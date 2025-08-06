@@ -858,6 +858,10 @@ async def get_trending_jerseys():
         # Get recent price activity
         recent_activity = await db.price_history.find().sort("transaction_date", -1).limit(50).to_list(50)
         
+        # Remove MongoDB ObjectId from activity data
+        for activity in recent_activity:
+            activity.pop('_id', None)
+        
         # Group by jersey signature
         signature_activity = {}
         for activity in recent_activity:
@@ -877,6 +881,8 @@ async def get_trending_jerseys():
             if data["activity_count"] >= 2:  # Minimum activity threshold
                 valuation = await db.jersey_valuations.find_one({"jersey_signature": signature})
                 if valuation:
+                    # Remove MongoDB ObjectId
+                    valuation.pop('_id', None)
                     trending.append({
                         "jersey_signature": signature,
                         "valuation": valuation,
@@ -891,6 +897,8 @@ async def get_trending_jerseys():
         
     except Exception as e:
         logger.error(f"Error getting trending jerseys: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return {"trending_jerseys": []}
 
 # Include the router in the main app
