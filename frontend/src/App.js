@@ -472,6 +472,7 @@ const ContactSellerModal = ({ listing, onClose }) => {
     </div>
   );
 };
+// Create Listing Modal Component
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
     price: '',
@@ -548,140 +549,123 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
     }
   };
 
-  const handleImageAdd = () => {
-    const imageUrl = prompt('Enter image URL:');
-    if (imageUrl) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, imageUrl]
-      });
-    }
-  };
-
-  const removeImage = (index) => {
-    setFormData({
-      ...formData,
-      images: formData.images.filter((_, i) => i !== index)
-    });
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Create Jersey Listing</h2>
+          <h2 className="text-2xl font-bold text-white">Create Jersey Listing</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-gray-400 hover:text-white text-2xl"
           >
             ✕
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Toggle for new jersey creation */}
           {jerseyId && (
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+            <div className="bg-gray-800 p-4 rounded-lg mb-4 border border-gray-700">
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={isCreatingNewJersey}
                   onChange={(e) => setIsCreatingNewJersey(e.target.checked)}
-                  className="rounded"
+                  className="rounded bg-gray-700 border-gray-600"
                 />
-                <span className="text-sm text-gray-700">Create new jersey instead of using existing one</span>
+                <span className="text-sm text-gray-300">Create new jersey instead of using existing one</span>
               </label>
             </div>
           )}
 
           {/* Jersey Details (only if creating new jersey) */}
           {(isCreatingNewJersey || !jerseyId) && (
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Jersey Details</h3>
+            <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
+              <h3 className="text-lg font-semibold mb-4 text-white">Jersey Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Club/National Team*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Club/National Team*</label>
                   <input
                     type="text"
                     placeholder="e.g., Manchester United"
                     value={formData.team}
                     onChange={(e) => setFormData({...formData, team: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Season*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Season*</label>
                   <input
                     type="text"
                     placeholder="e.g., 2023-24"
                     value={formData.season}
                     onChange={(e) => setFormData({...formData, season: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand/Manufacturer*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Brand/Manufacturer*</label>
                   <input
                     type="text"
                     placeholder="e.g., Nike, Adidas, Puma"
                     value={formData.manufacturer}
                     onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">League*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
                   <input
                     type="text"
                     placeholder="e.g., Premier League, La Liga"
                     value={formData.league}
                     onChange={(e) => setFormData({...formData, league: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Player Name</label>
                   <input
                     type="text"
                     placeholder="e.g., Bruno Fernandes (optional)"
                     value={formData.player}
                     onChange={(e) => setFormData({...formData, player: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Primary Color*</label>
                   <input
                     type="text"
                     placeholder="e.g., Red, Blue, Black"
                     value={formData.color}
                     onChange={(e) => setFormData({...formData, color: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
                   <select
                     value={formData.home_away}
                     onChange={(e) => setFormData({...formData, home_away: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
                   >
                     <option value="home">Home</option>
@@ -691,11 +675,11 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Model*</label>
                   <select
                     value={formData.model}
                     onChange={(e) => setFormData({...formData, model: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
                   >
                     <option value="replica">Replica</option>
@@ -706,11 +690,11 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Size*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Size*</label>
                   <select
                     value={formData.size}
                     onChange={(e) => setFormData({...formData, size: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
                   >
                     <option value="XS">XS</option>
@@ -723,11 +707,11 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition*</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Condition*</label>
                   <select
                     value={formData.condition}
                     onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
                   >
                     <option value="mint">Mint</option>
@@ -742,66 +726,43 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
           )}
 
           {/* Listing Details */}
-          <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Listing Details</h3>
+          <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 text-white">Listing Details</h3>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price (USD)*</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Price (USD)*</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="e.g., 89.99"
                 value={formData.price}
                 onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Description*</label>
               <textarea
                 placeholder="Describe the jersey condition, any special features, authenticity, etc."
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 h-24"
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-24"
                 required
               />
             </div>
 
             {/* Images */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
-              <button
-                type="button"
-                onClick={handleImageAdd}
-                className="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                Add Image URL
-              </button>
-              {formData.images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={image} 
-                        alt={`Jersey ${index + 1}`}
-                        className="w-full h-24 object-cover rounded border"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+URL';
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <label className="block text-sm font-medium text-gray-300 mb-2">Jersey Photos*</label>
+              <ImageUpload 
+                images={formData.images}
+                setImages={(images) => setFormData({...formData, images})}
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Upload high-quality photos of your jersey. First image will be the main photo.
+              </p>
             </div>
           </div>
 
@@ -809,14 +770,14 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="flex-1 bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-semibold"
             >
               {loading ? 'Creating Listing...' : 'Create Listing'}
             </button>
