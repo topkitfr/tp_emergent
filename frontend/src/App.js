@@ -1730,6 +1730,17 @@ const App = () => {
     }
   };
 
+  // Add event listener for sell jersey functionality
+  useEffect(() => {
+    const handleSellJersey = (event) => {
+      setSelectedListingJersey(event.detail);
+      setShowCreateListing(true);
+    };
+
+    window.addEventListener('sellJersey', handleSellJersey);
+    return () => window.removeEventListener('sellJersey', handleSellJersey);
+  }, []);
+
   const handleAddToCollection = async (jerseyId, collectionType) => {
     const token = localStorage.getItem('token');
     if (!token) {
