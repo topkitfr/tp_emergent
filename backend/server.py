@@ -184,6 +184,20 @@ class CollectionAdd(BaseModel):
     jersey_id: str
     collection_type: str
 
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    sender_id: str
+    recipient_id: str
+    listing_id: Optional[str] = None
+    message: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    read: bool = False
+
+class MessageCreate(BaseModel):
+    recipient_id: str
+    listing_id: Optional[str] = None
+    message: str
+
 class CheckoutRequest(BaseModel):
     listing_id: str
     origin_url: str
