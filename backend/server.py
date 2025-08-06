@@ -599,6 +599,11 @@ async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get
     
     listing = Listing(**listing_data.dict(), seller_id=user_id)
     await db.listings.insert_one(listing.dict())
+    
+    # Update jersey valuation with new listing price
+    jersey_obj = Jersey(**jersey)
+    await update_jersey_valuation(jersey_obj, listing_data.price, "listing", listing.id)
+    
     return listing
 
 @api_router.get("/listings", response_model=List[Dict])
