@@ -202,6 +202,214 @@ def create_jwt_token(user_id: str) -> str:
     }
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
+# Jersey valuation helpers
+def generate_jersey_signature(team: str, season: str, player: Optional[str], size: str, condition: str) -> str:
+    """Generate a unique signature for jersey valuation grouping"""
+    player_part = f"_{player}" if player else ""
+    return f"{team.lower().replace(' ', '_')}_{season}_{size.lower()}_{condition.lower()}{player_part}"
+
+async def update_jersey_valuation(jersey: Jersey, price: float, transaction_type: str, listing_id: Optional[str] = None):
+    """Update jersey valuation based on new price data"""
+    try:
+        signature = generate_jersey_signature(
+            jersey.team, jersey.season, jersey.player, jersey.size, jersey.condition
+        )
+        
+        # Add price to history
+        price_history = PriceHistory(
+            jersey_signature=signature,
+            price=price,
+            transaction_type=transaction_type,
+            listing_id=listing_id
+        )
+        await db.price_history.insert_one(price_history.dict())
+        
+        # Recalculate valuation
+        await recalculate_jersey_valuation(signature)
+        
+    except Exception as e:
+        logger.error(f"Error updating jersey valuation: {e}")
+
+async def recalculate_jersey_valuation(jersey_signature: str):
+    """Recalculate valuation estimates for a jersey type"""
+    try:
+        # Get all price data for this jersey type
+        price_data = await db.price_history.find({"jersey_signature": jersey_signature}).to_list(1000)
+        
+        if not price_data:
+            return
+        
+        # Extract prices and categorize
+        all_prices = [item["price"] for item in price_data]
+        sales_prices = [item["price"] for item in price_data if item["transaction_type"] == "sale"]
+        listing_prices = [item["price"] for item in price_data if item["transaction_type"] == "listing"]
+        
+        # Calculate estimates with weighted approach
+        # Sales carry more weight than listings for accuracy
+        if len(sales_prices) >= 3:
+            # Use sales data if sufficient
+            prices = sales_prices
+            weight_factor = 1.0
+        else:
+            # Use combined data with weighting
+            weighted_prices = []
+            for item in price_data:
+                if item["transaction_type"] == "sale":
+                    # Sales count triple
+                    weighted_prices.extend([item["price"]] * 3)
+                elif item["transaction_type"] == "collector_estimate":
+                    # Collector estimates count double
+                    weighted_prices.extend([item["price"]] * 2)
+                else:
+                    # Listings count once
+                    weighted_prices.append(item["price"])
+            
+            prices = weighted_prices
+        
+        if len(prices) < 2:
+            return
+        
+        # Sort prices
+        prices.sort()
+        
+        # Calculate percentiles
+        def percentile(data, p):
+            n = len(data)
+            if n == 0:
+                return 0
+            if n == 1:
+                return data[0]
+            
+            k = (n - 1) * p / 100
+            f = int(k)
+            c = k - f
+            
+            if f + 1 < n:
+                return data[f] * (1 - c) + data[f + 1] * c
+            else:
+                return data[f]
+        
+        low_estimate = percentile(prices, 25)  # 25th percentile
+        median_estimate = percentile(prices, 50)  # 50th percentile  
+        high_estimate = percentile(prices, 75)  # 75th percentile
+        
+        # Market data analysis
+        market_data = {
+            "total_data_points": len(all_prices),
+            "sales_count": len(sales_prices),
+            "listings_count": len(listing_prices),
+            "price_range": {
+                "min": min(all_prices) if all_prices else 0,
+                "max": max(all_prices) if all_prices else 0
+            },
+            "last_sale_price": sales_prices[-1] if sales_prices else None,
+            "confidence_score": min(100, (len(sales_prices) * 30 + len(all_prices) * 10))
+        }
+        
+        # Update or create valuation
+        valuation = JerseyValuation(
+            jersey_signature=jersey_signature,
+            low_estimate=round(low_estimate, 2),
+            median_estimate=round(median_estimate, 2),
+            high_estimate=round(high_estimate, 2),
+            total_listings=len(listing_prices),
+            total_sales=len(sales_prices),
+            market_data=market_data
+        )
+        
+        # Upsert valuation
+        await db.jersey_valuations.update_one(
+            {"jersey_signature": jersey_signature},
+            {"$set": valuation.dict()},
+            upsert=True
+        )
+        
+    except Exception as e:
+        logger.error(f"Error recalculating jersey valuation: {e}")
+
+async def get_jersey_valuation(jersey: Jersey) -> Optional[JerseyValuation]:
+    """Get valuation for a specific jersey"""
+    signature = generate_jersey_signature(
+        jersey.team, jersey.season, jersey.player, jersey.size, jersey.condition
+    )
+    
+    valuation_data = await db.jersey_valuations.find_one({"jersey_signature": signature})
+    if valuation_data:
+        return JerseyValuation(**valuation_data)
+    return None
+
+async def get_user_collection_valuations(user_id: str):
+    """Get valuations for all jerseys in user's collection"""
+    try:
+        # Get user's collections with jersey data
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "jerseys",
+                    "localField": "jersey_id", 
+                    "foreignField": "id",
+                    "as": "jersey"
+                }
+            },
+            {"$unwind": "$jersey"}
+        ]
+        
+        collections = await db.collections.aggregate(pipeline).to_list(1000)
+        
+        valuations = []
+        total_low = 0
+        total_median = 0
+        total_high = 0
+        valued_items = 0
+        
+        for collection in collections:
+            jersey_data = collection["jersey"]
+            jersey = Jersey(**jersey_data)
+            valuation = await get_jersey_valuation(jersey)
+            
+            collection_item = {
+                "collection_id": collection["id"],
+                "collection_type": collection["collection_type"],
+                "jersey": jersey_data,
+                "valuation": valuation.dict() if valuation else None,
+                "added_at": collection["added_at"]
+            }
+            
+            if valuation:
+                total_low += valuation.low_estimate
+                total_median += valuation.median_estimate
+                total_high += valuation.high_estimate
+                valued_items += 1
+            
+            valuations.append(collection_item)
+        
+        return {
+            "collections": valuations,
+            "portfolio_summary": {
+                "total_items": len(valuations),
+                "valued_items": valued_items,
+                "total_low_estimate": round(total_low, 2),
+                "total_median_estimate": round(total_median, 2),
+                "total_high_estimate": round(total_high, 2),
+                "average_value": round(total_median / valued_items, 2) if valued_items > 0 else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user collection valuations: {e}")
+        return {
+            "collections": [],
+            "portfolio_summary": {
+                "total_items": 0,
+                "valued_items": 0, 
+                "total_low_estimate": 0,
+                "total_median_estimate": 0,
+                "total_high_estimate": 0,
+                "average_value": 0
+            }
+        }
+
 def verify_jwt_token(token: str) -> Optional[str]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
