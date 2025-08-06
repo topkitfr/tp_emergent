@@ -780,6 +780,9 @@ async def get_profile(user_id: str = Depends(get_current_user)):
     wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
     listings_count = await db.listings.count_documents({"seller_id": user_id})
     
+    # Get collection valuations
+    collection_valuations = await get_user_collection_valuations(user_id)
+    
     return {
         "user": {
             "id": user["id"],
@@ -793,8 +796,94 @@ async def get_profile(user_id: str = Depends(get_current_user)):
             "owned_jerseys": owned_count,
             "wanted_jerseys": wanted_count,
             "active_listings": listings_count
-        }
+        },
+        "valuations": collection_valuations
     }
+
+# Jersey valuation endpoints
+@api_router.get("/jerseys/{jersey_id}/valuation")
+async def get_jersey_valuation_endpoint(jersey_id: str):
+    jersey = await db.jerseys.find_one({"id": jersey_id})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    jersey_obj = Jersey(**jersey)
+    valuation = await get_jersey_valuation(jersey_obj)
+    
+    if not valuation:
+        return {"message": "No valuation data available", "jersey_id": jersey_id}
+    
+    return {
+        "jersey_id": jersey_id,
+        "jersey": jersey,
+        "valuation": valuation.dict()
+    }
+
+@api_router.get("/collections/valuations")
+async def get_collection_valuations_endpoint(user_id: str = Depends(get_current_user)):
+    return await get_user_collection_valuations(user_id)
+
+@api_router.post("/jerseys/{jersey_id}/price-estimate")
+async def add_collector_price_estimate(
+    jersey_id: str, 
+    price_estimate: Dict[str, float],
+    user_id: str = Depends(get_current_user)
+):
+    """Allow collectors to contribute price estimates"""
+    jersey = await db.jerseys.find_one({"id": jersey_id})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    estimated_price = price_estimate.get("price")
+    if not estimated_price or estimated_price <= 0:
+        raise HTTPException(status_code=400, detail="Valid price required")
+    
+    jersey_obj = Jersey(**jersey)
+    await update_jersey_valuation(jersey_obj, estimated_price, "collector_estimate")
+    
+    return {"message": "Price estimate added successfully", "estimated_price": estimated_price}
+
+@api_router.get("/market/trending")
+async def get_trending_jerseys():
+    """Get trending jerseys based on recent activity"""
+    try:
+        # Get recent price activity
+        recent_activity = await db.price_history.find().sort("transaction_date", -1).limit(50).to_list(50)
+        
+        # Group by jersey signature
+        signature_activity = {}
+        for activity in recent_activity:
+            signature = activity["jersey_signature"]
+            if signature not in signature_activity:
+                signature_activity[signature] = {
+                    "recent_prices": [],
+                    "activity_count": 0,
+                    "last_activity": activity["transaction_date"]
+                }
+            signature_activity[signature]["recent_prices"].append(activity["price"])
+            signature_activity[signature]["activity_count"] += 1
+        
+        # Get top trending
+        trending = []
+        for signature, data in signature_activity.items():
+            if data["activity_count"] >= 2:  # Minimum activity threshold
+                valuation = await db.jersey_valuations.find_one({"jersey_signature": signature})
+                if valuation:
+                    trending.append({
+                        "jersey_signature": signature,
+                        "valuation": valuation,
+                        "activity_count": data["activity_count"],
+                        "price_trend": "up" if len(data["recent_prices"]) >= 2 and data["recent_prices"][-1] > data["recent_prices"][0] else "stable"
+                    })
+        
+        # Sort by activity
+        trending.sort(key=lambda x: x["activity_count"], reverse=True)
+        
+        return {"trending_jerseys": trending[:10]}
+        
+    except Exception as e:
+        logger.error(f"Error getting trending jerseys: {e}")
+        return {"trending_jerseys": []}
 
 # Include the router in the main app
 app.include_router(api_router)
