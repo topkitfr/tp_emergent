@@ -1079,12 +1079,6 @@ const ProfilePage = () => {
     });
   };
 
-  const handleSellJersey = (jersey) => {
-    // This will trigger the main app's listing creation modal with the jersey data
-    const event = new CustomEvent('sellJersey', { detail: jersey });
-    window.dispatchEvent(event);
-  };
-
   if (loading) {
     return <div className="text-center py-8 text-gray-400">Loading profile...</div>;
   }
@@ -1274,18 +1268,6 @@ const ProfilePage = () => {
                         <span className="text-gray-500">Added: {new Date(item.added_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    
-                    {/* Sell Jersey Button - Only for owned jerseys */}
-                    {item.collection_type === 'owned' && (
-                      <div className="mt-4">
-                        <button 
-                          onClick={() => handleSellJersey(item.jersey)}
-                          className="bg-green-900 text-green-300 px-4 py-2 rounded-lg hover:bg-green-800 transition-colors text-sm font-semibold border border-green-700"
-                        >
-                          Sell This Jersey
-                        </button>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="text-right">
