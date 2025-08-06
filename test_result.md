@@ -287,16 +287,31 @@ frontend:
         comment: "✅ FIXED - Added complete Profile and Collections pages with proper navigation, user statistics, collection management, and responsive design."
 
   - task: "Create Listing Functionality"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
         comment: "User reports: 'onCreateListing is not a function' runtime error when trying to create a listing. Function not implemented and not passed to JerseyCard component. User also requested comprehensive listing form with: Brand, Size, Model, Color, Type (Home/Away), Club/National Team Name, Season."
+      - working: true
+        agent: "main"
+        comment: "✅ FIXED - Implemented comprehensive listing creation system with all requested fields: Brand/Manufacturer, Size, Model (Replica/Professional/Special/Retro), Color, Type (Home/Away/Third), Club/Team Name, Season, Price, Description, Images, Condition. Added smart jersey creation logic, proper function implementation, and enhanced UI with Create Listing buttons on Browse Jerseys and Marketplace pages."
+
+  - task: "Jersey Valuation System"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requests: 'The system provides low, median, and high estimates for the value of soccer jerseys based on prices suggested by collectors and actual sale prices, displaying these estimates on the user's profile page.'"
 
 metadata:
   created_by: "main_agent"
