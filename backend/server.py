@@ -815,6 +815,9 @@ async def get_jersey_valuation_endpoint(jersey_id: str):
     if not jersey:
         raise HTTPException(status_code=404, detail="Jersey not found")
     
+    # Remove MongoDB ObjectId
+    jersey.pop('_id', None)
+    
     jersey_obj = Jersey(**jersey)
     valuation = await get_jersey_valuation(jersey_obj)
     
