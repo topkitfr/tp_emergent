@@ -1822,7 +1822,6 @@ const App = () => {
                     jersey={jersey} 
                     showActions={true}
                     onAddToCollection={handleAddToCollection}
-                    onCreateListing={() => handleCreateListing(jersey.id, jersey)}
                     onClick={handleJerseyClick}
                   />
                 ))}
