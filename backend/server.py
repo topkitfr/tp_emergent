@@ -938,6 +938,38 @@ async def get_trending_jerseys():
         logger.error(traceback.format_exc())
         return {"trending_jerseys": []}
 
+# Messaging endpoints
+@api_router.post("/messages")
+async def send_message(message_data: MessageCreate, user_id: str = Depends(get_current_user)):
+    message = Message(**message_data.dict(), sender_id=user_id)
+    await db.messages.insert_one(message.dict())
+    return {"message": "Message sent successfully"}
+
+@api_router.get("/messages")
+async def get_messages(user_id: str = Depends(get_current_user)):
+    messages = await db.messages.find({
+        "$or": [
+            {"sender_id": user_id},
+            {"recipient_id": user_id}
+        ]
+    }).sort("created_at", -1).to_list(100)
+    return messages
+
+# Public user endpoints
+@api_router.get("/users/{user_id}/public")
+async def get_public_user_info(user_id: str):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return only public information
+    return {
+        "id": user["id"],
+        "name": user["name"],
+        "picture": user.get("picture"),
+        "created_at": user["created_at"]
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
