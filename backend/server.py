@@ -422,6 +422,11 @@ async def get_listings(
     ])
     
     listings = await db.listings.aggregate(pipeline).to_list(limit)
+    # Remove MongoDB ObjectId fields to avoid serialization issues
+    for listing in listings:
+        listing.pop('_id', None)
+        if 'jersey' in listing:
+            listing['jersey'].pop('_id', None)
     return listings
 
 @api_router.get("/listings/{listing_id}")
