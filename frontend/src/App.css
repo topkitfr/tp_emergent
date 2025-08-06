@@ -2,41 +2,45 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Dark Theme Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+  background-color: #000000;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
 .App {
   text-align: center;
-}
-
-.App-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60px;
-  color: white;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  background: #000000;
 }
 
-.App-header img {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  margin-bottom: 20px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
+/* Custom Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.App-link {
-  color: inherit;
-  text-decoration: none;
+::-webkit-scrollbar-track {
+  background: #1f2937;
 }
 
-.App-link:hover {
-  transform: scale(1.05);
-  transition: transform 0.3s ease;
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
 }
 
-/* Custom styles for TopKit */
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Text Utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -44,41 +48,29 @@
   overflow: hidden;
 }
 
-/* Jersey card hover animations */
-.jersey-card {
+/* Enhanced Card Shadows */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Button Hover Effects */
+.btn-hover {
   transition: all 0.3s ease;
+  transform: translateY(0);
 }
 
-.jersey-card:hover {
-  transform: translateY(-5px);
+.btn-hover:hover {
+  transform: translateY(-2px);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* Loading animation */
+/* Loading Animation */
 .loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+  border: 4px solid #374151;
+  border-top: 4px solid #ffffff;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 2s linear infinite;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
   margin: 20px auto;
 }
 
@@ -87,88 +79,123 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Gradient backgrounds */
-.gradient-green {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+/* Gradient Backgrounds for Dark Theme */
+.gradient-dark {
+  background: linear-gradient(135deg, #000000 0%, #1f2937 100%);
 }
 
-.gradient-blue {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+.gradient-card {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
 }
 
-.gradient-purple {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+/* Focus States for Dark Theme */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  ring-width: 2px;
+  ring-color: #ffffff;
+  border-color: transparent;
 }
 
-/* Card shadows */
-.card-shadow {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.card-shadow:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Form inputs */
-.form-input {
+/* Custom Form Inputs */
+.form-input-dark {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #ffffff;
   transition: all 0.3s ease;
 }
 
-.form-input:focus {
-  transform: scale(1.02);
+.form-input-dark::placeholder {
+  color: #9ca3af;
 }
 
-/* Button animations */
-.btn-hover {
+.form-input-dark:focus {
+  background-color: #111827;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
-.btn-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+.btn-primary:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Hero section styling */
-.hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.btn-secondary {
+  background-color: #1f2937;
+  color: #ffffff;
+  border: 1px solid #374151;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #111827;
+  border-color: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Card Hover Effects */
+.card-dark {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  border: 1px solid #374151;
+  transition: all 0.3s ease;
+}
+
+.card-dark:hover {
+  border-color: #4b5563;
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Typography Enhancements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.text-primary {
+  color: #ffffff;
+}
+
+.text-secondary {
+  color: #d1d5db;
+}
+
+.text-muted {
+  color: #9ca3af;
+}
+
+/* Navigation Enhancements */
+.nav-link {
   position: relative;
-  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-.hero-section::before {
+.nav-link::after {
   content: '';
   position: absolute;
-  top: 0;
+  bottom: -2px;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="white" fill-opacity="0.05"><circle cx="20" cy="20" r="2"/></g></svg>');
-  pointer-events: none;
+  width: 0;
+  height: 2px;
+  background: #ffffff;
+  transition: width 0.3s ease;
 }
 
-/* Responsive design helpers */
-@media (max-width: 768px) {
-  .App-header {
-    font-size: calc(8px + 2vmin);
-    padding: 40px 20px;
-  }
-  
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+.nav-link.active::after,
+.nav-link:hover::after {
+  width: 100%;
 }
 
-/* Custom utilities */
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.backdrop-blur {
-  backdrop-filter: blur(10px);
-}
-
-/* Animations */
+/* Animation Classes */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -199,26 +226,80 @@
   animation: slideInFromLeft 0.6s ease-out;
 }
 
-/* Jersey specific styling */
+/* Modal Enhancements */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  border: 1px solid #374151;
+}
+
+/* Jersey Specific Styling */
 .jersey-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .jersey-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.7);
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.condition-mint { @apply bg-green-100 text-green-800; }
-.condition-excellent { @apply bg-blue-100 text-blue-800; }
-.condition-very-good { @apply bg-purple-100 text-purple-800; }
-.condition-good { @apply bg-yellow-100 text-yellow-800; }
-.condition-fair { @apply bg-orange-100 text-orange-800; }
+/* Condition Badges for Dark Theme */
+.condition-mint { @apply bg-green-900 text-green-300 border border-green-700; }
+.condition-excellent { @apply bg-blue-900 text-blue-300 border border-blue-700; }
+.condition-very-good { @apply bg-purple-900 text-purple-300 border border-purple-700; }
+.condition-good { @apply bg-yellow-900 text-yellow-300 border border-yellow-700; }
+.condition-fair { @apply bg-orange-900 text-orange-300 border border-orange-700; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .jersey-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* Text Shadow for Better Contrast */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Utilities for Dark Theme */
+.bg-dark-card {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+}
+
+.border-dark {
+  border-color: #374151;
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Logo Styling */
+.logo-container {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
