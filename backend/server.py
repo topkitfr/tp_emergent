@@ -365,6 +365,12 @@ async def get_user_collection_valuations(user_id: str):
         
         collections = await db.collections.aggregate(pipeline).to_list(1000)
         
+        # Remove MongoDB ObjectId fields
+        for collection in collections:
+            collection.pop('_id', None)
+            if 'jersey' in collection:
+                collection['jersey'].pop('_id', None)
+        
         valuations = []
         total_low = 0
         total_median = 0
@@ -406,6 +412,8 @@ async def get_user_collection_valuations(user_id: str):
         
     except Exception as e:
         logger.error(f"Error getting user collection valuations: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return {
             "collections": [],
             "portfolio_summary": {
