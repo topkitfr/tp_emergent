@@ -1383,6 +1383,18 @@ const CollectionsPage = () => {
     }
   };
 
+  const handleSellJersey = (jersey) => {
+    // This will trigger the main app's listing creation modal with the jersey data
+    window.parent?.postMessage({ 
+      type: 'SELL_JERSEY', 
+      jersey: jersey 
+    }, '*');
+    
+    // Alternative: Use a custom event
+    const event = new CustomEvent('sellJersey', { detail: jersey });
+    window.dispatchEvent(event);
+  };
+
   const handleJerseyClick = (jersey) => {
     // Jersey detail functionality can be added here
     console.log('Jersey clicked:', jersey);
@@ -1391,8 +1403,8 @@ const CollectionsPage = () => {
   if (!user) {
     return (
       <div className="text-center py-16">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Login</h2>
-        <p className="text-gray-600">You need to login to view your collections.</p>
+        <h2 className="text-2xl font-bold text-white mb-4">Please Login</h2>
+        <p className="text-gray-400">You need to login to view your collections.</p>
       </div>
     );
   }
@@ -1400,14 +1412,14 @@ const CollectionsPage = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">My Collections</h1>
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+        <h1 className="text-3xl font-bold text-white">My Collections</h1>
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
           <button
             onClick={() => setActiveTab('owned')}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeTab === 'owned'
-                ? 'bg-green-600 text-white'
-                : 'text-gray-600 hover:bg-gray-200'
+                ? 'bg-white text-black'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
             Owned Jerseys
@@ -1416,8 +1428,8 @@ const CollectionsPage = () => {
             onClick={() => setActiveTab('wanted')}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeTab === 'wanted'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-200'
+                ? 'bg-white text-black'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
             Wanted Jerseys
@@ -1426,19 +1438,19 @@ const CollectionsPage = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Loading collections...</div>
+        <div className="text-center py-8 text-gray-400">Loading collections...</div>
       ) : collections.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-6xl mb-4">{activeTab === 'owned' ? '👕' : '❤️'}</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <h2 className="text-2xl font-bold text-white mb-4">
             No {activeTab} jerseys yet
           </h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-400 mb-8">
             Start building your collection by browsing jerseys and adding them to your {activeTab} list.
           </p>
           <button 
             onClick={() => window.location.hash = '#jerseys'}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+            className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
           >
             Browse Jerseys
           </button>
@@ -1453,6 +1465,8 @@ const CollectionsPage = () => {
               addedAt={collection.added_at}
               showRemove={true}
               onRemoveFromCollection={handleRemoveFromCollection}
+              showSellButton={activeTab === 'owned'} // Only show sell button for owned jerseys
+              onSellJersey={handleSellJersey}
               onClick={handleJerseyClick}
             />
           ))}
