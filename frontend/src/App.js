@@ -978,51 +978,51 @@ const CollectionsPage = () => {
 // Jersey Card Component (updated)
 const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing, showCollectionDate = false, addedAt }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700">
       <img
         src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
         alt={`${jersey.team} ${jersey.season}`}
         className="w-full h-48 object-cover"
       />
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800">{jersey.team}</h3>
-        <p className="text-gray-600">{jersey.season} • {jersey.home_away}</p>
-        {jersey.player && <p className="text-green-600 font-medium">{jersey.player}</p>}
+      <div className="p-6">
+        <h3 className="text-xl font-semibold text-white mb-2">{jersey.team}</h3>
+        <p className="text-gray-400 mb-1">{jersey.season} • {jersey.home_away}</p>
+        {jersey.player && <p className="text-white font-medium mb-3">{jersey.player}</p>}
         
-        <div className="mt-3 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            <span className="bg-gray-100 px-2 py-1 rounded">{jersey.size}</span>
-            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+        <div className="mt-4 flex justify-between items-center mb-3">
+          <div className="text-sm text-gray-400">
+            <span className="bg-gray-800 text-white px-3 py-1 rounded-full border border-gray-700">{jersey.size}</span>
+            <span className="bg-gray-800 text-white px-3 py-1 rounded-full ml-2 border border-gray-700">
               {jersey.condition}
             </span>
           </div>
         </div>
         
-        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{jersey.description}</p>
+        <p className="text-sm text-gray-300 mt-3 line-clamp-2">{jersey.description}</p>
         
         {showCollectionDate && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-3">
             Added {new Date(addedAt).toLocaleDateString()}
           </p>
         )}
         
         {showActions && (
-          <div className="mt-4 space-y-2">
+          <div className="mt-6 space-y-3">
             <button 
               onClick={() => onAddToCollection(jersey.id, 'owned')}
-              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+              className="w-full bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold"
             >
               Add to Owned
             </button>
             <button 
               onClick={() => onAddToCollection(jersey.id, 'wanted')}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
             >
               Add to Wanted
             </button>
             <button 
               onClick={() => onCreateListing(jersey.id)}
-              className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+              className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
             >
               Create Listing
             </button>
@@ -1036,30 +1036,30 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateLi
 // Listing Card Component
 const ListingCard = ({ listing }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700">
       <img
         src={listing.images?.[0] || listing.jersey?.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
         alt={`${listing.jersey?.team} ${listing.jersey?.season}`}
         className="w-full h-48 object-cover"
       />
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800">{listing.jersey?.team}</h3>
-        <p className="text-gray-600">{listing.jersey?.season} • {listing.jersey?.home_away}</p>
-        {listing.jersey?.player && <p className="text-green-600 font-medium">{listing.jersey?.player}</p>}
+      <div className="p-6">
+        <h3 className="text-xl font-semibold text-white mb-2">{listing.jersey?.team}</h3>
+        <p className="text-gray-400 mb-1">{listing.jersey?.season} • {listing.jersey?.home_away}</p>
+        {listing.jersey?.player && <p className="text-white font-medium mb-3">{listing.jersey?.player}</p>}
         
-        <div className="mt-3 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            <span className="bg-gray-100 px-2 py-1 rounded">{listing.jersey?.size}</span>
-            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+        <div className="mt-4 flex justify-between items-center mb-3">
+          <div className="text-sm text-gray-400">
+            <span className="bg-gray-800 text-white px-3 py-1 rounded-full border border-gray-700">{listing.jersey?.size}</span>
+            <span className="bg-gray-800 text-white px-3 py-1 rounded-full ml-2 border border-gray-700">
               {listing.jersey?.condition}
             </span>
           </div>
-          <div className="text-2xl font-bold text-green-600">${listing.price}</div>
+          <div className="text-3xl font-bold text-white">${listing.price}</div>
         </div>
         
-        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{listing.description}</p>
+        <p className="text-sm text-gray-300 mt-3 mb-6 line-clamp-2">{listing.description}</p>
         
-        <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors mt-4">
+        <button className="w-full bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold">
           Buy Now
         </button>
       </div>
