@@ -38,7 +38,7 @@ oauth.register(
     name='google',
     client_id="920523740769-d74f1dsdajtilkqasrhtrei4blmf8ujj.apps.googleusercontent.com",
     client_secret="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",
-    server_metadata_url='https://accounts.google.com/.well-known/openid_configuration',
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid email profile'
     }
