@@ -1295,18 +1295,20 @@ const App = () => {
       case 'marketplace':
         return (
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-800">Marketplace</h1>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-4xl font-bold text-white">Marketplace</h1>
               <button 
                 onClick={() => handleCreateListing()}
-                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
               >
                 + Create Listing
               </button>
             </div>
             <SearchFilter onFilter={fetchListings} />
             {loading ? (
-              <div className="text-center py-8">Loading listings...</div>
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg">Loading listings...</div>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {listings.map((listing) => (
