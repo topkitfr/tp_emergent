@@ -132,6 +132,26 @@ class PaymentTransaction(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class JerseyValuation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    jersey_signature: str  # Unique identifier based on team+season+player+size+condition
+    low_estimate: float
+    median_estimate: float
+    high_estimate: float
+    total_listings: int
+    total_sales: int
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    market_data: Dict[str, Any] = {}
+
+class PriceHistory(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    jersey_signature: str
+    price: float
+    transaction_type: str  # "listing", "sale", "collector_estimate"
+    listing_id: Optional[str] = None
+    transaction_date: datetime = Field(default_factory=datetime.utcnow)
+    source: str = "marketplace"  # "marketplace", "collector_input", "external"
+
 # Request Models
 class UserRegister(BaseModel):
     email: EmailStr
