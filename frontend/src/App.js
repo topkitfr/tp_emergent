@@ -1243,6 +1243,15 @@ const App = () => {
           {renderContent()}
         </main>
 
+        {/* Modals */}
+        {showCreateListing && (
+          <CreateListingModal 
+            onClose={handleCloseCreateListing}
+            jerseyId={selectedJerseyForListing?.id || null}
+            jersey={selectedJerseyForListing}
+          />
+        )}
+
         {/* Footer */}
         <footer className="bg-gray-800 text-white py-8 mt-16">
           <div className="container mx-auto px-4 text-center">
