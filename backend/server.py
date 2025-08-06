@@ -500,6 +500,11 @@ async def get_user_collection(collection_type: str, user_id: str = Depends(get_c
     ]
     
     collections = await db.collections.aggregate(pipeline).to_list(1000)
+    # Remove MongoDB ObjectId fields to avoid serialization issues
+    for collection in collections:
+        collection.pop('_id', None)
+        if 'jersey' in collection:
+            collection['jersey'].pop('_id', None)
     return collections
 
 # Payment endpoints (Stripe integration will be added)
