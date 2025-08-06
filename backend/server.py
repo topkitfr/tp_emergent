@@ -976,17 +976,95 @@ async def get_messages(user_id: str = Depends(get_current_user)):
 
 # Public user endpoints
 @api_router.get("/users/{user_id}/public")
-async def get_public_user_info(user_id: str):
+async def get_public_user_info(user_id: str, current_user_id: Optional[str] = None):
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Return only public information
-    return {
+    # Check if profile is private
+    if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
+        return {
+            "id": user["id"],
+            "name": user["name"],
+            "picture": user.get("picture"),
+            "created_at": user["created_at"],
+            "profile_private": True
+        }
+    
+    # Get public stats if profile is public
+    owned_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "owned"})
+    wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
+    listings_count = await db.listings.count_documents({"seller_id": user_id})
+    
+    response = {
         "id": user["id"],
         "name": user["name"],
         "picture": user.get("picture"),
-        "created_at": user["created_at"]
+        "created_at": user["created_at"],
+        "profile_private": False,
+        "stats": {
+            "owned_jerseys": owned_count,
+            "wanted_jerseys": wanted_count,
+            "active_listings": listings_count
+        }
+    }
+    
+    # Only show collection if profile privacy allows and user opted to show collections
+    if user.get("profile_privacy", "public") == "public":
+        # Get collection without valuations (valuations are private)
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "jerseys",
+                    "localField": "jersey_id",
+                    "foreignField": "id",
+                    "as": "jersey"
+                }
+            },
+            {"$unwind": "$jersey"}
+        ]
+        
+        collections = await db.collections.aggregate(pipeline).to_list(100)
+        response["public_collection"] = collections
+    
+    return response
+
+@api_router.get("/users/{user_id}/collections")
+async def get_user_public_collections(user_id: str, current_user_id: str = Depends(get_current_user)):
+    """Get user's public collections (no valuations shown to others)"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if profile is private
+    if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
+        raise HTTPException(status_code=403, detail="This user's profile is private")
+    
+    # Get collection without valuations
+    pipeline = [
+        {"$match": {"user_id": user_id}},
+        {
+            "$lookup": {
+                "from": "jerseys",
+                "localField": "jersey_id",
+                "foreignField": "id",
+                "as": "jersey"
+            }
+        },
+        {"$unwind": "$jersey"}
+    ]
+    
+    collections = await db.collections.aggregate(pipeline).to_list(1000)
+    
+    # Remove valuation data for privacy
+    for collection in collections:
+        collection.pop('valuation', None)
+    
+    return {
+        "user_id": user_id,
+        "profile_owner": current_user_id == user_id,
+        "collections": collections
     }
 
 # Include the router in the main app
