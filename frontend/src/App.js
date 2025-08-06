@@ -1097,6 +1097,15 @@ const App = () => {
       case 'jerseys':
         return (
           <div>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-800">Browse Jerseys</h1>
+              <button 
+                onClick={() => handleCreateListing()}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                + Create New Listing
+              </button>
+            </div>
             <SearchFilter onFilter={fetchJerseys} />
             {loading ? (
               <div className="text-center py-8">Loading jerseys...</div>
@@ -1108,6 +1117,7 @@ const App = () => {
                     jersey={jersey} 
                     showActions={true}
                     onAddToCollection={handleAddToCollection}
+                    onCreateListing={() => handleCreateListing(jersey.id, jersey)}
                   />
                 ))}
               </div>
