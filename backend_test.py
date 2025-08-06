@@ -1108,6 +1108,15 @@ class TopKitAPITester:
         print("-" * 30)
         test_results['add_to_collection'] = self.test_add_to_collection()
         test_results['get_collections'] = self.test_get_user_collections()
+        test_results['remove_from_collection_authenticated'] = self.test_remove_from_collection_authenticated()
+        test_results['remove_from_collection_unauthenticated'] = self.test_remove_from_collection_unauthenticated()
+        test_results['remove_nonexistent_jersey'] = self.test_remove_nonexistent_jersey_from_collection()
+        test_results['remove_collection_integration_flow'] = self.test_remove_from_collection_integration_flow()
+        
+        # Data Verification Tests (High Priority)
+        print("🗄️ DATA VERIFICATION TESTS")
+        print("-" * 30)
+        test_results['sample_data_verification'] = self.test_sample_data_verification()
         
         # Profile Tests (Medium Priority)
         print("👤 PROFILE TESTS")
