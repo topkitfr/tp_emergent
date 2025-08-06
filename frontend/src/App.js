@@ -1419,27 +1419,35 @@ const CollectionsPage = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-white">My Collections</h1>
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
+        <div className="flex items-center space-x-4">
           <button
-            onClick={() => setActiveTab('owned')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'owned'
-                ? 'bg-white text-black'
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
+            onClick={handleAddNewJersey}
+            className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
           >
-            Owned Jerseys
+            + Add New Jersey
           </button>
-          <button
-            onClick={() => setActiveTab('wanted')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              activeTab === 'wanted'
-                ? 'bg-white text-black'
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            Wanted Jerseys
-          </button>
+          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
+            <button
+              onClick={() => setActiveTab('owned')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeTab === 'owned'
+                  ? 'bg-white text-black'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              Owned Jerseys
+            </button>
+            <button
+              onClick={() => setActiveTab('wanted')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeTab === 'wanted'
+                  ? 'bg-white text-black'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              Wanted Jerseys
+            </button>
+          </div>
         </div>
       </div>
 
