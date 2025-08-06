@@ -1481,6 +1481,9 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [showCreateListing, setShowCreateListing] = useState(false);
   const [selectedJerseyForListing, setSelectedJerseyForListing] = useState(null);
+  const [showJerseyDetail, setShowJerseyDetail] = useState(false);
+  const [selectedJerseyDetail, setSelectedJerseyDetail] = useState(null);
+  const [selectedListingDetail, setSelectedListingDetail] = useState(null);
 
   const fetchJerseys = async (filters = {}) => {
     setLoading(true);
@@ -1534,6 +1537,32 @@ const App = () => {
     }
   };
 
+  const handleRemoveFromCollection = async (jerseyId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to manage your collection');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to remove this jersey from your collection?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/collections/${jerseyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Removed from collection!');
+      // Refresh collections if we're on that page
+      if (currentView === 'collections') {
+        // This will trigger a re-render of the collections page
+        window.location.reload();
+      }
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Failed to remove from collection');
+    }
+  };
+
   const handleCreateListing = (jerseyId = null, jersey = null) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -1552,6 +1581,18 @@ const App = () => {
     if (currentView === 'marketplace') {
       fetchListings();
     }
+  };
+
+  const handleJerseyClick = (jersey, listing = null) => {
+    setSelectedJerseyDetail(jersey);
+    setSelectedListingDetail(listing);
+    setShowJerseyDetail(true);
+  };
+
+  const handleCloseJerseyDetail = () => {
+    setShowJerseyDetail(false);
+    setSelectedJerseyDetail(null);
+    setSelectedListingDetail(null);
   };
 
   useEffect(() => {
