@@ -66,62 +66,70 @@ const Header = ({ currentView, setCurrentView }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-3xl font-bold cursor-pointer" onClick={() => setCurrentView('home')}>TopKit</h1>
-          <p className="text-green-100">Soccer Jersey Marketplace</p>
-        </div>
-        
-        <nav className="flex items-center space-x-6">
-          <button 
-            onClick={() => setCurrentView('jerseys')}
-            className="hover:text-green-200 transition-colors"
-          >
-            Browse
-          </button>
-          <button 
-            onClick={() => setCurrentView('marketplace')}
-            className="hover:text-green-200 transition-colors"
-          >
-            Marketplace
-          </button>
-          {user && (
-            <>
-              <button 
-                onClick={() => setCurrentView('collections')}
-                className="hover:text-green-200 transition-colors"
-              >
-                My Collection
-              </button>
-              <button 
-                onClick={() => setCurrentView('profile')}
-                className="hover:text-green-200 transition-colors"
-              >
-                Profile
-              </button>
-            </>
-          )}
+    <header className="bg-black text-white shadow-2xl border-b border-gray-800">
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+              alt="TopKit Logo"
+              className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setCurrentView('home')}
+            />
+          </div>
           
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <span className="text-sm">Welcome, {user.name}</span>
-              <button 
-                onClick={logout}
-                className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
+          {/* Navigation */}
+          <nav className="flex items-center space-x-8">
             <button 
-              onClick={() => setShowAuthModal(true)}
-              className="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              onClick={() => setCurrentView('jerseys')}
+              className="text-gray-300 hover:text-white transition-colors font-medium"
             >
-              Login / Sign Up
+              Browse
             </button>
-          )}
-        </nav>
+            <button 
+              onClick={() => setCurrentView('marketplace')}
+              className="text-gray-300 hover:text-white transition-colors font-medium"
+            >
+              Marketplace
+            </button>
+            {user && (
+              <>
+                <button 
+                  onClick={() => setCurrentView('collections')}
+                  className="text-gray-300 hover:text-white transition-colors font-medium"
+                >
+                  My Collection
+                </button>
+                <button 
+                  onClick={() => setCurrentView('profile')}
+                  className="text-gray-300 hover:text-white transition-colors font-medium"
+                >
+                  Profile
+                </button>
+              </>
+            )}
+            
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-400">Welcome, {user.name}</span>
+                <button 
+                  onClick={logout}
+                  className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-600"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowAuthModal(true)}
+                className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Login / Sign Up
+              </button>
+            )}
+          </nav>
+        </div>
       </div>
       
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
