@@ -927,7 +927,123 @@ const AuthModal = ({ onClose }) => {
   );
 };
 
-// Profile Page Component
+// Profile Settings Modal
+const ProfileSettingsModal = ({ user, onClose, onSettingsUpdate }) => {
+  const [settings, setSettings] = useState({
+    profile_privacy: user?.profile_privacy || 'public',
+    show_collection_value: user?.show_collection_value || false
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/profile/settings`, settings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Profile settings updated successfully!');
+      onSettingsUpdate(settings);
+      onClose();
+    } catch (error) {
+      alert('Failed to update settings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-md w-full border border-gray-800">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-white">Profile Settings</h3>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">Profile Visibility</label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="public"
+                    checked={settings.profile_privacy === 'public'}
+                    onChange={(e) => setSettings({...settings, profile_privacy: e.target.value})}
+                    className="mr-2"
+                  />
+                  <span className="text-white">Public</span>
+                  <span className="text-gray-400 text-sm ml-2">- Anyone can view your profile and collections</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="private"
+                    checked={settings.profile_privacy === 'private'}
+                    onChange={(e) => setSettings({...settings, profile_privacy: e.target.value})}
+                    className="mr-2"
+                  />
+                  <span className="text-white">Private</span>
+                  <span className="text-gray-400 text-sm ml-2">- Only you can view your profile and collections</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={settings.show_collection_value}
+                  onChange={(e) => setSettings({...settings, show_collection_value: e.target.checked})}
+                  className="mr-3"
+                />
+                <div>
+                  <span className="text-white">Show Collection Values</span>
+                  <p className="text-gray-400 text-sm">Display estimated values of your jersey collection (only visible to you)</p>
+                </div>
+              </label>
+            </div>
+
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-2">Privacy Information</h4>
+              <ul className="text-gray-300 text-sm space-y-1">
+                <li>• Collection values are always private and only visible to you</li>
+                <li>• Private profiles hide your collection from other users</li>
+                <li>• Your listings and public interactions remain visible regardless of privacy setting</li>
+              </ul>
+            </div>
+
+            <div className="flex space-x-3">
+              <button 
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
 const ProfilePage = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
