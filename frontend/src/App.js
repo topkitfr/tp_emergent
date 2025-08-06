@@ -1128,6 +1128,15 @@ const App = () => {
       case 'marketplace':
         return (
           <div>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-800">Marketplace</h1>
+              <button 
+                onClick={() => handleCreateListing()}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                + Create Listing
+              </button>
+            </div>
             <SearchFilter onFilter={fetchListings} />
             {loading ? (
               <div className="text-center py-8">Loading listings...</div>
