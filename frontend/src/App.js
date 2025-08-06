@@ -61,7 +61,7 @@ const useAuth = () => {
 };
 
 // Header Component
-const Header = () => {
+const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -69,17 +69,37 @@ const Header = () => {
     <header className="bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h1 className="text-3xl font-bold">TopKit</h1>
+          <h1 className="text-3xl font-bold cursor-pointer" onClick={() => setCurrentView('home')}>TopKit</h1>
           <p className="text-green-100">Soccer Jersey Marketplace</p>
         </div>
         
         <nav className="flex items-center space-x-6">
-          <a href="#jerseys" className="hover:text-green-200 transition-colors">Browse</a>
-          <a href="#marketplace" className="hover:text-green-200 transition-colors">Marketplace</a>
+          <button 
+            onClick={() => setCurrentView('jerseys')}
+            className="hover:text-green-200 transition-colors"
+          >
+            Browse
+          </button>
+          <button 
+            onClick={() => setCurrentView('marketplace')}
+            className="hover:text-green-200 transition-colors"
+          >
+            Marketplace
+          </button>
           {user && (
             <>
-              <a href="#collections" className="hover:text-green-200 transition-colors">My Collection</a>
-              <a href="#profile" className="hover:text-green-200 transition-colors">Profile</a>
+              <button 
+                onClick={() => setCurrentView('collections')}
+                className="hover:text-green-200 transition-colors"
+              >
+                My Collection
+              </button>
+              <button 
+                onClick={() => setCurrentView('profile')}
+                className="hover:text-green-200 transition-colors"
+              >
+                Profile
+              </button>
             </>
           )}
           
@@ -250,8 +270,194 @@ const AuthModal = ({ onClose }) => {
   );
 };
 
-// Jersey Card Component
-const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing }) => {
+// Profile Page Component
+const ProfilePage = () => {
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProfileData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch profile data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading profile...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Login</h2>
+        <p className="text-gray-600">You need to login to view your profile.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <div className="flex items-center space-x-6 mb-8">
+          {user.picture && (
+            <img 
+              src={user.picture} 
+              alt={user.name}
+              className="w-20 h-20 rounded-full border-4 border-green-500"
+            />
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">{user.name}</h1>
+            <p className="text-gray-600">{user.email}</p>
+            <p className="text-sm text-gray-500">
+              Member since {new Date(user.created_at).toLocaleDateString()}
+            </p>
+            <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mt-2">
+              {user.provider} user
+            </span>
+          </div>
+        </div>
+
+        {profileData && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-green-50 p-6 rounded-lg text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">
+                {profileData.stats?.owned_jerseys || 0}
+              </div>
+              <div className="text-gray-700">Owned Jerseys</div>
+            </div>
+            <div className="bg-blue-50 p-6 rounded-lg text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {profileData.stats?.wanted_jerseys || 0}
+              </div>
+              <div className="text-gray-700">Wanted Jerseys</div>
+            </div>
+            <div className="bg-purple-50 p-6 rounded-lg text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">
+                {profileData.stats?.active_listings || 0}
+              </div>
+              <div className="text-gray-700">Active Listings</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Collections Page Component
+const CollectionsPage = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('owned');
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchCollections();
+    }
+  }, [user, activeTab]);
+
+  const fetchCollections = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/collections/${activeTab}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCollections(response.data);
+    } catch (error) {
+      console.error('Failed to fetch collections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Login</h2>
+        <p className="text-gray-600">You need to login to view your collections.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">My Collections</h1>
+        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('owned')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'owned'
+                ? 'bg-green-600 text-white'
+                : 'text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Owned Jerseys
+          </button>
+          <button
+            onClick={() => setActiveTab('wanted')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'wanted'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Wanted Jerseys
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">Loading collections...</div>
+      ) : collections.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-6xl mb-4">{activeTab === 'owned' ? '👕' : '❤️'}</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            No {activeTab} jerseys yet
+          </h2>
+          <p className="text-gray-600 mb-8">
+            Start building your collection by browsing jerseys and adding them to your {activeTab} list.
+          </p>
+          <button 
+            onClick={() => window.location.hash = '#jerseys'}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Browse Jerseys
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {collections.map((collection) => (
+            <JerseyCard 
+              key={collection.id} 
+              jersey={collection.jersey}
+              showCollectionDate={true}
+              addedAt={collection.added_at}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Jersey Card Component (updated)
+const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing, showCollectionDate = false, addedAt }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
       <img
@@ -274,6 +480,12 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateLi
         </div>
         
         <p className="text-sm text-gray-600 mt-2 line-clamp-2">{jersey.description}</p>
+        
+        {showCollectionDate && (
+          <p className="text-xs text-gray-500 mt-2">
+            Added {new Date(addedAt).toLocaleDateString()}
+          </p>
+        )}
         
         {showActions && (
           <div className="mt-4 space-y-2">
@@ -500,6 +712,12 @@ const App = () => {
 
   const renderContent = () => {
     switch (currentView) {
+      case 'profile':
+        return <ProfilePage />;
+      
+      case 'collections':
+        return <CollectionsPage />;
+      
       case 'jerseys':
         return (
           <div>
@@ -569,7 +787,10 @@ const App = () => {
                 <div className="text-purple-600 text-4xl mb-4">📚</div>
                 <h3 className="text-xl font-semibold mb-2">Manage Collection</h3>
                 <p className="text-gray-600">Keep track of your owned jerseys and create wishlists</p>
-                <button className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                <button 
+                  onClick={() => setCurrentView('collections')}
+                  className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
                   Get Started
                 </button>
               </div>
@@ -582,7 +803,7 @@ const App = () => {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-100">
-        <Header />
+        <Header currentView={currentView} setCurrentView={setCurrentView} />
         
         {/* Navigation */}
         <nav className="bg-white shadow-sm border-b border-gray-200">
