@@ -335,6 +335,8 @@ async def get_jersey_valuation(jersey: Jersey) -> Optional[JerseyValuation]:
     
     valuation_data = await db.jersey_valuations.find_one({"jersey_signature": signature})
     if valuation_data:
+        # Remove MongoDB ObjectId to avoid serialization issues
+        valuation_data.pop('_id', None)
         return JerseyValuation(**valuation_data)
     return None
 
