@@ -83,6 +83,8 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     session_token: Optional[str] = None
     session_expires: Optional[datetime] = None
+    profile_privacy: str = "public"  # "public" or "private"
+    show_collection_value: bool = False  # Only owner can see collection values
 
 class Jersey(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
