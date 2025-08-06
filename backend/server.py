@@ -239,6 +239,10 @@ async def recalculate_jersey_valuation(jersey_signature: str):
         if not price_data:
             return
         
+        # Remove MongoDB ObjectId from price data
+        for item in price_data:
+            item.pop('_id', None)
+        
         # Extract prices and categorize
         all_prices = [item["price"] for item in price_data]
         sales_prices = [item["price"] for item in price_data if item["transaction_type"] == "sale"]
@@ -326,6 +330,8 @@ async def recalculate_jersey_valuation(jersey_signature: str):
         
     except Exception as e:
         logger.error(f"Error recalculating jersey valuation: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 async def get_jersey_valuation(jersey: Jersey) -> Optional[JerseyValuation]:
     """Get valuation for a specific jersey"""
