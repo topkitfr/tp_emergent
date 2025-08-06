@@ -1044,10 +1044,12 @@ const ProfileSettingsModal = ({ user, onClose, onSettingsUpdate }) => {
     </div>
   );
 };
+// Profile Page Component
 const ProfilePage = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -1067,15 +1069,25 @@ const ProfilePage = () => {
     }
   };
 
+  const handleSettingsUpdate = (newSettings) => {
+    setProfileData({
+      ...profileData,
+      user: {
+        ...profileData.user,
+        ...newSettings
+      }
+    });
+  };
+
   if (loading) {
-    return <div className="text-center py-8">Loading profile...</div>;
+    return <div className="text-center py-8 text-gray-400">Loading profile...</div>;
   }
 
   if (!user) {
     return (
       <div className="text-center py-16">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Login</h2>
-        <p className="text-gray-600">You need to login to view your profile.</p>
+        <h2 className="text-2xl font-bold text-white mb-4">Please Login</h2>
+        <p className="text-gray-400">You need to login to view your profile.</p>
       </div>
     );
   }
@@ -1086,91 +1098,112 @@ const ProfilePage = () => {
   return (
     <div className="max-w-6xl mx-auto">
       {/* User Profile Section */}
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-        <div className="flex items-center space-x-6 mb-8">
-          {user.picture && (
-            <img 
-              src={user.picture} 
-              alt={user.name}
-              className="w-20 h-20 rounded-full border-4 border-green-500"
-            />
-          )}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">{user.name}</h1>
-            <p className="text-gray-600">{user.email}</p>
-            <p className="text-sm text-gray-500">
-              Member since {new Date(user.created_at).toLocaleDateString()}
-            </p>
-            <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mt-2">
-              {user.provider} user
-            </span>
+      <div className="bg-gray-900 rounded-xl shadow-2xl p-8 mb-8 border border-gray-800">
+        <div className="flex justify-between items-start mb-8">
+          <div className="flex items-center space-x-6">
+            {user.picture && (
+              <img 
+                src={user.picture} 
+                alt={user.name}
+                className="w-20 h-20 rounded-full border-4 border-white"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-white">{user.name}</h1>
+              <p className="text-gray-400">{user.email}</p>
+              <p className="text-sm text-gray-500">
+                Member since {new Date(user.created_at).toLocaleDateString()}
+              </p>
+              <div className="flex items-center space-x-3 mt-2">
+                <span className="inline-block bg-gray-800 text-white text-xs px-2 py-1 rounded-full border border-gray-600">
+                  {user.provider} user
+                </span>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                  profileData?.user?.profile_privacy === 'private' 
+                    ? 'bg-red-900 text-red-300 border border-red-700' 
+                    : 'bg-green-900 text-green-300 border border-green-700'
+                }`}>
+                  {profileData?.user?.profile_privacy === 'private' ? 'Private Profile' : 'Public Profile'}
+                </span>
+              </div>
+            </div>
           </div>
+          
+          <button
+            onClick={() => setShowSettings(true)}
+            className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+          >
+            Settings
+          </button>
         </div>
 
         {/* Collection Stats */}
         {profileData && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-green-50 p-6 rounded-lg text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">
+            <div className="bg-gray-800 p-6 rounded-lg text-center border border-gray-700">
+              <div className="text-3xl font-bold text-white mb-2">
                 {profileData.stats?.owned_jerseys || 0}
               </div>
-              <div className="text-gray-700">Owned Jerseys</div>
+              <div className="text-gray-300">Owned Jerseys</div>
             </div>
-            <div className="bg-blue-50 p-6 rounded-lg text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="bg-gray-800 p-6 rounded-lg text-center border border-gray-700">
+              <div className="text-3xl font-bold text-white mb-2">
                 {profileData.stats?.wanted_jerseys || 0}
               </div>
-              <div className="text-gray-700">Wanted Jerseys</div>
+              <div className="text-gray-300">Wanted Jerseys</div>
             </div>
-            <div className="bg-purple-50 p-6 rounded-lg text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">
+            <div className="bg-gray-800 p-6 rounded-lg text-center border border-gray-700">
+              <div className="text-3xl font-bold text-white mb-2">
                 {profileData.stats?.active_listings || 0}
               </div>
-              <div className="text-gray-700">Active Listings</div>
+              <div className="text-gray-300">Active Listings</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Portfolio Valuation Section */}
-      {portfolio && (
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+      {/* Portfolio Valuation Section - Only show if user enabled it */}
+      {portfolio && profileData?.user?.show_collection_value && (
+        <div className="bg-gray-900 rounded-xl shadow-2xl p-8 mb-8 border border-gray-800">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
             <span className="text-3xl mr-3">💰</span>
             Collection Portfolio Valuation
+            <span className="text-sm bg-gray-800 text-gray-300 px-3 py-1 rounded-full ml-4 border border-gray-600">
+              Private - Only Visible to You
+            </span>
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-              <div className="text-sm font-medium text-green-700 mb-2">Low Estimate</div>
-              <div className="text-2xl font-bold text-green-800">
+            <div className="bg-gradient-to-br from-green-900 to-green-800 p-6 rounded-xl border border-green-700">
+              <div className="text-sm font-medium text-green-300 mb-2">Low Estimate</div>
+              <div className="text-2xl font-bold text-green-100">
                 ${portfolio.total_low_estimate?.toLocaleString() || '0'}
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
-              <div className="text-sm font-medium text-blue-700 mb-2">Median Estimate</div>
-              <div className="text-2xl font-bold text-blue-800">
+            <div className="bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-xl border border-blue-700">
+              <div className="text-sm font-medium text-blue-300 mb-2">Median Estimate</div>
+              <div className="text-2xl font-bold text-blue-100">
                 ${portfolio.total_median_estimate?.toLocaleString() || '0'}
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
-              <div className="text-sm font-medium text-purple-700 mb-2">High Estimate</div>
-              <div className="text-2xl font-bold text-purple-800">
+            <div className="bg-gradient-to-br from-purple-900 to-purple-800 p-6 rounded-xl border border-purple-700">
+              <div className="text-sm font-medium text-purple-300 mb-2">High Estimate</div>
+              <div className="text-2xl font-bold text-purple-100">
                 ${portfolio.total_high_estimate?.toLocaleString() || '0'}
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-xl border border-amber-200">
-              <div className="text-sm font-medium text-amber-700 mb-2">Average Value</div>
-              <div className="text-2xl font-bold text-amber-800">
+            <div className="bg-gradient-to-br from-amber-900 to-amber-800 p-6 rounded-xl border border-amber-700">
+              <div className="text-sm font-medium text-amber-300 mb-2">Average Value</div>
+              <div className="text-2xl font-bold text-amber-100">
                 ${portfolio.average_value?.toLocaleString() || '0'}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-400">
             <div>
               <span className="font-medium">Total Items:</span> {portfolio.total_items || 0}
             </div>
@@ -1180,12 +1213,12 @@ const ProfilePage = () => {
           </div>
 
           {portfolio.valued_items < portfolio.total_items && (
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="mt-4 p-4 bg-yellow-900 border border-yellow-700 rounded-lg">
               <div className="flex items-center">
-                <span className="text-yellow-600 text-xl mr-2">⚠️</span>
+                <span className="text-yellow-300 text-xl mr-2">⚠️</span>
                 <div>
-                  <div className="font-medium text-yellow-800">Incomplete Valuation Data</div>
-                  <div className="text-sm text-yellow-700">
+                  <div className="font-medium text-yellow-200">Incomplete Valuation Data</div>
+                  <div className="text-sm text-yellow-300">
                     {portfolio.total_items - portfolio.valued_items} of your jerseys don't have enough market data for accurate valuation. 
                     As more similar jerseys are listed or sold, valuations will become available.
                   </div>
@@ -1196,35 +1229,38 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* Individual Jersey Valuations */}
-      {valuations?.collections && valuations.collections.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+      {/* Individual Jersey Valuations - Only show if user enabled collection values */}
+      {valuations?.collections && valuations.collections.length > 0 && profileData?.user?.show_collection_value && (
+        <div className="bg-gray-900 rounded-xl shadow-2xl p-8 border border-gray-800">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
             <span className="text-3xl mr-3">📊</span>
             Individual Jersey Valuations
+            <span className="text-sm bg-gray-800 text-gray-300 px-3 py-1 rounded-full ml-4 border border-gray-600">
+              Private
+            </span>
           </h2>
           
           <div className="space-y-4">
             {valuations.collections.map((item) => (
-              <div key={item.collection_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+              <div key={item.collection_id} className="border border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow bg-gray-800">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-lg font-semibold text-white">
                         {item.jersey.team} {item.jersey.season}
                       </h3>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         item.collection_type === 'owned' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-green-900 text-green-300 border border-green-700' 
+                          : 'bg-blue-900 text-blue-300 border border-blue-700'
                       }`}>
                         {item.collection_type}
                       </span>
                     </div>
                     
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <div className="text-sm text-gray-400 space-y-1">
                       <div>
-                        {item.jersey.player && <span className="font-medium">{item.jersey.player}</span>}
+                        {item.jersey.player && <span className="font-medium text-white">{item.jersey.player}</span>}
                         {item.jersey.player && ' • '}
                         <span>{item.jersey.home_away} • {item.jersey.size} • {item.jersey.condition}</span>
                       </div>
@@ -1239,15 +1275,15 @@ const ProfilePage = () => {
                       <div className="space-y-2">
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div className="text-center">
-                            <div className="text-green-600 font-bold">${item.valuation.low_estimate}</div>
+                            <div className="text-green-300 font-bold">${item.valuation.low_estimate}</div>
                             <div className="text-gray-500 text-xs">Low</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-blue-600 font-bold text-lg">${item.valuation.median_estimate}</div>
+                            <div className="text-blue-300 font-bold text-lg">${item.valuation.median_estimate}</div>
                             <div className="text-gray-500 text-xs">Median</div>
                           </div>
                           <div className="text-center">
-                            <div className="text-purple-600 font-bold">${item.valuation.high_estimate}</div>
+                            <div className="text-purple-300 font-bold">${item.valuation.high_estimate}</div>
                             <div className="text-gray-500 text-xs">High</div>
                           </div>
                         </div>
@@ -1260,10 +1296,10 @@ const ProfilePage = () => {
                           <div className="text-xs">
                             <span className={`px-2 py-1 rounded ${
                               item.valuation.market_data.confidence_score >= 70 
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-green-900 text-green-300 border border-green-700'
                                 : item.valuation.market_data.confidence_score >= 40
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
+                                ? 'bg-yellow-900 text-yellow-300 border border-yellow-700'
+                                : 'bg-red-900 text-red-300 border border-red-700'
                             }`}>
                               {item.valuation.market_data.confidence_score}% confidence
                             </span>
@@ -1282,6 +1318,15 @@ const ProfilePage = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <ProfileSettingsModal
+          user={profileData?.user}
+          onClose={() => setShowSettings(false)}
+          onSettingsUpdate={handleSettingsUpdate}
+        />
       )}
     </div>
   );
