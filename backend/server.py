@@ -456,7 +456,16 @@ async def get_listing(listing_id: str):
     result = await db.listings.aggregate(pipeline).to_list(1)
     if not result:
         raise HTTPException(status_code=404, detail="Listing not found")
-    return result[0]
+    
+    # Remove MongoDB ObjectId fields to avoid serialization issues
+    listing = result[0]
+    listing.pop('_id', None)
+    if 'jersey' in listing:
+        listing['jersey'].pop('_id', None)
+    if 'seller' in listing:
+        listing['seller'].pop('_id', None)
+    
+    return listing
 
 # Collection endpoints
 @api_router.post("/collections")
