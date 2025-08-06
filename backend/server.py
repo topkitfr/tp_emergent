@@ -200,6 +200,10 @@ class MessageCreate(BaseModel):
     listing_id: Optional[str] = None
     message: str
 
+class ProfileSettings(BaseModel):
+    profile_privacy: str  # "public" or "private"
+    show_collection_value: bool
+
 class CheckoutRequest(BaseModel):
     listing_id: str
     origin_url: str
