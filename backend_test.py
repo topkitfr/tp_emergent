@@ -1073,10 +1073,395 @@ class TopKitAPITester:
             self.log_test("JWT Token Validation", "FAIL", f"Exception: {str(e)}")
             return False
     
+    def test_new_user_workflow_jersey_creation(self):
+        """Test NEW WORKFLOW: Jersey Creation for 'Add New Jersey' functionality"""
+        try:
+            if not self.auth_token:
+                self.log_test("New Workflow - Jersey Creation", "FAIL", "No auth token available")
+                return False
+            
+            # Test creating a jersey with comprehensive data (as per new workflow)
+            payload = {
+                "team": "Liverpool FC",
+                "season": "2023-24",
+                "player": "Mohamed Salah",
+                "size": "L",
+                "condition": "excellent",
+                "manufacturer": "Nike",
+                "home_away": "home",
+                "league": "Premier League",
+                "description": "Official Liverpool FC home jersey with Mohamed Salah #11 - perfect for collection",
+                "images": ["https://example.com/liverpool-salah-home.jpg"]
+            }
+            
+            response = self.session.post(f"{self.base_url}/jerseys", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and data.get("team") == "Liverpool FC":
+                    self.new_workflow_jersey_id = data["id"]
+                    self.log_test("New Workflow - Jersey Creation", "PASS", 
+                                f"Jersey created for new workflow: {data['team']} {data['season']} {data.get('player', 'N/A')}")
+                    return True
+                else:
+                    self.log_test("New Workflow - Jersey Creation", "FAIL", "Missing jersey data in response")
+                    return False
+            else:
+                self.log_test("New Workflow - Jersey Creation", "FAIL", f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Jersey Creation", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_immediate_collection_add(self):
+        """Test NEW WORKFLOW: Immediate addition to collection after jersey creation"""
+        try:
+            if not self.auth_token or not hasattr(self, 'new_workflow_jersey_id'):
+                self.log_test("New Workflow - Immediate Collection Add", "FAIL", "Missing auth token or jersey ID")
+                return False
+            
+            # Test adding newly created jersey to owned collection (simulating "Add New Jersey" flow)
+            payload = {
+                "jersey_id": self.new_workflow_jersey_id,
+                "collection_type": "owned"
+            }
+            
+            response = self.session.post(f"{self.base_url}/collections", json=payload)
+            
+            if response.status_code == 200:
+                # Verify it was added by checking collections
+                collection_response = self.session.get(f"{self.base_url}/collections/owned")
+                
+                if collection_response.status_code == 200:
+                    collections = collection_response.json()
+                    jersey_in_collection = any(item.get('jersey_id') == self.new_workflow_jersey_id for item in collections)
+                    
+                    if jersey_in_collection:
+                        self.log_test("New Workflow - Immediate Collection Add", "PASS", 
+                                    "Jersey successfully added to collection immediately after creation")
+                        return True
+                    else:
+                        self.log_test("New Workflow - Immediate Collection Add", "FAIL", "Jersey not found in collection")
+                        return False
+                else:
+                    self.log_test("New Workflow - Immediate Collection Add", "FAIL", "Could not verify collection")
+                    return False
+            else:
+                self.log_test("New Workflow - Immediate Collection Add", "FAIL", f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Immediate Collection Add", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_sell_from_collection(self):
+        """Test NEW WORKFLOW: 'Sell This Jersey' - Creating listing from collection item"""
+        try:
+            if not self.auth_token or not hasattr(self, 'new_workflow_jersey_id'):
+                self.log_test("New Workflow - Sell From Collection", "FAIL", "Missing auth token or jersey ID")
+                return False
+            
+            # Test creating a listing from a jersey in collection (simulating "Sell This Jersey" button)
+            payload = {
+                "jersey_id": self.new_workflow_jersey_id,
+                "price": 125.99,
+                "description": "Excellent condition Liverpool FC jersey from my personal collection. Mohamed Salah #11, worn only once for photos. Perfect for any Liverpool fan!",
+                "images": ["https://example.com/liverpool-salah-listing1.jpg", "https://example.com/liverpool-salah-listing2.jpg"]
+            }
+            
+            response = self.session.post(f"{self.base_url}/listings", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and data.get("jersey_id") == self.new_workflow_jersey_id:
+                    self.new_workflow_listing_id = data["id"]
+                    self.log_test("New Workflow - Sell From Collection", "PASS", 
+                                f"Listing created from collection jersey: ${data.get('price', 'N/A')}")
+                    return True
+                else:
+                    self.log_test("New Workflow - Sell From Collection", "FAIL", "Invalid listing data")
+                    return False
+            else:
+                self.log_test("New Workflow - Sell From Collection", "FAIL", f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Sell From Collection", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_complete_data_flow(self):
+        """Test NEW WORKFLOW: Complete data flow integrity - Jersey Creation → Collection → Listing"""
+        try:
+            if not self.auth_token:
+                self.log_test("New Workflow - Complete Data Flow", "FAIL", "No auth token available")
+                return False
+            
+            # Step 1: Create a new jersey (simulating "Add New Jersey")
+            jersey_payload = {
+                "team": "FC Barcelona",
+                "season": "2023-24",
+                "player": "Robert Lewandowski",
+                "size": "M",
+                "condition": "mint",
+                "manufacturer": "Nike",
+                "home_away": "home",
+                "league": "La Liga",
+                "description": "Official FC Barcelona home jersey with Lewandowski #9 - brand new with tags",
+                "images": ["https://example.com/barca-lewandowski.jpg"]
+            }
+            
+            jersey_response = self.session.post(f"{self.base_url}/jerseys", json=jersey_payload)
+            
+            if jersey_response.status_code != 200:
+                self.log_test("New Workflow - Complete Data Flow", "FAIL", "Step 1: Jersey creation failed")
+                return False
+            
+            jersey_data = jersey_response.json()
+            flow_jersey_id = jersey_data["id"]
+            
+            # Step 2: Add to collection immediately
+            collection_payload = {
+                "jersey_id": flow_jersey_id,
+                "collection_type": "owned"
+            }
+            
+            collection_response = self.session.post(f"{self.base_url}/collections", json=collection_payload)
+            
+            if collection_response.status_code != 200:
+                self.log_test("New Workflow - Complete Data Flow", "FAIL", "Step 2: Collection add failed")
+                return False
+            
+            # Step 3: Create listing from collection (simulating "Sell This Jersey")
+            listing_payload = {
+                "jersey_id": flow_jersey_id,
+                "price": 149.99,
+                "description": "Mint condition FC Barcelona jersey from my collection. Lewandowski #9, never worn, still has original tags.",
+                "images": ["https://example.com/barca-listing.jpg"]
+            }
+            
+            listing_response = self.session.post(f"{self.base_url}/listings", json=listing_payload)
+            
+            if listing_response.status_code != 200:
+                self.log_test("New Workflow - Complete Data Flow", "FAIL", "Step 3: Listing creation failed")
+                return False
+            
+            listing_data = listing_response.json()
+            
+            # Step 4: Verify complete data integrity
+            # Check that listing has correct jersey reference
+            listing_detail_response = self.session.get(f"{self.base_url}/listings/{listing_data['id']}")
+            
+            if listing_detail_response.status_code == 200:
+                listing_detail = listing_detail_response.json()
+                
+                # Verify all data is properly linked
+                if (listing_detail.get("jersey_id") == flow_jersey_id and
+                    "jersey" in listing_detail and
+                    listing_detail["jersey"].get("team") == "FC Barcelona" and
+                    listing_detail["jersey"].get("player") == "Robert Lewandowski"):
+                    
+                    self.log_test("New Workflow - Complete Data Flow", "PASS", 
+                                f"Complete flow verified: Jersey → Collection → Listing (${listing_data.get('price')})")
+                    return True
+                else:
+                    self.log_test("New Workflow - Complete Data Flow", "FAIL", "Data integrity check failed")
+                    return False
+            else:
+                self.log_test("New Workflow - Complete Data Flow", "FAIL", "Could not verify listing details")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Complete Data Flow", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_browse_functionality(self):
+        """Test NEW WORKFLOW: Browse jerseys functionality (no create listing buttons)"""
+        try:
+            # Test that browse functionality still works (backend should support frontend changes)
+            response = self.session.get(f"{self.base_url}/jerseys?limit=10")
+            
+            if response.status_code == 200:
+                jerseys = response.json()
+                
+                # Test filtering still works
+                filter_response = self.session.get(f"{self.base_url}/jerseys", params={
+                    "team": "Liverpool",
+                    "condition": "excellent"
+                })
+                
+                if filter_response.status_code == 200:
+                    filtered_jerseys = filter_response.json()
+                    self.log_test("New Workflow - Browse Functionality", "PASS", 
+                                f"Browse working: {len(jerseys)} total jerseys, {len(filtered_jerseys)} filtered")
+                    return True
+                else:
+                    self.log_test("New Workflow - Browse Functionality", "FAIL", "Filtering failed")
+                    return False
+            else:
+                self.log_test("New Workflow - Browse Functionality", "FAIL", f"Browse failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Browse Functionality", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_marketplace_functionality(self):
+        """Test NEW WORKFLOW: Marketplace functionality (view/buy only, no create listing buttons)"""
+        try:
+            # Test marketplace viewing functionality
+            response = self.session.get(f"{self.base_url}/listings?limit=10")
+            
+            if response.status_code == 200:
+                listings = response.json()
+                
+                # Test marketplace filtering
+                filter_response = self.session.get(f"{self.base_url}/listings", params={
+                    "min_price": 50.0,
+                    "max_price": 200.0,
+                    "condition": "excellent"
+                })
+                
+                if filter_response.status_code == 200:
+                    filtered_listings = filter_response.json()
+                    
+                    # Test individual listing view (for "buy" functionality)
+                    if filtered_listings:
+                        listing_id = filtered_listings[0]["id"]
+                        detail_response = self.session.get(f"{self.base_url}/listings/{listing_id}")
+                        
+                        if detail_response.status_code == 200:
+                            self.log_test("New Workflow - Marketplace Functionality", "PASS", 
+                                        f"Marketplace working: {len(listings)} listings, filtering and detail view functional")
+                            return True
+                        else:
+                            self.log_test("New Workflow - Marketplace Functionality", "FAIL", "Listing detail view failed")
+                            return False
+                    else:
+                        self.log_test("New Workflow - Marketplace Functionality", "PASS", 
+                                    f"Marketplace working: {len(listings)} listings, filtering functional")
+                        return True
+                else:
+                    self.log_test("New Workflow - Marketplace Functionality", "FAIL", "Marketplace filtering failed")
+                    return False
+            else:
+                self.log_test("New Workflow - Marketplace Functionality", "FAIL", f"Marketplace failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Marketplace Functionality", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_collections_centralized_approach(self):
+        """Test NEW WORKFLOW: Collections as central hub for jersey management"""
+        try:
+            if not self.auth_token:
+                self.log_test("New Workflow - Collections Central Hub", "FAIL", "No auth token available")
+                return False
+            
+            # Test that collections properly support the centralized approach
+            # 1. Get owned collections
+            owned_response = self.session.get(f"{self.base_url}/collections/owned")
+            
+            if owned_response.status_code == 200:
+                owned_jerseys = owned_response.json()
+                
+                # 2. Get wanted collections
+                wanted_response = self.session.get(f"{self.base_url}/collections/wanted")
+                
+                if wanted_response.status_code == 200:
+                    wanted_jerseys = wanted_response.json()
+                    
+                    # 3. Test that collection items have all necessary data for the new workflow
+                    if owned_jerseys:
+                        sample_owned = owned_jerseys[0]
+                        required_fields = ["jersey_id", "collection_type", "jersey"]
+                        
+                        if all(field in sample_owned for field in required_fields):
+                            jersey_data = sample_owned["jersey"]
+                            jersey_required_fields = ["id", "team", "season", "size", "condition", "manufacturer"]
+                            
+                            if all(field in jersey_data for field in jersey_required_fields):
+                                self.log_test("New Workflow - Collections Central Hub", "PASS", 
+                                            f"Collections support centralized approach: {len(owned_jerseys)} owned, {len(wanted_jerseys)} wanted")
+                                return True
+                            else:
+                                self.log_test("New Workflow - Collections Central Hub", "FAIL", "Missing jersey data fields")
+                                return False
+                        else:
+                            self.log_test("New Workflow - Collections Central Hub", "FAIL", "Missing collection fields")
+                            return False
+                    else:
+                        self.log_test("New Workflow - Collections Central Hub", "PASS", 
+                                    f"Collections endpoint working (empty collections): owned={len(owned_jerseys)}, wanted={len(wanted_jerseys)}")
+                        return True
+                else:
+                    self.log_test("New Workflow - Collections Central Hub", "FAIL", "Wanted collections failed")
+                    return False
+            else:
+                self.log_test("New Workflow - Collections Central Hub", "FAIL", "Owned collections failed")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Collections Central Hub", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_new_user_workflow_profile_stats_only(self):
+        """Test NEW WORKFLOW: Profile page shows stats and valuations only (no selling functionality)"""
+        try:
+            if not self.auth_token:
+                self.log_test("New Workflow - Profile Stats Only", "FAIL", "No auth token available")
+                return False
+            
+            response = self.session.get(f"{self.base_url}/profile")
+            
+            if response.status_code == 200:
+                profile = response.json()
+                
+                # Verify profile has stats and valuations (as per new workflow)
+                required_sections = ["user", "stats", "valuations"]
+                
+                if all(section in profile for section in required_sections):
+                    stats = profile["stats"]
+                    valuations = profile["valuations"]
+                    
+                    # Check stats fields
+                    stats_fields = ["owned_jerseys", "wanted_jerseys", "active_listings"]
+                    
+                    if all(field in stats for field in stats_fields):
+                        # Check valuations structure
+                        if "portfolio_summary" in valuations:
+                            portfolio = valuations["portfolio_summary"]
+                            portfolio_fields = ["total_items", "total_median_estimate"]
+                            
+                            if all(field in portfolio for field in portfolio_fields):
+                                self.log_test("New Workflow - Profile Stats Only", "PASS", 
+                                            f"Profile supports new workflow: {stats['owned_jerseys']} owned, ${portfolio.get('total_median_estimate', 0)} portfolio value")
+                                return True
+                            else:
+                                self.log_test("New Workflow - Profile Stats Only", "FAIL", "Missing portfolio fields")
+                                return False
+                        else:
+                            self.log_test("New Workflow - Profile Stats Only", "FAIL", "Missing portfolio summary")
+                            return False
+                    else:
+                        self.log_test("New Workflow - Profile Stats Only", "FAIL", "Missing stats fields")
+                        return False
+                else:
+                    self.log_test("New Workflow - Profile Stats Only", "FAIL", "Missing required profile sections")
+                    return False
+            else:
+                self.log_test("New Workflow - Profile Stats Only", "FAIL", f"Profile failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("New Workflow - Profile Stats Only", "FAIL", f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting TopKit Backend API Tests")
-        print("=" * 50)
+        """Run all backend tests including new user workflow tests"""
+        print("🚀 Starting TopKit Backend API Tests - NEW USER WORKFLOW FOCUS")
+        print("=" * 60)
         
         test_results = {}
         
@@ -1088,6 +1473,18 @@ class TopKitAPITester:
         test_results['google_oauth'] = self.test_google_oauth_redirect()
         test_results['emergent_auth'] = self.test_emergent_auth_redirect()
         test_results['jwt_validation'] = self.test_jwt_token_validation()
+        
+        # NEW USER WORKFLOW TESTS (HIGHEST PRIORITY)
+        print("🎯 NEW USER WORKFLOW TESTS")
+        print("-" * 30)
+        test_results['new_workflow_jersey_creation'] = self.test_new_user_workflow_jersey_creation()
+        test_results['new_workflow_immediate_collection_add'] = self.test_new_user_workflow_immediate_collection_add()
+        test_results['new_workflow_sell_from_collection'] = self.test_new_user_workflow_sell_from_collection()
+        test_results['new_workflow_complete_data_flow'] = self.test_new_user_workflow_complete_data_flow()
+        test_results['new_workflow_browse_functionality'] = self.test_new_user_workflow_browse_functionality()
+        test_results['new_workflow_marketplace_functionality'] = self.test_new_user_workflow_marketplace_functionality()
+        test_results['new_workflow_collections_centralized'] = self.test_new_user_workflow_collections_centralized_approach()
+        test_results['new_workflow_profile_stats_only'] = self.test_new_user_workflow_profile_stats_only()
         
         # Jersey Database Tests (High Priority)
         print("⚽ JERSEY DATABASE TESTS")
@@ -1128,7 +1525,7 @@ class TopKitAPITester:
         print("-" * 30)
         test_results['payment_checkout'] = self.test_payment_checkout()
         
-        # Jersey Valuation System Tests (NEW - High Priority)
+        # Jersey Valuation System Tests (High Priority)
         print("💰 JERSEY VALUATION SYSTEM TESTS")
         print("-" * 30)
         test_results['jersey_valuation_endpoint'] = self.test_jersey_valuation_endpoint()
@@ -1151,10 +1548,21 @@ class TopKitAPITester:
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
         
+        # Separate new workflow results
+        new_workflow_tests = {k: v for k, v in test_results.items() if k.startswith('new_workflow_')}
+        new_workflow_passed = sum(1 for result in new_workflow_tests.values() if result)
+        new_workflow_total = len(new_workflow_tests)
+        
+        print(f"\n🎯 NEW USER WORKFLOW RESULTS:")
+        print(f"New Workflow Tests: {new_workflow_total}")
+        print(f"New Workflow Passed: {new_workflow_passed}")
+        print(f"New Workflow Success Rate: {(new_workflow_passed/new_workflow_total)*100:.1f}%")
+        
         print("\nDetailed Results:")
         for test_name, result in test_results.items():
             status = "✅ PASS" if result else "❌ FAIL"
-            print(f"  {test_name}: {status}")
+            priority = "🎯 HIGH" if test_name.startswith('new_workflow_') else ""
+            print(f"  {test_name}: {status} {priority}")
         
         return test_results
 
