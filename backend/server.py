@@ -733,6 +733,18 @@ async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depen
     await db.collections.insert_one(collection.dict())
     return {"message": "Added to collection"}
 
+@api_router.delete("/collections/{jersey_id}")
+async def remove_from_collection(jersey_id: str, user_id: str = Depends(get_current_user)):
+    result = await db.collections.delete_one({
+        "user_id": user_id,
+        "jersey_id": jersey_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Jersey not found in collection")
+    
+    return {"message": "Removed from collection"}
+
 @api_router.get("/collections/{collection_type}")
 async def get_user_collection(collection_type: str, user_id: str = Depends(get_current_user)):
     pipeline = [
