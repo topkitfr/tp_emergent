@@ -1752,8 +1752,18 @@ const App = () => {
       setShowCreateListing(true);
     };
 
+    const handleAddNewJersey = () => {
+      setSelectedListingJersey(null); // No pre-selected jersey for new jersey creation
+      setShowCreateListing(true);
+    };
+
     window.addEventListener('sellJersey', handleSellJersey);
-    return () => window.removeEventListener('sellJersey', handleSellJersey);
+    window.addEventListener('addNewJersey', handleAddNewJersey);
+    
+    return () => {
+      window.removeEventListener('sellJersey', handleSellJersey);
+      window.removeEventListener('addNewJersey', handleAddNewJersey);
+    };
   }, []);
 
   const handleAddToCollection = async (jerseyId, collectionType) => {
