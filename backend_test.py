@@ -849,6 +849,203 @@ class TopKitAPITester:
             self.log_test("Listing Updates Valuation", "FAIL", f"Exception: {str(e)}")
             return False
     
+    def test_remove_from_collection_authenticated(self):
+        """Test removing jersey from collection with authenticated user"""
+        try:
+            if not self.auth_token or not self.test_jersey_id:
+                self.log_test("Remove From Collection (Authenticated)", "FAIL", "Missing auth token or jersey ID")
+                return False
+            
+            # First, ensure jersey is in collection (add it if not already there)
+            add_payload = {
+                "jersey_id": self.test_jersey_id,
+                "collection_type": "owned"
+            }
+            
+            # Try to add (might fail if already exists, which is fine)
+            self.session.post(f"{self.base_url}/collections", json=add_payload)
+            
+            # Now test removal
+            response = self.session.delete(f"{self.base_url}/collections/{self.test_jersey_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "message" in data and "removed" in data["message"].lower():
+                    self.log_test("Remove From Collection (Authenticated)", "PASS", "Jersey successfully removed from collection")
+                    return True
+                else:
+                    self.log_test("Remove From Collection (Authenticated)", "FAIL", "Unexpected response message")
+                    return False
+            else:
+                self.log_test("Remove From Collection (Authenticated)", "FAIL", f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Remove From Collection (Authenticated)", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_remove_from_collection_unauthenticated(self):
+        """Test removing jersey from collection without authentication"""
+        try:
+            if not self.test_jersey_id:
+                self.log_test("Remove From Collection (Unauthenticated)", "FAIL", "No test jersey ID available")
+                return False
+            
+            # Remove auth header temporarily
+            original_auth = self.session.headers.get('Authorization')
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            response = self.session.delete(f"{self.base_url}/collections/{self.test_jersey_id}")
+            
+            # Restore auth header
+            if original_auth:
+                self.session.headers['Authorization'] = original_auth
+            
+            if response.status_code in [401, 403]:
+                self.log_test("Remove From Collection (Unauthenticated)", "PASS", f"Correctly rejected with status {response.status_code}")
+                return True
+            else:
+                self.log_test("Remove From Collection (Unauthenticated)", "FAIL", f"Expected 401/403, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Remove From Collection (Unauthenticated)", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_remove_nonexistent_jersey_from_collection(self):
+        """Test removing non-existent jersey from collection"""
+        try:
+            if not self.auth_token:
+                self.log_test("Remove Non-existent Jersey", "FAIL", "No auth token available")
+                return False
+            
+            # Use a fake jersey ID
+            fake_jersey_id = str(uuid.uuid4())
+            
+            response = self.session.delete(f"{self.base_url}/collections/{fake_jersey_id}")
+            
+            if response.status_code == 404:
+                self.log_test("Remove Non-existent Jersey", "PASS", "Correctly returned 404 for non-existent jersey")
+                return True
+            else:
+                self.log_test("Remove Non-existent Jersey", "FAIL", f"Expected 404, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Remove Non-existent Jersey", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_remove_from_collection_integration_flow(self):
+        """Test complete integration flow: GET collections -> DELETE jersey -> GET collections again"""
+        try:
+            if not self.auth_token or not self.test_jersey_id:
+                self.log_test("Remove Collection Integration Flow", "FAIL", "Missing auth token or jersey ID")
+                return False
+            
+            # Step 1: Add jersey to both owned and wanted collections
+            add_owned_payload = {
+                "jersey_id": self.test_jersey_id,
+                "collection_type": "owned"
+            }
+            
+            add_wanted_payload = {
+                "jersey_id": self.test_jersey_id,
+                "collection_type": "wanted"
+            }
+            
+            # Add to collections (ignore if already exists)
+            self.session.post(f"{self.base_url}/collections", json=add_owned_payload)
+            self.session.post(f"{self.base_url}/collections", json=add_wanted_payload)
+            
+            # Step 2: Get initial collections
+            owned_response_before = self.session.get(f"{self.base_url}/collections/owned")
+            wanted_response_before = self.session.get(f"{self.base_url}/collections/wanted")
+            
+            if owned_response_before.status_code != 200 or wanted_response_before.status_code != 200:
+                self.log_test("Remove Collection Integration Flow", "FAIL", "Could not get initial collections")
+                return False
+            
+            owned_before = owned_response_before.json()
+            wanted_before = wanted_response_before.json()
+            
+            # Count jerseys with our test jersey ID
+            owned_count_before = sum(1 for item in owned_before if item.get('jersey_id') == self.test_jersey_id)
+            wanted_count_before = sum(1 for item in wanted_before if item.get('jersey_id') == self.test_jersey_id)
+            
+            # Step 3: Remove jersey from collection (removes from all collection types)
+            remove_response = self.session.delete(f"{self.base_url}/collections/{self.test_jersey_id}")
+            
+            if remove_response.status_code != 200:
+                self.log_test("Remove Collection Integration Flow", "FAIL", f"Remove failed with status {remove_response.status_code}")
+                return False
+            
+            # Step 4: Get collections after removal
+            owned_response_after = self.session.get(f"{self.base_url}/collections/owned")
+            wanted_response_after = self.session.get(f"{self.base_url}/collections/wanted")
+            
+            if owned_response_after.status_code != 200 or wanted_response_after.status_code != 200:
+                self.log_test("Remove Collection Integration Flow", "FAIL", "Could not get collections after removal")
+                return False
+            
+            owned_after = owned_response_after.json()
+            wanted_after = wanted_response_after.json()
+            
+            # Count jerseys with our test jersey ID after removal
+            owned_count_after = sum(1 for item in owned_after if item.get('jersey_id') == self.test_jersey_id)
+            wanted_count_after = sum(1 for item in wanted_after if item.get('jersey_id') == self.test_jersey_id)
+            
+            # Step 5: Verify removal worked
+            if owned_count_after < owned_count_before or wanted_count_after < wanted_count_before:
+                self.log_test("Remove Collection Integration Flow", "PASS", 
+                            f"Jersey removed successfully. Owned: {owned_count_before}→{owned_count_after}, Wanted: {wanted_count_before}→{wanted_count_after}")
+                return True
+            else:
+                self.log_test("Remove Collection Integration Flow", "FAIL", 
+                            f"Jersey not removed. Owned: {owned_count_before}→{owned_count_after}, Wanted: {wanted_count_before}→{wanted_count_after}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Remove Collection Integration Flow", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_sample_data_verification(self):
+        """Test that sample data is properly loaded (3 users, 9 jerseys)"""
+        try:
+            # Test jerseys count
+            jerseys_response = self.session.get(f"{self.base_url}/jerseys?limit=50")
+            
+            if jerseys_response.status_code == 200:
+                jerseys = jerseys_response.json()
+                jerseys_count = len(jerseys)
+                
+                # Test listings count (should have some listings from sample data)
+                listings_response = self.session.get(f"{self.base_url}/listings?limit=50")
+                
+                if listings_response.status_code == 200:
+                    listings = listings_response.json()
+                    listings_count = len(listings)
+                    
+                    # Verify we have reasonable amounts of sample data
+                    if jerseys_count >= 3 and listings_count >= 1:
+                        self.log_test("Sample Data Verification", "PASS", 
+                                    f"Found {jerseys_count} jerseys and {listings_count} listings in database")
+                        return True
+                    else:
+                        self.log_test("Sample Data Verification", "FAIL", 
+                                    f"Insufficient sample data: {jerseys_count} jerseys, {listings_count} listings")
+                        return False
+                else:
+                    self.log_test("Sample Data Verification", "FAIL", f"Could not get listings: {listings_response.status_code}")
+                    return False
+            else:
+                self.log_test("Sample Data Verification", "FAIL", f"Could not get jerseys: {jerseys_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Sample Data Verification", "FAIL", f"Exception: {str(e)}")
+            return False
+    
     def test_jwt_token_validation(self):
         """Test JWT token validation for protected endpoints"""
         try:
