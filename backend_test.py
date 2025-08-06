@@ -23,6 +23,8 @@ class TopKitAPITester:
         self.user_id = None
         self.test_jersey_id = None
         self.test_listing_id = None
+        self.new_workflow_jersey_id = None  # For new workflow testing
+        self.new_workflow_listing_id = None  # For new workflow testing
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',
