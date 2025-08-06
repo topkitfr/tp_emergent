@@ -1362,39 +1362,39 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-black text-white">
         <Header currentView={currentView} setCurrentView={setCurrentView} />
         
         {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="container mx-auto px-4">
+        <nav className="bg-gray-900 shadow-sm border-b border-gray-800">
+          <div className="container mx-auto px-6">
             <div className="flex space-x-8">
               <button
                 onClick={() => setCurrentView('home')}
-                className={`py-4 px-2 border-b-2 transition-colors ${
+                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
                   currentView === 'home' 
-                    ? 'border-green-500 text-green-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
                 }`}
               >
                 Home
               </button>
               <button
                 onClick={() => setCurrentView('jerseys')}
-                className={`py-4 px-2 border-b-2 transition-colors ${
+                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
                   currentView === 'jerseys' 
-                    ? 'border-green-500 text-green-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
                 }`}
               >
                 Browse Jerseys
               </button>
               <button
                 onClick={() => setCurrentView('marketplace')}
-                className={`py-4 px-2 border-b-2 transition-colors ${
+                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
                   currentView === 'marketplace' 
-                    ? 'border-green-500 text-green-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-white text-white' 
+                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
                 }`}
               >
                 Marketplace
@@ -1404,7 +1404,7 @@ const App = () => {
         </nav>
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-6 py-8">
           {renderContent()}
         </main>
 
@@ -1418,15 +1418,21 @@ const App = () => {
         )}
 
         {/* Footer */}
-        <footer className="bg-gray-800 text-white py-8 mt-16">
-          <div className="container mx-auto px-4 text-center">
-            <h3 className="text-2xl font-bold mb-4">TopKit</h3>
-            <p className="text-gray-400 mb-4">The world's premier soccer jersey marketplace</p>
-            <div className="flex justify-center space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">About</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Support</a>
+        <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
+          <div className="container mx-auto px-6">
+            <div className="text-center">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+                alt="TopKit"
+                className="h-8 w-auto mx-auto mb-4 opacity-60"
+              />
+              <p className="text-gray-400 mb-6">The world's premier soccer jersey marketplace</p>
+              <div className="flex justify-center space-x-8">
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">About</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Support</a>
+              </div>
             </div>
           </div>
         </footer>
