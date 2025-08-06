@@ -1808,12 +1808,6 @@ const App = () => {
           <div>
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-4xl font-bold text-white">Browse Jerseys</h1>
-              <button 
-                onClick={() => handleCreateListing()}
-                className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
-              >
-                + Create New Listing
-              </button>
             </div>
             <SearchFilter onFilter={fetchJerseys} />
             {loading ? (
