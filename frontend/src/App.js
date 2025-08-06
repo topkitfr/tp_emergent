@@ -1262,6 +1262,9 @@ const CollectionsPage = () => {
               jersey={collection.jersey}
               showCollectionDate={true}
               addedAt={collection.added_at}
+              showRemove={true}
+              onRemoveFromCollection={handleRemoveFromCollection}
+              onClick={handleJerseyClick}
             />
           ))}
         </div>
