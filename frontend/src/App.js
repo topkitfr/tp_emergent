@@ -1271,9 +1271,10 @@ const CollectionsPage = () => {
 };
 
 // Jersey Card Component (updated)
-const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing, showCollectionDate = false, addedAt }) => {
+const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, onClick }) => {
   return (
-    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700">
+    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
+         onClick={() => onClick && onClick(jersey)}>
       <img
         src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
         alt={`${jersey.team} ${jersey.season}`}
@@ -1302,24 +1303,35 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateLi
         )}
         
         {showActions && (
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3" onClick={(e) => e.stopPropagation()}>
             <button 
-              onClick={() => onAddToCollection(jersey.id, 'owned')}
+              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'owned'); }}
               className="w-full bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold"
             >
               Add to Owned
             </button>
             <button 
-              onClick={() => onAddToCollection(jersey.id, 'wanted')}
+              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'wanted'); }}
               className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
             >
               Add to Wanted
             </button>
             <button 
-              onClick={() => onCreateListing(jersey.id)}
+              onClick={(e) => { e.stopPropagation(); onCreateListing(jersey.id); }}
               className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
             >
               Create Listing
+            </button>
+          </div>
+        )}
+
+        {showRemove && (
+          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onRemoveFromCollection(jersey.id); }}
+              className="w-full bg-red-900 text-red-300 py-2 rounded-lg hover:bg-red-800 transition-colors text-sm font-semibold border border-red-700"
+            >
+              Remove from Collection
             </button>
           </div>
         )}
@@ -1329,9 +1341,10 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateLi
 };
 
 // Listing Card Component
-const ListingCard = ({ listing }) => {
+const ListingCard = ({ listing, onClick }) => {
   return (
-    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700">
+    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
+         onClick={() => onClick && onClick(listing.jersey, listing)}>
       <img
         src={listing.images?.[0] || listing.jersey?.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
         alt={`${listing.jersey?.team} ${listing.jersey?.season}`}
@@ -1354,8 +1367,11 @@ const ListingCard = ({ listing }) => {
         
         <p className="text-sm text-gray-300 mt-3 mb-6 line-clamp-2">{listing.description}</p>
         
-        <button className="w-full bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold">
-          Buy Now
+        <button 
+          onClick={(e) => { e.stopPropagation(); onClick && onClick(listing.jersey, listing); }}
+          className="w-full bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+        >
+          View Details
         </button>
       </div>
     </div>
