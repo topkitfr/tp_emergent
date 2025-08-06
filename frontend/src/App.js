@@ -1463,7 +1463,7 @@ const CollectionsPage = () => {
 };
 
 // Jersey Card Component (updated)
-const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, onClick }) => {
+const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, showSellButton = false, onSellJersey, onClick }) => {
   return (
     <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
          onClick={() => onClick && onClick(jersey)}>
@@ -1508,11 +1508,16 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateLi
             >
               Add to Wanted
             </button>
+          </div>
+        )}
+
+        {showSellButton && (
+          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
             <button 
-              onClick={(e) => { e.stopPropagation(); onCreateListing(jersey.id); }}
-              className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
+              onClick={(e) => { e.stopPropagation(); onSellJersey(jersey); }}
+              className="w-full bg-green-900 text-green-300 py-2 rounded-lg hover:bg-green-800 transition-colors text-sm font-semibold border border-green-700"
             >
-              Create Listing
+              Sell This Jersey
             </button>
           </div>
         )}
