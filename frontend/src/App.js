@@ -1199,6 +1199,34 @@ const CollectionsPage = () => {
     }
   };
 
+  const handleRemoveFromCollection = async (jerseyId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to manage your collection');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to remove this jersey from your collection?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/collections/${jerseyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Removed from collection!');
+      // Refresh collections
+      fetchCollections();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Failed to remove from collection');
+    }
+  };
+
+  const handleJerseyClick = (jersey) => {
+    // Jersey detail functionality can be added here
+    console.log('Jersey clicked:', jersey);
+  };
+
   if (!user) {
     return (
       <div className="text-center py-16">
