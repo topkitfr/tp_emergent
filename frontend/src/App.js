@@ -1395,6 +1395,12 @@ const CollectionsPage = () => {
     window.dispatchEvent(event);
   };
 
+  const handleAddNewJersey = () => {
+    // This will trigger the main app's listing creation modal for creating a new jersey
+    const event = new CustomEvent('addNewJersey');
+    window.dispatchEvent(event);
+  };
+
   const handleJerseyClick = (jersey) => {
     // Jersey detail functionality can be added here
     console.log('Jersey clicked:', jersey);
