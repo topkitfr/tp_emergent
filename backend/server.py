@@ -828,7 +828,7 @@ async def get_profile(user_id: str = Depends(get_current_user)):
     wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
     listings_count = await db.listings.count_documents({"seller_id": user_id})
     
-    # Get collection valuations
+    # Get collection valuations (always show to owner)
     collection_valuations = await get_user_collection_valuations(user_id)
     
     return {
@@ -838,7 +838,9 @@ async def get_profile(user_id: str = Depends(get_current_user)):
             "name": user["name"],
             "picture": user.get("picture"),
             "provider": user["provider"],
-            "created_at": user["created_at"]
+            "created_at": user["created_at"],
+            "profile_privacy": user.get("profile_privacy", "public"),
+            "show_collection_value": user.get("show_collection_value", False)
         },
         "stats": {
             "owned_jerseys": owned_count,
@@ -847,6 +849,17 @@ async def get_profile(user_id: str = Depends(get_current_user)):
         },
         "valuations": collection_valuations
     }
+
+@api_router.put("/profile/settings")
+async def update_profile_settings(settings: ProfileSettings, user_id: str = Depends(get_current_user)):
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "profile_privacy": settings.profile_privacy,
+            "show_collection_value": settings.show_collection_value
+        }}
+    )
+    return {"message": "Profile settings updated successfully"}
 
 # Jersey valuation endpoints
 @api_router.get("/jerseys/{jersey_id}/valuation")
