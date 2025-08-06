@@ -1087,75 +1087,75 @@ const SearchFilter = ({ onFilter }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4">Search & Filter</h3>
+    <div className="bg-gray-900 rounded-xl shadow-2xl p-6 mb-8 border border-gray-800">
+      <h3 className="text-xl font-semibold mb-6 text-white">Search & Filter</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <input
           type="text"
           placeholder="Team"
           value={filters.team}
           onChange={(e) => handleFilterChange('team', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
         <input
           type="text"
           placeholder="Season (e.g., 2023-24)"
           value={filters.season}
           onChange={(e) => handleFilterChange('season', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
         <input
           type="text"
           placeholder="Player"
           value={filters.player}
           onChange={(e) => handleFilterChange('player', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
         <select
           value={filters.size}
           onChange={(e) => handleFilterChange('size', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
         >
-          <option value="">Any Size</option>
-          <option value="XS">XS</option>
-          <option value="S">S</option>
-          <option value="M">M</option>
-          <option value="L">L</option>
-          <option value="XL">XL</option>
-          <option value="XXL">XXL</option>
+          <option value="" className="bg-gray-800">Any Size</option>
+          <option value="XS" className="bg-gray-800">XS</option>
+          <option value="S" className="bg-gray-800">S</option>
+          <option value="M" className="bg-gray-800">M</option>
+          <option value="L" className="bg-gray-800">L</option>
+          <option value="XL" className="bg-gray-800">XL</option>
+          <option value="XXL" className="bg-gray-800">XXL</option>
         </select>
         <select
           value={filters.condition}
           onChange={(e) => handleFilterChange('condition', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
         >
-          <option value="">Any Condition</option>
-          <option value="mint">Mint</option>
-          <option value="excellent">Excellent</option>
-          <option value="very_good">Very Good</option>
-          <option value="good">Good</option>
-          <option value="fair">Fair</option>
+          <option value="" className="bg-gray-800">Any Condition</option>
+          <option value="mint" className="bg-gray-800">Mint</option>
+          <option value="excellent" className="bg-gray-800">Excellent</option>
+          <option value="very_good" className="bg-gray-800">Very Good</option>
+          <option value="good" className="bg-gray-800">Good</option>
+          <option value="fair" className="bg-gray-800">Fair</option>
         </select>
         <input
           type="text"
           placeholder="League"
           value={filters.league}
           onChange={(e) => handleFilterChange('league', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
         <input
           type="number"
           placeholder="Min Price"
           value={filters.minPrice}
           onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
         <input
           type="number"
           placeholder="Max Price"
           value={filters.maxPrice}
           onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
         />
       </div>
     </div>
