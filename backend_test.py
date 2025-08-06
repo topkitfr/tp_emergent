@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://ce446aa3-3dc9-46b4-8a26-16c4f295a473.preview.emergentagent.com/api"
+BASE_URL = "https://7dc90ad2-eb63-45b6-a854-741e16d4ebc1.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "testuser@topkit.com"
 TEST_USER_PASSWORD = "SecurePass123!"
 TEST_USER_NAME = "Test User"
