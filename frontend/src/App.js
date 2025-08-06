@@ -1982,9 +1982,12 @@ const App = () => {
         {/* Modals */}
         {showCreateListing && (
           <CreateListingModal 
-            onClose={handleCloseCreateListing}
-            jerseyId={selectedJerseyForListing?.id || null}
-            jersey={selectedJerseyForListing}
+            onClose={() => {
+              setShowCreateListing(false);
+              setSelectedListingJersey(null);
+            }}
+            jerseyId={selectedListingJersey?.id}
+            jersey={selectedListingJersey}
           />
         )}
 
