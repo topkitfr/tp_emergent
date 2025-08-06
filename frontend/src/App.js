@@ -129,7 +129,361 @@ const Header = ({ currentView, setCurrentView }) => {
   );
 };
 
-// Auth Modal Component
+// Create Listing Modal Component
+const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
+  const [formData, setFormData] = useState({
+    price: '',
+    description: '',
+    images: [],
+    // Additional jersey details if creating new jersey
+    team: jersey?.team || '',
+    season: jersey?.season || '',
+    player: jersey?.player || '',
+    size: jersey?.size || 'M',
+    condition: jersey?.condition || 'excellent',
+    manufacturer: jersey?.manufacturer || '',
+    home_away: jersey?.home_away || 'home',
+    league: jersey?.league || '',
+    model: 'replica', // replica, professional, special
+    color: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isCreatingNewJersey, setIsCreatingNewJersey] = useState(!jerseyId);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please login to create a listing');
+      }
+
+      let finalJerseyId = jerseyId;
+
+      // If creating a new jersey first
+      if (isCreatingNewJersey || !jerseyId) {
+        const jerseyData = {
+          team: formData.team,
+          season: formData.season,
+          player: formData.player || null,
+          size: formData.size,
+          condition: formData.condition,
+          manufacturer: formData.manufacturer,
+          home_away: formData.home_away,
+          league: formData.league,
+          description: `${formData.model} ${formData.color} jersey - ${formData.description}`,
+          images: formData.images
+        };
+
+        const jerseyResponse = await axios.post(`${API}/jerseys`, jerseyData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        finalJerseyId = jerseyResponse.data.id;
+      }
+
+      // Create the listing
+      const listingData = {
+        jersey_id: finalJerseyId,
+        price: parseFloat(formData.price),
+        description: formData.description,
+        images: formData.images
+      };
+
+      await axios.post(`${API}/listings`, listingData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Listing created successfully!');
+      onClose();
+    } catch (error) {
+      setError(error.response?.data?.detail || error.message || 'Failed to create listing');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageAdd = () => {
+    const imageUrl = prompt('Enter image URL:');
+    if (imageUrl) {
+      setFormData({
+        ...formData,
+        images: [...formData.images, imageUrl]
+      });
+    }
+  };
+
+  const removeImage = (index) => {
+    setFormData({
+      ...formData,
+      images: formData.images.filter((_, i) => i !== index)
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Create Jersey Listing</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Toggle for new jersey creation */}
+          {jerseyId && (
+            <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={isCreatingNewJersey}
+                  onChange={(e) => setIsCreatingNewJersey(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-700">Create new jersey instead of using existing one</span>
+              </label>
+            </div>
+          )}
+
+          {/* Jersey Details (only if creating new jersey) */}
+          {(isCreatingNewJersey || !jerseyId) && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Jersey Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Club/National Team*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Manchester United"
+                    value={formData.team}
+                    onChange={(e) => setFormData({...formData, team: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Season*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 2023-24"
+                    value={formData.season}
+                    onChange={(e) => setFormData({...formData, season: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand/Manufacturer*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Nike, Adidas, Puma"
+                    value={formData.manufacturer}
+                    onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">League*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Premier League, La Liga"
+                    value={formData.league}
+                    onChange={(e) => setFormData({...formData, league: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Bruno Fernandes (optional)"
+                    value={formData.player}
+                    onChange={(e) => setFormData({...formData, player: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Red, Blue, Black"
+                    value={formData.color}
+                    onChange={(e) => setFormData({...formData, color: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type*</label>
+                  <select
+                    value={formData.home_away}
+                    onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  >
+                    <option value="home">Home</option>
+                    <option value="away">Away</option>
+                    <option value="third">Third Kit</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Model*</label>
+                  <select
+                    value={formData.model}
+                    onChange={(e) => setFormData({...formData, model: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  >
+                    <option value="replica">Replica</option>
+                    <option value="professional">Professional/Authentic</option>
+                    <option value="special">Special Edition</option>
+                    <option value="retro">Retro/Vintage</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size*</label>
+                  <select
+                    value={formData.size}
+                    onChange={(e) => setFormData({...formData, size: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  >
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition*</label>
+                  <select
+                    value={formData.condition}
+                    onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  >
+                    <option value="mint">Mint</option>
+                    <option value="excellent">Excellent</option>
+                    <option value="very_good">Very Good</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Listing Details */}
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Listing Details</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (USD)*</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="e.g., 89.99"
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+              <textarea
+                placeholder="Describe the jersey condition, any special features, authenticity, etc."
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 h-24"
+                required
+              />
+            </div>
+
+            {/* Images */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
+              <button
+                type="button"
+                onClick={handleImageAdd}
+                className="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                Add Image URL
+              </button>
+              {formData.images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={image} 
+                        alt={`Jersey ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+URL';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Creating Listing...' : 'Create Listing'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 const AuthModal = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
