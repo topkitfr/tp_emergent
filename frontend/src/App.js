@@ -1317,39 +1317,39 @@ const App = () => {
       
       default:
         return (
-          <div className="text-center py-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">Welcome to TopKit</h2>
-            <p className="text-xl text-gray-600 mb-8">The ultimate soccer jersey marketplace</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="text-green-600 text-4xl mb-4">🏆</div>
-                <h3 className="text-xl font-semibold mb-2">Discover Jerseys</h3>
-                <p className="text-gray-600">Browse thousands of soccer jerseys from teams around the world</p>
+          <div className="text-center py-24">
+            <h2 className="text-5xl font-bold text-white mb-4">Welcome to TopKit</h2>
+            <p className="text-xl text-gray-300 mb-12">The ultimate soccer jersey marketplace</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 hover:border-gray-700 transition-all hover:shadow-3xl">
+                <div className="text-white text-5xl mb-6">🏆</div>
+                <h3 className="text-2xl font-semibold mb-4 text-white">Discover Jerseys</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">Browse thousands of soccer jerseys from teams around the world</p>
                 <button 
                   onClick={() => setCurrentView('jerseys')}
-                  className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                 >
                   Browse Now
                 </button>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="text-blue-600 text-4xl mb-4">🛒</div>
-                <h3 className="text-xl font-semibold mb-2">Buy & Sell</h3>
-                <p className="text-gray-600">Trade jerseys with collectors worldwide in our secure marketplace</p>
+              <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 hover:border-gray-700 transition-all hover:shadow-3xl">
+                <div className="text-white text-5xl mb-6">🛒</div>
+                <h3 className="text-2xl font-semibold mb-4 text-white">Buy & Sell</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">Trade jerseys with collectors worldwide in our secure marketplace</p>
                 <button 
                   onClick={() => setCurrentView('marketplace')}
-                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                 >
                   Shop Now
                 </button>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="text-purple-600 text-4xl mb-4">📚</div>
-                <h3 className="text-xl font-semibold mb-2">Manage Collection</h3>
-                <p className="text-gray-600">Keep track of your owned jerseys and create wishlists</p>
+              <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 hover:border-gray-700 transition-all hover:shadow-3xl">
+                <div className="text-white text-5xl mb-6">📚</div>
+                <h3 className="text-2xl font-semibold mb-4 text-white">Manage Collection</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">Keep track of your owned jerseys and create wishlists</p>
                 <button 
                   onClick={() => setCurrentView('collections')}
-                  className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                 >
                   Get Started
                 </button>
