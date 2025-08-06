@@ -661,8 +661,12 @@ const ProfilePage = () => {
     );
   }
 
+  const valuations = profileData?.valuations;
+  const portfolio = valuations?.portfolio_summary;
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
+      {/* User Profile Section */}
       <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
         <div className="flex items-center space-x-6 mb-8">
           {user.picture && (
@@ -684,6 +688,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* Collection Stats */}
         {profileData && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-green-50 p-6 rounded-lg text-center">
@@ -707,6 +712,158 @@ const ProfilePage = () => {
           </div>
         )}
       </div>
+
+      {/* Portfolio Valuation Section */}
+      {portfolio && (
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <span className="text-3xl mr-3">💰</span>
+            Collection Portfolio Valuation
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+              <div className="text-sm font-medium text-green-700 mb-2">Low Estimate</div>
+              <div className="text-2xl font-bold text-green-800">
+                ${portfolio.total_low_estimate?.toLocaleString() || '0'}
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+              <div className="text-sm font-medium text-blue-700 mb-2">Median Estimate</div>
+              <div className="text-2xl font-bold text-blue-800">
+                ${portfolio.total_median_estimate?.toLocaleString() || '0'}
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+              <div className="text-sm font-medium text-purple-700 mb-2">High Estimate</div>
+              <div className="text-2xl font-bold text-purple-800">
+                ${portfolio.total_high_estimate?.toLocaleString() || '0'}
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-xl border border-amber-200">
+              <div className="text-sm font-medium text-amber-700 mb-2">Average Value</div>
+              <div className="text-2xl font-bold text-amber-800">
+                ${portfolio.average_value?.toLocaleString() || '0'}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+            <div>
+              <span className="font-medium">Total Items:</span> {portfolio.total_items || 0}
+            </div>
+            <div>
+              <span className="font-medium">Valued Items:</span> {portfolio.valued_items || 0}
+            </div>
+          </div>
+
+          {portfolio.valued_items < portfolio.total_items && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center">
+                <span className="text-yellow-600 text-xl mr-2">⚠️</span>
+                <div>
+                  <div className="font-medium text-yellow-800">Incomplete Valuation Data</div>
+                  <div className="text-sm text-yellow-700">
+                    {portfolio.total_items - portfolio.valued_items} of your jerseys don't have enough market data for accurate valuation. 
+                    As more similar jerseys are listed or sold, valuations will become available.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Individual Jersey Valuations */}
+      {valuations?.collections && valuations.collections.length > 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <span className="text-3xl mr-3">📊</span>
+            Individual Jersey Valuations
+          </h2>
+          
+          <div className="space-y-4">
+            {valuations.collections.map((item) => (
+              <div key={item.collection_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {item.jersey.team} {item.jersey.season}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        item.collection_type === 'owned' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {item.collection_type}
+                      </span>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div>
+                        {item.jersey.player && <span className="font-medium">{item.jersey.player}</span>}
+                        {item.jersey.player && ' • '}
+                        <span>{item.jersey.home_away} • {item.jersey.size} • {item.jersey.condition}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Added: {new Date(item.added_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    {item.valuation ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="text-center">
+                            <div className="text-green-600 font-bold">${item.valuation.low_estimate}</div>
+                            <div className="text-gray-500 text-xs">Low</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-blue-600 font-bold text-lg">${item.valuation.median_estimate}</div>
+                            <div className="text-gray-500 text-xs">Median</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-purple-600 font-bold">${item.valuation.high_estimate}</div>
+                            <div className="text-gray-500 text-xs">High</div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-gray-500">
+                          Based on {item.valuation.total_sales} sales • {item.valuation.total_listings} listings
+                        </div>
+                        
+                        {item.valuation.market_data?.confidence_score && (
+                          <div className="text-xs">
+                            <span className={`px-2 py-1 rounded ${
+                              item.valuation.market_data.confidence_score >= 70 
+                                ? 'bg-green-100 text-green-700'
+                                : item.valuation.market_data.confidence_score >= 40
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {item.valuation.market_data.confidence_score}% confidence
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 text-sm">
+                        <div>No valuation data</div>
+                        <div className="text-xs">Need more market data</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
