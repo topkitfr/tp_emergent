@@ -1,54 +1,648 @@
-import { useEffect } from "react";
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import './App.css';
+import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Auth Context
+const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchProfile(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchProfile = async (token) => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.get(`${API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data.user);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+      localStorage.removeItem('token');
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const login = (token, userData) => {
+    localStorage.setItem('token', token);
+    setUser(userData);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+// Header Component
+const Header = () => {
+  const { user, logout } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  return (
+    <header className="bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-3xl font-bold">TopKit</h1>
+          <p className="text-green-100">Soccer Jersey Marketplace</p>
+        </div>
+        
+        <nav className="flex items-center space-x-6">
+          <a href="#jerseys" className="hover:text-green-200 transition-colors">Browse</a>
+          <a href="#marketplace" className="hover:text-green-200 transition-colors">Marketplace</a>
+          {user && (
+            <>
+              <a href="#collections" className="hover:text-green-200 transition-colors">My Collection</a>
+              <a href="#profile" className="hover:text-green-200 transition-colors">Profile</a>
+            </>
+          )}
+          
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className="text-sm">Welcome, {user.name}</span>
+              <button 
+                onClick={logout}
+                className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setShowAuthModal(true)}
+              className="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Login / Sign Up
+            </button>
+          )}
+        </nav>
+      </div>
+      
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+    </header>
+  );
+};
+
+// Auth Modal Component
+const AuthModal = ({ onClose }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const response = await axios.post(`${API}${endpoint}`, formData);
+      login(response.data.token, response.data.user);
+      onClose();
+    } catch (error) {
+      setError(error.response?.data?.detail || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = () => {
+    window.location.href = `${API}/auth/google`;
+  };
+
+  const handleEmergentAuth = async () => {
+    try {
+      const response = await axios.get(`${API}/auth/emergent/redirect`);
+      window.location.href = response.data.auth_url;
+    } catch (error) {
+      setError('Failed to redirect to Emergent Auth');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            {isLogin ? 'Login' : 'Sign Up'}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required={!isLogin}
+            />
+          )}
+          
+          <input
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+          
+          <input
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
+          </button>
+        </form>
+
+        <div className="mt-6 space-y-3">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGoogleAuth}
+            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <img 
+              src="https://developers.google.com/identity/images/g-logo.png" 
+              alt="Google" 
+              className="w-5 h-5 mr-3"
+            />
+            Continue with Google
+          </button>
+
+          <button
+            onClick={handleEmergentAuth}
+            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Continue with Emergent Auth
+          </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-green-600 hover:text-green-700"
+          >
+            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
 
-function App() {
+// Jersey Card Component
+const JerseyCard = ({ jersey, showActions = false, onAddToCollection, onCreateListing }) => {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+      <img
+        src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
+        alt={`${jersey.team} ${jersey.season}`}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4">
+        <h3 className="text-lg font-semibold text-gray-800">{jersey.team}</h3>
+        <p className="text-gray-600">{jersey.season} • {jersey.home_away}</p>
+        {jersey.player && <p className="text-green-600 font-medium">{jersey.player}</p>}
+        
+        <div className="mt-3 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            <span className="bg-gray-100 px-2 py-1 rounded">{jersey.size}</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+              {jersey.condition}
+            </span>
+          </div>
+        </div>
+        
+        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{jersey.description}</p>
+        
+        {showActions && (
+          <div className="mt-4 space-y-2">
+            <button 
+              onClick={() => onAddToCollection(jersey.id, 'owned')}
+              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+            >
+              Add to Owned
+            </button>
+            <button 
+              onClick={() => onAddToCollection(jersey.id, 'wanted')}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              Add to Wanted
+            </button>
+            <button 
+              onClick={() => onCreateListing(jersey.id)}
+              className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              Create Listing
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+// Listing Card Component
+const ListingCard = ({ listing }) => {
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+      <img
+        src={listing.images?.[0] || listing.jersey?.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
+        alt={`${listing.jersey?.team} ${listing.jersey?.season}`}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4">
+        <h3 className="text-lg font-semibold text-gray-800">{listing.jersey?.team}</h3>
+        <p className="text-gray-600">{listing.jersey?.season} • {listing.jersey?.home_away}</p>
+        {listing.jersey?.player && <p className="text-green-600 font-medium">{listing.jersey?.player}</p>}
+        
+        <div className="mt-3 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            <span className="bg-gray-100 px-2 py-1 rounded">{listing.jersey?.size}</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">
+              {listing.jersey?.condition}
+            </span>
+          </div>
+          <div className="text-2xl font-bold text-green-600">${listing.price}</div>
+        </div>
+        
+        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{listing.description}</p>
+        
+        <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors mt-4">
+          Buy Now
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Search and Filter Component
+const SearchFilter = ({ onFilter }) => {
+  const [filters, setFilters] = useState({
+    team: '',
+    season: '',
+    player: '',
+    size: '',
+    condition: '',
+    league: '',
+    minPrice: '',
+    maxPrice: ''
+  });
+
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilter(newFilters);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h3 className="text-lg font-semibold mb-4">Search & Filter</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <input
+          type="text"
+          placeholder="Team"
+          value={filters.team}
+          onChange={(e) => handleFilterChange('team', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="text"
+          placeholder="Season (e.g., 2023-24)"
+          value={filters.season}
+          onChange={(e) => handleFilterChange('season', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="text"
+          placeholder="Player"
+          value={filters.player}
+          onChange={(e) => handleFilterChange('player', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+        <select
+          value={filters.size}
+          onChange={(e) => handleFilterChange('size', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Any Size</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="XXL">XXL</option>
+        </select>
+        <select
+          value={filters.condition}
+          onChange={(e) => handleFilterChange('condition', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Any Condition</option>
+          <option value="mint">Mint</option>
+          <option value="excellent">Excellent</option>
+          <option value="very_good">Very Good</option>
+          <option value="good">Good</option>
+          <option value="fair">Fair</option>
+        </select>
+        <input
+          type="text"
+          placeholder="League"
+          value={filters.league}
+          onChange={(e) => handleFilterChange('league', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="number"
+          placeholder="Min Price"
+          value={filters.minPrice}
+          onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={filters.maxPrice}
+          onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+    </div>
+  );
+};
+
+// Main App Component
+const App = () => {
+  const [currentView, setCurrentView] = useState('home');
+  const [jerseys, setJerseys] = useState([]);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchJerseys = async (filters = {}) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      
+      const response = await axios.get(`${API}/jerseys?${params.toString()}`);
+      setJerseys(response.data);
+    } catch (error) {
+      console.error('Failed to fetch jerseys:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchListings = async (filters = {}) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      
+      const response = await axios.get(`${API}/listings?${params.toString()}`);
+      setListings(response.data);
+    } catch (error) {
+      console.error('Failed to fetch listings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCollection = async (jerseyId, collectionType) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to add jerseys to your collection');
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/collections`, 
+        { jersey_id: jerseyId, collection_type: collectionType },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Added to ${collectionType} collection!`);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Failed to add to collection');
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === 'jerseys') {
+      fetchJerseys();
+    } else if (currentView === 'marketplace') {
+      fetchListings();
+    }
+  }, [currentView]);
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'jerseys':
+        return (
+          <div>
+            <SearchFilter onFilter={fetchJerseys} />
+            {loading ? (
+              <div className="text-center py-8">Loading jerseys...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {jerseys.map((jersey) => (
+                  <JerseyCard 
+                    key={jersey.id} 
+                    jersey={jersey} 
+                    showActions={true}
+                    onAddToCollection={handleAddToCollection}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      
+      case 'marketplace':
+        return (
+          <div>
+            <SearchFilter onFilter={fetchListings} />
+            {loading ? (
+              <div className="text-center py-8">Loading listings...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {listings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="text-center py-16">
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">Welcome to TopKit</h2>
+            <p className="text-xl text-gray-600 mb-8">The ultimate soccer jersey marketplace</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <div className="text-green-600 text-4xl mb-4">🏆</div>
+                <h3 className="text-xl font-semibold mb-2">Discover Jerseys</h3>
+                <p className="text-gray-600">Browse thousands of soccer jerseys from teams around the world</p>
+                <button 
+                  onClick={() => setCurrentView('jerseys')}
+                  className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Browse Now
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <div className="text-blue-600 text-4xl mb-4">🛒</div>
+                <h3 className="text-xl font-semibold mb-2">Buy & Sell</h3>
+                <p className="text-gray-600">Trade jerseys with collectors worldwide in our secure marketplace</p>
+                <button 
+                  onClick={() => setCurrentView('marketplace')}
+                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Shop Now
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <div className="text-purple-600 text-4xl mb-4">📚</div>
+                <h3 className="text-xl font-semibold mb-2">Manage Collection</h3>
+                <p className="text-gray-600">Keep track of your owned jerseys and create wishlists</p>
+                <button className="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-100">
+        <Header />
+        
+        {/* Navigation */}
+        <nav className="bg-white shadow-sm border-b border-gray-200">
+          <div className="container mx-auto px-4">
+            <div className="flex space-x-8">
+              <button
+                onClick={() => setCurrentView('home')}
+                className={`py-4 px-2 border-b-2 transition-colors ${
+                  currentView === 'home' 
+                    ? 'border-green-500 text-green-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => setCurrentView('jerseys')}
+                className={`py-4 px-2 border-b-2 transition-colors ${
+                  currentView === 'jerseys' 
+                    ? 'border-green-500 text-green-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Browse Jerseys
+              </button>
+              <button
+                onClick={() => setCurrentView('marketplace')}
+                className={`py-4 px-2 border-b-2 transition-colors ${
+                  currentView === 'marketplace' 
+                    ? 'border-green-500 text-green-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Marketplace
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-8">
+          {renderContent()}
+        </main>
+
+        {/* Footer */}
+        <footer className="bg-gray-800 text-white py-8 mt-16">
+          <div className="container mx-auto px-4 text-center">
+            <h3 className="text-2xl font-bold mb-4">TopKit</h3>
+            <p className="text-gray-400 mb-4">The world's premier soccer jersey marketplace</p>
+            <div className="flex justify-center space-x-6">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">About</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Support</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </AuthProvider>
+  );
+};
 
 export default App;
