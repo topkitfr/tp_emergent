@@ -1003,6 +1003,8 @@ const App = () => {
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showCreateListing, setShowCreateListing] = useState(false);
+  const [selectedJerseyForListing, setSelectedJerseyForListing] = useState(null);
 
   const fetchJerseys = async (filters = {}) => {
     setLoading(true);
@@ -1053,6 +1055,26 @@ const App = () => {
       alert(`Added to ${collectionType} collection!`);
     } catch (error) {
       alert(error.response?.data?.detail || 'Failed to add to collection');
+    }
+  };
+
+  const handleCreateListing = (jerseyId = null, jersey = null) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to create a listing');
+      return;
+    }
+    
+    setSelectedJerseyForListing(jersey);
+    setShowCreateListing(true);
+  };
+
+  const handleCloseCreateListing = () => {
+    setShowCreateListing(false);
+    setSelectedJerseyForListing(null);
+    // Refresh listings if we're on marketplace
+    if (currentView === 'marketplace') {
+      fetchListings();
     }
   };
 
