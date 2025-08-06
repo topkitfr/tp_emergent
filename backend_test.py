@@ -922,6 +922,17 @@ class TopKitAPITester:
         print("-" * 30)
         test_results['payment_checkout'] = self.test_payment_checkout()
         
+        # Jersey Valuation System Tests (NEW - High Priority)
+        print("💰 JERSEY VALUATION SYSTEM TESTS")
+        print("-" * 30)
+        test_results['jersey_valuation_endpoint'] = self.test_jersey_valuation_endpoint()
+        test_results['collection_valuations_endpoint'] = self.test_collection_valuations_endpoint()
+        test_results['profile_with_valuations'] = self.test_profile_with_valuations()
+        test_results['collector_price_estimate'] = self.test_collector_price_estimate()
+        test_results['market_trending_endpoint'] = self.test_market_trending_endpoint()
+        test_results['valuation_calculation_logic'] = self.test_valuation_calculation_logic()
+        test_results['listing_updates_valuation'] = self.test_listing_updates_valuation()
+        
         # Summary
         print("📊 TEST SUMMARY")
         print("=" * 50)
