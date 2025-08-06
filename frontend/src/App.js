@@ -137,7 +137,341 @@ const Header = ({ currentView, setCurrentView }) => {
   );
 };
 
-// Create Listing Modal Component
+// Image Upload Component
+const ImageUpload = ({ images, setImages }) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    const newImages = [];
+
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+        continue;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert(`File ${file.name} is not an image.`);
+        continue;
+      }
+
+      // Convert to base64 for demo purposes
+      // In production, you'd upload to a cloud storage service
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newImages.push(e.target.result);
+        if (newImages.length === files.filter(f => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024).length) {
+          setImages([...images, ...newImages]);
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlAdd = () => {
+    const url = prompt('Enter image URL:');
+    if (url) {
+      setImages([...images, url]);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex space-x-3">
+        <label className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer text-sm font-semibold">
+          {uploading ? 'Uploading...' : 'Upload Photos'}
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={handleUrlAdd}
+          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
+        >
+          Add URL
+        </button>
+      </div>
+
+      {images.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {images.map((image, index) => (
+            <div key={index} className="relative group">
+              <img 
+                src={image} 
+                alt={`Jersey ${index + 1}`}
+                className="w-full h-24 object-cover rounded border border-gray-600"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+Image';
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 text-xs hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Jersey Detail Modal Component
+const JerseyDetailModal = ({ jersey, listing = null, onClose }) => {
+  const { user } = useAuth();
+  const [showContactSeller, setShowContactSeller] = useState(false);
+
+  const handleContactSeller = () => {
+    if (!user) {
+      alert('Please login to contact sellers');
+      return;
+    }
+    setShowContactSeller(true);
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      alert('Please login to buy jerseys');
+      return;
+    }
+    // Implement buy now functionality
+    alert('Buy now functionality will be implemented with payment system');
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center p-6 border-b border-gray-800">
+          <h2 className="text-2xl font-bold text-white">Jersey Details</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Image Gallery */}
+            <div>
+              <div className="bg-gray-800 rounded-lg overflow-hidden mb-4">
+                <img
+                  src={jersey.images?.[0] || 'https://via.placeholder.com/400x500?text=Jersey+Image'}
+                  alt={`${jersey.team} ${jersey.season}`}
+                  className="w-full h-96 object-cover"
+                />
+              </div>
+              {jersey.images && jersey.images.length > 1 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {jersey.images.slice(1, 5).map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Jersey ${index + 2}`}
+                      className="w-full h-16 object-cover rounded border border-gray-700 cursor-pointer hover:border-white transition-colors"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Jersey Details */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-3xl font-bold text-white mb-2">{jersey.team}</h3>
+                <p className="text-xl text-gray-300">{jersey.season} • {jersey.home_away}</p>
+                {jersey.player && <p className="text-2xl text-white font-semibold mt-2">{jersey.player}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-gray-400">Size:</span>
+                  <span className="text-white ml-2 font-semibold">{jersey.size}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Condition:</span>
+                  <span className="text-white ml-2 font-semibold capitalize">{jersey.condition}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Manufacturer:</span>
+                  <span className="text-white ml-2 font-semibold">{jersey.manufacturer}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">League:</span>
+                  <span className="text-white ml-2 font-semibold">{jersey.league}</span>
+                </div>
+              </div>
+
+              {listing && (
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-gray-400">Listed Price:</span>
+                    <span className="text-3xl font-bold text-white">${listing.price}</span>
+                  </div>
+                  <p className="text-gray-300 mb-4">{listing.description}</p>
+                  
+                  <div className="space-y-3">
+                    <button 
+                      onClick={handleBuyNow}
+                      className="w-full bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                    >
+                      Buy Now - ${listing.price}
+                    </button>
+                    <button 
+                      onClick={handleContactSeller}
+                      className="w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold border border-gray-600"
+                    >
+                      Contact Seller
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-2">Description</h4>
+                <p className="text-gray-300 leading-relaxed">{jersey.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {showContactSeller && listing && (
+          <ContactSellerModal
+            listing={listing}
+            onClose={() => setShowContactSeller(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Contact Seller Modal
+const ContactSellerModal = ({ listing, onClose }) => {
+  const [message, setMessage] = useState('');
+  const [sellerInfo, setSellerInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSellerInfo();
+  }, []);
+
+  const fetchSellerInfo = async () => {
+    try {
+      const response = await axios.get(`${API}/users/${listing.seller_id}/public`);
+      setSellerInfo(response.data);
+    } catch (error) {
+      console.error('Failed to fetch seller info:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) {
+      alert('Please enter a message');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/messages`, {
+        recipient_id: listing.seller_id,
+        listing_id: listing.id,
+        message: message.trim()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Message sent successfully!');
+      onClose();
+    } catch (error) {
+      alert('Failed to send message. Please try again.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-60 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-md w-full border border-gray-800">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-white">Contact Seller</h3>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-4 text-gray-400">Loading seller info...</div>
+          ) : sellerInfo ? (
+            <div className="mb-6">
+              <div className="flex items-center space-x-3 mb-4">
+                {sellerInfo.picture && (
+                  <img 
+                    src={sellerInfo.picture} 
+                    alt={sellerInfo.name}
+                    className="w-12 h-12 rounded-full"
+                  />
+                )}
+                <div>
+                  <h4 className="text-white font-semibold">{sellerInfo.name}</h4>
+                  <p className="text-gray-400 text-sm">Jersey Collector</p>
+                </div>
+              </div>
+              
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Hi! I'm interested in your jersey listing. Is it still available?"
+                className="w-full h-32 bg-gray-800 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-white focus:border-transparent"
+              />
+            </div>
+          ) : (
+            <div className="text-center py-4 text-red-400">Failed to load seller information</div>
+          )}
+
+          <div className="flex space-x-3">
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors border border-gray-600"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSendMessage}
+              disabled={!message.trim() || loading}
+              className="flex-1 bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
+            >
+              Send Message
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
     price: '',
