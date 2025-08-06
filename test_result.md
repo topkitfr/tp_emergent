@@ -272,6 +272,21 @@ frontend:
         comment: "✅ PASS - Responsive design and UI/UX working excellently! Header responsive on mobile (390x844), tablet (768x1024), and desktop (1920x1080) viewports. Navigation adapts properly across screen sizes. Beautiful gradient header (green to blue). Professional card layouts with proper shadows and hover effects. Button hover effects working correctly. Typography and spacing consistent throughout. Color scheme appropriate for soccer theme. Loading states and transitions smooth. Footer properly styled. Overall design is modern, professional, and user-friendly. Minor: Some placeholder images fail to load (via.placeholder.com) but this doesn't affect core functionality."
 
   - task: "Profile Page & Collection Views"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reports: 'Why i cant see my profil page and my collection?' - Profile and collection pages are missing from navigation, only anchor links exist without actual page implementations."
+      - working: true
+        agent: "main"
+        comment: "✅ FIXED - Added complete Profile and Collections pages with proper navigation, user statistics, collection management, and responsive design."
+
+  - task: "Create Listing Functionality"
     implemented: false
     working: false
     file: "/app/frontend/src/App.js"
@@ -281,7 +296,7 @@ frontend:
     status_history:
       - working: false
         agent: "user"
-        comment: "User reports: 'Why i cant see my profil page and my collection?' - Profile and collection pages are missing from navigation, only anchor links exist without actual page implementations."
+        comment: "User reports: 'onCreateListing is not a function' runtime error when trying to create a listing. Function not implemented and not passed to JerseyCard component. User also requested comprehensive listing form with: Brand, Size, Model, Color, Type (Home/Away), Club/National Team Name, Season."
 
 metadata:
   created_by: "main_agent"
