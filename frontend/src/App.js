@@ -1162,7 +1162,7 @@ const UserProfileModal = ({ userId, onClose }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get(`${API}/users/${userId}/profile`);
+      const response = await axios.get(`${API}/api/users/${userId}/profile`);
       setUserProfile(response.data);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
