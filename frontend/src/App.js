@@ -2338,12 +2338,11 @@ const App = () => {
   }, []);
 
   const handleAddToCollection = async (jerseyId, collectionType) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Please login to add jerseys to your collection');
+    if (!requireAuth(() => {}, `add jerseys to your ${collectionType} collection`)) {
       return;
     }
 
+    const token = localStorage.getItem('token');
     try {
       await axios.post(`${API}/collections`, 
         { jersey_id: jerseyId, collection_type: collectionType },
