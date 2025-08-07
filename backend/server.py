@@ -625,6 +625,28 @@ async def get_jersey(jersey_id: str):
         raise HTTPException(status_code=404, detail="Jersey not found")
     return Jersey(**jersey)
 
+@api_router.put("/jerseys/{jersey_id}", response_model=Jersey)
+async def update_jersey(jersey_id: str, jersey_data: JerseyCreate, user_id: str = Depends(get_current_user)):
+    # Check if jersey exists and user owns it
+    jersey = await db.jerseys.find_one({"id": jersey_id})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    # Check if the user created this jersey
+    if jersey.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this jersey")
+    
+    # Update the jersey
+    update_data = jersey_data.dict(exclude_unset=True)
+    await db.jerseys.update_one(
+        {"id": jersey_id}, 
+        {"$set": update_data}
+    )
+    
+    # Return the updated jersey
+    updated_jersey = await db.jerseys.find_one({"id": jersey_id})
+    return Jersey(**updated_jersey)
+
 # Marketplace endpoints
 @api_router.post("/listings", response_model=Listing)
 async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get_current_user)):
