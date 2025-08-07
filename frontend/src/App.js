@@ -1377,7 +1377,7 @@ const AuthModal = ({ onClose }) => {
     setError('');
 
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const response = await axios.post(`${API}${endpoint}`, formData);
       login(response.data.token, response.data.user);
       onClose();
