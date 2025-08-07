@@ -2441,7 +2441,7 @@ const App = () => {
 
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`${API}/collections/${jerseyId}`, {
+      await axios.delete(`${API}/api/collections/${jerseyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Removed from collection!');
