@@ -1722,7 +1722,7 @@ const CollectionsPage = () => {
 };
 
 // Jersey Card Component (updated)
-const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, showSellButton = false, onSellJersey, showEditButton = false, onEditJersey, onClick }) => {
+const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, showSellButton = false, onSellJersey, showEditButton = false, onEditJersey, onClick, onCreatorClick }) => {
   return (
     <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
          onClick={() => onClick && onClick(jersey)}>
@@ -1735,6 +1735,31 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
         <h3 className="text-xl font-semibold text-white mb-2">{jersey.team}</h3>
         <p className="text-gray-400 mb-1">{jersey.season} • {jersey.home_away}</p>
         {jersey.player && <p className="text-white font-medium mb-3">{jersey.player}</p>}
+        
+        {/* Creator information */}
+        {jersey.creator_info && (
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs text-gray-500">Added by</p>
+            <div className="flex items-center space-x-2 mt-1">
+              {jersey.creator_info.picture && (
+                <img 
+                  src={jersey.creator_info.picture} 
+                  alt={jersey.creator_info.name}
+                  className="w-5 h-5 rounded-full"
+                />
+              )}
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onCreatorClick && onCreatorClick(jersey.creator_info.id); 
+                }}
+                className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              >
+                {jersey.creator_info.name}
+              </button>
+            </div>
+          </div>
+        )}
         
         <div className="mt-4 flex justify-between items-center mb-3">
           <div className="text-sm text-gray-400">
