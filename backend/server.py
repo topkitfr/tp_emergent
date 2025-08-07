@@ -958,7 +958,77 @@ async def add_collector_price_estimate(
     jersey_obj = Jersey(**jersey)
     await update_jersey_valuation(jersey_obj, estimated_price, "collector_estimate")
     
-    return {"message": "Price estimate added successfully", "estimated_price": estimated_price}
+    return {"message": f"Price estimate of ${estimated_price} added for jersey {jersey_id}"}
+
+
+@api_router.get("/users/{user_id}/profile")
+async def get_user_public_profile(user_id: str):
+    """Get public profile information for a user"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if profile is private
+    if user.get("profile_privacy") == "private":
+        return {
+            "id": user["id"],
+            "name": user["name"],
+            "picture": user.get("picture"),
+            "profile_privacy": "private",
+            "message": "This user's profile is private"
+        }
+    
+    # Get user's collection stats
+    owned_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "owned"})
+    wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
+    listings_count = await db.listings.count_documents({"seller_id": user_id, "status": "active"})
+    jerseys_created_count = await db.jerseys.count_documents({"created_by": user_id})
+    
+    return {
+        "id": user["id"],
+        "name": user["name"],
+        "picture": user.get("picture"),
+        "provider": user.get("provider", "custom"),
+        "created_at": user.get("created_at"),
+        "profile_privacy": user.get("profile_privacy", "public"),
+        "stats": {
+            "owned_jerseys": owned_count,
+            "wanted_jerseys": wanted_count,
+            "active_listings": listings_count,
+            "jerseys_created": jerseys_created_count
+        }
+    }
+
+
+@api_router.get("/users/{user_id}/jerseys")
+async def get_user_created_jerseys(user_id: str, skip: int = 0, limit: int = 20):
+    """Get jerseys created by a specific user"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if profile is private
+    if user.get("profile_privacy") == "private":
+        raise HTTPException(status_code=403, detail="This user's jerseys are private")
+    
+    pipeline = [
+        {"$match": {"created_by": user_id}},
+        {"$skip": skip},
+        {"$limit": limit},
+        {
+            "$addFields": {
+                "creator_info": {
+                    "name": user["name"],
+                    "id": user["id"],
+                    "picture": user.get("picture")
+                }
+            }
+        }
+    ]
+    
+    jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    return jerseys
+
 
 @api_router.get("/market/trending")
 async def get_trending_jerseys():
