@@ -52,7 +52,7 @@ const SEASONS = [
   '15/16', '14/15', '13/14', '12/13', '11/12', '10/11', '09/10', '08/09', '07/08', '06/07'
 ];
 
-const API = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+const API = process.env.REACT_APP_BACKEND_URL;
 
 // Auth Context
 const AuthContext = createContext();
