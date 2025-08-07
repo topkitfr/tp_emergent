@@ -2196,6 +2196,8 @@ const App = () => {
   const [selectedListingDetail, setSelectedListingDetail] = useState(null);
   const [showEditJersey, setShowEditJersey] = useState(false);
   const [selectedEditJersey, setSelectedEditJersey] = useState(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const fetchJerseys = async (filters = {}) => {
     setLoading(true);
