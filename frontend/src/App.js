@@ -2414,11 +2414,16 @@ const App = () => {
       handleRemoveFromCollection(event.detail);
     };
 
+    const handleNavigateToJerseys = () => {
+      setCurrentView('jerseys');
+    };
+
     window.addEventListener('sellJersey', handleSellJersey);
     window.addEventListener('addNewJersey', handleAddNewJersey);
     window.addEventListener('editJersey', handleEditJersey);
     window.addEventListener('showUserProfile', handleShowUserProfile);
     window.addEventListener('removeFromCollection', handleRemoveFromCollectionEvent);
+    window.addEventListener('navigateToJerseys', handleNavigateToJerseys);
     
     return () => {
       window.removeEventListener('sellJersey', handleSellJersey);
@@ -2426,6 +2431,7 @@ const App = () => {
       window.removeEventListener('editJersey', handleEditJersey);
       window.removeEventListener('showUserProfile', handleShowUserProfile);
       window.removeEventListener('removeFromCollection', handleRemoveFromCollectionEvent);
+      window.removeEventListener('navigateToJerseys', handleNavigateToJerseys);
     };
   }, []);
 
