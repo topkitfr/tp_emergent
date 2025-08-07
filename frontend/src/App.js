@@ -2347,6 +2347,18 @@ const App = () => {
     setSelectedListingDetail(null);
   };
 
+  const handleCreatorClick = (userId) => {
+    if (userId) {
+      setSelectedUserId(userId);
+      setShowUserProfile(true);
+    }
+  };
+
+  const handleCloseUserProfile = () => {
+    setShowUserProfile(false);
+    setSelectedUserId(null);
+  };
+
   useEffect(() => {
     if (currentView === 'jerseys') {
       fetchJerseys();
