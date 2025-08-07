@@ -1952,6 +1952,8 @@ const App = () => {
   const [showJerseyDetail, setShowJerseyDetail] = useState(false);
   const [selectedJerseyDetail, setSelectedJerseyDetail] = useState(null);
   const [selectedListingDetail, setSelectedListingDetail] = useState(null);
+  const [showEditJersey, setShowEditJersey] = useState(false);
+  const [selectedEditJersey, setSelectedEditJersey] = useState(null);
 
   const fetchJerseys = async (filters = {}) => {
     setLoading(true);
