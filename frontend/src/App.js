@@ -2255,6 +2255,18 @@ const App = () => {
   const [selectedEditJersey, setSelectedEditJersey] = useState(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
+
+  // Utility function to check authentication and redirect if needed
+  const requireAuth = (action, actionName = 'perform this action') => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert(`Please login to ${actionName}`);
+      setShowAuthModalFromAction(true);
+      return false;
+    }
+    return true;
+  };
 
   const fetchJerseys = async (filters = {}) => {
     setLoading(true);
