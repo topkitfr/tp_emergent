@@ -1460,6 +1460,298 @@ class TopKitAPITester:
             self.log_test("New Workflow - Profile Stats Only", "FAIL", f"Exception: {str(e)}")
             return False
 
+    def test_jersey_update_endpoint(self):
+        """Test PUT /api/jerseys/{jersey_id} endpoint for updating jersey details"""
+        try:
+            if not self.auth_token or not self.test_jersey_id:
+                self.log_test("Jersey Update Endpoint", "FAIL", "Missing auth token or jersey ID")
+                return False
+            
+            # Test updating jersey details
+            update_payload = {
+                "team": "Manchester United",
+                "season": "2023-24",
+                "player": "Bruno Fernandes",
+                "size": "XL",  # Changed from L to XL
+                "condition": "mint",  # Changed from excellent to mint
+                "manufacturer": "Adidas",
+                "home_away": "home",
+                "league": "Premier League",
+                "description": "Updated: Official Manchester United home jersey with Bruno Fernandes #8 - now in mint condition",
+                "images": ["https://example.com/jersey1-updated.jpg"]
+            }
+            
+            response = self.session.put(f"{self.base_url}/jerseys/{self.test_jersey_id}", json=update_payload)
+            
+            if response.status_code == 200:
+                updated_jersey = response.json()
+                
+                # Verify the updates were applied
+                if (updated_jersey.get("size") == "XL" and 
+                    updated_jersey.get("condition") == "mint" and
+                    "Updated:" in updated_jersey.get("description", "")):
+                    
+                    self.log_test("Jersey Update Endpoint", "PASS", 
+                                f"Jersey updated successfully: Size {updated_jersey.get('size')}, Condition {updated_jersey.get('condition')}")
+                    return True
+                else:
+                    self.log_test("Jersey Update Endpoint", "FAIL", "Updates not reflected in response")
+                    return False
+            else:
+                self.log_test("Jersey Update Endpoint", "FAIL", f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Jersey Update Endpoint", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_jersey_update_authorization(self):
+        """Test that users can only update their own jerseys"""
+        try:
+            if not self.test_jersey_id:
+                self.log_test("Jersey Update Authorization", "FAIL", "No test jersey ID available")
+                return False
+            
+            # Create a second user to test authorization
+            unique_email = f"testuser2_{int(time.time())}@topkit.com"
+            
+            register_payload = {
+                "email": unique_email,
+                "password": TEST_USER_PASSWORD,
+                "name": "Test User 2"
+            }
+            
+            register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
+            
+            if register_response.status_code != 200:
+                self.log_test("Jersey Update Authorization", "FAIL", "Could not create second user")
+                return False
+            
+            # Get the second user's token
+            second_user_data = register_response.json()
+            second_user_token = second_user_data["token"]
+            
+            # Try to update the first user's jersey with second user's token
+            update_payload = {
+                "team": "Manchester United",
+                "season": "2023-24",
+                "player": "Bruno Fernandes",
+                "size": "S",
+                "condition": "good",
+                "manufacturer": "Adidas",
+                "home_away": "home",
+                "league": "Premier League",
+                "description": "Unauthorized update attempt",
+                "images": []
+            }
+            
+            # Use second user's token
+            unauthorized_headers = {'Authorization': f'Bearer {second_user_token}'}
+            response = self.session.put(f"{self.base_url}/jerseys/{self.test_jersey_id}", 
+                                      json=update_payload, headers=unauthorized_headers)
+            
+            if response.status_code == 403:
+                self.log_test("Jersey Update Authorization", "PASS", "Unauthorized update correctly rejected with 403")
+                return True
+            else:
+                self.log_test("Jersey Update Authorization", "FAIL", f"Expected 403, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Jersey Update Authorization", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_jersey_update_nonexistent(self):
+        """Test updating non-existent jersey returns 404"""
+        try:
+            if not self.auth_token:
+                self.log_test("Jersey Update Non-existent", "FAIL", "No auth token available")
+                return False
+            
+            fake_jersey_id = str(uuid.uuid4())
+            
+            update_payload = {
+                "team": "Fake Team",
+                "season": "2023-24",
+                "player": "Fake Player",
+                "size": "L",
+                "condition": "excellent",
+                "manufacturer": "Fake Brand",
+                "home_away": "home",
+                "league": "Fake League",
+                "description": "This should fail",
+                "images": []
+            }
+            
+            response = self.session.put(f"{self.base_url}/jerseys/{fake_jersey_id}", json=update_payload)
+            
+            if response.status_code == 404:
+                self.log_test("Jersey Update Non-existent", "PASS", "Non-existent jersey update correctly returned 404")
+                return True
+            else:
+                self.log_test("Jersey Update Non-existent", "FAIL", f"Expected 404, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Jersey Update Non-existent", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_collection_delete_with_existing_jerseys(self):
+        """Test DELETE /api/collections/{jersey_id} with jerseys that exist in user collections"""
+        try:
+            if not self.auth_token:
+                self.log_test("Collection Delete - Existing Jerseys", "FAIL", "No auth token available")
+                return False
+            
+            # First, get current collections to find existing jerseys
+            owned_response = self.session.get(f"{self.base_url}/collections/owned")
+            wanted_response = self.session.get(f"{self.base_url}/collections/wanted")
+            
+            if owned_response.status_code != 200 or wanted_response.status_code != 200:
+                self.log_test("Collection Delete - Existing Jerseys", "FAIL", "Could not get current collections")
+                return False
+            
+            owned_jerseys = owned_response.json()
+            wanted_jerseys = wanted_response.json()
+            
+            # Find a jersey that exists in collections
+            test_jersey_for_delete = None
+            
+            if owned_jerseys:
+                test_jersey_for_delete = owned_jerseys[0]["jersey_id"]
+            elif wanted_jerseys:
+                test_jersey_for_delete = wanted_jerseys[0]["jersey_id"]
+            elif self.test_jersey_id:
+                # Add our test jersey to collection first
+                add_payload = {
+                    "jersey_id": self.test_jersey_id,
+                    "collection_type": "owned"
+                }
+                add_response = self.session.post(f"{self.base_url}/collections", json=add_payload)
+                if add_response.status_code in [200, 400]:  # 400 if already exists
+                    test_jersey_for_delete = self.test_jersey_id
+            
+            if not test_jersey_for_delete:
+                self.log_test("Collection Delete - Existing Jerseys", "FAIL", "No jersey available for delete test")
+                return False
+            
+            # Now test deletion
+            delete_response = self.session.delete(f"{self.base_url}/collections/{test_jersey_for_delete}")
+            
+            if delete_response.status_code == 200:
+                delete_data = delete_response.json()
+                if "message" in delete_data and "removed" in delete_data["message"].lower():
+                    self.log_test("Collection Delete - Existing Jerseys", "PASS", 
+                                f"Successfully deleted jersey {test_jersey_for_delete} from collection")
+                    return True
+                else:
+                    self.log_test("Collection Delete - Existing Jerseys", "FAIL", "Unexpected response message")
+                    return False
+            else:
+                self.log_test("Collection Delete - Existing Jerseys", "FAIL", 
+                            f"Delete failed with status {delete_response.status_code}: {delete_response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Collection Delete - Existing Jerseys", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_full_integration_flow_priority(self):
+        """Test PRIORITY INTEGRATION: Create jersey → Add to collection → Edit jersey → Remove from collection"""
+        try:
+            if not self.auth_token:
+                self.log_test("Full Integration Flow - Priority", "FAIL", "No auth token available")
+                return False
+            
+            # Step 1: Create a new jersey
+            jersey_payload = {
+                "team": "Arsenal FC",
+                "season": "2023-24",
+                "player": "Bukayo Saka",
+                "size": "M",
+                "condition": "excellent",
+                "manufacturer": "Adidas",
+                "home_away": "home",
+                "league": "Premier League",
+                "description": "Official Arsenal home jersey with Saka #7",
+                "images": ["https://example.com/arsenal-saka.jpg"]
+            }
+            
+            jersey_response = self.session.post(f"{self.base_url}/jerseys", json=jersey_payload)
+            
+            if jersey_response.status_code != 200:
+                self.log_test("Full Integration Flow - Priority", "FAIL", "Step 1: Jersey creation failed")
+                return False
+            
+            integration_jersey_id = jersey_response.json()["id"]
+            
+            # Step 2: Add to collection
+            collection_payload = {
+                "jersey_id": integration_jersey_id,
+                "collection_type": "owned"
+            }
+            
+            collection_response = self.session.post(f"{self.base_url}/collections", json=collection_payload)
+            
+            if collection_response.status_code != 200:
+                self.log_test("Full Integration Flow - Priority", "FAIL", "Step 2: Add to collection failed")
+                return False
+            
+            # Step 3: Edit jersey (test the PUT endpoint)
+            edit_payload = {
+                "team": "Arsenal FC",
+                "season": "2023-24",
+                "player": "Bukayo Saka",
+                "size": "L",  # Changed from M to L
+                "condition": "mint",  # Changed from excellent to mint
+                "manufacturer": "Adidas",
+                "home_away": "home",
+                "league": "Premier League",
+                "description": "UPDATED: Official Arsenal home jersey with Saka #7 - now in mint condition",
+                "images": ["https://example.com/arsenal-saka-updated.jpg"]
+            }
+            
+            edit_response = self.session.put(f"{self.base_url}/jerseys/{integration_jersey_id}", json=edit_payload)
+            
+            if edit_response.status_code != 200:
+                self.log_test("Full Integration Flow - Priority", "FAIL", f"Step 3: Jersey edit failed with status {edit_response.status_code}")
+                return False
+            
+            # Verify the edit worked
+            updated_jersey = edit_response.json()
+            if updated_jersey.get("size") != "L" or updated_jersey.get("condition") != "mint":
+                self.log_test("Full Integration Flow - Priority", "FAIL", "Step 3: Jersey edit not applied correctly")
+                return False
+            
+            # Step 4: Remove from collection
+            remove_response = self.session.delete(f"{self.base_url}/collections/{integration_jersey_id}")
+            
+            if remove_response.status_code != 200:
+                self.log_test("Full Integration Flow - Priority", "FAIL", f"Step 4: Remove from collection failed with status {remove_response.status_code}")
+                return False
+            
+            # Step 5: Verify removal by checking collections
+            verify_response = self.session.get(f"{self.base_url}/collections/owned")
+            
+            if verify_response.status_code == 200:
+                owned_after_removal = verify_response.json()
+                jersey_still_in_collection = any(item.get('jersey_id') == integration_jersey_id for item in owned_after_removal)
+                
+                if not jersey_still_in_collection:
+                    self.log_test("Full Integration Flow - Priority", "PASS", 
+                                f"✅ Complete integration flow successful: Create → Add → Edit (M→L, excellent→mint) → Remove")
+                    return True
+                else:
+                    self.log_test("Full Integration Flow - Priority", "FAIL", "Step 5: Jersey still in collection after removal")
+                    return False
+            else:
+                self.log_test("Full Integration Flow - Priority", "FAIL", "Step 5: Could not verify removal")
+                return False
+                
+        except Exception as e:
+            self.log_test("Full Integration Flow - Priority", "FAIL", f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests including new user workflow tests"""
         print("🚀 Starting TopKit Backend API Tests - NEW USER WORKFLOW FOCUS")
