@@ -66,30 +66,92 @@ const Header = ({ currentView, setCurrentView }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   return (
-    <header className="bg-black text-white shadow-2xl border-b border-gray-800">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <div className="flex items-center">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
-              alt="TopKit Logo"
-              className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setCurrentView('home')}
-            />
+    <>
+      {/* Main Header: Logo centré + Login à droite */}
+      <header className="bg-black text-white shadow-2xl border-b border-gray-800">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            {/* Espace gauche (pour équilibrer) */}
+            <div className="flex-1"></div>
+            
+            {/* Logo centré */}
+            <div className="flex justify-center flex-1">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+                alt="TopKit Logo"
+                className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setCurrentView('home')}
+                style={{ maxWidth: 'none', flexShrink: 0 }}
+              />
+            </div>
+            
+            {/* Login/Logout à droite */}
+            <div className="flex justify-end flex-1">
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    {user.picture && (
+                      <img 
+                        src={user.picture} 
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full border-2 border-gray-600"
+                      />
+                    )}
+                    <span className="text-sm text-gray-300">Welcome, <span className="text-white font-medium">{user.name}</span></span>
+                  </div>
+                  <button 
+                    onClick={logout}
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-600 text-sm font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                >
+                  Login / Sign Up
+                </button>
+              )}
+            </div>
           </div>
-          
-          {/* Navigation */}
-          <nav className="flex items-center space-x-8">
+        </div>
+        
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      </header>
+
+      {/* Navigation Bar: En dessous du header */}
+      <nav className="bg-gray-900 shadow-sm border-b border-gray-800">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-center items-center space-x-8 py-3">
+            <button 
+              onClick={() => setCurrentView('home')}
+              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                currentView === 'home' 
+                  ? 'bg-white text-black' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              Home
+            </button>
             <button 
               onClick={() => setCurrentView('jerseys')}
-              className="text-gray-300 hover:text-white transition-colors font-medium"
+              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                currentView === 'jerseys' 
+                  ? 'bg-white text-black' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              }`}
             >
-              Browse
+              Browse Jerseys
             </button>
             <button 
               onClick={() => setCurrentView('marketplace')}
-              className="text-gray-300 hover:text-white transition-colors font-medium"
+              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                currentView === 'marketplace' 
+                  ? 'bg-white text-black' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              }`}
             >
               Marketplace
             </button>
@@ -97,43 +159,30 @@ const Header = ({ currentView, setCurrentView }) => {
               <>
                 <button 
                   onClick={() => setCurrentView('collections')}
-                  className="text-gray-300 hover:text-white transition-colors font-medium"
+                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                    currentView === 'collections' 
+                      ? 'bg-white text-black' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
                 >
                   My Collection
                 </button>
                 <button 
                   onClick={() => setCurrentView('profile')}
-                  className="text-gray-300 hover:text-white transition-colors font-medium"
+                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                    currentView === 'profile' 
+                      ? 'bg-white text-black' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
                 >
                   Profile
                 </button>
               </>
             )}
-            
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-400">Welcome, {user.name}</span>
-                <button 
-                  onClick={logout}
-                  className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-600"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setShowAuthModal(true)}
-                className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-              >
-                Login / Sign Up
-              </button>
-            )}
-          </nav>
+          </div>
         </div>
-      </div>
-      
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </header>
+      </nav>
+    </>
   );
 };
 
