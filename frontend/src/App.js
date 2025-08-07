@@ -590,6 +590,20 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isCreatingNewJersey, setIsCreatingNewJersey] = useState(!jerseyId);
+  const [selectedLeague, setSelectedLeague] = useState(jersey?.league || '');
+  const [availableTeams, setAvailableTeams] = useState([]);
+
+  // Update available teams when league changes
+  useEffect(() => {
+    if (selectedLeague && LEAGUES_DATA[selectedLeague]) {
+      setAvailableTeams(LEAGUES_DATA[selectedLeague]);
+      if (!LEAGUES_DATA[selectedLeague].includes(formData.team)) {
+        setFormData({...formData, team: '', league: selectedLeague});
+      }
+    } else {
+      setAvailableTeams([]);
+    }
+  }, [selectedLeague]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
