@@ -1173,7 +1173,7 @@ const UserProfileModal = ({ userId, onClose }) => {
 
   const fetchUserJerseys = async () => {
     try {
-      const response = await axios.get(`${API}/users/${userId}/jerseys`);
+      const response = await axios.get(`${API}/api/users/${userId}/jerseys`);
       setUserJerseys(response.data);
     } catch (error) {
       console.error('Failed to fetch user jerseys:', error);
