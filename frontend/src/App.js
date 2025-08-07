@@ -631,7 +631,8 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
           home_away: formData.home_away,
           league: formData.league,
           description: `${formData.model} ${formData.color} jersey - ${formData.description}`,
-          images: formData.images
+          images: formData.images,
+          reference_code: formData.reference_code
         };
 
         const jerseyResponse = await axios.post(`${API}/api/jerseys`, jerseyData, {
