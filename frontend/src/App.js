@@ -1,4 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import './App.css';
 import axios from 'axios';
 
 // Football data for suggestions
