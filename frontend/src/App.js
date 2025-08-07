@@ -2346,7 +2346,7 @@ const App = () => {
         if (value) params.append(key, value);
       });
       
-      const response = await axios.get(`${API}/jerseys?${params.toString()}`);
+      const response = await axios.get(`${API}/api/jerseys?${params.toString()}`);
       setJerseys(response.data);
     } catch (error) {
       console.error('Failed to fetch jerseys:', error);
