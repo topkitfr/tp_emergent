@@ -787,6 +787,229 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
     </div>
   );
 };
+
+// Edit Jersey Modal Component
+const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
+  const [formData, setFormData] = useState({
+    team: jersey?.team || '',
+    season: jersey?.season || '',
+    player: jersey?.player || '',
+    size: jersey?.size || 'M',
+    condition: jersey?.condition || 'excellent',
+    manufacturer: jersey?.manufacturer || '',
+    home_away: jersey?.home_away || 'home',
+    league: jersey?.league || '',
+    description: jersey?.description || '',
+    images: jersey?.images || []
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please login to edit jerseys');
+      }
+
+      const response = await axios.put(`${API}/jerseys/${jersey.id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Jersey updated successfully!');
+      if (onJerseyUpdated) {
+        onJerseyUpdated(response.data);
+      }
+      onClose();
+    } catch (error) {
+      setError(error.response?.data?.detail || error.message || 'Failed to update jersey');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!jersey) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Edit Jersey</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Jersey Details */}
+          <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 text-white">Jersey Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Club/National Team*</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Manchester United"
+                  value={formData.team}
+                  onChange={(e) => setFormData({...formData, team: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Season*</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 2023-24"
+                  value={formData.season}
+                  onChange={(e) => setFormData({...formData, season: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Brand/Manufacturer*</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Nike, Adidas, Puma"
+                  value={formData.manufacturer}
+                  onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Premier League, La Liga"
+                  value={formData.league}
+                  onChange={(e) => setFormData({...formData, league: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Player Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Bruno Fernandes (optional)"
+                  value={formData.player}
+                  onChange={(e) => setFormData({...formData, player: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
+                <select
+                  value={formData.home_away}
+                  onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="home">Home</option>
+                  <option value="away">Away</option>
+                  <option value="third">Third Kit</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Size*</label>
+                <select
+                  value={formData.size}
+                  onChange={(e) => setFormData({...formData, size: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Condition*</label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="mint">Mint</option>
+                  <option value="excellent">Excellent</option>
+                  <option value="very_good">Very Good</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+              <textarea
+                placeholder="Describe the jersey condition, any special features, authenticity, etc."
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-24"
+              />
+            </div>
+
+            {/* Images */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">Jersey Photos</label>
+              <ImageUpload 
+                images={formData.images}
+                setImages={(images) => setFormData({...formData, images})}
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Upload high-quality photos of your jersey. First image will be the main photo.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-semibold"
+            >
+              {loading ? 'Updating Jersey...' : 'Update Jersey'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const AuthModal = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
