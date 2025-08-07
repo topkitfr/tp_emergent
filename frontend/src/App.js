@@ -2355,9 +2355,7 @@ const App = () => {
   };
 
   const handleRemoveFromCollection = async (jerseyId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Please login to manage your collection');
+    if (!requireAuth(() => {}, 'manage your collection')) {
       return;
     }
 
@@ -2365,6 +2363,7 @@ const App = () => {
       return;
     }
 
+    const token = localStorage.getItem('token');
     try {
       await axios.delete(`${API}/collections/${jerseyId}`, {
         headers: { Authorization: `Bearer ${token}` }
