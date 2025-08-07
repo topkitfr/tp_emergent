@@ -1618,6 +1618,12 @@ const CollectionsPage = () => {
     window.dispatchEvent(event);
   };
 
+  const handleEditJersey = (jersey) => {
+    // This will trigger the main app's edit jersey modal with the jersey data
+    const event = new CustomEvent('editJersey', { detail: jersey });
+    window.dispatchEvent(event);
+  };
+
   const handleAddNewJersey = () => {
     // This will trigger the main app's listing creation modal for creating a new jersey
     const event = new CustomEvent('addNewJersey');
