@@ -952,7 +952,7 @@ const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
         throw new Error('Please login to edit jerseys');
       }
 
-      const response = await axios.put(`${API}/jerseys/${jersey.id}`, formData, {
+      const response = await axios.put(`${API}/api/jerseys/${jersey.id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
