@@ -2542,44 +2542,6 @@ const App = () => {
       <div className="min-h-screen bg-black text-white">
         <Header currentView={currentView} setCurrentView={setCurrentView} />
         
-        {/* Navigation */}
-        <nav className="bg-gray-900 shadow-sm border-b border-gray-800">
-          <div className="container mx-auto px-6">
-            <div className="flex space-x-8">
-              <button
-                onClick={() => setCurrentView('home')}
-                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
-                  currentView === 'home' 
-                    ? 'border-white text-white' 
-                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-                }`}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => setCurrentView('jerseys')}
-                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
-                  currentView === 'jerseys' 
-                    ? 'border-white text-white' 
-                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-                }`}
-              >
-                Browse Jerseys
-              </button>
-              <button
-                onClick={() => setCurrentView('marketplace')}
-                className={`py-4 px-2 border-b-2 transition-colors font-medium ${
-                  currentView === 'marketplace' 
-                    ? 'border-white text-white' 
-                    : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-                }`}
-              >
-                Marketplace
-              </button>
-            </div>
-          </div>
-        </nav>
-
         {/* Main Content */}
         <main className="container mx-auto px-6 py-8">
           {renderContent()}
