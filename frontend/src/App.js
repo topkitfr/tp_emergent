@@ -72,7 +72,7 @@ const AuthProvider = ({ children }) => {
 
   const fetchProfile = async (token) => {
     try {
-      const response = await axios.get(`${API}/profile`, {
+      const response = await axios.get(`${API}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data.user);
