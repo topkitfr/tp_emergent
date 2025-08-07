@@ -195,6 +195,18 @@ backend:
         agent: "testing"
         comment: "✅ PASS - User profile endpoint working with authentication. Returns user details and stats (owned_jerseys, wanted_jerseys, active_listings counts). All required fields present."
 
+  - task: "Jersey Update Backend Endpoint"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Need to create PUT/PATCH endpoint for updating jersey details to support Edit Jersey functionality."
+
 frontend:
   - task: "Authentication UI with Dual Login Options"
     implemented: true
