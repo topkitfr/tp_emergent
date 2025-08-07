@@ -1930,6 +1930,7 @@ const CollectionsPage = () => {
               showEditButton={activeTab === 'owned'} // Only show edit button for owned jerseys
               onEditJersey={handleEditJersey}
               onClick={handleJerseyClick}
+              onCreatorClick={handleCreatorClick}
             />
           ))}
         </div>
