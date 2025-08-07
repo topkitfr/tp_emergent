@@ -777,8 +777,8 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                     value={formData.player}
                     onChange={(e) => setFormData({...formData, player: e.target.value})}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                  />
-                </div>
+                  <input
+                    type="text"
                     placeholder="e.g., Bruno Fernandes (optional)"
                     value={formData.player}
                     onChange={(e) => setFormData({...formData, player: e.target.value})}
@@ -787,15 +787,17 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Primary Color*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Red, Blue, Black"
-                    value={formData.color}
-                    onChange={(e) => setFormData({...formData, color: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
+                  <select
+                    value={formData.home_away}
+                    onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
-                  />
+                  >
+                    <option value="home">Home</option>
+                    <option value="away">Away</option>
+                    <option value="third">Third Kit</option>
+                  </select>
                 </div>
 
                 <div>
