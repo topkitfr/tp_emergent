@@ -475,7 +475,7 @@ const ContactSellerModal = ({ listing, onClose }) => {
 
   const fetchSellerInfo = async () => {
     try {
-      const response = await axios.get(`${API}/users/${listing.seller_id}/public`);
+      const response = await axios.get(`${API}/api/users/${listing.seller_id}/public`);
       setSellerInfo(response.data);
     } catch (error) {
       console.error('Failed to fetch seller info:', error);
