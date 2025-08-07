@@ -768,26 +768,17 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Premier League, La Liga"
-                    value={formData.league}
-                    onChange={(e) => setFormData({...formData, league: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                    required
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Player Name</label>
                   <input
                     type="text"
+                    placeholder="e.g., Bruno Fernandes (optional)"
+                    value={formData.player}
+                    onChange={(e) => setFormData({...formData, player: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  />
+                </div>
                     placeholder="e.g., Bruno Fernandes (optional)"
                     value={formData.player}
                     onChange={(e) => setFormData({...formData, player: e.target.value})}
