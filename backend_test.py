@@ -1753,13 +1753,16 @@ class TopKitAPITester:
             return False
 
     def run_all_tests(self):
-        """Run all backend tests including new user workflow tests"""
-        print("🚀 Starting TopKit Backend API Tests - NEW USER WORKFLOW FOCUS")
+        """Run all backend tests with focus on PRIORITY areas: Collection Delete, Jersey Update, Integration"""
+        print("🚀 Starting TopKit Backend API Tests - PRIORITY FOCUS")
+        print("🎯 PRIORITY 1: Collection Delete Functionality")
+        print("🎯 PRIORITY 2: Jersey Update Functionality") 
+        print("🎯 PRIORITY 3: Integration Testing")
         print("=" * 60)
         
         test_results = {}
         
-        # Authentication Tests (High Priority)
+        # Authentication Tests (Required for other tests)
         print("🔐 AUTHENTICATION TESTS")
         print("-" * 30)
         test_results['auth_register'] = self.test_custom_auth_registration()
@@ -1768,7 +1771,74 @@ class TopKitAPITester:
         test_results['emergent_auth'] = self.test_emergent_auth_redirect()
         test_results['jwt_validation'] = self.test_jwt_token_validation()
         
-        # NEW USER WORKFLOW TESTS (HIGHEST PRIORITY)
+        # PRIORITY TESTS - Collection Delete Functionality
+        print("🎯 PRIORITY 1: COLLECTION DELETE FUNCTIONALITY")
+        print("-" * 40)
+        test_results['remove_from_collection_authenticated'] = self.test_remove_from_collection_authenticated()
+        test_results['remove_from_collection_unauthenticated'] = self.test_remove_from_collection_unauthenticated()
+        test_results['remove_nonexistent_jersey'] = self.test_remove_nonexistent_jersey_from_collection()
+        test_results['remove_collection_integration_flow'] = self.test_remove_from_collection_integration_flow()
+        test_results['collection_delete_existing_jerseys'] = self.test_collection_delete_with_existing_jerseys()
+        
+        # PRIORITY TESTS - Jersey Update Functionality
+        print("🎯 PRIORITY 2: JERSEY UPDATE FUNCTIONALITY")
+        print("-" * 40)
+        test_results['jersey_update_endpoint'] = self.test_jersey_update_endpoint()
+        test_results['jersey_update_authorization'] = self.test_jersey_update_authorization()
+        test_results['jersey_update_nonexistent'] = self.test_jersey_update_nonexistent()
+        
+        # PRIORITY TESTS - Integration Testing
+        print("🎯 PRIORITY 3: INTEGRATION TESTING")
+        print("-" * 40)
+        test_results['full_integration_flow_priority'] = self.test_full_integration_flow_priority()
+        
+        # Jersey Database Tests (Required for integration)
+        print("⚽ JERSEY DATABASE TESTS")
+        print("-" * 30)
+        test_results['create_jersey'] = self.test_create_jersey()
+        test_results['get_jerseys'] = self.test_get_jerseys()
+        test_results['get_specific_jersey'] = self.test_get_specific_jersey()
+        
+        # Marketplace Tests (Required for integration)
+        print("🏪 MARKETPLACE TESTS")
+        print("-" * 30)
+        test_results['create_listing'] = self.test_create_listing()
+        test_results['get_listings'] = self.test_get_listings()
+        test_results['get_specific_listing'] = self.test_get_specific_listing()
+        
+        # Collections Tests (Additional coverage)
+        print("📚 COLLECTIONS TESTS (Additional)")
+        print("-" * 30)
+        test_results['add_to_collection'] = self.test_add_to_collection()
+        test_results['get_collections'] = self.test_get_user_collections()
+        
+        # Data Verification Tests
+        print("🗄️ DATA VERIFICATION TESTS")
+        print("-" * 30)
+        test_results['sample_data_verification'] = self.test_sample_data_verification()
+        
+        # Profile Tests
+        print("👤 PROFILE TESTS")
+        print("-" * 30)
+        test_results['user_profile'] = self.test_user_profile()
+        
+        # Payment Tests
+        print("💳 PAYMENT TESTS")
+        print("-" * 30)
+        test_results['payment_checkout'] = self.test_payment_checkout()
+        
+        # Jersey Valuation System Tests
+        print("💰 JERSEY VALUATION SYSTEM TESTS")
+        print("-" * 30)
+        test_results['jersey_valuation_endpoint'] = self.test_jersey_valuation_endpoint()
+        test_results['collection_valuations_endpoint'] = self.test_collection_valuations_endpoint()
+        test_results['profile_with_valuations'] = self.test_profile_with_valuations()
+        test_results['collector_price_estimate'] = self.test_collector_price_estimate()
+        test_results['market_trending_endpoint'] = self.test_market_trending_endpoint()
+        test_results['valuation_calculation_logic'] = self.test_valuation_calculation_logic()
+        test_results['listing_updates_valuation'] = self.test_listing_updates_valuation()
+        
+        # NEW USER WORKFLOW TESTS
         print("🎯 NEW USER WORKFLOW TESTS")
         print("-" * 30)
         test_results['new_workflow_jersey_creation'] = self.test_new_user_workflow_jersey_creation()
@@ -1779,56 +1849,6 @@ class TopKitAPITester:
         test_results['new_workflow_marketplace_functionality'] = self.test_new_user_workflow_marketplace_functionality()
         test_results['new_workflow_collections_centralized'] = self.test_new_user_workflow_collections_centralized_approach()
         test_results['new_workflow_profile_stats_only'] = self.test_new_user_workflow_profile_stats_only()
-        
-        # Jersey Database Tests (High Priority)
-        print("⚽ JERSEY DATABASE TESTS")
-        print("-" * 30)
-        test_results['create_jersey'] = self.test_create_jersey()
-        test_results['get_jerseys'] = self.test_get_jerseys()
-        test_results['get_specific_jersey'] = self.test_get_specific_jersey()
-        
-        # Marketplace Tests (High Priority)
-        print("🏪 MARKETPLACE TESTS")
-        print("-" * 30)
-        test_results['create_listing'] = self.test_create_listing()
-        test_results['get_listings'] = self.test_get_listings()
-        test_results['get_specific_listing'] = self.test_get_specific_listing()
-        
-        # Collections Tests (Medium Priority)
-        print("📚 COLLECTIONS TESTS")
-        print("-" * 30)
-        test_results['add_to_collection'] = self.test_add_to_collection()
-        test_results['get_collections'] = self.test_get_user_collections()
-        test_results['remove_from_collection_authenticated'] = self.test_remove_from_collection_authenticated()
-        test_results['remove_from_collection_unauthenticated'] = self.test_remove_from_collection_unauthenticated()
-        test_results['remove_nonexistent_jersey'] = self.test_remove_nonexistent_jersey_from_collection()
-        test_results['remove_collection_integration_flow'] = self.test_remove_from_collection_integration_flow()
-        
-        # Data Verification Tests (High Priority)
-        print("🗄️ DATA VERIFICATION TESTS")
-        print("-" * 30)
-        test_results['sample_data_verification'] = self.test_sample_data_verification()
-        
-        # Profile Tests (Medium Priority)
-        print("👤 PROFILE TESTS")
-        print("-" * 30)
-        test_results['user_profile'] = self.test_user_profile()
-        
-        # Payment Tests (Medium Priority)
-        print("💳 PAYMENT TESTS")
-        print("-" * 30)
-        test_results['payment_checkout'] = self.test_payment_checkout()
-        
-        # Jersey Valuation System Tests (High Priority)
-        print("💰 JERSEY VALUATION SYSTEM TESTS")
-        print("-" * 30)
-        test_results['jersey_valuation_endpoint'] = self.test_jersey_valuation_endpoint()
-        test_results['collection_valuations_endpoint'] = self.test_collection_valuations_endpoint()
-        test_results['profile_with_valuations'] = self.test_profile_with_valuations()
-        test_results['collector_price_estimate'] = self.test_collector_price_estimate()
-        test_results['market_trending_endpoint'] = self.test_market_trending_endpoint()
-        test_results['valuation_calculation_logic'] = self.test_valuation_calculation_logic()
-        test_results['listing_updates_valuation'] = self.test_listing_updates_valuation()
         
         # Summary
         print("📊 TEST SUMMARY")
@@ -1842,21 +1862,57 @@ class TopKitAPITester:
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
         
+        # Separate priority test results
+        priority_tests = {
+            'collection_delete': [
+                'remove_from_collection_authenticated',
+                'remove_from_collection_unauthenticated', 
+                'remove_nonexistent_jersey',
+                'remove_collection_integration_flow',
+                'collection_delete_existing_jerseys'
+            ],
+            'jersey_update': [
+                'jersey_update_endpoint',
+                'jersey_update_authorization',
+                'jersey_update_nonexistent'
+            ],
+            'integration': [
+                'full_integration_flow_priority'
+            ]
+        }
+        
+        print(f"\n🎯 PRIORITY TEST RESULTS:")
+        
+        for priority_name, test_names in priority_tests.items():
+            priority_passed = sum(1 for test_name in test_names if test_results.get(test_name, False))
+            priority_total = len(test_names)
+            priority_rate = (priority_passed/priority_total)*100 if priority_total > 0 else 0
+            
+            print(f"{priority_name.upper()}: {priority_passed}/{priority_total} ({priority_rate:.1f}%)")
+            for test_name in test_names:
+                status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+                print(f"  {test_name}: {status}")
+        
         # Separate new workflow results
         new_workflow_tests = {k: v for k, v in test_results.items() if k.startswith('new_workflow_')}
         new_workflow_passed = sum(1 for result in new_workflow_tests.values() if result)
         new_workflow_total = len(new_workflow_tests)
         
-        print(f"\n🎯 NEW USER WORKFLOW RESULTS:")
-        print(f"New Workflow Tests: {new_workflow_total}")
-        print(f"New Workflow Passed: {new_workflow_passed}")
-        print(f"New Workflow Success Rate: {(new_workflow_passed/new_workflow_total)*100:.1f}%")
+        if new_workflow_total > 0:
+            print(f"\n🎯 NEW USER WORKFLOW RESULTS:")
+            print(f"New Workflow Tests: {new_workflow_total}")
+            print(f"New Workflow Passed: {new_workflow_passed}")
+            print(f"New Workflow Success Rate: {(new_workflow_passed/new_workflow_total)*100:.1f}%")
         
         print("\nDetailed Results:")
         for test_name, result in test_results.items():
             status = "✅ PASS" if result else "❌ FAIL"
-            priority = "🎯 HIGH" if test_name.startswith('new_workflow_') else ""
-            print(f"  {test_name}: {status} {priority}")
+            priority_marker = ""
+            if any(test_name in tests for tests in priority_tests.values()):
+                priority_marker = "🎯 PRIORITY"
+            elif test_name.startswith('new_workflow_'):
+                priority_marker = "🔄 WORKFLOW"
+            print(f"  {test_name}: {status} {priority_marker}")
         
         return test_results
 
