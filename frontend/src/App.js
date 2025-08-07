@@ -492,7 +492,7 @@ const ContactSellerModal = ({ listing, onClose }) => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/messages`, {
+      await axios.post(`${API}/api/messages`, {
         recipient_id: listing.seller_id,
         listing_id: listing.id,
         message: message.trim()
