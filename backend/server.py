@@ -98,6 +98,7 @@ class Jersey(BaseModel):
     league: str
     description: str
     images: List[str] = []
+    reference_code: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
 
