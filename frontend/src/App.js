@@ -777,12 +777,8 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                     value={formData.player}
                     onChange={(e) => setFormData({...formData, player: e.target.value})}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                  <input
-                    type="text"
-                    placeholder="e.g., Bruno Fernandes (optional)"
-                    value={formData.player}
-                    onChange={(e) => setFormData({...formData, player: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                  />
+                </div>
                   />
                 </div>
 
