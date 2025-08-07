@@ -369,6 +369,8 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Edit Jersey Functionality"
+    - "Jersey Update Backend Endpoint"
     - "New User Workflow Testing - Jersey Creation → Collection → Listing"
     - "Complete Data Flow Integrity Verification"
   stuck_tasks: []
