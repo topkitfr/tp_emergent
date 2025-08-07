@@ -647,6 +647,11 @@ async def get_jerseys(
     ]
     
     jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields to avoid serialization issues
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
     return jerseys
 
 @api_router.get("/jerseys/{jersey_id}", response_model=Jersey)
