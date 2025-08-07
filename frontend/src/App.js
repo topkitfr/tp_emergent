@@ -1773,6 +1773,17 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
           </div>
         )}
 
+        {showEditButton && (
+          <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEditJersey(jersey); }}
+              className="w-full bg-blue-900 text-blue-300 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm font-semibold border border-blue-700"
+            >
+              Edit Jersey
+            </button>
+          </div>
+        )}
+
         {showRemove && (
           <div className="mt-4" onClick={(e) => e.stopPropagation()}>
             <button 
