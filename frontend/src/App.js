@@ -1635,7 +1635,7 @@ const ProfilePage = () => {
   const fetchProfileData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/profile`, {
+      const response = await axios.get(`${API}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfileData(response.data);
