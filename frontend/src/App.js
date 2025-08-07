@@ -2420,7 +2420,7 @@ const App = () => {
 
     const token = localStorage.getItem('token');
     try {
-      await axios.post(`${API}/collections`, 
+      await axios.post(`${API}/api/collections`, 
         { jersey_id: jerseyId, collection_type: collectionType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
