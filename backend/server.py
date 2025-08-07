@@ -176,6 +176,7 @@ class JerseyCreate(BaseModel):
     league: str
     description: str
     images: List[str] = []
+    reference_code: Optional[str] = None
 
 class ListingCreate(BaseModel):
     jersey_id: str
