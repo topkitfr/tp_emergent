@@ -1926,7 +1926,7 @@ const CollectionsPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/collections/${activeTab}`, {
+      const response = await axios.get(`${API}/api/collections/${activeTab}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCollections(response.data);
