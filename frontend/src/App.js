@@ -648,7 +648,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         images: formData.images
       };
 
-      await axios.post(`${API}/listings`, listingData, {
+      await axios.post(`${API}/api/listings`, listingData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
