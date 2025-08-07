@@ -1710,6 +1710,8 @@ const CollectionsPage = () => {
               onRemoveFromCollection={handleRemoveFromCollection}
               showSellButton={activeTab === 'owned'} // Only show sell button for owned jerseys
               onSellJersey={handleSellJersey}
+              showEditButton={activeTab === 'owned'} // Only show edit button for owned jerseys
+              onEditJersey={handleEditJersey}
               onClick={handleJerseyClick}
             />
           ))}
