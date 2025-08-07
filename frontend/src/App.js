@@ -681,7 +681,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Toggle for new jersey creation */}
+          <>
           {jerseyId && (
             <div className="bg-gray-800 p-4 rounded-lg mb-4 border border-gray-700">
               <label className="flex items-center space-x-2">
