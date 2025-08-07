@@ -1032,6 +1032,11 @@ async def get_user_created_jerseys(user_id: str, skip: int = 0, limit: int = 20)
     ]
     
     jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields to avoid serialization issues
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
     return jerseys
 
 
