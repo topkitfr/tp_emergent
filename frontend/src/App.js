@@ -701,37 +701,73 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
               <h3 className="text-lg font-semibold mb-4 text-white">Jersey Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
+                  <select
+                    value={selectedLeague}
+                    onChange={(e) => setSelectedLeague(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                    required
+                  >
+                    <option value="">Select League</option>
+                    {Object.keys(LEAGUES_DATA).map(league => (
+                      <option key={league} value={league}>{league}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Club/National Team*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Manchester United"
+                  <select
                     value={formData.team}
                     onChange={(e) => setFormData({...formData, team: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
-                  />
+                    disabled={!selectedLeague}
+                  >
+                    <option value="">Select Team</option>
+                    {availableTeams.map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Season*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., 2023-24"
+                  <select
                     value={formData.season}
                     onChange={(e) => setFormData({...formData, season: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
                     required
-                  />
+                  >
+                    <option value="">Select Season</option>
+                    {SEASONS.map(season => (
+                      <option key={season} value={season}>{season}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Brand/Manufacturer*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Nike, Adidas, Puma"
+                  <select
                     value={formData.manufacturer}
                     onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                    required
+                  >
+                    <option value="">Select Brand</option>
+                    <option value="Adidas">Adidas</option>
+                    <option value="Nike">Nike</option>
+                    <option value="Puma">Puma</option>
+                    <option value="New Balance">New Balance</option>
+                    <option value="Under Armour">Under Armour</option>
+                    <option value="Hummel">Hummel</option>
+                    <option value="Kappa">Kappa</option>
+                    <option value="Umbro">Umbro</option>
+                    <option value="Macron">Macron</option>
+                    <option value="Errea">Errea</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
                     required
                   />
                 </div>
