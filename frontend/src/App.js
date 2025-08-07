@@ -1,9 +1,57 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import './App.css';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Football data for suggestions
+const LEAGUES_DATA = {
+  'Premier League': [
+    'Arsenal FC', 'Aston Villa', 'Brighton & Hove Albion', 'Burnley', 'Chelsea FC', 'Crystal Palace', 
+    'Everton', 'Fulham', 'Liverpool FC', 'Luton Town', 'Manchester City', 'Manchester United', 
+    'Newcastle United', 'Nottingham Forest', 'Sheffield United', 'Tottenham Hotspur', 'West Ham United', 'Wolverhampton Wanderers'
+  ],
+  'La Liga': [
+    'Athletic Bilbao', 'Atletico Madrid', 'FC Barcelona', 'Real Betis', 'Celta Vigo', 'Deportivo Alaves', 
+    'Getafe CF', 'Girona FC', 'Granada CF', 'Las Palmas', 'Mallorca', 'Osasuna', 'Rayo Vallecano', 
+    'Real Madrid', 'Real Sociedad', 'Sevilla FC', 'Valencia CF', 'Villarreal CF'
+  ],
+  'Serie A': [
+    'AC Milan', 'AS Roma', 'Atalanta', 'Bologna', 'Cagliari', 'Empoli', 'Fiorentina', 'Frosinone', 
+    'Genoa', 'Hellas Verona', 'Inter Milan', 'Juventus', 'Lazio', 'Lecce', 'Monza', 'Napoli', 
+    'Salernitana', 'Sassuolo', 'Torino', 'Udinese'
+  ],
+  'Bundesliga': [
+    'FC Augsburg', 'Bayer Leverkusen', 'Bayern Munich', 'Borussia Dortmund', 'Borussia Monchengladbach', 
+    'Eintracht Frankfurt', 'SC Freiburg', 'FC Heidenheim', 'TSG Hoffenheim', 'FC Koln', 'RB Leipzig', 
+    'Mainz 05', 'SV Darmstadt 98', 'Union Berlin', 'VfB Stuttgart', 'VfL Bochum', 'VfL Wolfsburg', 'Werder Bremen'
+  ],
+  'Ligue 1': [
+    'AS Monaco', 'Brest', 'Clermont Foot', 'FC Lorient', 'FC Metz', 'Lille OSC', 'Le Havre', 
+    'Lens', 'Lyon', 'Marseille', 'Montpellier', 'Nantes', 'Nice', 'Paris Saint-Germain', 
+    'Reims', 'Rennes', 'Strasbourg', 'Toulouse FC'
+  ],
+  'Champions League': [
+    'All European clubs participating'
+  ],
+  'Europa League': [
+    'All European clubs participating'  
+  ],
+  'World Cup': [
+    'Argentina', 'Australia', 'Belgium', 'Brazil', 'Croatia', 'Denmark', 'England', 'France', 
+    'Germany', 'Italy', 'Japan', 'Mexico', 'Morocco', 'Netherlands', 'Poland', 'Portugal', 
+    'Qatar', 'Senegal', 'South Korea', 'Spain', 'Switzerland', 'United States'
+  ],
+  'Euro Championship': [
+    'Austria', 'Belgium', 'Croatia', 'Czech Republic', 'Denmark', 'England', 'France', 'Germany', 
+    'Hungary', 'Italy', 'Netherlands', 'Poland', 'Portugal', 'Slovakia', 'Slovenia', 'Spain', 
+    'Switzerland', 'Turkey', 'Ukraine'
+  ]
+};
+
+const SEASONS = [
+  '25/26', '24/25', '23/24', '22/23', '21/22', '20/21', '19/20', '18/19', '17/18', '16/17', 
+  '15/16', '14/15', '13/14', '12/13', '11/12', '10/11', '09/10', '08/09', '07/08', '06/07'
+];
+
+const API = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
 
 // Auth Context
 const AuthContext = createContext();
