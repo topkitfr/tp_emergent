@@ -2258,14 +2258,21 @@ const App = () => {
       setShowEditJersey(true);
     };
 
+    const handleShowUserProfile = (event) => {
+      setSelectedUserId(event.detail);
+      setShowUserProfile(true);
+    };
+
     window.addEventListener('sellJersey', handleSellJersey);
     window.addEventListener('addNewJersey', handleAddNewJersey);
     window.addEventListener('editJersey', handleEditJersey);
+    window.addEventListener('showUserProfile', handleShowUserProfile);
     
     return () => {
       window.removeEventListener('sellJersey', handleSellJersey);
       window.removeEventListener('addNewJersey', handleAddNewJersey);
       window.removeEventListener('editJersey', handleEditJersey);
+      window.removeEventListener('showUserProfile', handleShowUserProfile);
     };
   }, []);
 
