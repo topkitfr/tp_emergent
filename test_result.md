@@ -318,11 +318,11 @@ frontend:
 
   - task: "Remove From Collection Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
@@ -333,6 +333,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ PASS - Remove From Collection functionality fully tested and working perfectly! Comprehensive testing completed with 100% success rate (6/6 focused tests passed). Key features verified: ✅ DELETE endpoint /api/collections/{jersey_id} working correctly for authenticated users ✅ Successfully removes jerseys from both owned and wanted collections ✅ Proper authentication required - correctly rejects unauthenticated requests with 403 status ✅ Edge cases handled properly - returns 404 for non-existent jerseys and jerseys not in collection ✅ Sample data verification confirmed - database contains 15 jerseys and 17 listings ✅ Complete integration flow tested: GET collections → DELETE jersey → GET collections again to verify removal. Test scenarios verified: Liverpool FC 2023-24 Salah jersey successfully removed from both owned and wanted collections. Backend endpoint working as expected at /api/collections/{jersey_id} (not /api/collections/remove as mentioned in test plan). All authentication, authorization, and data integrity checks passing. The recent bug fix by main agent has resolved the collection delete functionality completely."
+      - working: false
+        agent: "user" 
+        comment: "User reports: 'the delete button doesn't work, fix this' - Despite previous testing success, user still experiencing issues with collection delete functionality. Need to investigate and retest."
 
 metadata:
   created_by: "main_agent"
