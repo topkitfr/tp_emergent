@@ -1010,6 +1010,223 @@ const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
   );
 };
 
+// User Profile Modal Component
+const UserProfileModal = ({ userId, onClose }) => {
+  const [userProfile, setUserProfile] = useState(null);
+  const [userJerseys, setUserJerseys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('profile');
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+      fetchUserJerseys();
+    }
+  }, [userId]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get(`${API}/users/${userId}/profile`);
+      setUserProfile(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserJerseys = async () => {
+    try {
+      const response = await axios.get(`${API}/users/${userId}/jerseys`);
+      setUserJerseys(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user jerseys:', error);
+      setUserJerseys([]);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-xl max-w-4xl w-full border border-gray-800 p-8">
+          <div className="text-center py-8 text-gray-400">Loading user profile...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-xl max-w-md w-full border border-gray-800 p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white">User Profile</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">✕</button>
+          </div>
+          <div className="text-center py-8 text-red-400">User profile not found</div>
+        </div>
+      </div>
+    );
+  }
+
+  const isPrivate = userProfile.profile_privacy === 'private';
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center p-6 border-b border-gray-800">
+          <h2 className="text-2xl font-bold text-white">User Profile</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">✕</button>
+        </div>
+
+        <div className="p-6">
+          {/* User Profile Header */}
+          <div className="flex items-center space-x-6 mb-8">
+            {userProfile.picture && (
+              <img 
+                src={userProfile.picture} 
+                alt={userProfile.name}
+                className="w-20 h-20 rounded-full border-4 border-gray-700"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-white">{userProfile.name}</h1>
+              <div className="flex items-center space-x-3 mt-2">
+                <span className="inline-block bg-gray-800 text-white text-xs px-2 py-1 rounded-full border border-gray-600">
+                  {userProfile.provider} user
+                </span>
+                <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                  isPrivate 
+                    ? 'bg-red-900 text-red-300 border border-red-700' 
+                    : 'bg-green-900 text-green-300 border border-green-700'
+                }`}>
+                  {isPrivate ? 'Private Profile' : 'Public Profile'}
+                </span>
+              </div>
+              {userProfile.created_at && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Member since {new Date(userProfile.created_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {isPrivate ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-2xl font-bold text-white mb-4">Private Profile</h2>
+              <p className="text-gray-400">{userProfile.message}</p>
+            </div>
+          ) : (
+            <>
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {userProfile.stats?.jerseys_created || 0}
+                  </div>
+                  <div className="text-gray-300 text-sm">Jerseys Created</div>
+                </div>
+                <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {userProfile.stats?.owned_jerseys || 0}
+                  </div>
+                  <div className="text-gray-300 text-sm">Owned</div>
+                </div>
+                <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {userProfile.stats?.wanted_jerseys || 0}
+                  </div>
+                  <div className="text-gray-300 text-sm">Wanted</div>
+                </div>
+                <div className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {userProfile.stats?.active_listings || 0}
+                  </div>
+                  <div className="text-gray-300 text-sm">Active Listings</div>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700 mb-6">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`px-4 py-2 rounded-lg transition-colors flex-1 ${
+                    activeTab === 'profile'
+                      ? 'bg-white text-black'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Profile Info
+                </button>
+                <button
+                  onClick={() => setActiveTab('jerseys')}
+                  className={`px-4 py-2 rounded-lg transition-colors flex-1 ${
+                    activeTab === 'jerseys'
+                      ? 'bg-white text-black'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Created Jerseys ({userJerseys.length})
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              {activeTab === 'profile' && (
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
+                  <div className="space-y-3 text-gray-300">
+                    <div>
+                      <span className="text-gray-400">Name:</span>
+                      <span className="ml-2 text-white">{userProfile.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Account Type:</span>
+                      <span className="ml-2 text-white">{userProfile.provider} account</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Profile Visibility:</span>
+                      <span className="ml-2 text-white">{userProfile.profile_privacy}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Member Since:</span>
+                      <span className="ml-2 text-white">
+                        {userProfile.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'jerseys' && (
+                <div>
+                  {userJerseys.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {userJerseys.map((jersey) => (
+                        <JerseyCard 
+                          key={jersey.id}
+                          jersey={jersey}
+                          onClick={() => {}}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4">👕</div>
+                      <h3 className="text-xl font-bold text-white mb-4">No jerseys created</h3>
+                      <p className="text-gray-400">This user hasn't created any jerseys yet.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AuthModal = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
