@@ -902,6 +902,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
               </p>
             </div>
           </div>
+          </>
 
           <div className="flex space-x-4 pt-4">
             <button
