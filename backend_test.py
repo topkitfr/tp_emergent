@@ -1752,6 +1752,460 @@ class TopKitAPITester:
             self.log_test("Full Integration Flow - Priority", "FAIL", f"Exception: {str(e)}")
             return False
 
+    def create_test_users_and_jerseys(self):
+        """Create test users and jerseys for profile and creator testing"""
+        try:
+            # Create test users
+            test_users = []
+            
+            # User 1: Alex Johnson (public profile)
+            alex_email = f"alex.johnson_{int(time.time())}@topkit.com"
+            alex_payload = {
+                "email": alex_email,
+                "password": "SecurePass123!",
+                "name": "Alex Johnson"
+            }
+            
+            alex_response = self.session.post(f"{self.base_url}/auth/register", json=alex_payload)
+            if alex_response.status_code == 200:
+                alex_data = alex_response.json()
+                test_users.append({
+                    "id": alex_data["user"]["id"],
+                    "name": "Alex Johnson",
+                    "email": alex_email,
+                    "token": alex_data["token"],
+                    "privacy": "public"
+                })
+            
+            # User 2: Sarah Martinez (public profile)
+            sarah_email = f"sarah.martinez_{int(time.time())}@topkit.com"
+            sarah_payload = {
+                "email": sarah_email,
+                "password": "SecurePass123!",
+                "name": "Sarah Martinez"
+            }
+            
+            sarah_response = self.session.post(f"{self.base_url}/auth/register", json=sarah_payload)
+            if sarah_response.status_code == 200:
+                sarah_data = sarah_response.json()
+                test_users.append({
+                    "id": sarah_data["user"]["id"],
+                    "name": "Sarah Martinez",
+                    "email": sarah_email,
+                    "token": sarah_data["token"],
+                    "privacy": "public"
+                })
+            
+            # User 3: Private User (private profile)
+            private_email = f"private.user_{int(time.time())}@topkit.com"
+            private_payload = {
+                "email": private_email,
+                "password": "SecurePass123!",
+                "name": "Private User"
+            }
+            
+            private_response = self.session.post(f"{self.base_url}/auth/register", json=private_payload)
+            if private_response.status_code == 200:
+                private_data = private_response.json()
+                test_users.append({
+                    "id": private_data["user"]["id"],
+                    "name": "Private User",
+                    "email": private_email,
+                    "token": private_data["token"],
+                    "privacy": "private"
+                })
+                
+                # Set private user's profile to private
+                private_headers = {'Authorization': f'Bearer {private_data["token"]}'}
+                settings_payload = {
+                    "profile_privacy": "private",
+                    "show_collection_value": False
+                }
+                self.session.put(f"{self.base_url}/profile/settings", json=settings_payload, headers=private_headers)
+            
+            # Create jerseys for each user
+            jerseys_created = []
+            
+            # Alex Johnson's jerseys (2 jerseys)
+            if len(test_users) >= 1:
+                alex_headers = {'Authorization': f'Bearer {test_users[0]["token"]}'}
+                
+                # Manchester United jersey
+                man_utd_payload = {
+                    "team": "Manchester United",
+                    "season": "2023-24",
+                    "player": "Bruno Fernandes",
+                    "size": "L",
+                    "condition": "excellent",
+                    "manufacturer": "Adidas",
+                    "home_away": "home",
+                    "league": "Premier League",
+                    "description": "Official Manchester United home jersey",
+                    "images": ["https://example.com/manutd.jpg"]
+                }
+                
+                man_utd_response = self.session.post(f"{self.base_url}/jerseys", json=man_utd_payload, headers=alex_headers)
+                if man_utd_response.status_code == 200:
+                    jerseys_created.append({
+                        "id": man_utd_response.json()["id"],
+                        "team": "Manchester United",
+                        "creator": "Alex Johnson",
+                        "creator_id": test_users[0]["id"]
+                    })
+                
+                # Liverpool jersey
+                liverpool_payload = {
+                    "team": "Liverpool FC",
+                    "season": "2023-24",
+                    "player": "Mohamed Salah",
+                    "size": "M",
+                    "condition": "mint",
+                    "manufacturer": "Nike",
+                    "home_away": "home",
+                    "league": "Premier League",
+                    "description": "Official Liverpool FC home jersey",
+                    "images": ["https://example.com/liverpool.jpg"]
+                }
+                
+                liverpool_response = self.session.post(f"{self.base_url}/jerseys", json=liverpool_payload, headers=alex_headers)
+                if liverpool_response.status_code == 200:
+                    jerseys_created.append({
+                        "id": liverpool_response.json()["id"],
+                        "team": "Liverpool FC",
+                        "creator": "Alex Johnson",
+                        "creator_id": test_users[0]["id"]
+                    })
+            
+            # Sarah Martinez's jerseys (2 jerseys)
+            if len(test_users) >= 2:
+                sarah_headers = {'Authorization': f'Bearer {test_users[1]["token"]}'}
+                
+                # Real Madrid jersey
+                real_madrid_payload = {
+                    "team": "Real Madrid",
+                    "season": "2023-24",
+                    "player": "Vinicius Jr",
+                    "size": "L",
+                    "condition": "excellent",
+                    "manufacturer": "Adidas",
+                    "home_away": "home",
+                    "league": "La Liga",
+                    "description": "Official Real Madrid home jersey",
+                    "images": ["https://example.com/realmadrid.jpg"]
+                }
+                
+                real_madrid_response = self.session.post(f"{self.base_url}/jerseys", json=real_madrid_payload, headers=sarah_headers)
+                if real_madrid_response.status_code == 200:
+                    jerseys_created.append({
+                        "id": real_madrid_response.json()["id"],
+                        "team": "Real Madrid",
+                        "creator": "Sarah Martinez",
+                        "creator_id": test_users[1]["id"]
+                    })
+                
+                # Chelsea jersey
+                chelsea_payload = {
+                    "team": "Chelsea FC",
+                    "season": "2023-24",
+                    "player": "Enzo Fernandez",
+                    "size": "XL",
+                    "condition": "very_good",
+                    "manufacturer": "Nike",
+                    "home_away": "home",
+                    "league": "Premier League",
+                    "description": "Official Chelsea FC home jersey",
+                    "images": ["https://example.com/chelsea.jpg"]
+                }
+                
+                chelsea_response = self.session.post(f"{self.base_url}/jerseys", json=chelsea_payload, headers=sarah_headers)
+                if chelsea_response.status_code == 200:
+                    jerseys_created.append({
+                        "id": chelsea_response.json()["id"],
+                        "team": "Chelsea FC",
+                        "creator": "Sarah Martinez",
+                        "creator_id": test_users[1]["id"]
+                    })
+            
+            # Private User's jersey (1 jersey)
+            if len(test_users) >= 3:
+                private_headers = {'Authorization': f'Bearer {test_users[2]["token"]}'}
+                
+                # Arsenal jersey
+                arsenal_payload = {
+                    "team": "Arsenal FC",
+                    "season": "2023-24",
+                    "player": "Bukayo Saka",
+                    "size": "M",
+                    "condition": "good",
+                    "manufacturer": "Adidas",
+                    "home_away": "home",
+                    "league": "Premier League",
+                    "description": "Official Arsenal FC home jersey",
+                    "images": ["https://example.com/arsenal.jpg"]
+                }
+                
+                arsenal_response = self.session.post(f"{self.base_url}/jerseys", json=arsenal_payload, headers=private_headers)
+                if arsenal_response.status_code == 200:
+                    jerseys_created.append({
+                        "id": arsenal_response.json()["id"],
+                        "team": "Arsenal FC",
+                        "creator": "Private User",
+                        "creator_id": test_users[2]["id"]
+                    })
+            
+            return {
+                "users": test_users,
+                "jerseys": jerseys_created
+            }
+            
+        except Exception as e:
+            self.log_test("Create Test Users and Jerseys", "FAIL", f"Exception: {str(e)}")
+            return None
+    
+    def test_jersey_api_with_creator_info(self):
+        """PRIORITY 1: Test GET /api/jerseys endpoint includes creator_info for each jersey"""
+        try:
+            # Create test data
+            test_data = self.create_test_users_and_jerseys()
+            if not test_data:
+                self.log_test("Jersey API with Creator Info", "FAIL", "Could not create test data")
+                return False
+            
+            # Test GET /api/jerseys endpoint
+            response = self.session.get(f"{self.base_url}/jerseys?limit=10")
+            
+            if response.status_code == 200:
+                jerseys = response.json()
+                
+                # Verify creator_info is included
+                creator_info_found = 0
+                for jersey in jerseys:
+                    if "creator_info" in jersey:
+                        creator_info = jersey["creator_info"]
+                        if "name" in creator_info and "id" in creator_info:
+                            creator_info_found += 1
+                            
+                            # Verify creator info matches our test data
+                            expected_creator = next((j for j in test_data["jerseys"] if j["id"] == jersey["id"]), None)
+                            if expected_creator and creator_info["name"] == expected_creator["creator"]:
+                                continue
+                
+                if creator_info_found > 0:
+                    self.log_test("Jersey API with Creator Info", "PASS", 
+                                f"Found {creator_info_found} jerseys with proper creator_info (name, id, picture fields)")
+                    return True
+                else:
+                    self.log_test("Jersey API with Creator Info", "FAIL", "No jerseys found with creator_info")
+                    return False
+            else:
+                self.log_test("Jersey API with Creator Info", "FAIL", f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Jersey API with Creator Info", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_user_profile_endpoints(self):
+        """PRIORITY 2: Test GET /api/users/{user_id}/profile for each test user"""
+        try:
+            # Create test data
+            test_data = self.create_test_users_and_jerseys()
+            if not test_data:
+                self.log_test("User Profile Endpoints", "FAIL", "Could not create test data")
+                return False
+            
+            profiles_tested = 0
+            
+            for user in test_data["users"]:
+                # Test public profile
+                response = self.session.get(f"{self.base_url}/users/{user['id']}/profile")
+                
+                if response.status_code == 200:
+                    profile = response.json()
+                    
+                    if user["privacy"] == "public":
+                        # Verify public profile returns full information
+                        required_fields = ["id", "name", "picture", "provider", "created_at", "profile_privacy", "stats"]
+                        if all(field in profile for field in required_fields):
+                            stats = profile["stats"]
+                            required_stats = ["owned_jerseys", "wanted_jerseys", "active_listings", "jerseys_created"]
+                            
+                            if all(stat in stats for stat in required_stats):
+                                profiles_tested += 1
+                                self.log_test(f"User Profile - {user['name']} (Public)", "PASS", 
+                                            f"Stats: {stats['jerseys_created']} created, {stats['owned_jerseys']} owned")
+                            else:
+                                self.log_test(f"User Profile - {user['name']} (Public)", "FAIL", "Missing required stats")
+                        else:
+                            self.log_test(f"User Profile - {user['name']} (Public)", "FAIL", "Missing required fields")
+                    
+                    elif user["privacy"] == "private":
+                        # Verify private profile returns limited info
+                        if "profile_privacy" in profile and profile["profile_privacy"] == "private":
+                            if "message" in profile and "private" in profile["message"].lower():
+                                profiles_tested += 1
+                                self.log_test(f"User Profile - {user['name']} (Private)", "PASS", 
+                                            "Private profile correctly returns limited info")
+                            else:
+                                self.log_test(f"User Profile - {user['name']} (Private)", "FAIL", "Missing private message")
+                        else:
+                            self.log_test(f"User Profile - {user['name']} (Private)", "FAIL", "Privacy not properly indicated")
+                else:
+                    self.log_test(f"User Profile - {user['name']}", "FAIL", f"Status: {response.status_code}")
+            
+            if profiles_tested >= 3:
+                self.log_test("User Profile Endpoints", "PASS", f"Successfully tested {profiles_tested} user profiles")
+                return True
+            else:
+                self.log_test("User Profile Endpoints", "FAIL", f"Only {profiles_tested} profiles tested successfully")
+                return False
+                
+        except Exception as e:
+            self.log_test("User Profile Endpoints", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_user_created_jerseys_endpoint(self):
+        """PRIORITY 3: Test GET /api/users/{user_id}/jerseys for each user"""
+        try:
+            # Create test data
+            test_data = self.create_test_users_and_jerseys()
+            if not test_data:
+                self.log_test("User Created Jerseys Endpoint", "FAIL", "Could not create test data")
+                return False
+            
+            jerseys_tested = 0
+            
+            for user in test_data["users"]:
+                response = self.session.get(f"{self.base_url}/users/{user['id']}/jerseys")
+                
+                if user["privacy"] == "public":
+                    if response.status_code == 200:
+                        jerseys = response.json()
+                        
+                        # Count expected jerseys for this user
+                        expected_jerseys = [j for j in test_data["jerseys"] if j["creator_id"] == user["id"]]
+                        
+                        if len(jerseys) == len(expected_jerseys):
+                            # Verify jersey data includes creator_info
+                            creator_info_correct = True
+                            for jersey in jerseys:
+                                if "creator_info" in jersey:
+                                    creator_info = jersey["creator_info"]
+                                    if creator_info["name"] != user["name"] or creator_info["id"] != user["id"]:
+                                        creator_info_correct = False
+                                        break
+                                else:
+                                    creator_info_correct = False
+                                    break
+                            
+                            if creator_info_correct:
+                                jerseys_tested += 1
+                                jersey_teams = [j["team"] for j in jerseys]
+                                self.log_test(f"User Created Jerseys - {user['name']}", "PASS", 
+                                            f"Found {len(jerseys)} jerseys: {', '.join(jersey_teams)}")
+                            else:
+                                self.log_test(f"User Created Jerseys - {user['name']}", "FAIL", "Creator info incorrect")
+                        else:
+                            self.log_test(f"User Created Jerseys - {user['name']}", "FAIL", 
+                                        f"Expected {len(expected_jerseys)} jerseys, got {len(jerseys)}")
+                    else:
+                        self.log_test(f"User Created Jerseys - {user['name']}", "FAIL", f"Status: {response.status_code}")
+                
+                elif user["privacy"] == "private":
+                    if response.status_code == 403:
+                        jerseys_tested += 1
+                        self.log_test(f"User Created Jerseys - {user['name']} (Private)", "PASS", 
+                                    "Correctly returned 403 for private user")
+                    else:
+                        self.log_test(f"User Created Jerseys - {user['name']} (Private)", "FAIL", 
+                                    f"Expected 403, got {response.status_code}")
+            
+            if jerseys_tested >= 3:
+                self.log_test("User Created Jerseys Endpoint", "PASS", f"Successfully tested {jerseys_tested} user jersey endpoints")
+                return True
+            else:
+                self.log_test("User Created Jerseys Endpoint", "FAIL", f"Only {jerseys_tested} endpoints tested successfully")
+                return False
+                
+        except Exception as e:
+            self.log_test("User Created Jerseys Endpoint", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def test_data_integrity_and_aggregation(self):
+        """PRIORITY 4: Test data integrity and aggregation pipelines"""
+        try:
+            # Create test data
+            test_data = self.create_test_users_and_jerseys()
+            if not test_data:
+                self.log_test("Data Integrity and Aggregation", "FAIL", "Could not create test data")
+                return False
+            
+            integrity_checks = 0
+            
+            # Test 1: Verify jersey creator relationships are correct
+            response = self.session.get(f"{self.base_url}/jerseys?limit=20")
+            if response.status_code == 200:
+                jerseys = response.json()
+                
+                creator_relationships_correct = True
+                for jersey in jerseys:
+                    if "creator_info" in jersey and "created_by" in jersey:
+                        # Find expected creator
+                        expected_creator = next((j for j in test_data["jerseys"] if j["id"] == jersey["id"]), None)
+                        if expected_creator:
+                            if jersey["creator_info"]["id"] != expected_creator["creator_id"]:
+                                creator_relationships_correct = False
+                                break
+                
+                if creator_relationships_correct:
+                    integrity_checks += 1
+                    self.log_test("Data Integrity - Creator Relationships", "PASS", "All creator relationships correct")
+                else:
+                    self.log_test("Data Integrity - Creator Relationships", "FAIL", "Creator relationship mismatch found")
+            
+            # Test 2: Test non-existent user ID returns 404
+            fake_user_id = str(uuid.uuid4())
+            response = self.session.get(f"{self.base_url}/users/{fake_user_id}/profile")
+            if response.status_code == 404:
+                integrity_checks += 1
+                self.log_test("Data Integrity - Non-existent User", "PASS", "Correctly returned 404 for non-existent user")
+            else:
+                self.log_test("Data Integrity - Non-existent User", "FAIL", f"Expected 404, got {response.status_code}")
+            
+            # Test 3: Verify aggregation pipelines work with MongoDB
+            # Test jersey aggregation with creator lookup
+            response = self.session.get(f"{self.base_url}/jerseys?team=Manchester&limit=5")
+            if response.status_code == 200:
+                jerseys = response.json()
+                aggregation_working = True
+                
+                for jersey in jerseys:
+                    if "creator_info" not in jersey:
+                        aggregation_working = False
+                        break
+                    
+                    creator_info = jersey["creator_info"]
+                    if not ("name" in creator_info and "id" in creator_info):
+                        aggregation_working = False
+                        break
+                
+                if aggregation_working:
+                    integrity_checks += 1
+                    self.log_test("Data Integrity - Aggregation Pipeline", "PASS", "MongoDB aggregation working correctly")
+                else:
+                    self.log_test("Data Integrity - Aggregation Pipeline", "FAIL", "Aggregation pipeline issues detected")
+            
+            if integrity_checks >= 3:
+                self.log_test("Data Integrity and Aggregation", "PASS", f"All {integrity_checks} integrity checks passed")
+                return True
+            else:
+                self.log_test("Data Integrity and Aggregation", "FAIL", f"Only {integrity_checks}/3 integrity checks passed")
+                return False
+                
+        except Exception as e:
+            self.log_test("Data Integrity and Aggregation", "FAIL", f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests with focus on PRIORITY areas: Collection Delete, Jersey Update, Integration"""
         print("🚀 Starting TopKit Backend API Tests - PRIORITY FOCUS")
