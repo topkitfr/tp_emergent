@@ -2276,6 +2276,17 @@ const App = () => {
           />
         )}
 
+        {showEditJersey && selectedEditJersey && (
+          <EditJerseyModal 
+            jersey={selectedEditJersey}
+            onClose={() => {
+              setShowEditJersey(false);
+              setSelectedEditJersey(null);
+            }}
+            onJerseyUpdated={handleJerseyUpdated}
+          />
+        )}
+
         {showJerseyDetail && selectedJerseyDetail && (
           <JerseyDetailModal
             jersey={selectedJerseyDetail}
