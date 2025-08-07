@@ -349,6 +349,18 @@ frontend:
         agent: "user" 
         comment: "User reports: 'the delete button doesn't work, fix this' - Despite previous testing success, user still experiencing issues with collection delete functionality. Need to investigate and retest."
 
+  - task: "Edit Jersey Functionality" 
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User requests: 'In my collection is it possible to edit my jersey? I want a button for that just below the sell button' - Need to add Edit Jersey functionality to collection page with ability to modify jersey details."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
