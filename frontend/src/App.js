@@ -2567,6 +2567,13 @@ const App = () => {
           />
         )}
 
+        {showUserProfile && selectedUserId && (
+          <UserProfileModal
+            userId={selectedUserId}
+            onClose={handleCloseUserProfile}
+          />
+        )}
+
         {/* Footer */}
         <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
           <div className="container mx-auto px-6">
