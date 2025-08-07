@@ -949,7 +949,8 @@ const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
     home_away: jersey?.home_away || 'home',
     league: jersey?.league || '',
     description: jersey?.description || '',
-    images: jersey?.images || []
+    images: jersey?.images || [],
+    reference_code: jersey?.reference_code || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
