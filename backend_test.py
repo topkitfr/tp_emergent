@@ -2207,11 +2207,12 @@ class TopKitAPITester:
             return False
 
     def run_all_tests(self):
-        """Run all backend tests with focus on PRIORITY areas: Collection Delete, Jersey Update, Integration"""
-        print("🚀 Starting TopKit Backend API Tests - PRIORITY FOCUS")
-        print("🎯 PRIORITY 1: Collection Delete Functionality")
-        print("🎯 PRIORITY 2: Jersey Update Functionality") 
-        print("🎯 PRIORITY 3: Integration Testing")
+        """Run all backend tests with focus on NEW USER PROFILE & JERSEY CREATOR functionality"""
+        print("🚀 Starting TopKit Backend API Tests - NEW USER PROFILE & JERSEY CREATOR FOCUS")
+        print("🎯 PRIORITY 1: Jersey API with Creator Information")
+        print("🎯 PRIORITY 2: User Profile Endpoints") 
+        print("🎯 PRIORITY 3: User Created Jerseys Endpoint")
+        print("🎯 PRIORITY 4: Data Integrity & Aggregation")
         print("=" * 60)
         
         test_results = {}
@@ -2225,8 +2226,16 @@ class TopKitAPITester:
         test_results['emergent_auth'] = self.test_emergent_auth_redirect()
         test_results['jwt_validation'] = self.test_jwt_token_validation()
         
+        # NEW USER PROFILE & JERSEY CREATOR TESTS - TOP PRIORITY
+        print("🎯 NEW USER PROFILE & JERSEY CREATOR FUNCTIONALITY TESTS")
+        print("-" * 50)
+        test_results['jersey_api_with_creator_info'] = self.test_jersey_api_with_creator_info()
+        test_results['user_profile_endpoints'] = self.test_user_profile_endpoints()
+        test_results['user_created_jerseys_endpoint'] = self.test_user_created_jerseys_endpoint()
+        test_results['data_integrity_and_aggregation'] = self.test_data_integrity_and_aggregation()
+        
         # PRIORITY TESTS - Collection Delete Functionality
-        print("🎯 PRIORITY 1: COLLECTION DELETE FUNCTIONALITY")
+        print("🎯 COLLECTION DELETE FUNCTIONALITY")
         print("-" * 40)
         test_results['remove_from_collection_authenticated'] = self.test_remove_from_collection_authenticated()
         test_results['remove_from_collection_unauthenticated'] = self.test_remove_from_collection_unauthenticated()
@@ -2235,14 +2244,14 @@ class TopKitAPITester:
         test_results['collection_delete_existing_jerseys'] = self.test_collection_delete_with_existing_jerseys()
         
         # PRIORITY TESTS - Jersey Update Functionality
-        print("🎯 PRIORITY 2: JERSEY UPDATE FUNCTIONALITY")
+        print("🎯 JERSEY UPDATE FUNCTIONALITY")
         print("-" * 40)
         test_results['jersey_update_endpoint'] = self.test_jersey_update_endpoint()
         test_results['jersey_update_authorization'] = self.test_jersey_update_authorization()
         test_results['jersey_update_nonexistent'] = self.test_jersey_update_nonexistent()
         
         # PRIORITY TESTS - Integration Testing
-        print("🎯 PRIORITY 3: INTEGRATION TESTING")
+        print("🎯 INTEGRATION TESTING")
         print("-" * 40)
         test_results['full_integration_flow_priority'] = self.test_full_integration_flow_priority()
         
@@ -2316,6 +2325,25 @@ class TopKitAPITester:
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
         
+        # Separate NEW USER PROFILE & JERSEY CREATOR test results
+        new_profile_creator_tests = {
+            'jersey_api_with_creator_info': 'Jersey API with Creator Information',
+            'user_profile_endpoints': 'User Profile Endpoints',
+            'user_created_jerseys_endpoint': 'User Created Jerseys Endpoint',
+            'data_integrity_and_aggregation': 'Data Integrity & Aggregation'
+        }
+        
+        print(f"\n🎯 NEW USER PROFILE & JERSEY CREATOR TEST RESULTS:")
+        
+        profile_creator_passed = sum(1 for test_name in new_profile_creator_tests.keys() if test_results.get(test_name, False))
+        profile_creator_total = len(new_profile_creator_tests)
+        profile_creator_rate = (profile_creator_passed/profile_creator_total)*100 if profile_creator_total > 0 else 0
+        
+        print(f"NEW FUNCTIONALITY: {profile_creator_passed}/{profile_creator_total} ({profile_creator_rate:.1f}%)")
+        for test_name, description in new_profile_creator_tests.items():
+            status = "✅ PASS" if test_results.get(test_name, False) else "❌ FAIL"
+            print(f"  {description}: {status}")
+        
         # Separate priority test results
         priority_tests = {
             'collection_delete': [
@@ -2335,7 +2363,7 @@ class TopKitAPITester:
             ]
         }
         
-        print(f"\n🎯 PRIORITY TEST RESULTS:")
+        print(f"\n🎯 OTHER PRIORITY TEST RESULTS:")
         
         for priority_name, test_names in priority_tests.items():
             priority_passed = sum(1 for test_name in test_names if test_results.get(test_name, False))
@@ -2362,7 +2390,9 @@ class TopKitAPITester:
         for test_name, result in test_results.items():
             status = "✅ PASS" if result else "❌ FAIL"
             priority_marker = ""
-            if any(test_name in tests for tests in priority_tests.values()):
+            if test_name in new_profile_creator_tests:
+                priority_marker = "🎯 NEW PROFILE/CREATOR"
+            elif any(test_name in tests for tests in priority_tests.values()):
                 priority_marker = "🎯 PRIORITY"
             elif test_name.startswith('new_workflow_'):
                 priority_marker = "🔄 WORKFLOW"
