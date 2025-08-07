@@ -2001,12 +2001,19 @@ const App = () => {
       setShowCreateListing(true);
     };
 
+    const handleEditJersey = (event) => {
+      setSelectedEditJersey(event.detail);
+      setShowEditJersey(true);
+    };
+
     window.addEventListener('sellJersey', handleSellJersey);
     window.addEventListener('addNewJersey', handleAddNewJersey);
+    window.addEventListener('editJersey', handleEditJersey);
     
     return () => {
       window.removeEventListener('sellJersey', handleSellJersey);
       window.removeEventListener('addNewJersey', handleAddNewJersey);
+      window.removeEventListener('editJersey', handleEditJersey);
     };
   }, []);
 
