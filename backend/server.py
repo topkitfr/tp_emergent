@@ -590,7 +590,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
     await db.jerseys.insert_one(jersey.dict())
     return jersey
 
-@api_router.get("/jerseys", response_model=List[Jersey])
+@api_router.get("/jerseys")
 async def get_jerseys(
     team: Optional[str] = None,
     season: Optional[str] = None,
@@ -615,8 +615,39 @@ async def get_jerseys(
     if league:
         query["league"] = {"$regex": league, "$options": "i"}
     
-    jerseys = await db.jerseys.find(query).skip(skip).limit(limit).to_list(limit)
-    return [Jersey(**jersey) for jersey in jerseys]
+    # Use aggregation to include creator information
+    pipeline = [
+        {"$match": query},
+        {"$skip": skip},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "created_by",
+                "foreignField": "id", 
+                "as": "creator"
+            }
+        },
+        {
+            "$addFields": {
+                "creator_info": {
+                    "$cond": {
+                        "if": {"$eq": [{"$size": "$creator"}, 0]},
+                        "then": {"name": "Unknown User", "id": None},
+                        "else": {
+                            "name": {"$arrayElemAt": ["$creator.name", 0]},
+                            "id": {"$arrayElemAt": ["$creator.id", 0]},
+                            "picture": {"$arrayElemAt": ["$creator.picture", 0]}
+                        }
+                    }
+                }
+            }
+        },
+        {"$unset": "creator"}
+    ]
+    
+    jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    return jerseys
 
 @api_router.get("/jerseys/{jersey_id}", response_model=Jersey)
 async def get_jersey(jersey_id: str):
