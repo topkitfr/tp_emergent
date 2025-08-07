@@ -2061,6 +2061,16 @@ const App = () => {
     }
   };
 
+  const handleJerseyUpdated = (updatedJersey) => {
+    // Refresh the current view data if needed
+    if (currentView === 'collections') {
+      // This will trigger a re-render of the collections page
+      window.location.reload();
+    } else if (currentView === 'jerseys') {
+      fetchJerseys();
+    }
+  };
+
   const handleCreateListing = (jerseyId = null, jersey = null) => {
     const token = localStorage.getItem('token');
     if (!token) {
