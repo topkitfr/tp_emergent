@@ -390,11 +390,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Remove From Collection Functionality"
-    - "Edit Jersey Functionality"
-    - "Jersey Update Backend Endpoint"
-    - "New User Workflow Testing - Jersey Creation → Collection → Listing"
-    - "Complete Data Flow Integrity Verification"
+    - "Frontend Integration Testing - Delete Button UI Issue"
+    - "Complete System Integration Verification"
+    - "Performance and Load Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
