@@ -2410,6 +2410,7 @@ const App = () => {
                     showActions={true}
                     onAddToCollection={handleAddToCollection}
                     onClick={handleJerseyClick}
+                    onCreatorClick={handleCreatorClick}
                   />
                 ))}
               </div>
