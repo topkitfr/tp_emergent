@@ -369,6 +369,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Remove From Collection Functionality"
     - "Edit Jersey Functionality"
     - "Jersey Update Backend Endpoint"
     - "New User Workflow Testing - Jersey Creation → Collection → Listing"
