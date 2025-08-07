@@ -396,10 +396,12 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Database Population Issue - Critical Blocker"
     - "Frontend Integration Testing - Delete Button UI Issue"
-    - "Complete System Integration Verification"
-    - "Performance and Load Testing"
-  stuck_tasks: []
+    - "Edit Jersey Frontend Testing"
+  stuck_tasks:
+    - "Remove From Collection Functionality"
+    - "Edit Jersey Functionality"
   test_all: false
   test_priority: "high_first"
 
