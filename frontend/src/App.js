@@ -1842,6 +1842,12 @@ const CollectionsPage = () => {
     window.dispatchEvent(event);
   };
 
+  const handleCreatorClick = (userId) => {
+    // This will trigger the main app's user profile modal with the user ID
+    const event = new CustomEvent('showUserProfile', { detail: userId });
+    window.dispatchEvent(event);
+  };
+
   const handleAddNewJersey = () => {
     // This will trigger the main app's listing creation modal for creating a new jersey
     const event = new CustomEvent('addNewJersey');
