@@ -2048,7 +2048,10 @@ const CollectionsPage = () => {
             Start building your collection by browsing jerseys and adding them to your {activeTab} list.
           </p>
           <button 
-            onClick={() => window.location.hash = '#jerseys'}
+            onClick={() => {
+              const event = new CustomEvent('navigateToJerseys');
+              window.dispatchEvent(event);
+            }}
             className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
           >
             Browse Jerseys
