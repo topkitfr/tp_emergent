@@ -330,9 +330,9 @@ frontend:
 
   - task: "Remove From Collection Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -351,6 +351,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ CONFIRMED WORKING - Priority testing completed with 100% success rate. DELETE /api/collections/{jersey_id} endpoint fully functional: ✅ Successfully adds jersey to collection ✅ Confirms jersey exists in collection via GET request ✅ DELETE endpoint returns 200 with proper success message ✅ Verifies jersey is completely removed from collection ✅ Full integration flow working: Add → Verify → Delete → Confirm Removal. Test scenario: Chelsea FC 2023-24 Enzo Fernandez jersey successfully managed through complete lifecycle. Backend collection delete functionality is working perfectly - any frontend issues are separate from backend API functionality."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL FRONTEND ISSUE CONFIRMED - Comprehensive UI testing reveals the user's complaint is valid. FINDINGS: ✅ User registration and authentication working perfectly ✅ My Collection page loads correctly with proper navigation ✅ Collection tabs (Owned/Wanted) are functional ❌ CRITICAL ISSUE: Database appears empty - no jerseys available in Browse section ❌ CRITICAL ISSUE: Cannot test delete functionality because collections are empty ❌ CRITICAL ISSUE: Cannot test Edit Jersey functionality due to empty collections. ROOT CAUSE: The frontend UI cannot be properly tested because there's no sample data in the database. While backend APIs may work in isolation, the complete user experience is broken due to empty database state. USER IMPACT: Users cannot add jerseys to collections (browse section empty), therefore cannot test delete functionality. This explains why user reports delete button doesn't work - they likely have empty collections. RECOMMENDATION: Main agent must populate database with sample jersey data before delete functionality can be properly tested in the UI."
 
   - task: "Jersey Update Backend Endpoint"
     implemented: true
