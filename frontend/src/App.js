@@ -780,8 +780,6 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
                   />
                 </div>
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
