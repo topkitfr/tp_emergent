@@ -2363,7 +2363,7 @@ const App = () => {
         if (value) params.append(key, value);
       });
       
-      const response = await axios.get(`${API}/listings?${params.toString()}`);
+      const response = await axios.get(`${API}/api/listings?${params.toString()}`);
       setListings(response.data);
     } catch (error) {
       console.error('Failed to fetch listings:', error);
