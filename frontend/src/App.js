@@ -1207,6 +1207,7 @@ const UserProfileModal = ({ userId, onClose }) => {
                           key={jersey.id}
                           jersey={jersey}
                           onClick={() => {}}
+                          onCreatorClick={onClose} // Close current modal if someone clicks on creator
                         />
                       ))}
                     </div>
