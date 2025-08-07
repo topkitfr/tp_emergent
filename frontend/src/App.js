@@ -638,6 +638,19 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
           headers: { Authorization: `Bearer ${token}` }
         });
         finalJerseyId = jerseyResponse.data.id;
+        
+        // Automatically add the newly created jersey to the user's owned collection
+        try {
+          await axios.post(`${API}/api/collections`, {
+            jersey_id: finalJerseyId,
+            collection_type: 'owned'
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (collectionError) {
+          console.warn('Failed to add jersey to collection automatically:', collectionError);
+          // Don't fail the entire operation if collection add fails
+        }
       }
 
       // Create the listing
