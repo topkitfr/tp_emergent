@@ -1518,7 +1518,7 @@ const ProfileSettingsModal = ({ user, onClose, onSettingsUpdate }) => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/profile/settings`, settings, {
+      await axios.put(`${API}/api/profile/settings`, settings, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
