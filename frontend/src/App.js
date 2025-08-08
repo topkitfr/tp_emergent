@@ -152,7 +152,7 @@ const useAuth = () => {
 };
 
 // Avatar Component with default styling
-const Avatar = ({ user, size = 'sm', className = '' }) => {
+const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   const sizeClasses = {
     xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-sm', 
@@ -161,7 +161,7 @@ const Avatar = ({ user, size = 'sm', className = '' }) => {
     xl: 'w-20 h-20 text-xl'
   };
   
-  const baseClasses = `${sizeClasses[size]} rounded-full border-2 border-gray-600 flex items-center justify-center font-semibold transition-all hover:border-gray-400 ${className}`;
+  const baseClasses = `${sizeClasses[size]} rounded-full border-2 border-gray-600 flex items-center justify-center font-semibold transition-all hover:border-gray-400 ${className} ${onClick ? 'cursor-pointer' : ''}`;
   
   // If user has profile picture
   if (user?.picture) {
@@ -170,6 +170,7 @@ const Avatar = ({ user, size = 'sm', className = '' }) => {
         src={user.picture} 
         alt={user.name || 'User'}
         className={`${baseClasses} object-cover`}
+        onClick={onClick}
         onError={(e) => {
           // Fallback to initials if image fails to load
           e.target.style.display = 'none';
@@ -200,7 +201,7 @@ const Avatar = ({ user, size = 'sm', className = '' }) => {
     : 0;
     
   return (
-    <div className={`${baseClasses} ${gradients[gradientIndex]} text-white shadow-lg`}>
+    <div className={`${baseClasses} ${gradients[gradientIndex]} text-white shadow-lg`} onClick={onClick}>
       {initials}
     </div>
   );
