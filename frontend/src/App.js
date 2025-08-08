@@ -2129,9 +2129,7 @@ const ProfilePage = () => {
       {/* Settings Modal */}
       {showSettings && (
         <ProfileSettingsModal
-          user={profileData?.user}
           onClose={() => setShowSettings(false)}
-          onSettingsUpdate={handleSettingsUpdate}
         />
       )}
     </div>
