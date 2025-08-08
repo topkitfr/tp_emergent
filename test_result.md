@@ -177,9 +177,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend Listing Model Update - Optional Price"
-    - "Jersey Creation for Collections"
-    - "Existing Jersey Operations Verification"
+    - "TopKit Frontend Modifications Testing Complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
