@@ -2767,6 +2767,12 @@ const App = () => {
           />
         )}
 
+        {showAddJersey && (
+          <AddJerseyModal 
+            onClose={() => setShowAddJersey(false)}
+          />
+        )}
+
         {showEditJersey && selectedEditJersey && (
           <EditJerseyModal 
             jersey={selectedEditJersey}
