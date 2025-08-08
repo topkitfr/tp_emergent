@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 TopKit Soccer Jersey Marketplace - Backend API Testing
-Tests all backend endpoints for authentication, jerseys, marketplace, collections, and payments
+URGENT AUTHENTICATION DIAGNOSIS - Testing authentication system to diagnose disconnection issues
 """
 
 import requests
@@ -9,12 +9,13 @@ import json
 import uuid
 from datetime import datetime
 import time
+import jwt
 
 # Configuration
 BASE_URL = "https://bff2ecda-60a3-4d43-8679-db87dcf9451e.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "testuser@topkit.com"
-TEST_USER_PASSWORD = "SecurePass123!"
-TEST_USER_NAME = "Test User"
+TEST_USER_EMAIL = "test@topkit.com"
+TEST_USER_PASSWORD = "password123"
+TEST_USER_NAME = "testuser"
 
 class TopKitAPITester:
     def __init__(self):
