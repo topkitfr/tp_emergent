@@ -106,7 +106,7 @@ class Listing(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     jersey_id: str
     seller_id: str
-    price: float
+    price: Optional[float] = None  # Price is optional - market determined like Discogs
     status: ListingStatus = ListingStatus.ACTIVE
     description: str
     images: List[str] = []
