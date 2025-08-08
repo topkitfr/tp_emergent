@@ -2496,8 +2496,7 @@ const App = () => {
     };
 
     const handleAddNewJersey = () => {
-      setSelectedListingJersey(null); // No pre-selected jersey for new jersey creation
-      setShowCreateListing(true);
+      setShowAddJersey(true); // Use the new AddJerseyModal for adding jerseys to collection
     };
 
     const handleEditJersey = (event) => {
