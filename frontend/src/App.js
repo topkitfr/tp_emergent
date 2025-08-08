@@ -574,7 +574,7 @@ const ContactSellerModal = ({ listing, onClose }) => {
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
     price: '',
-    description: '',
+    listing_description: '',
     images: [],
     // Additional jersey details if creating new jersey
     team: jersey?.team || '',
@@ -585,8 +585,8 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
     manufacturer: jersey?.manufacturer || '',
     home_away: jersey?.home_away || 'home',
     league: jersey?.league || '',
-    model: 'replica', // replica, professional, special
-    color: ''
+    description: jersey?.description || '',
+    reference_code: jersey?.reference_code || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
