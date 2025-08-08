@@ -236,7 +236,12 @@ const Header = ({ currentView, setCurrentView }) => {
               {user ? (
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-3">
-                    <Avatar user={user} size="md" className="hover:scale-105 cursor-pointer" />
+                    <Avatar 
+                      user={user} 
+                      size="md" 
+                      className="hover:scale-105 cursor-pointer hover:border-blue-400" 
+                      onClick={() => setCurrentView('profile')}
+                    />
                     <div className="flex flex-col">
                       <span className="text-white font-medium text-sm">Welcome back!</span>
                       <span className="text-gray-300 text-xs">{user.name}</span>
