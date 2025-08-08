@@ -177,7 +177,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Frontend Modifications Testing Complete"
+    - "Profile Settings API Update"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
