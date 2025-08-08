@@ -10,7 +10,7 @@ import uuid
 import time
 
 # Configuration
-BASE_URL = "https://b0eb9f53-62ff-4085-84f1-93e2485a4420.preview.emergentagent.com/api"
+BASE_URL = "https://3bfd3c6f-b999-4c88-aea4-e19023aa66b7.preview.emergentagent.com/api"
 
 class RemoveCollectionTester:
     def __init__(self):
