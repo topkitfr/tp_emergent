@@ -892,8 +892,8 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
               <label className="block text-sm font-medium text-gray-300 mb-1">Description*</label>
               <textarea
                 placeholder="Describe the jersey condition, any special features, authenticity, etc."
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                value={formData.listing_description}
+                onChange={(e) => setFormData({...formData, listing_description: e.target.value})}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-24"
                 required
               />
