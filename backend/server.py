@@ -533,7 +533,7 @@ async def google_callback(request: Request):
 
 @api_router.get("/auth/emergent/redirect")
 async def emergent_auth_redirect():
-    preview_url = "https://bff2ecda-60a3-4d43-8679-db87dcf9451e.preview.emergentagent.com"
+    preview_url = "https://b0eb9f53-62ff-4085-84f1-93e2485a4420.preview.emergentagent.com"
     auth_url = f"https://auth.emergentagent.com/?redirect={preview_url}/profile"
     return {"auth_url": auth_url}
 

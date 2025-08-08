@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://bff2ecda-60a3-4d43-8679-db87dcf9451e.preview.emergentagent.com/api"
+BASE_URL = "https://b0eb9f53-62ff-4085-84f1-93e2485a4420.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "postui_testuser@topkit.com"
 TEST_USER_PASSWORD = "SecurePass123!"
 TEST_USER_NAME = "Post UI Test User"
