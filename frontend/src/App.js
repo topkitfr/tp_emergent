@@ -151,6 +151,93 @@ const useAuth = () => {
   return context;
 };
 
+// Loading Spinner Component
+const LoadingSpinner = ({ size = 'md', className = '' }) => {
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12'
+  };
+  
+  return (
+    <div className={`${sizeClasses[size]} ${className} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600`}></div>
+  );
+};
+
+// Toast Notification Component
+const Toast = ({ message, type = 'success', onClose }) => {
+  const typeClasses = {
+    success: 'bg-green-600 text-white',
+    error: 'bg-red-600 text-white',
+    info: 'bg-blue-600 text-white',
+    warning: 'bg-yellow-600 text-white'
+  };
+  
+  const icons = {
+    success: '✓',
+    error: '✕',
+    info: 'ℹ',
+    warning: '⚠'
+  };
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 4000);
+    
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  
+  return (
+    <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${typeClasses[type]} animate-pulse`}>
+      <div className="flex items-center space-x-2">
+        <span className="text-lg">{icons[type]}</span>
+        <span className="font-medium">{message}</span>
+        <button 
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200 font-bold"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Button Component
+const Button = ({ children, variant = 'primary', size = 'md', loading = false, disabled = false, className = '', ...props }) => {
+  const baseClasses = 'font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  
+  const variants = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 hover:scale-105 shadow-lg',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500 hover:scale-105 shadow-lg',
+    success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 hover:scale-105 shadow-lg',
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 hover:scale-105 shadow-lg',
+    outline: 'border-2 border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 focus:ring-gray-500'
+  };
+  
+  const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg'
+  };
+  
+  return (
+    <button
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center space-x-2">
+          <LoadingSpinner size="sm" />
+          <span>Loading...</span>
+        </div>
+      ) : children}
+    </button>
+  );
+};
+
 // Avatar Component with default styling
 const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   const sizeClasses = {
