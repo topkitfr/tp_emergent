@@ -268,17 +268,35 @@ agent_communication:
         agent: "testing"
         comment: "✅ PASS - User profile endpoint working with authentication. Returns user details and stats (owned_jerseys, wanted_jerseys, active_listings counts). All required fields present."
 
-  - task: "Jersey Update Backend Endpoint"
-    implemented: false
-    working: false
+  - task: "Jersey Creation for Collections"
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-      - working: false
+      - working: "NA"
         agent: "main"
-        comment: "Need to create PUT/PATCH endpoint for updating jersey details to support Edit Jersey functionality."
+        comment: "Ensured POST /api/jerseys endpoint works independently for creating jerseys that can be added to collections via POST /api/collections. Separated jersey creation from listing creation to support the new workflow where 'Add New Jersey' only adds to collection."
+      - working: true
+        agent: "testing"
+        comment: "✅ PASS - PRIORITY 2 TESTING COMPLETE: Jersey creation for collections working perfectly! Key findings: ✅ POST /api/jerseys endpoint working correctly for creating new jerseys - tested with Chelsea FC Enzo Fernandez jersey ✅ Jerseys can be added to collections via POST /api/collections - complete flow tested ✅ Complete flow verified: create jersey → add to owned collection - integration working seamlessly ✅ Jersey creation includes all required fields: team, season, player, size, condition, manufacturer, home_away, league, description, images, reference_code. All PRIORITY 2 requirements fully satisfied."
+
+  - task: "Existing Jersey Operations Verification"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Verified that existing jersey operations remain functional after backend modifications. All CRUD operations should continue working as expected."
+      - working: true
+        agent: "testing"
+        comment: "✅ PASS - PRIORITY 3 TESTING COMPLETE: All existing jersey operations working perfectly! Key findings: ✅ GET /api/jerseys returns all jerseys properly - retrieved 20 jerseys with proper structure and required fields ✅ Jersey update (PUT /api/jerseys/{id}) working correctly - tested size change L→M and condition excellent→mint ✅ Collection removal (DELETE /api/collections/{jersey_id}) working correctly - jersey successfully removed from collection ✅ All existing functionality preserved after backend modifications. All PRIORITY 3 requirements fully satisfied."
 
 frontend:
   - task: "Authentication UI with Dual Login Options"
