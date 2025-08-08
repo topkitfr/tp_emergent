@@ -915,13 +915,27 @@ async def get_profile(user_id: str = Depends(get_current_user)):
 
 @api_router.put("/profile/settings")
 async def update_profile_settings(settings: ProfileSettings, user_id: str = Depends(get_current_user)):
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {
-            "profile_privacy": settings.profile_privacy,
-            "show_collection_value": settings.show_collection_value
-        }}
-    )
+    # Build update dictionary only with provided fields
+    update_data = {}
+    
+    if settings.name is not None:
+        update_data["name"] = settings.name
+    
+    if settings.picture is not None:
+        update_data["picture"] = settings.picture
+    
+    if settings.profile_privacy is not None:
+        update_data["profile_privacy"] = settings.profile_privacy
+    
+    if settings.show_collection_value is not None:
+        update_data["show_collection_value"] = settings.show_collection_value
+    
+    if update_data:
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_data}
+        )
+    
     return {"message": "Profile settings updated successfully"}
 
 # Jersey valuation endpoints
