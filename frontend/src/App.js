@@ -905,41 +905,14 @@ const AddJerseyModal = ({ onClose }) => {
   );
 };
 
-// Create Listing Modal Component
+// Create Listing Modal Component (for creating listings from existing jerseys)
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
-    price: '',
     listing_description: '',
-    images: [],
-    // Additional jersey details if creating new jersey
-    team: jersey?.team || '',
-    season: jersey?.season || '',
-    player: jersey?.player || '',
-    size: jersey?.size || 'M',
-    condition: jersey?.condition || 'excellent',
-    manufacturer: jersey?.manufacturer || '',
-    home_away: jersey?.home_away || 'home',
-    league: jersey?.league || '',
-    description: jersey?.description || '',
-    reference_code: jersey?.reference_code || ''
+    images: jersey?.images || []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isCreatingNewJersey, setIsCreatingNewJersey] = useState(!jerseyId);
-  const [selectedLeague, setSelectedLeague] = useState(jersey?.league || '');
-  const [availableTeams, setAvailableTeams] = useState([]);
-
-  // Update available teams when league changes
-  useEffect(() => {
-    if (selectedLeague && LEAGUES_DATA[selectedLeague]) {
-      setAvailableTeams(LEAGUES_DATA[selectedLeague]);
-      if (!LEAGUES_DATA[selectedLeague].includes(formData.team)) {
-        setFormData({...formData, team: '', league: selectedLeague});
-      }
-    } else {
-      setAvailableTeams([]);
-    }
-  }, [selectedLeague]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -952,47 +925,13 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         throw new Error('Please login to create a listing');
       }
 
-      let finalJerseyId = jerseyId;
-
-      // If creating a new jersey first
-      if (isCreatingNewJersey || !jerseyId) {
-        const jerseyData = {
-          team: formData.team,
-          season: formData.season,
-          player: formData.player || null,
-          size: formData.size,
-          condition: formData.condition,
-          manufacturer: formData.manufacturer,
-          home_away: formData.home_away,
-          league: formData.league,
-          description: formData.description,
-          images: formData.images,
-          reference_code: formData.reference_code
-        };
-
-        const jerseyResponse = await axios.post(`${API}/api/jerseys`, jerseyData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        finalJerseyId = jerseyResponse.data.id;
-        
-        // Automatically add the newly created jersey to the user's owned collection
-        try {
-          await axios.post(`${API}/api/collections`, {
-            jersey_id: finalJerseyId,
-            collection_type: 'owned'
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        } catch (collectionError) {
-          console.warn('Failed to add jersey to collection automatically:', collectionError);
-          // Don't fail the entire operation if collection add fails
-        }
+      if (!jerseyId) {
+        throw new Error('No jersey selected for listing');
       }
 
-      // Create the listing
+      // Create the listing without price (price determined by market like Discogs)
       const listingData = {
-        jersey_id: finalJerseyId,
-        price: parseFloat(formData.price),
+        jersey_id: jerseyId,
         description: formData.listing_description,
         images: formData.images
       };
@@ -1001,7 +940,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Jersey and listing created successfully!');
+      alert('Jersey listed successfully!');
       onClose();
     } catch (error) {
       setError(error.response?.data?.detail || error.message || 'Failed to create listing');
@@ -1012,9 +951,9 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Create Jersey Listing</h2>
+          <h2 className="text-2xl font-bold text-white">Create Listing</h2>
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-white text-2xl"
@@ -1029,224 +968,51 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <>
-          {jerseyId && (
-            <div className="bg-gray-800 p-4 rounded-lg mb-4 border border-gray-700">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={isCreatingNewJersey}
-                  onChange={(e) => setIsCreatingNewJersey(e.target.checked)}
-                  className="rounded bg-gray-700 border-gray-600"
+        {jersey && (
+          <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">Jersey to List</h3>
+            <div className="flex items-center space-x-4">
+              {jersey.images && jersey.images[0] && (
+                <img 
+                  src={jersey.images[0]} 
+                  alt={`${jersey.team} ${jersey.season}`}
+                  className="w-16 h-16 object-cover rounded border border-gray-600"
                 />
-                <span className="text-sm text-gray-300">Create new jersey instead of using existing one</span>
-              </label>
-            </div>
-          )}
-
-          {/* Jersey Details (only if creating new jersey) */}
-          {(isCreatingNewJersey || !jerseyId) && (
-            <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
-              <h3 className="text-lg font-semibold mb-4 text-white">Jersey Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
-                  <select
-                    value={selectedLeague}
-                    onChange={(e) => setSelectedLeague(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="">Select League</option>
-                    {Object.keys(LEAGUES_DATA).map(league => (
-                      <option key={league} value={league}>{league}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Club/National Team*</label>
-                  <select
-                    value={formData.team}
-                    onChange={(e) => setFormData({...formData, team: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                    disabled={!selectedLeague}
-                  >
-                    <option value="">Select Team</option>
-                    {availableTeams.map(team => (
-                      <option key={team} value={team}>{team}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Season*</label>
-                  <select
-                    value={formData.season}
-                    onChange={(e) => setFormData({...formData, season: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="">Select Season</option>
-                    {SEASONS.map(season => (
-                      <option key={season} value={season}>{season}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Brand/Manufacturer*</label>
-                  <select
-                    value={formData.manufacturer}
-                    onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="">Select Brand</option>
-                    <option value="Adidas">Adidas</option>
-                    <option value="Nike">Nike</option>
-                    <option value="Puma">Puma</option>
-                    <option value="New Balance">New Balance</option>
-                    <option value="Under Armour">Under Armour</option>
-                    <option value="Hummel">Hummel</option>
-                    <option value="Kappa">Kappa</option>
-                    <option value="Umbro">Umbro</option>
-                    <option value="Macron">Macron</option>
-                    <option value="Errea">Errea</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Player Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Bruno Fernandes (optional)"
-                    value={formData.player}
-                    onChange={(e) => setFormData({...formData, player: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Code Référence</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., 779963-01"
-                    value={formData.reference_code}
-                    onChange={(e) => setFormData({...formData, reference_code: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
-                  <select
-                    value={formData.home_away}
-                    onChange={(e) => setFormData({...formData, home_away: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="home">Home</option>
-                    <option value="away">Away</option>
-                    <option value="third">Third Kit</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Model*</label>
-                  <select
-                    value={formData.model}
-                    onChange={(e) => setFormData({...formData, model: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="replica">Replica</option>
-                    <option value="professional">Professional/Authentic</option>
-                    <option value="special">Special Edition</option>
-                    <option value="retro">Retro/Vintage</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Size*</label>
-                  <select
-                    value={formData.size}
-                    onChange={(e) => setFormData({...formData, size: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Condition*</label>
-                  <select
-                    value={formData.condition}
-                    onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                    required
-                  >
-                    <option value="mint">Mint</option>
-                    <option value="excellent">Excellent</option>
-                    <option value="very_good">Very Good</option>
-                    <option value="good">Good</option>
-                    <option value="fair">Fair</option>
-                  </select>
-                </div>
+              )}
+              <div>
+                <p className="text-white font-medium">{jersey.team} - {jersey.season}</p>
+                {jersey.player && <p className="text-gray-300">{jersey.player}</p>}
+                <p className="text-gray-400 text-sm">Size: {jersey.size} • Condition: {jersey.condition}</p>
               </div>
             </div>
-          )}
-
-          {/* Listing Details */}
-          <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
-            <h3 className="text-lg font-semibold mb-4 text-white">Listing Details</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Price (USD)*</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="e.g., 89.99"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description*</label>
-              <textarea
-                placeholder="Describe the jersey condition, any special features, authenticity, etc."
-                value={formData.listing_description}
-                onChange={(e) => setFormData({...formData, listing_description: e.target.value})}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-24"
-                required
-              />
-            </div>
-
-            {/* Images */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">Jersey Photos*</label>
-              <ImageUpload 
-                images={formData.images}
-                setImages={(images) => setFormData({...formData, images})}
-              />
-              <p className="text-xs text-gray-400 mt-2">
-                Upload high-quality photos of your jersey. First image will be the main photo.
-              </p>
-            </div>
           </div>
-          </>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Description*</label>
+            <textarea
+              placeholder="Describe the jersey condition, any special features, authenticity, etc."
+              value={formData.listing_description}
+              onChange={(e) => setFormData({...formData, listing_description: e.target.value})}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-32"
+              required
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Note: Price will be determined by market value based on similar sales (like Discogs)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Additional Photos</label>
+            <ImageUpload 
+              images={formData.images}
+              setImages={(images) => setFormData({...formData, images})}
+            />
+            <p className="text-xs text-gray-400 mt-2">
+              Add extra photos for your listing. High-quality images help with sales.
+            </p>
+          </div>
 
           <div className="flex space-x-4 pt-4">
             <button
