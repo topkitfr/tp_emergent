@@ -102,9 +102,79 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Create a comprehensive online platform named TopKit - similar to Discogs but focused on soccer jerseys. Platform should serve as global database for soccer jerseys, allowing users to buy, sell, and catalog collections. Features include user profiles, jersey database/catalog, marketplace, search/filter, community features, authentication/security, payments with Stripe."
+user_problem_statement: "TopKit corrections requises par l'utilisateur:
+1. Corriger le flux 'Add New Jersey' - doit seulement ajouter à la collection, apparaître dans 'Browse' seulement si profil public, apparaître sur 'Marketplace' seulement via 'Sell This Jersey'
+2. Élargir les choix de Ligues et Clubs avec catégorie générale 'Nation' au lieu de 'Euro' et 'World Cup'
+3. Simplifier le formulaire de listing - supprimer la section 'listing details' et le prix (valeur déterminée par ventes similaires comme Discogs), garder seulement la description"
 
 backend:
+  - task: "Backend Listing Model Update - Optional Price"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modified Listing model and ListingCreate to make price optional. Updated listing creation logic to only call valuation update if price is provided. This supports the Discogs-like model where price is determined by market data rather than seller input."
+
+frontend:
+  - task: "Separate Add Jersey vs Create Listing Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js" 
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created new AddJerseyModal for adding jerseys to collection without creating listings. Modified handleAddNewJersey to use AddJerseyModal instead of CreateListingModal. Separated the two workflows: 'Add New Jersey' only adds to collection, 'Sell This Jersey' creates marketplace listings."
+
+  - task: "Expanded League and Club Data"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium" 
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Expanded LEAGUES_DATA to include Liga Portugal, Eredivisie, Scottish Premiership, Belgian Pro League, MLS, Liga MX, Brazilian Serie A, Argentine Primera. Replaced 'World Cup' and 'Euro Championship' with general 'Nation' category containing all national teams."
+
+  - task: "Simplified Create Listing Modal"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Completely simplified CreateListingModal - removed price field and all jersey creation functionality. Modal now only handles listing creation for existing jerseys. Added jersey preview section and helpful messaging about market-based pricing like Discogs. Reduced modal size and complexity significantly."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 3
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Backend Listing Model Update - Optional Price"
+    - "Separate Add Jersey vs Create Listing Functionality"
+    - "Simplified Create Listing Modal"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented TopKit corrections as requested by user. Key changes: 1) Created separate AddJerseyModal for 'Add New Jersey' workflow (only adds to collection), 2) Simplified CreateListingModal for 'Sell This Jersey' workflow (no price required, market-determined like Discogs), 3) Expanded leagues data with 8 new leagues and replaced World Cup/Euro with general 'Nation' category, 4) Updated backend to make listing price optional. Ready for backend testing to verify API changes work correctly."
   - task: "Dual Authentication System (Google OAuth + Custom + Emergent Auth)"
     implemented: true
     working: true
