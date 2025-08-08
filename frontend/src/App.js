@@ -151,6 +151,61 @@ const useAuth = () => {
   return context;
 };
 
+// Avatar Component with default styling
+const Avatar = ({ user, size = 'sm', className = '' }) => {
+  const sizeClasses = {
+    xs: 'w-6 h-6 text-xs',
+    sm: 'w-8 h-8 text-sm', 
+    md: 'w-12 h-12 text-base',
+    lg: 'w-16 h-16 text-lg',
+    xl: 'w-20 h-20 text-xl'
+  };
+  
+  const baseClasses = `${sizeClasses[size]} rounded-full border-2 border-gray-600 flex items-center justify-center font-semibold transition-all hover:border-gray-400 ${className}`;
+  
+  // If user has profile picture
+  if (user?.picture) {
+    return (
+      <img 
+        src={user.picture} 
+        alt={user.name || 'User'}
+        className={`${baseClasses} object-cover`}
+        onError={(e) => {
+          // Fallback to initials if image fails to load
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'flex';
+        }}
+      />
+    );
+  }
+  
+  // Generate initials from name
+  const initials = user?.name 
+    ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
+    
+  // Beautiful gradient background
+  const gradients = [
+    'bg-gradient-to-br from-blue-500 to-purple-600',
+    'bg-gradient-to-br from-green-500 to-blue-600', 
+    'bg-gradient-to-br from-pink-500 to-red-600',
+    'bg-gradient-to-br from-yellow-500 to-orange-600',
+    'bg-gradient-to-br from-indigo-500 to-purple-600',
+    'bg-gradient-to-br from-teal-500 to-cyan-600'
+  ];
+  
+  // Generate consistent gradient based on user name/id
+  const gradientIndex = user?.name 
+    ? user.name.charCodeAt(0) % gradients.length 
+    : 0;
+    
+  return (
+    <div className={`${baseClasses} ${gradients[gradientIndex]} text-white shadow-lg`}>
+      {initials}
+    </div>
+  );
+};
+
 // Header Component
 const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
