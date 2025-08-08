@@ -235,19 +235,16 @@ const Header = ({ currentView, setCurrentView }) => {
             <div className="flex justify-end flex-1">
               {user ? (
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    {user.picture && (
-                      <img 
-                        src={user.picture} 
-                        alt={user.name}
-                        className="w-8 h-8 rounded-full border-2 border-gray-600"
-                      />
-                    )}
-                    <span className="text-sm text-gray-300">Welcome, <span className="text-white font-medium">{user.name}</span></span>
+                  <div className="flex items-center space-x-3">
+                    <Avatar user={user} size="md" className="hover:scale-105 cursor-pointer" />
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium text-sm">Welcome back!</span>
+                      <span className="text-gray-300 text-xs">{user.name}</span>
+                    </div>
                   </div>
                   <button 
                     onClick={logout}
-                    className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-600 text-sm font-medium"
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200 border border-gray-600 text-sm font-medium hover:scale-105 shadow-lg"
                   >
                     Logout
                   </button>
@@ -255,7 +252,7 @@ const Header = ({ currentView, setCurrentView }) => {
               ) : (
                 <button 
                   onClick={() => setShowAuthModal(true)}
-                  className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
                 >
                   Login / Sign Up
                 </button>
