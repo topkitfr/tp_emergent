@@ -203,8 +203,10 @@ class MessageCreate(BaseModel):
     message: str
 
 class ProfileSettings(BaseModel):
-    profile_privacy: str  # "public" or "private"
-    show_collection_value: bool
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    profile_privacy: Optional[str] = None
+    show_collection_value: Optional[bool] = None
 
 class CheckoutRequest(BaseModel):
     listing_id: str
