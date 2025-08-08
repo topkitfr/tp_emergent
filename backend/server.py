@@ -180,7 +180,7 @@ class JerseyCreate(BaseModel):
 
 class ListingCreate(BaseModel):
     jersey_id: str
-    price: float
+    price: Optional[float] = None  # Price is optional - market determined like Discogs
     description: str
     images: List[str] = []
 
