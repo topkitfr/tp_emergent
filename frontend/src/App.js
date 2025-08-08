@@ -92,8 +92,11 @@ const AuthProvider = ({ children }) => {
   };
 
   const login = (token, userData) => {
+    console.log('Login called with token:', token.substring(0, 20) + '...');
+    console.log('Login called with user data:', userData);
     localStorage.setItem('token', token);
     setUser(userData);
+    console.log('User state set to:', userData);
   };
 
   const logout = () => {
