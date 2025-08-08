@@ -169,8 +169,8 @@ metadata:
 test_plan:
   current_focus:
     - "Backend Listing Model Update - Optional Price"
-    - "Separate Add Jersey vs Create Listing Functionality"
-    - "Simplified Create Listing Modal"
+    - "Jersey Creation for Collections"
+    - "Existing Jersey Operations Verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
