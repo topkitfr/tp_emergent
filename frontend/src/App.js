@@ -2390,37 +2390,62 @@ const CollectionsPage = () => {
 
 // Jersey Card Component (updated)
 const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollectionDate = false, addedAt, onRemoveFromCollection, showRemove = false, showSellButton = false, onSellJersey, showEditButton = false, onEditJersey, onClick, onCreatorClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
   return (
-    <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
-         onClick={() => onClick && onClick(jersey)}>
-      <img
-        src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
-        alt={`${jersey.team} ${jersey.season}`}
-        className="w-full h-48 object-cover"
-      />
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-white mb-2">{jersey.team}</h3>
-        <p className="text-gray-400 mb-1">{jersey.season} • {jersey.home_away}</p>
-        {jersey.player && <p className="text-white font-medium mb-3">{jersey.player}</p>}
+    <div 
+      className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all duration-300 border border-gray-700 hover:border-gray-600 cursor-pointer group transform hover:scale-105"
+      onClick={() => onClick && onClick(jersey)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Image Container with Overlay */}
+      <div className="relative overflow-hidden">
+        <img
+          src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
+          alt={`${jersey.team} ${jersey.season}`}
+          className={`w-full h-48 object-cover transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Creator information */}
+        {/* Floating badges */}
+        <div className="absolute top-3 left-3 space-y-2">
+          {jersey.home_away && (
+            <span className="bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
+              {jersey.home_away}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
+            {jersey.team}
+          </h3>
+          <p className="text-gray-400 text-sm font-medium">{jersey.season}</p>
+          {jersey.player && (
+            <p className="text-blue-300 font-medium text-sm mt-1">#{jersey.player}</p>
+          )}
+        </div>
+        
+        {/* Creator information with Avatar */}
         {jersey.creator_info && (
-          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
-            <p className="text-xs text-gray-500">Added by</p>
-            <div className="flex items-center space-x-2 mt-1">
-              {jersey.creator_info.picture && (
-                <img 
-                  src={jersey.creator_info.picture} 
-                  alt={jersey.creator_info.name}
-                  className="w-5 h-5 rounded-full"
-                />
-              )}
+          <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs text-gray-500 mb-1">Added by</p>
+            <div className="flex items-center space-x-2">
+              <Avatar 
+                user={jersey.creator_info} 
+                size="xs" 
+                className="border-gray-600"
+              />
               <button 
                 onClick={(e) => { 
                   e.stopPropagation(); 
                   onCreatorClick && onCreatorClick(jersey.creator_info.id); 
                 }}
-                className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors hover:underline"
               >
                 {jersey.creator_info.name}
               </button>
@@ -2428,70 +2453,91 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
           </div>
         )}
         
-        <div className="mt-4 flex justify-between items-center mb-3">
-          <div className="text-sm text-gray-400">
-            <span className="bg-gray-800 text-white px-3 py-1 rounded-full border border-gray-700">{jersey.size}</span>
-            <span className="bg-gray-800 text-white px-3 py-1 rounded-full ml-2 border border-gray-700">
-              {jersey.condition}
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+            {jersey.size}
+          </span>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow-lg ${
+            jersey.condition === 'mint' ? 'bg-gradient-to-r from-green-600 to-green-700 text-white' :
+            jersey.condition === 'excellent' ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white' :
+            jersey.condition === 'very_good' ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white' :
+            jersey.condition === 'good' ? 'bg-gradient-to-r from-orange-600 to-orange-700 text-white' :
+            'bg-gradient-to-r from-red-600 to-red-700 text-white'
+          }`}>
+            {jersey.condition.replace('_', ' ')}
+          </span>
+          {jersey.manufacturer && (
+            <span className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+              {jersey.manufacturer}
             </span>
-          </div>
+          )}
         </div>
         
-        <p className="text-sm text-gray-300 mt-3 line-clamp-2">{jersey.description}</p>
+        {/* Description */}
+        {jersey.description && (
+          <p className="text-sm text-gray-300 mb-4 line-clamp-2 leading-relaxed">{jersey.description}</p>
+        )}
         
         {showCollectionDate && (
-          <p className="text-xs text-gray-500 mt-3">
+          <p className="text-xs text-gray-500 mb-4 flex items-center">
+            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
             Added {new Date(addedAt).toLocaleDateString()}
           </p>
         )}
         
         {showActions && (
-          <div className="mt-6 space-y-3" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'owned'); }}
-              className="w-full bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold"
-            >
-              Add to Owned
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'wanted'); }}
-              className="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold border border-gray-600"
-            >
-              Add to Wanted
-            </button>
-          </div>
-        )}
-
-        {showSellButton && (
-          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onSellJersey(jersey); }}
-              className="w-full bg-green-900 text-green-300 py-2 rounded-lg hover:bg-green-800 transition-colors text-sm font-semibold border border-green-700"
-            >
-              Sell This Jersey
-            </button>
-          </div>
-        )}
-
-        {showEditButton && (
-          <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onEditJersey(jersey); }}
-              className="w-full bg-blue-900 text-blue-300 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm font-semibold border border-blue-700"
-            >
-              Edit Jersey
-            </button>
-          </div>
-        )}
-
-        {showRemove && (
-          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onRemoveFromCollection(jersey.id); }}
-              className="w-full bg-red-900 text-red-300 py-2 rounded-lg hover:bg-red-800 transition-colors text-sm font-semibold border border-red-700"
-            >
-              Remove from Collection
-            </button>
+          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+            {showSellButton && (
+              <Button
+                onClick={(e) => { e.stopPropagation(); onSellJersey && onSellJersey(jersey); }}
+                variant="success"
+                size="sm"
+                className="w-full"
+              >
+                💰 Sell This Jersey
+              </Button>
+            )}
+            {showEditButton && (
+              <Button
+                onClick={(e) => { e.stopPropagation(); onEditJersey && onEditJersey(jersey); }}
+                variant="secondary"
+                size="sm"
+                className="w-full"
+              >
+                ✏️ Edit Jersey
+              </Button>
+            )}
+            {showRemove && onRemoveFromCollection && (
+              <Button
+                onClick={(e) => { e.stopPropagation(); onRemoveFromCollection(jersey.id); }}
+                variant="danger"
+                size="sm"
+                className="w-full"
+              >
+                🗑️ Remove
+              </Button>
+            )}
+            {onAddToCollection && (
+              <div className="flex space-x-2">
+                <Button
+                  onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'owned'); }}
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  ❤️ Own
+                </Button>
+                <Button
+                  onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'wanted'); }}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  ⭐ Want
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
