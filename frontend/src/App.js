@@ -630,7 +630,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
           manufacturer: formData.manufacturer,
           home_away: formData.home_away,
           league: formData.league,
-          description: `${formData.model} ${formData.color} jersey - ${formData.description}`,
+          description: formData.description,
           images: formData.images,
           reference_code: formData.reference_code
         };
@@ -658,7 +658,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
       const listingData = {
         jersey_id: finalJerseyId,
         price: parseFloat(formData.price),
-        description: formData.description,
+        description: formData.listing_description,
         images: formData.images
       };
 
@@ -666,7 +666,7 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Listing created successfully!');
+      alert('Jersey and listing created successfully!');
       onClose();
     } catch (error) {
       setError(error.response?.data?.detail || error.message || 'Failed to create listing');
