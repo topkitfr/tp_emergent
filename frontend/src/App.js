@@ -62,10 +62,14 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthProvider mounted, checking for existing token...');
     const token = localStorage.getItem('token');
+    console.log('Token found in localStorage:', token ? token.substring(0, 20) + '...' : 'none');
     if (token) {
+      console.log('Calling fetchProfile with existing token');
       fetchProfile(token);
     } else {
+      console.log('No token found, setting loading to false');
       setLoading(false);
     }
   }, []);
