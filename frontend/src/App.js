@@ -612,6 +612,299 @@ const ContactSellerModal = ({ listing, onClose }) => {
     </div>
   );
 };
+
+// Add Jersey Modal Component (for adding jersey to collection without listing)
+const AddJerseyModal = ({ onClose }) => {
+  const [formData, setFormData] = useState({
+    team: '',
+    season: '',
+    player: '',
+    size: 'M',
+    condition: 'excellent',
+    manufacturer: '',
+    home_away: 'home',
+    league: '',
+    description: '',
+    reference_code: '',
+    images: []
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedLeague, setSelectedLeague] = useState('');
+  const [availableTeams, setAvailableTeams] = useState([]);
+
+  // Update available teams when league changes
+  useEffect(() => {
+    if (selectedLeague && LEAGUES_DATA[selectedLeague]) {
+      setAvailableTeams(LEAGUES_DATA[selectedLeague]);
+      if (!LEAGUES_DATA[selectedLeague].includes(formData.team)) {
+        setFormData({...formData, team: '', league: selectedLeague});
+      }
+    } else {
+      setAvailableTeams([]);
+    }
+  }, [selectedLeague]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please login to add a jersey');
+      }
+
+      // Create jersey only (no listing)
+      const jerseyData = {
+        team: formData.team,
+        season: formData.season,
+        player: formData.player || null,
+        size: formData.size,
+        condition: formData.condition,
+        manufacturer: formData.manufacturer,
+        home_away: formData.home_away,
+        league: formData.league,
+        description: formData.description,
+        images: formData.images,
+        reference_code: formData.reference_code
+      };
+
+      const jerseyResponse = await axios.post(`${API}/api/jerseys`, jerseyData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const jerseyId = jerseyResponse.data.id;
+      
+      // Automatically add the jersey to the user's owned collection
+      try {
+        await axios.post(`${API}/api/collections`, {
+          jersey_id: jerseyId,
+          collection_type: 'owned'
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (collectionError) {
+        console.warn('Failed to add jersey to collection automatically:', collectionError);
+      }
+
+      alert('Jersey added to your collection successfully!');
+      onClose();
+      // Trigger refresh of collections
+      window.location.reload();
+    } catch (error) {
+      setError(error.response?.data?.detail || error.message || 'Failed to add jersey');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Add New Jersey</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 text-white">Jersey Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">League*</label>
+                <select
+                  value={selectedLeague}
+                  onChange={(e) => setSelectedLeague(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Select League</option>
+                  {Object.keys(LEAGUES_DATA).map(league => (
+                    <option key={league} value={league}>{league}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Club/National Team*</label>
+                <select
+                  value={formData.team}
+                  onChange={(e) => setFormData({...formData, team: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                  disabled={!selectedLeague}
+                >
+                  <option value="">Select Team</option>
+                  {availableTeams.map(team => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Season*</label>
+                <select
+                  value={formData.season}
+                  onChange={(e) => setFormData({...formData, season: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Select Season</option>
+                  {SEASONS.map(season => (
+                    <option key={season} value={season}>{season}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Brand/Manufacturer*</label>
+                <select
+                  value={formData.manufacturer}
+                  onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Select Brand</option>
+                  <option value="Adidas">Adidas</option>
+                  <option value="Nike">Nike</option>
+                  <option value="Puma">Puma</option>
+                  <option value="New Balance">New Balance</option>
+                  <option value="Under Armour">Under Armour</option>
+                  <option value="Hummel">Hummel</option>
+                  <option value="Kappa">Kappa</option>
+                  <option value="Umbro">Umbro</option>
+                  <option value="Macron">Macron</option>
+                  <option value="Errea">Errea</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Player Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Bruno Fernandes (optional)"
+                  value={formData.player}
+                  onChange={(e) => setFormData({...formData, player: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Code Référence</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 779963-01"
+                  value={formData.reference_code}
+                  onChange={(e) => setFormData({...formData, reference_code: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
+                <select
+                  value={formData.home_away}
+                  onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="home">Home</option>
+                  <option value="away">Away</option>
+                  <option value="third">Third Kit</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Size*</label>
+                <select
+                  value={formData.size}
+                  onChange={(e) => setFormData({...formData, size: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Condition*</label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="mint">Mint</option>
+                  <option value="excellent">Excellent</option>
+                  <option value="very_good">Very Good</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <textarea
+                  placeholder="Add details about the jersey, special features, etc."
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-20"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Jersey Photos</label>
+                <ImageUpload 
+                  images={formData.images}
+                  setImages={(images) => setFormData({...formData, images})}
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Upload photos of your jersey. Optional but recommended.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-semibold"
+            >
+              {loading ? 'Adding Jersey...' : 'Add to Collection'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Create Listing Modal Component
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
