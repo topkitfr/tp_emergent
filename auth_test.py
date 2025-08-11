@@ -441,8 +441,8 @@ class AuthenticationTester:
                 print(f"❌ {test.__name__}: FAIL - Exception: {str(e)}")
                 failed += 1
         
-        print("=" * 50)
-        print(f"📊 AUTHENTICATION TEST RESULTS:")
+        print("=" * 60)
+        print(f"📊 URGENT AUTHENTICATION TEST RESULTS:")
         print(f"✅ Passed: {passed}")
         print(f"❌ Failed: {failed}")
         print(f"📈 Success Rate: {(passed/(passed+failed)*100):.1f}%")
@@ -450,10 +450,17 @@ class AuthenticationTester:
         
         if failed == 0:
             print("🎉 ALL AUTHENTICATION TESTS PASSED!")
-            print("The authentication system is working correctly.")
+            print("✅ Backend authentication is working correctly")
+            print("✅ Users should be able to register and login")
+            print("✅ JWT tokens are working properly")
+            print("✅ Issue may be in frontend-backend communication")
         else:
-            print("⚠️  SOME AUTHENTICATION TESTS FAILED!")
-            print("Please review the failed tests above for issues.")
+            print("🚨 CRITICAL AUTHENTICATION ISSUES FOUND!")
+            print("❌ This explains why users cannot connect/register")
+            print("❌ Backend authentication system has problems")
+            print("❌ Check server status and network configuration")
+        
+        print("=" * 60)
         
         return failed == 0
 
