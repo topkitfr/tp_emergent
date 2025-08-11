@@ -2839,8 +2839,9 @@ const App = () => {
       alert('Article supprimé de votre collection !');
       // Refresh collections if we're on that page
       if (currentView === 'collections') {
-        // This will trigger a re-render of the collections page
-        window.location.reload();
+        // Force refresh the collections data by dispatching an event
+        const refreshEvent = new CustomEvent('refreshCollections');
+        window.dispatchEvent(refreshEvent);
       }
     } catch (error) {
       alert(error.response?.data?.detail || 'Erreur lors de la suppression');
