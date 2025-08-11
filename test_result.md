@@ -102,10 +102,15 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "TopKit corrections requises par l'utilisateur:
-1. Corriger le flux 'Add New Jersey' - doit seulement ajouter à la collection, apparaître dans 'Browse' seulement si profil public, apparaître sur 'Marketplace' seulement via 'Sell This Jersey'
-2. Élargir les choix de Ligues et Clubs avec catégorie générale 'Nation' au lieu de 'Euro' et 'World Cup'
-3. Simplifier le formulaire de listing - supprimer la section 'listing details' et le prix (valeur déterminée par ventes similaires comme Discogs), garder seulement la description"
+user_problem_statement: "TopKit corrections critiques requises par l'utilisateur:
+1. CRITIQUE: Ne peut pas fixer de prix lors de la vente d'un article depuis la collection (bouton 'sell')
+2. CRITIQUE: Le bouton 'remove' ne fonctionne pas pour supprimer des articles de la collection 
+3. Demande dialogue de confirmation 'êtes-vous sûr ?' en français pour les suppressions
+4. Demande gestion des frais d'envoi (paramètres vendeur comme Discogs)
+5. Demande gestion des statuts collection (own/want/for sale)
+6. Nettoyage complet base de données après corrections
+7. Retirer authentification Emergent, garder seulement Google OAuth
+8. Améliorations UI/UX"
 
 backend:
   - task: "Backend Listing Model Update - Optional Price"
