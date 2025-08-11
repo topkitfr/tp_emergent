@@ -2827,7 +2827,15 @@ const App = () => {
       return;
     }
 
-    if (!confirm('Are you sure you want to remove this jersey from your collection?')) {
+    // Create custom confirmation dialog
+    const confirmed = await showConfirmDialog(
+      'Confirmer la suppression',
+      'Êtes-vous sûr de vouloir supprimer cet article de votre collection ?',
+      'Oui, supprimer',
+      'Annuler'
+    );
+    
+    if (!confirmed) {
       return;
     }
 
@@ -2836,14 +2844,14 @@ const App = () => {
       await axios.delete(`${API}/api/collections/${jerseyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Removed from collection!');
+      alert('Article supprimé de votre collection !');
       // Refresh collections if we're on that page
       if (currentView === 'collections') {
         // This will trigger a re-render of the collections page
         window.location.reload();
       }
     } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to remove from collection');
+      alert(error.response?.data?.detail || 'Erreur lors de la suppression');
     }
   };
 
