@@ -1054,6 +1054,7 @@ const AddJerseyModal = ({ onClose }) => {
 const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   const [formData, setFormData] = useState({
     listing_description: '',
+    price: '',
     images: jersey?.images || []
   });
   const [loading, setLoading] = useState(false);
