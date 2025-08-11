@@ -3072,7 +3072,7 @@ const AppContent = () => {
         {renderContent()}
       </main>
 
-        {/* Modals */}
+      {/* Modals */}
         {showCreateListing && (
           <CreateListingModal 
             onClose={() => {
