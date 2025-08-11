@@ -177,7 +177,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Profile Settings API Update"
+    - "Button Visibility Fix Verification - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
