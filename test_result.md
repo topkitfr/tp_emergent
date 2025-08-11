@@ -221,9 +221,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Prix dans CreateListing - Rétablir champ prix obligatoire"
     - "Bouton Remove Collection - Corriger suppression d'articles"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Bouton Remove Collection - Corriger suppression d'articles"
   test_all: false
   test_priority: "high_first"
 
