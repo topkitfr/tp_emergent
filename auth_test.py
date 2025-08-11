@@ -367,7 +367,7 @@ class AuthenticationTester:
             # Try to register with same email
             payload = {
                 "email": self.test_user_email,
-                "password": "password123",
+                "password": TEST_PASSWORD,
                 "name": "Another Test User"
             }
             
