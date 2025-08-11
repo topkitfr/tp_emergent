@@ -124,6 +124,21 @@ backend:
         comment: "✅ PASS - PRIORITY 1 CRITICAL TESTING COMPLETE: All backend listing model changes working perfectly! Comprehensive testing completed with 100% success rate (9/9 tests passed). Key findings: ✅ POST /api/listings accepts listings without price field - tested and confirmed working ✅ Listing creation works without price parameter - price field correctly set to null ✅ Existing listings with prices still work - tested with $129.99 listing ✅ Jersey valuation update only triggers when price is provided - conditional logic working correctly ✅ Complete Discogs-like workflow tested: Jersey → Collection → Market-priced Listing. All PRIORITY 1 requirements fully satisfied. Backend modifications are production-ready."
 
 frontend:
+  - task: "Button Visibility Fix - Missing Collection Action Buttons"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed missing buttons issue by ensuring showActions={true} is properly set in Collections section. The JerseyCard component now correctly displays all three action buttons (Sell This Jersey, Edit Jersey, Remove) in the My Collection → Owned tab."
+      - working: true
+        agent: "testing"
+        comment: "✅ CRITICAL BUG FIXED - COMPREHENSIVE TESTING COMPLETE! The missing buttons issue has been completely resolved. VERIFICATION RESULTS: ✅ All three buttons now visible in My Collection → Owned tab: '💰 Sell This Jersey' (green styling), '✏️ Edit Jersey' (gray styling), '🗑️ Remove' (red styling) ✅ Button functionality verified: Sell opens Create Listing modal, Edit opens Edit Jersey modal, Remove is clickable ✅ Authentication flow working (Button Test User registered/logged in) ✅ Add New Jersey functionality working (Manchester United 23/24 Bruno Fernandes added) ✅ Regression testing passed: Browse section shows Own/Want buttons correctly, Marketplace shows View Details correctly, no inappropriate button visibility. CONCLUSION: The showActions={true} fix is working perfectly. The primary objective has been achieved - all expected buttons are visible and functional as designed."
+
   - task: "Separate Add Jersey vs Create Listing Functionality"
     implemented: true
     working: true
