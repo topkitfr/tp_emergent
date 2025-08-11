@@ -5,7 +5,7 @@ Test JWT validation specifically
 
 import requests
 
-BASE_URL = "https://e56af9eb-f0e2-423a-b3fb-fb05410a9c58.preview.emergentagent.com/api"
+BASE_URL = "https://fef57c80-b192-443b-8b87-510cd8eae0a0.preview.emergentagent.com/api"
 
 def test_jwt_validation():
     session = requests.Session()
