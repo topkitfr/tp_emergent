@@ -10,8 +10,8 @@ import time
 import jwt
 from datetime import datetime
 
-# Configuration - Using localhost:8001 as specified in review request
-BASE_URL = "http://localhost:8001/api"
+# Configuration - Using production URL from frontend/.env
+BASE_URL = "https://fef57c80-b192-443b-8b87-510cd8eae0a0.preview.emergentagent.com/api"
 
 # Test data as specified in review request
 TEST_EMAIL = "test@topkit.com"
