@@ -310,7 +310,7 @@ class AuthenticationTester:
                 # Verify data integrity
                 if (user_data.get("id") == self.user_id and
                     user_data.get("email") == self.test_user_email and
-                    user_data.get("name") == "Test User"):
+                    user_data.get("name") == TEST_NAME):
                     
                     self.log_test("User Profile Endpoint", "PASS", 
                                 f"Profile endpoint working correctly - User: {user_data.get('name')}, "
