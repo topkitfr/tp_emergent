@@ -3064,14 +3064,13 @@ const AppContent = () => {
   };
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-black text-white">
-        <Header currentView={currentView} setCurrentView={setCurrentView} />
-        
-        {/* Main Content */}
-        <main className="container mx-auto px-6 py-8">
-          {renderContent()}
-        </main>
+    <div className="min-h-screen bg-black text-white">
+      <Header currentView={currentView} setCurrentView={setCurrentView} />
+      
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-8">
+        {renderContent()}
+      </main>
 
         {/* Modals */}
         {showCreateListing && (
