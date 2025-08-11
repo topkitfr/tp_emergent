@@ -2256,6 +2256,19 @@ const CollectionsPage = () => {
     if (user) {
       fetchCollections();
     }
+
+    // Listen for refresh events
+    const handleRefreshCollections = () => {
+      if (user) {
+        fetchCollections();
+      }
+    };
+
+    window.addEventListener('refreshCollections', handleRefreshCollections);
+
+    return () => {
+      window.removeEventListener('refreshCollections', handleRefreshCollections);
+    };
   }, [user, activeTab]);
 
   const fetchCollections = async () => {
