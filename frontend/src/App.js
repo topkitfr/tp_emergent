@@ -124,11 +124,20 @@ const AuthProvider = ({ children }) => {
   };
 
   const login = (token, userData) => {
-    console.log('Login called with token:', token.substring(0, 20) + '...');
-    console.log('Login called with user data:', userData);
+    console.log('🔑 Login called with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    console.log('👤 Login called with user data:', userData);
+    
+    if (!token || !userData) {
+      console.error('❌ Login failed: missing token or userData');
+      return;
+    }
+    
     localStorage.setItem('token', token);
+    console.log('💾 Token saved to localStorage');
+    
     setUser(userData);
-    console.log('User state set to:', userData);
+    console.log('✅ User state set to:', userData);
+    console.log('🔄 User state should trigger re-render with navigation');
   };
 
   const logout = () => {
