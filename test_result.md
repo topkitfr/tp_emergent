@@ -113,6 +113,18 @@ user_problem_statement: "TopKit corrections critiques requises par l'utilisateur
 8. Améliorations UI/UX"
 
 backend:
+  - task: "Authentication Endpoints API - Login/Register"
+    implemented: true
+    working: "unknown"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Backend authentication endpoints exist (/api/auth/login, /api/auth/register) but need testing to verify they work correctly. Frontend AuthModal calls these endpoints but authentication state not persisting in React context. Testing backend first to isolate whether issue is backend API or frontend state management."
+
   - task: "Prix dans CreateListing - Rétablir champ prix obligatoire"
     implemented: true
     working: true
