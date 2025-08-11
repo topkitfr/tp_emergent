@@ -2370,6 +2370,7 @@ const CollectionsPage = () => {
             <JerseyCard 
               key={collection.id} 
               jersey={collection.jersey}
+              showActions={true}
               showCollectionDate={true}
               addedAt={collection.added_at}
               showRemove={true}
