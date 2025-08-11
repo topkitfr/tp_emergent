@@ -3064,85 +3064,86 @@ const AppContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Header currentView={currentView} setCurrentView={setCurrentView} />
-      
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        {renderContent()}
-      </main>
+    <>
+      <div className="min-h-screen bg-black text-white">
+        <Header currentView={currentView} setCurrentView={setCurrentView} />
+        
+        {/* Main Content */}
+        <main className="container mx-auto px-6 py-8">
+          {renderContent()}
+        </main>
 
-      {/* Modals */}
-      {showCreateListing && (
-        <CreateListingModal 
-          onClose={() => {
-            setShowCreateListing(false);
-            setSelectedListingJersey(null);
-          }}
-          jerseyId={selectedListingJersey?.id}
-          jersey={selectedListingJersey}
-        />
-      )}
+        {/* Modals */}
+        {showCreateListing && (
+          <CreateListingModal 
+            onClose={() => {
+              setShowCreateListing(false);
+              setSelectedListingJersey(null);
+            }}
+            jerseyId={selectedListingJersey?.id}
+            jersey={selectedListingJersey}
+          />
+        )}
 
-      {showAddJersey && (
-        <AddJerseyModal 
-          onClose={() => setShowAddJersey(false)}
-        />
-      )}
+        {showAddJersey && (
+          <AddJerseyModal 
+            onClose={() => setShowAddJersey(false)}
+          />
+        )}
 
-      {showEditJersey && selectedEditJersey && (
-        <EditJerseyModal 
-          jersey={selectedEditJersey}
-          onClose={() => {
-            setShowEditJersey(false);
-            setSelectedEditJersey(null);
-          }}
-          onJerseyUpdated={handleJerseyUpdated}
-        />
-      )}
+        {showEditJersey && selectedEditJersey && (
+          <EditJerseyModal 
+            jersey={selectedEditJersey}
+            onClose={() => {
+              setShowEditJersey(false);
+              setSelectedEditJersey(null);
+            }}
+            onJerseyUpdated={handleJerseyUpdated}
+          />
+        )}
 
-      {showJerseyDetail && selectedJerseyDetail && (
-        <JerseyDetailModal
-          jersey={selectedJerseyDetail}
-          listing={selectedListingDetail}
-          onClose={handleCloseJerseyDetail}
-        />
-      )}
+        {showJerseyDetail && selectedJerseyDetail && (
+          <JerseyDetailModal
+            jersey={selectedJerseyDetail}
+            listing={selectedListingDetail}
+            onClose={handleCloseJerseyDetail}
+          />
+        )}
 
-      {showUserProfile && selectedUserId && (
-        <UserProfileModal
-          userId={selectedUserId}
-          onClose={handleCloseUserProfile}
-        />
-      )}
+        {showUserProfile && selectedUserId && (
+          <UserProfileModal
+            userId={selectedUserId}
+            onClose={handleCloseUserProfile}
+          />
+        )}
 
-      {showAuthModalFromAction && (
-        <AuthModal 
-          onClose={() => setShowAuthModalFromAction(false)} 
-        />
-      )}
+        {showAuthModalFromAction && (
+          <AuthModal 
+            onClose={() => setShowAuthModalFromAction(false)} 
+          />
+        )}
 
-      {/* Footer */}
-      <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
-        <div className="container mx-auto px-6">
-          <div className="text-center">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
-              alt="TopKit"
-              className="h-8 w-auto mx-auto mb-4 opacity-60"
-            />
-            <p className="text-gray-400 mb-6">The world's premier soccer jersey marketplace</p>
-            <div className="flex justify-center space-x-8">
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">About</a>
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms</a>
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Support</a>
+        {/* Footer */}
+        <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
+          <div className="container mx-auto px-6">
+            <div className="text-center">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+                alt="TopKit"
+                className="h-8 w-auto mx-auto mb-4 opacity-60"
+              />
+              <p className="text-gray-400 mb-6">The world's premier soccer jersey marketplace</p>
+              <div className="flex justify-center space-x-8">
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">About</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Support</a>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
       </div>
-    </div>
+    </>
   );
 };
 
