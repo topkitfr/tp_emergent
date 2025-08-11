@@ -3122,25 +3122,25 @@ const AppContent = () => {
         />
       )}
 
-        {/* Footer */}
-        <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
-          <div className="container mx-auto px-6">
-            <div className="text-center">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
-                alt="TopKit"
-                className="h-8 w-auto mx-auto mb-4 opacity-60"
-              />
-              <p className="text-gray-400 mb-6">The world's premier soccer jersey marketplace</p>
-              <div className="flex justify-center space-x-8">
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">About</a>
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy</a>
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms</a>
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">Support</a>
-              </div>
+      {/* Footer */}
+      <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+              alt="TopKit"
+              className="h-8 w-auto mx-auto mb-4 opacity-60"
+            />
+            <p className="text-gray-400 mb-6">The world's premier soccer jersey marketplace</p>
+            <div className="flex justify-center space-x-8">
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">About</a>
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms</a>
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Support</a>
             </div>
           </div>
-        </footer>
+        </div>
+      </footer>
       </div>
     </div>
   );
