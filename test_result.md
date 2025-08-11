@@ -130,11 +130,11 @@ backend:
 
   - task: "Bouton Remove Collection - Corriger suppression d'articles"
     implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 2
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 3
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
@@ -145,6 +145,12 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PRIORITY 1 SUCCESS - API Collection Delete fully tested and working! CRITICAL FINDINGS (stuck_count: 2 RESOLVED): ✅ DELETE /api/collections/{jersey_id} endpoint working perfectly for authenticated users ✅ Complete integration flow tested: Add jersey to collection → Verify presence → DELETE → Confirm removal ✅ Proper authentication enforcement - correctly rejects unauthenticated requests with 403 status ✅ Edge cases handled properly - returns 404 for non-existent jerseys ✅ Jersey successfully removed from collection with proper success message. The backend API is working correctly - any frontend issues with the remove button are separate from backend functionality. User complaint about 'le bouton remove ne fonctionne pas' is likely a frontend issue, not backend."
+      - working: false
+        agent: "user"
+        comment: "User reports: 'je ne peux toujours pas effacer mes maillots dans la page collection, ni en 'own' ni en 'want', aucun message apparaît pour confirmer la suppression' - User still experiencing issues with remove functionality"
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL UI ISSUE CONFIRMED - Comprehensive testing reveals user complaint is PARTIALLY VALID. FINDINGS: ✅ CONFIRMATION DIALOG WORKS: French confirmation 'Êtes-vous sûr de vouloir supprimer cet article de votre collection ?' DOES appear ✅ BACKEND DELETION WORKS: DELETE /api/collections/{jersey_id} working perfectly ✅ SUCCESS MESSAGE APPEARS: 'Article supprimé de votre collection !' shows ❌ CRITICAL ISSUE: Jersey NOT removed from UI after deletion - collection doesn't refresh despite window.location.reload() call. ROOT CAUSE: Frontend refresh mechanism broken. Jersey remains visible making users think deletion failed. SOLUTION NEEDED: Fix collection refresh after successful deletion in handleRemoveFromCollection function."
 
 frontend:
   - task: "Button Visibility Fix - Missing Collection Action Buttons"
