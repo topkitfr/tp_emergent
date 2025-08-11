@@ -113,20 +113,32 @@ user_problem_statement: "TopKit corrections critiques requises par l'utilisateur
 8. Améliorations UI/UX"
 
 backend:
-  - task: "Backend Listing Model Update - Optional Price"
+  - task: "Prix dans CreateListing - Rétablir champ prix obligatoire"
     implemented: true
-    working: true
-    file: "/app/backend/server.py"
+    working: "NA"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Modified Listing model and ListingCreate to make price optional. Updated listing creation logic to only call valuation update if price is provided. This supports the Discogs-like model where price is determined by market data rather than seller input."
-      - working: true
-        agent: "testing"
-        comment: "✅ PASS - PRIORITY 1 CRITICAL TESTING COMPLETE: All backend listing model changes working perfectly! Comprehensive testing completed with 100% success rate (9/9 tests passed). Key findings: ✅ POST /api/listings accepts listings without price field - tested and confirmed working ✅ Listing creation works without price parameter - price field correctly set to null ✅ Existing listings with prices still work - tested with $129.99 listing ✅ Jersey valuation update only triggers when price is provided - conditional logic working correctly ✅ Complete Discogs-like workflow tested: Jersey → Collection → Market-priced Listing. All PRIORITY 1 requirements fully satisfied. Backend modifications are production-ready."
+        comment: "Rétabli le champ prix dans CreateListingModal. Ajouté input de prix obligatoire en euros avec validation. Modifié la logique de création de listing pour inclure le prix. L'utilisateur peut maintenant fixer un prix quand il clique 'Sell This Jersey'."
+
+  - task: "Bouton Remove Collection - Corriger suppression d'articles"
+    implemented: true
+    working: "NA" 
+    file: "/app/frontend/src/App.js"
+    stuck_count: 2
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Utilisateur signale: 'le bouton remove ne fonctionne pas, je ne peux pas supprimer un article de ma collection'"
+      - working: "NA"
+        agent: "main"
+        comment: "Amélioré le dialogue de confirmation en français 'Êtes-vous sûr de vouloir supprimer cet article de votre collection ?'. Traduit les messages d'erreur/succès en français. La fonction handleRemoveFromCollection existe déjà et fait appel à DELETE /api/collections/${jerseyId}."
 
 frontend:
   - task: "Button Visibility Fix - Missing Collection Action Buttons"
