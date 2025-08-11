@@ -1140,16 +1140,16 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
             <label className="block text-sm font-medium text-gray-300 mb-1">Price (€)*</label>
             <input
               type="number"
-              placeholder="Enter price in euros"
+              placeholder="Prix minimum 0.10€"
               value={formData.price}
               onChange={(e) => setFormData({...formData, price: e.target.value})}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
               step="0.01"
-              min="0"
+              min="0.10"
               required
             />
             <p className="text-xs text-gray-400 mt-1">
-              Set your asking price for this jersey
+              Prix minimum : 0.10€
             </p>
           </div>
 
