@@ -39,15 +39,15 @@ class AuthenticationTester:
         print()
     
     def test_user_registration(self):
-        """Test user registration endpoint with valid data"""
+        """Test user registration endpoint with test data from review request"""
         try:
-            # Use unique email to avoid conflicts
-            unique_email = f"testuser_{int(time.time())}@example.com"
+            # Use unique email to avoid conflicts but based on test data
+            unique_email = f"test_{int(time.time())}@topkit.com"
             
             payload = {
                 "email": unique_email,
-                "password": "password123",
-                "name": "Test User"
+                "password": TEST_PASSWORD,
+                "name": TEST_NAME
             }
             
             response = self.session.post(f"{self.base_url}/auth/register", json=payload)
