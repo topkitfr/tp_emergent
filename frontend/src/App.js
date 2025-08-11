@@ -2737,10 +2737,11 @@ const SearchFilter = ({ onFilter }) => {
 
 // Main App Component
 const App = () => {
+  const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoading] = useState(false);
   const [showCreateListing, setShowCreateListing] = useState(false);
   const [showAddJersey, setShowAddJersey] = useState(false); // For adding new jerseys
   const [selectedListingJersey, setSelectedListingJersey] = useState(null); // For selling from collection
@@ -2753,6 +2754,12 @@ const App = () => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
+
+  // Debug user state changes  
+  useEffect(() => {
+    console.log('🔄 App component - user state changed:', user);
+    console.log('🔄 App component - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
+  }, [user]);
 
   // Utility function to check authentication and redirect if needed
   const requireAuth = (action, actionName = 'perform this action') => {
