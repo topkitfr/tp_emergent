@@ -1075,10 +1075,11 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
         throw new Error('No jersey selected for listing');
       }
 
-      // Create the listing without price (price determined by market like Discogs)
+      // Create the listing with price
       const listingData = {
         jersey_id: jerseyId,
         description: formData.listing_description,
+        price: formData.price ? parseFloat(formData.price) : null,
         images: formData.images
       };
 
