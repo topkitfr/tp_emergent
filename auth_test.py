@@ -38,6 +38,26 @@ class AuthenticationTester:
             print(f"   Details: {details}")
         print()
     
+    def test_backend_connectivity(self):
+        """Test if backend is running on localhost:8001 as specified in review request"""
+        try:
+            # Test basic connectivity to backend
+            response = self.session.get(f"{self.base_url.replace('/api', '')}/")
+            
+            if response.status_code in [200, 404, 405]:  # Any response means server is running
+                self.log_test("Backend Connectivity", "PASS", f"Backend responding on {self.base_url}")
+                return True
+            else:
+                self.log_test("Backend Connectivity", "FAIL", f"Unexpected status: {response.status_code}")
+                return False
+                
+        except requests.exceptions.ConnectionError:
+            self.log_test("Backend Connectivity", "FAIL", f"CRITICAL: Cannot connect to {self.base_url} - This matches user's timeout issue!")
+            return False
+        except Exception as e:
+            self.log_test("Backend Connectivity", "FAIL", f"Exception: {str(e)}")
+            return False
+    
     def test_user_registration(self):
         """Test user registration endpoint with test data from review request"""
         try:
