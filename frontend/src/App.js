@@ -313,6 +313,13 @@ const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Debug user state in Header
+  useEffect(() => {
+    console.log('🎯 Header - user state changed:', user);
+    console.log('🎯 Header - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
+    console.log('🎯 Header - will show navigation:', user ? 'YES' : 'NO');
+  }, [user]);
+
   return (
     <>
       {/* Main Header: Logo centré + Login à droite */}
