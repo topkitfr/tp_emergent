@@ -3143,6 +3143,14 @@ const AppContent = () => {
           </div>
         </footer>
       </div>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   );
 };
