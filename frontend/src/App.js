@@ -2783,6 +2783,7 @@ const AppContent = () => {
   useEffect(() => {
     console.log('🔄 AppContent - user state changed:', user);
     console.log('🔄 AppContent - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
+    console.log('🔄 AppContent - token in localStorage:', localStorage.getItem('token') ? 'EXISTS' : 'MISSING');
   }, [user]);
 
   // Utility function to check authentication and redirect if needed
