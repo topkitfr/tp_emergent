@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://fef57c80-b192-443b-8b87-510cd8eae0a0.preview.emergentagent.com/api"
+BASE_URL = "https://21de401d-5b49-4140-b3c2-83cfb19517b0.preview.emergentagent.com/api"
 
 class ProfileSettingsAPITester:
     def __init__(self):
