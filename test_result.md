@@ -132,9 +132,9 @@ backend:
     implemented: true
     working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 3
+    stuck_count: 4
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -151,6 +151,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL UI ISSUE CONFIRMED - Comprehensive testing reveals user complaint is PARTIALLY VALID. FINDINGS: ✅ CONFIRMATION DIALOG WORKS: French confirmation 'Êtes-vous sûr de vouloir supprimer cet article de votre collection ?' DOES appear ✅ BACKEND DELETION WORKS: DELETE /api/collections/{jersey_id} working perfectly ✅ SUCCESS MESSAGE APPEARS: 'Article supprimé de votre collection !' shows ❌ CRITICAL ISSUE: Jersey NOT removed from UI after deletion - collection doesn't refresh despite window.location.reload() call. ROOT CAUSE: Frontend refresh mechanism broken. Jersey remains visible making users think deletion failed. SOLUTION NEEDED: Fix collection refresh after successful deletion in handleRemoveFromCollection function."
+      - working: false
+        agent: "testing"
+        comment: "❌ REMOVE BUTTON TESTING INCOMPLETE - CRITICAL AUTHENTICATION AND COLLECTION ISSUES DISCOVERED. FINDINGS: ❌ AUTHENTICATION SYSTEM: Multiple login attempts failed with timeout errors, preventing proper testing of Remove functionality ❌ COLLECTION SYSTEM: Even when jerseys are supposedly added to collections via 'Add to Owned/Wanted' buttons, the My Collection page shows 'No owned jerseys yet' and 'No wanted jerseys yet' ❌ FUNDAMENTAL ISSUE: Cannot test Remove button functionality because there are no jerseys in collections to remove ❌ ROOT CAUSE: Either the collection addition process is broken, or there's a data persistence/retrieval issue. CRITICAL PROBLEMS IDENTIFIED: 1) Authentication flow has timeout issues preventing login 2) Collection addition may not be working properly 3) Remove button cannot be tested without jerseys in collection. RECOMMENDATION: Main agent must fix authentication and collection addition issues before Remove button can be properly tested. The refresh mechanism fix cannot be verified until these fundamental issues are resolved."
 
 frontend:
   - task: "Button Visibility Fix - Missing Collection Action Buttons"
