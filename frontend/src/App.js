@@ -2774,7 +2774,7 @@ const App = () => {
   };
 
   const fetchJerseys = async (filters = {}) => {
-    setLoadingData(true);
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -2785,13 +2785,12 @@ const App = () => {
       setJerseys(response.data);
     } catch (error) {
       console.error('Failed to fetch jerseys:', error);
-    } finally {
-      setLoadingData(false);
+    } finally {      setLoading(false);
     }
   };
 
   const fetchListings = async (filters = {}) => {
-    setLoadingData(true);
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -2803,7 +2802,7 @@ const App = () => {
     } catch (error) {
       console.error('Failed to fetch listings:', error);
     } finally {
-      setLoadingData(false);
+      setLoading(false);
     }
   };
 
