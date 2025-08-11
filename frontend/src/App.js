@@ -2741,7 +2741,7 @@ const App = () => {
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
-  const [loadingData, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const [showCreateListing, setShowCreateListing] = useState(false);
   const [showAddJersey, setShowAddJersey] = useState(false); // For adding new jerseys
   const [selectedListingJersey, setSelectedListingJersey] = useState(null); // For selling from collection
