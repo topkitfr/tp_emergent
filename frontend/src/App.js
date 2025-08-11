@@ -1652,11 +1652,29 @@ const AuthModal = ({ onClose }) => {
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await axios.post(`${API}${endpoint}`, formData);
+      console.log('Attempting authentication:', `${API}${endpoint}`, formData);
+      
+      const response = await axios.post(`${API}${endpoint}`, formData, {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('Authentication response:', response.data);
       login(response.data.token, response.data.user);
       onClose();
     } catch (error) {
-      setError(error.response?.data?.detail || 'Authentication failed');
+      console.error('Authentication error:', error);
+      if (error.code === 'ECONNABORTED') {
+        setError('Connexion timeout - Vérifiez votre connexion internet');
+      } else if (error.response?.status === 404) {
+        setError('Service d\'authentification non disponible');
+      } else if (error.response?.status === 500) {
+        setError('Erreur serveur - Réessayez plus tard');
+      } else {
+        setError(error.response?.data?.detail || 'Erreur d\'authentification');
+      }
     } finally {
       setLoading(false);
     }
