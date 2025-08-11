@@ -408,11 +408,15 @@ class AuthenticationTester:
     
     def run_all_tests(self):
         """Run all authentication tests"""
-        print("🔐 TOPKIT AUTHENTICATION SYSTEM TESTING")
-        print("=" * 50)
+        print("🚨 URGENT AUTHENTICATION TESTING - TopKit Backend")
+        print("=" * 60)
+        print(f"Testing against: {self.base_url}")
+        print(f"Test data: {TEST_EMAIL} / {TEST_PASSWORD} / {TEST_NAME}")
+        print("=" * 60)
         print()
         
         tests = [
+            self.test_backend_connectivity,
             self.test_user_registration,
             self.test_user_login,
             self.test_jwt_token_creation,
