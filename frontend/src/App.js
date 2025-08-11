@@ -2569,6 +2569,7 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
         
         {showActions && (
           <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+            {console.log('🎯 JerseyCard - showActions:', showActions, 'onAddToCollection:', !!onAddToCollection)}
             {showSellButton && (
               <Button
                 onClick={(e) => { e.stopPropagation(); onSellJersey && onSellJersey(jersey); }}
