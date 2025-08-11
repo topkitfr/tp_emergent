@@ -135,9 +135,14 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
     console.log('💾 Token saved to localStorage');
     
+    console.log('🔄 BEFORE setUser - current user state:', user);
     setUser(userData);
-    console.log('✅ User state set to:', userData);
-    console.log('🔄 User state should trigger re-render with navigation');
+    console.log('✅ AFTER setUser - user state should be:', userData);
+    
+    // Force a small delay to see if the state update is async
+    setTimeout(() => {
+      console.log('⏰ DELAYED CHECK - user state is now:', user);
+    }, 100);
   };
 
   const logout = () => {
