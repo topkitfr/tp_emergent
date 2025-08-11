@@ -2816,7 +2816,9 @@ const AppContent = () => {
       
       const response = await axios.get(url);
       console.log('🎯 fetchJerseys - response received:', response.status, response.data?.length, 'jerseys');
+      console.log('🎯 fetchJerseys - sample jersey data:', response.data?.[0]);
       setJerseys(response.data);
+      console.log('🎯 fetchJerseys - jerseys state should be set to:', response.data?.length, 'items');
     } catch (error) {
       console.error('❌ fetchJerseys - Failed to fetch jerseys:', error);
       console.error('❌ fetchJerseys - Error details:', error.response?.status, error.response?.data);
