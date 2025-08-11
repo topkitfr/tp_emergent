@@ -338,7 +338,7 @@ class AuthenticationTester:
             
             # Test with wrong password
             payload = {
-                "email": self.test_user_email if self.test_user_email else "testuser@example.com",
+                "email": self.test_user_email if self.test_user_email else TEST_EMAIL,
                 "password": "wrongpassword"
             }
             
