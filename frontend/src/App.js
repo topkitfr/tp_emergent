@@ -110,15 +110,23 @@ const AuthProvider = ({ children }) => {
     try {
       console.log('Fetching profile with token:', token.substring(0, 20) + '...');
       const response = await axios.get(`${API}/api/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000
       });
       console.log('Profile response:', response.data);
-      setUser(response.data.user);
+      if (response.data?.user) {
+        setUser(response.data.user);
+        console.log('✅ Profile loaded successfully:', response.data.user);
+      } else {
+        console.error('❌ Invalid profile response structure:', response.data);
+        localStorage.removeItem('token');
+      }
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch profile:', error);
       console.error('Error response:', error.response?.data);
       localStorage.removeItem('token');
+      setUser(null);
       setLoading(false);
     }
   };
