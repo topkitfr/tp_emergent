@@ -410,6 +410,8 @@ const Header = ({ currentView, setCurrentView }) => {
             >
               Browse Jerseys
             </button>
+              Browse Jerseys
+            </button>
             <button 
               onClick={() => setCurrentView('marketplace')}
               className={`px-4 py-2 rounded-lg transition-colors font-medium ${
