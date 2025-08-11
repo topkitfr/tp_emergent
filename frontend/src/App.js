@@ -1687,8 +1687,16 @@ const AuthModal = ({ onClose }) => {
       });
       
       console.log('Authentication response:', response.data);
-      login(response.data.token, response.data.user);
-      onClose();
+      
+      if (response.data?.token && response.data?.user) {
+        console.log('✅ Authentication successful, calling login...');
+        await login(response.data.token, response.data.user);
+        console.log('✅ Login completed, closing modal...');
+        onClose();
+      } else {
+        console.error('❌ Invalid authentication response:', response.data);
+        setError('Authentication response was invalid. Please try again.');
+      }
     } catch (error) {
       console.error('Authentication error:', error);
       if (error.code === 'ECONNABORTED') {
