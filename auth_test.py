@@ -10,8 +10,13 @@ import time
 import jwt
 from datetime import datetime
 
-# Configuration
-BASE_URL = "https://e56af9eb-f0e2-423a-b3fb-fb05410a9c58.preview.emergentagent.com/api"
+# Configuration - Using localhost:8001 as specified in review request
+BASE_URL = "http://localhost:8001/api"
+
+# Test data as specified in review request
+TEST_EMAIL = "test@topkit.com"
+TEST_PASSWORD = "testpass123"
+TEST_NAME = "Test User"
 
 class AuthenticationTester:
     def __init__(self):
