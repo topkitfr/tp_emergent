@@ -2785,7 +2785,8 @@ const App = () => {
       setJerseys(response.data);
     } catch (error) {
       console.error('Failed to fetch jerseys:', error);
-    } finally {      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
