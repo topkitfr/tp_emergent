@@ -63,7 +63,7 @@ class AuthenticationTester:
                     # Verify user data
                     user_data = data["user"]
                     if (user_data.get("email") == unique_email and 
-                        user_data.get("name") == "Test User" and
+                        user_data.get("name") == TEST_NAME and
                         "id" in user_data):
                         
                         self.log_test("User Registration", "PASS", 
