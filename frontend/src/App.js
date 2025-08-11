@@ -2737,11 +2737,10 @@ const SearchFilter = ({ onFilter }) => {
 
 // Main App Component
 const App = () => {
-  const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
-  const [loadingData, setLoadingData] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showCreateListing, setShowCreateListing] = useState(false);
   const [showAddJersey, setShowAddJersey] = useState(false); // For adding new jerseys
   const [selectedListingJersey, setSelectedListingJersey] = useState(null); // For selling from collection
@@ -2754,6 +2753,8 @@ const App = () => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
+
+  const { user } = useAuth();
 
   // Debug user state changes  
   useEffect(() => {
