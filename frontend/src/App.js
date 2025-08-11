@@ -2736,7 +2736,8 @@ const SearchFilter = ({ onFilter }) => {
 };
 
 // Main App Component
-const App = () => {
+const AppContent = () => {
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
@@ -2754,12 +2755,10 @@ const App = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
 
-  const { user } = useAuth();
-
   // Debug user state changes  
   useEffect(() => {
-    console.log('🔄 App component - user state changed:', user);
-    console.log('🔄 App component - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
+    console.log('🔄 AppContent - user state changed:', user);
+    console.log('🔄 AppContent - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
   }, [user]);
 
   // Utility function to check authentication and redirect if needed
