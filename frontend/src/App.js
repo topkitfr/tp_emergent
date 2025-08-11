@@ -2827,15 +2827,7 @@ const App = () => {
       return;
     }
 
-    // Create custom confirmation dialog
-    const confirmed = await showConfirmDialog(
-      'Confirmer la suppression',
-      'Êtes-vous sûr de vouloir supprimer cet article de votre collection ?',
-      'Oui, supprimer',
-      'Annuler'
-    );
-    
-    if (!confirmed) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet article de votre collection ?')) {
       return;
     }
 
