@@ -3073,54 +3073,54 @@ const AppContent = () => {
       </main>
 
       {/* Modals */}
-        {showCreateListing && (
-          <CreateListingModal 
-            onClose={() => {
-              setShowCreateListing(false);
-              setSelectedListingJersey(null);
-            }}
-            jerseyId={selectedListingJersey?.id}
-            jersey={selectedListingJersey}
-          />
-        )}
+      {showCreateListing && (
+        <CreateListingModal 
+          onClose={() => {
+            setShowCreateListing(false);
+            setSelectedListingJersey(null);
+          }}
+          jerseyId={selectedListingJersey?.id}
+          jersey={selectedListingJersey}
+        />
+      )}
 
-        {showAddJersey && (
-          <AddJerseyModal 
-            onClose={() => setShowAddJersey(false)}
-          />
-        )}
+      {showAddJersey && (
+        <AddJerseyModal 
+          onClose={() => setShowAddJersey(false)}
+        />
+      )}
 
-        {showEditJersey && selectedEditJersey && (
-          <EditJerseyModal 
-            jersey={selectedEditJersey}
-            onClose={() => {
-              setShowEditJersey(false);
-              setSelectedEditJersey(null);
-            }}
-            onJerseyUpdated={handleJerseyUpdated}
-          />
-        )}
+      {showEditJersey && selectedEditJersey && (
+        <EditJerseyModal 
+          jersey={selectedEditJersey}
+          onClose={() => {
+            setShowEditJersey(false);
+            setSelectedEditJersey(null);
+          }}
+          onJerseyUpdated={handleJerseyUpdated}
+        />
+      )}
 
-        {showJerseyDetail && selectedJerseyDetail && (
-          <JerseyDetailModal
-            jersey={selectedJerseyDetail}
-            listing={selectedListingDetail}
-            onClose={handleCloseJerseyDetail}
-          />
-        )}
+      {showJerseyDetail && selectedJerseyDetail && (
+        <JerseyDetailModal
+          jersey={selectedJerseyDetail}
+          listing={selectedListingDetail}
+          onClose={handleCloseJerseyDetail}
+        />
+      )}
 
-        {showUserProfile && selectedUserId && (
-          <UserProfileModal
-            userId={selectedUserId}
-            onClose={handleCloseUserProfile}
-          />
-        )}
+      {showUserProfile && selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          onClose={handleCloseUserProfile}
+        />
+      )}
 
-        {showAuthModalFromAction && (
-          <AuthModal 
-            onClose={() => setShowAuthModalFromAction(false)} 
-          />
-        )}
+      {showAuthModalFromAction && (
+        <AuthModal 
+          onClose={() => setShowAuthModalFromAction(false)} 
+        />
+      )}
 
         {/* Footer */}
         <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
