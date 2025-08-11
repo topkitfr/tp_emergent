@@ -2983,6 +2983,7 @@ const AppContent = () => {
   }, [currentView]);
 
   const renderContent = () => {
+    console.log('🎯 renderContent - currentView is:', currentView);
     switch (currentView) {
       case 'profile':
         return <ProfilePage />;
