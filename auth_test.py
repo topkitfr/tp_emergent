@@ -97,7 +97,7 @@ class AuthenticationTester:
             
             payload = {
                 "email": self.test_user_email,
-                "password": "password123"
+                "password": TEST_PASSWORD
             }
             
             response = self.session.post(f"{self.base_url}/auth/login", json=payload)
