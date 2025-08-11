@@ -123,7 +123,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = (token, userData) => {
+  const login = async (token, userData) => {
     console.log('🔑 Login called with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
     console.log('👤 Login called with user data:', userData);
     
@@ -135,14 +135,10 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
     console.log('💾 Token saved to localStorage');
     
-    console.log('🔄 BEFORE setUser - current user state:', user);
+    // Set loading to false and user data
+    setLoading(false);
     setUser(userData);
-    console.log('✅ AFTER setUser - user state should be:', userData);
-    
-    // Force a small delay to see if the state update is async
-    setTimeout(() => {
-      console.log('⏰ DELAYED CHECK - user state is now:', user);
-    }, 100);
+    console.log('✅ Login successful - user state set:', userData);
   };
 
   const logout = () => {
