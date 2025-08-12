@@ -46,7 +46,7 @@ class BackendCorrectionsTest:
             # Try to register admin account
             admin_payload = {
                 "email": "topkitfr@gmail.com",
-                "password": "TopKit2024!",
+                "password": "adminpass123",
                 "name": "TopKit Admin"
             }
             
