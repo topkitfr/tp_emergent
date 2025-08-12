@@ -1043,6 +1043,20 @@ async def get_jersey_valuation_endpoint(jersey_id: str):
 async def get_collection_valuations_endpoint(user_id: str = Depends(get_current_user)):
     return await get_user_collection_valuations(user_id)
 
+@api_router.get("/collections/pending")
+async def get_user_pending_submissions(user_id: str = Depends(get_current_user)):
+    """Get user's pending jersey submissions"""
+    submissions = await db.jerseys.find({
+        "submitted_by": user_id,
+        "status": {"$in": ["pending", "rejected"]}
+    }).to_list(100)
+    
+    # Remove MongoDB ObjectId for JSON serialization
+    for submission in submissions:
+        submission.pop('_id', None)
+    
+    return submissions
+
 @api_router.post("/jerseys/{jersey_id}/price-estimate")
 async def add_collector_price_estimate(
     jersey_id: str, 
