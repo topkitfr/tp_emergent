@@ -2330,6 +2330,7 @@ const CollectionsPage = () => {
   const [collections, setCollections] = useState([]);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSubmitJerseyModal, setShowSubmitJerseyModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -2356,11 +2357,19 @@ const CollectionsPage = () => {
       const token = localStorage.getItem('token');
       
       if (activeTab === 'pending') {
-        // Fetch pending submissions
+        // Fetch pending submissions for submit jersey tab
         const response = await axios.get(`${API}/api/collections/pending`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setPendingSubmissions(response.data);
+        setCollections([]); // Clear regular collections
+      } else if (activeTab === 'submit') {
+        // Fetch all submissions (pending, approved, rejected) for submit jersey history
+        const pendingResponse = await axios.get(`${API}/api/collections/pending`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // For now, we'll show pending submissions. Later we can add an endpoint for all user submissions
+        setPendingSubmissions(pendingResponse.data);
         setCollections([]); // Clear regular collections
       } else {
         // Fetch regular collections (owned/wanted)
@@ -2378,9 +2387,22 @@ const CollectionsPage = () => {
   };
 
   const handleRemoveFromCollection = async (jerseyId) => {
-    // Use the main App's remove function via custom event
-    const event = new CustomEvent('removeFromCollection', { detail: jerseyId });
-    window.dispatchEvent(event);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(`${API}/api/collections/${jerseyId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.status === 200) {
+        // Show success message
+        window.alert('Article retiré de votre collection avec succès !');
+        // Refresh collections
+        fetchCollections();
+      }
+    } catch (error) {
+      console.error('Failed to remove from collection:', error);
+      window.alert('Erreur lors du retrait de l\'article de votre collection.');
+    }
   };
 
   const handleSellJersey = (jersey) => {
@@ -2407,10 +2429,9 @@ const CollectionsPage = () => {
     window.dispatchEvent(event);
   };
 
-  const handleAddNewJersey = () => {
-    // This will trigger the main app's listing creation modal for creating a new jersey
-    const event = new CustomEvent('addNewJersey');
-    window.dispatchEvent(event);
+  const handleSubmitNewJersey = () => {
+    // Open submit jersey modal instead of navigating
+    setShowSubmitJerseyModal(true);
   };
 
   const handleJerseyClick = (jersey) => {
@@ -2431,45 +2452,37 @@ const CollectionsPage = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-white">My Collections</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
           <button
-            onClick={handleAddNewJersey}
-            className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+            onClick={() => setActiveTab('owned')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'owned'
+                ? 'bg-white text-black'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
           >
-            + Add New Jersey
+            👕 Owned
           </button>
-          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
-            <button
-              onClick={() => setActiveTab('owned')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'owned'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              Owned Jerseys
-            </button>
-            <button
-              onClick={() => setActiveTab('wanted')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'wanted'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              Wanted Jerseys
-            </button>
-            <button
-              onClick={() => setActiveTab('pending')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'pending'
-                  ? 'bg-yellow-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              ⏳ Pending ({pendingSubmissions.length})
-            </button>
-          </div>
+          <button
+            onClick={() => setActiveTab('wanted')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'wanted'
+                ? 'bg-white text-black'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            ❤️ Wanted
+          </button>
+          <button
+            onClick={() => setActiveTab('submit')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'submit'
+                ? 'bg-green-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            📝 Submit Jersey
+          </button>
         </div>
       </div>
 
