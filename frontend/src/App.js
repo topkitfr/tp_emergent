@@ -4020,19 +4020,29 @@ const SubmitJerseyPage = () => {
 // Admin Panel Component (topkitfr@gmail.com only)
 const AdminPanel = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('jerseys');
   const [pendingJerseys, setPendingJerseys] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (user?.email === 'topkitfr@gmail.com') {
-      fetchPendingJerseys();
+      if (activeTab === 'jerseys') {
+        fetchPendingJerseys();
+      } else if (activeTab === 'users') {
+        fetchUsers();
+      } else if (activeTab === 'activities') {
+        fetchActivities();
+      }
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   const fetchPendingJerseys = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API}/api/admin/jerseys/pending`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -4041,6 +4051,38 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Failed to fetch pending jerseys:', error);
       alert('Failed to load pending submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data.users);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      alert('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/admin/activities`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setActivities(response.data.activities);
+    } catch (error) {
+      console.error('Failed to fetch activities:', error);
+      alert('Failed to load activities');
     } finally {
       setLoading(false);
     }
@@ -4091,6 +4133,31 @@ const AdminPanel = () => {
     }
   };
 
+  const handleAssignRole = async (userId, newRole, userName) => {
+    const reason = prompt(`Assigning ${newRole} role to ${userName}. Reason (optional):`);
+    if (reason === null) return; // User cancelled
+    
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/users/${userId}/assign-role`, {
+        user_id: userId,
+        role: newRole,
+        reason: reason || 'No reason provided'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert(`Role ${newRole} assigned successfully to ${userName}!`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Role assignment error:', error);
+      alert('Failed to assign role');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (user?.email !== 'topkitfr@gmail.com') {
     return (
       <div className="text-center py-24">
@@ -4098,6 +4165,259 @@ const AdminPanel = () => {
         <h2 className="text-3xl font-bold text-white mb-4">Access Denied</h2>
         <p className="text-gray-400">This area is restricted to administrators only.</p>
       </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-white">🔧 Admin Panel</h1>
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
+          <button
+            onClick={() => setActiveTab('jerseys')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'jerseys'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            📝 Jersey Validation
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'users'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            👥 User Management
+          </button>
+          <button
+            onClick={() => setActiveTab('activities')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'activities'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            📊 Activities
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8 text-gray-400">Loading...</div>
+      ) : activeTab === 'jerseys' ? (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-6">
+            📝 Pending Jersey Submissions ({pendingJerseys.length})
+          </h2>
+          
+          {pendingJerseys.length === 0 ? (
+            <div className="text-center py-16 bg-gray-800 rounded-2xl">
+              <div className="text-6xl mb-4">✅</div>
+              <h3 className="text-2xl font-bold text-white mb-4">All caught up!</h3>
+              <p className="text-gray-400">No pending jersey submissions to review.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pendingJerseys.map((jersey) => (
+                <div key={jersey.id} className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white truncate">
+                      {jersey.team} {jersey.season}
+                    </h3>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleApprove(jersey.id)}
+                        disabled={actionLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                      >
+                        ✅ Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(jersey.id)}
+                        disabled={actionLoading}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                      >
+                        ❌ Reject
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="text-gray-300 text-sm space-y-1">
+                    {jersey.player && <p><span className="text-gray-400">Player:</span> {jersey.player}</p>}
+                    <p><span className="text-gray-400">Size:</span> {jersey.size}</p>
+                    <p><span className="text-gray-400">Condition:</span> {jersey.condition}</p>
+                    {jersey.manufacturer && <p><span className="text-gray-400">Brand:</span> {jersey.manufacturer}</p>}
+                    {jersey.league && <p><span className="text-gray-400">League:</span> {jersey.league}</p>}
+                    {jersey.reference_code && <p><span className="text-gray-400">Ref:</span> {jersey.reference_code}</p>}
+                    {jersey.description && <p><span className="text-gray-400">Description:</span> {jersey.description}</p>}
+                    <p className="text-xs text-gray-500 pt-2">
+                      Submitted: {new Date(jersey.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'users' ? (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-6">
+            👥 User Management ({users.length} users)
+          </h2>
+          
+          <div className="space-y-4">
+            {users.map((userData) => (
+              <div key={userData.id} className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Avatar user={userData} size="md" />
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{userData.name}</h3>
+                        <p className="text-gray-400 text-sm">{userData.email}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            userData.role === 'admin' ? 'bg-red-900 text-red-300' :
+                            userData.role === 'moderator' ? 'bg-blue-900 text-blue-300' :
+                            'bg-gray-900 text-gray-300'
+                          }`}>
+                            {userData.role === 'admin' ? '👑 Admin' : 
+                             userData.role === 'moderator' ? '🔧 Moderator' : 
+                             '👤 User'}
+                          </span>
+                          <span className="text-gray-500 text-xs">
+                            {userData.provider} • {new Date(userData.created_at).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                      <div className="bg-gray-700 rounded-lg p-3 text-center">
+                        <div className="text-lg font-bold text-white">{userData.stats.jerseys_submitted}</div>
+                        <div className="text-xs text-gray-400">Submitted</div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-3 text-center">
+                        <div className="text-lg font-bold text-green-400">{userData.stats.jerseys_approved}</div>
+                        <div className="text-xs text-gray-400">Approved</div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-3 text-center">
+                        <div className="text-lg font-bold text-red-400">{userData.stats.jerseys_rejected}</div>
+                        <div className="text-xs text-gray-400">Rejected</div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-3 text-center">
+                        <div className="text-lg font-bold text-blue-400">{userData.stats.collections_added}</div>
+                        <div className="text-xs text-gray-400">Collections</div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-3 text-center">
+                        <div className="text-lg font-bold text-purple-400">{userData.stats.listings_created}</div>
+                        <div className="text-xs text-gray-400">Listings</div>
+                      </div>
+                    </div>
+
+                    {userData.recent_activities && userData.recent_activities.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">Recent Activities</h4>
+                        <div className="space-y-1">
+                          {userData.recent_activities.slice(0, 3).map((activity, index) => (
+                            <div key={index} className="text-xs text-gray-500">
+                              <span className="text-gray-300">{activity.action.replace('_', ' ')}</span>
+                              <span className="mx-2">•</span>
+                              {new Date(activity.created_at).toLocaleDateString('fr-FR')}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col space-y-2 ml-4">
+                    {userData.email !== 'topkitfr@gmail.com' && (
+                      <>
+                        {userData.role !== 'moderator' && (
+                          <button
+                            onClick={() => handleAssignRole(userData.id, 'moderator', userData.name)}
+                            disabled={actionLoading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                          >
+                            🔧 Make Moderator
+                          </button>
+                        )}
+                        {userData.role === 'moderator' && (
+                          <button
+                            onClick={() => handleAssignRole(userData.id, 'user', userData.name)}
+                            disabled={actionLoading}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                          >
+                            👤 Remove Moderator
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-6">
+            📊 System Activities ({activities.length} recent)
+          </h2>
+          
+          <div className="space-y-3">
+            {activities.map((activity) => (
+              <div key={activity.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-sm font-medium text-white">
+                        {activity.user_name || activity.user_email}
+                      </span>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-sm text-gray-400">
+                        {activity.action.replace('_', ' ')}
+                      </span>
+                    </div>
+                    
+                    {activity.details && Object.keys(activity.details).length > 0 && (
+                      <div className="text-xs text-gray-500">
+                        {activity.details.jersey_name && (
+                          <span>Jersey: {activity.details.jersey_name}</span>
+                        )}
+                        {activity.details.new_role && (
+                          <span>New role: {activity.details.new_role}</span>
+                        )}
+                        {activity.details.reason && (
+                          <span>Reason: {activity.details.reason}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <span className="text-xs text-gray-500">
+                    {new Date(activity.created_at).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
     );
   }
 
