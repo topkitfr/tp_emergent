@@ -581,6 +581,39 @@ async def get_current_admin(user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return user_id
 
+async def get_current_moderator_or_admin(user_id: str = Depends(get_current_user)):
+    """Check if the current user is a moderator or admin"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=403, detail="Authentication required")
+    
+    # Admin can always access
+    if user["email"] == ADMIN_EMAIL:
+        return user_id
+    
+    # Check if user has moderator role
+    user_role = user.get("role", "user")
+    if user_role not in ["moderator", "admin"]:
+        raise HTTPException(status_code=403, detail="Moderator or admin access required")
+    
+    return user_id
+
+async def log_user_activity(user_id: str, action: str, target_id: str = None, details: Dict[str, Any] = None):
+    """Log user activity for admin tracking"""
+    if details is None:
+        details = {}
+    
+    activity = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "action": action,
+        "target_id": target_id,
+        "details": details,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.user_activities.insert_one(activity)
+
 # Admin endpoints
 @api_router.get("/admin/jerseys/pending")
 async def get_pending_jerseys(admin_id: str = Depends(get_current_admin)):
