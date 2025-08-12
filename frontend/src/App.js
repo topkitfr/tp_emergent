@@ -1805,12 +1805,6 @@ const AuthModal = ({ onClose }) => {
             Continue with Google
           </button>
 
-          <button
-            onClick={handleEmergentAuth}
-            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Continue with Emergent Auth
-          </button>
         </div>
 
         <div className="mt-4 text-center">
