@@ -1427,9 +1427,36 @@ const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+              className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
             >
               Cancel
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (confirm('Êtes-vous sûr de vouloir supprimer cet article de votre collection ?')) {
+                  try {
+                    setLoading(true);
+                    const token = localStorage.getItem('token');
+                    await axios.delete(`${API}/api/collections/${jersey.id}`, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    alert('Article supprimé de votre collection !');
+                    // Dispatch refresh event for collections
+                    const refreshEvent = new CustomEvent('refreshCollections');
+                    window.dispatchEvent(refreshEvent);
+                    onClose();
+                  } catch (error) {
+                    alert(error.response?.data?.detail || 'Erreur lors de la suppression');
+                  } finally {
+                    setLoading(false);
+                  }
+                }
+              }}
+              disabled={loading}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-semibold"
+            >
+              🗑️ Remove from Collection
             </button>
             <button
               type="submit"
