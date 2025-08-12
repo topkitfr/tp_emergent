@@ -1057,6 +1057,42 @@ async def get_trending_jerseys():
         logger.error(traceback.format_exc())
         return {"trending_jerseys": []}
 
+# Database management endpoints
+@api_router.delete("/admin/database/erase")
+async def erase_database(current_user: dict = Depends(get_current_user)):
+    """
+    Erase the entire database - USE WITH CAUTION!
+    This will delete all users, jerseys, listings, and collections.
+    """
+    try:
+        # Delete all collections
+        await db.users.delete_many({})
+        await db.jerseys.delete_many({})
+        await db.listings.delete_many({})
+        await db.collections.delete_many({})
+        await db.price_history.delete_many({})
+        await db.jersey_valuations.delete_many({})
+        await db.messages.delete_many({})
+        
+        return {"message": "Database successfully erased", "status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to erase database: {str(e)}")
+
+@api_router.delete("/admin/database/clear-listings")
+async def clear_deleted_listings():
+    """
+    Remove all listings marked as deleted from Browse and Marketplace
+    """
+    try:
+        # Delete all listings that are marked as deleted or inactive
+        result = await db.listings.delete_many({"deleted": True})
+        result2 = await db.listings.delete_many({"status": "deleted"})
+        
+        deleted_count = result.deleted_count + result2.deleted_count
+        return {"message": f"Removed {deleted_count} deleted listings", "status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear deleted listings: {str(e)}")
+
 # Messaging endpoints
 @api_router.post("/messages")
 async def send_message(message_data: MessageCreate, user_id: str = Depends(get_current_user)):
