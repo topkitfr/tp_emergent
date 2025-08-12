@@ -220,6 +220,26 @@ class MessageCreate(BaseModel):
     listing_id: Optional[str] = None
     message: str
 
+class UserActivity(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    action: str  # "jersey_submission", "jersey_approved", "jersey_rejected", "role_assigned", etc.
+    target_id: Optional[str] = None  # ID of jersey/listing/etc involved
+    details: Dict[str, Any] = {}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class RoleAssignment(BaseModel):
+    user_id: str
+    role: str
+    reason: Optional[str] = None
+
+class UserStats(BaseModel):
+    jerseys_submitted: int = 0
+    jerseys_approved: int = 0
+    jerseys_rejected: int = 0
+    collections_added: int = 0
+    listings_created: int = 0
+
 class ProfileSettings(BaseModel):
     name: Optional[str] = None
     picture: Optional[str] = None
