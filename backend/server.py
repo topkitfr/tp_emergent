@@ -614,9 +614,57 @@ async def reject_jersey(
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
 async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user)):
-    jersey = Jersey(**jersey_data.dict(), created_by=user_id, submitted_by=user_id)
-    await db.jerseys.insert_one(jersey.dict())
-    return jersey
+    """Create a new jersey submission (pending approval)"""
+    try:
+        print(f"🟡 Jersey submission received from user {user_id}")
+        print(f"🟡 Jersey data: {jersey_data.dict()}")
+        
+        # Validate required fields
+        if not jersey_data.team or not jersey_data.season:
+            raise HTTPException(status_code=422, detail="Team and season are required")
+        
+        if not jersey_data.size or not jersey_data.condition:
+            raise HTTPException(status_code=422, detail="Size and condition are required")
+        
+        # Validate enums
+        try:
+            size_enum = JerseySize(jersey_data.size.upper() if jersey_data.size else "")
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid size: {jersey_data.size}. Must be one of: XS, S, M, L, XL, XXL")
+        
+        try:
+            condition_enum = JerseyCondition(jersey_data.condition.lower() if jersey_data.condition else "")
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid condition: {jersey_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+        
+        # Create jersey with validated data
+        jersey = Jersey(
+            team=jersey_data.team.strip(),
+            season=jersey_data.season.strip(),
+            player=jersey_data.player.strip() if jersey_data.player else None,
+            size=size_enum,
+            condition=condition_enum,
+            manufacturer=jersey_data.manufacturer.strip() if jersey_data.manufacturer else "",
+            home_away=jersey_data.home_away.strip() if jersey_data.home_away else "",
+            league=jersey_data.league.strip() if jersey_data.league else "",
+            description=jersey_data.description.strip() if jersey_data.description else "",
+            images=jersey_data.images or [],
+            reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
+            created_by=user_id,
+            submitted_by=user_id
+        )
+        
+        # Insert into database
+        await db.jerseys.insert_one(jersey.dict())
+        print(f"✅ Jersey created successfully with ID: {jersey.id}")
+        
+        return jersey
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Jersey creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create jersey: {str(e)}")
 
 @api_router.get("/jerseys")
 async def get_jerseys(
