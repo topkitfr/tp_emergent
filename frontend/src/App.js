@@ -2785,7 +2785,6 @@ const AppContent = () => {
   };
 
   const fetchJerseys = async (filters = {}) => {
-    console.log('🎯 fetchJerseys called with filters:', filters);
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -2794,20 +2793,11 @@ const AppContent = () => {
       });
       
       const url = `${API}/api/jerseys?${params.toString()}`;
-      console.log('🎯 fetchJerseys - making request to:', url);
-      console.log('🎯 fetchJerseys - API constant is:', API);
-      
       const response = await axios.get(url);
-      console.log('🎯 fetchJerseys - response received:', response.status, response.data?.length, 'jerseys');
-      console.log('🎯 fetchJerseys - sample jersey data:', response.data?.[0]);
       setJerseys(response.data);
-      console.log('🎯 fetchJerseys - jerseys state should be set to:', response.data?.length, 'items');
     } catch (error) {
-      console.error('❌ fetchJerseys - Failed to fetch jerseys:', error);
-      console.error('❌ fetchJerseys - Error details:', error.response?.status, error.response?.data);
-      console.error('❌ fetchJerseys - Network error:', error.message);
+      console.error('❌ Failed to fetch jerseys:', error);
     } finally {
-      console.log('🎯 fetchJerseys - setting loading to false');
       setLoading(false);
     }
   };
