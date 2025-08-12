@@ -3021,6 +3021,20 @@ const AppContent = () => {
     }
   }, [currentView]);
 
+  // Event listeners for custom events from subcomponents
+  useEffect(() => {
+    const handleShowAuthModal = () => setShowAuthModal(true);
+    const handleChangeView = (e) => setCurrentView(e.detail);
+    
+    window.addEventListener('showAuthModal', handleShowAuthModal);
+    window.addEventListener('changeView', handleChangeView);
+    
+    return () => {
+      window.removeEventListener('showAuthModal', handleShowAuthModal);
+      window.removeEventListener('changeView', handleChangeView);
+    };
+  }, []);
+
   const renderContent = () => {
     switch (currentView) {
       case 'profile':
