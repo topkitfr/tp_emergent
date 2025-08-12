@@ -2655,6 +2655,18 @@ const CollectionsPage = () => {
           ))}
         </div>
       )}
+      
+      {/* Submit Jersey Modal */}
+      {showSubmitJerseyModal && (
+        <SubmitJerseyModal 
+          onClose={() => setShowSubmitJerseyModal(false)}
+          onSuccess={() => {
+            setShowSubmitJerseyModal(false);
+            // Refresh submissions after successful submission
+            fetchCollections();
+          }}
+        />
+      )}
     </div>
   );
 };
