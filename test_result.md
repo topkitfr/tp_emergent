@@ -359,8 +359,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend Discogs Validation System Testing Complete"
-  stuck_tasks: []
+    - "Authentication Modal Form Login - Frontend Login State Management"
+    - "My Collection Page Redesign with 3 Tabs"
+    - "Submit Jersey Integration"
+    - "Collection Management with French Text"
+  stuck_tasks:
+    - "Authentication Modal Form Login - Frontend Login State Management"
   test_all: false
   test_priority: "high_first"
 
