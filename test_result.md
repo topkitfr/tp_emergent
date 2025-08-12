@@ -303,6 +303,42 @@ frontend:
         agent: "testing"
         comment: "✅ PRIORITY 2 SUCCESS: Simplified Create Listing Modal fully implemented and tested! CRITICAL VERIFICATION: ✅ CreateListingModal opens correctly when clicking 'Sell This Jersey' button ✅ PRICE FIELD REMOVED: Confirmed no price input fields present (correctly removed as requested) ✅ Only description field and photo upload available as specified ✅ Jersey preview section displays existing jersey information ✅ Helpful messaging about market-based pricing like Discogs model present ✅ Modal size and complexity significantly reduced ✅ Listing creation process functional without price requirement. All PRIORITY 2 requirements fully satisfied. The Discogs-like model where prices are market-determined rather than seller-set is properly implemented."
 
+  - task: "Submission Confirmation Messages"
+    implemented: true
+    working: "unknown"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Fixed handleSubmit function in SubmitJerseyPage to correctly handle HTTP response codes and display appropriate success/error messages. Success messages now only show on 200/201 responses, error messages properly displayed for 422 validation errors."
+
+  - task: "Pending Tab in My Collection"
+    implemented: true
+    working: "unknown"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Enhanced CollectionsPage component with new 'Pending' tab that fetches user's pending jersey submissions from /api/collections/pending endpoint. Displays greyed-out jersey cards with status messages like 'Under Review' or 'Rejected'."
+
+  - task: "Admin Panel Functionality"
+    implemented: true
+    working: "unknown"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "AdminPanel component allows topkitfr@gmail.com to view and manage pending jersey submissions. Should display pending submissions and allow approve/reject actions. Backend endpoints confirmed working, need to test frontend integration."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
