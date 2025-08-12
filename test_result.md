@@ -185,9 +185,9 @@ backend:
 frontend:
   - task: "Add to Owned/Wanted Collection Buttons - Browse Jerseys Page"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -197,6 +197,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "🎯 COMPREHENSIVE BACKEND TESTING COMPLETE - ROOT CAUSE IDENTIFIED! Extensive testing reveals the backend systems are FULLY FUNCTIONAL, confirming this is a FRONTEND-SPECIFIC issue. BACKEND VERIFICATION RESULTS: ✅ JERSEY DATABASE: Contains 30+ jerseys with complete data structure (team, season, player, size, condition, league) - sufficient data for frontend jersey cards ✅ AUTHENTICATION SYSTEM: 100% functional - registration, login, and profile access working perfectly with proper JWT token handling ✅ COLLECTIONS API: 100% functional - 'Add to Owned/Wanted' endpoints working correctly, users can successfully add jerseys to both owned and wanted collections ✅ DATA INTEGRITY: Jersey data structure complete with all required fields for frontend rendering ✅ API ENDPOINTS: All tested endpoints responding correctly (GET /api/jerseys, POST /api/collections, GET /api/collections/owned, GET /api/collections/wanted, GET /api/profile). CRITICAL FINDING: The user's complaint 'je ne peux toujours pas voir les boutons Add to Owned/Wanted sur les cartes de jersey' is NOT caused by backend issues. The backend provides all necessary data and functionality. ROOT CAUSE: This is a FRONTEND RENDERING ISSUE - the Browse Jerseys page is likely not properly displaying jersey cards or the collection buttons are not rendering due to frontend logic problems. RECOMMENDATION: Main agent should focus on frontend jersey card rendering, authentication state management in React, and button visibility logic in the Browse Jerseys component."
+      - working: true
+        agent: "main"
+        comment: "✅ PROBLÈME RÉSOLU - Correction de la logique d'affichage des boutons collection dans JerseyCard. Les boutons 'Own' et 'Want' étaient incorrectement imbriqués dans la section showActions. Les boutons sont maintenant séparés et s'affichent correctement lorsque onAddToCollection est fourni. Screenshots confirment que les boutons ❤️ Own et ⭐ Want sont maintenant visibles sur toutes les cartes dans Browse Jerseys."
 
   - task: "Authentication Modal Form Login - Frontend Login State Management"
     implemented: true
