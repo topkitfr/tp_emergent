@@ -543,6 +543,72 @@ async def google_callback(request: Request):
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
     return f"<script>window.location.href = '{frontend_url}/auth/success?token={token}';</script>"
 
+# Admin functions
+ADMIN_EMAIL = "topkitfr@gmail.com"
+
+async def get_current_admin(user_id: str = Depends(get_current_user)):
+    """Check if the current user is an admin"""
+    user = await db.users.find_one({"id": user_id})
+    if not user or user["email"] != ADMIN_EMAIL:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user_id
+
+# Admin endpoints
+@api_router.get("/admin/jerseys/pending")
+async def get_pending_jerseys(admin_id: str = Depends(get_current_admin)):
+    """Get all jerseys pending approval"""
+    jerseys = await db.jerseys.find({"status": "pending"}).to_list(100)
+    
+    # Remove MongoDB ObjectId for JSON serialization
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
+    return jerseys
+
+@api_router.post("/admin/jerseys/{jersey_id}/approve")
+async def approve_jersey(jersey_id: str, admin_id: str = Depends(get_current_admin)):
+    """Approve a pending jersey"""
+    result = await db.jerseys.update_one(
+        {"id": jersey_id, "status": "pending"},
+        {
+            "$set": {
+                "status": "approved",
+                "approved_by": admin_id,
+                "approved_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Jersey not found or already processed")
+    
+    return {"message": "Jersey approved successfully"}
+
+@api_router.post("/admin/jerseys/{jersey_id}/reject")
+async def reject_jersey(
+    jersey_id: str, 
+    rejection_data: dict,
+    admin_id: str = Depends(get_current_admin)
+):
+    """Reject a pending jersey"""
+    reason = rejection_data.get("reason", "No reason provided")
+    
+    result = await db.jerseys.update_one(
+        {"id": jersey_id, "status": "pending"},
+        {
+            "$set": {
+                "status": "rejected",
+                "approved_by": admin_id,
+                "approved_at": datetime.utcnow(),
+                "rejection_reason": reason
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Jersey not found or already processed")
+    
+    return {"message": "Jersey rejected successfully"}
 
 
 # Jersey endpoints
