@@ -104,8 +104,13 @@ class Jersey(BaseModel):
     description: str
     images: List[str] = []
     reference_code: Optional[str] = None
+    status: JerseyStatus = JerseyStatus.PENDING  # Default to pending for moderation
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
+    submitted_by: str  # User who submitted this jersey
+    approved_by: Optional[str] = None  # Admin who approved/rejected
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
 
 class Listing(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
