@@ -1721,14 +1721,7 @@ const AuthModal = ({ onClose }) => {
     window.location.href = `${API}/api/auth/google`;
   };
 
-  const handleEmergentAuth = async () => {
-    try {
-      const response = await axios.get(`${API}/api/auth/emergent/redirect`);
-      window.location.href = response.data.auth_url;
-    } catch (error) {
-      setError('Failed to redirect to Emergent Auth');
-    }
-  };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] pointer-events-none">
