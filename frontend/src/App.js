@@ -3259,31 +3259,67 @@ const SubmitJerseyPage = () => {
     }
 
     if (!formData.team || !formData.season || !formData.size || !formData.condition) {
-      alert('Please fill in all required fields');
+      alert('Please fill in all required fields (Team, Season, Size, Condition)');
       return;
     }
 
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      
+      // Clean and prepare data
       const jerseyData = {
-        ...formData,
+        team: formData.team.trim(),
+        season: formData.season,
+        player: formData.player?.trim() || null,
+        size: formData.size,
+        condition: formData.condition,
+        manufacturer: formData.manufacturer?.trim() || "",
+        home_away: formData.home_away || "",
+        league: formData.league?.trim() || "",
+        description: formData.description?.trim() || "",
+        reference_code: formData.reference_code?.trim() || null,
         images: images
       };
 
-      await axios.post(`${API}/api/jerseys`, jerseyData, {
-        headers: { Authorization: `Bearer ${token}` }
+      console.log('🟡 Submitting jersey data:', jerseyData);
+
+      const response = await axios.post(`${API}/api/jerseys`, jerseyData, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      setSubmitted(true);
-      setFormData({
-        team: '', season: '', player: '', size: '', condition: '', 
-        manufacturer: '', home_away: '', league: '', description: '', reference_code: ''
-      });
-      setImages([]);
+      console.log('✅ Jersey submission successful:', response.data);
+
+      // Only set submitted to true if we get a successful response
+      if (response.status === 200 || response.status === 201) {
+        setSubmitted(true);
+        setFormData({
+          team: '', season: '', player: '', size: '', condition: '', 
+          manufacturer: '', home_away: '', league: '', description: '', reference_code: ''
+        });
+        setImages([]);
+      }
     } catch (error) {
-      console.error('Submission error:', error);
-      alert('Failed to submit jersey: ' + (error.response?.data?.detail || error.message));
+      console.error('❌ Jersey submission error:', error);
+      
+      let errorMessage = 'Failed to submit jersey';
+      
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.detail || `Server error (${error.response.status})`;
+        console.error('Server error details:', error.response.data);
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'No response from server - check your connection';
+      } else {
+        // Something happened in setting up the request
+        errorMessage = error.message;
+      }
+      
+      alert(`❌ Submission failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
