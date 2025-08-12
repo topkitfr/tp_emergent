@@ -564,8 +564,8 @@ async def get_jerseys(
     limit: int = 20
 ):
     query = {}
-    # Exclude deleted or inactive jerseys
-    query["$and"] = [{"$or": [{"deleted": {"$ne": True}}, {"deleted": {"$exists": False}}]}]
+    # Only show approved jerseys (Discogs-like system)
+    query["$and"] = [{"status": "approved"}]
     
     filter_conditions = []
     if team:
