@@ -2032,6 +2032,42 @@ const ProfilePage = () => {
     });
   };
 
+  const handleEraseDatabase = async () => {
+    if (window.confirm('⚠️ WARNING: This will permanently delete ALL data including users, jerseys, listings, and collections. This action cannot be undone.\n\nAre you absolutely sure you want to proceed?')) {
+      if (window.confirm('Final confirmation: Type "DELETE" to confirm database erasure.') && 
+          window.prompt('Type "DELETE" to confirm:') === 'DELETE') {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await axios.delete(`${API}/api/admin/database/erase`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          alert('✅ Database successfully erased!');
+          // Logout user as their account no longer exists
+          localStorage.removeItem('token');
+          window.location.reload();
+        } catch (error) {
+          console.error('Failed to erase database:', error);
+          alert('❌ Failed to erase database: ' + (error.response?.data?.detail || error.message));
+        }
+      }
+    }
+  };
+
+  const handleClearDeletedListings = async () => {
+    if (window.confirm('This will remove all deleted listings from Browse and Marketplace. Continue?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.delete(`${API}/api/admin/database/clear-listings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert(`✅ ${response.data.message}`);
+      } catch (error) {
+        console.error('Failed to clear deleted listings:', error);
+        alert('❌ Failed to clear deleted listings: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-gray-400">Loading profile...</div>;
   }
