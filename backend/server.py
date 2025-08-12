@@ -575,16 +575,29 @@ async def google_callback(request: Request):
     
     if existing_user:
         user_id = existing_user["id"]
+        # Ensure admin account has admin role
+        if existing_user["email"] == ADMIN_EMAIL and existing_user.get("role") != "admin":
+            await db.users.update_one({"id": user_id}, {"$set": {"role": "admin"}})
     else:
+        # Determine role - admin for main account
+        user_role = "admin" if user_info["email"] == ADMIN_EMAIL else "user"
+        
         # Create new user
         user = User(
             email=user_info["email"],
             name=user_info.get("name", ""),
             picture=user_info.get("picture"),
-            provider="google"
+            provider="google",
+            role=user_role
         )
         await db.users.insert_one(user.dict())
         user_id = user.id
+        
+        # Log registration activity
+        await log_user_activity(user_id, "user_registered", None, {
+            "provider": "google",
+            "role": user_role
+        })
     
     token = create_jwt_token(user_id)
     # Redirect to frontend with token
