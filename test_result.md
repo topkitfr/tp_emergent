@@ -287,10 +287,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 2 Backend Improvements - Emergent Auth Removal & Database Management"
-  stuck_tasks:
-    - "Bouton Remove Collection - Corriger suppression d'articles"
     - "Authentication Modal Form Login - Frontend Login State Management"
+    - "Bouton Remove Collection - Corriger suppression d'articles"
+  stuck_tasks:
+    - "Authentication Modal Form Login - Frontend Login State Management"
+    - "Bouton Remove Collection - Corriger suppression d'articles"
   test_all: false
   test_priority: "high_first"
 
