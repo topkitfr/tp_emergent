@@ -179,12 +179,12 @@ class JerseyCreate(BaseModel):
     team: str
     season: str
     player: Optional[str] = None
-    size: JerseySize
-    condition: JerseyCondition
-    manufacturer: str
-    home_away: str
-    league: str
-    description: str
+    size: str  # Allow string input, validate in endpoint
+    condition: str  # Allow string input, validate in endpoint  
+    manufacturer: Optional[str] = ""
+    home_away: Optional[str] = ""
+    league: Optional[str] = ""
+    description: Optional[str] = ""
     images: List[str] = []
     reference_code: Optional[str] = None
 
