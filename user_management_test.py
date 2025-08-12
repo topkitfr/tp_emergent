@@ -16,7 +16,7 @@ BASE_URL = "https://5c1e5cdf-f085-400c-8082-f0ce836a4540.preview.emergentagent.c
 # Test accounts as specified in the review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
-REGULAR_USER_EMAIL = "steinmetzlivio@gmail.com"
+REGULAR_USER_EMAIL = f"testuser_{int(time.time())}@example.com"
 REGULAR_USER_PASSWORD = "testpass123"
 
 class UserManagementTester:
