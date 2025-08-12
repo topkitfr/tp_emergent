@@ -554,18 +554,25 @@ async def get_jerseys(
     limit: int = 20
 ):
     query = {}
+    # Exclude deleted or inactive jerseys
+    query["$and"] = [{"$or": [{"deleted": {"$ne": True}}, {"deleted": {"$exists": False}}]}]
+    
+    filter_conditions = []
     if team:
-        query["team"] = {"$regex": team, "$options": "i"}
+        filter_conditions.append({"team": {"$regex": team, "$options": "i"}})
     if season:
-        query["season"] = season
+        filter_conditions.append({"season": season})
     if player:
-        query["player"] = {"$regex": player, "$options": "i"}
+        filter_conditions.append({"player": {"$regex": player, "$options": "i"}})
     if size:
-        query["size"] = size
+        filter_conditions.append({"size": size})
     if condition:
-        query["condition"] = condition
+        filter_conditions.append({"condition": condition})
     if league:
-        query["league"] = {"$regex": league, "$options": "i"}
+        filter_conditions.append({"league": {"$regex": league, "$options": "i"}})
+    
+    if filter_conditions:
+        query["$and"].extend(filter_conditions)
     
     # Use aggregation to include creator information
     pipeline = [
