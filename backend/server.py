@@ -660,7 +660,7 @@ async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current
 async def reject_jersey(
     jersey_id: str, 
     rejection_data: dict,
-    admin_id: str = Depends(get_current_admin)
+    moderator_id: str = Depends(get_current_moderator_or_admin)
 ):
     """Reject a pending jersey"""
     reason = rejection_data.get("reason", "No reason provided")
@@ -670,7 +670,7 @@ async def reject_jersey(
         {
             "$set": {
                 "status": "rejected",
-                "approved_by": admin_id,
+                "approved_by": moderator_id,
                 "approved_at": datetime.utcnow(),
                 "rejection_reason": reason
             }
@@ -680,7 +680,124 @@ async def reject_jersey(
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Jersey not found or already processed")
     
+    # Log activity
+    await log_user_activity(moderator_id, "jersey_rejected", jersey_id, {"reason": reason})
+    
+    # Get jersey info for activity logging
+    jersey = await db.jerseys.find_one({"id": jersey_id})
+    if jersey:
+        await log_user_activity(jersey["created_by"], "jersey_rejected", jersey_id, {
+            "rejected_by": moderator_id,
+            "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}",
+            "reason": reason
+        })
+    
     return {"message": "Jersey rejected successfully"}
+
+# User management endpoints (Admin only)
+@api_router.get("/admin/users")
+async def get_all_users(admin_id: str = Depends(get_current_admin)):
+    """Get all users with their stats and activities"""
+    users = await db.users.find({}).to_list(1000)
+    
+    user_list = []
+    for user in users:
+        user.pop('_id', None)
+        user.pop('password_hash', None)  # Don't expose password hash
+        
+        # Get user statistics
+        user_stats = {
+            "jerseys_submitted": await db.jerseys.count_documents({"created_by": user["id"]}),
+            "jerseys_approved": await db.jerseys.count_documents({"created_by": user["id"], "status": "approved"}),
+            "jerseys_rejected": await db.jerseys.count_documents({"created_by": user["id"], "status": "rejected"}),
+            "collections_added": await db.collections.count_documents({"user_id": user["id"]}),
+            "listings_created": await db.listings.count_documents({"seller_id": user["id"]})
+        }
+        
+        # Get recent activities
+        recent_activities = await db.user_activities.find(
+            {"user_id": user["id"]}
+        ).sort("created_at", -1).limit(5).to_list(5)
+        
+        for activity in recent_activities:
+            activity.pop('_id', None)
+        
+        user_data = {
+            **user,
+            "stats": user_stats,
+            "recent_activities": recent_activities
+        }
+        
+        user_list.append(user_data)
+    
+    return {"users": user_list, "total": len(user_list)}
+
+@api_router.post("/admin/users/{user_id}/assign-role")
+async def assign_user_role(
+    user_id: str, 
+    role_data: RoleAssignment,
+    admin_id: str = Depends(get_current_admin)
+):
+    """Assign a role to a user (Admin only)"""
+    
+    # Validate role
+    if role_data.role not in ["user", "moderator"]:
+        raise HTTPException(status_code=400, detail="Invalid role. Must be 'user' or 'moderator'")
+    
+    # Cannot change admin role
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["email"] == ADMIN_EMAIL:
+        raise HTTPException(status_code=400, detail="Cannot modify admin user role")
+    
+    # Update user role
+    result = await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "role": role_data.role,
+                "assigned_by": admin_id,
+                "role_assigned_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Log activity
+    await log_user_activity(admin_id, "role_assigned", user_id, {
+        "new_role": role_data.role,
+        "reason": role_data.reason,
+        "user_email": user["email"]
+    })
+    
+    await log_user_activity(user_id, "role_received", None, {
+        "new_role": role_data.role,
+        "assigned_by": admin_id,
+        "reason": role_data.reason
+    })
+    
+    return {"message": f"Role '{role_data.role}' assigned to user successfully"}
+
+@api_router.get("/admin/activities")
+async def get_all_activities(admin_id: str = Depends(get_current_admin), limit: int = 50):
+    """Get recent system activities"""
+    activities = await db.user_activities.find({}).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Enrich activities with user info
+    for activity in activities:
+        activity.pop('_id', None)
+        
+        # Get user info
+        user = await db.users.find_one({"id": activity["user_id"]}, {"name": 1, "email": 1})
+        if user:
+            activity["user_name"] = user.get("name", "Unknown")
+            activity["user_email"] = user.get("email", "Unknown")
+    
+    return {"activities": activities, "total": len(activities)}
 
 
 # Jersey endpoints
