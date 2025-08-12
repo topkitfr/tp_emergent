@@ -293,11 +293,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Authentication Modal Form Login - Frontend Login State Management"
-    - "Bouton Remove Collection - Corriger suppression d'articles"
-  stuck_tasks:
-    - "Authentication Modal Form Login - Frontend Login State Management"
-    - "Bouton Remove Collection - Corriger suppression d'articles"
+    - "Application Quality Assurance and User Experience Validation"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
