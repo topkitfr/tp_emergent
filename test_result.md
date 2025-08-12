@@ -303,6 +303,21 @@ test_plan:
         agent: "testing"
         comment: "✅ PASS - PRIORITY 1 CRITICAL TESTING COMPLETE: Profile Settings API working perfectly with 100% success rate (11/11 tests passed)! COMPREHENSIVE VERIFICATION: ✅ POST /api/auth/register creates test users successfully ✅ PUT /api/profile/settings updates name only - tested and working ✅ PUT /api/profile/settings updates picture only (base64 data) - tested and working ✅ PUT /api/profile/settings updates name and picture together - tested and working ✅ Optional fields work correctly - empty payload preserves existing values ✅ Profile privacy settings update correctly (private ↔ public) ✅ Collection value visibility settings update correctly (true ↔ false) ✅ GET /api/profile reflects all profile updates correctly. PRIORITY 2 EXISTING FUNCTIONALITY: ✅ Jersey creation still works (POST /api/jerseys) ✅ Collection management still works (POST /api/collections) ✅ Authentication flows still work (registration/login). All profile settings functionality is production-ready and fully functional. The new ProfileSettingsModal with image upload capabilities is fully supported by the backend API."
 
+  - task: "Phase 2 Backend Improvements - Emergent Auth Removal & Database Management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 2 improvements implemented: 1) Removed Emergent auth endpoints (/api/auth/emergent/redirect and /api/auth/emergent/session), 2) Added database management endpoints (/api/admin/database/erase and /api/admin/database/clear-listings), 3) Enhanced jerseys endpoint filtering to exclude deleted jerseys, 4) UI improvements with cleaned debugging logs and enhanced admin panel."
+      - working: true
+        agent: "testing"
+        comment: "✅ PHASE 2 TESTING COMPLETE - 100% SUCCESS RATE (11/11 tests passed)! COMPREHENSIVE VERIFICATION: ✅ EMERGENT AUTH REMOVAL: Both /api/auth/emergent/redirect and /api/auth/emergent/session correctly return 404 (endpoints successfully removed) ✅ REGULAR AUTH PRESERVED: Custom email/password registration and login working perfectly ✅ GOOGLE OAUTH PRESERVED: Google OAuth redirect endpoint still accessible and functional ✅ DATABASE MANAGEMENT: DELETE /api/admin/database/erase requires authentication (correctly rejects unauthenticated requests with 403), DELETE /api/admin/database/clear-listings working correctly ✅ JERSEY FILTERING: GET /api/jerseys excludes deleted jerseys (found 35+ active jerseys, 0 deleted jerseys in response) ✅ LISTINGS FILTERING: GET /api/listings only shows active listings (verified 9+ active listings, no inactive/deleted listings) ✅ EXISTING FUNCTIONALITY PRESERVED: Jersey creation, listing creation, collection management, and profile endpoints all working correctly after Phase 2 changes. All Phase 2 improvements successfully implemented and fully functional. The backend is production-ready with enhanced security and data management capabilities."
+
 agent_communication:
   - agent: "main"
     message: "PHASE 1 BUGS CRITIQUES - Corrections implémentées pour les problèmes critiques signalés par l'utilisateur: 1) Rétabli le champ prix obligatoire dans CreateListingModal avec validation en euros, 2) Amélioré le dialogue de confirmation de suppression en français avec messages d'erreur/succès traduits. Prêt pour les tests backend pour vérifier que l'API de suppression fonctionne et que le nouveau champ prix est correctement traité."
