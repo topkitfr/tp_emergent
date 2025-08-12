@@ -77,6 +77,11 @@ class JerseyStatus(str, Enum):
     APPROVED = "approved"    # Validé et visible
     REJECTED = "rejected"    # Rejeté
 
+class UserRole(str, Enum):
+    USER = "user"           # Utilisateur normal
+    MODERATOR = "moderator" # Modérateur (peut valider les références)
+    ADMIN = "admin"         # Admin principal (peut tout faire)
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -90,6 +95,9 @@ class User(BaseModel):
     session_expires: Optional[datetime] = None
     profile_privacy: str = "public"  # "public" or "private"
     show_collection_value: bool = False  # Only owner can see collection values
+    role: str = "user"  # Default role is user
+    assigned_by: Optional[str] = None  # ID of admin who assigned the role
+    role_assigned_at: Optional[datetime] = None
 
 class Jersey(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
