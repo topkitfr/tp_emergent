@@ -547,8 +547,18 @@ async def login(user_data: UserLogin):
     if not user or not verify_password(user_data.password, user["password_hash"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
+    # Ensure admin account has admin role
+    if user["email"] == ADMIN_EMAIL and user.get("role") != "admin":
+        await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin"}})
+        user["role"] = "admin"
+    
     token = create_jwt_token(user["id"])
-    return {"token": token, "user": {"id": user["id"], "email": user["email"], "name": user["name"]}}
+    return {"token": token, "user": {
+        "id": user["id"], 
+        "email": user["email"], 
+        "name": user["name"],
+        "role": user.get("role", "user")
+    }}
 
 @api_router.get("/auth/google")
 async def google_auth(request: Request):
