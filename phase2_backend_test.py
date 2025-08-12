@@ -229,8 +229,8 @@ class Phase2APITester:
                 self.log_test("Jerseys Filtering (Deleted)", "FAIL", "Could not create test jersey")
                 return False
             
-            # Get all jerseys before any deletion
-            response_before = self.session.get(f"{self.base_url}/jerseys")
+            # Get all jerseys before any deletion (use higher limit to ensure we see our test jersey)
+            response_before = self.session.get(f"{self.base_url}/jerseys?limit=50")
             
             if response_before.status_code != 200:
                 self.log_test("Jerseys Filtering (Deleted)", "FAIL", "Could not get jerseys list")
