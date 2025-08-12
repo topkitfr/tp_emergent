@@ -616,7 +616,7 @@ async def log_user_activity(user_id: str, action: str, target_id: str = None, de
 
 # Admin endpoints
 @api_router.get("/admin/jerseys/pending")
-async def get_pending_jerseys(admin_id: str = Depends(get_current_admin)):
+async def get_pending_jerseys(moderator_id: str = Depends(get_current_moderator_or_admin)):
     """Get all jerseys pending approval"""
     jerseys = await db.jerseys.find({"status": "pending"}).to_list(100)
     
@@ -627,14 +627,14 @@ async def get_pending_jerseys(admin_id: str = Depends(get_current_admin)):
     return jerseys
 
 @api_router.post("/admin/jerseys/{jersey_id}/approve")
-async def approve_jersey(jersey_id: str, admin_id: str = Depends(get_current_admin)):
+async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current_moderator_or_admin)):
     """Approve a pending jersey"""
     result = await db.jerseys.update_one(
         {"id": jersey_id, "status": "pending"},
         {
             "$set": {
                 "status": "approved",
-                "approved_by": admin_id,
+                "approved_by": moderator_id,
                 "approved_at": datetime.utcnow()
             }
         }
@@ -642,6 +642,17 @@ async def approve_jersey(jersey_id: str, admin_id: str = Depends(get_current_adm
     
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Jersey not found or already processed")
+    
+    # Log activity
+    await log_user_activity(moderator_id, "jersey_approved", jersey_id)
+    
+    # Get jersey info for activity logging
+    jersey = await db.jerseys.find_one({"id": jersey_id})
+    if jersey:
+        await log_user_activity(jersey["created_by"], "jersey_approved", jersey_id, {
+            "approved_by": moderator_id,
+            "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}"
+        })
     
     return {"message": "Jersey approved successfully"}
 
