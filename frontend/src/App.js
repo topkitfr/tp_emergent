@@ -3023,7 +3023,7 @@ const AppContent = () => {
 
   // Event listeners for custom events from subcomponents
   useEffect(() => {
-    const handleShowAuthModal = () => setShowAuthModal(true);
+    const handleShowAuthModal = () => setShowAuthModalFromAction(true);
     const handleChangeView = (e) => setCurrentView(e.detail);
     
     window.addEventListener('showAuthModal', handleShowAuthModal);
