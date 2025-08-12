@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://5c1e5cdf-f085-400c-8082-f0ce836a4540.preview.emergentagent.com/api"
+BASE_URL = "https://kit-approve.preview.emergentagent.com/api"
 
 # Test accounts as specified in the review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
