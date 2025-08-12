@@ -12,7 +12,7 @@ import time
 import jwt
 
 # Configuration
-BASE_URL = "https://21de401d-5b49-4140-b3c2-83cfb19517b0.preview.emergentagent.com/api"
+BASE_URL = "https://kit-bazaar-1.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "test@topkit.com"
 TEST_USER_PASSWORD = "password123"
 TEST_USER_NAME = "testuser"
