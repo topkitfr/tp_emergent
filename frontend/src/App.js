@@ -2488,6 +2488,86 @@ const CollectionsPage = () => {
 
       {loading ? (
         <div className="text-center py-8 text-gray-400">Loading collections...</div>
+      ) : activeTab === 'submit' ? (
+        <div className="space-y-8">
+          {/* Submit New Jersey Section */}
+          <div className="bg-gradient-to-br from-green-900 to-green-800 rounded-2xl p-8 border border-green-700">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📝</div>
+              <h2 className="text-2xl font-bold text-white mb-4">Soumettre un nouveau maillot</h2>
+              <p className="text-green-200 mb-8">
+                Proposez de nouveaux maillots à la base de données. Ils seront examinés par nos modérateurs avant d'être publiés.
+              </p>
+              <button
+                onClick={handleSubmitNewJersey}
+                className="bg-white text-green-900 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-lg"
+              >
+                📝 Soumettre un nouveau maillot
+              </button>
+            </div>
+          </div>
+
+          {/* Submissions History Section */}
+          <div>
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+              📚 Historique de mes propositions
+              <span className="ml-2 text-sm text-gray-400 font-normal">
+                ({pendingSubmissions.length} propositions)
+              </span>
+            </h3>
+            
+            {pendingSubmissions.length === 0 ? (
+              <div className="text-center py-12 bg-gray-800 rounded-2xl border border-gray-700">
+                <div className="text-4xl mb-4">📋</div>
+                <h4 className="text-lg font-bold text-white mb-2">Aucune proposition pour le moment</h4>
+                <p className="text-gray-400">Vos propositions de maillots apparaîtront ici avec leur statut de validation.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pendingSubmissions.map((submission) => (
+                  <div key={submission.id} className="relative">
+                    <div className={`opacity-70 ${
+                      submission.status === 'approved' ? 'border-2 border-green-500' : 
+                      submission.status === 'rejected' ? 'border-2 border-red-500' : 
+                      'border-2 border-yellow-500'
+                    }`}>
+                      <JerseyCard
+                        jersey={submission}
+                        showActions={false}
+                        onClick={() => {}}
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <div className="text-3xl mb-2">
+                          {submission.status === 'pending' ? '⏳' : 
+                           submission.status === 'approved' ? '✅' : 
+                           submission.status === 'rejected' ? '❌' : '❓'}
+                        </div>
+                        <div className="font-bold text-lg mb-1">
+                          {submission.status === 'pending' ? 'En attente de validation' : 
+                           submission.status === 'approved' ? 'Validé' : 
+                           submission.status === 'rejected' ? 'Rejeté' : 'Statut inconnu'}
+                        </div>
+                        <div className="text-sm opacity-75">
+                          {submission.status === 'pending' 
+                            ? 'En cours d\'examen par les modérateurs' 
+                            : submission.status === 'approved'
+                            ? 'Maillot publié dans la base de données'
+                            : submission.rejection_reason || 'Voir les commentaires des modérateurs'
+                          }
+                        </div>
+                        <div className="text-xs mt-2 opacity-60">
+                          Soumis le {new Date(submission.created_at).toLocaleDateString('fr-FR')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       ) : activeTab === 'pending' ? (
         pendingSubmissions.length === 0 ? (
           <div className="text-center py-16">
@@ -2495,7 +2575,7 @@ const CollectionsPage = () => {
             <h2 className="text-2xl font-bold text-white mb-4">No pending submissions</h2>
             <p className="text-gray-400 mb-8">Your jersey submissions will appear here while they are being reviewed.</p>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'submit' }))}
+              onClick={() => setActiveTab('submit')}
               className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
             >
               Submit a Jersey
