@@ -533,59 +533,7 @@ async def google_callback(request: Request):
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
     return f"<script>window.location.href = '{frontend_url}/auth/success?token={token}';</script>"
 
-@api_router.get("/auth/emergent/redirect")
-async def emergent_auth_redirect():
-    preview_url = "https://21de401d-5b49-4140-b3c2-83cfb19517b0.preview.emergentagent.com"
-    auth_url = f"https://auth.emergentagent.com/?redirect={preview_url}/profile"
-    return {"auth_url": auth_url}
 
-@api_router.post("/auth/emergent/session")
-async def emergent_session(request: Request):
-    body = await request.json()
-    session_id = body.get("session_id")
-    
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Session ID required")
-    
-    # Call Emergent auth API
-    headers = {"X-Session-ID": session_id}
-    response = requests.get(
-        "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-        headers=headers
-    )
-    
-    if response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Invalid session")
-    
-    user_data = response.json()
-    
-    # Check if user exists
-    existing_user = await db.users.find_one({"email": user_data["email"]})
-    
-    if existing_user:
-        user_id = existing_user["id"]
-        # Update session token
-        session_token = user_data["session_token"]
-        session_expires = datetime.utcnow() + timedelta(days=7)
-        await db.users.update_one(
-            {"id": user_id},
-            {"$set": {"session_token": session_token, "session_expires": session_expires}}
-        )
-    else:
-        # Create new user
-        user = User(
-            email=user_data["email"],
-            name=user_data.get("name", ""),
-            picture=user_data.get("picture"),
-            provider="emergent",
-            session_token=user_data["session_token"],
-            session_expires=datetime.utcnow() + timedelta(days=7)
-        )
-        await db.users.insert_one(user.dict())
-        user_id = user.id
-    
-    token = create_jwt_token(user_id)
-    return {"token": token, "user": {"id": user_id, "email": user_data["email"], "name": user_data.get("name", "")}}
 
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
