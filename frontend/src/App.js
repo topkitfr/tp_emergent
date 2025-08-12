@@ -2025,9 +2025,14 @@ const AuthModal = ({ onClose }) => {
       
       if (response.data?.token && response.data?.user) {
         console.log('✅ Authentication successful, calling login...');
-        await login(response.data.token, response.data.user);
-        console.log('✅ Login completed, closing modal...');
-        onClose();
+        const loginSuccess = login(response.data.token, response.data.user);
+        if (loginSuccess) {
+          console.log('✅ Login completed successfully, closing modal...');
+          onClose();
+        } else {
+          console.error('❌ Login failed during context update');
+          setError('Erreur lors de la mise à jour de la session. Veuillez réessayer.');
+        }
       } else {
         console.error('❌ Invalid authentication response:', response.data);
         setError('Authentication response was invalid. Please try again.');
