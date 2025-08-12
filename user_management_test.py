@@ -89,44 +89,32 @@ class UserManagementTester:
     def register_or_login_regular_user(self):
         """Register or login regular user"""
         try:
-            # Try to login first
-            login_payload = {
-                "email": REGULAR_USER_EMAIL,
-                "password": REGULAR_USER_PASSWORD
+            # Generate unique email for regular user
+            regular_user_email = f"testuser_{int(time.time())}@example.com"
+            regular_user_password = "testpass123"
+            
+            # Try to register new user
+            register_payload = {
+                "email": regular_user_email,
+                "password": regular_user_password,
+                "name": "Test Regular User"
             }
             
-            login_response = self.session.post(f"{self.base_url}/auth/login", json=login_payload)
+            register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
             
-            if login_response.status_code == 200:
-                data = login_response.json()
+            if register_response.status_code == 200:
+                data = register_response.json()
                 self.regular_token = data["token"]
                 self.regular_user_id = data["user"]["id"]
                 user_role = data["user"].get("role", "user")
-                self.log_test("Regular User Login", "PASS", f"Regular user logged in with role: {user_role}")
+                self.log_test("Regular User Registration", "PASS", f"Regular user registered with role: {user_role}")
                 return True
             else:
-                # Try to register if login fails
-                register_payload = {
-                    "email": REGULAR_USER_EMAIL,
-                    "password": REGULAR_USER_PASSWORD,
-                    "name": "Steinmetz Livio"
-                }
-                
-                register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
-                
-                if register_response.status_code == 200:
-                    data = register_response.json()
-                    self.regular_token = data["token"]
-                    self.regular_user_id = data["user"]["id"]
-                    user_role = data["user"].get("role", "user")
-                    self.log_test("Regular User Registration", "PASS", f"Regular user registered with role: {user_role}")
-                    return True
-                else:
-                    self.log_test("Regular User Registration/Login", "FAIL", f"Status: {register_response.status_code}")
-                    return False
+                self.log_test("Regular User Registration", "FAIL", f"Status: {register_response.status_code}, Response: {register_response.text}")
+                return False
                     
         except Exception as e:
-            self.log_test("Regular User Registration/Login", "FAIL", f"Exception: {str(e)}")
+            self.log_test("Regular User Registration", "FAIL", f"Exception: {str(e)}")
             return False
     
     def test_admin_role_assignment(self):
