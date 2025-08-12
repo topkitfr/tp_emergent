@@ -407,16 +407,6 @@ const Header = ({ currentView, setCurrentView }) => {
               Browse Jerseys
             </button>
             <button 
-              onClick={() => setCurrentView('submit')}
-              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                currentView === 'submit' 
-                  ? 'bg-white text-black' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Submit Jersey
-            </button>
-            <button 
               onClick={() => setCurrentView('marketplace')}
               className={`px-4 py-2 rounded-lg transition-colors font-medium ${
                 currentView === 'marketplace' 
@@ -429,16 +419,6 @@ const Header = ({ currentView, setCurrentView }) => {
             {user && (
               <>
                 <button 
-                  onClick={() => setCurrentView('collections')}
-                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                    currentView === 'collections' 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  My Collection
-                </button>
-                <button 
                   onClick={() => setCurrentView('profile')}
                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
                     currentView === 'profile' 
@@ -447,6 +427,16 @@ const Header = ({ currentView, setCurrentView }) => {
                   }`}
                 >
                   Profile
+                </button>
+                <button 
+                  onClick={() => setCurrentView('collections')}
+                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                    currentView === 'collections' 
+                      ? 'bg-white text-black' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  My Collection
                 </button>
                 {user.email === 'topkitfr@gmail.com' && (
                   <button 
