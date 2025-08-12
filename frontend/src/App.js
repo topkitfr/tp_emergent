@@ -2991,21 +2991,16 @@ const AppContent = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {console.log('🎯 renderContent - jerseys array length:', jerseys?.length)}
-                {console.log('🎯 renderContent - jerseys array:', jerseys)}
-                {jerseys.map((jersey) => {
-                  console.log('🎯 renderContent - rendering jersey:', jersey.id, jersey.team);
-                  return (
-                    <JerseyCard 
-                      key={jersey.id} 
-                      jersey={jersey} 
-                      showActions={true}
-                      onAddToCollection={handleAddToCollection}
-                      onClick={handleJerseyClick}
-                      onCreatorClick={handleCreatorClick}
-                    />
-                  );
-                })}
+                {jerseys.map((jersey) => (
+                  <JerseyCard 
+                    key={jersey.id} 
+                    jersey={jersey} 
+                    showActions={true}
+                    onAddToCollection={handleAddToCollection}
+                    onClick={handleJerseyClick}
+                    onCreatorClick={handleCreatorClick}
+                  />
+                ))}
               </div>
             )}
           </div>
