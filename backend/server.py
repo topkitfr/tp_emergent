@@ -517,19 +517,29 @@ async def register(user_data: UserRegister):
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
     
+    # Determine role - admin for main account
+    user_role = "admin" if user_data.email == ADMIN_EMAIL else "user"
+    
     # Create new user
     hashed_password = hash_password(user_data.password)
     user = User(
         email=user_data.email,
         name=user_data.name,
         provider="custom",
-        password_hash=hashed_password
+        password_hash=hashed_password,
+        role=user_role
     )
     
     await db.users.insert_one(user.dict())
     token = create_jwt_token(user.id)
     
-    return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.name}}
+    # Log registration activity
+    await log_user_activity(user.id, "user_registered", None, {
+        "provider": "custom",
+        "role": user_role
+    })
+    
+    return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.name, "role": user_role}}
 
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin):
