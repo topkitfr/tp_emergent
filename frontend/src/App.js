@@ -3029,6 +3029,12 @@ const AppContent = () => {
       case 'collections':
         return <CollectionsPage />;
       
+      case 'submit':
+        return <SubmitJerseyPage />;
+      
+      case 'admin':
+        return <AdminPanel />;
+      
       case 'jerseys':
         return (
           <div>
