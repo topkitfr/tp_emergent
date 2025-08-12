@@ -847,6 +847,13 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
         await db.jerseys.insert_one(jersey.dict())
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
         
+        # Log user activity
+        await log_user_activity(user_id, "jersey_submission", jersey.id, {
+            "jersey_name": f"{jersey.team} {jersey.season}",
+            "player": jersey.player,
+            "status": jersey.status
+        })
+        
         return jersey
         
     except HTTPException:
