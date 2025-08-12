@@ -2786,7 +2786,7 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
                 size="sm"
                 className="w-full"
               >
-                🗑️ Remove
+                🗑️ Retirer de la collection
               </Button>
             )}
           </div>
