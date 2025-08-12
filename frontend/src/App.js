@@ -3217,6 +3217,516 @@ const AppContent = () => {
   );
 };
 
+// Submit Jersey Page Component (Discogs-like submission system)
+const SubmitJerseyPage = () => {
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    team: '',
+    season: '',
+    player: '',
+    size: '',
+    condition: '',
+    manufacturer: '',
+    home_away: '',
+    league: '',
+    description: '',
+    reference_code: ''
+  });
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert('Please login to submit a jersey');
+      return;
+    }
+
+    if (!formData.team || !formData.season || !formData.size || !formData.condition) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const jerseyData = {
+        ...formData,
+        images: images
+      };
+
+      await axios.post(`${API}/api/jerseys`, jerseyData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setSubmitted(true);
+      setFormData({
+        team: '', season: '', player: '', size: '', condition: '', 
+        manufacturer: '', home_away: '', league: '', description: '', reference_code: ''
+      });
+      setImages([]);
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Failed to submit jersey: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="text-center py-24">
+        <div className="text-6xl mb-6">🔒</div>
+        <h2 className="text-3xl font-bold text-white mb-4">Login Required</h2>
+        <p className="text-gray-400 mb-8">You need to be logged in to submit jerseys to the database.</p>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal'))}
+          className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+        >
+          Login / Sign Up
+        </button>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="text-center py-24">
+        <div className="text-6xl mb-6">🎉</div>
+        <h2 className="text-3xl font-bold text-white mb-4">Jersey Submitted!</h2>
+        <p className="text-gray-400 mb-4">Your jersey submission has been sent for review.</p>
+        <p className="text-sm text-gray-500 mb-8">
+          Our team will review your submission and approve it if it meets our quality standards. 
+          This usually takes 1-2 business days.
+        </p>
+        <button 
+          onClick={() => setSubmitted(false)}
+          className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold mr-4"
+        >
+          Submit Another Jersey
+        </button>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+          className="bg-gray-700 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+        >
+          Browse Jerseys
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">Submit New Jersey</h1>
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="text-blue-400 text-xl mr-3 mt-1">ℹ️</div>
+            <div>
+              <h3 className="text-blue-300 font-semibold mb-2">Submission Process</h3>
+              <p className="text-blue-200 text-sm leading-relaxed">
+                Similar to Discogs, all jersey submissions are reviewed by our moderation team before being published. 
+                This ensures database quality and prevents duplicates. Your submission will be visible to all users once approved.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl shadow-2xl p-8 border border-gray-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Team */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Team *</label>
+            <input
+              type="text"
+              required
+              value={formData.team}
+              onChange={(e) => setFormData({...formData, team: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+              placeholder="e.g., Manchester United, FC Barcelona"
+            />
+          </div>
+
+          {/* Season */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Season *</label>
+            <select
+              required
+              value={formData.season}
+              onChange={(e) => setFormData({...formData, season: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+            >
+              <option value="">Select Season</option>
+              {SEASONS.map(season => (
+                <option key={season} value={season} className="bg-gray-800">{season}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Player */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Player (Optional)</label>
+            <input
+              type="text"
+              value={formData.player}
+              onChange={(e) => setFormData({...formData, player: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+              placeholder="e.g., Ronaldo, Messi"
+            />
+          </div>
+
+          {/* Size */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Size *</label>
+            <select
+              required
+              value={formData.size}
+              onChange={(e) => setFormData({...formData, size: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+            >
+              <option value="">Select Size</option>
+              <option value="XS" className="bg-gray-800">XS</option>
+              <option value="S" className="bg-gray-800">S</option>
+              <option value="M" className="bg-gray-800">M</option>
+              <option value="L" className="bg-gray-800">L</option>
+              <option value="XL" className="bg-gray-800">XL</option>
+              <option value="XXL" className="bg-gray-800">XXL</option>
+            </select>
+          </div>
+
+          {/* Condition */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Condition *</label>
+            <select
+              required
+              value={formData.condition}
+              onChange={(e) => setFormData({...formData, condition: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+            >
+              <option value="">Select Condition</option>
+              <option value="new" className="bg-gray-800">New</option>
+              <option value="near_mint" className="bg-gray-800">Near Mint</option>
+              <option value="very_good" className="bg-gray-800">Very Good</option>
+              <option value="good" className="bg-gray-800">Good</option>
+              <option value="poor" className="bg-gray-800">Poor</option>
+            </select>
+          </div>
+
+          {/* Manufacturer */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Manufacturer</label>
+            <input
+              type="text"
+              value={formData.manufacturer}
+              onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+              placeholder="e.g., Nike, Adidas, Puma"
+            />
+          </div>
+
+          {/* Home/Away */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+            <select
+              value={formData.home_away}
+              onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+            >
+              <option value="">Select Type</option>
+              <option value="home" className="bg-gray-800">Home</option>
+              <option value="away" className="bg-gray-800">Away</option>
+              <option value="third" className="bg-gray-800">Third</option>
+              <option value="special" className="bg-gray-800">Special Edition</option>
+            </select>
+          </div>
+
+          {/* League */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">League/Competition</label>
+            <input
+              type="text"
+              value={formData.league}
+              onChange={(e) => setFormData({...formData, league: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+              placeholder="e.g., Premier League, La Liga, World Cup"
+            />
+          </div>
+
+          {/* Reference Code */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Reference Code</label>
+            <input
+              type="text"
+              value={formData.reference_code}
+              onChange={(e) => setFormData({...formData, reference_code: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+              placeholder="Internal reference code (if known)"
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            rows={4}
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white placeholder-gray-400"
+            placeholder="Additional details about this jersey..."
+          />
+        </div>
+
+        {/* Image Upload */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-300 mb-2">Images</label>
+          <ImageUpload images={images} setImages={setImages} />
+        </div>
+
+        {/* Submit Button */}
+        <div className="mt-8 flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50"
+          >
+            {loading ? 'Submitting...' : 'Submit for Review'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Admin Panel Component (topkitfr@gmail.com only)
+const AdminPanel = () => {
+  const { user } = useAuth();
+  const [pendingJerseys, setPendingJerseys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedJersey, setSelectedJersey] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.email === 'topkitfr@gmail.com') {
+      fetchPendingJerseys();
+    }
+  }, [user]);
+
+  const fetchPendingJerseys = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/admin/jerseys/pending`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPendingJerseys(response.data);
+    } catch (error) {
+      console.error('Failed to fetch pending jerseys:', error);
+      alert('Failed to load pending submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (jerseyId) => {
+    if (!confirm('Approve this jersey submission?')) return;
+    
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/jerseys/${jerseyId}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Jersey approved successfully!');
+      fetchPendingJerseys();
+      setSelectedJersey(null);
+    } catch (error) {
+      console.error('Approval error:', error);
+      alert('Failed to approve jersey');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (jerseyId) => {
+    const reason = prompt('Reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/jerseys/${jerseyId}/reject`, {
+        reason: reason || 'No reason provided'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Jersey rejected successfully!');
+      fetchPendingJerseys();
+      setSelectedJersey(null);
+    } catch (error) {
+      console.error('Rejection error:', error);
+      alert('Failed to reject jersey');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (user?.email !== 'topkitfr@gmail.com') {
+    return (
+      <div className="text-center py-24">
+        <div className="text-6xl mb-6">🚫</div>
+        <h2 className="text-3xl font-bold text-white mb-4">Access Denied</h2>
+        <p className="text-gray-400">This area is restricted to administrators only.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-24">
+        <LoadingSpinner size="lg" className="mx-auto mb-4" />
+        <p className="text-gray-400">Loading pending submissions...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-white">Admin Panel</h1>
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg px-4 py-2">
+          <span className="text-red-300 text-sm font-semibold">
+            🔧 Administrator Access
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Pending Submissions List */}
+        <div className="lg:col-span-1">
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Pending Submissions ({pendingJerseys.length})
+          </h2>
+          
+          {pendingJerseys.length === 0 ? (
+            <div className="bg-gray-900 rounded-lg p-6 text-center border border-gray-800">
+              <div className="text-4xl mb-4">✅</div>
+              <p className="text-gray-400">No pending submissions</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingJerseys.map((jersey) => (
+                <div 
+                  key={jersey.id}
+                  onClick={() => setSelectedJersey(jersey)}
+                  className={`bg-gray-900 rounded-lg p-4 border cursor-pointer transition-all ${
+                    selectedJersey?.id === jersey.id 
+                      ? 'border-white' 
+                      : 'border-gray-800 hover:border-gray-700'
+                  }`}
+                >
+                  <h3 className="text-white font-semibold">{jersey.team}</h3>
+                  <p className="text-gray-400 text-sm">{jersey.season} • {jersey.player || 'No player'}</p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    Submitted {new Date(jersey.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Jersey Details & Actions */}
+        <div className="lg:col-span-2">
+          {selectedJersey ? (
+            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-white">Review Submission</h2>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => handleApprove(selectedJersey.id)}
+                    disabled={actionLoading}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    ✅ Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(selectedJersey.id)}
+                    disabled={actionLoading}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    ❌ Reject
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Jersey Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-400">Team:</span> <span className="text-white">{selectedJersey.team}</span></div>
+                    <div><span className="text-gray-400">Season:</span> <span className="text-white">{selectedJersey.season}</span></div>
+                    <div><span className="text-gray-400">Player:</span> <span className="text-white">{selectedJersey.player || 'N/A'}</span></div>
+                    <div><span className="text-gray-400">Size:</span> <span className="text-white">{selectedJersey.size}</span></div>
+                    <div><span className="text-gray-400">Condition:</span> <span className="text-white">{selectedJersey.condition}</span></div>
+                    <div><span className="text-gray-400">Manufacturer:</span> <span className="text-white">{selectedJersey.manufacturer || 'N/A'}</span></div>
+                    <div><span className="text-gray-400">Type:</span> <span className="text-white">{selectedJersey.home_away || 'N/A'}</span></div>
+                    <div><span className="text-gray-400">League:</span> <span className="text-white">{selectedJersey.league || 'N/A'}</span></div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Submission Info</h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-400">Submitted by:</span> <span className="text-white">{selectedJersey.submitted_by}</span></div>
+                    <div><span className="text-gray-400">Date:</span> <span className="text-white">{new Date(selectedJersey.created_at).toLocaleString()}</span></div>
+                    <div><span className="text-gray-400">Reference:</span> <span className="text-white">{selectedJersey.reference_code || 'N/A'}</span></div>
+                  </div>
+                </div>
+              </div>
+
+              {selectedJersey.description && (
+                <div className="mt-6">
+                  <h3 className="text-white font-semibold mb-3">Description</h3>
+                  <p className="text-gray-300 text-sm bg-gray-800 rounded-lg p-4">
+                    {selectedJersey.description}
+                  </p>
+                </div>
+              )}
+
+              {selectedJersey.images && selectedJersey.images.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-white font-semibold mb-3">Images ({selectedJersey.images.length})</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {selectedJersey.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`Jersey ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border border-gray-700"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gray-900 rounded-lg p-12 text-center border border-gray-800">
+              <div className="text-4xl mb-4">👈</div>
+              <h3 className="text-white font-semibold mb-2">Select a Submission</h3>
+              <p className="text-gray-400">Choose a pending jersey from the list to review and moderate</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   return (
     <AuthProvider>
