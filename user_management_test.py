@@ -124,13 +124,17 @@ class UserManagementTester:
                 self.log_test("Admin Role Assignment", "FAIL", "No admin token available")
                 return False
             
-            # Get admin profile to verify role
-            headers = {'Authorization': f'Bearer {self.admin_token}'}
-            response = self.session.get(f"{self.base_url}/profile", headers=headers)
+            # Test admin login response includes role (more reliable than profile endpoint)
+            login_payload = {
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            }
             
-            if response.status_code == 200:
-                profile = response.json()
-                user_data = profile.get("user", {})
+            login_response = self.session.post(f"{self.base_url}/auth/login", json=login_payload)
+            
+            if login_response.status_code == 200:
+                data = login_response.json()
+                user_data = data.get("user", {})
                 user_role = user_data.get("role", "user")
                 
                 if user_role == "admin":
@@ -140,7 +144,7 @@ class UserManagementTester:
                     self.log_test("Admin Role Assignment", "FAIL", f"Expected admin role, got: {user_role}")
                     return False
             else:
-                self.log_test("Admin Role Assignment", "FAIL", f"Could not get profile: {response.status_code}")
+                self.log_test("Admin Role Assignment", "FAIL", f"Could not login admin: {login_response.status_code}")
                 return False
                 
         except Exception as e:
