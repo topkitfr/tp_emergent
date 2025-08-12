@@ -2973,9 +2973,7 @@ const AppContent = () => {
   };
 
   useEffect(() => {
-    console.log('🔄 AppContent - currentView changed to:', currentView);
     if (currentView === 'jerseys') {
-      console.log('🔄 AppContent - fetching jerseys because currentView is jerseys');
       fetchJerseys();
     } else if (currentView === 'marketplace') {
       fetchListings();
