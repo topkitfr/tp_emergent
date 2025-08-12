@@ -2485,6 +2485,53 @@ const CollectionsPage = () => {
 
       {loading ? (
         <div className="text-center py-8 text-gray-400">Loading collections...</div>
+      ) : activeTab === 'pending' ? (
+        pendingSubmissions.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">⏳</div>
+            <h2 className="text-2xl font-bold text-white mb-4">No pending submissions</h2>
+            <p className="text-gray-400 mb-8">Your jersey submissions will appear here while they are being reviewed.</p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'submit' }))}
+              className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+            >
+              Submit a Jersey
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pendingSubmissions.map((submission) => (
+              <div key={submission.id} className="relative">
+                <div className={`opacity-60 ${submission.status === 'rejected' ? 'border-2 border-red-500' : ''}`}>
+                  <JerseyCard
+                    jersey={submission}
+                    showActions={false}
+                    onClick={() => {}}
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="text-3xl mb-2">
+                      {submission.status === 'pending' ? '⏳' : '❌'}
+                    </div>
+                    <div className="font-bold text-lg mb-1">
+                      {submission.status === 'pending' ? 'Under Review' : 'Rejected'}
+                    </div>
+                    <div className="text-sm opacity-75">
+                      {submission.status === 'pending' 
+                        ? 'Waiting for admin approval' 
+                        : submission.rejection_reason || 'See admin feedback'
+                      }
+                    </div>
+                    <div className="text-xs mt-2 opacity-60">
+                      Submitted {new Date(submission.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       ) : collections.length === 0 ? (
         <div className="text-center py-16">
           <div className="text-6xl mb-4">{activeTab === 'owned' ? '👕' : '❤️'}</div>
