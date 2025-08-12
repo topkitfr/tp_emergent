@@ -67,7 +67,7 @@ class BackendCorrectionsTest:
                 # Admin account already exists, try to login
                 login_payload = {
                     "email": "topkitfr@gmail.com", 
-                    "password": "TopKit2024!"
+                    "password": "adminpass123"
                 }
                 
                 login_response = self.session.post(f"{self.base_url}/auth/login", json=login_payload)
