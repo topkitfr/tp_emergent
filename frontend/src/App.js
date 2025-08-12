@@ -131,22 +131,28 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (token, userData) => {
+  const login = (token, userData) => {
     console.log('🔑 Login called with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
     console.log('👤 Login called with user data:', userData);
     
     if (!token || !userData) {
       console.error('❌ Login failed: missing token or userData');
-      return;
+      return false;
     }
     
-    localStorage.setItem('token', token);
-    console.log('💾 Token saved to localStorage');
-    
-    // Set loading to false and user data
-    setLoading(false);
-    setUser(userData);
-    console.log('✅ Login successful - user state set:', userData);
+    try {
+      localStorage.setItem('token', token);
+      console.log('💾 Token saved to localStorage');
+      
+      // Set user data and stop loading immediately
+      setUser(userData);
+      setLoading(false);
+      console.log('✅ Login successful - user state set:', userData);
+      return true;
+    } catch (error) {
+      console.error('❌ Login failed during state update:', error);
+      return false;
+    }
   };
 
   const logout = () => {
