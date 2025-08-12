@@ -733,9 +733,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Database Population Issue - RESOLVED"
-    - "Frontend Integration Testing - COMPLETED"
-    - "Edit Jersey Frontend Testing - COMPLETED"
+    - "Frontend Testing for Recent Bug Fixes"
+    - "Submission Confirmation Messages Testing"
+    - "Pending Tab Display in My Collection"
+    - "Admin Panel Functionality Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
