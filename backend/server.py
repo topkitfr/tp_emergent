@@ -72,6 +72,11 @@ class ListingStatus(str, Enum):
     SOLD = "sold"
     INACTIVE = "inactive"
 
+class JerseyStatus(str, Enum):
+    PENDING = "pending"      # En attente de validation
+    APPROVED = "approved"    # Validé et visible
+    REJECTED = "rejected"    # Rejeté
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
