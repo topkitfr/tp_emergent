@@ -2338,6 +2338,7 @@ const CollectionsPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('owned');
   const [collections, setCollections] = useState([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -2363,10 +2364,22 @@ const CollectionsPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/api/collections/${activeTab}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCollections(response.data);
+      
+      if (activeTab === 'pending') {
+        // Fetch pending submissions
+        const response = await axios.get(`${API}/api/collections/pending`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPendingSubmissions(response.data);
+        setCollections([]); // Clear regular collections
+      } else {
+        // Fetch regular collections (owned/wanted)
+        const response = await axios.get(`${API}/api/collections/${activeTab}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCollections(response.data);
+        setPendingSubmissions([]); // Clear pending submissions
+      }
     } catch (error) {
       console.error('Failed to fetch collections:', error);
     } finally {
