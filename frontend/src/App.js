@@ -397,11 +397,7 @@ const Header = ({ currentView, setCurrentView }) => {
               Home
             </button>
             <button 
-              onClick={() => {
-                console.log('🔄 Browse Jerseys button clicked!');
-                setCurrentView('jerseys');
-                console.log('🔄 setCurrentView called with: jerseys');
-              }}
+              onClick={() => setCurrentView('jerseys')}
               className={`px-4 py-2 rounded-lg transition-colors font-medium ${
                 currentView === 'jerseys' 
                   ? 'bg-white text-black' 
