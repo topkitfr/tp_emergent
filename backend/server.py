@@ -548,7 +548,7 @@ async def google_callback(request: Request):
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
 async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user)):
-    jersey = Jersey(**jersey_data.dict(), created_by=user_id)
+    jersey = Jersey(**jersey_data.dict(), created_by=user_id, submitted_by=user_id)
     await db.jerseys.insert_one(jersey.dict())
     return jersey
 
