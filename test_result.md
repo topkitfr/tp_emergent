@@ -328,6 +328,18 @@ test_plan:
         agent: "testing"
         comment: "✅ PHASE 2 TESTING COMPLETE - 100% SUCCESS RATE (11/11 tests passed)! COMPREHENSIVE VERIFICATION: ✅ EMERGENT AUTH REMOVAL: Both /api/auth/emergent/redirect and /api/auth/emergent/session correctly return 404 (endpoints successfully removed) ✅ REGULAR AUTH PRESERVED: Custom email/password registration and login working perfectly ✅ GOOGLE OAUTH PRESERVED: Google OAuth redirect endpoint still accessible and functional ✅ DATABASE MANAGEMENT: DELETE /api/admin/database/erase requires authentication (correctly rejects unauthenticated requests with 403), DELETE /api/admin/database/clear-listings working correctly ✅ JERSEY FILTERING: GET /api/jerseys excludes deleted jerseys (found 35+ active jerseys, 0 deleted jerseys in response) ✅ LISTINGS FILTERING: GET /api/listings only shows active listings (verified 9+ active listings, no inactive/deleted listings) ✅ EXISTING FUNCTIONALITY PRESERVED: Jersey creation, listing creation, collection management, and profile endpoints all working correctly after Phase 2 changes. All Phase 2 improvements successfully implemented and fully functional. The backend is production-ready with enhanced security and data management capabilities."
 
+  - task: "Database Erasure - Complete Database Wipe"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 VIDAGE COMPLET DE LA BASE DE DONNÉES RÉUSSI - 100% SUCCESS! Comprehensive testing of database erasure functionality completed with perfect results. CRITICAL FINDINGS: ✅ DELETE /api/admin/database/erase endpoint working perfectly - requires proper authentication (correctly rejects unauthenticated requests with 403), successfully deletes ALL data from all collections (users, jerseys, listings, collections, price_history, jersey_valuations, messages) ✅ VERIFICATION COMPLETE: GET /api/jerseys returns empty list [] after erase, GET /api/listings returns empty list [] after erase, old user accounts cannot login (correctly fails with 400 Invalid credentials) ✅ DATABASE STATE CONFIRMED: Found 37 jerseys and 10 listings before erasure, all completely removed after erasure ✅ ALTERNATIVE ENDPOINT AVAILABLE: DELETE /api/admin/database/clear-listings also functional for partial cleanup if needed ✅ NEW DATA ACCEPTANCE: Database accepts new user registration and jersey creation after erase, confirming complete reset. CONCLUSION: The database erasure functionality is COMPLETELY FUNCTIONAL and production-ready. The TopKit database has been successfully wiped clean and is ready for restructuring according to the Discogs model workflow. All user requirements for complete database reset have been satisfied."
+
 agent_communication:
   - agent: "main"
     message: "PROBLÈMES CRITIQUES IDENTIFIÉS ET RÉSOLUS - Phase 1: ✅ RÉSOLU - Boutons Own/Want maintenant visibles dans Browse Jerseys après correction de la logique d'affichage des boutons. Les boutons de collection sont maintenant séparés de la logique showActions. ✅ BACKEND TESTÉ - Authentification et suppression fonctionnent parfaitement côté backend (100% tests passés). Le problème du bouton Remove est uniquement frontend (gestion d'état React). 🔧 EN COURS - Debugging de l'authentification frontend et mécanisme de rafraîchissement des collections après suppression."
