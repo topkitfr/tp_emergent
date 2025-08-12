@@ -2310,20 +2310,7 @@ const ProfilePage = () => {
           </span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={handleEraseDatabase}
-            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold border border-red-500 flex items-center justify-center"
-          >
-            <span className="mr-2">⚠️</span>
-            Erase Entire Database
-          </button>
-          <button
-            onClick={handleClearDeletedListings}
-            className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors font-semibold border border-orange-500 flex items-center justify-center"
-          >
-            <span className="mr-2">🗑️</span>
-            Clear Deleted Listings
-          </button>
+          {/* Admin functions removed */}
         </div>
         <p className="text-gray-400 text-sm mt-4">
           ⚠️ WARNING: Database erasure is permanent and cannot be undone. Use with extreme caution.
