@@ -448,6 +448,18 @@ const Header = ({ currentView, setCurrentView }) => {
                 >
                   Profile
                 </button>
+                {user.email === 'topkitfr@gmail.com' && (
+                  <button 
+                    onClick={() => setCurrentView('admin')}
+                    className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                      currentView === 'admin' 
+                        ? 'bg-red-600 text-white' 
+                        : 'text-red-400 hover:text-white hover:bg-red-800'
+                    }`}
+                  >
+                    🔧 Admin Panel
+                  </button>
+                )}
               </>
             )}
           </div>
