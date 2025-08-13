@@ -575,7 +575,7 @@ const Header = ({ currentView, setCurrentView }) => {
                   : 'text-gray-300 hover:text-white hover:bg-gray-800'
               }`}
             >
-              Browse Jerseys
+              Explorez
             </button>
             <button 
               onClick={() => setCurrentView('marketplace')}
