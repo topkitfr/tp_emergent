@@ -53,11 +53,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'topkit-secret-key-2024')
 
 # Enums
 class JerseyCondition(str, Enum):
-    MINT = "mint"
-    EXCELLENT = "excellent"
+    NEW = "new"
+    NEAR_MINT = "near_mint"
     VERY_GOOD = "very_good"
     GOOD = "good"
-    FAIR = "fair"
+    POOR = "poor"
 
 class JerseySize(str, Enum):
     XS = "XS"
