@@ -2788,6 +2788,149 @@ const ProfilePage = () => {
   );
 };
 
+// Jersey Suggestions View Modal Component
+const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, [jersey?.id]);
+
+  const fetchSuggestions = async () => {
+    if (!jersey?.id) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/jerseys/${jersey.id}/suggestions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuggestions(response.data.suggestions || []);
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!jersey) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center p-6 border-b border-gray-800">
+          <h2 className="text-2xl font-bold text-white">Moderator Feedback</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Jersey Info */}
+          <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">Jersey: {jersey.team} {jersey.season}</h3>
+            <div className="flex items-center space-x-4">
+              {jersey.images && jersey.images[0] && (
+                <img 
+                  src={jersey.images[0]} 
+                  alt={`${jersey.team} ${jersey.season}`}
+                  className="w-16 h-16 object-cover rounded border border-gray-600"
+                />
+              )}
+              <div>
+                {jersey.player && <p className="text-gray-300">{jersey.player}</p>}
+                <p className="text-gray-400 text-sm">
+                  Size: {jersey.size} • Condition: {jersey.condition} • Status: <span className="capitalize font-medium">{jersey.status}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Suggestions */}
+          {loading ? (
+            <div className="text-center py-8 text-gray-400">
+              <LoadingSpinner size="md" className="mx-auto mb-2" />
+              Loading feedback...
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              No moderator feedback available.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-white">Moderator Feedback:</h3>
+              {suggestions.map((suggestion, index) => (
+                <div key={suggestion.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h4 className="text-lg font-semibold text-white">
+                        Feedback #{index + 1}
+                      </h4>
+                      <p className="text-gray-400 text-sm">
+                        From: {suggestion.moderator_info?.name || 'Moderator'} • {new Date(suggestion.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      suggestion.status === 'pending' ? 'bg-yellow-900 text-yellow-300' :
+                      suggestion.status === 'addressed' ? 'bg-green-900 text-green-300' :
+                      'bg-gray-900 text-gray-300'
+                    }`}>
+                      {suggestion.status}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h5 className="text-white font-medium mb-2">Suggested Changes:</h5>
+                      <p className="text-gray-300 bg-gray-900 p-3 rounded border border-gray-600 leading-relaxed">
+                        {suggestion.suggested_changes}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {jersey.status === 'needs_modification' && (
+            <div className="mt-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+              <div className="flex items-start">
+                <div className="text-blue-400 text-xl mr-3 mt-1">💡</div>
+                <div className="flex-1">
+                  <h3 className="text-blue-300 font-semibold mb-2">Ready to Address Feedback?</h3>
+                  <p className="text-blue-200 text-sm leading-relaxed mb-4">
+                    You can resubmit this jersey with the suggested modifications. The original submission will be marked as superseded, and your new submission will go through the review process again.
+                  </p>
+                  <button
+                    onClick={() => onResubmit && onResubmit()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    Resubmit with Modifications
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={onClose}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Collections Page Component
 const CollectionsPage = () => {
   const { user } = useAuth();
