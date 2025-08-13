@@ -141,7 +141,7 @@ class AuthDebugTester:
         try:
             register_payload = {
                 "email": "steinmetzlivio@gmail.com",
-                "password": "password123",
+                "password": "123",
                 "name": "Livio Steinmetz"
             }
             
