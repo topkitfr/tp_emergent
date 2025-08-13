@@ -597,13 +597,13 @@ const NotificationBell = () => {
         <div className="absolute right-0 mt-2 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
           <div className="p-4 border-b border-gray-700">
             <div className="flex justify-between items-center">
-              <h3 className="text-white font-semibold">Notifications</h3>
+              <h3 className="text-white font-semibold">{t('notifications')}</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
                   className="text-blue-400 hover:text-blue-300 text-sm"
                 >
-                  Mark all read
+                  {t('markAllRead')}
                 </button>
               )}
             </div>
