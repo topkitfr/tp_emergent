@@ -1100,13 +1100,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Frontend Testing for Recent Bug Fixes"
-    - "Submission Confirmation Messages Testing"
-    - "Pending Tab Display in My Collection"
-    - "Admin Panel Functionality Testing"
-  stuck_tasks: []
+    - "Robust Authentication Context with useReducer - Collection Bug Fix"
+    - "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
+  stuck_tasks:
+    - "Robust Authentication Context with useReducer - Collection Bug Fix"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"
