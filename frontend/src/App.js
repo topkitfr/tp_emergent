@@ -4427,6 +4427,13 @@ const AdminPanel = () => {
                         ✅ Approve
                       </button>
                       <button
+                        onClick={() => handleSuggestModifications(jersey.id)}
+                        disabled={actionLoading}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                      >
+                        🔧 Suggest Changes
+                      </button>
+                      <button
                         onClick={() => handleReject(jersey.id)}
                         disabled={actionLoading}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
