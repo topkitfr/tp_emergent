@@ -2613,8 +2613,10 @@ const AuthModal = ({ onClose }) => {
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] pointer-events-none">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[10000] pointer-events-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" 
+         onClick={onClose}>
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[10000]" 
+           onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
             {isLogin ? 'Login' : 'Sign Up'}
@@ -2666,16 +2668,6 @@ const AuthModal = ({ onClose }) => {
           <button
             type="submit"
             disabled={loading}
-            onClick={(e) => {
-              console.log('🖱️ Login button clicked');
-              console.log('🔍 Form data check:', formData);
-              console.log('🎯 Is login mode:', isLogin);
-              // Ensure form submission happens
-              if (!loading) {
-                console.log('⚡ Manually triggering handleSubmit');
-                handleSubmit(e);
-              }
-            }}
             className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
           >
             {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
