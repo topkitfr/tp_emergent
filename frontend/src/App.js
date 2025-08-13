@@ -5384,6 +5384,16 @@ const AppContent = () => {
     };
   }, []);
 
+  // Helper function to extract jersey identifier from currentView
+  const getJerseyIdentifier = (viewString, prefix) => {
+    const identifier = viewString.replace(prefix, '');
+    return {
+      isReference: identifier.startsWith('TK-'),
+      jerseyId: identifier.startsWith('TK-') ? null : identifier,
+      referenceNumber: identifier.startsWith('TK-') ? identifier : null
+    };
+  };
+
   const renderContent = () => {
     // Handle jersey detail pages with reference numbers
     if (currentView.startsWith('jersey-detail-')) {
