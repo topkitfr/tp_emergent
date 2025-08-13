@@ -3235,15 +3235,17 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
   );
 };
 
-// Explorer Page Component
-const ExplorerPage = () => {
+// Enhanced Browse Jerseys Page with Explorer Features
+const BrowseJerseysPage = ({ jerseys, loading, onFilter }) => {
+  // Explorer data states
   const [mostCollected, setMostCollected] = useState([]);
   const [mostWanted, setMostWanted] = useState([]);
   const [latestAdditions, setLatestAdditions] = useState([]);
   const [leagues, setLeagues] = useState([]);
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [leagueJerseys, setLeagueJerseys] = useState([]);
-  const [loading, setLoading] = useState({
+  const [activeTab, setActiveTab] = useState('discover'); // 'discover' or 'browse'
+  const [explorerLoading, setExplorerLoading] = useState({
     mostCollected: true,
     mostWanted: true,
     latestAdditions: true,
@@ -3251,10 +3253,12 @@ const ExplorerPage = () => {
     leagueJerseys: false
   });
 
-  // Fetch explorer data
+  // Fetch explorer data when component mounts
   useEffect(() => {
-    fetchExplorerData();
-  }, []);
+    if (activeTab === 'discover') {
+      fetchExplorerData();
+    }
+  }, [activeTab]);
 
   const fetchExplorerData = async () => {
     try {
@@ -3272,7 +3276,7 @@ const ExplorerPage = () => {
       setLeagues(leaguesRes.data);
 
       // Update loading states
-      setLoading({
+      setExplorerLoading({
         mostCollected: false,
         mostWanted: false,
         latestAdditions: false,
@@ -3281,7 +3285,7 @@ const ExplorerPage = () => {
       });
     } catch (error) {
       console.error('Failed to fetch explorer data:', error);
-      setLoading({
+      setExplorerLoading({
         mostCollected: false,
         mostWanted: false,
         latestAdditions: false,
@@ -3293,14 +3297,14 @@ const ExplorerPage = () => {
 
   const fetchLeagueJerseys = async (league) => {
     try {
-      setLoading(prev => ({ ...prev, leagueJerseys: true }));
+      setExplorerLoading(prev => ({ ...prev, leagueJerseys: true }));
       const response = await axios.get(`${API}/api/explorer/leagues/${encodeURIComponent(league)}/jerseys?limit=12`);
       setLeagueJerseys(response.data);
       setSelectedLeague(league);
     } catch (error) {
       console.error('Failed to fetch league jerseys:', error);
     } finally {
-      setLoading(prev => ({ ...prev, leagueJerseys: false }));
+      setExplorerLoading(prev => ({ ...prev, leagueJerseys: false }));
     }
   };
 
@@ -3346,7 +3350,7 @@ const ExplorerPage = () => {
     </div>
   );
 
-  const renderSection = (title, icon, jerseys, loadingState, showStats = false) => (
+  const renderExplorerSection = (title, icon, jerseys, loadingState, showStats = false) => (
     <div className="mb-12">
       <div className="flex items-center space-x-3 mb-6">
         <span className="text-3xl">{icon}</span>
@@ -3381,108 +3385,167 @@ const ExplorerPage = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">🌟 Explorer</h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Discover the best jerseys in the TopKit community. Explore trending collections, 
-            latest additions, and browse by your favorite leagues.
-          </p>
+        {/* Header with Tabs */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-6">Jersey Collection</h1>
+          
+          {/* Tab Navigation */}
+          <div className="flex justify-center space-x-1 bg-gray-900 rounded-lg p-1 max-w-md mx-auto mb-8">
+            <button
+              onClick={() => setActiveTab('discover')}
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                activeTab === 'discover'
+                  ? 'bg-white text-black'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              🌟 Discover
+            </button>
+            <button
+              onClick={() => setActiveTab('browse')}
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                activeTab === 'browse'
+                  ? 'bg-white text-black'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              🔍 Browse All
+            </button>
+          </div>
         </div>
 
-        {/* Most Collected Section */}
-        {renderSection("Most Collected", "🔥", mostCollected, loading.mostCollected, true)}
-
-        {/* Most Wanted Section */}
-        {renderSection("Most Wanted", "💎", mostWanted, loading.mostWanted, true)}
-
-        {/* Latest Additions Section */}
-        {renderSection("Latest Additions", "✨", latestAdditions, loading.latestAdditions)}
-
-        {/* Explore Leagues Section */}
-        <div className="mb-12">
-          <div className="flex items-center space-x-3 mb-6">
-            <span className="text-3xl">🏆</span>
-            <h2 className="text-2xl font-bold text-white">Explore Leagues</h2>
-          </div>
-          
-          {loading.leagues ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-gray-800 rounded-lg p-6 border border-gray-700 animate-pulse">
-                  <div className="h-6 bg-gray-700 rounded mb-3"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                  </div>
-                </div>
-              ))}
+        {/* Tab Content */}
+        {activeTab === 'discover' ? (
+          <div>
+            {/* Discovery Content */}
+            <div className="text-center mb-12">
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                Discover the best jerseys in the TopKit community. Explore trending collections, 
+                latest additions, and browse by your favorite leagues.
+              </p>
             </div>
-          ) : leagues.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-              {leagues.map((league, index) => (
-                <button
-                  key={index}
-                  onClick={() => fetchLeagueJerseys(league.league)}
-                  className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-all hover:scale-105 text-left"
-                >
-                  <h3 className="text-white font-semibold text-lg mb-3 truncate">{league.league}</h3>
-                  <div className="space-y-1 text-gray-400 text-sm">
-                    <p>📊 {league.jersey_count} jerseys</p>
-                    <p>⚽ {league.team_count} teams</p>
-                    <p>📅 {league.season_count} seasons</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-400">
-              <div className="text-4xl mb-4">🏟️</div>
-              <p>No league data available yet.</p>
-            </div>
-          )}
 
-          {/* Selected League Jerseys */}
-          {selectedLeague && (
-            <div className="mt-8 border-t border-gray-700 pt-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white">🏆 {selectedLeague} Jerseys</h3>
-                <button
-                  onClick={() => {
-                    setSelectedLeague(null);
-                    setLeagueJerseys([]);
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  ✕ Close
-                </button>
+            {/* Most Collected Section */}
+            {renderExplorerSection("Most Collected", "🔥", mostCollected, explorerLoading.mostCollected, true)}
+
+            {/* Most Wanted Section */}
+            {renderExplorerSection("Most Wanted", "💎", mostWanted, explorerLoading.mostWanted, true)}
+
+            {/* Latest Additions Section */}
+            {renderExplorerSection("Latest Additions", "✨", latestAdditions, explorerLoading.latestAdditions)}
+
+            {/* Explore Leagues Section */}
+            <div className="mb-12">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-3xl">🏆</span>
+                <h2 className="text-2xl font-bold text-white">Explore by League</h2>
               </div>
-
-              {loading.leagueJerseys ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 animate-pulse">
-                      <div className="aspect-square bg-gray-700"></div>
-                      <div className="p-4 space-y-2">
-                        <div className="h-4 bg-gray-700 rounded"></div>
-                        <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+              
+              {explorerLoading.leagues ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="bg-gray-800 rounded-lg p-6 border border-gray-700 animate-pulse">
+                      <div className="h-6 bg-gray-700 rounded mb-3"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : leagueJerseys.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                  {leagueJerseys.map(jersey => renderJerseyCard(jersey))}
+              ) : leagues.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+                  {leagues.map((league, index) => (
+                    <button
+                      key={index}
+                      onClick={() => fetchLeagueJerseys(league.league)}
+                      className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-all hover:scale-105 text-left"
+                    >
+                      <h3 className="text-white font-semibold text-lg mb-3 truncate">{league.league}</h3>
+                      <div className="space-y-1 text-gray-400 text-sm">
+                        <p>📊 {league.jersey_count} jerseys</p>
+                        <p>⚽ {league.team_count} teams</p>
+                        <p>📅 {league.season_count} seasons</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-400">
-                  <div className="text-4xl mb-4">👕</div>
-                  <p>No jerseys found for {selectedLeague}.</p>
+                  <div className="text-4xl mb-4">🏟️</div>
+                  <p>No league data available yet.</p>
+                </div>
+              )}
+
+              {/* Selected League Jerseys */}
+              {selectedLeague && (
+                <div className="mt-8 border-t border-gray-700 pt-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-white">🏆 {selectedLeague} Jerseys</h3>
+                    <button
+                      onClick={() => {
+                        setSelectedLeague(null);
+                        setLeagueJerseys([]);
+                      }}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  {explorerLoading.leagueJerseys ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 animate-pulse">
+                          <div className="aspect-square bg-gray-700"></div>
+                          <div className="p-4 space-y-2">
+                            <div className="h-4 bg-gray-700 rounded"></div>
+                            <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : leagueJerseys.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                      {leagueJerseys.map(jersey => renderJerseyCard(jersey))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400">
+                      <div className="text-4xl mb-4">👕</div>
+                      <p>No jerseys found for {selectedLeague}.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // Browse All Content (original functionality)
+          <div>
+            <div className="text-center mb-8">
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                Browse our complete collection of verified soccer jerseys from teams around the world.
+              </p>
+            </div>
+
+            <SearchFilter onFilter={onFilter} />
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg">Loading jerseys...</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {jerseys.map((jersey) => (
+                  <JerseyCard 
+                    key={jersey.id} 
+                    jersey={jersey} 
+                    showActions={true}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
