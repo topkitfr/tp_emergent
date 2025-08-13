@@ -517,6 +517,7 @@ const Header = ({ currentView, setCurrentView }) => {
             <div className="flex justify-end flex-1">
               {user ? (
                 <div className="flex items-center space-x-4">
+                  <NotificationBell />
                   <div className="flex items-center space-x-3">
                     <Avatar 
                       user={user} 
