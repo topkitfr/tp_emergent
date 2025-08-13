@@ -648,6 +648,15 @@ async def google_callback(request: Request):
             "provider": "google",
             "role": user_role
         })
+        
+        # Send welcome notification for new users
+        await create_notification(
+            user_id=user_id,
+            notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+            title="🎉 Welcome to TopKit!",
+            message=f"Welcome {user.name}! You're now part of the TopKit community. Start building your jersey collection by browsing our database and submitting your own jerseys for review.",
+            related_id=None
+        )
     
     token = create_jwt_token(user_id)
     # Redirect to frontend with token
