@@ -341,15 +341,18 @@ frontend:
 
   - task: "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
     implemented: true
-    working: "unknown"
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "COMPLETE DARK THEME MONOCHROME REDESIGN - Implemented comprehensive dark theme transformation as requested: ✅ EXPLOREZ PAGE: Renamed from Browse Jerseys, dark sidebar filters, gray-900 cards, white text on black background matching Discogs style ✅ GLOBAL MARKETPLACE PAGE: Like Discogs /sell/list with dark theme, listings view, price filters, condition badges, seamless navigation to jersey details ✅ PROFILE+COLLECTION FUSION: Merged Profile and My Collection pages with tabbed interface (Collection/Wishlist/Submitted/Stats), collection value estimation like Discogs, dark theme throughout ✅ HOMEPAGE: Updated with dark theme, French text, proper event handling for navigation ✅ CONSISTENT DARK THEME: Black background (bg-black), gray-900 cards, gray-700 borders, white text, blue accents throughout entire application. Complete monochrome coherence as requested."
+      - working: false
+        agent: "testing"
+        comment: "❌ DARK THEME TESTING BLOCKED BY AUTHENTICATION BUG: Cannot properly test dark theme implementation and collection UI features because authentication system is completely broken. While dark theme styling appears to be implemented (black backgrounds, gray cards visible in screenshots), the core functionality is inaccessible. Missing collection buttons (❤️ Own, ⭐ Want) on jersey cards indicate collection UI components are not properly rendered. Authentication form submission failure prevents access to Profile/Collection pages where dark theme can be fully evaluated. PRIORITY: Fix authentication system first, then retest dark theme implementation."
 
   - task: "Moderator Suggestions System - Frontend Implementation"
     implemented: true
