@@ -70,14 +70,15 @@ class BugFixTester:
             return False
     
     def authenticate_test_user(self):
-        """Authenticate as test user"""
+        """Authenticate as test user - try login first, then register if needed"""
         try:
-            payload = {
+            # First try to login
+            login_payload = {
                 "email": TEST_EMAIL,
                 "password": TEST_PASSWORD
             }
             
-            response = self.session.post(f"{self.base_url}/auth/login", json=payload)
+            response = self.session.post(f"{self.base_url}/auth/login", json=login_payload)
             
             if response.status_code == 200:
                 data = response.json()
@@ -86,11 +87,28 @@ class BugFixTester:
                     self.test_user_id = data["user"]["id"]
                     self.log_test("Test User Authentication", "PASS", f"Test user logged in: {TEST_EMAIL}")
                     return True
+            
+            # If login fails, try to register
+            register_payload = {
+                "email": TEST_EMAIL,
+                "password": TEST_PASSWORD,
+                "name": "Test User"
+            }
+            
+            register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
+            
+            if register_response.status_code == 200:
+                data = register_response.json()
+                if "token" in data and "user" in data:
+                    self.test_token = data["token"]
+                    self.test_user_id = data["user"]["id"]
+                    self.log_test("Test User Authentication", "PASS", f"Test user registered: {TEST_EMAIL}")
+                    return True
                 else:
-                    self.log_test("Test User Authentication", "FAIL", "Missing token or user in response")
+                    self.log_test("Test User Authentication", "FAIL", "Missing token or user in registration response")
                     return False
             else:
-                self.log_test("Test User Authentication", "FAIL", f"Status: {response.status_code}, Response: {response.text}")
+                self.log_test("Test User Authentication", "FAIL", f"Login failed: {response.status_code}, Register failed: {register_response.status_code}")
                 return False
                 
         except Exception as e:
