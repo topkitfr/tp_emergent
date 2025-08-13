@@ -4849,13 +4849,14 @@ const JerseyMarketplacePage = ({ jerseyId, referenceNumber }) => {
 };
 
 // Unified Profile & Collection Page with Dark Theme
-const ProfileCollectionPage = () => {
+const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('collection');
   const [ownedJerseys, setOwnedJerseys] = useState([]);
   const [wantedJerseys, setWantedJerseys] = useState([]);
   const [submittedJerseys, setSubmittedJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
   const [collectionStats, setCollectionStats] = useState({
     totalValue: 0,
     averageValue: 0,
@@ -4867,6 +4868,27 @@ const ProfileCollectionPage = () => {
     if (user) {
       fetchCollectionData();
     }
+  }, [user, lastRefresh]);
+
+  // Add effect to handle page visibility and refresh data when user comes back
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchCollectionData();
+      }
+    };
+
+    const handleCustomRefresh = () => {
+      setLastRefresh(Date.now());
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('refreshProfile', handleCustomRefresh);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('refreshProfile', handleCustomRefresh);
+    };
   }, [user]);
 
   const fetchCollectionData = async () => {
