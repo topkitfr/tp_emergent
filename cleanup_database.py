@@ -25,7 +25,7 @@ async def cleanup_database():
     
     # Connect to MongoDB
     client = AsyncIOMotorClient(MONGO_URL)
-    db = client.get_default_database()
+    db = client[DB_NAME]
     
     print("🧹 Starting TopKit Database Cleanup...")
     print(f"📅 Cleanup started at: {datetime.utcnow()}")
