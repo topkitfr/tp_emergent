@@ -1022,6 +1022,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
         
         # Check if this is a resubmission
         is_resubmission = False
+        original_reference_number = None
         if resubmission_id:
             # Verify the original jersey exists and belongs to the user
             original_jersey = await db.jerseys.find_one({
@@ -1031,7 +1032,16 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             })
             if original_jersey:
                 is_resubmission = True
+                original_reference_number = original_jersey.get("reference_number")
                 print(f"🔄 This is a resubmission for jersey {resubmission_id}")
+        
+        # Generate reference number (keep original for resubmissions)
+        if is_resubmission and original_reference_number:
+            reference_number = original_reference_number
+            print(f"🔄 Keeping original reference: {reference_number}")
+        else:
+            reference_number = await get_next_jersey_reference()
+            print(f"🆕 Generated new reference: {reference_number}")
         
         # Create jersey with validated data
         jersey = Jersey(
@@ -1046,6 +1056,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             description=jersey_data.description.strip() if jersey_data.description else "",
             images=jersey_data.images or [],
             reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
+            reference_number=reference_number,
             created_by=user_id,
             submitted_by=user_id,
             status=JerseyStatus.PENDING  # Always start as pending for moderation
