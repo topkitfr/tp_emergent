@@ -568,16 +568,6 @@ const Header = ({ currentView, setCurrentView }) => {
               Home
             </button>
             <button 
-              onClick={() => setCurrentView('explorer')}
-              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                currentView === 'explorer' 
-                  ? 'bg-white text-black' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              🌟 Explorer
-            </button>
-            <button 
               onClick={() => setCurrentView('jerseys')}
               className={`px-4 py-2 rounded-lg transition-colors font-medium ${
                 currentView === 'jerseys' 
