@@ -5381,11 +5381,9 @@ const AdminPanel = () => {
 
 const App = () => {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </LanguageProvider>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
