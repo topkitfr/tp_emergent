@@ -4524,35 +4524,13 @@ const AppContent = () => {
       case 'admin':
         return <AdminPanel />;
       
-      case 'explorer':
-        return <ExplorerPage />;
-      
       case 'jerseys':
         return (
-          <div>
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-4xl font-bold text-white">Browse Jerseys</h1>
-            </div>
-            <SearchFilter onFilter={fetchJerseys} />
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">Loading jerseys...</div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {jerseys.map((jersey) => (
-                  <JerseyCard 
-                    key={jersey.id} 
-                    jersey={jersey} 
-                    showActions={true}
-                    onAddToCollection={handleAddToCollection}
-                    onClick={handleJerseyClick}
-                    onCreatorClick={handleCreatorClick}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          <BrowseJerseysPage 
+            jerseys={jerseys}
+            loading={loading}
+            onFilter={fetchJerseys}
+          />
         );
       
       case 'marketplace':
