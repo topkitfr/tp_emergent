@@ -5856,6 +5856,9 @@ const AppContent = () => {
       case 'admin':
         return <AdminPanel />;
       
+      case 'marketplace':
+        return <GlobalMarketplacePage />;
+      
       case 'jerseys':
         return (
           <BrowseJerseysPage 
