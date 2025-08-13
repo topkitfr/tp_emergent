@@ -712,11 +712,68 @@ async def get_pending_jerseys(moderator_id: str = Depends(get_current_moderator_
     
     return jerseys
 
+@api_router.post("/admin/jerseys/{jersey_id}/suggest-modifications")
+async def suggest_jersey_modifications(
+    jersey_id: str, 
+    suggestion_data: ModificationSuggestionCreate,
+    moderator_id: str = Depends(get_current_moderator_or_admin)
+):
+    """Suggest modifications for a pending jersey instead of rejecting it"""
+    
+    # Verify jersey exists and is pending
+    jersey = await db.jerseys.find_one({"id": jersey_id, "status": "pending"})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found or already processed")
+    
+    # Create modification suggestion
+    suggestion = ModificationSuggestion(
+        jersey_id=jersey_id,
+        moderator_id=moderator_id,
+        suggested_changes=suggestion_data.suggested_changes,
+        suggested_modifications=suggestion_data.suggested_modifications or {}
+    )
+    
+    await db.modification_suggestions.insert_one(suggestion.dict())
+    
+    # Update jersey status to indicate it needs modification
+    await db.jerseys.update_one(
+        {"id": jersey_id},
+        {
+            "$set": {
+                "status": "needs_modification",
+                "approved_by": moderator_id,
+                "approved_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Create notification for the user
+    await create_notification(
+        user_id=jersey["submitted_by"],
+        notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
+        title="Modifications Suggested for Your Jersey",
+        message=f"Your jersey submission '{jersey.get('team', '')} {jersey.get('season', '')}' needs some modifications. Please check the feedback from our moderators.",
+        related_id=suggestion.id
+    )
+    
+    # Log activity
+    await log_user_activity(moderator_id, "jersey_modification_suggested", jersey_id, {
+        "suggested_changes": suggestion_data.suggested_changes,
+        "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}"
+    })
+    
+    await log_user_activity(jersey["submitted_by"], "jersey_modification_requested", jersey_id, {
+        "moderator_id": moderator_id,
+        "suggestion_id": suggestion.id
+    })
+    
+    return {"message": "Modification suggestions sent to user", "suggestion_id": suggestion.id}
+
 @api_router.post("/admin/jerseys/{jersey_id}/approve")
 async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current_moderator_or_admin)):
     """Approve a pending jersey"""
     result = await db.jerseys.update_one(
-        {"id": jersey_id, "status": "pending"},
+        {"id": jersey_id, "status": {"$in": ["pending", "needs_modification"]}},
         {
             "$set": {
                 "status": "approved",
@@ -729,12 +786,20 @@ async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Jersey not found or already processed")
     
-    # Log activity
-    await log_user_activity(moderator_id, "jersey_approved", jersey_id)
-    
-    # Get jersey info for activity logging
+    # Get jersey info for notifications
     jersey = await db.jerseys.find_one({"id": jersey_id})
     if jersey:
+        # Create notification for the user
+        await create_notification(
+            user_id=jersey["submitted_by"],
+            notification_type=NotificationType.JERSEY_APPROVED,
+            title="Jersey Approved!",
+            message=f"Great news! Your jersey '{jersey.get('team', '')} {jersey.get('season', '')}' has been approved and is now visible in the database.",
+            related_id=jersey_id
+        )
+        
+        # Log activity
+        await log_user_activity(moderator_id, "jersey_approved", jersey_id)
         await log_user_activity(jersey["created_by"], "jersey_approved", jersey_id, {
             "approved_by": moderator_id,
             "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}"
@@ -752,7 +817,7 @@ async def reject_jersey(
     reason = rejection_data.get("reason", "No reason provided")
     
     result = await db.jerseys.update_one(
-        {"id": jersey_id, "status": "pending"},
+        {"id": jersey_id, "status": {"$in": ["pending", "needs_modification"]}},
         {
             "$set": {
                 "status": "rejected",
@@ -766,12 +831,20 @@ async def reject_jersey(
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Jersey not found or already processed")
     
-    # Log activity
-    await log_user_activity(moderator_id, "jersey_rejected", jersey_id, {"reason": reason})
-    
-    # Get jersey info for activity logging
+    # Get jersey info for notifications
     jersey = await db.jerseys.find_one({"id": jersey_id})
     if jersey:
+        # Create notification for the user
+        await create_notification(
+            user_id=jersey["submitted_by"],
+            notification_type=NotificationType.JERSEY_REJECTED,
+            title="Jersey Submission Rejected",
+            message=f"Unfortunately, your jersey '{jersey.get('team', '')} {jersey.get('season', '')}' has been rejected. Reason: {reason}",
+            related_id=jersey_id
+        )
+        
+        # Log activity
+        await log_user_activity(moderator_id, "jersey_rejected", jersey_id, {"reason": reason})
         await log_user_activity(jersey["created_by"], "jersey_rejected", jersey_id, {
             "rejected_by": moderator_id,
             "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}",
