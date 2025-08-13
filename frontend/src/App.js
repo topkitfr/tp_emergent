@@ -3690,9 +3690,16 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
       <div className="p-5">
         {/* Header */}
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
-            {jersey.team}
-          </h3>
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
+              {jersey.team}
+            </h3>
+            {jersey.reference_number && (
+              <span className="bg-blue-600/20 text-blue-300 px-2 py-1 rounded-md text-xs font-mono border border-blue-500/30">
+                {jersey.reference_number}
+              </span>
+            )}
+          </div>
           <p className="text-gray-400 text-sm font-medium">{jersey.season}</p>
           {jersey.player && (
             <p className="text-blue-300 font-medium text-sm mt-1">#{jersey.player}</p>
