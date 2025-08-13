@@ -262,6 +262,169 @@ const Button = ({ children, variant = 'primary', size = 'md', loading = false, d
   );
 };
 
+// Notification Bell Component
+const NotificationBell = () => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/notifications?limit=10`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setNotifications(response.data.notifications || []);
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mark notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/notifications/${notificationId}/mark-read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Update local state
+      setNotifications(notifications.map(notif => 
+        notif.id === notificationId ? { ...notif, is_read: true } : notif
+      ));
+      setUnreadCount(Math.max(0, unreadCount - 1));
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/notifications/mark-all-read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Update local state
+      setNotifications(notifications.map(notif => ({ ...notif, is_read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
+  };
+
+  // Fetch notifications on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      // Refresh notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Don't render if user is not logged in
+  if (!user) return null;
+
+  return (
+    <div className="relative">
+      {/* Notification Bell Button */}
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="relative p-2 text-gray-300 hover:text-white transition-colors"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5zM12 3a7 7 0 00-7 7v4.09L3 16l1.82.91L12 21l7.18-4.09L21 16l-2-1.91V10a7 7 0 00-7-7z" />
+        </svg>
+        
+        {/* Unread Count Badge */}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Notifications Dropdown */}
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex justify-between items-center">
+              <h3 className="text-white font-semibold">Notifications</h3>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-blue-400 hover:text-blue-300 text-sm"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 text-center text-gray-400">
+                <LoadingSpinner size="sm" className="mx-auto mb-2" />
+                Loading notifications...
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-400">
+                No notifications yet
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors ${
+                    !notification.is_read ? 'bg-blue-900/20' : ''
+                  }`}
+                  onClick={() => !notification.is_read && markAsRead(notification.id)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${!notification.is_read ? 'text-white' : 'text-gray-300'}`}>
+                        {notification.title}
+                      </h4>
+                      <p className="text-gray-400 text-sm mt-1">{notification.message}</p>
+                      <p className="text-gray-500 text-xs mt-2">
+                        {new Date(notification.created_at).toLocaleDateString()} {new Date(notification.created_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    {!notification.is_read && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2"></div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="p-3 border-t border-gray-700">
+            <button
+              onClick={() => setShowDropdown(false)}
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg transition-colors text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Avatar Component with default styling
 const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   const sizeClasses = {
