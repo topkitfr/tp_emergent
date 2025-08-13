@@ -4245,32 +4245,63 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     console.log('🔄 Current user collection state:', userCollection);
 
     try {
-      const apiCall = userCollection[action] ? 
+      if (userCollection[action]) {
         // Remove from collection
-        axios.post(`${API}/api/collections/remove`, {
-          jersey_id: jersey.id,
-          collection_type: action
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        }) :
-        // Add to collection  
-        axios.post(`${API}/api/collections`, {
+        console.log('📡 Making API call to: remove from collection');
+        
+        const response = await axios.post(`${API}/api/collections/remove`, {
           jersey_id: jersey.id,
           collection_type: action
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
-      console.log('📡 Making API call to:', userCollection[action] ? 'remove' : 'add');
-      
-      const response = await apiCall;
-      console.log('✅ API call successful:', response.data);
-      
-      // Update local state
-      setUserCollection(prev => ({ ...prev, [action]: !prev[action] }));
+        
+        console.log('✅ Remove API call successful:', response.data);
+        setUserCollection(prev => ({ ...prev, [action]: false }));
+        
+        // Success message for removal
+        const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
+        alert(`✅ Maillot retiré de ${actionText} avec succès !`);
+        
+      } else {
+        // Add to collection
+        console.log('📡 Making API call to: add to collection');
+        
+        try {
+          const response = await axios.post(`${API}/api/collections`, {
+            jersey_id: jersey.id,
+            collection_type: action
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          console.log('✅ Add API call successful:', response.data);
+          setUserCollection(prev => ({ ...prev, [action]: true }));
+          
+          // Success message for addition
+          const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
+          alert(`✅ Maillot ajouté à ${actionText} avec succès !`);
+          
+        } catch (addError) {
+          console.error('❌ Add to collection error:', addError);
+          
+          // Check if already in collection
+          if (addError.response?.status === 400 && addError.response?.data?.detail?.includes('already in collection')) {
+            const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
+            alert(`ℹ️ Ce maillot est déjà dans ${actionText} !`);
+            // Update local state to reflect reality
+            setUserCollection(prev => ({ ...prev, [action]: true }));
+          } else {
+            throw addError; // Re-throw for general error handling
+          }
+        }
+      }
       
       // Refresh collection status to ensure consistency
-      setTimeout(() => checkUserCollection(), 500);
+      setTimeout(() => {
+        checkUserCollection();
+        console.log('🔄 Collection status refreshed');
+      }, 1000);
       
       // Trigger profile page refresh if user navigates there
       window.dispatchEvent(new CustomEvent('refreshProfile'));
