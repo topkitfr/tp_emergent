@@ -1538,10 +1538,24 @@ async def get_jersey_suggestions(jersey_id: str, user_id: str = Depends(get_curr
 @api_router.get("/collections/pending")
 async def get_user_pending_submissions(user_id: str = Depends(get_current_user)):
     """Get user's pending jersey submissions including those needing modification"""
-    submissions = await db.jerseys.find({
+    # Use multiple queries as workaround for MongoDB $in issue
+    pending_submissions = await db.jerseys.find({
         "submitted_by": user_id,
-        "status": {"$in": ["pending", "rejected", "needs_modification"]}
+        "status": "pending"
     }).to_list(100)
+    
+    rejected_submissions = await db.jerseys.find({
+        "submitted_by": user_id,
+        "status": "rejected"
+    }).to_list(100)
+    
+    needs_mod_submissions = await db.jerseys.find({
+        "submitted_by": user_id,
+        "status": "needs_modification"
+    }).to_list(100)
+    
+    # Combine all submissions
+    submissions = pending_submissions + rejected_submissions + needs_mod_submissions
     
     # Remove MongoDB ObjectId for JSON serialization and add suggestions info
     for submission in submissions:
