@@ -76,6 +76,7 @@ class ExplorerAPITester:
     def authenticate_user(self):
         """Authenticate as regular user"""
         try:
+            # First try existing user
             payload = {
                 "email": USER_EMAIL,
                 "password": USER_PASSWORD
@@ -90,11 +91,28 @@ class ExplorerAPITester:
                     self.user_user_id = data["user"]["id"]
                     self.log_test("User Authentication", "PASS", f"User authenticated: {USER_EMAIL}")
                     return True
+            
+            # If existing user fails, try to register a new test user
+            register_payload = {
+                "email": TEST_USER_EMAIL,
+                "password": TEST_USER_PASSWORD,
+                "name": TEST_USER_NAME
+            }
+            
+            register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
+            
+            if register_response.status_code == 200:
+                data = register_response.json()
+                if "token" in data and "user" in data:
+                    self.user_token = data["token"]
+                    self.user_user_id = data["user"]["id"]
+                    self.log_test("User Authentication", "PASS", f"New test user registered: {TEST_USER_EMAIL}")
+                    return True
                 else:
-                    self.log_test("User Authentication", "FAIL", "Missing token or user in response")
+                    self.log_test("User Authentication", "FAIL", "Missing token or user in registration response")
                     return False
             else:
-                self.log_test("User Authentication", "FAIL", f"Status: {response.status_code}, Response: {response.text}")
+                self.log_test("User Authentication", "FAIL", f"Registration failed - Status: {register_response.status_code}, Response: {register_response.text}")
                 return False
                 
         except Exception as e:
