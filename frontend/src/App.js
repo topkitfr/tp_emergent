@@ -2666,6 +2666,10 @@ const AuthModal = ({ onClose }) => {
           <button
             type="submit"
             disabled={loading}
+            onClick={(e) => {
+              console.log('🖱️ Login button clicked');
+              // Form will still handle the submission via onSubmit
+            }}
             className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
           >
             {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
