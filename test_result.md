@@ -566,6 +566,18 @@ test_plan:
         agent: "testing"
         comment: "✅ PHASE 2 TESTING COMPLETE - 100% SUCCESS RATE (11/11 tests passed)! COMPREHENSIVE VERIFICATION: ✅ EMERGENT AUTH REMOVAL: Both /api/auth/emergent/redirect and /api/auth/emergent/session correctly return 404 (endpoints successfully removed) ✅ REGULAR AUTH PRESERVED: Custom email/password registration and login working perfectly ✅ GOOGLE OAUTH PRESERVED: Google OAuth redirect endpoint still accessible and functional ✅ DATABASE MANAGEMENT: DELETE /api/admin/database/erase requires authentication (correctly rejects unauthenticated requests with 403), DELETE /api/admin/database/clear-listings working correctly ✅ JERSEY FILTERING: GET /api/jerseys excludes deleted jerseys (found 35+ active jerseys, 0 deleted jerseys in response) ✅ LISTINGS FILTERING: GET /api/listings only shows active listings (verified 9+ active listings, no inactive/deleted listings) ✅ EXISTING FUNCTIONALITY PRESERVED: Jersey creation, listing creation, collection management, and profile endpoints all working correctly after Phase 2 changes. All Phase 2 improvements successfully implemented and fully functional. The backend is production-ready with enhanced security and data management capabilities."
 
+  - task: "Bug Fixes - Jersey Condition and Collection Management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 BUG FIX TESTING COMPLETE - 100% SUCCESS RATE (11/11 tests passed)! All requested bug fixes are working perfectly: ✅ JERSEY CONDITION BUG FIX: Jersey submission with condition 'new' now works correctly (previously failed with 'Invalid condition: new'), all condition values (new, near_mint, very_good, good, poor) are now properly accepted in jersey creation, comprehensive testing with Real Madrid Mbappé jersey and Manchester City Haaland jerseys confirmed all conditions work ✅ COLLECTION MANAGEMENT BUG FIX: New POST endpoint /api/collections/remove is working perfectly for both owned and wanted collections, complete add/remove workflow tested successfully (add to collection → verify presence → remove → verify removal), no more 'Failed to update collection' errors ✅ GENERAL API HEALTH: All existing endpoints still work correctly (GET /api/jerseys returns 9 jerseys, GET /api/listings returns 2 listings), jersey creation and approval workflow functioning properly, admin authentication and jersey approval process working correctly ✅ COMPREHENSIVE TESTING: Used admin account (topkitfr@gmail.com) and created test user account, tested with valid jersey data using all new condition values, verified collection add/remove operations work without errors, confirmed all endpoints return appropriate success/error responses. CONCLUSION: All bug fixes are PRODUCTION-READY and fully operational. The jersey condition validation now accepts all required values, and the collection management system has proper add/remove functionality through both POST /api/collections and POST /api/collections/remove endpoints."
+
   - task: "Database Erasure - Complete Database Wipe"
     implemented: true
     working: true
