@@ -228,6 +228,34 @@ class UserActivity(BaseModel):
     details: Dict[str, Any] = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class ModificationSuggestion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    jersey_id: str
+    moderator_id: str
+    suggested_changes: str  # Detailed feedback from moderator
+    suggested_modifications: Dict[str, Any] = {}  # Field-specific suggestions
+    status: str = "pending"  # "pending", "addressed", "ignored"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    addressed_at: Optional[datetime] = None
+
+class NotificationType(str, Enum):
+    JERSEY_APPROVED = "jersey_approved"
+    JERSEY_REJECTED = "jersey_rejected"
+    JERSEY_NEEDS_MODIFICATION = "jersey_needs_modification"
+    MODIFICATION_SUGGESTION = "modification_suggestion"
+    SYSTEM_ANNOUNCEMENT = "system_announcement"
+
+class Notification(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    type: NotificationType
+    title: str
+    message: str
+    related_id: Optional[str] = None  # Jersey ID, suggestion ID, etc.
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    read_at: Optional[datetime] = None
+
 class RoleAssignment(BaseModel):
     user_id: str
     role: str
