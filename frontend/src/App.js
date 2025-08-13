@@ -3017,6 +3017,23 @@ const CollectionsPage = () => {
     }
   };
 
+  const handleViewSuggestions = (jersey) => {
+    setSelectedJerseyForSuggestions(jersey);
+    setShowSuggestionsModal(true);
+  };
+
+  const handleResubmitJersey = (jersey) => {
+    setJerseyToResubmit(jersey);
+    setShowSuggestionsModal(false);
+    setShowResubmissionModal(true);
+  };
+
+  const handleResubmissionSuccess = () => {
+    setShowResubmissionModal(false);
+    setJerseyToResubmit(null);
+    fetchCollections(); // Refresh to show updated status
+  };
+
   const handleSellJersey = (jersey) => {
     // This will trigger the main app's listing creation modal with the jersey data
     window.parent?.postMessage({ 
