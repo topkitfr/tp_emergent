@@ -345,7 +345,7 @@ class AuthDebugTester:
             # Test login with admin account
             admin_payload = {
                 "email": "topkitfr@gmail.com",
-                "password": "adminpass123"  # Common admin password
+                "password": "123"  # Using correct password
             }
             
             print(f"🔍 Testing admin account: {admin_payload['email']}")
