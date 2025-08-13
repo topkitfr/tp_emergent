@@ -703,12 +703,27 @@ async def create_notification(user_id: str, notification_type: NotificationType,
 # Admin endpoints
 @api_router.get("/admin/jerseys/pending")
 async def get_pending_jerseys(moderator_id: str = Depends(get_current_moderator_or_admin)):
-    """Get all jerseys pending approval"""
-    jerseys = await db.jerseys.find({"status": "pending"}).to_list(100)
+    """Get all jerseys pending approval or needing modification"""
+    jerseys = await db.jerseys.find({"status": {"$in": ["pending", "needs_modification"]}}).to_list(100)
     
-    # Remove MongoDB ObjectId for JSON serialization
+    # Remove MongoDB ObjectId for JSON serialization and add suggestion info
     for jersey in jerseys:
         jersey.pop('_id', None)
+        
+        # If jersey needs modification, get the latest suggestion
+        if jersey.get("status") == "needs_modification":
+            latest_suggestion = await db.modification_suggestions.find_one(
+                {"jersey_id": jersey["id"]},
+                sort=[("created_at", -1)]
+            )
+            if latest_suggestion:
+                latest_suggestion.pop('_id', None)
+                # Get moderator who made the suggestion
+                moderator = await db.users.find_one({"id": latest_suggestion["moderator_id"]}, {"name": 1, "role": 1})
+                if moderator:
+                    moderator.pop('_id', None)
+                    latest_suggestion["moderator_info"] = moderator
+                jersey["latest_suggestion"] = latest_suggestion
     
     return jerseys
 
