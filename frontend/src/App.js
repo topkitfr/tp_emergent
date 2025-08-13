@@ -651,7 +651,7 @@ const NotificationBell = () => {
               onClick={() => setShowDropdown(false)}
               className="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg transition-colors text-sm"
             >
-              {t('close')}
+              Close
             </button>
           </div>
         </div>
