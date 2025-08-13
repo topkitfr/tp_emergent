@@ -575,7 +575,6 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
 // Header Component
 const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Debug user state in Header
   useEffect(() => {
