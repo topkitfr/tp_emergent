@@ -3323,6 +3323,7 @@ const ProfilePage = () => {
 
 // Jersey Suggestions View Modal Component
 const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
+  const { t } = useLanguage();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
