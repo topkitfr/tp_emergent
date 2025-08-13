@@ -4471,6 +4471,9 @@ const AppContent = () => {
       case 'admin':
         return <AdminPanel />;
       
+      case 'explorer':
+        return <ExplorerPage />;
+      
       case 'jerseys':
         return (
           <div>
