@@ -717,10 +717,9 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   );
 };
 
-// Header Component with Multi-language Support
+// Header Component
 const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Debug user state in Header
