@@ -641,8 +641,6 @@ const Header = ({ currentView, setCurrentView }) => {
             </div>
           </div>
         </div>
-        
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
       </header>
 
       {/* Navigation Bar: En dessous du header */}
