@@ -524,7 +524,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     - "Explorer Page Frontend - Most Collected, Most Wanted, Latest Additions, Leagues Overview UI"
     - "Authentication Modal Form Login - Frontend Login State Management"
     - "My Collection Page Redesign with 3 Tabs"
