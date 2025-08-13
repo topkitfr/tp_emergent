@@ -154,6 +154,18 @@ user_problem_statement: "TopKit corrections critiques requises par l'utilisateur
 8. Améliorations UI/UX"
 
 backend:
+  - task: "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
+    implemented: true
+    working: "unknown"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Implemented 5 new explorer endpoints: /api/explorer/most-collected (gets jerseys by owned collection count), /api/explorer/most-wanted (gets jerseys by wanted collection count), /api/explorer/latest-additions (gets latest approved jerseys), /api/explorer/leagues (gets league overview with jersey/team/season counts), /api/explorer/leagues/{league}/jerseys (gets jerseys from specific league). All endpoints use MongoDB aggregation with proper status filtering for approved jerseys only."
+
   - task: "Moderator Suggestions System - Backend Implementation"
     implemented: true
     working: true
