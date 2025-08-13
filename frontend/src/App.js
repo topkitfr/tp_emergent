@@ -86,6 +86,241 @@ const SEASONS = [
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
+// Language Context
+const LanguageContext = createContext();
+
+// Translations
+const translations = {
+  fr: {
+    // Header
+    home: "Accueil",
+    browse: "Parcourir",
+    marketplace: "Marketplace",
+    profile: "Profil",
+    myCollection: "Ma Collection",
+    submitJersey: "Soumettre un Maillot",
+    adminPanel: "🔧 Admin Panel",
+    login: "Se connecter",
+    logout: "Se déconnecter",
+    
+    // Collection tabs
+    owned: "👕 Possédés",
+    wanted: "❤️ Recherchés",
+    submitTab: "📝 Soumettre",
+    
+    // Jersey submission
+    submitJerseyTitle: "Soumettre un nouveau maillot",
+    submitJerseyDesc: "Proposez de nouveaux maillots à la base de données. Ils seront examinés par nos modérateurs avant d'être publiés.",
+    submissionHistory: "Historique de mes propositions",
+    noSubmissions: "Aucune proposition pour le moment",
+    
+    // Jersey form
+    league: "Ligue",
+    selectLeague: "Sélectionner une ligue",
+    team: "Équipe",
+    selectTeam: "Sélectionner une équipe",
+    season: "Saison",
+    selectSeason: "Sélectionner une saison",
+    player: "Joueur",
+    playerPlaceholder: "ex. Bruno Fernandes (optionnel)",
+    size: "Taille",
+    condition: "État",
+    manufacturer: "Marque",
+    selectBrand: "Sélectionner une marque",
+    type: "Type",
+    home: "Domicile",
+    away: "Extérieur",
+    third: "Troisième Kit",
+    description: "Description",
+    descriptionPlaceholder: "Ajoutez des détails sur le maillot...",
+    referenceCode: "Code de référence",
+    submit: "Soumettre",
+    cancel: "Annuler",
+    
+    // Status
+    pending: "En attente",
+    approved: "Approuvé",
+    rejected: "Rejeté",
+    needsModification: "Modification requise",
+    underReview: "En cours d'examen",
+    waitingApproval: "En attente d'approbation",
+    
+    // Notifications
+    notifications: "Notifications",
+    markAllRead: "Tout marquer comme lu",
+    noNotifications: "Aucune notification",
+    close: "Fermer",
+    
+    // Actions
+    viewFeedback: "Voir les commentaires",
+    resubmit: "Resoumettre",
+    viewDetails: "Voir les détails",
+    
+    // Welcome
+    welcomeBack: "Bon retour !",
+    
+    // Collections
+    noOwnedJerseys: "Aucun maillot possédé",
+    noWantedJerseys: "Aucun maillot recherché",
+    browseJerseys: "Parcourir les maillots",
+    buildCollection: "Commencez à construire votre collection",
+    
+    // Admin
+    jerseyValidation: "📝 Validation des Maillots",
+    userManagement: "👥 Gestion des Utilisateurs",
+    activities: "📊 Activités",
+    approve: "✅ Approuver",
+    reject: "❌ Rejeter",
+    suggestChanges: "🔧 Suggérer des modifications"
+  },
+  en: {
+    // Header
+    home: "Home",
+    browse: "Browse Jerseys",
+    marketplace: "Marketplace",
+    profile: "Profile",
+    myCollection: "My Collection",
+    submitJersey: "Submit Jersey",
+    adminPanel: "🔧 Admin Panel",
+    login: "Login / Sign Up",
+    logout: "Logout",
+    
+    // Collection tabs
+    owned: "👕 Owned",
+    wanted: "❤️ Wanted",
+    submitTab: "📝 Submit Jersey",
+    
+    // Jersey submission
+    submitJerseyTitle: "Submit a new jersey",
+    submitJerseyDesc: "Propose new jerseys to the database. They will be reviewed by our moderators before being published.",
+    submissionHistory: "My submission history",
+    noSubmissions: "No submissions yet",
+    
+    // Jersey form
+    league: "League",
+    selectLeague: "Select League",
+    team: "Club/National Team",
+    selectTeam: "Select Team",
+    season: "Season",
+    selectSeason: "Select Season",
+    player: "Player",
+    playerPlaceholder: "e.g., Bruno Fernandes (optional)",
+    size: "Size",
+    condition: "Condition",
+    manufacturer: "Brand/Manufacturer",
+    selectBrand: "Select Brand",
+    type: "Type",
+    home: "Home",
+    away: "Away",
+    third: "Third Kit",
+    description: "Description",
+    descriptionPlaceholder: "Add details about the jersey...",
+    referenceCode: "Reference Code",
+    submit: "Submit",
+    cancel: "Cancel",
+    
+    // Status
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+    needsModification: "Needs Modification",
+    underReview: "Under Review",
+    waitingApproval: "Waiting for admin approval",
+    
+    // Notifications
+    notifications: "Notifications",
+    markAllRead: "Mark all read",
+    noNotifications: "No notifications yet",
+    close: "Close",
+    
+    // Actions
+    viewFeedback: "View Feedback",
+    resubmit: "Resubmit",
+    viewDetails: "View Details",
+    
+    // Welcome
+    welcomeBack: "Welcome back!",
+    
+    // Collections
+    noOwnedJerseys: "No owned jerseys yet",
+    noWantedJerseys: "No wanted jerseys yet",
+    browseJerseys: "Browse Jerseys",
+    buildCollection: "Start building your collection",
+    
+    // Admin
+    jerseyValidation: "📝 Jersey Validation",
+    userManagement: "👥 User Management",
+    activities: "📊 Activities",
+    approve: "✅ Approve",
+    reject: "❌ Reject",
+    suggestChanges: "🔧 Suggest Changes"
+  }
+};
+
+// Language Provider
+const LanguageProvider = ({ children }) => {
+  const [language, setLanguage] = useState(() => {
+    // Auto-detect language from browser
+    const savedLang = localStorage.getItem('topkit_language');
+    if (savedLang) return savedLang;
+    
+    const browserLang = navigator.language.slice(0, 2);
+    return browserLang === 'fr' ? 'fr' : 'en';
+  });
+
+  const changeLanguage = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('topkit_language', lang);
+  };
+
+  const t = (key) => {
+    return translations[language]?.[key] || translations.en[key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, changeLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+// Custom hook to use language context
+const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+// Language Selector Component
+const LanguageSelector = () => {
+  const { language, changeLanguage } = useLanguage();
+
+  return (
+    <div className="flex items-center space-x-2">
+      <button
+        onClick={() => changeLanguage('fr')}
+        className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
+          language === 'fr' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'
+        }`}
+        title="Français"
+      >
+        <span className="text-lg">🇫🇷</span>
+      </button>
+      <button
+        onClick={() => changeLanguage('en')}
+        className={`flex items-center space-x-1 px-2 py-1 rounded transition-colors ${
+          language === 'en' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'
+        }`}
+        title="English"
+      >
+        <span className="text-lg">🇬🇧</span>
+      </button>
+    </div>
+  );
+};
+
 // Auth Context
 const AuthContext = createContext();
 
