@@ -526,7 +526,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Unified Browse Jerseys Page - Fusion Explorer + Browse with Tabbed Interface"
+    - "Discogs-Inspired UI/UX - Browse, Jersey Detail & Marketplace Pages"
     - "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     - "Authentication Modal Form Login - Frontend Login State Management"
   stuck_tasks:
