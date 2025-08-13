@@ -87,48 +87,117 @@ const SEASONS = [
 // Get the backend URL from environment variables
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-// Auth Context
+// Auth Context with useReducer for robust state management
 const AuthContext = createContext();
 
+// Auth actions
+const authActions = {
+  LOGIN_START: 'LOGIN_START',
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGIN_ERROR: 'LOGIN_ERROR',
+  LOGOUT: 'LOGOUT',
+  SET_LOADING: 'SET_LOADING'
+};
+
+// Initial auth state
+const initialAuthState = {
+  user: null,
+  loading: true,
+  isAuthenticated: false,
+  error: null
+};
+
+// Auth reducer
+const authReducer = (state, action) => {
+  switch (action.type) {
+    case authActions.LOGIN_START:
+      return {
+        ...state,
+        loading: true,
+        error: null
+      };
+    case authActions.LOGIN_SUCCESS:
+      return {
+        ...state,
+        user: action.payload.user,
+        loading: false,
+        isAuthenticated: true,
+        error: null
+      };
+    case authActions.LOGIN_ERROR:
+      return {
+        ...state,
+        user: null,
+        loading: false,
+        isAuthenticated: false,
+        error: action.payload.error
+      };
+    case authActions.LOGOUT:
+      return {
+        ...initialAuthState,
+        loading: false
+      };
+    case authActions.SET_LOADING:
+      return {
+        ...state,
+        loading: action.payload.loading
+      };
+    default:
+      return state;
+  }
+};
+
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
   useEffect(() => {
     console.log('AuthProvider mounted, checking for existing token...');
     const token = localStorage.getItem('token');
     console.log('Token found in localStorage:', token ? token.substring(0, 20) + '...' : 'none');
+    
     if (token) {
       console.log('Calling fetchProfile with existing token');
       fetchProfile(token);
     } else {
       console.log('No token found, setting loading to false');
-      setLoading(false);
+      dispatch({ type: authActions.SET_LOADING, payload: { loading: false } });
     }
   }, []);
 
   const fetchProfile = async (token) => {
     try {
+      dispatch({ type: authActions.LOGIN_START });
       console.log('Fetching profile with token:', token.substring(0, 20) + '...');
+      
       const response = await axios.get(`${API}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 10000
       });
+      
       console.log('Profile response:', response.data);
+      
       if (response.data?.user) {
-        setUser(response.data.user);
+        dispatch({ 
+          type: authActions.LOGIN_SUCCESS, 
+          payload: { user: response.data.user } 
+        });
         console.log('✅ Profile loaded successfully:', response.data.user);
       } else {
         console.error('❌ Invalid profile response structure:', response.data);
         localStorage.removeItem('token');
+        dispatch({ 
+          type: authActions.LOGIN_ERROR, 
+          payload: { error: 'Invalid profile response' } 
+        });
       }
-      setLoading(false);
     } catch (error) {
       console.error('Failed to fetch profile:', error);
       console.error('Error response:', error.response?.data);
       localStorage.removeItem('token');
-      setUser(null);
-      setLoading(false);
+      dispatch({ 
+        type: authActions.LOGIN_ERROR, 
+        payload: { error: 'Failed to fetch profile' } 
+      });
     }
   };
 
@@ -138,6 +207,10 @@ const AuthProvider = ({ children }) => {
     
     if (!token || !userData) {
       console.error('❌ Login failed: missing token or userData');
+      dispatch({ 
+        type: authActions.LOGIN_ERROR, 
+        payload: { error: 'Missing token or user data' } 
+      });
       return false;
     }
     
@@ -145,24 +218,41 @@ const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       console.log('💾 Token saved to localStorage');
       
-      // Set user data and stop loading immediately
-      setUser(userData);
-      setLoading(false);
+      // Set user data immediately using reducer
+      dispatch({ 
+        type: authActions.LOGIN_SUCCESS, 
+        payload: { user: userData } 
+      });
+      
       console.log('✅ Login successful - user state set:', userData);
       return true;
     } catch (error) {
       console.error('❌ Login failed during state update:', error);
+      dispatch({ 
+        type: authActions.LOGIN_ERROR, 
+        payload: { error: 'Failed to save login state' } 
+      });
       return false;
     }
   };
 
   const logout = () => {
+    console.log('🚪 Logout called');
     localStorage.removeItem('token');
-    setUser(null);
+    dispatch({ type: authActions.LOGOUT });
+  };
+
+  const value = {
+    user: state.user,
+    loading: state.loading,
+    isAuthenticated: state.isAuthenticated,
+    error: state.error,
+    login,
+    logout
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
