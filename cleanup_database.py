@@ -11,7 +11,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 
 # Database configuration
-MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://mongo:27017/topkit')
+MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+DB_NAME = os.environ.get('DB_NAME', 'test_database')
 
 # Users to preserve
 PRESERVE_USERS = [
