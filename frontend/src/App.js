@@ -600,14 +600,14 @@ const Header = ({ currentView, setCurrentView }) => {
                   Profile
                 </button>
                 <button 
-                  onClick={() => setCurrentView('collections')}
+                  onClick={() => setCurrentView('profile')}
                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                    currentView === 'collections' 
+                    currentView === 'profile' 
                       ? 'bg-white text-black' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  My Collection
+                  My Profile
                 </button>
                 {user.email === 'topkitfr@gmail.com' && (
                   <button 
