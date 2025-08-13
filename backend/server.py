@@ -687,6 +687,19 @@ async def log_user_activity(user_id: str, action: str, target_id: str = None, de
     
     await db.user_activities.insert_one(activity)
 
+async def create_notification(user_id: str, notification_type: NotificationType, title: str, message: str, related_id: str = None):
+    """Create a notification for a user"""
+    notification = Notification(
+        user_id=user_id,
+        type=notification_type,
+        title=title,
+        message=message,
+        related_id=related_id
+    )
+    
+    await db.notifications.insert_one(notification.dict())
+    return notification
+
 # Admin endpoints
 @api_router.get("/admin/jerseys/pending")
 async def get_pending_jerseys(moderator_id: str = Depends(get_current_moderator_or_admin)):
