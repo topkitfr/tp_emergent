@@ -3455,7 +3455,7 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
               onClick={onClose}
               className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
             >
-              {t('close')}
+              Close
             </button>
           </div>
         </div>
