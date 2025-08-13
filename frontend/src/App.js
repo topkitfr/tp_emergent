@@ -6401,8 +6401,8 @@ const AppContent = () => {
                 </div>
                 <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 hover:border-gray-600 transition-all hover:shadow-3xl">
                   <div className="text-white text-5xl mb-6">📚</div>
-                  <h3 className="text-2xl font-semibold mb-4 text-white">Ma Collection</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">Gérez votre collection et créez vos wishlists</p>
+                  <h3 className="text-2xl font-semibold mb-4 text-white">Mon Profil & Collection</h3>
+                  <p className="text-gray-400 mb-6 leading-relaxed">Gérez votre profil, collection et estimations de valeur</p>
                   <button 
                     onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }))}
                     className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
