@@ -5397,26 +5397,22 @@ const AppContent = () => {
   const renderContent = () => {
     // Handle jersey detail pages with reference numbers
     if (currentView.startsWith('jersey-detail-')) {
-      const identifier = currentView.replace('jersey-detail-', '');
-      // Check if it's a TK reference number or regular ID
-      const isReference = identifier.startsWith('TK-');
+      const { jerseyId, referenceNumber } = getJerseyIdentifier(currentView, 'jersey-detail-');
       return (
         <JerseyDetailPage 
-          jerseyId={isReference ? null : identifier}
-          referenceNumber={isReference ? identifier : null}
+          jerseyId={jerseyId}
+          referenceNumber={referenceNumber}
         />
       );
     }
     
     // Handle jersey marketplace pages with reference numbers
     if (currentView.startsWith('jersey-marketplace-')) {
-      const identifier = currentView.replace('jersey-marketplace-', '');
-      // Check if it's a TK reference number or regular ID
-      const isReference = identifier.startsWith('TK-');
+      const { jerseyId, referenceNumber } = getJerseyIdentifier(currentView, 'jersey-marketplace-');
       return (
         <JerseyMarketplacePage 
-          jerseyId={isReference ? null : identifier}
-          referenceNumber={isReference ? identifier : null}
+          jerseyId={jerseyId}
+          referenceNumber={referenceNumber}
         />
       );
     }
