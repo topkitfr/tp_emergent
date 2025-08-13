@@ -616,7 +616,7 @@ const NotificationBell = () => {
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-400">
-                {t('noNotifications')}
+                No notifications yet
               </div>
             ) : (
               notifications.map((notification) => (
