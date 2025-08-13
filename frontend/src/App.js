@@ -3226,7 +3226,7 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
 };
 
 // Enhanced Browse Jerseys Page with Explorer Features
-const BrowseJerseysPage = ({ jerseys, loading, onFilter }) => {
+const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
   // Explorer data states
   const [mostCollected, setMostCollected] = useState([]);
   const [mostWanted, setMostWanted] = useState([]);
