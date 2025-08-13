@@ -4075,6 +4075,346 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   );
 };
 
+// Jersey Marketplace Page - Discogs Sell Style
+const JerseyMarketplacePage = ({ jerseyId, referenceNumber }) => {
+  const { user } = useAuth();
+  const [jersey, setJersey] = useState(null);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('price_low');
+
+  useEffect(() => {
+    fetchJerseyAndListings();
+  }, [jerseyId, referenceNumber]);
+
+  const fetchJerseyAndListings = async () => {
+    try {
+      setLoading(true);
+      // Find jersey by reference number if available, otherwise by ID
+      const jerseys = await axios.get(`${API}/api/jerseys`);
+      const foundJersey = jerseys.data.find(j => 
+        j.reference_number === referenceNumber || j.id === jerseyId
+      );
+      
+      if (foundJersey) {
+        setJersey(foundJersey);
+        
+        // Fetch marketplace listings for this jersey
+        const response = await axios.get(`${API}/api/listings`);
+        const jerseyListings = response.data.filter(listing => 
+          listing.jersey && listing.jersey.id === foundJersey.id
+        );
+        setListings(jerseyListings);
+      }
+    } catch (error) {
+      console.error('Failed to fetch jersey and listings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSortedListings = () => {
+    let sorted = [...listings];
+    
+    switch (sortBy) {
+      case 'price_high':
+        sorted.sort((a, b) => b.price - a.price);
+        break;
+      case 'condition':
+        const conditionOrder = { 'mint': 5, 'near_mint': 4, 'very_good': 3, 'good': 2, 'poor': 1 };
+        sorted.sort((a, b) => (conditionOrder[b.jersey?.condition] || 0) - (conditionOrder[a.jersey?.condition] || 0));
+        break;
+      case 'newest':
+        sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      default: // price_low
+        sorted.sort((a, b) => a.price - b.price);
+    }
+    
+    return sorted;
+  };
+
+  const getConditionBadge = (condition) => {
+    const colors = {
+      'mint': 'bg-green-100 text-green-800',
+      'near_mint': 'bg-blue-100 text-blue-800',
+      'very_good': 'bg-yellow-100 text-yellow-800',
+      'good': 'bg-orange-100 text-orange-800',
+      'poor': 'bg-red-100 text-red-800'
+    };
+    
+    const labels = {
+      'mint': 'M',
+      'near_mint': 'NM',
+      'very_good': 'VG+',
+      'good': 'VG',
+      'poor': 'P'
+    };
+    
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded ${colors[condition] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[condition] || condition}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading marketplace...</div>
+      </div>
+    );
+  }
+
+  if (!jersey) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-500 mb-4">Jersey not found</div>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Back to Browse
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+              className="hover:text-black"
+            >
+              Database
+            </button>
+            <span>›</span>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
+              }))}
+              className="hover:text-black"
+            >
+              {jersey.team} - {jersey.season}
+            </button>
+            <span>›</span>
+            <span className="text-black font-medium">Marketplace</span>
+          </div>
+          <h1 className="text-2xl font-bold text-black">
+            Buy {jersey.team} - {jersey.season}
+          </h1>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Jersey Info Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
+              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+                {jersey.images && jersey.images.length > 0 ? (
+                  <img
+                    src={jersey.images[0]}
+                    alt={`${jersey.team} ${jersey.season}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/300x300?text=Jersey';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <span className="text-4xl">👕</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-semibold text-black">{jersey.team}</h3>
+                  <p className="text-gray-600">{jersey.season}</p>
+                  {jersey.player && (
+                    <p className="text-sm text-gray-700">{jersey.player}</p>
+                  )}
+                </div>
+
+                <div className="text-sm space-y-1">
+                  <div><span className="font-medium">League:</span> {jersey.league}</div>
+                  <div><span className="font-medium">Type:</span> {jersey.home_away}</div>
+                  <div><span className="font-medium">Manufacturer:</span> {jersey.manufacturer}</div>
+                  <div><span className="font-medium">Reference:</span> <span className="font-mono">{jersey.reference_number}</span></div>
+                </div>
+
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                    detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
+                  }))}
+                  className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition-colors text-sm"
+                >
+                  ← Back to Jersey Details
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Marketplace Listings */}
+          <div className="lg:col-span-3">
+            {/* Controls */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    {listings.length} listing{listings.length !== 1 ? 's' : ''} available
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Sort by:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="condition">Condition</option>
+                    <option value="newest">Newest First</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Listings */}
+            {listings.length > 0 ? (
+              <div className="space-y-4">
+                {getSortedListings().map((listing) => (
+                  <div key={listing.id} className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="text-2xl font-bold text-black">
+                              ${listing.price}
+                            </div>
+                            {getConditionBadge(listing.jersey?.condition)}
+                            <div className="text-sm text-gray-500">
+                              Size {listing.jersey?.size}
+                            </div>
+                          </div>
+
+                          {listing.description && (
+                            <p className="text-gray-700 mb-4 leading-relaxed">
+                              {listing.description}
+                            </p>
+                          )}
+
+                          <div className="flex items-center space-x-6 text-sm text-gray-600">
+                            <div>
+                              <span className="font-medium">Seller:</span> Anonymous
+                            </div>
+                            <div>
+                              <span className="font-medium">Location:</span> Europe
+                            </div>
+                            <div>
+                              <span className="font-medium">Listed:</span> 
+                              {new Date(listing.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col space-y-2 ml-6">
+                          <button className="bg-orange-500 text-white px-6 py-2 rounded font-medium hover:bg-orange-600 transition-colors">
+                            Buy Now
+                          </button>
+                          <button className="bg-gray-100 text-gray-700 px-6 py-2 rounded hover:bg-gray-200 transition-colors">
+                            Contact Seller
+                          </button>
+                          <button className="text-blue-600 hover:text-blue-800 text-sm">
+                            Add to Wantlist
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Seller Details (if available) */}
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center space-x-4 text-gray-600">
+                            <span>⭐ 4.9 seller rating</span>
+                            <span>📦 Ships from France</span>
+                            <span>🚚 €5 shipping</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ID: {listing.id.substring(0, 8)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <div className="text-gray-500 mb-4">
+                  <span className="text-4xl block mb-4">🛒</span>
+                  No listings available
+                </div>
+                <p className="text-gray-600 mb-6">
+                  This jersey is not currently for sale. You can add it to your wantlist to get notified when someone lists it.
+                </p>
+                <div className="space-x-3">
+                  <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Add to Wantlist
+                  </button>
+                  <button 
+                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                      detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
+                    }))}
+                    className="bg-gray-100 text-gray-700 px-6 py-2 rounded hover:bg-gray-200 transition-colors"
+                  >
+                    View Jersey Details
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Price History (placeholder for future) */}
+            {listings.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+                <h3 className="font-semibold text-black mb-4">Price Statistics</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      ${Math.min(...listings.map(l => l.price))}
+                    </div>
+                    <div className="text-sm text-gray-600">Lowest</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      ${Math.round(listings.reduce((sum, l) => sum + l.price, 0) / listings.length)}
+                    </div>
+                    <div className="text-sm text-gray-600">Average</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">
+                      ${Math.max(...listings.map(l => l.price))}
+                    </div>
+                    <div className="text-sm text-gray-600">Highest</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Collections Page Component
 const CollectionsPage = () => {
   const { user } = useAuth();
