@@ -3611,7 +3611,448 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
   );
 };
 
-// Jersey Detail Page - Discogs Release Style
+// Global Marketplace Page - Discogs Sell List Style
+const GlobalMarketplacePage = () => {
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    team: '',
+    league: '',
+    season: '',
+    condition: '',
+    size: '',
+    minPrice: '',
+    maxPrice: ''
+  });
+  const [sortBy, setSortBy] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    fetchAllListings();
+  }, []);
+
+  const fetchAllListings = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/api/listings`);
+      setListings(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch listings:', error);
+      setListings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get unique values for filters
+  const getUniqueValues = (field) => {
+    const values = listings
+      .map(listing => listing.jersey?.[field])
+      .filter(v => v && v.trim());
+    return [...new Set(values)].sort();
+  };
+
+  // Filter and search listings
+  const getFilteredListings = () => {
+    let filtered = listings;
+
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.jersey?.player?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.jersey?.league?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filters
+    if (filters.team) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.team?.toLowerCase().includes(filters.team.toLowerCase())
+      );
+    }
+    if (filters.league) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.league?.toLowerCase().includes(filters.league.toLowerCase())
+      );
+    }
+    if (filters.season) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.season === filters.season
+      );
+    }
+    if (filters.condition) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.condition === filters.condition
+      );
+    }
+    if (filters.size) {
+      filtered = filtered.filter(listing => 
+        listing.jersey?.size === filters.size
+      );
+    }
+    if (filters.minPrice) {
+      filtered = filtered.filter(listing => 
+        listing.price >= parseFloat(filters.minPrice)
+      );
+    }
+    if (filters.maxPrice) {
+      filtered = filtered.filter(listing => 
+        listing.price <= parseFloat(filters.maxPrice)
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'price_low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'condition':
+        const conditionOrder = { 'mint': 5, 'near_mint': 4, 'very_good': 3, 'good': 2, 'poor': 1 };
+        filtered.sort((a, b) => (conditionOrder[b.jersey?.condition] || 0) - (conditionOrder[a.jersey?.condition] || 0));
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      default: // newest
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
+    return filtered;
+  };
+
+  const getConditionBadge = (condition) => {
+    const colors = {
+      'mint': 'bg-green-800 text-green-200',
+      'near_mint': 'bg-blue-800 text-blue-200',
+      'very_good': 'bg-yellow-800 text-yellow-200',
+      'good': 'bg-orange-800 text-orange-200',
+      'poor': 'bg-red-800 text-red-200'
+    };
+    
+    const labels = {
+      'mint': 'M',
+      'near_mint': 'NM',
+      'very_good': 'VG+',
+      'good': 'VG',
+      'poor': 'P'
+    };
+    
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded ${colors[condition] || 'bg-gray-800 text-gray-200'}`}>
+        {labels[condition] || condition}
+      </span>
+    );
+  };
+
+  const handleJerseyClick = (listing) => {
+    if (listing.jersey?.reference_number) {
+      window.dispatchEvent(new CustomEvent('changeView', { 
+        detail: `jersey-detail-${listing.jersey.reference_number}` 
+      }));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <div className="bg-gray-900 border-b border-gray-700">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-white">Marketplace</h1>
+            <div className="text-sm text-gray-400">
+              {getFilteredListings().length} annonces
+            </div>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Rechercher par équipe, joueur, description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Rechercher
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-6">
+        <div className="flex">
+          {/* Filters Sidebar */}
+          <div className="w-64 flex-shrink-0 mr-8">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
+              <h3 className="font-semibold text-white mb-4">Filtres</h3>
+              
+              <div className="space-y-4">
+                {/* Team Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
+                  <select
+                    value={filters.team}
+                    onChange={(e) => setFilters({...filters, team: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Toutes les équipes</option>
+                    {getUniqueValues('team').slice(0, 20).map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* League Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
+                  <select
+                    value={filters.league}
+                    onChange={(e) => setFilters({...filters, league: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Tous les championnats</option>
+                    {getUniqueValues('league').map(league => (
+                      <option key={league} value={league}>{league}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Season Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
+                  <select
+                    value={filters.season}
+                    onChange={(e) => setFilters({...filters, season: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Toutes les saisons</option>
+                    {getUniqueValues('season').map(season => (
+                      <option key={season} value={season}>{season}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Condition Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
+                  <select
+                    value={filters.condition}
+                    onChange={(e) => setFilters({...filters, condition: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Tous les états</option>
+                    <option value="mint">Mint (M)</option>
+                    <option value="near_mint">Near Mint (NM)</option>
+                    <option value="very_good">Very Good (VG+)</option>
+                    <option value="good">Good (VG)</option>
+                    <option value="poor">Poor (P)</option>
+                  </select>
+                </div>
+
+                {/* Size Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
+                  <select
+                    value={filters.size}
+                    onChange={(e) => setFilters({...filters, size: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Toutes les tailles</option>
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Prix (€)</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={filters.minPrice}
+                      onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={filters.maxPrice}
+                      onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      team: '', league: '', season: '', condition: '', size: '', minPrice: '', maxPrice: ''
+                    });
+                    setSearchQuery('');
+                  }}
+                  className="w-full text-blue-400 hover:text-blue-300 text-sm font-medium"
+                >
+                  Effacer tous les filtres
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Controls Bar */}
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-400">Trier par:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="newest">Plus récent</option>
+                    <option value="oldest">Plus ancien</option>
+                    <option value="price_low">Prix croissant</option>
+                    <option value="price_high">Prix décroissant</option>
+                    <option value="condition">État</option>
+                  </select>
+                </div>
+                
+                <div className="text-sm text-gray-400">
+                  {getFilteredListings().length} résultat{getFilteredListings().length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+
+            {/* Listings */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400">Chargement des annonces...</div>
+              </div>
+            ) : getFilteredListings().length > 0 ? (
+              <div className="space-y-3">
+                {getFilteredListings().map((listing) => (
+                  <div key={listing.id} className="bg-gray-900 border border-gray-700 rounded-lg hover:border-gray-600 transition-colors">
+                    <div className="p-4">
+                      <div className="flex items-start space-x-4">
+                        {/* Jersey Image */}
+                        <div 
+                          className="w-16 h-16 bg-gray-800 rounded flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer"
+                          onClick={() => handleJerseyClick(listing)}
+                        >
+                          {listing.jersey?.images && listing.jersey.images.length > 0 ? (
+                            <img
+                              src={listing.jersey.images[0]}
+                              alt={`${listing.jersey.team} ${listing.jersey.season}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                              }}
+                            />
+                          ) : (
+                            <span className="text-gray-500 text-2xl">👕</span>
+                          )}
+                        </div>
+
+                        {/* Listing Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <h3
+                                  className="text-white font-semibold text-sm cursor-pointer hover:text-blue-400 truncate"
+                                  onClick={() => handleJerseyClick(listing)}
+                                >
+                                  {listing.jersey?.team} • {listing.jersey?.season}
+                                  {listing.jersey?.player && ` • ${listing.jersey.player}`}
+                                </h3>
+                                {getConditionBadge(listing.jersey?.condition)}
+                                <span className="text-xs text-gray-400">
+                                  Size {listing.jersey?.size}
+                                </span>
+                              </div>
+
+                              {listing.description && (
+                                <p className="text-gray-400 text-sm mb-2 line-clamp-2">
+                                  {listing.description}
+                                </p>
+                              )}
+
+                              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                <span>{listing.jersey?.league}</span>
+                                <span>{listing.jersey?.manufacturer}</span>
+                                <span>Ref: {listing.jersey?.reference_number}</span>
+                                <span>Annoncé le {new Date(listing.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+
+                            {/* Price and Actions */}
+                            <div className="flex flex-col items-end space-y-2 ml-4">
+                              <div className="text-2xl font-bold text-white">
+                                {listing.price}€
+                              </div>
+                              
+                              <div className="flex space-x-2">
+                                <button className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                  Acheter
+                                </button>
+                                <button className="bg-gray-700 text-gray-300 px-4 py-1 rounded text-sm hover:bg-gray-600 transition-colors">
+                                  Contact
+                                </button>
+                              </div>
+                              
+                              <div className="text-xs text-gray-500">
+                                + frais de port
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                <div className="text-gray-400 mb-4">
+                  <span className="text-4xl block mb-4">🛒</span>
+                  Aucune annonce trouvée
+                </div>
+                <p className="text-gray-500 mb-6">
+                  Aucun maillot n'est actuellement en vente avec ces critères.
+                </p>
+                <button
+                  onClick={() => {
+                    setFilters({
+                      team: '', league: '', season: '', condition: '', size: '', minPrice: '', maxPrice: ''
+                    });
+                    setSearchQuery('');
+                  }}
+                  className="text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  Effacer les filtres pour voir toutes les annonces
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Jersey Detail Page - Dark Theme
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
   const [jersey, setJersey] = useState(null);
