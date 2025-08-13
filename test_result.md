@@ -399,7 +399,7 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 7
+    stuck_count: 8
     priority: "high"
     needs_retesting: true
     status_history:
@@ -418,6 +418,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL AUTHENTICATION SYSTEM FAILURE - Comprehensive testing reveals authentication system is completely broken, preventing access to all authenticated features. DETAILED FINDINGS: ❌ LOGIN FAILURE: Multiple attempts to login with admin credentials (topkitfr@gmail.com/adminpass123) failed - modal opens correctly, form fields are functional, but authentication completion fails consistently. ❌ REGISTRATION FAILURE: Attempted new user registration (testuser2025@example.com) also failed - modal remains open after form submission, indicating authentication state is not being set properly. ❌ NAVIGATION MISSING: 'My Collection' and 'Profile' navigation buttons never appear, confirming users cannot access authenticated features. ❌ STATE MANAGEMENT BROKEN: Frontend authentication state management appears completely broken - login/registration forms submit but user state is never set in React context. ❌ TESTING BLOCKED: Cannot test Priority 2-4 requirements (My Collection 3-tab redesign, Submit Jersey integration, Collection Management with French 'Retirer de la collection' text) due to authentication failure. ROOT CAUSE: The AuthContext login() function or backend authentication integration is failing to properly set user state after successful API calls. URGENT PRIORITY: Authentication system must be completely debugged and fixed before any authenticated features can be tested or validated."
+      - working: false
+        agent: "testing"
+        comment: "❌ COLLECTION BUG TESTING BLOCKED - AUTHENTICATION STATE MANAGEMENT CRITICAL FAILURE! Comprehensive testing of user-reported collection bug 'depuis la page dédiée à un maillot, je peux enfin cliquer sur le bouton j'ai ce maillot, le problème c'est que je ne le vois toujours pas dans ma collection' reveals CRITICAL FRONTEND ISSUES: 🚨 AUTHENTICATION STATE PERSISTENCE BROKEN: User registration/login appears successful initially but authentication state is immediately lost, causing authenticated navigation (Profile/My Profile) to disappear 🚨 COLLECTION BUTTONS COMPLETELY MISSING: No 'Own', 'Want', 'J'ai ce maillot', or any collection-related buttons found on jersey detail pages - users cannot add jerseys to collections through the UI 🚨 PROFILE/COLLECTION ACCESS IMPOSSIBLE: Users cannot access Profile or My Collection pages due to authentication state management failure 🚨 FRONTEND-BACKEND DISCONNECT: While backend collection APIs may work correctly, the frontend UI is completely broken for collection management. ROOT CAUSE: AuthContext login() function not properly maintaining user state after successful authentication, causing conditional navigation rendering to fail immediately. CRITICAL FINDING: The user's complaint is 100% VALID - they literally cannot access collection functionality due to broken authentication state management. URGENT PRIORITY: Frontend authentication state management must be fixed before collection bug can be properly tested or resolved."
 
   - task: "Button Visibility Fix - Missing Collection Action Buttons"
     implemented: true
