@@ -4053,6 +4053,7 @@ const GlobalMarketplacePage = () => {
 };
 
 // Jersey Detail Page - Dark Theme
+// Jersey Detail Page - Dark Theme
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
   const [jersey, setJersey] = useState(null);
@@ -4060,7 +4061,6 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const [loading, setLoading] = useState(true);
   const [userCollection, setUserCollection] = useState({ owned: false, wanted: false });
   const [activeTab, setActiveTab] = useState('overview');
-  const [showMarketplace, setShowMarketplace] = useState(false);
 
   useEffect(() => {
     fetchJerseyDetails();
@@ -4127,7 +4127,7 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 
   const handleCollectionAction = async (action) => {
     if (!user) {
-      alert('Please login to manage your collection');
+      alert('Veuillez vous connecter pour gérer votre collection');
       return;
     }
 
@@ -4136,7 +4136,10 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
       
       if (userCollection[action]) {
         // Remove from collection
-        await axios.delete(`${API}/api/collections/${jersey.id}`, {
+        await axios.post(`${API}/api/collections/remove`, {
+          jersey_id: jersey.id,
+          collection_type: action
+        }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserCollection(prev => ({ ...prev, [action]: false }));
@@ -4152,7 +4155,7 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
       }
     } catch (error) {
       console.error('Failed to update collection:', error);
-      alert('Failed to update collection. Please try again.');
+      alert('Erreur lors de la mise à jour de la collection. Veuillez réessayer.');
     }
   };
 
@@ -4163,28 +4166,28 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
         detail: `jersey-marketplace-${jersey.reference_number || jersey.id}` 
       }));
     } else {
-      alert('No listings available for this jersey at the moment.');
+      alert('Aucune annonce disponible pour ce maillot pour le moment.');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading jersey details...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-gray-400">Chargement des détails du maillot...</div>
       </div>
     );
   }
 
   if (!jersey) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="text-gray-500 mb-4">Jersey not found</div>
+          <div className="text-gray-400 mb-4">Maillot introuvable</div>
           <button 
             onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-400 hover:text-blue-300"
           >
-            Back to Browse
+            Retour à la liste
           </button>
         </div>
       </div>
@@ -4192,21 +4195,21 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+          <div className="flex items-center space-x-2 text-sm text-gray-400 mb-2">
             <button 
               onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
-              className="hover:text-black"
+              className="hover:text-white"
             >
-              Database
+              Base de données
             </button>
             <span>›</span>
             <span>{jersey.league}</span>
             <span>›</span>
-            <span className="text-black font-medium">{jersey.team} - {jersey.season}</span>
+            <span className="text-white font-medium">{jersey.team} - {jersey.season}</span>
           </div>
         </div>
       </div>
@@ -4215,8 +4218,8 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Image */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
-              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 sticky top-6">
+              <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden mb-4">
                 {jersey.images && jersey.images.length > 0 ? (
                   <img
                     src={jersey.images[0]}
@@ -4227,23 +4230,23 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-gray-500">
                     <span className="text-6xl">👕</span>
                   </div>
                 )}
               </div>
 
-              {/* Action Buttons - Discogs Style */}
+              {/* Action Buttons - Dark Theme */}
               <div className="space-y-3">
                 <button
                   onClick={() => handleCollectionAction('owned')}
                   className={`w-full px-4 py-3 rounded font-medium transition-colors ${
                     userCollection.owned
                       ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
                   }`}
                 >
-                  {userCollection.owned ? '✓ Have' : '+ Have'}
+                  {userCollection.owned ? '✓ J\'ai ce maillot' : '+ J\'ai ce maillot'}
                 </button>
                 
                 <button
@@ -4251,42 +4254,42 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                   className={`w-full px-4 py-3 rounded font-medium transition-colors ${
                     userCollection.wanted
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600'
                   }`}
                 >
-                  {userCollection.wanted ? '✓ Want' : '♡ Want'}
+                  {userCollection.wanted ? '✓ Je le veux' : '♡ Je le veux'}
                 </button>
 
                 {listings.length > 0 && (
                   <button
                     onClick={handleBuyClick}
-                    className="w-full bg-orange-500 text-white px-4 py-3 rounded font-medium hover:bg-orange-600 transition-colors"
+                    className="w-full bg-orange-600 text-white px-4 py-3 rounded font-medium hover:bg-orange-700 transition-colors"
                   >
-                    Buy ({listings.length} available)
+                    Acheter ({listings.length} disponible{listings.length > 1 ? 's' : ''})
                   </button>
                 )}
               </div>
 
-              {/* Quick Stats */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              {/* Quick Stats - Dark Theme */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Reference</span>
-                    <span className="font-mono font-medium">{jersey.reference_number}</span>
+                    <span className="text-gray-400">Référence</span>
+                    <span className="font-mono font-medium text-white">{jersey.reference_number}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Condition</span>
-                    <span className="font-medium capitalize">{jersey.condition}</span>
+                    <span className="text-gray-400">État</span>
+                    <span className="font-medium capitalize text-white">{jersey.condition}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Size</span>
-                    <span className="font-medium">{jersey.size}</span>
+                    <span className="text-gray-400">Taille</span>
+                    <span className="font-medium text-white">{jersey.size}</span>
                   </div>
                   {listings.length > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Lowest Price</span>
-                      <span className="font-medium text-green-600">
-                        ${Math.min(...listings.map(l => l.price))}
+                      <span className="text-gray-400">Prix le plus bas</span>
+                      <span className="font-medium text-green-400">
+                        {Math.min(...listings.map(l => l.price))}€
                       </span>
                     </div>
                   )}
@@ -4297,15 +4300,15 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Jersey Title */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-              <h1 className="text-3xl font-bold text-black mb-2">
+            {/* Jersey Title - Dark Theme */}
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 mb-6">
+              <h1 className="text-3xl font-bold text-white mb-2">
                 {jersey.team} - {jersey.season}
               </h1>
               {jersey.player && (
-                <h2 className="text-xl text-gray-700 mb-2">{jersey.player}</h2>
+                <h2 className="text-xl text-gray-300 mb-2">{jersey.player}</h2>
               )}
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
+              <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>{jersey.home_away} kit</span>
                 <span>•</span>
                 <span>{jersey.manufacturer}</span>
@@ -4314,26 +4317,26 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="bg-white rounded-lg border border-gray-200">
-              <div className="border-b border-gray-200">
+            {/* Tabs - Dark Theme */}
+            <div className="bg-gray-900 rounded-lg border border-gray-700">
+              <div className="border-b border-gray-700">
                 <nav className="flex">
                   <button
                     onClick={() => setActiveTab('overview')}
                     className={`px-6 py-4 text-sm font-medium border-b-2 ${
                       activeTab === 'overview'
-                        ? 'border-black text-black'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-white text-white'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
                     }`}
                   >
-                    Overview
+                    Aperçu
                   </button>
                   <button
                     onClick={() => setActiveTab('marketplace')}
                     className={`px-6 py-4 text-sm font-medium border-b-2 ${
                       activeTab === 'marketplace'
-                        ? 'border-black text-black'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-white text-white'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
                     }`}
                   >
                     Marketplace ({listings.length})
@@ -4342,11 +4345,11 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                     onClick={() => setActiveTab('statistics')}
                     className={`px-6 py-4 text-sm font-medium border-b-2 ${
                       activeTab === 'statistics'
-                        ? 'border-black text-black'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-white text-white'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
                     }`}
                   >
-                    Statistics
+                    Statistiques
                   </button>
                 </nav>
               </div>
@@ -4357,46 +4360,46 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                     {/* Description */}
                     {jersey.description && (
                       <div>
-                        <h3 className="font-semibold text-black mb-3">Description</h3>
-                        <p className="text-gray-700 leading-relaxed">{jersey.description}</p>
+                        <h3 className="font-semibold text-white mb-3">Description</h3>
+                        <p className="text-gray-300 leading-relaxed">{jersey.description}</p>
                       </div>
                     )}
 
-                    {/* Details Grid */}
+                    {/* Details Grid - Dark Theme */}
                     <div>
-                      <h3 className="font-semibold text-black mb-3">Details</h3>
+                      <h3 className="font-semibold text-white mb-3">Détails</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <dt className="text-sm text-gray-600">Team</dt>
-                          <dd className="font-medium">{jersey.team}</dd>
+                          <dt className="text-sm text-gray-400">Équipe</dt>
+                          <dd className="font-medium text-white">{jersey.team}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Season</dt>
-                          <dd className="font-medium">{jersey.season}</dd>
+                          <dt className="text-sm text-gray-400">Saison</dt>
+                          <dd className="font-medium text-white">{jersey.season}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">League</dt>
-                          <dd className="font-medium">{jersey.league}</dd>
+                          <dt className="text-sm text-gray-400">Championnat</dt>
+                          <dd className="font-medium text-white">{jersey.league}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Manufacturer</dt>
-                          <dd className="font-medium">{jersey.manufacturer}</dd>
+                          <dt className="text-sm text-gray-400">Fabricant</dt>
+                          <dd className="font-medium text-white">{jersey.manufacturer}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Type</dt>
-                          <dd className="font-medium capitalize">{jersey.home_away}</dd>
+                          <dt className="text-sm text-gray-400">Type</dt>
+                          <dd className="font-medium capitalize text-white">{jersey.home_away}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Size</dt>
-                          <dd className="font-medium">{jersey.size}</dd>
+                          <dt className="text-sm text-gray-400">Taille</dt>
+                          <dd className="font-medium text-white">{jersey.size}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Condition</dt>
-                          <dd className="font-medium capitalize">{jersey.condition}</dd>
+                          <dt className="text-sm text-gray-400">État</dt>
+                          <dd className="font-medium capitalize text-white">{jersey.condition}</dd>
                         </div>
                         <div>
-                          <dt className="text-sm text-gray-600">Reference</dt>
-                          <dd className="font-mono text-sm">{jersey.reference_number}</dd>
+                          <dt className="text-sm text-gray-400">Référence</dt>
+                          <dd className="font-mono text-sm text-white">{jersey.reference_number}</dd>
                         </div>
                       </div>
                     </div>
@@ -4408,31 +4411,31 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                     {listings.length > 0 ? (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-black">Available Listings</h3>
+                          <h3 className="font-semibold text-white">Annonces disponibles</h3>
                           <button
                             onClick={handleBuyClick}
-                            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors"
+                            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition-colors"
                           >
-                            View All Listings
+                            Voir toutes les annonces
                           </button>
                         </div>
                         
                         <div className="space-y-3">
                           {listings.slice(0, 5).map((listing) => (
-                            <div key={listing.id} className="border border-gray-200 rounded p-4">
+                            <div key={listing.id} className="border border-gray-700 rounded p-4 bg-gray-800">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <div className="font-medium">${listing.price}</div>
-                                  <div className="text-sm text-gray-600">
-                                    Condition: {listing.jersey?.condition || 'N/A'}
+                                  <div className="font-medium text-white">{listing.price}€</div>
+                                  <div className="text-sm text-gray-400">
+                                    État: {listing.jersey?.condition || 'N/A'}
                                   </div>
                                 </div>
-                                <button className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200 transition-colors">
-                                  Contact Seller
+                                <button className="bg-gray-700 text-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors">
+                                  Contacter le vendeur
                                 </button>
                               </div>
                               {listing.description && (
-                                <p className="text-sm text-gray-600 mt-2">{listing.description}</p>
+                                <p className="text-sm text-gray-400 mt-2">{listing.description}</p>
                               )}
                             </div>
                           ))}
@@ -4440,9 +4443,9 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <div className="text-gray-500 mb-4">No listings available</div>
-                        <p className="text-sm text-gray-600">
-                          Be the first to list this jersey for sale!
+                        <div className="text-gray-400 mb-4">Aucune annonce disponible</div>
+                        <p className="text-sm text-gray-500">
+                          Soyez le premier à mettre ce maillot en vente !
                         </p>
                       </div>
                     )}
@@ -4452,40 +4455,40 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
                 {activeTab === 'statistics' && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-semibold text-black mb-3">Collection Statistics</h3>
+                      <h3 className="font-semibold text-white mb-3">Statistiques de collection</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gray-50 p-4 rounded">
-                          <div className="text-2xl font-bold text-green-600">0</div>
-                          <div className="text-sm text-gray-600">Users Own This</div>
+                        <div className="bg-gray-800 p-4 rounded">
+                          <div className="text-2xl font-bold text-green-400">0</div>
+                          <div className="text-sm text-gray-400">Utilisateurs possèdent</div>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded">
-                          <div className="text-2xl font-bold text-blue-600">0</div>
-                          <div className="text-sm text-gray-600">Users Want This</div>
+                        <div className="bg-gray-800 p-4 rounded">
+                          <div className="text-2xl font-bold text-blue-400">0</div>
+                          <div className="text-sm text-gray-400">Utilisateurs recherchent</div>
                         </div>
                       </div>
                     </div>
 
                     {listings.length > 0 && (
                       <div>
-                        <h3 className="font-semibold text-black mb-3">Price Statistics</h3>
+                        <h3 className="font-semibold text-white mb-3">Statistiques de prix</h3>
                         <div className="grid grid-cols-3 gap-4">
-                          <div className="bg-gray-50 p-4 rounded">
-                            <div className="text-lg font-bold text-green-600">
-                              ${Math.min(...listings.map(l => l.price))}
+                          <div className="bg-gray-800 p-4 rounded">
+                            <div className="text-lg font-bold text-green-400">
+                              {Math.min(...listings.map(l => l.price))}€
                             </div>
-                            <div className="text-sm text-gray-600">Lowest Price</div>
+                            <div className="text-sm text-gray-400">Prix le plus bas</div>
                           </div>
-                          <div className="bg-gray-50 p-4 rounded">
-                            <div className="text-lg font-bold text-orange-600">
-                              ${Math.max(...listings.map(l => l.price))}
+                          <div className="bg-gray-800 p-4 rounded">
+                            <div className="text-lg font-bold text-orange-400">
+                              {Math.max(...listings.map(l => l.price))}€
                             </div>
-                            <div className="text-sm text-gray-600">Highest Price</div>
+                            <div className="text-sm text-gray-400">Prix le plus élevé</div>
                           </div>
-                          <div className="bg-gray-50 p-4 rounded">
-                            <div className="text-lg font-bold text-blue-600">
-                              ${Math.round(listings.reduce((sum, l) => sum + l.price, 0) / listings.length)}
+                          <div className="bg-gray-800 p-4 rounded">
+                            <div className="text-lg font-bold text-blue-400">
+                              {Math.round(listings.reduce((sum, l) => sum + l.price, 0) / listings.length)}€
                             </div>
-                            <div className="text-sm text-gray-600">Average Price</div>
+                            <div className="text-sm text-gray-400">Prix moyen</div>
                           </div>
                         </div>
                       </div>
