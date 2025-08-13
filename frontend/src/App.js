@@ -4533,6 +4533,9 @@ const AppContent = () => {
             jerseys={jerseys}
             loading={loading}
             onFilter={fetchJerseys}
+            onAddToCollection={handleAddToCollection}
+            onJerseyClick={handleJerseyClick}
+            onCreatorClick={handleCreatorClick}
           />
         );
       
