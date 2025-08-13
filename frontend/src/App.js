@@ -853,7 +853,7 @@ const Header = ({ currentView, setCurrentView }) => {
                         : 'text-red-400 hover:text-white hover:bg-red-800'
                     }`}
                   >
-                    {t('adminPanel')}
+                    🔧 Admin Panel
                   </button>
                 )}
               </>
