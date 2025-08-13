@@ -764,7 +764,7 @@ const Header = ({ currentView, setCurrentView }) => {
                         onClick={() => setCurrentView('profile')}
                       />
                       <div className="flex flex-col">
-                        <span className="text-white font-medium text-sm">Welcome back!</span>
+                        <span className="text-white font-medium text-sm">{t('welcomeBack')}</span>
                         <span className="text-gray-300 text-xs">{user.name}</span>
                       </div>
                     </div>
@@ -772,7 +772,7 @@ const Header = ({ currentView, setCurrentView }) => {
                       onClick={logout}
                       className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200 border border-gray-600 text-sm font-medium hover:scale-105 shadow-lg"
                     >
-                      Logout
+                      {t('logout')}
                     </button>
                   </div>
                 ) : (
@@ -780,7 +780,7 @@ const Header = ({ currentView, setCurrentView }) => {
                     onClick={() => setShowAuthModal(true)}
                     className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
                   >
-                    Login / Sign Up
+                    {t('login')}
                   </button>
                 )}
               </div>
