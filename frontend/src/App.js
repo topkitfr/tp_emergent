@@ -3214,7 +3214,11 @@ const CollectionsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingSubmissions.map((submission) => (
               <div key={submission.id} className="relative">
-                <div className={`opacity-60 ${submission.status === 'rejected' ? 'border-2 border-red-500' : ''}`}>
+                <div className={`opacity-60 ${
+                  submission.status === 'rejected' ? 'border-2 border-red-500' : 
+                  submission.status === 'needs_modification' ? 'border-2 border-yellow-500' : 
+                  'border-2 border-blue-500'
+                }`}>
                   <JerseyCard
                     jersey={submission}
                     showActions={false}
@@ -3224,17 +3228,53 @@ const CollectionsPage = () => {
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
                   <div className="text-center text-white">
                     <div className="text-3xl mb-2">
-                      {submission.status === 'pending' ? '⏳' : '❌'}
+                      {submission.status === 'pending' ? '⏳' : 
+                       submission.status === 'needs_modification' ? '🔧' : 
+                       '❌'}
                     </div>
                     <div className="font-bold text-lg mb-1">
-                      {submission.status === 'pending' ? 'Under Review' : 'Rejected'}
+                      {submission.status === 'pending' ? 'Under Review' : 
+                       submission.status === 'needs_modification' ? 'Needs Modification' :
+                       'Rejected'}
                     </div>
-                    <div className="text-sm opacity-75">
+                    <div className="text-sm opacity-75 mb-3">
                       {submission.status === 'pending' 
                         ? 'Waiting for admin approval' 
+                        : submission.status === 'needs_modification'
+                        ? 'Moderator has suggested changes'
                         : submission.rejection_reason || 'See admin feedback'
                       }
                     </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="space-y-2">
+                      {submission.status === 'needs_modification' && (
+                        <>
+                          <button
+                            onClick={() => handleViewSuggestions(submission)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors w-full"
+                          >
+                            View Feedback
+                          </button>
+                          <button
+                            onClick={() => handleResubmitJersey(submission)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors w-full"
+                          >
+                            Resubmit
+                          </button>
+                        </>
+                      )}
+                      
+                      {submission.status === 'rejected' && (
+                        <button
+                          onClick={() => handleViewSuggestions(submission)}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          View Details
+                        </button>
+                      )}
+                    </div>
+                    
                     <div className="text-xs mt-2 opacity-60">
                       Submitted {new Date(submission.created_at).toLocaleDateString()}
                     </div>
