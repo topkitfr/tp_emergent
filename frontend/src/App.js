@@ -800,7 +800,7 @@ const Header = ({ currentView, setCurrentView }) => {
                   : 'text-gray-300 hover:text-white hover:bg-gray-800'
               }`}
             >
-              {t('home')}
+              Home
             </button>
             <button 
               onClick={() => setCurrentView('jerseys')}
@@ -810,7 +810,7 @@ const Header = ({ currentView, setCurrentView }) => {
                   : 'text-gray-300 hover:text-white hover:bg-gray-800'
               }`}
             >
-              {t('browse')}
+              Browse Jerseys
             </button>
             <button 
               onClick={() => setCurrentView('marketplace')}
@@ -820,7 +820,7 @@ const Header = ({ currentView, setCurrentView }) => {
                   : 'text-gray-300 hover:text-white hover:bg-gray-800'
               }`}
             >
-              {t('marketplace')}
+              Marketplace
             </button>
             {user && (
               <>
@@ -832,7 +832,7 @@ const Header = ({ currentView, setCurrentView }) => {
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  {t('profile')}
+                  Profile
                 </button>
                 <button 
                   onClick={() => setCurrentView('collections')}
@@ -842,7 +842,7 @@ const Header = ({ currentView, setCurrentView }) => {
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  {t('myCollection')}
+                  My Collection
                 </button>
                 {user.email === 'topkitfr@gmail.com' && (
                   <button 
