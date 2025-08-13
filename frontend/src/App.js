@@ -629,7 +629,10 @@ const Header = ({ currentView, setCurrentView }) => {
                 </div>
               ) : (
                 <button 
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={() => {
+                    // Trigger the AuthModal from AppContent instead of Header
+                    window.dispatchEvent(new CustomEvent('showAuthModal'));
+                  }}
                   className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
                 >
                   Login / Sign Up
