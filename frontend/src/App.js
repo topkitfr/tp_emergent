@@ -4216,33 +4216,58 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   };
 
   const handleCollectionAction = async (action) => {
+    console.log('🔄 handleCollectionAction called with action:', action);
+    console.log('👤 Current user:', user);
+    
     if (!user) {
+      console.error('❌ No user found');
       alert('Veuillez vous connecter pour gérer votre collection');
       return;
     }
 
+    const token = localStorage.getItem('token');
+    console.log('🔑 Token from localStorage:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
+    
+    if (!token) {
+      console.error('❌ No authentication token found');
+      alert('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
+    if (!jersey || !jersey.id) {
+      console.error('❌ No jersey or jersey ID found');
+      alert('Erreur: maillot non trouvé. Veuillez rafraîchir la page.');
+      return;
+    }
+
+    console.log('🎯 Jersey ID:', jersey.id);
+    console.log('📦 Collection action:', action);
+    console.log('🔄 Current user collection state:', userCollection);
+
     try {
-      const token = localStorage.getItem('token');
-      
-      if (userCollection[action]) {
+      const apiCall = userCollection[action] ? 
         // Remove from collection
-        await axios.post(`${API}/api/collections/remove`, {
+        axios.post(`${API}/api/collections/remove`, {
+          jersey_id: jersey.id,
+          collection_type: action
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        }) :
+        // Add to collection  
+        axios.post(`${API}/api/collections`, {
           jersey_id: jersey.id,
           collection_type: action
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setUserCollection(prev => ({ ...prev, [action]: false }));
-      } else {
-        // Add to collection
-        await axios.post(`${API}/api/collections`, {
-          jersey_id: jersey.id,
-          collection_type: action
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUserCollection(prev => ({ ...prev, [action]: true }));
-      }
+
+      console.log('📡 Making API call to:', userCollection[action] ? 'remove' : 'add');
+      
+      const response = await apiCall;
+      console.log('✅ API call successful:', response.data);
+      
+      // Update local state
+      setUserCollection(prev => ({ ...prev, [action]: !prev[action] }));
       
       // Refresh collection status to ensure consistency
       setTimeout(() => checkUserCollection(), 500);
@@ -4250,9 +4275,25 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
       // Trigger profile page refresh if user navigates there
       window.dispatchEvent(new CustomEvent('refreshProfile'));
       
+      console.log('✅ Collection action completed successfully');
+      
     } catch (error) {
-      console.error('Failed to update collection:', error);
-      alert('Erreur lors de la mise à jour de la collection. Veuillez réessayer.');
+      console.error('❌ Failed to update collection:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error headers:', error.response?.headers);
+      
+      let errorMessage = 'Erreur lors de la mise à jour de la collection.';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Maillot introuvable. Veuillez rafraîchir la page.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = `Erreur: ${error.response.data.detail}`;
+      }
+      
+      alert(errorMessage + ' Veuillez réessayer.');
     }
   };
 
