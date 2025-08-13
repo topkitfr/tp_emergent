@@ -3422,18 +3422,20 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     }
   };
 
-  // Dark Theme Jersey Card Component
+  // Dark Theme Jersey Card Component with Collection Buttons
   const DarkJerseyCard = ({ jersey, isListView = false }) => (
     <div 
-      className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all cursor-pointer ${
+      className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all ${
         isListView ? 'flex items-center p-4 mb-2' : 'rounded-lg overflow-hidden'
       }`}
-      onClick={() => handleJerseyDetailClick(jersey)}
     >
       {isListView ? (
         <>
           {/* List View */}
-          <div className="w-16 h-16 bg-gray-800 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden">
+          <div 
+            className="w-16 h-16 bg-gray-800 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden cursor-pointer"
+            onClick={() => handleJerseyDetailClick(jersey)}
+          >
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
@@ -3451,7 +3453,10 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm truncate">
+                <h3 
+                  className="text-white font-semibold text-sm truncate cursor-pointer hover:text-blue-400"
+                  onClick={() => handleJerseyDetailClick(jersey)}
+                >
                   {jersey.team} • {jersey.season}
                 </h3>
                 <p className="text-gray-400 text-xs mt-1">
@@ -3463,11 +3468,36 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 </p>
               </div>
               
-              <div className="flex items-center space-x-4 text-xs text-gray-400">
-                <span className="bg-gray-800 px-2 py-1 rounded text-gray-300">
+              <div className="flex items-center space-x-2">
+                <span className="bg-gray-800 px-2 py-1 rounded text-gray-300 text-xs">
                   {jersey.reference_number}
                 </span>
-                <span>Condition: {jersey.condition}</span>
+                
+                {/* Collection Buttons */}
+                {user && (
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickCollectionAction(jersey, 'owned');
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                      title="Ajouter à ma collection"
+                    >
+                      📚
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickCollectionAction(jersey, 'wanted');
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                      title="Ajouter à ma wishlist"
+                    >
+                      💫
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -3475,7 +3505,10 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       ) : (
         <>
           {/* Grid View */}
-          <div className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden">
+          <div 
+            className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer"
+            onClick={() => handleJerseyDetailClick(jersey)}
+          >
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
@@ -3491,7 +3524,10 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
           </div>
           
           <div className="p-3">
-            <h3 className="text-white font-semibold text-sm mb-1 truncate">
+            <h3 
+              className="text-white font-semibold text-sm mb-1 truncate cursor-pointer hover:text-blue-400"
+              onClick={() => handleJerseyDetailClick(jersey)}
+            >
               {jersey.team}
             </h3>
             <p className="text-gray-400 text-xs mb-1">{jersey.season}</p>
@@ -3501,10 +3537,37 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             <p className="text-gray-500 text-xs">
               {jersey.home_away} • {jersey.condition}
             </p>
+            
             <div className="mt-2 flex justify-between items-center">
               <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
                 {jersey.reference_number}
               </span>
+              
+              {/* Collection Buttons for Grid View */}
+              {user && (
+                <div className="flex space-x-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickCollectionAction(jersey, 'owned');
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                    title="Ajouter à ma collection"
+                  >
+                    📚
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickCollectionAction(jersey, 'wanted');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                    title="Ajouter à ma wishlist"
+                  >
+                    💫
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </>
