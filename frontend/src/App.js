@@ -2939,6 +2939,10 @@ const CollectionsPage = () => {
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSubmitJerseyModal, setShowSubmitJerseyModal] = useState(false);
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
+  const [selectedJerseyForSuggestions, setSelectedJerseyForSuggestions] = useState(null);
+  const [showResubmissionModal, setShowResubmissionModal] = useState(false);
+  const [jerseyToResubmit, setJerseyToResubmit] = useState(null);
 
   useEffect(() => {
     if (user) {
