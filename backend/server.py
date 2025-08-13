@@ -700,6 +700,25 @@ async def create_notification(user_id: str, notification_type: NotificationType,
     await db.notifications.insert_one(notification.dict())
     return notification
 
+async def get_next_jersey_reference():
+    """Generate the next sequential jersey reference number (TK-000001, TK-000002, etc.)"""
+    # Find the highest existing reference number
+    last_jersey = await db.jerseys.find().sort("reference_number", -1).limit(1).to_list(1)
+    
+    if last_jersey and last_jersey[0].get("reference_number"):
+        # Extract number from reference like "TK-000001" -> 1
+        last_ref = last_jersey[0]["reference_number"]
+        try:
+            last_number = int(last_ref.split("-")[1])
+            next_number = last_number + 1
+        except (ValueError, IndexError):
+            next_number = 1
+    else:
+        next_number = 1
+    
+    # Format as TK-000001
+    return f"TK-{next_number:06d}"
+
 # Admin endpoints
 @api_router.get("/admin/jerseys/pending")
 async def get_pending_jerseys(moderator_id: str = Depends(get_current_moderator_or_admin)):
