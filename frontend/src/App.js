@@ -6319,10 +6319,8 @@ const AppContent = () => {
 
     switch (currentView) {
       case 'profile':
-        return <ProfilePage />;
-      
       case 'collections':
-        return <CollectionsPage />;
+        return <ProfileCollectionPage />;
       
       case 'submit':
         return <SubmitJerseyPage />;
