@@ -16,7 +16,8 @@ BASE_URL = "https://fb40ec68-ab6e-448b-9759-50a0e3c354db.preview.emergentagent.c
 # Test accounts as specified in review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
-TEST_EMAIL = "steinmetzlivio@gmail.com"
+# Use unique email for test user to avoid conflicts
+TEST_EMAIL = f"testuser_{int(time.time())}@example.com"
 TEST_PASSWORD = "testpass123"
 
 class BugFixTester:
