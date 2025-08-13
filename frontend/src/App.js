@@ -4297,6 +4297,32 @@ const AdminPanel = () => {
     }
   };
 
+  const handleSuggestModifications = async (jerseyId) => {
+    const suggestedChanges = prompt('What modifications would you like to suggest to the user? Please provide detailed feedback:');
+    if (!suggestedChanges || suggestedChanges.trim() === '') return;
+    
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/jerseys/${jerseyId}/suggest-modifications`, {
+        jersey_id: jerseyId,
+        suggested_changes: suggestedChanges.trim(),
+        suggested_modifications: {}
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Modification suggestions sent to user successfully!');
+      fetchPendingJerseys();
+      setSelectedJersey(null);
+    } catch (error) {
+      console.error('Suggest modifications error:', error);
+      alert('Failed to send modification suggestions');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleAssignRole = async (userId, newRole, userName) => {
     const reason = prompt(`Assigning ${newRole} role to ${userName}. Reason (optional):`);
     if (reason === null) return; // User cancelled
