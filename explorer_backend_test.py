@@ -19,6 +19,11 @@ ADMIN_PASSWORD = "adminpass123"
 USER_EMAIL = "steinmetzlivio@gmail.com"
 USER_PASSWORD = "userpass123"
 
+# Fallback test user for registration
+TEST_USER_EMAIL = f"explorertest_{int(time.time())}@topkit.com"
+TEST_USER_PASSWORD = "testpass123"
+TEST_USER_NAME = "Explorer Test User"
+
 class ExplorerAPITester:
     def __init__(self):
         self.base_url = BASE_URL
