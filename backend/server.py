@@ -278,6 +278,18 @@ class CheckoutRequest(BaseModel):
     listing_id: str
     origin_url: str
 
+class ModificationSuggestionCreate(BaseModel):
+    jersey_id: str
+    suggested_changes: str
+    suggested_modifications: Optional[Dict[str, Any]] = {}
+
+class NotificationCreate(BaseModel):
+    user_id: str
+    type: NotificationType
+    title: str
+    message: str
+    related_id: Optional[str] = None
+
 # Authentication helpers
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
