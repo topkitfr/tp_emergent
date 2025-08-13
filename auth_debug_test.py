@@ -41,7 +41,7 @@ class AuthDebugTester:
             # Test with the specific user mentioned in the request
             login_payload = {
                 "email": "steinmetzlivio@gmail.com",
-                "password": "password123"  # Using common test password
+                "password": "123"  # Using correct password provided
             }
             
             print(f"🔍 Attempting login with: {login_payload['email']}")
