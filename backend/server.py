@@ -580,6 +580,15 @@ async def register(user_data: UserRegister):
         "role": user_role
     })
     
+    # Send welcome notification
+    await create_notification(
+        user_id=user.id,
+        notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+        title="🎉 Welcome to TopKit!",
+        message=f"Welcome {user.name}! You're now part of the TopKit community. Start building your jersey collection by browsing our database and submitting your own jerseys for review.",
+        related_id=None
+    )
+    
     return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.name, "role": user_role}}
 
 @api_router.post("/auth/login")
