@@ -3225,16 +3225,8 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
   );
 };
 
-// Enhanced Browse Jerseys Page with Discogs-inspired Design
+// Enhanced Browse Jerseys Page with Dark Theme
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
-  // Explorer data states
-  const [mostCollected, setMostCollected] = useState([]);
-  const [mostWanted, setMostWanted] = useState([]);
-  const [latestAdditions, setLatestAdditions] = useState([]);
-  const [leagues, setLeagues] = useState([]);
-  const [selectedLeague, setSelectedLeague] = useState(null);
-  const [leagueJerseys, setLeagueJerseys] = useState([]);
-  const [activeTab, setActiveTab] = useState('browse'); // 'discover' or 'browse'
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'team', 'season'
   const [searchQuery, setSearchQuery] = useState('');
@@ -3245,13 +3237,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     size: '',
     condition: '',
     manufacturer: ''
-  });
-  const [explorerLoading, setExplorerLoading] = useState({
-    mostCollected: true,
-    mostWanted: true,
-    latestAdditions: true,
-    leagues: true,
-    leagueJerseys: false
   });
 
   // Get unique values for filters
@@ -3308,10 +3293,10 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     }));
   };
 
-  // Discogs-style Jersey Card Component
-  const DiscogsJerseyCard = ({ jersey, isListView = false }) => (
+  // Dark Theme Jersey Card Component
+  const DarkJerseyCard = ({ jersey, isListView = false }) => (
     <div 
-      className={`bg-white border border-gray-200 hover:border-gray-300 transition-all cursor-pointer ${
+      className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all cursor-pointer ${
         isListView ? 'flex items-center p-4 mb-2' : 'rounded-lg overflow-hidden'
       }`}
       onClick={() => handleJerseyDetailClick(jersey)}
@@ -3319,7 +3304,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       {isListView ? (
         <>
           {/* List View */}
-          <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden">
+          <div className="w-16 h-16 bg-gray-800 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden">
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
@@ -3330,17 +3315,17 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 }}
               />
             ) : (
-              <span className="text-gray-400 text-2xl">👕</span>
+              <span className="text-gray-500 text-2xl">👕</span>
             )}
           </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="text-black font-semibold text-sm truncate">
+                <h3 className="text-white font-semibold text-sm truncate">
                   {jersey.team} • {jersey.season}
                 </h3>
-                <p className="text-gray-600 text-xs mt-1">
+                <p className="text-gray-400 text-xs mt-1">
                   {jersey.player && `${jersey.player} • `}
                   {jersey.home_away} • {jersey.manufacturer}
                 </p>
@@ -3349,8 +3334,8 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 </p>
               </div>
               
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
-                <span className="bg-gray-100 px-2 py-1 rounded">
+              <div className="flex items-center space-x-4 text-xs text-gray-400">
+                <span className="bg-gray-800 px-2 py-1 rounded text-gray-300">
                   {jersey.reference_number}
                 </span>
                 <span>Condition: {jersey.condition}</span>
@@ -3361,7 +3346,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       ) : (
         <>
           {/* Grid View */}
-          <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+          <div className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden">
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
@@ -3372,23 +3357,23 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 }}
               />
             ) : (
-              <span className="text-gray-400 text-4xl">👕</span>
+              <span className="text-gray-500 text-4xl">👕</span>
             )}
           </div>
           
           <div className="p-3">
-            <h3 className="text-black font-semibold text-sm mb-1 truncate">
+            <h3 className="text-white font-semibold text-sm mb-1 truncate">
               {jersey.team}
             </h3>
-            <p className="text-gray-600 text-xs mb-1">{jersey.season}</p>
+            <p className="text-gray-400 text-xs mb-1">{jersey.season}</p>
             {jersey.player && (
-              <p className="text-black text-xs font-medium mb-1 truncate">{jersey.player}</p>
+              <p className="text-white text-xs font-medium mb-1 truncate">{jersey.player}</p>
             )}
             <p className="text-gray-500 text-xs">
               {jersey.home_away} • {jersey.condition}
             </p>
             <div className="mt-2 flex justify-between items-center">
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
                 {jersey.reference_number}
               </span>
             </div>
@@ -3399,14 +3384,14 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Discogs-style Header */}
-      <div className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-black">
+      {/* Dark Header */}
+      <div className="bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-black">Jersey Database</h1>
-            <div className="text-sm text-gray-600">
-              {getFilteredJerseys().length} results
+            <h1 className="text-2xl font-bold text-white">Explorez</h1>
+            <div className="text-sm text-gray-400">
+              {getFilteredJerseys().length} résultats
             </div>
           </div>
           
@@ -3415,14 +3400,14 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Search by team, player, league..."
+                placeholder="Rechercher par équipe, joueur, championnat..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-              Search
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Rechercher
             </button>
           </div>
         </div>
@@ -3430,21 +3415,21 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
       <div className="container mx-auto px-6 py-6">
         <div className="flex">
-          {/* Discogs-style Sidebar Filters */}
+          {/* Dark Sidebar Filters */}
           <div className="w-64 flex-shrink-0 mr-8">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 sticky top-6">
-              <h3 className="font-semibold text-black mb-4">Filter Results</h3>
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
+              <h3 className="font-semibold text-white mb-4">Filtrer les résultats</h3>
               
               <div className="space-y-4">
                 {/* League Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">League</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
                   <select
                     value={filters.league}
                     onChange={(e) => setFilters({...filters, league: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">All Leagues</option>
+                    <option value="">Tous les championnats</option>
                     {getUniqueValues('league').map(league => (
                       <option key={league} value={league}>{league}</option>
                     ))}
@@ -3453,13 +3438,13 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
                 {/* Team Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
                   <select
                     value={filters.team}
                     onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">All Teams</option>
+                    <option value="">Toutes les équipes</option>
                     {getUniqueValues('team').slice(0, 20).map(team => (
                       <option key={team} value={team}>{team}</option>
                     ))}
@@ -3468,13 +3453,13 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
                 {/* Season Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Season</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
                   <select
                     value={filters.season}
                     onChange={(e) => setFilters({...filters, season: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">All Seasons</option>
+                    <option value="">Toutes les saisons</option>
                     {getUniqueValues('season').map(season => (
                       <option key={season} value={season}>{season}</option>
                     ))}
@@ -3483,13 +3468,13 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
                 {/* Size Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
                   <select
                     value={filters.size}
                     onChange={(e) => setFilters({...filters, size: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">All Sizes</option>
+                    <option value="">Toutes les tailles</option>
                     {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
                       <option key={size} value={size}>{size}</option>
                     ))}
@@ -3498,13 +3483,13 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
                 {/* Condition Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
                   <select
                     value={filters.condition}
                     onChange={(e) => setFilters({...filters, condition: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">All Conditions</option>
+                    <option value="">Tous les états</option>
                     <option value="mint">Mint (M)</option>
                     <option value="near_mint">Near Mint (NM)</option>
                     <option value="very_good">Very Good (VG+)</option>
@@ -3521,9 +3506,9 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     });
                     setSearchQuery('');
                   }}
-                  className="w-full text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  className="w-full text-blue-400 hover:text-blue-300 text-sm font-medium"
                 >
-                  Clear all filters
+                  Effacer tous les filtres
                 </button>
               </div>
             </div>
@@ -3531,30 +3516,30 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Discogs-style Controls Bar */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            {/* Dark Controls Bar */}
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">Sort by:</span>
+                    <span className="text-sm text-gray-400">Trier par:</span>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-1 border border-gray-300 rounded text-sm"
+                      className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-white"
                     >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                      <option value="team">Team A-Z</option>
-                      <option value="season">Season</option>
+                      <option value="newest">Plus récent</option>
+                      <option value="oldest">Plus ancien</option>
+                      <option value="team">Équipe A-Z</option>
+                      <option value="season">Saison</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">View:</span>
+                  <span className="text-sm text-gray-400">Vue:</span>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-700' : 'hover:bg-gray-800'} text-gray-300`}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -3562,7 +3547,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-700' : 'hover:bg-gray-800'} text-gray-300`}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M3 3a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm-12 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clipRule="evenodd" />
@@ -3575,14 +3560,14 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             {/* Results */}
             {loading ? (
               <div className="text-center py-12">
-                <div className="text-gray-500">Loading jerseys...</div>
+                <div className="text-gray-400">Chargement des maillots...</div>
               </div>
             ) : (
               <div>
                 {viewMode === 'list' ? (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
                     {getFilteredJerseys().map((jersey) => (
-                      <DiscogsJerseyCard 
+                      <DarkJerseyCard 
                         key={jersey.id} 
                         jersey={jersey} 
                         isListView={true}
@@ -3592,7 +3577,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {getFilteredJerseys().map((jersey) => (
-                      <DiscogsJerseyCard 
+                      <DarkJerseyCard 
                         key={jersey.id} 
                         jersey={jersey} 
                         isListView={false}
@@ -3602,8 +3587,8 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 )}
                 
                 {getFilteredJerseys().length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                    <div className="text-gray-500">No jerseys found matching your criteria.</div>
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400">Aucun maillot trouvé correspondant à vos critères.</div>
                     <button
                       onClick={() => {
                         setFilters({
@@ -3611,9 +3596,9 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                         });
                         setSearchQuery('');
                       }}
-                      className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+                      className="mt-4 text-blue-400 hover:text-blue-300 font-medium"
                     >
-                      Clear filters to see all jerseys
+                      Effacer les filtres pour voir tous les maillots
                     </button>
                   </div>
                 )}
