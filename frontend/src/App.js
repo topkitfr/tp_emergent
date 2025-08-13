@@ -697,7 +697,7 @@ const Header = ({ currentView, setCurrentView }) => {
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  My Profile
+                  My Profil
                 </button>
                 {user.email === 'topkitfr@gmail.com' && (
                   <button 
