@@ -66,7 +66,7 @@ class CollectionDebugTester:
                 "password": "adminpass123"  # Common admin password pattern
             }
             
-            print(f"🔐 Attempting login with: {login_payload['email']}")
+            print(f"🔐 Now attempting login with: {login_payload['email']}")
             response = self.session.post(f"{self.base_url}/auth/login", json=login_payload)
             
             print(f"📡 Login Response Status: {response.status_code}")
