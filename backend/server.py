@@ -112,6 +112,7 @@ class Jersey(BaseModel):
     description: str
     images: List[str] = []
     reference_code: Optional[str] = None
+    reference_number: str  # Unique reference like TK-000001
     status: JerseyStatus = JerseyStatus.PENDING  # Default to pending for moderation
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
