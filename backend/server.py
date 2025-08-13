@@ -1012,6 +1012,165 @@ async def get_all_activities(admin_id: str = Depends(get_current_admin), limit: 
     return {"activities": activities, "total": len(activities)}
 
 
+# Explorer endpoints
+@api_router.get("/explorer/most-collected")
+async def get_most_collected_jerseys(limit: int = 10):
+    """Get most collected jerseys based on owned collection count"""
+    pipeline = [
+        # Match only approved jerseys
+        {"$match": {"status": "approved"}},
+        # Lookup collections to count how many users own each jersey
+        {
+            "$lookup": {
+                "from": "collections",
+                "let": {"jersey_id": "$id"},
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": [
+                                    {"$eq": ["$jersey_id", "$$jersey_id"]},
+                                    {"$eq": ["$collection_type", "owned"]}
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "as": "owned_by"
+            }
+        },
+        # Add collection count
+        {"$addFields": {"collection_count": {"$size": "$owned_by"}}},
+        # Filter only jerseys that are collected by at least 1 user
+        {"$match": {"collection_count": {"$gt": 0}}},
+        # Sort by collection count descending
+        {"$sort": {"collection_count": -1}},
+        # Limit results
+        {"$limit": limit},
+        # Remove the owned_by array to reduce response size
+        {"$unset": "owned_by"}
+    ]
+    
+    jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
+    return jerseys
+
+@api_router.get("/explorer/most-wanted")
+async def get_most_wanted_jerseys(limit: int = 10):
+    """Get most wanted jerseys based on wanted collection count"""
+    pipeline = [
+        # Match only approved jerseys
+        {"$match": {"status": "approved"}},
+        # Lookup collections to count how many users want each jersey
+        {
+            "$lookup": {
+                "from": "collections",
+                "let": {"jersey_id": "$id"},
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": [
+                                    {"$eq": ["$jersey_id", "$$jersey_id"]},
+                                    {"$eq": ["$collection_type", "wanted"]}
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "as": "wanted_by"
+            }
+        },
+        # Add wanted count
+        {"$addFields": {"wanted_count": {"$size": "$wanted_by"}}},
+        # Filter only jerseys that are wanted by at least 1 user
+        {"$match": {"wanted_count": {"$gt": 0}}},
+        # Sort by wanted count descending
+        {"$sort": {"wanted_count": -1}},
+        # Limit results
+        {"$limit": limit},
+        # Remove the wanted_by array to reduce response size
+        {"$unset": "wanted_by"}
+    ]
+    
+    jerseys = await db.jerseys.aggregate(pipeline).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
+    return jerseys
+
+@api_router.get("/explorer/latest-additions")
+async def get_latest_additions(limit: int = 10):
+    """Get latest approved jersey additions"""
+    jerseys = await db.jerseys.find(
+        {"status": "approved"}
+    ).sort("approved_at", -1).limit(limit).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
+    return jerseys
+
+@api_router.get("/explorer/leagues")
+async def get_leagues_overview():
+    """Get overview of all leagues with jersey counts"""
+    pipeline = [
+        # Match only approved jerseys
+        {"$match": {"status": "approved"}},
+        # Group by league
+        {
+            "$group": {
+                "_id": "$league",
+                "jersey_count": {"$sum": 1},
+                "teams": {"$addToSet": "$team"},
+                "seasons": {"$addToSet": "$season"}
+            }
+        },
+        # Add team and season counts
+        {
+            "$addFields": {
+                "team_count": {"$size": "$teams"},
+                "season_count": {"$size": "$seasons"}
+            }
+        },
+        # Sort by jersey count descending
+        {"$sort": {"jersey_count": -1}},
+        # Project final structure
+        {
+            "$project": {
+                "league": "$_id",
+                "jersey_count": 1,
+                "team_count": 1,
+                "season_count": 1,
+                "_id": 0
+            }
+        }
+    ]
+    
+    leagues = await db.jerseys.aggregate(pipeline).to_list(100)
+    
+    return leagues
+
+@api_router.get("/explorer/leagues/{league}/jerseys")
+async def get_league_jerseys(league: str, limit: int = 20):
+    """Get jerseys from a specific league"""
+    jerseys = await db.jerseys.find(
+        {"status": "approved", "league": {"$regex": league, "$options": "i"}}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Remove MongoDB ObjectId fields
+    for jersey in jerseys:
+        jersey.pop('_id', None)
+    
+    return jerseys
+
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
 async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user), resubmission_id: Optional[str] = None):
