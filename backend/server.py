@@ -961,8 +961,8 @@ async def get_all_activities(admin_id: str = Depends(get_current_admin), limit: 
 
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
-async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user)):
-    """Create a new jersey submission (pending approval)"""
+async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user), resubmission_id: Optional[str] = None):
+    """Create a new jersey submission (pending approval) or resubmit with modifications"""
     try:
         print(f"🟡 Jersey submission received from user {user_id}")
         print(f"🟡 Jersey data: {jersey_data.dict()}")
@@ -985,6 +985,19 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
         except ValueError:
             raise HTTPException(status_code=422, detail=f"Invalid condition: {jersey_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
         
+        # Check if this is a resubmission
+        is_resubmission = False
+        if resubmission_id:
+            # Verify the original jersey exists and belongs to the user
+            original_jersey = await db.jerseys.find_one({
+                "id": resubmission_id, 
+                "submitted_by": user_id,
+                "status": "needs_modification"
+            })
+            if original_jersey:
+                is_resubmission = True
+                print(f"🔄 This is a resubmission for jersey {resubmission_id}")
+        
         # Create jersey with validated data
         jersey = Jersey(
             team=jersey_data.team.strip(),
@@ -999,19 +1012,41 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             images=jersey_data.images or [],
             reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
             created_by=user_id,
-            submitted_by=user_id
+            submitted_by=user_id,
+            status=JerseyStatus.PENDING  # Always start as pending for moderation
         )
         
         # Insert into database
         await db.jerseys.insert_one(jersey.dict())
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
         
-        # Log user activity
-        await log_user_activity(user_id, "jersey_submission", jersey.id, {
-            "jersey_name": f"{jersey.team} {jersey.season}",
-            "player": jersey.player,
-            "status": jersey.status
-        })
+        # Handle resubmission logic
+        if is_resubmission:
+            # Mark the original jersey as superseded
+            await db.jerseys.update_one(
+                {"id": resubmission_id},
+                {"$set": {"status": "superseded", "superseded_by": jersey.id}}
+            )
+            
+            # Mark related suggestions as addressed
+            await db.modification_suggestions.update_many(
+                {"jersey_id": resubmission_id, "status": "pending"},
+                {"$set": {"status": "addressed", "addressed_at": datetime.utcnow()}}
+            )
+            
+            # Log resubmission activity
+            await log_user_activity(user_id, "jersey_resubmission", jersey.id, {
+                "original_jersey_id": resubmission_id,
+                "jersey_name": f"{jersey.team} {jersey.season}",
+                "status": jersey.status
+            })
+        else:
+            # Log regular submission activity
+            await log_user_activity(user_id, "jersey_submission", jersey.id, {
+                "jersey_name": f"{jersey.team} {jersey.season}",
+                "player": jersey.player,
+                "status": jersey.status
+            })
         
         return jersey
         
