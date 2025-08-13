@@ -38,7 +38,29 @@ class CollectionDebugTester:
         print("=" * 80)
         
         try:
-            # Test login with the specific user mentioned in the request
+            # First try to register a test user for debugging
+            test_email = f"collectiontest_{int(time.time())}@topkit.com"
+            register_payload = {
+                "email": test_email,
+                "password": "testpass123",
+                "name": "Collection Test User"
+            }
+            
+            print(f"🔐 First attempting registration with: {test_email}")
+            register_response = self.session.post(f"{self.base_url}/auth/register", json=register_payload)
+            
+            if register_response.status_code == 200:
+                register_data = register_response.json()
+                if "token" in register_data and "user" in register_data:
+                    self.auth_token = register_data["token"]
+                    self.user_id = register_data["user"]["id"]
+                    self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
+                    
+                    self.log_test("Authentication Registration", "PASS", 
+                                f"Successfully registered and logged in as {register_data['user']['email']}")
+                    return True
+            
+            # If registration fails, try login with the specific user mentioned in the request
             login_payload = {
                 "email": "steinmetzlivio@gmail.com",
                 "password": "adminpass123"  # Common admin password pattern
