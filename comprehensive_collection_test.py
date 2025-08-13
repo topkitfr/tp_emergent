@@ -9,7 +9,7 @@ import json
 import time
 from datetime import datetime
 
-BASE_URL = "https://fb40ec68-ab6e-448b-9759-50a0e3c354db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-exchange.preview.emergentagent.com/api"
 
 class ComprehensiveCollectionTester:
     def __init__(self):

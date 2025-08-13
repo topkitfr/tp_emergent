@@ -6,7 +6,7 @@ Test different passwords for steinmetzlivio@gmail.com to find the correct one
 import requests
 import json
 
-BASE_URL = "https://fb40ec68-ab6e-448b-9759-50a0e3c354db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-exchange.preview.emergentagent.com/api"
 
 def test_login_with_password(email, password):
     """Test login with specific password"""

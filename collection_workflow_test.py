@@ -18,7 +18,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://fb40ec68-ab6e-448b-9759-50a0e3c354db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-exchange.preview.emergentagent.com/api"
 
 class CollectionWorkflowTester:
     def __init__(self):
