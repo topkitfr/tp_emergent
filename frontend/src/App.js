@@ -6404,10 +6404,10 @@ const AppContent = () => {
                   <h3 className="text-2xl font-semibold mb-4 text-white">Ma Collection</h3>
                   <p className="text-gray-400 mb-6 leading-relaxed">Gérez votre collection et créez vos wishlists</p>
                   <button 
-                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'collections' }))}
+                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }))}
                     className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                   >
-                    Ma Collection
+                    Mon Profil
                   </button>
                 </div>
               </div>
