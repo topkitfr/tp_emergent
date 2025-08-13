@@ -326,15 +326,18 @@ backend:
 frontend:
   - task: "Robust Authentication Context with useReducer - Collection Bug Fix"
     implemented: true
-    working: "unknown"
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "AUTHENTICATION & COLLECTION BUG FIXED - Root cause identified: authentication state management issues causing collection not to display. IMPLEMENTATION: ✅ Replaced useState with useReducer in AuthContext for robust state management ✅ Added comprehensive auth actions (LOGIN_START, LOGIN_SUCCESS, LOGIN_ERROR, LOGOUT, SET_LOADING) ✅ Added persistent login verification with proper error handling ✅ Added profile page refresh mechanism with custom events ✅ Added isAuthenticated flag for reliable auth state checking ✅ Enhanced error handling and logging throughout auth flow. This fixes the core issue where users couldn't see their collection because authentication state was lost between pages."
+      - working: false
+        agent: "testing"
+        comment: "❌ PHASE 4: CRITICAL AUTHENTICATION FORM SUBMISSION BUG CONFIRMED! Comprehensive end-to-end collection workflow testing reveals the EXACT ROOT CAUSE of user's collection issues: 🚨 AUTHENTICATION FORM SUBMISSION BROKEN: Login modal opens correctly, credentials filled successfully (steinmetzlivio@gmail.com/123), but clicking Login button makes ZERO authentication API calls to backend - no POST /api/auth/login requests detected in network monitoring 🚨 COMPLETE COLLECTION WORKFLOW BLOCKED: Cannot test collection buttons (❤️ Own, ⭐ Want), Profile page access, collection tabs, or remove functionality because users literally cannot authenticate 🚨 MISSING COLLECTION UI ELEMENTS: Found 0 collection buttons on jersey cards in Explorez page, confirming users have no way to add jerseys to collections even if authentication worked 🚨 NO AUTHENTICATED NAVIGATION: Profile/My Profile buttons never appear because authentication state is never set due to failed form submission. ROOT CAUSE IDENTIFIED: AuthModal handleSubmit function is not being triggered when Login button is clicked - this is a critical frontend JavaScript event handling bug that prevents the authentication API call from being made. CRITICAL PRIORITY: Main agent must fix the AuthModal form submission event handling before any collection functionality can work. The backend is 100% functional but completely inaccessible due to this frontend authentication bug."
 
   - task: "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
     implemented: true
