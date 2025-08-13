@@ -3629,6 +3629,30 @@ const CollectionsPage = () => {
           }}
         />
       )}
+      
+      {/* Jersey Suggestions Modal */}
+      {showSuggestionsModal && selectedJerseyForSuggestions && (
+        <JerseySuggestionsModal
+          jersey={selectedJerseyForSuggestions}
+          onClose={() => {
+            setShowSuggestionsModal(false);
+            setSelectedJerseyForSuggestions(null);
+          }}
+          onResubmit={() => handleResubmitJersey(selectedJerseyForSuggestions)}
+        />
+      )}
+      
+      {/* Resubmission Modal */}
+      {showResubmissionModal && jerseyToResubmit && (
+        <ResubmissionModal
+          originalJersey={jerseyToResubmit}
+          onClose={() => {
+            setShowResubmissionModal(false);
+            setJerseyToResubmit(null);
+          }}
+          onSuccess={handleResubmissionSuccess}
+        />
+      )}
     </div>
   );
 };
