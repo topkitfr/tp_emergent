@@ -1398,17 +1398,114 @@ async def get_jersey_valuation_endpoint(jersey_id: str):
 async def get_collection_valuations_endpoint(user_id: str = Depends(get_current_user)):
     return await get_user_collection_valuations(user_id)
 
-@api_router.get("/collections/pending")
-async def get_user_pending_submissions(user_id: str = Depends(get_current_user)):
-    """Get user's pending jersey submissions"""
-    submissions = await db.jerseys.find({
-        "submitted_by": user_id,
-        "status": {"$in": ["pending", "rejected"]}
-    }).to_list(100)
+@api_router.get("/notifications")
+async def get_user_notifications(user_id: str = Depends(get_current_user), limit: int = 20, offset: int = 0):
+    """Get user's notifications"""
+    notifications = await db.notifications.find(
+        {"user_id": user_id}
+    ).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
     
     # Remove MongoDB ObjectId for JSON serialization
+    for notification in notifications:
+        notification.pop('_id', None)
+    
+    # Get unread count
+    unread_count = await db.notifications.count_documents({"user_id": user_id, "is_read": False})
+    
+    return {
+        "notifications": notifications,
+        "unread_count": unread_count,
+        "total": len(notifications)
+    }
+
+@api_router.post("/notifications/{notification_id}/mark-read")
+async def mark_notification_read(notification_id: str, user_id: str = Depends(get_current_user)):
+    """Mark a notification as read"""
+    result = await db.notifications.update_one(
+        {"id": notification_id, "user_id": user_id, "is_read": False},
+        {
+            "$set": {
+                "is_read": True,
+                "read_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found or already read")
+    
+    return {"message": "Notification marked as read"}
+
+@api_router.post("/notifications/mark-all-read")
+async def mark_all_notifications_read(user_id: str = Depends(get_current_user)):
+    """Mark all user notifications as read"""
+    result = await db.notifications.update_many(
+        {"user_id": user_id, "is_read": False},
+        {
+            "$set": {
+                "is_read": True,
+                "read_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": f"Marked {result.modified_count} notifications as read"}
+
+@api_router.get("/jerseys/{jersey_id}/suggestions")
+async def get_jersey_suggestions(jersey_id: str, user_id: str = Depends(get_current_user)):
+    """Get modification suggestions for a jersey (only owner can see)"""
+    
+    # Verify user owns this jersey
+    jersey = await db.jerseys.find_one({"id": jersey_id, "submitted_by": user_id})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found or you don't have permission to view suggestions")
+    
+    # Get suggestions for this jersey
+    suggestions = await db.modification_suggestions.find(
+        {"jersey_id": jersey_id}
+    ).sort("created_at", -1).to_list(10)
+    
+    # Remove MongoDB ObjectId for JSON serialization
+    for suggestion in suggestions:
+        suggestion.pop('_id', None)
+        
+        # Get moderator info
+        moderator = await db.users.find_one({"id": suggestion["moderator_id"]}, {"name": 1, "email": 1, "role": 1})
+        if moderator:
+            moderator.pop('_id', None)
+            suggestion["moderator_info"] = moderator
+    
+    return {
+        "jersey": {
+            "id": jersey["id"],
+            "team": jersey.get("team", ""),
+            "season": jersey.get("season", ""),
+            "status": jersey.get("status", "")
+        },
+        "suggestions": suggestions
+    }
+
+@api_router.get("/collections/pending")
+async def get_user_pending_submissions(user_id: str = Depends(get_current_user)):
+    """Get user's pending jersey submissions including those needing modification"""
+    submissions = await db.jerseys.find({
+        "submitted_by": user_id,
+        "status": {"$in": ["pending", "rejected", "needs_modification"]}
+    }).to_list(100)
+    
+    # Remove MongoDB ObjectId for JSON serialization and add suggestions info
     for submission in submissions:
         submission.pop('_id', None)
+        
+        # If jersey needs modification, get the latest suggestion
+        if submission.get("status") == "needs_modification":
+            latest_suggestion = await db.modification_suggestions.find_one(
+                {"jersey_id": submission["id"]},
+                sort=[("created_at", -1)]
+            )
+            if latest_suggestion:
+                latest_suggestion.pop('_id', None)
+                submission["latest_suggestion"] = latest_suggestion
     
     return submissions
 
