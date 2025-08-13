@@ -4157,6 +4157,9 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
       // Refresh collection status to ensure consistency
       setTimeout(() => checkUserCollection(), 500);
       
+      // Trigger profile page refresh if user navigates there
+      window.dispatchEvent(new CustomEvent('refreshProfile'));
+      
     } catch (error) {
       console.error('Failed to update collection:', error);
       alert('Erreur lors de la mise à jour de la collection. Veuillez réessayer.');
