@@ -535,9 +535,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
-    - "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     - "Authentication Modal Form Login - Frontend Login State Management"
+    - "Collection Management with French Remove Text"
+    - "Browse Jerseys Collection Buttons"
   stuck_tasks:
     - "Authentication Modal Form Login - Frontend Login State Management"
   test_all: false
