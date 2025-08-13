@@ -500,7 +500,6 @@ const Button = ({ children, variant = 'primary', size = 'md', loading = false, d
 // Notification Bell Component
 const NotificationBell = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
