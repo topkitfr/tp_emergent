@@ -3530,6 +3530,9 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     key={jersey.id} 
                     jersey={jersey} 
                     showActions={true}
+                    onAddToCollection={onAddToCollection}
+                    onClick={onJerseyClick}
+                    onCreatorClick={onCreatorClick}
                   />
                 ))}
               </div>
