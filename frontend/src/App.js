@@ -5225,7 +5225,7 @@ const ProfileCollectionPage = () => {
                       Vous n'avez pas encore soumis de maillots à la base de données.
                     </p>
                     <button
-                      onClick={() => setCurrentView('submit')}
+                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'submit' }))}
                       className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Soumettre un maillot
