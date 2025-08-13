@@ -5285,11 +5285,19 @@ const ProfileCollectionPage = () => {
           <>
             {activeTab === 'collection' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Ma Collection</h2>
-                {ownedJerseys.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {ownedJerseys.map((item) => renderJerseyCard(item, 'owned'))}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Ma Collection</h2>
+                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <span>{ownedJerseys.length} maillots</span>
+                    <span>•</span>
+                    <span className="text-green-400 font-semibold">
+                      Valeur estimée: {collectionStats.totalValue}€
+                    </span>
                   </div>
+                </div>
+                
+                {ownedJerseys.length > 0 ? (
+                  renderCollectionList(ownedJerseys, 'owned')
                 ) : (
                   <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-4">
@@ -5312,11 +5320,15 @@ const ProfileCollectionPage = () => {
 
             {activeTab === 'wishlist' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Ma Wishlist</h2>
-                {wantedJerseys.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {wantedJerseys.map((item) => renderJerseyCard(item, 'wanted'))}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Ma Wishlist</h2>
+                  <div className="text-sm text-gray-400">
+                    {wantedJerseys.length} maillot{wantedJerseys.length > 1 ? 's' : ''}
                   </div>
+                </div>
+                
+                {wantedJerseys.length > 0 ? (
+                  renderCollectionList(wantedJerseys, 'wanted')
                 ) : (
                   <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-4">
