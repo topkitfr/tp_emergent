@@ -1565,7 +1565,9 @@ async def get_user_collection(collection_type: str, user_id: str = Depends(get_c
                 "as": "jersey"
             }
         },
-        {"$unwind": "$jersey"}
+        {"$unwind": "$jersey"},
+        # Only include approved jerseys in collections
+        {"$match": {"jersey.status": "approved"}}
     ]
     
     collections = await db.collections.aggregate(pipeline).to_list(1000)
