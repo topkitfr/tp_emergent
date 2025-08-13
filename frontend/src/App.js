@@ -3225,7 +3225,7 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
   );
 };
 
-// Enhanced Browse Jerseys Page with Explorer Features
+// Enhanced Browse Jerseys Page with Discogs-inspired Design
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
   // Explorer data states
   const [mostCollected, setMostCollected] = useState([]);
@@ -3234,7 +3234,18 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
   const [leagues, setLeagues] = useState([]);
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [leagueJerseys, setLeagueJerseys] = useState([]);
-  const [activeTab, setActiveTab] = useState('discover'); // 'discover' or 'browse'
+  const [activeTab, setActiveTab] = useState('browse'); // 'discover' or 'browse'
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'team', 'season'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    league: '',
+    team: '',
+    season: '',
+    size: '',
+    condition: '',
+    manufacturer: ''
+  });
   const [explorerLoading, setExplorerLoading] = useState({
     mostCollected: true,
     mostWanted: true,
@@ -3243,302 +3254,373 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     leagueJerseys: false
   });
 
-  // Fetch explorer data when component mounts
-  useEffect(() => {
-    if (activeTab === 'discover') {
-      fetchExplorerData();
-    }
-  }, [activeTab]);
-
-  const fetchExplorerData = async () => {
-    try {
-      // Fetch all explorer data in parallel
-      const [mostCollectedRes, mostWantedRes, latestRes, leaguesRes] = await Promise.all([
-        axios.get(`${API}/api/explorer/most-collected?limit=6`),
-        axios.get(`${API}/api/explorer/most-wanted?limit=6`),
-        axios.get(`${API}/api/explorer/latest-additions?limit=6`),
-        axios.get(`${API}/api/explorer/leagues`)
-      ]);
-
-      setMostCollected(mostCollectedRes.data);
-      setMostWanted(mostWantedRes.data);
-      setLatestAdditions(latestRes.data);
-      setLeagues(leaguesRes.data);
-
-      // Update loading states
-      setExplorerLoading({
-        mostCollected: false,
-        mostWanted: false,
-        latestAdditions: false,
-        leagues: false,
-        leagueJerseys: false
-      });
-    } catch (error) {
-      console.error('Failed to fetch explorer data:', error);
-      setExplorerLoading({
-        mostCollected: false,
-        mostWanted: false,
-        latestAdditions: false,
-        leagues: false,
-        leagueJerseys: false
-      });
-    }
+  // Get unique values for filters
+  const getUniqueValues = (field) => {
+    const values = jerseys.map(jersey => jersey[field]).filter(v => v && v.trim());
+    return [...new Set(values)].sort();
   };
 
-  const fetchLeagueJerseys = async (league) => {
-    try {
-      setExplorerLoading(prev => ({ ...prev, leagueJerseys: true }));
-      const response = await axios.get(`${API}/api/explorer/leagues/${encodeURIComponent(league)}/jerseys?limit=12`);
-      setLeagueJerseys(response.data);
-      setSelectedLeague(league);
-    } catch (error) {
-      console.error('Failed to fetch league jerseys:', error);
-    } finally {
-      setExplorerLoading(prev => ({ ...prev, leagueJerseys: false }));
+  // Filter and search jerseys
+  const getFilteredJerseys = () => {
+    let filtered = jerseys;
+
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(jersey => 
+        jersey.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jersey.player?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jersey.league?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jersey.season?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
+
+    // Other filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter(jersey => 
+          jersey[key]?.toLowerCase().includes(value.toLowerCase())
+        );
+      }
+    });
+
+    // Sort
+    switch (sortBy) {
+      case 'team':
+        filtered.sort((a, b) => (a.team || '').localeCompare(b.team || ''));
+        break;
+      case 'season':
+        filtered.sort((a, b) => (b.season || '').localeCompare(a.season || ''));
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      default: // newest
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
+    return filtered;
   };
 
-  const renderJerseyCard = (jersey, showStats = false) => (
-    <div key={jersey.id} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-gray-600 transition-all hover:scale-105">
-      <div className="aspect-square bg-gray-900 flex items-center justify-center overflow-hidden">
-        {jersey.images && jersey.images.length > 0 ? (
-          <img
-            src={jersey.images[0]}
-            alt={`${jersey.team} ${jersey.season}`}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/200x200?text=Jersey+Image';
-            }}
-          />
-        ) : (
-          <div className="text-gray-500 text-center">
-            <div className="text-4xl mb-2">👕</div>
-            <div className="text-sm">No Image</div>
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <h3 className="text-white font-semibold text-sm mb-1 truncate">{jersey.team}</h3>
-        <p className="text-gray-400 text-xs mb-2">{jersey.season} • {jersey.home_away}</p>
-        {jersey.player && (
-          <p className="text-white text-xs font-medium mb-2 truncate">{jersey.player}</p>
-        )}
-        {jersey.reference_number && (
-          <p className="text-gray-500 text-xs mb-2">{jersey.reference_number}</p>
-        )}
-        {showStats && (
-          <div className="flex justify-between text-xs text-gray-400 mt-2">
-            {jersey.collection_count !== undefined && (
-              <span>👥 {jersey.collection_count} own</span>
-            )}
-            {jersey.wanted_count !== undefined && (
-              <span>❤️ {jersey.wanted_count} want</span>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const handleJerseyDetailClick = (jersey) => {
+    // Navigate to jersey detail page using reference number
+    window.dispatchEvent(new CustomEvent('changeView', { 
+      detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
+    }));
+  };
 
-  const renderExplorerSection = (title, icon, jerseys, loadingState, showStats = false) => (
-    <div className="mb-12">
-      <div className="flex items-center space-x-3 mb-6">
-        <span className="text-3xl">{icon}</span>
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
-      </div>
-      
-      {loadingState ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 animate-pulse">
-              <div className="aspect-square bg-gray-700"></div>
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-700 rounded"></div>
-                <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+  // Discogs-style Jersey Card Component
+  const DiscogsJerseyCard = ({ jersey, isListView = false }) => (
+    <div 
+      className={`bg-white border border-gray-200 hover:border-gray-300 transition-all cursor-pointer ${
+        isListView ? 'flex items-center p-4 mb-2' : 'rounded-lg overflow-hidden'
+      }`}
+      onClick={() => handleJerseyDetailClick(jersey)}
+    >
+      {isListView ? (
+        <>
+          {/* List View */}
+          <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden">
+            {jersey.images && jersey.images.length > 0 ? (
+              <img
+                src={jersey.images[0]}
+                alt={`${jersey.team} ${jersey.season}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                }}
+              />
+            ) : (
+              <span className="text-gray-400 text-2xl">👕</span>
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-black font-semibold text-sm truncate">
+                  {jersey.team} • {jersey.season}
+                </h3>
+                <p className="text-gray-600 text-xs mt-1">
+                  {jersey.player && `${jersey.player} • `}
+                  {jersey.home_away} • {jersey.manufacturer}
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  {jersey.league} • Size {jersey.size} • {jersey.condition}
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <span className="bg-gray-100 px-2 py-1 rounded">
+                  {jersey.reference_number}
+                </span>
+                <span>Condition: {jersey.condition}</span>
               </div>
             </div>
-          ))}
-        </div>
-      ) : jerseys.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {jerseys.map(jersey => renderJerseyCard(jersey, showStats))}
-        </div>
+          </div>
+        </>
       ) : (
-        <div className="text-center py-12 text-gray-400">
-          <div className="text-4xl mb-4">📦</div>
-          <p>No jerseys found in this category yet.</p>
-        </div>
+        <>
+          {/* Grid View */}
+          <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+            {jersey.images && jersey.images.length > 0 ? (
+              <img
+                src={jersey.images[0]}
+                alt={`${jersey.team} ${jersey.season}`}
+                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/200x200?text=Jersey';
+                }}
+              />
+            ) : (
+              <span className="text-gray-400 text-4xl">👕</span>
+            )}
+          </div>
+          
+          <div className="p-3">
+            <h3 className="text-black font-semibold text-sm mb-1 truncate">
+              {jersey.team}
+            </h3>
+            <p className="text-gray-600 text-xs mb-1">{jersey.season}</p>
+            {jersey.player && (
+              <p className="text-black text-xs font-medium mb-1 truncate">{jersey.player}</p>
+            )}
+            <p className="text-gray-500 text-xs">
+              {jersey.home_away} • {jersey.condition}
+            </p>
+            <div className="mt-2 flex justify-between items-center">
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                {jersey.reference_number}
+              </span>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-6 py-8">
-        {/* Header with Tabs */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-6">Jersey Collection</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Discogs-style Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-black">Jersey Database</h1>
+            <div className="text-sm text-gray-600">
+              {getFilteredJerseys().length} results
+            </div>
+          </div>
           
-          {/* Tab Navigation */}
-          <div className="flex justify-center space-x-1 bg-gray-900 rounded-lg p-1 max-w-md mx-auto mb-8">
-            <button
-              onClick={() => setActiveTab('discover')}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                activeTab === 'discover'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              🌟 Discover
-            </button>
-            <button
-              onClick={() => setActiveTab('browse')}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                activeTab === 'browse'
-                  ? 'bg-white text-black'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              🔍 Browse All
+          {/* Search Bar */}
+          <div className="flex space-x-4 mb-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search by team, player, league..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+              Search
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Tab Content */}
-        {activeTab === 'discover' ? (
-          <div>
-            {/* Discovery Content */}
-            <div className="text-center mb-12">
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                Discover the best jerseys in the TopKit community. Explore trending collections, 
-                latest additions, and browse by your favorite leagues.
-              </p>
-            </div>
-
-            {/* Most Collected Section */}
-            {renderExplorerSection("Most Collected", "🔥", mostCollected, explorerLoading.mostCollected, true)}
-
-            {/* Most Wanted Section */}
-            {renderExplorerSection("Most Wanted", "💎", mostWanted, explorerLoading.mostWanted, true)}
-
-            {/* Latest Additions Section */}
-            {renderExplorerSection("Latest Additions", "✨", latestAdditions, explorerLoading.latestAdditions)}
-
-            {/* Explore Leagues Section */}
-            <div className="mb-12">
-              <div className="flex items-center space-x-3 mb-6">
-                <span className="text-3xl">🏆</span>
-                <h2 className="text-2xl font-bold text-white">Explore by League</h2>
-              </div>
+      <div className="container mx-auto px-6 py-6">
+        <div className="flex">
+          {/* Discogs-style Sidebar Filters */}
+          <div className="w-64 flex-shrink-0 mr-8">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 sticky top-6">
+              <h3 className="font-semibold text-black mb-4">Filter Results</h3>
               
-              {explorerLoading.leagues ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-gray-800 rounded-lg p-6 border border-gray-700 animate-pulse">
-                      <div className="h-6 bg-gray-700 rounded mb-3"></div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
+              <div className="space-y-4">
+                {/* League Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">League</label>
+                  <select
+                    value={filters.league}
+                    onChange={(e) => setFilters({...filters, league: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Leagues</option>
+                    {getUniqueValues('league').map(league => (
+                      <option key={league} value={league}>{league}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : leagues.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-                  {leagues.map((league, index) => (
-                    <button
-                      key={index}
-                      onClick={() => fetchLeagueJerseys(league.league)}
-                      className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-all hover:scale-105 text-left"
-                    >
-                      <h3 className="text-white font-semibold text-lg mb-3 truncate">{league.league}</h3>
-                      <div className="space-y-1 text-gray-400 text-sm">
-                        <p>📊 {league.jersey_count} jerseys</p>
-                        <p>⚽ {league.team_count} teams</p>
-                        <p>📅 {league.season_count} seasons</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <div className="text-4xl mb-4">🏟️</div>
-                  <p>No league data available yet.</p>
-                </div>
-              )}
 
-              {/* Selected League Jerseys */}
-              {selectedLeague && (
-                <div className="mt-8 border-t border-gray-700 pt-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white">🏆 {selectedLeague} Jerseys</h3>
-                    <button
-                      onClick={() => {
-                        setSelectedLeague(null);
-                        setLeagueJerseys([]);
-                      }}
-                      className="text-gray-400 hover:text-white transition-colors"
-                    >
-                      ✕ Close
-                    </button>
-                  </div>
-
-                  {explorerLoading.leagueJerseys ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                      {[...Array(6)].map((_, i) => (
-                        <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 animate-pulse">
-                          <div className="aspect-square bg-gray-700"></div>
-                          <div className="p-4 space-y-2">
-                            <div className="h-4 bg-gray-700 rounded"></div>
-                            <div className="h-3 bg-gray-700 rounded w-2/3"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : leagueJerseys.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                      {leagueJerseys.map(jersey => renderJerseyCard(jersey))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-gray-400">
-                      <div className="text-4xl mb-4">👕</div>
-                      <p>No jerseys found for {selectedLeague}.</p>
-                    </div>
-                  )}
+                {/* Team Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
+                  <select
+                    value={filters.team}
+                    onChange={(e) => setFilters({...filters, team: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Teams</option>
+                    {getUniqueValues('team').slice(0, 20).map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
+
+                {/* Season Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Season</label>
+                  <select
+                    value={filters.season}
+                    onChange={(e) => setFilters({...filters, season: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Seasons</option>
+                    {getUniqueValues('season').map(season => (
+                      <option key={season} value={season}>{season}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Size Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
+                  <select
+                    value={filters.size}
+                    onChange={(e) => setFilters({...filters, size: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Sizes</option>
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Condition Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                  <select
+                    value={filters.condition}
+                    onChange={(e) => setFilters({...filters, condition: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Conditions</option>
+                    <option value="mint">Mint (M)</option>
+                    <option value="near_mint">Near Mint (NM)</option>
+                    <option value="very_good">Very Good (VG+)</option>
+                    <option value="good">Good (VG)</option>
+                    <option value="poor">Poor (P)</option>
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      league: '', team: '', season: '', size: '', condition: '', manufacturer: ''
+                    });
+                    setSearchQuery('');
+                  }}
+                  className="w-full text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  Clear all filters
+                </button>
+              </div>
             </div>
           </div>
-        ) : (
-          // Browse All Content (original functionality)
-          <div>
-            <div className="text-center mb-8">
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                Browse our complete collection of verified soccer jerseys from teams around the world.
-              </p>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Discogs-style Controls Bar */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">Sort by:</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="team">Team A-Z</option>
+                      <option value="season">Season</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">View:</span>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm-12 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <SearchFilter onFilter={onFilter} />
+            {/* Results */}
             {loading ? (
               <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">Loading jerseys...</div>
+                <div className="text-gray-500">Loading jerseys...</div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {jerseys.map((jersey) => (
-                  <JerseyCard 
-                    key={jersey.id} 
-                    jersey={jersey} 
-                    showActions={true}
-                    onAddToCollection={onAddToCollection}
-                    onClick={onJerseyClick}
-                    onCreatorClick={onCreatorClick}
-                  />
-                ))}
+              <div>
+                {viewMode === 'list' ? (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    {getFilteredJerseys().map((jersey) => (
+                      <DiscogsJerseyCard 
+                        key={jersey.id} 
+                        jersey={jersey} 
+                        isListView={true}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {getFilteredJerseys().map((jersey) => (
+                      <DiscogsJerseyCard 
+                        key={jersey.id} 
+                        jersey={jersey} 
+                        isListView={false}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {getFilteredJerseys().length === 0 && (
+                  <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                    <div className="text-gray-500">No jerseys found matching your criteria.</div>
+                    <button
+                      onClick={() => {
+                        setFilters({
+                          league: '', team: '', season: '', size: '', condition: '', manufacturer: ''
+                        });
+                        setSearchQuery('');
+                      }}
+                      className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear filters to see all jerseys
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
