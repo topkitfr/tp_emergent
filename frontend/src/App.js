@@ -2555,12 +2555,17 @@ const AuthModal = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🚀 handleSubmit called - starting authentication process');
+    console.log('📧 Form data:', { email: formData.email, password: formData.password ? '***' : 'empty', name: formData.name });
+    
     setLoading(true);
     setError('');
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      console.log('Attempting authentication:', `${API}${endpoint}`, formData);
+      console.log('🔄 Attempting authentication:', `${API}${endpoint}`);
       
       const response = await axios.post(`${API}${endpoint}`, formData, {
         timeout: 10000, // 10 second timeout
@@ -2569,10 +2574,10 @@ const AuthModal = ({ onClose }) => {
         }
       });
       
-      console.log('Authentication response:', response.data);
+      console.log('✅ Authentication response received:', response.data);
       
       if (response.data?.token && response.data?.user) {
-        console.log('✅ Authentication successful, calling login...');
+        console.log('🔑 Authentication successful, calling login...');
         const loginSuccess = login(response.data.token, response.data.user);
         if (loginSuccess) {
           console.log('✅ Login completed successfully, closing modal...');
@@ -2586,7 +2591,7 @@ const AuthModal = ({ onClose }) => {
         setError('Authentication response was invalid. Please try again.');
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('❌ Authentication error:', error);
       if (error.code === 'ECONNABORTED') {
         setError('Connexion timeout - Vérifiez votre connexion internet');
       } else if (error.response?.status === 404) {
