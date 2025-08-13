@@ -3317,6 +3317,7 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
 
 // Enhanced Browse Jerseys Page with Dark Theme
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'team', 'season'
   const [searchQuery, setSearchQuery] = useState('');
@@ -3381,6 +3382,44 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     window.dispatchEvent(new CustomEvent('changeView', { 
       detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
     }));
+  };
+
+  const handleQuickCollectionAction = async (jersey, action) => {
+    if (!user) {
+      alert('Veuillez vous connecter pour gérer votre collection');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API}/api/collections`, {
+        jersey_id: jersey.id,
+        collection_type: action
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
+      alert(`✅ ${jersey.team} ajouté à ${actionText} !`);
+      
+      // Trigger profile refresh
+      window.dispatchEvent(new CustomEvent('refreshProfile'));
+      
+    } catch (error) {
+      console.error('Failed to add to collection:', error);
+      
+      if (error.response?.status === 400 && error.response?.data?.detail?.includes('already in collection')) {
+        const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
+        alert(`ℹ️ ${jersey.team} est déjà dans ${actionText} !`);
+      } else {
+        alert('Erreur lors de l\'ajout à la collection. Veuillez réessayer.');
+      }
+    }
   };
 
   // Dark Theme Jersey Card Component
