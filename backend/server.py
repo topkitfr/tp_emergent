@@ -828,8 +828,8 @@ async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current
         await create_notification(
             user_id=jersey["submitted_by"],
             notification_type=NotificationType.JERSEY_APPROVED,
-            title="Jersey Approved!",
-            message=f"Great news! Your jersey '{jersey.get('team', '')} {jersey.get('season', '')}' has been approved and is now visible in the database.",
+            title="Jersey Approved & Now Live!",
+            message=f"🎉 Congratulations! Your jersey '{jersey.get('team', '')} {jersey.get('season', '')}' ({jersey.get('reference_number', '')}) has been approved and is now visible to the entire TopKit community!",
             related_id=jersey_id
         )
         
