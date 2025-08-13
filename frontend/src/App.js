@@ -5198,7 +5198,7 @@ const ProfileCollectionPage = () => {
                       Ajoutez des maillots que vous aimeriez posséder à votre wishlist.
                     </p>
                     <button
-                      onClick={() => setCurrentView('jerseys')}
+                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
                       className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Explorez les maillots
