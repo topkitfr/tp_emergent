@@ -4841,6 +4841,480 @@ const JerseyMarketplacePage = ({ jerseyId, referenceNumber }) => {
   );
 };
 
+// Unified Profile & Collection Page with Dark Theme
+const ProfileCollectionPage = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('collection');
+  const [ownedJerseys, setOwnedJerseys] = useState([]);
+  const [wantedJerseys, setWantedJerseys] = useState([]);
+  const [submittedJerseys, setSubmittedJerseys] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [collectionStats, setCollectionStats] = useState({
+    totalValue: 0,
+    averageValue: 0,
+    totalItems: 0,
+    mostValuableItem: null
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchCollectionData();
+    }
+  }, [user]);
+
+  const fetchCollectionData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Fetch collections
+      const [ownedRes, wantedRes, submittedRes] = await Promise.all([
+        axios.get(`${API}/api/collections/owned`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/api/collections/wanted`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/api/jerseys/user/${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      
+      const owned = ownedRes.data || [];
+      const wanted = wantedRes.data || [];
+      const submitted = submittedRes.data || [];
+      
+      setOwnedJerseys(owned);
+      setWantedJerseys(wanted);
+      setSubmittedJerseys(submitted);
+      
+      // Calculate collection value estimate (mock values for demo)
+      const estimatedValues = owned.map(() => Math.floor(Math.random() * 200) + 50); // Random values 50-250€
+      const totalValue = estimatedValues.reduce((sum, val) => sum + val, 0);
+      const averageValue = owned.length > 0 ? Math.round(totalValue / owned.length) : 0;
+      const mostValuable = owned.length > 0 ? owned[estimatedValues.indexOf(Math.max(...estimatedValues))] : null;
+      
+      setCollectionStats({
+        totalValue,
+        averageValue,
+        totalItems: owned.length,
+        mostValuableItem: mostValuable
+      });
+      
+    } catch (error) {
+      console.error('Failed to fetch collection data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFromCollection = async (jerseyId, collectionType) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/collections/remove`, {
+        jersey_id: jerseyId,
+        collection_type: collectionType
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Refresh collection data
+      fetchCollectionData();
+    } catch (error) {
+      console.error('Failed to remove from collection:', error);
+      alert('Failed to remove jersey from collection. Please try again.');
+    }
+  };
+
+  const renderJerseyCard = (item, collectionType) => (
+    <div key={item.id} className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
+      <div className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden">
+        {item.jersey?.images && item.jersey.images.length > 0 ? (
+          <img
+            src={item.jersey.images[0]}
+            alt={`${item.jersey.team} ${item.jersey.season}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/200x200?text=Jersey';
+            }}
+          />
+        ) : (
+          <div className="text-gray-500 text-center">
+            <div className="text-4xl mb-2">👕</div>
+            <div className="text-sm">No Image</div>
+          </div>
+        )}
+      </div>
+      
+      <div className="p-4">
+        <h3 className="text-white font-semibold text-sm mb-1 truncate">
+          {item.jersey?.team}
+        </h3>
+        <p className="text-gray-400 text-xs mb-2">
+          {item.jersey?.season} • {item.jersey?.home_away}
+        </p>
+        {item.jersey?.player && (
+          <p className="text-white text-xs font-medium mb-2 truncate">
+            {item.jersey.player}
+          </p>
+        )}
+        
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+            {item.jersey?.reference_number}
+          </span>
+          {collectionType === 'owned' && (
+            <span className="text-xs text-green-400 font-semibold">
+              ~{Math.floor(Math.random() * 200) + 50}€
+            </span>
+          )}
+        </div>
+        
+        <button
+          onClick={() => handleRemoveFromCollection(item.jersey.id, collectionType)}
+          className="w-full mt-3 bg-red-600 text-white px-3 py-2 rounded text-xs hover:bg-red-700 transition-colors"
+        >
+          Retirer de {collectionType === 'owned' ? 'ma collection' : 'ma wishlist'}
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderSubmittedJerseyCard = (jersey) => (
+    <div key={jersey.id} className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
+      <div className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden">
+        {jersey.images && jersey.images.length > 0 ? (
+          <img
+            src={jersey.images[0]}
+            alt={`${jersey.team} ${jersey.season}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/200x200?text=Jersey';
+            }}
+          />
+        ) : (
+          <div className="text-gray-500 text-center">
+            <div className="text-4xl mb-2">👕</div>
+            <div className="text-sm">No Image</div>
+          </div>
+        )}
+      </div>
+      
+      <div className="p-4">
+        <h3 className="text-white font-semibold text-sm mb-1 truncate">
+          {jersey.team}
+        </h3>
+        <p className="text-gray-400 text-xs mb-2">
+          {jersey.season} • {jersey.home_away}
+        </p>
+        {jersey.player && (
+          <p className="text-white text-xs font-medium mb-2 truncate">
+            {jersey.player}
+          </p>
+        )}
+        
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+            {jersey.reference_number}
+          </span>
+          <span className={`text-xs px-2 py-1 rounded font-medium ${
+            jersey.status === 'approved' ? 'bg-green-800 text-green-200' :
+            jersey.status === 'rejected' ? 'bg-red-800 text-red-200' :
+            'bg-yellow-800 text-yellow-200'
+          }`}>
+            {jersey.status === 'approved' ? 'Approuvé' :
+             jersey.status === 'rejected' ? 'Rejeté' : 'En attente'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 mb-4">Please login to view your profile</div>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', {}))}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <div className="bg-gray-900 border-b border-gray-700">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-start space-x-6">
+            {/* Profile Picture */}
+            <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+              {user.profile_picture ? (
+                <img
+                  src={user.profile_picture}
+                  alt={user.name}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-400 text-3xl">👤</span>
+              )}
+            </div>
+            
+            {/* Profile Info */}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-2">
+                {user.name || user.email?.split('@')[0]}
+              </h1>
+              <p className="text-gray-400 mb-4">{user.email}</p>
+              
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <div className="text-xl font-bold text-white">{collectionStats.totalItems}</div>
+                  <div className="text-xs text-gray-400">Maillots possédés</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <div className="text-xl font-bold text-green-400">{collectionStats.totalValue}€</div>
+                  <div className="text-xs text-gray-400">Valeur estimée</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <div className="text-xl font-bold text-blue-400">{wantedJerseys.length}</div>
+                  <div className="text-xs text-gray-400">En recherche</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <div className="text-xl font-bold text-yellow-400">{submittedJerseys.length}</div>
+                  <div className="text-xs text-gray-400">Soumis</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="bg-gray-900 border-b border-gray-700">
+        <div className="container mx-auto px-6">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('collection')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'collection'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Ma Collection ({ownedJerseys.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'wishlist'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Ma Wishlist ({wantedJerseys.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('submitted')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'submitted'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Mes Soumissions ({submittedJerseys.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'stats'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Statistiques
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="container mx-auto px-6 py-8">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400">Chargement...</div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'collection' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Ma Collection</h2>
+                {ownedJerseys.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {ownedJerseys.map((item) => renderJerseyCard(item, 'owned'))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-4">
+                      <span className="text-4xl block mb-4">👕</span>
+                      Votre collection est vide
+                    </div>
+                    <p className="text-gray-500 mb-6">
+                      Commencez à collectionner en explorant nos maillots disponibles.
+                    </p>
+                    <button
+                      onClick={() => setCurrentView('jerseys')}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Explorez les maillots
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'wishlist' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Ma Wishlist</h2>
+                {wantedJerseys.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {wantedJerseys.map((item) => renderJerseyCard(item, 'wanted'))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-4">
+                      <span className="text-4xl block mb-4">💫</span>
+                      Votre wishlist est vide
+                    </div>
+                    <p className="text-gray-500 mb-6">
+                      Ajoutez des maillots que vous aimeriez posséder à votre wishlist.
+                    </p>
+                    <button
+                      onClick={() => setCurrentView('jerseys')}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Explorez les maillots
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'submitted' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Mes Soumissions</h2>
+                {submittedJerseys.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {submittedJerseys.map((jersey) => renderSubmittedJerseyCard(jersey))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-4">
+                      <span className="text-4xl block mb-4">📝</span>
+                      Aucune soumission
+                    </div>
+                    <p className="text-gray-500 mb-6">
+                      Vous n'avez pas encore soumis de maillots à la base de données.
+                    </p>
+                    <button
+                      onClick={() => setCurrentView('submit')}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Soumettre un maillot
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">Statistiques de Collection</h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Collection Value */}
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Estimation de Valeur</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Valeur totale estimée</span>
+                        <span className="text-2xl font-bold text-green-400">{collectionStats.totalValue}€</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Valeur moyenne par maillot</span>
+                        <span className="text-lg font-semibold text-white">{collectionStats.averageValue}€</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Nombre de maillots</span>
+                        <span className="text-lg font-semibold text-white">{collectionStats.totalItems}</span>
+                      </div>
+                      {collectionStats.mostValuableItem && (
+                        <div className="pt-4 border-t border-gray-700">
+                          <span className="text-gray-400 text-sm">Maillot le plus précieux</span>
+                          <div className="mt-2">
+                            <span className="text-white font-medium">
+                              {collectionStats.mostValuableItem.jersey?.team} {collectionStats.mostValuableItem.jersey?.season}
+                            </span>
+                            <span className="text-green-400 font-bold ml-2">~250€</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Collection Breakdown */}
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Répartition</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Maillots possédés</span>
+                        <span className="text-white font-semibold">{ownedJerseys.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">En wishlist</span>
+                        <span className="text-white font-semibold">{wantedJerseys.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Soumissions approuvées</span>
+                        <span className="text-white font-semibold">
+                          {submittedJerseys.filter(j => j.status === 'approved').length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Soumissions en attente</span>
+                        <span className="text-white font-semibold">
+                          {submittedJerseys.filter(j => j.status === 'pending').length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional stats could go here */}
+                <div className="mt-8 bg-gray-900 rounded-lg border border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Activité Récente</h3>
+                  <div className="text-gray-400 text-center py-8">
+                    <span className="text-2xl block mb-4">📊</span>
+                    Les statistiques détaillées seront bientôt disponibles
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Collections Page Component
 const CollectionsPage = () => {
   const { user } = useAuth();
