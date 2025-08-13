@@ -526,7 +526,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Discogs-Inspired UI/UX - Browse, Jersey Detail & Marketplace Pages"
+    - "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
     - "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     - "Authentication Modal Form Login - Frontend Login State Management"
   stuck_tasks:
