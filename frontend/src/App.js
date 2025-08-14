@@ -3338,6 +3338,22 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
               <h3 className="font-semibold text-white mb-4">Filtres</h3>
               <div className="space-y-4">
+                {/* League Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
+                  <select
+                    value={filters.league}
+                    onChange={(e) => setFilters({...filters, league: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Tous les championnats</option>
+                    {getUniqueValues('league').map(league => (
+                      <option key={league} value={league}>{league}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Team Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
                   <select
@@ -3351,6 +3367,37 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     ))}
                   </select>
                 </div>
+                
+                {/* Season Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
+                  <select
+                    value={filters.season}
+                    onChange={(e) => setFilters({...filters, season: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Toutes les saisons</option>
+                    {getUniqueValues('season').map(season => (
+                      <option key={season} value={season}>{season}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Size Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
+                  <select
+                    value={filters.size}
+                    onChange={(e) => setFilters({...filters, size: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Toutes les tailles</option>
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+                
                 <button
                   onClick={() => {
                     setFilters({
