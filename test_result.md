@@ -185,15 +185,10 @@ agent_communication:
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "TopKit corrections critiques requises par l'utilisateur:
-1. CRITIQUE: Ne peut pas fixer de prix lors de la vente d'un article depuis la collection (bouton 'sell')
-2. CRITIQUE: Le bouton 'remove' ne fonctionne pas pour supprimer des articles de la collection 
-3. Demande dialogue de confirmation 'êtes-vous sûr ?' en français pour les suppressions
-4. Demande gestion des frais d'envoi (paramètres vendeur comme Discogs)
-5. Demande gestion des statuts collection (own/want/for sale)
-6. Nettoyage complet base de données après corrections
-7. Retirer authentification Emergent, garder seulement Google OAuth
-8. Améliorations UI/UX"
+user_problem_statement: "TopKit améliorations demandées par l'utilisateur:
+1. SECTION AMIS dans My Profile - Afficher les amis avec compteur et onglets pour demandes (en attente/à approuver)
+2. SYSTÈME DE SOUMISSION ANONYME - Les maillots soumis ne sont plus automatiquement attribués à l'utilisateur, seuls les admins voient qui a soumis quoi, l'utilisateur peut voir SES soumissions avec statut et recevoir notifications si approuvé/corrigé
+3. INTERFACE ADMIN pour corriger soumissions - Admin peut reprendre le formulaire qu'un utilisateur a renseigné, le corriger, puis l'approuver en 2 étapes (Corriger → Approuver), avec 3 actions possibles: Corriger/Approuver/Supprimer"
 
 backend:
   - task: "User Profile API Endpoints - GET /api/users/{user_id}/profile and /api/users/{user_id}/collections"
