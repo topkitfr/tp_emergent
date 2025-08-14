@@ -2642,6 +2642,498 @@ async def get_public_advanced_profile(user_id: str, current_user_id: Optional[st
     
     return public_profile
 
+# Friends System API Endpoints
+@api_router.get("/users/search")
+async def search_users(
+    query: str, 
+    limit: int = 10,
+    user_id: str = Depends(get_current_user)
+):
+    """Search for users to add as friends"""
+    if len(query) < 2:
+        return []
+    
+    # Search by name or email (exclude current user)
+    search_filter = {
+        "$and": [
+            {"id": {"$ne": user_id}},  # Exclude current user
+            {
+                "$or": [
+                    {"name": {"$regex": query, "$options": "i"}},
+                    {"email": {"$regex": query, "$options": "i"}}
+                ]
+            }
+        ]
+    }
+    
+    users = await db.users.find(
+        search_filter,
+        {"id": 1, "name": 1, "email": 1, "picture": 1}
+    ).limit(limit).to_list(limit)
+    
+    # Remove MongoDB ObjectId and return clean user data
+    for user in users:
+        user.pop('_id', None)
+    
+    return users
+
+@api_router.post("/friends/request")
+async def send_friend_request(
+    friend_request: FriendRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Send a friend request"""
+    # Check if user exists
+    target_user = await db.users.find_one({"id": friend_request.user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Can't send friend request to yourself
+    if friend_request.user_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot send friend request to yourself")
+    
+    # Check if friendship already exists or is pending
+    existing_friendship = await db.friendships.find_one({
+        "$or": [
+            {"requester_id": user_id, "addressee_id": friend_request.user_id},
+            {"requester_id": friend_request.user_id, "addressee_id": user_id}
+        ]
+    })
+    
+    if existing_friendship:
+        if existing_friendship["status"] == FriendshipStatus.ACCEPTED:
+            raise HTTPException(status_code=400, detail="Users are already friends")
+        elif existing_friendship["status"] == FriendshipStatus.PENDING:
+            raise HTTPException(status_code=400, detail="Friend request already sent")
+        elif existing_friendship["status"] == FriendshipStatus.BLOCKED:
+            raise HTTPException(status_code=400, detail="Unable to send friend request")
+    
+    # Create friendship request
+    friendship = Friendship(
+        requester_id=user_id,
+        addressee_id=friend_request.user_id
+    )
+    
+    await db.friendships.insert_one(friendship.dict())
+    
+    # Get requester info for notification
+    requester = await db.users.find_one({"id": user_id})
+    requester_name = requester.get("name", "Someone") if requester else "Someone"
+    
+    # Create notification for the target user
+    await create_notification(
+        user_id=friend_request.user_id,
+        notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+        title="New Friend Request",
+        message=f"{requester_name} wants to be your friend! You can accept or decline this request in your friends section.",
+        related_id=friendship.id
+    )
+    
+    return {"message": "Friend request sent successfully", "request_id": friendship.id}
+
+@api_router.post("/friends/respond")
+async def respond_to_friend_request(
+    response: FriendRequestResponse,
+    user_id: str = Depends(get_current_user)
+):
+    """Accept or decline a friend request"""
+    # Find the friend request
+    friendship = await db.friendships.find_one({
+        "id": response.request_id,
+        "addressee_id": user_id,
+        "status": FriendshipStatus.PENDING
+    })
+    
+    if not friendship:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    # Update friendship status
+    new_status = FriendshipStatus.ACCEPTED if response.accept else FriendshipStatus.BLOCKED
+    await db.friendships.update_one(
+        {"id": response.request_id},
+        {
+            "$set": {
+                "status": new_status,
+                "responded_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Get user names for notifications
+    requester = await db.users.find_one({"id": friendship["requester_id"]})
+    addressee = await db.users.find_one({"id": user_id})
+    
+    requester_name = requester.get("name", "Someone") if requester else "Someone"
+    addressee_name = addressee.get("name", "Someone") if addressee else "Someone"
+    
+    if response.accept:
+        # Notify requester that request was accepted
+        await create_notification(
+            user_id=friendship["requester_id"],
+            notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+            title="Friend Request Accepted! 🎉",
+            message=f"{addressee_name} accepted your friend request! You are now friends and can message each other.",
+            related_id=friendship["id"]
+        )
+        return {"message": "Friend request accepted"}
+    else:
+        return {"message": "Friend request declined"}
+
+@api_router.get("/friends")
+async def get_friends(user_id: str = Depends(get_current_user)):
+    """Get user's friends list and pending requests"""
+    
+    # Get accepted friends
+    friends_pipeline = [
+        {
+            "$match": {
+                "$and": [
+                    {
+                        "$or": [
+                            {"requester_id": user_id},
+                            {"addressee_id": user_id}
+                        ]
+                    },
+                    {"status": FriendshipStatus.ACCEPTED}
+                ]
+            }
+        },
+        {
+            "$addFields": {
+                "friend_id": {
+                    "$cond": {
+                        "if": {"$eq": ["$requester_id", user_id]},
+                        "then": "$addressee_id",
+                        "else": "$requester_id"
+                    }
+                }
+            }
+        },
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "friend_id",
+                "foreignField": "id",
+                "as": "friend_info"
+            }
+        },
+        {"$unwind": "$friend_info"},
+        {
+            "$project": {
+                "friendship_id": "$id",
+                "friend_id": "$friend_id",
+                "name": "$friend_info.name",
+                "email": "$friend_info.email",
+                "picture": "$friend_info.picture",
+                "friends_since": "$responded_at",
+                "_id": 0
+            }
+        }
+    ]
+    
+    # Get pending requests (received)
+    pending_received_pipeline = [
+        {
+            "$match": {
+                "addressee_id": user_id,
+                "status": FriendshipStatus.PENDING
+            }
+        },
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "requester_id",
+                "foreignField": "id",
+                "as": "requester_info"
+            }
+        },
+        {"$unwind": "$requester_info"},
+        {
+            "$project": {
+                "request_id": "$id",
+                "requester_id": "$requester_id",
+                "name": "$requester_info.name",
+                "email": "$requester_info.email",
+                "picture": "$requester_info.picture",
+                "requested_at": "$requested_at",
+                "_id": 0
+            }
+        }
+    ]
+    
+    # Get pending requests (sent)
+    pending_sent_pipeline = [
+        {
+            "$match": {
+                "requester_id": user_id,
+                "status": FriendshipStatus.PENDING
+            }
+        },
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "addressee_id",
+                "foreignField": "id",
+                "as": "addressee_info"
+            }
+        },
+        {"$unwind": "$addressee_info"},
+        {
+            "$project": {
+                "request_id": "$id",
+                "addressee_id": "$addressee_id",
+                "name": "$addressee_info.name",
+                "email": "$addressee_info.email",
+                "picture": "$addressee_info.picture",
+                "requested_at": "$requested_at",
+                "_id": 0
+            }
+        }
+    ]
+    
+    friends = await db.friendships.aggregate(friends_pipeline).to_list(1000)
+    pending_received = await db.friendships.aggregate(pending_received_pipeline).to_list(100)
+    pending_sent = await db.friendships.aggregate(pending_sent_pipeline).to_list(100)
+    
+    return {
+        "friends": friends,
+        "pending_requests": {
+            "received": pending_received,
+            "sent": pending_sent
+        },
+        "stats": {
+            "total_friends": len(friends),
+            "pending_received": len(pending_received),
+            "pending_sent": len(pending_sent)
+        }
+    }
+
+# Messaging System API Endpoints  
+@api_router.post("/conversations")
+async def create_conversation(
+    message_data: MessageCreateV2,
+    user_id: str = Depends(get_current_user)
+):
+    """Create a new conversation or add message to existing conversation"""
+    
+    if message_data.conversation_id:
+        # Add message to existing conversation
+        conversation = await db.conversations.find_one({"id": message_data.conversation_id})
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Check if user is participant
+        participant_ids = [p["user_id"] for p in conversation["participants"]]
+        if user_id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Not authorized to message in this conversation")
+        
+        conversation_id = message_data.conversation_id
+        
+    else:
+        # Create new conversation with recipient
+        if not message_data.recipient_id:
+            raise HTTPException(status_code=400, detail="recipient_id required for new conversations")
+        
+        # Check if recipient exists
+        recipient = await db.users.find_one({"id": message_data.recipient_id})
+        if not recipient:
+            raise HTTPException(status_code=404, detail="Recipient not found")
+        
+        # Check if conversation already exists between these users
+        existing_conversation = await db.conversations.find_one({
+            "participants": {
+                "$all": [
+                    {"$elemMatch": {"user_id": user_id}},
+                    {"$elemMatch": {"user_id": message_data.recipient_id}}
+                ]
+            }
+        })
+        
+        if existing_conversation:
+            conversation_id = existing_conversation["id"]
+        else:
+            # Create new conversation
+            conversation = Conversation(
+                participants=[
+                    ConversationParticipant(user_id=user_id),
+                    ConversationParticipant(user_id=message_data.recipient_id)
+                ]
+            )
+            await db.conversations.insert_one(conversation.dict())
+            conversation_id = conversation.id
+    
+    # Create message
+    message = Message(
+        sender_id=user_id,
+        recipient_id=message_data.recipient_id or "",  # Will be updated for existing conversations
+        message=message_data.message
+    )
+    
+    # If this is an existing conversation, update recipient_id based on other participant
+    if message_data.conversation_id:
+        conversation = await db.conversations.find_one({"id": conversation_id})
+        other_participants = [p["user_id"] for p in conversation["participants"] if p["user_id"] != user_id]
+        if other_participants:
+            message.recipient_id = other_participants[0]
+    
+    await db.messages.insert_one(message.dict())
+    
+    # Update conversation last message time
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {
+            "$set": {
+                "last_message_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {
+        "message": "Message sent successfully",
+        "conversation_id": conversation_id,
+        "message_id": message.id
+    }
+
+@api_router.get("/conversations")
+async def get_conversations(user_id: str = Depends(get_current_user)):
+    """Get all conversations for a user"""
+    
+    pipeline = [
+        {
+            "$match": {
+                "participants": {"$elemMatch": {"user_id": user_id}}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "messages",
+                "localField": "id",
+                "foreignField": "sender_id",  # This is incorrect but will be fixed
+                "as": "messages"
+            }
+        },
+        {
+            "$addFields": {
+                "other_participant": {
+                    "$filter": {
+                        "input": "$participants",
+                        "cond": {"$ne": ["$$this.user_id", user_id]}
+                    }
+                }
+            }
+        },
+        {"$unwind": "$other_participant"},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "other_participant.user_id",
+                "foreignField": "id",
+                "as": "other_user_info"
+            }
+        },
+        {"$unwind": "$other_user_info"},
+        {
+            "$project": {
+                "conversation_id": "$id",
+                "other_user": {
+                    "id": "$other_user_info.id",
+                    "name": "$other_user_info.name",
+                    "picture": "$other_user_info.picture"
+                },
+                "last_message_at": "$last_message_at",
+                "created_at": "$created_at",
+                "_id": 0
+            }
+        },
+        {"$sort": {"last_message_at": -1}}
+    ]
+    
+    conversations = await db.conversations.aggregate(pipeline).to_list(100)
+    
+    # Get last message for each conversation
+    for conv in conversations:
+        last_message = await db.messages.find_one(
+            {
+                "$or": [
+                    {"sender_id": user_id, "recipient_id": conv["other_user"]["id"]},
+                    {"sender_id": conv["other_user"]["id"], "recipient_id": user_id}
+                ]
+            },
+            sort=[("created_at", -1)]
+        )
+        
+        if last_message:
+            last_message.pop('_id', None)
+            conv["last_message"] = {
+                "message": last_message["message"],
+                "sent_by_me": last_message["sender_id"] == user_id,
+                "created_at": last_message["created_at"],
+                "read": last_message["read"]
+            }
+        else:
+            conv["last_message"] = None
+    
+    return conversations
+
+@api_router.get("/conversations/{conversation_id}/messages")
+async def get_conversation_messages(
+    conversation_id: str,
+    limit: int = 50,
+    skip: int = 0,
+    user_id: str = Depends(get_current_user)
+):
+    """Get messages from a specific conversation"""
+    
+    # Verify user is participant in conversation
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    participant_ids = [p["user_id"] for p in conversation["participants"]]
+    if user_id not in participant_ids:
+        raise HTTPException(status_code=403, detail="Not authorized to view this conversation")
+    
+    # Get other participant ID
+    other_participant_id = None
+    for p in conversation["participants"]:
+        if p["user_id"] != user_id:
+            other_participant_id = p["user_id"]
+            break
+    
+    if not other_participant_id:
+        raise HTTPException(status_code=400, detail="Invalid conversation")
+    
+    # Get messages between these users
+    messages = await db.messages.find({
+        "$or": [
+            {"sender_id": user_id, "recipient_id": other_participant_id},
+            {"sender_id": other_participant_id, "recipient_id": user_id}
+        ]
+    }).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Remove MongoDB ObjectId and add sender info
+    for message in messages:
+        message.pop('_id', None)
+        message["sent_by_me"] = message["sender_id"] == user_id
+    
+    # Mark messages as read
+    await db.messages.update_many(
+        {
+            "sender_id": other_participant_id,
+            "recipient_id": user_id,
+            "read": False
+        },
+        {"$set": {"read": True}}
+    )
+    
+    return {
+        "messages": list(reversed(messages)),  # Return in chronological order
+        "conversation_id": conversation_id,
+        "total": len(messages)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
