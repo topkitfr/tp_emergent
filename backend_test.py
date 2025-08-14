@@ -554,7 +554,7 @@ class TopKitTester:
         self.test_collection_system()
         
         # Generate summary
-        self.generate_summary()
+        return self.generate_summary()
 
     def generate_summary(self):
         """Generate test summary"""
