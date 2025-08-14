@@ -8790,8 +8790,10 @@ const AppContent = () => {
   };
 
   const handleCreatorClick = (userId) => {
-    setSelectedUserId(userId);
-    setCurrentView('user-profile');
+    if (userId) {
+      setSelectedUserId(userId);
+      setCurrentView('user-profile');
+    }
   };
 
   const handleCloseUserProfile = () => {
