@@ -7174,6 +7174,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
     const handleFocus = () => {
       if (user) {
         fetchCollectionData();
+        fetchFriendsData();
       }
     };
 
