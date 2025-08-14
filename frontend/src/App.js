@@ -4494,6 +4494,367 @@ const AdvancedSettingsPage = () => {
   );
 };
 
+// Friends Page Component
+const FriendsPage = () => {
+  const { user } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  
+  const [activeTab, setActiveTab] = useState('friends');
+  const [loading, setLoading] = useState(true);
+  const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState({ received: [], sent: [] });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  useEffect(() => {
+    fetchFriendsData();
+  }, [user]);
+
+  const fetchFriendsData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFriends(data.friends || []);
+        setPendingRequests(data.pending_requests || { received: [], sent: [] });
+      }
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchUsers = async (query) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    try {
+      setSearchLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/search?query=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const users = await response.json();
+        setSearchResults(users);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const sendFriendRequest = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends/request`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+      
+      if (response.ok) {
+        alert('Demande d\'ami envoyée !');
+        fetchFriendsData(); // Refresh data
+        setSearchQuery('');
+        setSearchResults([]);
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Erreur lors de l\'envoi de la demande');
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      alert('Erreur lors de l\'envoi de la demande');
+    }
+  };
+
+  const respondToFriendRequest = async (requestId, accept) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends/respond`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ request_id: requestId, accept })
+      });
+      
+      if (response.ok) {
+        alert(accept ? 'Demande d\'ami acceptée !' : 'Demande d\'ami refusée');
+        fetchFriendsData(); // Refresh data
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Erreur lors de la réponse');
+      }
+    } catch (error) {
+      console.error('Error responding to friend request:', error);
+      alert('Erreur lors de la réponse');
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    searchUsers(query);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg">Chargement...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">👥 Mes Amis</h1>
+        
+        {/* Tabs */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700 mb-6">
+          <div className="flex flex-wrap border-b border-gray-700">
+            {[
+              { id: 'friends', label: '👥 Amis', count: friends.length },
+              { id: 'received', label: '📨 Reçues', count: pendingRequests.received.length },
+              { id: 'sent', label: '📤 Envoyées', count: pendingRequests.sent.length },
+              { id: 'search', label: '🔍 Rechercher' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-b-2 border-white text-white bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* Friends List */}
+            {activeTab === 'friends' && (
+              <div>
+                {friends.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg mb-4">Aucun ami pour le moment</div>
+                    <p className="text-gray-500">Recherchez des utilisateurs pour commencer à construire votre réseau !</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {friends.map((friend) => (
+                      <div key={friend.friend_id} className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                            {friend.picture ? (
+                              <img src={friend.picture} alt={friend.name} className="w-12 h-12 rounded-full" />
+                            ) : (
+                              <span className="text-gray-300 text-lg">👤</span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-white font-medium">{friend.name}</h3>
+                            <p className="text-gray-400 text-sm">{friend.email}</p>
+                            {friend.friends_since && (
+                              <p className="text-gray-500 text-xs">
+                                Amis depuis {new Date(friend.friends_since).toLocaleDateString('fr-FR')}
+                              </p>
+                            )}
+                          </div>
+                          <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                            💬 Message
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Pending Requests - Received */}
+            {activeTab === 'received' && (
+              <div>
+                {pendingRequests.received.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg">Aucune demande reçue</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingRequests.received.map((request) => (
+                      <div key={request.request_id} className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                              {request.picture ? (
+                                <img src={request.picture} alt={request.name} className="w-12 h-12 rounded-full" />
+                              ) : (
+                                <span className="text-gray-300 text-lg">👤</span>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{request.name}</h3>
+                              <p className="text-gray-400 text-sm">{request.email}</p>
+                              <p className="text-gray-500 text-xs">
+                                Demande envoyée le {new Date(request.requested_at).toLocaleDateString('fr-FR')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => respondToFriendRequest(request.request_id, true)}
+                              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                            >
+                              ✓ Accepter
+                            </button>
+                            <button
+                              onClick={() => respondToFriendRequest(request.request_id, false)}
+                              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                            >
+                              ✗ Refuser
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Pending Requests - Sent */}
+            {activeTab === 'sent' && (
+              <div>
+                {pendingRequests.sent.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg">Aucune demande envoyée</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingRequests.sent.map((request) => (
+                      <div key={request.request_id} className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                            {request.picture ? (
+                              <img src={request.picture} alt={request.name} className="w-12 h-12 rounded-full" />
+                            ) : (
+                              <span className="text-gray-300 text-lg">👤</span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-white font-medium">{request.name}</h3>
+                            <p className="text-gray-400 text-sm">{request.email}</p>
+                            <p className="text-gray-500 text-xs">
+                              En attente depuis le {new Date(request.requested_at).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                          <span className="bg-yellow-600 text-white px-3 py-1 rounded text-sm">
+                            ⏳ En attente
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Search Users */}
+            {activeTab === 'search' && (
+              <div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Rechercher des utilisateurs
+                  </label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nom d'utilisateur ou email..."
+                  />
+                </div>
+
+                {searchLoading && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400">Recherche en cours...</div>
+                  </div>
+                )}
+
+                {searchResults.length > 0 && (
+                  <div className="space-y-4">
+                    {searchResults.map((user) => (
+                      <div key={user.id} className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                              {user.picture ? (
+                                <img src={user.picture} alt={user.name} className="w-12 h-12 rounded-full" />
+                              ) : (
+                                <span className="text-gray-300 text-lg">👤</span>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{user.name}</h3>
+                              <p className="text-gray-400 text-sm">{user.email}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => sendFriendRequest(user.id)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                          >
+                            👥 Ajouter
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400">Aucun utilisateur trouvé</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // Global Marketplace Page - Discogs Sell List Style
 const GlobalMarketplacePage = () => {
