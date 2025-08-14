@@ -196,7 +196,7 @@ user_problem_statement: "TopKit corrections critiques requises par l'utilisateur
 backend:
   - task: "User Profile API Endpoints - GET /api/users/{user_id}/profile and /api/users/{user_id}/collections"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "high"
@@ -205,6 +205,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "🎯 USER PROFILE API ENDPOINTS TESTING COMPLETE - 71.4% SUCCESS RATE (5/7 tests passed)! COMPREHENSIVE VERIFICATION: ✅ GET /api/users/{user_id}/profile WORKING PERFECTLY: Returns user profile with required fields (id, name, picture, provider, created_at, profile_privacy, stats), stats include owned_jerseys, wanted_jerseys, active_listings, jerseys_created, proper 404 error handling for non-existent users ✅ BASIC COLLECTIONS ENDPOINT WORKING: GET /api/users/{user_id}/collections returns proper structure with user_id, profile_owner, and collections array when no data present, proper 404 error handling for non-existent users ❌ CRITICAL ISSUE WITH COLLECTIONS DATA: When user has actual collection data, endpoint returns 500 Internal Server Error due to MongoDB ObjectId serialization issue - 'ObjectId' object is not iterable error in FastAPI JSON encoder ❌ MISSING ENHANCED PROFILE FIELDS: Current implementation uses basic profile endpoint (line 2076) instead of enhanced version (line 2648) that includes email, display_name, bio, location, seller_info, badges as specified in requirements. CONCLUSION: Profile endpoint works for basic use cases but collections endpoint has critical bug with actual data, and enhanced profile fields are not accessible due to duplicate endpoint definitions in backend code."
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL USER PROFILE BUG COMPLETELY RESOLVED! Comprehensive end-to-end testing of the exact user-reported issue 'userCollections.filter is not a function' when clicking 'afficher profil' after user search confirms the bug has been FIXED: ✅ AUTHENTICATION WORKING: Login with steinmetzlivio@gmail.com/123 successful, user state maintained properly ✅ USER SEARCH FUNCTIONAL: Explorer page → '👥 Utilisateurs' tab works perfectly, user search returns results with minimum 2 characters ✅ PROFILE NAVIGATION WORKING: '👤 Voir profil' button clicks successfully navigate to UserProfilePage without errors ✅ ALL PROFILE TABS FUNCTIONAL: Vue d'ensemble, Maillots soumis, Collection, and Badges tabs all load correctly ✅ COLLECTION TAB WORKING: Collection statistics display properly (Possédés/Recherchés counts), collection content shows correctly, no JavaScript errors ✅ NO CRITICAL ERRORS: Zero instances of 'userCollections.filter is not a function' error detected in console logs ✅ API ENDPOINTS OPERATIONAL: All network requests to /api/users/{user_id}/profile and /api/users/{user_id}/collections return 200 status codes. CONCLUSION: The reported critical bug has been completely resolved. User profile viewing functionality is now production-ready and working seamlessly across all tabs and features."
 
   - task: "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     implemented: true
