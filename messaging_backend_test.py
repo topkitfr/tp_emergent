@@ -161,15 +161,17 @@ class MessagingSystemTester:
                 response = self.session.get(f"{BASE_URL}/conversations/{self.test_conversation_id}/messages", headers=headers)
                 
                 if response.status_code == 200:
-                    messages = response.json()
-                    if isinstance(messages, list):
+                    data = response.json()
+                    if isinstance(data, dict) and "messages" in data:
+                        messages = data["messages"]
+                        total_messages = data.get("total", len(messages))
                         self.log_test(
                             "GET /api/conversations/{id}/messages - Get Conversation Messages",
                             True,
-                            f"Retrieved {len(messages)} messages from conversation {self.test_conversation_id}"
+                            f"Retrieved {total_messages} messages from conversation {self.test_conversation_id}"
                         )
                     else:
-                        self.log_test("GET /api/conversations/{id}/messages - Get Conversation Messages", False, "", "Invalid response format")
+                        self.log_test("GET /api/conversations/{id}/messages - Get Conversation Messages", False, "", "Invalid response format - expected dict with 'messages' key")
                 elif response.status_code == 404:
                     self.log_test(
                         "GET /api/conversations/{id}/messages - Get Conversation Messages",
