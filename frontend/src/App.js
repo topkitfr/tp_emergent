@@ -7537,6 +7537,12 @@ const AppContent = () => {
         
       case 'settings':
         return <AdvancedSettingsPage />;
+        
+      case 'friends':
+        return <FriendsPage />;
+        
+      case 'messages':
+        return <MessagesPage />;
       
       case 'submit':
         return <SubmitJerseyPage />;
