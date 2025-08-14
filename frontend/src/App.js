@@ -9633,6 +9633,263 @@ const SubmitJerseyPage = () => {
   );
 };
 
+// Edit Jersey Modal Component for Admin
+const EditJerseyModal = ({ jersey, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    team: jersey.team || '',
+    season: jersey.season || '',
+    player: jersey.player || '',
+    size: jersey.size || 'M',
+    condition: jersey.condition || 'excellent',
+    manufacturer: jersey.manufacturer || '',
+    home_away: jersey.home_away || 'home',
+    league: jersey.league || '',
+    description: jersey.description || '',
+    reference_code: jersey.reference_code || '',
+    images: jersey.images || []
+  });
+  const [loading, setLoading] = useState(false);
+  const [selectedLeague, setSelectedLeague] = useState(jersey.league || '');
+  const [availableTeams, setAvailableTeams] = useState([]);
+
+  // Update available teams when league changes
+  useEffect(() => {
+    if (selectedLeague && LEAGUES_DATA[selectedLeague]) {
+      setAvailableTeams(LEAGUES_DATA[selectedLeague]);
+      if (!LEAGUES_DATA[selectedLeague].includes(formData.team)) {
+        setFormData({...formData, team: '', league: selectedLeague});
+      }
+    } else {
+      setAvailableTeams([]);
+    }
+  }, [selectedLeague]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await onSave(formData);
+    } catch (error) {
+      console.error('Failed to save jersey:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">✏️ Corriger la soumission</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-start">
+            <div className="text-blue-400 text-xl mr-3 mt-1">ℹ️</div>
+            <div>
+              <h3 className="text-blue-300 font-semibold mb-2">Mode Correction Admin</h3>
+              <p className="text-blue-200 text-sm leading-relaxed">
+                Vous pouvez corriger directement les informations soumises par l'utilisateur. 
+                Après correction, vous pourrez approuver le jersey en une seule étape.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
+            <h3 className="text-lg font-semibold mb-4 text-white">Détails du Maillot</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Ligue*</label>
+                <select
+                  value={selectedLeague}
+                  onChange={(e) => setSelectedLeague(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Sélectionner une ligue</option>
+                  {Object.keys(LEAGUES_DATA).map(league => (
+                    <option key={league} value={league}>{league}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Club/Équipe nationale*</label>
+                <select
+                  value={formData.team}
+                  onChange={(e) => setFormData({...formData, team: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                  disabled={!selectedLeague}
+                >
+                  <option value="">Sélectionner une équipe</option>
+                  {availableTeams.map(team => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Saison*</label>
+                <select
+                  value={formData.season}
+                  onChange={(e) => setFormData({...formData, season: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Sélectionner une saison</option>
+                  {SEASONS.map(season => (
+                    <option key={season} value={season}>{season}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Marque/Fabricant*</label>
+                <select
+                  value={formData.manufacturer}
+                  onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="">Sélectionner une marque</option>
+                  <option value="Adidas">Adidas</option>
+                  <option value="Nike">Nike</option>
+                  <option value="Puma">Puma</option>
+                  <option value="New Balance">New Balance</option>
+                  <option value="Under Armour">Under Armour</option>
+                  <option value="Hummel">Hummel</option>
+                  <option value="Kappa">Kappa</option>
+                  <option value="Umbro">Umbro</option>
+                  <option value="Macron">Macron</option>
+                  <option value="Errea">Errea</option>
+                  <option value="Other">Autre</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Nom du joueur</label>
+                <input
+                  type="text"
+                  placeholder="ex: Bruno Fernandes (optionnel)"
+                  value={formData.player}
+                  onChange={(e) => setFormData({...formData, player: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Code Référence</label>
+                <input
+                  type="text"
+                  placeholder="ex: 779963-01"
+                  value={formData.reference_code}
+                  onChange={(e) => setFormData({...formData, reference_code: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Type*</label>
+                <select
+                  value={formData.home_away}
+                  onChange={(e) => setFormData({...formData, home_away: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="home">Domicile</option>
+                  <option value="away">Extérieur</option>
+                  <option value="third">Troisième tenue</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Taille*</label>
+                <select
+                  value={formData.size}
+                  onChange={(e) => setFormData({...formData, size: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">État*</label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
+                  required
+                >
+                  <option value="new">Neuf</option>
+                  <option value="near_mint">Excellent</option>
+                  <option value="very_good">Très bon</option>
+                  <option value="good">Bon</option>
+                  <option value="poor">Acceptable</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                <textarea
+                  placeholder="Ajouter des détails sur le maillot, caractéristiques spéciales, etc."
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white placeholder-gray-400 h-20"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Photos du maillot</label>
+                <ImageUpload 
+                  images={formData.images}
+                  setImages={(images) => setFormData({...formData, images})}
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Télécharger des photos du maillot. Optionnel mais recommandé.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-semibold"
+            >
+              {loading ? 'Sauvegarde...' : 'Sauvegarder les corrections'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Admin Panel Component (topkitfr@gmail.com only)
 const AdminPanel = () => {
   const { user } = useAuth();
