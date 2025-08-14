@@ -753,6 +753,19 @@ const Header = ({ currentView, setCurrentView }) => {
                   >
                     My Profil
                   </button>
+                  <button 
+                    onClick={() => {
+                      setCurrentView('settings');
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                      currentView === 'settings' 
+                        ? 'bg-white text-black' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    ⚙️ Paramètres
+                  </button>
                   {user.email === 'topkitfr@gmail.com' && (
                     <button 
                       onClick={() => {
