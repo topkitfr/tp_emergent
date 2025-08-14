@@ -11093,6 +11093,21 @@ const AdminPanel = () => {
           }}
         />
       )}
+
+      {/* Submit Jersey Modal */}
+      {showSubmitModal && (
+        <SubmitJerseyModal 
+          onClose={() => setShowSubmitModal(false)}
+          onSuccess={() => {
+            setShowSubmitModal(false);
+            // Refresh submissions if on submitted tab
+            if (currentView === 'profile' && user) {
+              // This will trigger a re-fetch of user submissions
+              window.location.reload();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
