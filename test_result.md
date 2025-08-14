@@ -189,10 +189,10 @@ agent_communication:
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "TopKit améliorations demandées par l'utilisateur:
-1. SECTION AMIS dans My Profile - Afficher les amis avec compteur et onglets pour demandes (en attente/à approuver)
-2. SYSTÈME DE SOUMISSION ANONYME - Les maillots soumis ne sont plus automatiquement attribués à l'utilisateur, seuls les admins voient qui a soumis quoi, l'utilisateur peut voir SES soumissions avec statut et recevoir notifications si approuvé/corrigé
-3. INTERFACE ADMIN pour corriger soumissions - Admin peut reprendre le formulaire qu'un utilisateur a renseigné, le corriger, puis l'approuver en 2 étapes (Corriger → Approuver), avec 3 actions possibles: Corriger/Approuver/Supprimer"
+user_problem_statement: "TopKit continued development requested by user:
+1. COMPLETE MESSAGING SYSTEM IMPLEMENTATION - Full frontend for real-time conversations between users, replacing placeholder UI with functional messaging interface including conversation list, message sending/receiving, user search, and real-time updates
+2. ENHANCE USER SUBMISSIONS & NOTIFICATIONS - Complete the user submissions view with detailed status tracking and ensure notifications work properly for jersey submission lifecycle (submitted, approved, rejected, needs modification)
+3. TESTING & REFINEMENT - Comprehensive testing of all new messaging and notification features"
 
 backend:
   - task: "Friends Section in Profile - Backend API endpoints for friends data"
