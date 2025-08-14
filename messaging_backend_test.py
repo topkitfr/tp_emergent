@@ -493,8 +493,12 @@ class MessagingSystemTester:
                     new_notif_response = self.session.get(f"{BASE_URL}/notifications", headers=headers)
                     
                     if new_notif_response.status_code == 200:
-                        new_notifications = new_notif_response.json()
-                        new_count = len(new_notifications) if isinstance(new_notifications, list) else 0
+                        data = new_notif_response.json()
+                        if isinstance(data, dict) and "notifications" in data:
+                            new_notifications = data["notifications"]
+                            new_count = len(new_notifications)
+                        else:
+                            new_count = 0
                         
                         if new_count > initial_count:
                             self.log_test(
