@@ -4855,6 +4855,346 @@ const FriendsPage = () => {
   );
 };
 
+// Messages Page Component
+const MessagesPage = () => {
+  const { user } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [ws, setWs] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+      // Initialize WebSocket connection for real-time messaging
+      initializeWebSocket();
+    }
+    
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [user]);
+
+  const initializeWebSocket = () => {
+    try {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = API.replace('http://', '').replace('https://', '');
+      const wsUrl = `${wsProtocol}//${wsHost}/ws/${user.id}`;
+      
+      const websocket = new WebSocket(wsUrl);
+      
+      websocket.onopen = () => {
+        console.log('WebSocket connected for real-time messaging');
+      };
+      
+      websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_message') {
+          // Add new message to current conversation if it's the active one
+          if (selectedConversation && data.message.conversation_id === selectedConversation.conversation_id) {
+            setMessages(prev => [...prev, {
+              ...data.message,
+              sent_by_me: false
+            }]);
+          }
+          // Refresh conversations list to update last message
+          fetchConversations();
+        }
+      };
+      
+      websocket.onclose = () => {
+        console.log('WebSocket disconnected');
+        // Reconnect after 3 seconds
+        setTimeout(() => {
+          if (user) {
+            initializeWebSocket();
+          }
+        }, 3000);
+      };
+      
+      setWs(websocket);
+    } catch (error) {
+      console.error('WebSocket connection failed:', error);
+    }
+  };
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (conversationId) => {
+    try {
+      setMessagesLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations/${conversationId}/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.messages || []);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          conversation_id: selectedConversation.conversation_id,
+          message: newMessage.trim()
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Add message to current conversation
+        const newMsg = {
+          id: data.message_id,
+          message: newMessage.trim(),
+          created_at: new Date().toISOString(),
+          sent_by_me: true
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+        setNewMessage('');
+        
+        // Refresh conversations to update last message
+        fetchConversations();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const selectConversation = (conversation) => {
+    setSelectedConversation(conversation);
+    fetchMessages(conversation.conversation_id);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg">Chargement...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-8">💬 Messages</h1>
+        
+        <div className="bg-gray-900 rounded-lg border border-gray-700 h-[calc(100vh-200px)] flex">
+          {/* Conversations List */}
+          <div className="w-1/3 border-r border-gray-700 flex flex-col">
+            <div className="p-4 border-b border-gray-700">
+              <h2 className="text-lg font-semibold">Conversations</h2>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {conversations.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400">Aucune conversation</div>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Commencez par ajouter des amis pour pouvoir leur envoyer des messages !
+                  </p>
+                </div>
+              ) : (
+                conversations.map((conversation) => (
+                  <div
+                    key={conversation.conversation_id}
+                    onClick={() => selectConversation(conversation)}
+                    className={`p-4 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors ${
+                      selectedConversation?.conversation_id === conversation.conversation_id ? 'bg-gray-800' : ''
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                        {conversation.other_user.picture ? (
+                          <img 
+                            src={conversation.other_user.picture} 
+                            alt={conversation.other_user.name} 
+                            className="w-12 h-12 rounded-full" 
+                          />
+                        ) : (
+                          <span className="text-gray-300 text-lg">👤</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-medium truncate">
+                          {conversation.other_user.name}
+                        </h3>
+                        {conversation.last_message && (
+                          <p className="text-gray-400 text-sm truncate">
+                            {conversation.last_message.sent_by_me ? 'Vous: ' : ''}
+                            {conversation.last_message.message}
+                          </p>
+                        )}
+                        {conversation.last_message_at && (
+                          <p className="text-gray-500 text-xs">
+                            {new Date(conversation.last_message_at).toLocaleString('fr-FR')}
+                          </p>
+                        )}
+                      </div>
+                      {conversation.last_message && !conversation.last_message.read && !conversation.last_message.sent_by_me && (
+                        <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Messages Area */}
+          <div className="flex-1 flex flex-col">
+            {selectedConversation ? (
+              <>
+                {/* Chat Header */}
+                <div className="p-4 border-b border-gray-700 bg-gray-800">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+                      {selectedConversation.other_user.picture ? (
+                        <img 
+                          src={selectedConversation.other_user.picture} 
+                          alt={selectedConversation.other_user.name} 
+                          className="w-10 h-10 rounded-full" 
+                        />
+                      ) : (
+                        <span className="text-gray-300">👤</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">{selectedConversation.other_user.name}</h3>
+                      <p className="text-gray-400 text-sm">En ligne</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messagesLoading ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400">Chargement des messages...</div>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400">Aucun message encore</div>
+                      <p className="text-gray-500 text-sm mt-2">Commencez la conversation !</p>
+                    </div>
+                  ) : (
+                    messages.map((message, index) => (
+                      <div
+                        key={message.id || index}
+                        className={`flex ${message.sent_by_me ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] p-3 rounded-lg ${
+                            message.sent_by_me
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-700 text-white'
+                          }`}
+                        >
+                          <p className="text-sm">{message.message}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.sent_by_me ? 'text-blue-100' : 'text-gray-400'
+                          }`}>
+                            {new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Message Input */}
+                <div className="p-4 border-t border-gray-700">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Tapez votre message..."
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim()}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Envoyer
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-gray-400 text-lg mb-2">💬 Sélectionnez une conversation</div>
+                  <p className="text-gray-500">
+                    Choisissez une conversation dans la liste pour commencer à échanger !
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // Global Marketplace Page - Discogs Sell List Style
 const GlobalMarketplacePage = () => {
