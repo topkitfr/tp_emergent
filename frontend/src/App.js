@@ -4001,6 +4001,102 @@ const AdvancedSettingsPage = () => {
                             placeholder="Informations importantes pour vos acheteurs..."
                           />
                         </div>
+
+                        {/* Shipping Settings */}
+                        <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                          <h3 className="text-lg font-semibold text-white mb-4">📦 Frais d'envoi</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                France métropolitaine (€)
+                              </label>
+                              <input
+                                type="number"
+                                value={sellerSettings.shipping_cost_france || ''}
+                                onChange={(e) => setSellerSettings({...sellerSettings, shipping_cost_france: parseFloat(e.target.value) || 0})}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-2 focus:ring-blue-500"
+                                placeholder="5.00"
+                                step="0.50"
+                                min="0"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Europe (€)
+                              </label>
+                              <input
+                                type="number"
+                                value={sellerSettings.shipping_cost_europe || ''}
+                                onChange={(e) => setSellerSettings({...sellerSettings, shipping_cost_europe: parseFloat(e.target.value) || 0})}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-2 focus:ring-blue-500"
+                                placeholder="8.00"
+                                step="0.50"
+                                min="0"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                International (€)
+                              </label>
+                              <input
+                                type="number"
+                                value={sellerSettings.shipping_cost_international || ''}
+                                onChange={(e) => setSellerSettings({...sellerSettings, shipping_cost_international: parseFloat(e.target.value) || 0})}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-2 focus:ring-blue-500"
+                                placeholder="15.00"
+                                step="0.50"
+                                min="0"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Envoi gratuit à partir de (€)
+                              </label>
+                              <input
+                                type="number"
+                                value={sellerSettings.free_shipping_threshold || ''}
+                                onChange={(e) => setSellerSettings({...sellerSettings, free_shipping_threshold: parseFloat(e.target.value) || 0})}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:ring-2 focus:ring-blue-500"
+                                placeholder="50.00"
+                                step="5.00"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Transporteurs acceptés
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {['La Poste', 'Chronopost', 'DHL', 'UPS', 'FedEx', 'Mondial Relay'].map((carrier) => (
+                                <div key={carrier} className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`carrier_${carrier.replace(' ', '_')}`}
+                                    checked={(sellerSettings.accepted_carriers || []).includes(carrier)}
+                                    onChange={(e) => {
+                                      const carriers = sellerSettings.accepted_carriers || [];
+                                      if (e.target.checked) {
+                                        setSellerSettings({...sellerSettings, accepted_carriers: [...carriers, carrier]});
+                                      } else {
+                                        setSellerSettings({...sellerSettings, accepted_carriers: carriers.filter(c => c !== carrier)});
+                                      }
+                                    }}
+                                    className="w-4 h-4 text-blue-600 bg-gray-700 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                                  />
+                                  <label htmlFor={`carrier_${carrier.replace(' ', '_')}`} className="text-sm text-gray-300">
+                                    {carrier}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </>
                     )}
 
