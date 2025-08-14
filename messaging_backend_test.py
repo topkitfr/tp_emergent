@@ -373,16 +373,18 @@ class MessagingSystemTester:
                 notif_response = self.session.get(f"{BASE_URL}/notifications", headers=headers)
                 
                 if notif_response.status_code == 200:
-                    notifications = notif_response.json()
+                    data = notif_response.json()
                     
                     # Look for jersey submission notification
                     submission_notification = None
-                    for notif in notifications:
-                        if (notif.get("related_id") == jersey_id or 
-                            "submitted" in notif.get("message", "").lower() or
-                            "jersey" in notif.get("title", "").lower()):
-                            submission_notification = notif
-                            break
+                    if isinstance(data, dict) and "notifications" in data:
+                        notifications = data["notifications"]
+                        for notif in notifications:
+                            if (notif.get("related_id") == jersey_id or 
+                                "submitted" in notif.get("message", "").lower() or
+                                "jersey" in notif.get("title", "").lower()):
+                                submission_notification = notif
+                                break
                     
                     if submission_notification:
                         self.log_test(
