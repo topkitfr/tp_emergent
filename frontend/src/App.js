@@ -5462,7 +5462,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
 // Collections Page Component
 const CollectionsPage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('owned');
+  const [activeTab, setActiveTab] = useState('collection');
   const [collections, setCollections] = useState([]);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
