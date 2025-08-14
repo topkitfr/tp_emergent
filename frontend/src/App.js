@@ -9234,6 +9234,18 @@ const AppContent = () => {
     }
   };
 
+  // Show loading spinner while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mb-4"></div>
+          <div className="text-gray-400">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
