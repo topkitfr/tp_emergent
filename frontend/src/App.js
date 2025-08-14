@@ -7286,6 +7286,30 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
     }
   };
 
+  const handleFriendResponse = async (requestId, accept) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/friends/respond`, {
+        request_id: requestId,
+        accept: accept
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Refresh friends data
+      fetchFriendsData();
+      
+      if (accept) {
+        alert('Demande d\'ami acceptée !');
+      } else {
+        alert('Demande d\'ami refusée.');
+      }
+    } catch (error) {
+      console.error('Failed to respond to friend request:', error);
+      alert('Impossible de répondre à la demande d\'ami. Veuillez réessayer.');
+    }
+  };
+
   const renderCollectionList = (items, collectionType) => (
     <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
       {/* Desktop Table View */}
