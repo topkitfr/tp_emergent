@@ -7540,6 +7540,429 @@ const MessagingInterface = () => {
   );
 };
 
+// Enhanced Submission Card Component
+const EnhancedSubmissionCard = ({ jersey, onResubmit }) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showResubmissionModal, setShowResubmissionModal] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'bg-green-800 text-green-200';
+      case 'rejected': return 'bg-red-800 text-red-200';
+      case 'needs_modification': return 'bg-orange-800 text-orange-200';
+      default: return 'bg-yellow-800 text-yellow-200';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved': return '✅ Approuvé';
+      case 'rejected': return '❌ Rejeté';
+      case 'needs_modification': return '🔧 Modifications requises';
+      default: return '⏳ En attente';
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    if (!jersey || jersey.status !== 'needs_modification') return;
+    
+    try {
+      setLoadingSuggestions(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/jerseys/${jersey.id}/suggestions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuggestions(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleViewSuggestions = async () => {
+    setShowSuggestions(true);
+    await fetchSuggestions();
+  };
+
+  const handleResubmit = () => {
+    setShowResubmissionModal(true);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <>
+      <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 hover:border-gray-600 transition-colors">
+        <div className="flex items-start space-x-4">
+          {/* Jersey Image */}
+          <div className="w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {jersey.images && jersey.images.length > 0 ? (
+              <img
+                src={jersey.images[0]}
+                alt={`${jersey.team} ${jersey.season}`}
+                className="w-full h-full object-cover rounded-lg"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/80x80?text=Jersey';
+                }}
+              />
+            ) : (
+              <div className="text-gray-500 text-2xl">👕</div>
+            )}
+          </div>
+
+          {/* Jersey Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1 truncate">
+                  {jersey.team}
+                </h3>
+                <p className="text-gray-400 text-sm mb-1">
+                  {jersey.season} • {jersey.home_away || 'Domicile'}
+                  {jersey.player && ` • ${jersey.player}`}
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Référence: {jersey.reference_number}
+                </p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(jersey.status)}`}>
+                {getStatusText(jersey.status)}
+              </span>
+            </div>
+
+            {/* Jersey Specs */}
+            <div className="flex items-center space-x-4 mb-3 text-sm text-gray-400">
+              <span>Taille: {jersey.size}</span>
+              <span>État: {jersey.condition}</span>
+              {jersey.manufacturer && <span>Marque: {jersey.manufacturer}</span>}
+            </div>
+
+            {/* Submission Date */}
+            <div className="text-xs text-gray-500 mb-4">
+              Soumis le {formatDate(jersey.created_at)}
+              {jersey.approved_at && jersey.status === 'approved' && (
+                <span> • Approuvé le {formatDate(jersey.approved_at)}</span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
+              {jersey.status === 'needs_modification' && (
+                <>
+                  <button
+                    onClick={handleViewSuggestions}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    📝 Voir les suggestions
+                  </button>
+                  <button
+                    onClick={handleResubmit}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    🔄 Resoumettre
+                  </button>
+                </>
+              )}
+              
+              {jersey.status === 'rejected' && jersey.rejection_reason && (
+                <div className="text-red-400 text-sm">
+                  <span className="font-medium">Motif:</span> {jersey.rejection_reason}
+                </div>
+              )}
+
+              {jersey.status === 'approved' && (
+                <div className="text-green-400 text-sm font-medium">
+                  🎉 Maillot publié dans la base de données
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Suggestions Modal */}
+      {showSuggestions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto border border-gray-700">
+            <div className="flex justify-between items-center p-6 border-b border-gray-700">
+              <h3 className="text-xl font-bold text-white">Suggestions de modification</h3>
+              <button
+                onClick={() => setShowSuggestions(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6">
+              {loadingSuggestions ? (
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSpinner size="md" className="mr-3" />
+                  <span className="text-gray-400">Chargement des suggestions...</span>
+                </div>
+              ) : suggestions.length > 0 ? (
+                <div className="space-y-4">
+                  {suggestions.map((suggestion, index) => (
+                    <div key={index} className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                      <div className="flex items-start space-x-3 mb-3">
+                        <Avatar user={{ name: suggestion.moderator_info?.name }} size="sm" />
+                        <div>
+                          <div className="text-white font-medium">
+                            {suggestion.moderator_info?.name || 'Modérateur'}
+                          </div>
+                          <div className="text-gray-400 text-xs">
+                            {formatDate(suggestion.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-700 rounded-lg p-3 mb-3">
+                        <p className="text-white text-sm leading-relaxed">
+                          {suggestion.suggested_changes}
+                        </p>
+                      </div>
+
+                      {suggestion.suggested_modifications && Object.keys(suggestion.suggested_modifications).length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-gray-300 text-sm font-medium">Modifications suggérées:</div>
+                          {Object.entries(suggestion.suggested_modifications).map(([field, value]) => (
+                            <div key={field} className="text-xs text-gray-400 bg-gray-700 px-3 py-2 rounded">
+                              <span className="font-medium capitalize">{field}:</span> {value}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  Aucune suggestion trouvée
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-700">
+                <button
+                  onClick={() => setShowSuggestions(false)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSuggestions(false);
+                    handleResubmit();
+                  }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  🔄 Resoumettre ce maillot
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resubmission Modal */}
+      {showResubmissionModal && (
+        <ResubmissionModal
+          jersey={jersey}
+          onClose={() => setShowResubmissionModal(false)}
+          onSuccess={() => {
+            setShowResubmissionModal(false);
+            onResubmit();
+          }}
+        />
+      )}
+    </>
+  );
+};
+
+// Resubmission Modal Component
+const ResubmissionModal = ({ jersey, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    team: jersey?.team || '',
+    season: jersey?.season || '',
+    player: jersey?.player || '',
+    size: jersey?.size || '',
+    condition: jersey?.condition || '',
+    manufacturer: jersey?.manufacturer || '',
+    home_away: jersey?.home_away || 'home',
+    league: jersey?.league || '',
+    description: jersey?.description || '',
+    images: jersey?.images || [],
+    reference_code: jersey?.reference_code || ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/jerseys?resubmission_id=${jersey.id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      onSuccess();
+    } catch (error) {
+      console.error('Resubmission failed:', error);
+      setError(error.response?.data?.detail || 'Erreur lors de la resoumission');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto border border-gray-700">
+        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+          <h3 className="text-xl font-bold text-white">Resoumettre le maillot</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          {error && (
+            <div className="bg-red-900 border border-red-600 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <span className="text-red-400 text-xl mr-3">❌</span>
+                <div>
+                  <div className="text-red-300 font-semibold">Erreur</div>
+                  <div className="text-red-200 text-sm">{error}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Team */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Équipe *</label>
+              <input
+                type="text"
+                required
+                value={formData.team}
+                onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Season */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Saison *</label>
+              <select
+                required
+                value={formData.season}
+                onChange={(e) => setFormData({ ...formData, season: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="">Sélectionner une saison</option>
+                {SEASONS.map((season) => (
+                  <option key={season} value={season}>{season}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Player */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Joueur (optionnel)</label>
+              <input
+                type="text"
+                value={formData.player}
+                onChange={(e) => setFormData({ ...formData, player: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Size */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Taille *</label>
+              <select
+                required
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="">Sélectionner une taille</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+              </select>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">État *</label>
+              <select
+                required
+                value={formData.condition}
+                onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="">Sélectionner un état</option>
+                <option value="new">Neuf</option>
+                <option value="near_mint">Quasi-neuf</option>
+                <option value="very_good">Très bon</option>
+                <option value="good">Bon</option>
+                <option value="poor">Moyen</option>
+              </select>
+            </div>
+
+            {/* Manufacturer */}
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Fabricant</label>
+              <input
+                type="text"
+                value={formData.manufacturer}
+                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              {loading ? 'Soumission...' : '🔄 Resoumettre'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Unified Profile & Collection Page with Dark Theme
 const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   const { user, loading: authLoading } = useAuth();
