@@ -7703,10 +7703,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
       {/* Tab Navigation */}
       <div className="bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-6">
-          <nav className="flex space-x-8">
+          <nav className="flex space-x-6 md:space-x-8 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('collection')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'collection'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -7716,7 +7716,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             </button>
             <button
               onClick={() => setActiveTab('wishlist')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'wishlist'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -7726,7 +7726,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             </button>
             <button
               onClick={() => setActiveTab('submitted')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'submitted'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -7736,7 +7736,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'stats'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -7746,7 +7746,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             </button>
             <button
               onClick={() => setActiveTab('friends')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'friends'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -7756,7 +7756,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+              className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'messages'
                   ? 'border-white text-white'
                   : 'border-transparent text-gray-400 hover:text-gray-300'
