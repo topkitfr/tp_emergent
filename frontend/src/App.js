@@ -3265,10 +3265,16 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       setSearchLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/api/users/search?q=${encodeURIComponent(query)}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await fetch(`${API}/api/users/search?query=${encodeURIComponent(query)}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
-        setSearchResults(response.data.users || []);
+        
+        if (response.ok) {
+          const users = await response.json();
+          setSearchResults(users);
+        } else {
+          setSearchResults([]);
+        }
       } catch (error) {
         console.error('Failed to search users:', error);
         setSearchResults([]);
