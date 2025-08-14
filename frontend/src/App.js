@@ -5682,7 +5682,7 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
             {activeTab === 'collection' && (
               <div>
                 <h3 className="text-xl font-semibold mb-4">Collection de {profileData.display_name || profileData.name}</h3>
-                {userCollections.length === 0 ? (
+                {Array.isArray(userCollections) && userCollections.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-gray-400 text-lg">Collection privée ou vide</div>
                   </div>
@@ -5690,9 +5690,9 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
                   <div className="space-y-6">
                     {/* Owned Collection */}
                     <div>
-                      <h4 className="text-lg font-medium mb-3 text-green-400">📗 Maillots possédés ({userCollections.filter(c => c.collection_type === 'owned').length})</h4>
+                      <h4 className="text-lg font-medium mb-3 text-green-400">📗 Maillots possédés ({Array.isArray(userCollections) ? userCollections.filter(c => c.collection_type === 'owned').length : 0})</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {userCollections.filter(c => c.collection_type === 'owned').map((item) => (
+                        {Array.isArray(userCollections) && userCollections.filter(c => c.collection_type === 'owned').map((item) => (
                           <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-600 p-3">
                             <h5 className="text-white font-medium">{item.jersey?.team}</h5>
                             <p className="text-gray-400 text-sm">{item.jersey?.season}</p>
@@ -5704,9 +5704,9 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
 
                     {/* Wanted Collection */}
                     <div>
-                      <h4 className="text-lg font-medium mb-3 text-yellow-400">📒 Maillots recherchés ({userCollections.filter(c => c.collection_type === 'wanted').length})</h4>
+                      <h4 className="text-lg font-medium mb-3 text-yellow-400">📒 Maillots recherchés ({Array.isArray(userCollections) ? userCollections.filter(c => c.collection_type === 'wanted').length : 0})</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {userCollections.filter(c => c.collection_type === 'wanted').map((item) => (
+                        {Array.isArray(userCollections) && userCollections.filter(c => c.collection_type === 'wanted').map((item) => (
                           <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-600 p-3">
                             <h5 className="text-white font-medium">{item.jersey?.team}</h5>
                             <p className="text-gray-400 text-sm">{item.jersey?.season}</p>
