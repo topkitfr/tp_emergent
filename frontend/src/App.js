@@ -10338,7 +10338,7 @@ const AdminPanel = () => {
       
       {/* Edit Jersey Modal */}
       {showEditModal && jerseyToEdit && (
-        <EditJerseyModal
+        <AdminEditJerseyModal
           jersey={jerseyToEdit}
           onClose={() => {
             setShowEditModal(false);
