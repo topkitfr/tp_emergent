@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://jersey-collect-bug.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-exchange-2.preview.emergentagent.com/api"
 
 class ExtendedAuthTester:
     def __init__(self):
