@@ -6555,7 +6555,7 @@ const MessagingInterface = () => {
               <button
                 onClick={() => {
                   setShowNewConversation(false);
-                  setSearchUsers('');
+                  setUserSearchQuery('');
                   setSearchResults([]);
                 }}
                 className="text-gray-400 hover:text-white"
