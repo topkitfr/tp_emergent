@@ -6342,13 +6342,13 @@ const MessagingInterface = () => {
   // Effect to handle search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchUsers) {
-        searchForUsers(searchUsers);
+      if (userSearchQuery) {
+        searchForUsers(userSearchQuery);
       }
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchUsers]);
+  }, [userSearchQuery]);
 
   // Load conversations on mount
   useEffect(() => {
