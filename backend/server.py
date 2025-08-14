@@ -464,6 +464,49 @@ class RatingCreate(BaseModel):
     score: int  # 1-5
     comment: Optional[str] = None
 
+# Friends System Models
+class FriendshipStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    BLOCKED = "blocked"
+
+class Friendship(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    requester_id: str  # User who sent the friend request
+    addressee_id: str  # User who received the friend request
+    status: FriendshipStatus = FriendshipStatus.PENDING
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    responded_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class FriendRequest(BaseModel):
+    user_id: str  # The user to send friend request to
+    message: Optional[str] = None  # Optional message with friend request
+
+class FriendRequestResponse(BaseModel):
+    request_id: str
+    accept: bool  # True to accept, False to decline
+
+# Messaging System Models (extending existing Message model)
+class ConversationParticipant(BaseModel):
+    user_id: str
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    last_read_at: Optional[datetime] = None
+
+class Conversation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    participants: List[ConversationParticipant]
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    last_message_at: Optional[datetime] = None
+
+class MessageCreateV2(BaseModel):
+    conversation_id: Optional[str] = None  # If None, create new conversation
+    recipient_id: Optional[str] = None  # For new conversations
+    message: str
+    message_type: str = "text"  # "text", "image", "file"
+
 # Authentication helpers
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
