@@ -1809,6 +1809,61 @@ async def get_listing(listing_id: str):
     
     return listing
 
+# Marketplace Catalog endpoint - Discogs style (jerseys with listings)
+@api_router.get("/marketplace/catalog")
+async def get_marketplace_catalog():
+    """Get jerseys that have active listings - Discogs style catalog"""
+    try:
+        # Get all jerseys that have at least one active listing
+        pipeline = [
+            # Match only approved jerseys
+            {"$match": {"status": "approved"}},
+            # Lookup active listings for each jersey
+            {
+                "$lookup": {
+                    "from": "listings",
+                    "let": {"jersey_id": "$id"},
+                    "pipeline": [
+                        {"$match": {"$expr": {"$eq": ["$jersey_id", "$$jersey_id"]}}},
+                        {"$match": {"status": "active"}}
+                    ],
+                    "as": "listings"
+                }
+            },
+            # Only keep jerseys that have at least one listing
+            {"$match": {"listings.0": {"$exists": True}}},
+            # Add computed fields
+            {
+                "$addFields": {
+                    "listing_count": {"$size": "$listings"},
+                    "min_price": {"$min": "$listings.price"},
+                    "max_price": {"$max": "$listings.price"},
+                    "available_sizes": {"$setUnion": ["$listings.jersey.size"]},
+                    "available_conditions": {"$setUnion": ["$listings.jersey.condition"]}
+                }
+            },
+            # Clean up - remove listings array to keep response lightweight  
+            {"$project": {"listings": 0}},
+            # Sort by newest first
+            {"$sort": {"created_at": -1}}
+        ]
+        
+        catalog = await db.jerseys.aggregate(pipeline).to_list(1000)
+        
+        # Remove MongoDB ObjectId fields
+        for jersey in catalog:
+            jersey.pop('_id', None)
+            
+        return catalog
+        
+    except Exception as e:
+        print(f"Error getting marketplace catalog: {e}")
+        # Fallback to simple approach
+        jerseys = await db.jerseys.find({"status": "approved"}).to_list(1000)
+        for jersey in jerseys:
+            jersey.pop('_id', None)
+        return jerseys
+
 # Collection endpoints
 @api_router.post("/collections")
 async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depends(get_current_user)):
