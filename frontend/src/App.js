@@ -6232,6 +6232,11 @@ const MessagingInterface = () => {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   // Fetch conversations
   const fetchConversations = async () => {
