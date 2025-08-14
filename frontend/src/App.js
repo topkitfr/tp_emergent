@@ -9777,6 +9777,11 @@ const AdminPanel = () => {
     }
   };
 
+  const handleEdit = (jersey) => {
+    setJerseyToEdit({...jersey}); // Create a copy for editing
+    setShowEditModal(true);
+  };
+
   const handleAssignRole = async (userId, newRole, userName) => {
     const reason = prompt(`Assigning ${newRole} role to ${userName}. Reason (optional):`);
     if (reason === null) return; // User cancelled
