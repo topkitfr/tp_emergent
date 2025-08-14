@@ -3706,6 +3706,75 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     </button>
                   </div>
                 )}
+              </>
+            ) : (
+              /* Users Tab */
+              <div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Rechercher des utilisateurs
+                  </label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleUserSearch}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nom d'utilisateur ou email..."
+                  />
+                </div>
+
+                {searchLoading && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400">Recherche en cours...</div>
+                  </div>
+                )}
+
+                {searchResults.length > 0 && (
+                  <div className="space-y-4">
+                    {searchResults.map((user) => (
+                      <div key={user.id} className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                              {user.picture ? (
+                                <img src={user.picture} alt={user.name} className="w-12 h-12 rounded-full" />
+                              ) : (
+                                <span className="text-gray-300 text-lg">👤</span>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{user.name}</h3>
+                              <p className="text-gray-400 text-sm">{user.email}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onViewUserProfile && onViewUserProfile(user.id)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                          >
+                            👤 Voir profil
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400">Aucun utilisateur trouvé</div>
+                  </div>
+                )}
+
+                {searchQuery.length < 2 && (
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-2">🔍 Recherche d'utilisateurs</div>
+                    <p className="text-gray-500 text-sm">
+                      Tapez au moins 2 caractères pour rechercher des utilisateurs de TopKit
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
               </div>
             )}
           </div>
