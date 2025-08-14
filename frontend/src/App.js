@@ -3800,8 +3800,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 )}
               </div>
             )}
-              </div>
-            )}
           </div>
         </div>
       </div>
