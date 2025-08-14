@@ -5750,10 +5750,13 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
 };
 
 
-// Global Marketplace Page - Discogs Sell List Style
+// Global Marketplace Page - Discogs Style (Jersey References then Listings)
 const GlobalMarketplacePage = () => {
-  const [listings, setListings] = useState([]);
+  const [jerseys, setJerseys] = useState([]); // Jersey references available for sale
+  const [selectedJersey, setSelectedJersey] = useState(null); // Selected jersey to view listings
+  const [selectedJerseyListings, setSelectedJerseyListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [listingsLoading, setListingsLoading] = useState(false);
   const [filters, setFilters] = useState({
     team: '',
     league: '',
@@ -5768,86 +5771,423 @@ const GlobalMarketplacePage = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
-    fetchAllListings();
+    fetchAvailableJerseys();
   }, []);
 
-  const fetchAllListings = async () => {
+  // Fetch jerseys that have active listings (Discogs style catalog)
+  const fetchAvailableJerseys = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API}/api/listings`);
-      setListings(response.data || []);
+      // Get all jerseys that have at least one active listing
+      const response = await axios.get(`${API}/api/marketplace/catalog`);
+      setJerseys(response.data || []);
     } catch (error) {
-      console.error('Failed to fetch listings:', error);
-      setListings([]);
+      console.error('Failed to fetch marketplace catalog:', error);
+      // Fallback: get all approved jerseys and check which have listings
+      try {
+        const jerseysResponse = await axios.get(`${API}/api/jerseys?status=approved`);
+        const listingsResponse = await axios.get(`${API}/api/listings`);
+        
+        const jerseysWithListings = jerseysResponse.data.filter(jersey => 
+          listingsResponse.data.some(listing => listing.jersey_id === jersey.id)
+        );
+        setJerseys(jerseysWithListings || []);
+      } catch (fallbackError) {
+        console.error('Fallback failed:', fallbackError);
+        setJerseys([]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch listings for a specific jersey (Discogs style listings page)
+  const fetchJerseyListings = async (jerseyId) => {
+    try {
+      setListingsLoading(true);
+      const response = await axios.get(`${API}/api/listings?jersey_id=${jerseyId}`);
+      setSelectedJerseyListings(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch jersey listings:', error);
+      setSelectedJerseyListings([]);
+    } finally {
+      setListingsLoading(false);
+    }
+  };
+
+  const handleJerseyClick = async (jersey) => {
+    setSelectedJersey(jersey);
+    await fetchJerseyListings(jersey.id);
+  };
+
+  const handleBackToCatalog = () => {
+    setSelectedJersey(null);
+    setSelectedJerseyListings([]);
+  };
+
   // Get unique values for filters
   const getUniqueValues = (field) => {
-    const values = listings
-      .map(listing => listing.jersey?.[field])
+    const values = jerseys
+      .map(jersey => jersey[field])
       .filter(v => v && v.trim());
     return [...new Set(values)].sort();
   };
 
-  // Filter and search listings
-  const getFilteredListings = () => {
-    let filtered = listings;
+  // Filter and search jerseys
+  const getFilteredJerseys = () => {
+    let filtered = jerseys;
 
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.jersey?.player?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.jersey?.league?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(jersey => 
+        jersey.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jersey.player?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jersey.league?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Filters
     if (filters.team) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.team?.toLowerCase().includes(filters.team.toLowerCase())
+      filtered = filtered.filter(jersey => 
+        jersey.team?.toLowerCase().includes(filters.team.toLowerCase())
       );
     }
     if (filters.league) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.league?.toLowerCase().includes(filters.league.toLowerCase())
+      filtered = filtered.filter(jersey => 
+        jersey.league?.toLowerCase().includes(filters.league.toLowerCase())
       );
     }
     if (filters.season) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.season === filters.season
-      );
-    }
-    if (filters.condition) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.condition === filters.condition
-      );
-    }
-    if (filters.size) {
-      filtered = filtered.filter(listing => 
-        listing.jersey?.size === filters.size
-      );
-    }
-    if (filters.minPrice) {
-      filtered = filtered.filter(listing => 
-        listing.price >= parseFloat(filters.minPrice)
-      );
-    }
-    if (filters.maxPrice) {
-      filtered = filtered.filter(listing => 
-        listing.price <= parseFloat(filters.maxPrice)
+      filtered = filtered.filter(jersey => 
+        jersey.season === filters.season
       );
     }
 
-    // Sort
+    return filtered;
+  };
+
+  // Sort listings for selected jersey
+  const getSortedListings = () => {
+    let sorted = [...selectedJerseyListings];
+    
     switch (sortBy) {
       case 'price_low':
-        filtered.sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => a.price - b.price);
         break;
+      case 'price_high':
+        sorted.sort((a, b) => b.price - a.price);
+        break;
+      case 'condition':
+        const conditionOrder = { 'mint': 5, 'excellent': 4, 'very_good': 3, 'good': 2, 'fair': 1 };
+        sorted.sort((a, b) => (conditionOrder[b.jersey?.condition] || 0) - (conditionOrder[a.jersey?.condition] || 0));
+        break;
+      case 'newest':
+      default:
+        sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+    }
+    
+    return sorted;
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const getConditionBadge = (condition) => {
+    const badges = {
+      'mint': 'bg-green-100 text-green-800',
+      'excellent': 'bg-blue-100 text-blue-800', 
+      'very_good': 'bg-yellow-100 text-yellow-800',
+      'good': 'bg-orange-100 text-orange-800',
+      'fair': 'bg-red-100 text-red-800'
+    };
+    
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badges[condition] || 'bg-gray-100 text-gray-800'}`}>
+        {condition?.toUpperCase() || 'N/A'}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Loading marketplace...</div>
+      </div>
+    );
+  }
+
+  // Show listings for selected jersey (Step C in Discogs flow)
+  if (selectedJersey) {
+    return (
+      <div className="min-h-screen bg-black">
+        <div className="container mx-auto px-4 py-8">
+          {/* Back button and jersey info */}
+          <div className="mb-8">
+            <button
+              onClick={handleBackToCatalog}
+              className="text-blue-400 hover:text-white mb-4 flex items-center space-x-2"
+            >
+              <span>←</span>
+              <span>Retour au catalogue</span>
+            </button>
+            
+            <div className="bg-gray-900 rounded-xl border border-gray-700 p-6">
+              <div className="flex items-start space-x-6">
+                <div className="w-32 h-32 bg-gray-800 rounded overflow-hidden flex-shrink-0">
+                  {selectedJersey.images?.[0] ? (
+                    <img 
+                      src={selectedJersey.images[0]} 
+                      alt={selectedJersey.team}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500">
+                      👕
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    {selectedJersey.player ? `${selectedJersey.team} - ${selectedJersey.player}` : selectedJersey.team}
+                  </h1>
+                  <p className="text-gray-300 text-lg mb-4">
+                    {selectedJersey.league} • {selectedJersey.season} • {selectedJersey.home_away}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Référence:</span>
+                      <span className="text-white ml-2 font-mono">{selectedJersey.reference_number}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Fabricant:</span>
+                      <span className="text-white ml-2">{selectedJersey.manufacturer}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Annonces:</span>
+                      <span className="text-white ml-2">{selectedJerseyListings.length}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Prix dès:</span>
+                      <span className="text-white ml-2 font-bold">
+                        {selectedJerseyListings.length > 0 ? `${Math.min(...selectedJerseyListings.map(l => l.price))}€` : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Listings controls */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">
+                Annonces disponibles ({selectedJerseyListings.length})
+              </h2>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+              >
+                <option value="price_low">Prix croissant</option>
+                <option value="price_high">Prix décroissant</option>
+                <option value="condition">Par état</option>
+                <option value="newest">Plus récent</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Listings */}
+          {listingsLoading ? (
+            <div className="text-center py-8 text-gray-400">Chargement des annonces...</div>
+          ) : selectedJerseyListings.length > 0 ? (
+            <div className="space-y-4">
+              {getSortedListings().map((listing) => (
+                <div key={listing.id} className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4 mb-3">
+                        <div className="text-2xl font-bold text-white">{listing.price}€</div>
+                        {getConditionBadge(listing.jersey?.condition)}
+                        <div className="text-sm text-gray-400">Taille {listing.jersey?.size}</div>
+                      </div>
+                      
+                      {listing.description && (
+                        <p className="text-gray-300 mb-4">{listing.description}</p>
+                      )}
+                      
+                      <div className="flex items-center space-x-6 text-sm text-gray-400">
+                        <div><span className="font-medium">Vendeur:</span> Anonyme</div>
+                        <div><span className="font-medium">Publié:</span> {new Date(listing.created_at).toLocaleDateString('fr-FR')}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-6 space-y-2">
+                      <button className="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition-colors font-medium">
+                        Acheter maintenant
+                      </button>
+                      <button className="block bg-gray-800 text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition-colors text-center">
+                        Contacter vendeur
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-4">Aucune annonce disponible pour ce maillot</div>
+              <p className="text-gray-500">Ajoutez-le à votre wishlist pour être notifié quand une annonce sera disponible.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Show jersey catalog (Step A & B in Discogs flow)
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Marketplace</h1>
+          <p className="text-gray-400">Découvrez et achetez des maillots mis en vente par la communauté</p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Rechercher par équipe, joueur, championnat..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-white focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="lg:hidden bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700"
+            >
+              Filtres {showMobileFilters ? '▲' : '▼'}
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 ${showMobileFilters ? 'block' : 'hidden lg:grid'}`}>
+            <select
+              value={filters.league}
+              onChange={(e) => handleFilterChange('league', e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Tous les championnats</option>
+              {getUniqueValues('league').map(league => (
+                <option key={league} value={league}>{league}</option>
+              ))}
+            </select>
+            <select
+              value={filters.team}
+              onChange={(e) => handleFilterChange('team', e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Toutes les équipes</option>
+              {getUniqueValues('team').map(team => (
+                <option key={team} value={team}>{team}</option>
+              ))}
+            </select>
+            <select
+              value={filters.season}
+              onChange={(e) => handleFilterChange('season', e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Toutes les saisons</option>
+              {getUniqueValues('season').map(season => (
+                <option key={season} value={season}>{season}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              placeholder="Prix min €"
+              value={filters.minPrice}
+              onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm placeholder-gray-400"
+            />
+            <input
+              type="number"
+              placeholder="Prix max €"
+              value={filters.maxPrice}
+              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm placeholder-gray-400"
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="newest">Plus récent</option>
+              <option value="team">Par équipe</option>
+              <option value="league">Par championnat</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Jersey Catalog */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {getFilteredJerseys().map((jersey) => (
+            <div
+              key={jersey.id}
+              onClick={() => handleJerseyClick(jersey)}
+              className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-all cursor-pointer group hover:shadow-xl"
+            >
+              <div className="aspect-square bg-gray-800 overflow-hidden">
+                {jersey.images?.[0] ? (
+                  <img
+                    src={jersey.images[0]}
+                    alt={jersey.team}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-6xl">
+                    👕
+                  </div>
+                )}
+                {/* Price overlay */}
+                <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm font-medium">
+                  dès {jersey.min_price || '?'}€
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <h3 className="font-semibold text-white text-sm mb-1 truncate">
+                  {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
+                </h3>
+                <p className="text-gray-400 text-xs mb-2">
+                  {jersey.league} • {jersey.season}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-xs">{jersey.reference_number}</span>
+                  <span className="text-blue-400 text-xs font-medium">
+                    {jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {getFilteredJerseys().length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4 text-lg">Aucun maillot trouvé</div>
+            <p className="text-gray-500">Essayez de modifier vos filtres ou votre recherche</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
       case 'price_high':
         filtered.sort((a, b) => b.price - a.price);
         break;
