@@ -575,6 +575,7 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
 // Header Component
 const Header = ({ currentView, setCurrentView }) => {
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Debug user state in Header
   useEffect(() => {
@@ -585,103 +586,67 @@ const Header = ({ currentView, setCurrentView }) => {
 
   return (
     <>
-      {/* Main Header: Logo centré + Login à droite */}
+      {/* Main Header: Responsive design */}
       <header className="bg-black text-white shadow-2xl border-b border-gray-800">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            {/* Espace gauche (pour équilibrer) */}
-            <div className="flex-1"></div>
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden text-white p-1"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             
-            {/* Logo centré */}
-            <div className="flex justify-center flex-1">
+            {/* Logo - Responsive sizing */}
+            <div className="flex justify-center flex-1 md:flex-none">
               <img 
                 src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
                 alt="TopKit Logo"
-                className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                className="h-8 md:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity mobile-logo"
                 onClick={() => setCurrentView('home')}
                 style={{ maxWidth: 'none', flexShrink: 0 }}
               />
             </div>
             
-            {/* Login/Logout à droite */}
-            <div className="flex justify-end flex-1">
-              {user ? (
-                <div className="flex items-center space-x-4">
-                  <NotificationBell />
-                  <div className="flex items-center space-x-3">
-                    <Avatar 
-                      user={user} 
-                      size="md" 
-                      className="hover:scale-105 cursor-pointer hover:border-blue-400" 
-                      onClick={() => setCurrentView('profile')}
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-white font-medium text-sm">Welcome back!</span>
-                      <span className="text-gray-300 text-xs">{user.name}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={logout}
-                    className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200 border border-gray-600 text-sm font-medium hover:scale-105 shadow-lg"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => {
-                    // Trigger the AuthModal from AppContent instead of Header
-                    window.dispatchEvent(new CustomEvent('showAuthModal'));
-                  }}
-                  className="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
-                >
-                  Login / Sign Up
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation Bar: En dessous du header */}
-      <nav className="bg-gray-900 shadow-sm border-b border-gray-800">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-center items-center space-x-8 py-3">
-            <button 
-              onClick={() => setCurrentView('home')}
-              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                currentView === 'home' 
-                  ? 'bg-white text-black' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Home
-            </button>
-            <button 
-              onClick={() => setCurrentView('jerseys')}
-              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                currentView === 'jerseys' 
-                  ? 'bg-white text-black' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Explorez
-            </button>
-            <button 
-              onClick={() => setCurrentView('marketplace')}
-              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                currentView === 'marketplace' 
-                  ? 'bg-white text-black' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Marketplace
-            </button>
-            {user && (
-              <>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-6">
+              <button 
+                onClick={() => setCurrentView('home')}
+                className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                  currentView === 'home' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => setCurrentView('jerseys')}
+                className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                  currentView === 'jerseys' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Explorez
+              </button>
+              <button 
+                onClick={() => setCurrentView('marketplace')}
+                className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                  currentView === 'marketplace' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Marketplace
+              </button>
+              {user && (
                 <button 
                   onClick={() => setCurrentView('profile')}
-                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                  className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
                     currentView === 'profile' 
                       ? 'bg-white text-black' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
@@ -689,23 +654,126 @@ const Header = ({ currentView, setCurrentView }) => {
                 >
                   My Profil
                 </button>
-                {user.email === 'topkitfr@gmail.com' && (
+              )}
+            </nav>
+            
+            {/* User Controls - Responsive */}
+            <div className="flex items-center space-x-2 mobile-user-controls">
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <NotificationBell />
+                  <div className="hidden sm:flex items-center space-x-3">
+                    <Avatar 
+                      user={user} 
+                      size="sm" 
+                      className="hover:scale-105 cursor-pointer hover:border-blue-400" 
+                      onClick={() => setCurrentView('profile')}
+                    />
+                    <div className="hidden lg:flex flex-col">
+                      <span className="text-white font-medium text-xs">Welcome!</span>
+                      <span className="text-gray-300 text-xs">{user.name}</span>
+                    </div>
+                  </div>
                   <button 
-                    onClick={() => setCurrentView('admin')}
-                    className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                      currentView === 'admin' 
-                        ? 'bg-red-600 text-white' 
-                        : 'text-red-400 hover:text-white hover:bg-red-800'
-                    }`}
+                    onClick={logout}
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 rounded text-xs md:px-3 md:py-2 md:text-sm transition-all duration-200 border border-gray-600 font-medium hover:scale-105 shadow-lg"
                   >
-                    🔧 Admin Panel
+                    Logout
                   </button>
-                )}
-              </>
-            )}
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('showAuthModal'));
+                  }}
+                  className="bg-white text-black px-3 py-1 text-xs md:px-4 md:py-2 md:text-sm rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
+                >
+                  Login / Sign Up
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </nav>
+
+        {/* Mobile Menu - Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-gray-900 border-t border-gray-800">
+            <div className="px-4 py-3 space-y-2">
+              <button 
+                onClick={() => {
+                  setCurrentView('home');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                  currentView === 'home' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('jerseys');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                  currentView === 'jerseys' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Explorez
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('marketplace');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                  currentView === 'marketplace' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                Marketplace
+              </button>
+              {user && (
+                <>
+                  <button 
+                    onClick={() => {
+                      setCurrentView('profile');
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                      currentView === 'profile' 
+                        ? 'bg-white text-black' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    My Profil
+                  </button>
+                  {user.email === 'topkitfr@gmail.com' && (
+                    <button 
+                      onClick={() => {
+                        setCurrentView('admin');
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                        currentView === 'admin' 
+                          ? 'bg-red-600 text-white' 
+                          : 'text-red-400 hover:text-white hover:bg-red-800'
+                      }`}
+                    >
+                      🔧 Admin Panel
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
     </>
   );
 };
