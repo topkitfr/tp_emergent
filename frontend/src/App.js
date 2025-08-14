@@ -4883,7 +4883,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
         axios.get(`${API}/api/collections/wanted`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API}/api/jerseys/user/${user.id}`, {
+        axios.get(`${API}/api/users/${user.id}/jerseys`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
