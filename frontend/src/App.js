@@ -9633,8 +9633,8 @@ const SubmitJerseyPage = () => {
   );
 };
 
-// Edit Jersey Modal Component for Admin
-const EditJerseyModal = ({ jersey, onClose, onSave }) => {
+// Admin Edit Jersey Modal Component for Admin Panel
+const AdminEditJerseyModal = ({ jersey, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     team: jersey.team || '',
     season: jersey.season || '',
