@@ -9643,6 +9643,8 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [jerseyToEdit, setJerseyToEdit] = useState(null);
 
   useEffect(() => {
     if (user?.email === 'topkitfr@gmail.com') {
