@@ -2743,16 +2743,13 @@ async def get_user_collections(user_id: str):
                         "league": "$jersey.league",
                         "manufacturer": "$jersey.manufacturer",
                         "images": "$jersey.images"
-                    }
+                    },
+                    "_id": 0  # Exclude MongoDB ObjectId
                 }
             }
         ]
         
         collections = await db.collections.aggregate(pipeline).to_list(1000)
-        
-        # Remove MongoDB ObjectId
-        for collection in collections:
-            collection.pop('_id', None)
         
         return collections
         
