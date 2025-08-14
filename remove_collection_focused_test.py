@@ -10,7 +10,7 @@ import uuid
 import time
 
 # Configuration
-BASE_URL = "https://topkit-exchange.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-collect-bug.preview.emergentagent.com/api"
 
 class RemoveCollectionTester:
     def __init__(self):
