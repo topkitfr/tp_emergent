@@ -3327,32 +3327,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 <div className="flex space-x-1">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickCollectionAction(jersey, 'owned');
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
-                    title="Ajouter à ma collection"
-                  >
-                    📚
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickCollectionAction(jersey, 'wanted');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
-                    title="Ajouter à ma wishlist"
-                  >
-                    💫
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-
   return (
     <div className="min-h-screen bg-black">
       {/* Dark Header */}
