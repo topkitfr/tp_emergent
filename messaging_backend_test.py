@@ -273,15 +273,16 @@ class MessagingSystemTester:
             response = self.session.get(f"{BASE_URL}/notifications", headers=headers)
             
             if response.status_code == 200:
-                notifications = response.json()
-                if isinstance(notifications, list):
-                    unread_count = sum(1 for notif in notifications if not notif.get("is_read", True))
-                    read_count = len(notifications) - unread_count
+                data = response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    notifications = data["notifications"]
+                    unread_count = data.get("unread_count", 0)
+                    total_count = data.get("total", len(notifications))
                     
                     self.log_test(
                         "GET /api/notifications - Retrieve User Notifications",
                         True,
-                        f"Retrieved {len(notifications)} notifications (Unread: {unread_count}, Read: {read_count})"
+                        f"Retrieved {total_count} notifications (Unread: {unread_count})"
                     )
                     
                     # Store first unread notification for testing
@@ -295,7 +296,7 @@ class MessagingSystemTester:
                         self.test_notification_id = notifications[0].get("id")
                         
                 else:
-                    self.log_test("GET /api/notifications - Retrieve User Notifications", False, "", "Invalid response format")
+                    self.log_test("GET /api/notifications - Retrieve User Notifications", False, "", "Invalid response format - expected dict with 'notifications' key")
             else:
                 self.log_test("GET /api/notifications - Retrieve User Notifications", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
