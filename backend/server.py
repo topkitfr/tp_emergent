@@ -2644,6 +2644,124 @@ async def get_public_advanced_profile(user_id: str, current_user_id: Optional[st
     
     return public_profile
 
+# User Profile API Endpoints for UserProfilePage
+@api_router.get("/users/{user_id}/profile")
+async def get_user_public_profile(user_id: str):
+    """Get public profile information for a specific user"""
+    try:
+        # Get user basic information
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user stats
+        jerseys_count = await db.jerseys.count_documents({"creator_id": user_id})
+        owned_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "owned"})
+        wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
+        
+        # Get seller ratings average
+        seller_ratings = await db.ratings.find({"rated_user_id": user_id, "rating_type": "seller"}).to_list(1000)
+        avg_seller_rating = sum(r["score"] for r in seller_ratings) / len(seller_ratings) if seller_ratings else None
+        
+        # Get seller settings if user is a seller
+        seller_info = None
+        if user.get("seller_settings", {}).get("is_seller"):
+            seller_settings = user.get("seller_settings", {})
+            seller_info = {
+                "business_name": seller_settings.get("business_name"),
+                "processing_time_days": seller_settings.get("processing_time_days", 3),
+                "return_days": seller_settings.get("return_days", 14),
+                "payment_methods": seller_settings.get("payment_methods", []),
+                "verified": seller_settings.get("verified", False)
+            }
+        
+        profile_data = {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "display_name": user.get("display_name", user["name"]),
+            "picture": user.get("picture"),
+            "bio": user.get("bio"),
+            "location": user.get("location"),
+            "verified_seller": user.get("seller_settings", {}).get("verified", False),
+            "seller_info": seller_info,
+            "stats": {
+                "jerseys_submitted": jerseys_count,
+                "owned_jerseys": owned_count,
+                "wanted_jerseys": wanted_count,
+                "avg_seller_rating": avg_seller_rating
+            },
+            "badges": user.get("badges", []),
+            "created_at": user.get("created_at"),
+            "social_links": user.get("social_links", {})
+        }
+        
+        return profile_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching user profile: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/users/{user_id}/collections")
+async def get_user_collections(user_id: str):
+    """Get user's public collections (owned and wanted jerseys)"""
+    try:
+        # Check if user exists
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check privacy settings (for future implementation)
+        privacy_settings = user.get("privacy_settings", {})
+        if not privacy_settings.get("show_collection", True):
+            return []  # Return empty if collection is private
+        
+        # Get collections with jersey details
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "jerseys",
+                    "localField": "jersey_id",
+                    "foreignField": "id",
+                    "as": "jersey"
+                }
+            },
+            {"$unwind": {"path": "$jersey", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "id": 1,
+                    "collection_type": 1,
+                    "added_at": 1,
+                    "jersey": {
+                        "id": "$jersey.id",
+                        "team": "$jersey.team",
+                        "season": "$jersey.season",
+                        "player": "$jersey.player",
+                        "league": "$jersey.league",
+                        "manufacturer": "$jersey.manufacturer",
+                        "images": "$jersey.images"
+                    }
+                }
+            }
+        ]
+        
+        collections = await db.collections.aggregate(pipeline).to_list(1000)
+        
+        # Remove MongoDB ObjectId
+        for collection in collections:
+            collection.pop('_id', None)
+        
+        return collections
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching user collections: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Friends System API Endpoints
 @api_router.get("/users/search")
 async def search_users(
