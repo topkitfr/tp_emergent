@@ -412,13 +412,14 @@ class UserProfileAPITester:
         print("📊 USER PROFILE API TESTING SUMMARY")
         print("=" * 60)
         
-        total_tests = len(existing_users) * 2 + 3  # profile + collections per user + error handling + completeness
-        passed_tests = profile_tests_passed + collections_tests_passed + error_handling_passed + completeness_passed
+        total_tests = len(existing_users) * 2 + 4  # profile + collections per user + error handling + completeness + enhanced
+        passed_tests = profile_tests_passed + collections_tests_passed + error_handling_passed + completeness_passed + enhanced_passed
         
         print(f"✅ Profile Endpoint Tests: {profile_tests_passed}/{len(existing_users[:3])}")
         print(f"✅ Collections Endpoint Tests: {collections_tests_passed}/{len(existing_users[:3])}")
         print(f"✅ Error Handling Tests: {error_handling_passed}/2")
         print(f"✅ Data Completeness Tests: {completeness_passed}/1")
+        print(f"✅ Enhanced Profile Tests: {enhanced_passed}/1")
         print(f"\n🎯 OVERALL SUCCESS RATE: {passed_tests}/{total_tests} ({(passed_tests/total_tests)*100:.1f}%)")
         
         if passed_tests == total_tests:
