@@ -5552,11 +5552,11 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
               <div className="text-gray-400 text-sm">Maillots soumis</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{userCollections.filter(c => c.collection_type === 'owned').length}</div>
+              <div className="text-2xl font-bold text-green-400">{Array.isArray(userCollections) ? userCollections.filter(c => c.collection_type === 'owned').length : 0}</div>
               <div className="text-gray-400 text-sm">Possédés</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">{userCollections.filter(c => c.collection_type === 'wanted').length}</div>
+              <div className="text-2xl font-bold text-yellow-400">{Array.isArray(userCollections) ? userCollections.filter(c => c.collection_type === 'wanted').length : 0}</div>
               <div className="text-gray-400 text-sm">Recherchés</div>
             </div>
             <div className="text-center">
