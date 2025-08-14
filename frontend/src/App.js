@@ -4478,26 +4478,32 @@ const GlobalMarketplacePage = () => {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-700">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">Marketplace</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-white">Marketplace</h1>
             <div className="text-sm text-gray-400">
               {getFilteredListings().length} annonces
             </div>
           </div>
           
-          {/* Search Bar */}
-          <div className="flex space-x-4">
+          {/* Responsive Search Bar */}
+          <div className="flex space-x-2 md:space-x-4">
             <div className="flex-1">
               <input
                 type="text"
                 placeholder="Rechercher par équipe, joueur, description..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 md:px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              className="md:hidden bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+            >
+              🔍
+            </button>
+            <button className="hidden md:block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Rechercher
             </button>
           </div>
