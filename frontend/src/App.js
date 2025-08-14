@@ -7167,6 +7167,11 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   });
   const [friendsActiveTab, setFriendsActiveTab] = useState('friends');
 
+  // Messages data states
+  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [activeConversation, setActiveConversation] = useState(null);
+
   useEffect(() => {
     if (user) {
       fetchCollectionData();
