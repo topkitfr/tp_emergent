@@ -3352,7 +3352,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
         </>
       )}
     </div>
-  );
 
   return (
     <div className="min-h-screen bg-black">
