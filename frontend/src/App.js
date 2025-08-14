@@ -6237,6 +6237,7 @@ const MessagingInterface = () => {
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [showNewConversation, setShowNewConversation] = useState(false);
 
   // Fetch conversations
   const fetchConversations = async () => {
