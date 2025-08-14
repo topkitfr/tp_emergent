@@ -104,7 +104,7 @@ class MessagingSystemTester:
                     
                     # Store first conversation ID for message testing
                     if len(conversations) > 0:
-                        self.test_conversation_id = conversations[0].get("id")
+                        self.test_conversation_id = conversations[0].get("conversation_id")  # Use conversation_id, not id
                 else:
                     self.log_test("GET /api/conversations - Retrieve User Conversations", False, "", "Invalid response format")
             else:
