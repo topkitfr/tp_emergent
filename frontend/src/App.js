@@ -10078,6 +10078,35 @@ const AdminPanel = () => {
           </div>
         </div>
       )}
+      
+      {/* Edit Jersey Modal */}
+      {showEditModal && jerseyToEdit && (
+        <EditJerseyModal
+          jersey={jerseyToEdit}
+          onClose={() => {
+            setShowEditModal(false);
+            setJerseyToEdit(null);
+          }}
+          onSave={async (updatedJersey) => {
+            try {
+              setActionLoading(true);
+              const token = localStorage.getItem('token');
+              await axios.put(`${API}/api/admin/jerseys/${jerseyToEdit.id}/edit`, updatedJersey, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              alert('Jersey mis à jour avec succès !');
+              fetchPendingJerseys();
+              setShowEditModal(false);
+              setJerseyToEdit(null);
+            } catch (error) {
+              console.error('Update error:', error);
+              alert('Erreur lors de la mise à jour du jersey');
+            } finally {
+              setActionLoading(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
