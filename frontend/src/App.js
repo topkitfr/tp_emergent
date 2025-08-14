@@ -655,6 +655,18 @@ const Header = ({ currentView, setCurrentView }) => {
                   My Profil
                 </button>
               )}
+              {user && (
+                <button 
+                  onClick={() => setCurrentView('settings')}
+                  className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
+                    currentView === 'settings' 
+                      ? 'bg-white text-black' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  ⚙️ Paramètres
+                </button>
+              )}
             </nav>
             
             {/* User Controls - Responsive */}
