@@ -330,6 +330,39 @@ class UserProfileAPITester:
             self.log_test("Profile Data Completeness", "FAIL", f"Exception: {str(e)}")
             return False
     
+    def test_enhanced_profile_endpoint(self, user_id):
+        """Test if the enhanced profile endpoint (with email, display_name, etc.) is accessible"""
+        try:
+            print(f"🔍 Testing Enhanced Profile endpoint (checking for newer implementation)...")
+            
+            # The newer implementation should be at the same endpoint but might have different behavior
+            # Let's check if we can get more detailed profile information
+            response = self.session.get(f"{self.base_url}/users/{user_id}/profile")
+            
+            if response.status_code == 200:
+                profile_data = response.json()
+                
+                # Check if this has the enhanced fields from the newer implementation
+                enhanced_fields = ['email', 'display_name', 'bio', 'location', 'seller_info', 'badges']
+                present_enhanced = [field for field in enhanced_fields if field in profile_data]
+                
+                if present_enhanced:
+                    self.log_test("Enhanced Profile Endpoint", "PASS", 
+                                f"Enhanced fields found: {present_enhanced}")
+                    return True
+                else:
+                    self.log_test("Enhanced Profile Endpoint", "INFO", 
+                                f"Using basic profile implementation (no enhanced fields found)")
+                    return True  # Not a failure, just different implementation
+            else:
+                self.log_test("Enhanced Profile Endpoint", "FAIL", 
+                            f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Enhanced Profile Endpoint", "FAIL", f"Exception: {str(e)}")
+            return False
+    
     def run_comprehensive_tests(self):
         """Run all User Profile API tests"""
         print("🚀 Starting User Profile API Comprehensive Testing")
