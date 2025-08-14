@@ -6209,6 +6209,10 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     // Implementation for fetching jersey details
   };
 
+  const checkUserCollection = async () => {
+    // Implementation for checking user collection
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* Component content will be implemented here */}
