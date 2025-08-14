@@ -3665,7 +3665,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     </button>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               /* Users Tab */
               <div>
