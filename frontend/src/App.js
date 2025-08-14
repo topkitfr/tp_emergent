@@ -3602,8 +3602,36 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            {/* View Controls */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
+            {/* Tabs */}
+            <div className="bg-gray-900 rounded-lg border border-gray-700 mb-6">
+              <div className="flex border-b border-gray-700">
+                <button
+                  onClick={() => setActiveTab('jerseys')}
+                  className={`px-6 py-4 text-sm font-medium transition-colors ${
+                    activeTab === 'jerseys'
+                      ? 'border-b-2 border-white text-white bg-gray-800'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  👕 Maillots ({jerseys.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className={`px-6 py-4 text-sm font-medium transition-colors ${
+                    activeTab === 'users'
+                      ? 'border-b-2 border-white text-white bg-gray-800'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  👥 Utilisateurs
+                </button>
+              </div>
+            </div>
+
+            {activeTab === 'jerseys' ? (
+              <>
+                {/* View Controls */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
                 <select
                   value={sortBy}
