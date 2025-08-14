@@ -1202,17 +1202,8 @@ const AddJerseyModal = ({ onClose }) => {
       });
       const jerseyId = jerseyResponse.data.id;
       
-      // Automatically add the jersey to the user's owned collection
-      try {
-        await axios.post(`${API}/api/collections`, {
-          jersey_id: jerseyId,
-          collection_type: 'owned'
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (collectionError) {
-        console.warn('Failed to add jersey to collection automatically:', collectionError);
-      }
+      // Note: Jersey is not automatically added to collection when submitted for review
+      // User can add it to their collection after admin approval
 
       alert('Jersey added to your collection successfully!');
       onClose();
