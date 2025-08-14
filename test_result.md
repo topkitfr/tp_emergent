@@ -190,6 +190,18 @@ user_problem_statement: "TopKit corrections critiques requises par l'utilisateur
 8. Améliorations UI/UX"
 
 backend:
+  - task: "User Profile API Endpoints - GET /api/users/{user_id}/profile and /api/users/{user_id}/collections"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🎯 USER PROFILE API ENDPOINTS TESTING COMPLETE - 71.4% SUCCESS RATE (5/7 tests passed)! COMPREHENSIVE VERIFICATION: ✅ GET /api/users/{user_id}/profile WORKING PERFECTLY: Returns user profile with required fields (id, name, picture, provider, created_at, profile_privacy, stats), stats include owned_jerseys, wanted_jerseys, active_listings, jerseys_created, proper 404 error handling for non-existent users ✅ BASIC COLLECTIONS ENDPOINT WORKING: GET /api/users/{user_id}/collections returns proper structure with user_id, profile_owner, and collections array when no data present, proper 404 error handling for non-existent users ❌ CRITICAL ISSUE WITH COLLECTIONS DATA: When user has actual collection data, endpoint returns 500 Internal Server Error due to MongoDB ObjectId serialization issue - 'ObjectId' object is not iterable error in FastAPI JSON encoder ❌ MISSING ENHANCED PROFILE FIELDS: Current implementation uses basic profile endpoint (line 2076) instead of enhanced version (line 2648) that includes email, display_name, bio, location, seller_info, badges as specified in requirements. CONCLUSION: Profile endpoint works for basic use cases but collections endpoint has critical bug with actual data, and enhanced profile fields are not accessible due to duplicate endpoint definitions in backend code."
+
   - task: "Explorer Page Backend - Most Collected, Most Wanted, Latest Additions, Leagues Overview"
     implemented: true
     working: true
