@@ -467,8 +467,12 @@ class MessagingSystemTester:
             notif_response = self.session.get(f"{BASE_URL}/notifications", headers=headers)
             
             if notif_response.status_code == 200:
-                initial_notifications = notif_response.json()
-                initial_count = len(initial_notifications) if isinstance(initial_notifications, list) else 0
+                data = notif_response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    initial_notifications = data["notifications"]
+                    initial_count = len(initial_notifications)
+                else:
+                    initial_count = 0
                 
                 # Create a test jersey
                 test_jersey_data = {
