@@ -6864,7 +6864,7 @@ const EnhancedSubmissionCard = ({ jersey, onResubmit }) => {
 };
 
 // Unified Profile & Collection Page with Dark Theme
-const ProfileCollectionPage = ({ shouldRefresh = false }) => {
+const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) => {
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('collection');
   const [ownedJerseys, setOwnedJerseys] = useState([]);
