@@ -3256,6 +3256,31 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     return filtered;
   };
 
+  // Handle user search
+  const handleUserSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    if (query.length >= 2) {
+      setSearchLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API}/api/users/search?q=${encodeURIComponent(query)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSearchResults(response.data.users || []);
+      } catch (error) {
+        console.error('Failed to search users:', error);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    } else {
+      setSearchResults([]);
+      setSearchLoading(false);
+    }
+  };
+
   const DarkJerseyCard = ({ jersey, isListView }) => (
     <div 
       className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all duration-200 cursor-pointer group relative ${
