@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 TopKit Soccer Jersey Marketplace - Backend API Testing
-URGENT AUTHENTICATION DIAGNOSIS - Testing authentication system to diagnose disconnection issues
+COLLECTION API ENDPOINTS TESTING - Focus on collection retrieval 404 errors
+Testing for user steinmetzlivio@gmail.com with password '123'
 """
 
 import requests
@@ -13,9 +14,9 @@ import jwt
 
 # Configuration
 BASE_URL = "https://jersey-collect-bug.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "test@topkit.com"
-TEST_USER_PASSWORD = "password123"
-TEST_USER_NAME = "testuser"
+TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
+TEST_USER_PASSWORD = "123"
+TEST_USER_NAME = "Livio"
 
 class TopKitAPITester:
     def __init__(self):
