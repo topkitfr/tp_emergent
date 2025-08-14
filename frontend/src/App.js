@@ -6569,8 +6569,8 @@ const MessagingInterface = () => {
                 <label className="block text-gray-400 text-sm mb-2">Search for users</label>
                 <input
                   type="text"
-                  value={searchUsers}
-                  onChange={(e) => setSearchUsers(e.target.value)}
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
                   placeholder="Type username or email..."
                   className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                 />
