@@ -199,6 +199,17 @@ class TopKitTester:
                 # Verify the jersey was updated and status reset to pending
                 self.verify_jersey_edit_results(jersey_id, updated_data)
                 return True
+            elif response.status_code == 403:
+                # Expected if test admin doesn't have admin privileges
+                self.log_test("Admin Edit Jersey Endpoint", False, "Test admin lacks admin privileges - endpoint exists but requires proper admin role")
+                
+                # Test that the endpoint exists by checking the error message
+                if "admin access required" in response.text.lower() or "moderator" in response.text.lower():
+                    self.log_test("Admin Edit Endpoint Exists", True, "Endpoint exists and properly validates admin access")
+                    return False  # Still failed but for expected reason
+                else:
+                    self.log_test("Admin Edit Endpoint Exists", False, f"Unexpected error: {response.text}")
+                    return False
             else:
                 self.log_test("Admin Edit Jersey Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
                 return False
