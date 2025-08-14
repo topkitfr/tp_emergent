@@ -4828,7 +4828,7 @@ const JerseyMarketplacePage = ({ jerseyId, referenceNumber }) => {
 // Unified Profile & Collection Page with Dark Theme
 const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('collection');
+  const [activeTab, setActiveTab] = useState('owned');
   const [ownedJerseys, setOwnedJerseys] = useState([]);
   const [wantedJerseys, setWantedJerseys] = useState([]);
   const [submittedJerseys, setSubmittedJerseys] = useState([]);
