@@ -643,26 +643,6 @@ const Header = ({ currentView, setCurrentView }) => {
               >
                 Marketplace
               </button>
-              <button
-                onClick={() => setCurrentView('friends')}
-                className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
-                  currentView === 'friends' 
-                    ? 'bg-white text-black' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                👥 Amis
-              </button>
-              <button
-                onClick={() => setCurrentView('messages')}
-                className={`px-3 py-2 rounded-lg transition-colors font-medium text-sm ${
-                  currentView === 'messages' 
-                    ? 'bg-white text-black' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                💬 Messages
-              </button>
               {user && (
                 <button 
                   onClick={() => setCurrentView('profile')}
