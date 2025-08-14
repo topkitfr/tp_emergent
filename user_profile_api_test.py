@@ -413,6 +413,7 @@ class UserProfileAPITester:
         except Exception as e:
             self.log_test(f"Collections with Data (User: {user_id})", "FAIL", f"Exception: {str(e)}")
             return False
+    def test_enhanced_profile_endpoint(self, user_id):
         """Test if the enhanced profile endpoint (with email, display_name, etc.) is accessible"""
         try:
             print(f"🔍 Testing Enhanced Profile endpoint (checking for newer implementation)...")
