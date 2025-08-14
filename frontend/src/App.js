@@ -6220,7 +6220,6 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     </div>
   );
 };
-        <div className="flex flex-col md:flex-row gap-6">
           {/* Mobile Filters */}
           {showMobileFilters && (
             <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
