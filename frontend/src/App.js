@@ -7894,6 +7894,219 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
                 </div>
               </div>
             )}
+
+            {/* Friends Tab */}
+            {activeTab === 'friends' && (
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-6">👥 Mes Amis</h2>
+                
+                {/* Friends Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-400 mb-2">{friendsData.totalFriends}</div>
+                      <div className="text-gray-400">Amis</div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-yellow-400 mb-2">{friendsData.pendingReceived.length}</div>
+                      <div className="text-gray-400">Demandes reçues</div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-400 mb-2">{friendsData.pendingSent.length}</div>
+                      <div className="text-gray-400">Demandes envoyées</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Friends Sub-tabs */}
+                <div className="mb-6">
+                  <nav className="flex space-x-4">
+                    <button
+                      onClick={() => setFriendsActiveTab('friends')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        friendsActiveTab === 'friends'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      Mes Amis ({friendsData.totalFriends})
+                    </button>
+                    <button
+                      onClick={() => setFriendsActiveTab('received')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        friendsActiveTab === 'received'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      Demandes reçues ({friendsData.pendingReceived.length})
+                    </button>
+                    <button
+                      onClick={() => setFriendsActiveTab('sent')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        friendsActiveTab === 'sent'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      Demandes envoyées ({friendsData.pendingSent.length})
+                    </button>
+                  </nav>
+                </div>
+
+                {/* Friends Content */}
+                <div className="bg-gray-900 rounded-lg border border-gray-700">
+                  {friendsActiveTab === 'friends' && (
+                    <div className="p-6">
+                      {friendsData.friends.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="text-gray-400 mb-4">
+                            <span className="text-4xl block mb-4">👥</span>
+                            Aucun ami pour le moment
+                          </div>
+                          <p className="text-gray-500 mb-6">
+                            Commencez à construire votre réseau en recherchant d'autres collectionneurs
+                          </p>
+                          <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'friends' }))}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Trouver des amis
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {friendsData.friends.map((friend) => (
+                            <div key={friend.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                              <div className="flex items-center space-x-4">
+                                <img
+                                  src={friend.picture || 'https://via.placeholder.com/40x40?text=👤'}
+                                  alt={friend.name}
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <h3 className="text-white font-medium">{friend.name}</h3>
+                                  <p className="text-gray-400 text-sm">Ami depuis {new Date(friend.created_at).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('changeView', { detail: 'user-profile' }));
+                                    window.dispatchEvent(new CustomEvent('setSelectedUserId', { detail: friend.id }));
+                                  }}
+                                  className="bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors"
+                                >
+                                  Voir profil
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('changeView', { detail: 'messages' }));
+                                    window.dispatchEvent(new CustomEvent('startConversation', { detail: friend.id }));
+                                  }}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                                >
+                                  Message
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {friendsActiveTab === 'received' && (
+                    <div className="p-6">
+                      {friendsData.pendingReceived.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="text-gray-400 mb-4">
+                            <span className="text-4xl block mb-4">📥</span>
+                            Aucune demande d'ami en attente
+                          </div>
+                          <p className="text-gray-500">
+                            Les demandes d'ami que vous recevez apparaîtront ici
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {friendsData.pendingReceived.map((request) => (
+                            <div key={request.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                              <div className="flex items-center space-x-4">
+                                <img
+                                  src={request.picture || 'https://via.placeholder.com/40x40?text=👤'}
+                                  alt={request.name}
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <h3 className="text-white font-medium">{request.name}</h3>
+                                  <p className="text-gray-400 text-sm">Demande envoyée le {new Date(request.requested_at).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleFriendResponse(request.id, true)}
+                                  className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                                >
+                                  Accepter
+                                </button>
+                                <button
+                                  onClick={() => handleFriendResponse(request.id, false)}
+                                  className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
+                                >
+                                  Refuser
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {friendsActiveTab === 'sent' && (
+                    <div className="p-6">
+                      {friendsData.pendingSent.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="text-gray-400 mb-4">
+                            <span className="text-4xl block mb-4">📤</span>
+                            Aucune demande d'ami envoyée
+                          </div>
+                          <p className="text-gray-500">
+                            Les demandes d'ami que vous envoyez apparaîtront ici
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {friendsData.pendingSent.map((request) => (
+                            <div key={request.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                              <div className="flex items-center space-x-4">
+                                <img
+                                  src={request.picture || 'https://via.placeholder.com/40x40?text=👤'}
+                                  alt={request.name}
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <h3 className="text-white font-medium">{request.name}</h3>
+                                  <p className="text-gray-400 text-sm">Demande envoyée le {new Date(request.requested_at).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                              <div className="text-gray-400 text-sm">
+                                En attente...
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
