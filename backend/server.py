@@ -723,6 +723,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     
     return user_id
 
+async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    """Récupère l'utilisateur actuel si le token est fourni, sinon renvoie None"""
+    if not credentials:
+        return None
+    
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("user_id")
+        return user_id
+    except jwt.PyJWTError:
+        return None
+
 # Authentication endpoints
 @api_router.post("/auth/register")
 async def register(user_data: UserRegister):
