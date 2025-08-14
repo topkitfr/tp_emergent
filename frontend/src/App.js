@@ -7165,6 +7165,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   useEffect(() => {
     if (user) {
       fetchCollectionData();
+      fetchFriendsData();
     }
   }, [user, lastRefresh]);
 
