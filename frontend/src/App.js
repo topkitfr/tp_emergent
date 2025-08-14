@@ -7706,6 +7706,16 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             >
               Statistiques
             </button>
+            <button
+              onClick={() => setActiveTab('friends')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'friends'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              👥 Mes Amis ({friendsData.totalFriends})
+            </button>
           </nav>
         </div>
       </div>
