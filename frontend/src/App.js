@@ -6605,7 +6605,7 @@ const MessagingInterface = () => {
                       </div>
                     ))}
                   </div>
-                ) : searchUsers.length >= 2 ? (
+                ) : userSearchQuery.length >= 2 ? (
                   <div className="text-center py-4 text-gray-400 text-sm">
                     No users found
                   </div>
