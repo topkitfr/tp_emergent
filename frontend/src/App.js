@@ -9716,13 +9716,55 @@ const AppContent = () => {
 
     const token = localStorage.getItem('token');
     try {
+      // First, check if user already has this jersey in any collection
+      const [ownedRes, wantedRes] = await Promise.all([
+        axios.get(`${API}/api/collections/owned`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/collections/wanted`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(() => ({ data: [] }))
+      ]);
+      
+      const isInOwned = ownedRes.data.some(item => item.jersey.id === jerseyId);
+      const isInWanted = wantedRes.data.some(item => item.jersey.id === jerseyId);
+      
+      // If trying to add to same collection type and already there, remove it
+      if ((collectionType === 'owned' && isInOwned) || (collectionType === 'wanted' && isInWanted)) {
+        await axios.post(`${API}/api/collections/remove`, 
+          { jersey_id: jerseyId, collection_type: collectionType },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const actionText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
+        alert(`✅ Maillot retiré de ${actionText} !`);
+        return;
+      }
+      
+      // If in other collection type, remove from there first
+      if (collectionType === 'owned' && isInWanted) {
+        await axios.post(`${API}/api/collections/remove`, 
+          { jersey_id: jerseyId, collection_type: 'wanted' },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (collectionType === 'wanted' && isInOwned) {
+        await axios.post(`${API}/api/collections/remove`, 
+          { jersey_id: jerseyId, collection_type: 'owned' },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      
+      // Add to new collection
       await axios.post(`${API}/api/collections`, 
         { jersey_id: jerseyId, collection_type: collectionType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert(`Added to ${collectionType} collection!`);
+      
+      const actionText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
+      alert(`✅ Maillot ajouté à ${actionText} !`);
+      
     } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to add to collection');
+      console.error('Collection action error:', error);
+      alert(error.response?.data?.detail || 'Erreur lors de la gestion de la collection');
     }
   };
 
