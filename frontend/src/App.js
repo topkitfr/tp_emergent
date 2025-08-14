@@ -6220,7 +6220,6 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     </div>
   );
 };
-          {/* Mobile Filters */}
           {showMobileFilters && (
             <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
               <h3 className="font-semibold text-white mb-4">Filtres</h3>
