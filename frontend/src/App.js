@@ -10234,6 +10234,20 @@ const AdminPanel = () => {
         />
       )}
     </div>
+
+    {/* Submit Jersey Modal - Moved to ProfileCollectionPage */}
+    {setShowSubmitModal && (
+      <SubmitJerseyModal 
+        onClose={() => setShowSubmitModal(false)}
+        onSuccess={() => {
+          setShowSubmitModal(false);
+          // Refresh submissions
+          if (user) {
+            window.location.reload();
+          }
+        }}
+      />
+    )}
   );
 };
 
