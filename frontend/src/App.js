@@ -4510,10 +4510,83 @@ const GlobalMarketplacePage = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6">
-        <div className="flex">
-          {/* Filters Sidebar */}
-          <div className="w-64 flex-shrink-0 mr-8">
+      <div className="container mx-auto px-4 md:px-6 py-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Mobile Filters */}
+          {showMobileFilters && (
+            <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
+              <h3 className="font-semibold text-white mb-4">Filtres</h3>
+              <div className="space-y-4">
+                {/* Team Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
+                  <select
+                    value={filters.team}
+                    onChange={(e) => setFilters({...filters, team: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Toutes les équipes</option>
+                    {getUniqueValues('team').slice(0, 20).map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* League Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
+                  <select
+                    value={filters.league}
+                    onChange={(e) => setFilters({...filters, league: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                  >
+                    <option value="">Tous les championnats</option>
+                    {getUniqueValues('league').map(league => (
+                      <option key={league} value={league}>{league}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Prix (€)</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={filters.minPrice}
+                      onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={filters.maxPrice}
+                      onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      team: '', league: '', season: '', condition: '', size: '', minPrice: '', maxPrice: ''
+                    });
+                    setSearchQuery('');
+                    setShowMobileFilters(false);
+                  }}
+                  className="w-full text-blue-400 hover:text-blue-300 text-sm font-medium"
+                >
+                  Effacer tous les filtres
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Filters Sidebar */}
+          <div className="hidden md:block w-64 flex-shrink-0">
             <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
               <h3 className="font-semibold text-white mb-4">Filtres</h3>
               
