@@ -8502,6 +8502,723 @@ const AdminPanel = () => {
   );
 };
 
+// Nouveau composant : Paramètres Utilisateur Avancés  
+const AdvancedSettingsPage = () => {
+  const { user } = useAuth();
+  const API = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+  
+  const [activeTab, setActiveTab] = useState('profile');  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // États pour les différentes sections
+  const [profileData, setProfileData] = useState({
+    display_name: '',
+    bio: '',
+    location: '',
+    languages: [],
+    website: '',
+    social_links: {}
+  });
+
+  const [sellerSettings, setSellerSettings] = useState({
+    is_seller: false,
+    business_name: '',
+    address: '',
+    phone: '',
+    return_policy: '',
+    shipping_policy: '',
+    payment_methods: [],
+    processing_time_days: 3,
+    return_days: 14,
+    seller_notes: ''
+  });
+
+  const [buyerSettings, setBuyerSettings] = useState({
+    max_budget_per_item: null,
+    notify_new_matches: true,
+    notify_price_drops: true,
+    notify_watchlist_available: true
+  });
+
+  const [collectionSettings, setCollectionSettings] = useState({
+    visibility: 'public',
+    show_statistics: true,
+    show_estimated_value: false,
+    show_acquisition_dates: true,
+    notify_similar_items: true
+  });
+
+  const [privacySettings, setPrivacySettings] = useState({
+    profile_visibility: 'public',
+    show_last_seen: true,
+    allow_private_messages: true,
+    show_location: true,
+    show_join_date: true
+  });
+
+  const [userRatings, setUserRatings] = useState({
+    seller_ratings: [],
+    buyer_ratings: []
+  });
+
+  // Chargement des données au montage
+  useEffect(() => {
+    fetchAdvancedProfile();
+  }, []);
+
+  const fetchAdvancedProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/profile/advanced`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = response.data;
+      
+      // Mise à jour des états avec les données récupérées
+      setProfileData({
+        display_name: data.display_name || '',
+        bio: data.bio || '',
+        location: data.location || '',
+        languages: data.languages || [],
+        website: data.website || '',
+        social_links: data.social_links || {}
+      });
+
+      setSellerSettings(data.seller_settings || {
+        is_seller: false,
+        business_name: '',
+        address: '',
+        phone: '',
+        return_policy: '',
+        shipping_policy: '',
+        payment_methods: [],
+        processing_time_days: 3,
+        return_days: 14,
+        seller_notes: ''
+      });
+
+      setBuyerSettings(data.buyer_settings || {
+        max_budget_per_item: null,
+        notify_new_matches: true,
+        notify_price_drops: true,
+        notify_watchlist_available: true
+      });
+
+      setCollectionSettings(data.collection_settings || {
+        visibility: 'public',
+        show_statistics: true,
+        show_estimated_value: false,
+        show_acquisition_dates: true,
+        notify_similar_items: true
+      });
+
+      setPrivacySettings(data.privacy_settings || {
+        profile_visibility: 'public',
+        show_last_seen: true,
+        allow_private_messages: true,
+        show_location: true,
+        show_join_date: true
+      });
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async (section, data) => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/api/profile/${section}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setMessage('Paramètres sauvegardés avec succès !');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      setMessage('Erreur lors de la sauvegarde');
+      setTimeout(() => setMessage(''), 3000);
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Chargement des paramètres...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Paramètres Avancés</h1>
+          <p className="text-gray-400">Gérez votre profil, vos préférences et vos paramètres de confidentialité</p>
+        </div>
+
+        {/* Message de feedback */}
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            message.includes('succès') ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'
+          }`}>
+            {message}
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Navigation des onglets */}
+          <div className="lg:w-64 flex-shrink-0">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+              <nav className="space-y-2">
+                {[
+                  { id: 'profile', label: '👤 Profil', icon: '👤' },
+                  { id: 'seller-settings', label: '🏪 Vendeur', icon: '🏪' },
+                  { id: 'buyer-settings', label: '🛒 Acheteur', icon: '🛒' },
+                  { id: 'collection-settings', label: '📚 Collection', icon: '📚' },
+                  { id: 'privacy-settings', label: '🔒 Confidentialité', icon: '🔒' },
+                  { id: 'ratings', label: '⭐ Évaluations', icon: '⭐' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      activeTab === tab.id 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <span className="mr-3">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Contenu des onglets */}
+          <div className="flex-1">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-6">
+              
+              {/* Onglet Profil */}
+              {activeTab === 'profile' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Informations du Profil</h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Nom d'affichage
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.display_name}
+                        onChange={(e) => setProfileData({...profileData, display_name: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                        placeholder="Votre nom d'affichage"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Biographie
+                      </label>
+                      <textarea
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        rows={4}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                        placeholder="Parlez-nous de vous et de votre passion pour les maillots..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Localisation
+                        </label>
+                        <input
+                          type="text"
+                          value={profileData.location}
+                          onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                          placeholder="Paris, France"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Site web
+                        </label>
+                        <input
+                          type="url"
+                          value={profileData.website}
+                          onChange={(e) => setProfileData({...profileData, website: e.target.value})}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                          placeholder="https://monsite.com"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => saveSettings('advanced', profileData)}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Sauvegarde...' : 'Sauvegarder le profil'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Onglet Paramètres Vendeur */}
+              {activeTab === 'seller-settings' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Paramètres Vendeur</h2>
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="is_seller"
+                        checked={sellerSettings.is_seller}
+                        onChange={(e) => setSellerSettings({...sellerSettings, is_seller: e.target.checked})}
+                        className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <label htmlFor="is_seller" className="text-white font-medium">
+                        Je souhaite vendre des maillots sur TopKit
+                      </label>
+                    </div>
+
+                    {sellerSettings.is_seller && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Nom de l'entreprise (optionnel)
+                            </label>
+                            <input
+                              type="text"
+                              value={sellerSettings.business_name}
+                              onChange={(e) => setSellerSettings({...sellerSettings, business_name: e.target.value})}
+                              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                              placeholder="Mon Shop Maillots"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Téléphone
+                            </label>
+                            <input
+                              type="tel"
+                              value={sellerSettings.phone}
+                              onChange={(e) => setSellerSettings({...sellerSettings, phone: e.target.value})}
+                              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                              placeholder="+33 1 23 45 67 89"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Adresse complète
+                          </label>
+                          <textarea
+                            value={sellerSettings.address}
+                            onChange={(e) => setSellerSettings({...sellerSettings, address: e.target.value})}
+                            rows={3}
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder="123 Rue du Football, 75001 Paris, France"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Délai de traitement (jours)
+                            </label>
+                            <input
+                              type="number"
+                              value={sellerSettings.processing_time_days}
+                              onChange={(e) => setSellerSettings({...sellerSettings, processing_time_days: parseInt(e.target.value)})}
+                              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                              min="1"
+                              max="30"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Période de retour (jours)
+                            </label>
+                            <input
+                              type="number"
+                              value={sellerSettings.return_days}
+                              onChange={(e) => setSellerSettings({...sellerSettings, return_days: parseInt(e.target.value)})}
+                              className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                              min="0"
+                              max="365"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Politique de retour
+                          </label>
+                          <textarea
+                            value={sellerSettings.return_policy}
+                            onChange={(e) => setSellerSettings({...sellerSettings, return_policy: e.target.value})}
+                            rows={4}
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder="Décrivez votre politique de retour..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Notes pour les acheteurs
+                          </label>
+                          <textarea
+                            value={sellerSettings.seller_notes}
+                            onChange={(e) => setSellerSettings({...sellerSettings, seller_notes: e.target.value})}
+                            rows={3}
+                            className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder="Informations importantes pour vos acheteurs..."
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <button
+                      onClick={() => saveSettings('seller-settings', sellerSettings)}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres vendeur'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Onglet Paramètres Acheteur */}
+              {activeTab === 'buyer-settings' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Paramètres Acheteur</h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Budget maximum par article (€)
+                      </label>
+                      <input
+                        type="number"
+                        value={buyerSettings.max_budget_per_item || ''}
+                        onChange={(e) => setBuyerSettings({...buyerSettings, max_budget_per_item: e.target.value ? parseInt(e.target.value) : null})}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                        placeholder="500"
+                        min="0"
+                      />
+                      <p className="text-gray-500 text-sm mt-1">Laissez vide pour aucune limite</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Notifications</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="notify_new_matches"
+                            checked={buyerSettings.notify_new_matches}
+                            onChange={(e) => setBuyerSettings({...buyerSettings, notify_new_matches: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="notify_new_matches" className="text-white">
+                            Nouveaux maillots correspondant à mes critères
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="notify_price_drops"
+                            checked={buyerSettings.notify_price_drops}
+                            onChange={(e) => setBuyerSettings({...buyerSettings, notify_price_drops: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="notify_price_drops" className="text-white">
+                            Baisses de prix sur mes maillots favoris
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="notify_watchlist_available"
+                            checked={buyerSettings.notify_watchlist_available}
+                            onChange={(e) => setBuyerSettings({...buyerSettings, notify_watchlist_available: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="notify_watchlist_available" className="text-white">
+                            Maillots de ma wishlist disponibles à la vente
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => saveSettings('buyer-settings', buyerSettings)}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres acheteur'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Onglet Paramètres de Collection */}  
+              {activeTab === 'collection-settings' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Paramètres de Collection</h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Visibilité de la collection
+                      </label>
+                      <select
+                        value={collectionSettings.visibility}
+                        onChange={(e) => setCollectionSettings({...collectionSettings, visibility: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="public">🌍 Publique - Tout le monde peut voir</option>
+                        <option value="private">🔒 Privée - Seulement moi</option>
+                        <option value="friends">👥 Amis seulement</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Affichage</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_statistics"
+                            checked={collectionSettings.show_statistics}
+                            onChange={(e) => setCollectionSettings({...collectionSettings, show_statistics: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_statistics" className="text-white">
+                            Afficher les statistiques de ma collection
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_estimated_value"
+                            checked={collectionSettings.show_estimated_value}
+                            onChange={(e) => setCollectionSettings({...collectionSettings, show_estimated_value: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_estimated_value" className="text-white">
+                            Afficher la valeur estimée de ma collection
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_acquisition_dates"
+                            checked={collectionSettings.show_acquisition_dates}
+                            onChange={(e) => setCollectionSettings({...collectionSettings, show_acquisition_dates: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_acquisition_dates" className="text-white">
+                            Afficher les dates d'acquisition
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Notifications</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="notify_similar_items"
+                            checked={collectionSettings.notify_similar_items}
+                            onChange={(e) => setCollectionSettings({...collectionSettings, notify_similar_items: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="notify_similar_items" className="text-white">
+                            Nouveaux maillots similaires à ma collection
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => saveSettings('collection-settings', collectionSettings)}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres de collection'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Onglet Paramètres de Confidentialité */}
+              {activeTab === 'privacy-settings' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Paramètres de Confidentialité</h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Visibilité du profil
+                      </label>
+                      <select
+                        value={privacySettings.profile_visibility}
+                        onChange={(e) => setPrivacySettings({...privacySettings, profile_visibility: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="public">🌍 Public - Visible par tous</option>
+                        <option value="private">🔒 Privé - Seulement moi</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Informations visibles</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_location"
+                            checked={privacySettings.show_location}
+                            onChange={(e) => setPrivacySettings({...privacySettings, show_location: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_location" className="text-white">
+                            Afficher ma localisation
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_join_date"
+                            checked={privacySettings.show_join_date}
+                            onChange={(e) => setPrivacySettings({...privacySettings, show_join_date: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_join_date" className="text-white">
+                            Afficher ma date d'inscription
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="show_last_seen"
+                            checked={privacySettings.show_last_seen}
+                            onChange={(e) => setPrivacySettings({...privacySettings, show_last_seen: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="show_last_seen" className="text-white">
+                            Afficher ma dernière connexion
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Communications</h3>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id="allow_private_messages"
+                            checked={privacySettings.allow_private_messages}
+                            onChange={(e) => setPrivacySettings({...privacySettings, allow_private_messages: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <label htmlFor="allow_private_messages" className="text-white">
+                            Autoriser les messages privés
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => saveSettings('privacy-settings', privacySettings)}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres de confidentialité'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Onglet Évaluations */}
+              {activeTab === 'ratings' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">Mes Évaluations</h2>
+                  <div className="space-y-6">
+                    <div className="bg-gray-800 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-white mb-4">Statistiques</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-green-400 mb-2">
+                            N/A
+                          </div>
+                          <div className="text-gray-400">Note Vendeur</div>
+                          <div className="text-sm text-gray-500">(0 évaluations)</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-blue-400 mb-2">
+                            N/A
+                          </div>
+                          <div className="text-gray-400">Note Acheteur</div>
+                          <div className="text-sm text-gray-500">(0 évaluations)</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center py-12">
+                      <div className="text-gray-400 mb-4">
+                        <span className="text-6xl">⭐</span>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-2">Aucune évaluation pour le moment</h3>
+                      <p className="text-gray-400">
+                        Vos évaluations apparaîtront ici après vos premières transactions
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   return (
     <AuthProvider>
