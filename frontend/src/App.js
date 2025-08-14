@@ -7663,7 +7663,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
               <p className="text-gray-400 mb-4">{user.email}</p>
               
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="bg-gray-800 rounded-lg p-3">
                   <div className="text-xl font-bold text-white">{collectionStats.totalItems}</div>
                   <div className="text-xs text-gray-400">Maillots possédés</div>
@@ -7679,6 +7679,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
                 <div className="bg-gray-800 rounded-lg p-3">
                   <div className="text-xl font-bold text-yellow-400">{submittedJerseys.length}</div>
                   <div className="text-xs text-gray-400">Soumis</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <div className="text-xl font-bold text-purple-400">{friendsData.totalFriends}</div>
+                  <div className="text-xs text-gray-400">Amis</div>
                 </div>
               </div>
             </div>
