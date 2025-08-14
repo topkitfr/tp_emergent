@@ -357,7 +357,8 @@ class TopKitTester:
             response = requests.get(f"{BACKEND_URL}/notifications", headers=headers)
             
             if response.status_code == 200:
-                notifications = response.json()
+                data = response.json()
+                notifications = data.get("notifications", [])
                 
                 # Look for notification related to jersey edit
                 edit_notification = None
@@ -371,7 +372,7 @@ class TopKitTester:
                     self.log_test("Admin Edit Notification", True, 
                                 f"Notification created: {edit_notification.get('title', 'No title')}")
                 else:
-                    self.log_test("Admin Edit Notification", False, "No edit notification found")
+                    self.log_test("Admin Edit Notification", False, "No edit notification found (expected since admin edit didn't succeed)")
             else:
                 self.log_test("Admin Edit Notification", False, f"Could not fetch notifications: {response.status_code}")
                 
