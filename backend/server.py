@@ -296,6 +296,101 @@ class ProfileSettings(BaseModel):
     profile_privacy: Optional[str] = None
     show_collection_value: Optional[bool] = None
 
+# Nouveaux modèles pour profil utilisateur avancé
+class ShippingRate(BaseModel):
+    zone: ShippingZone
+    price: float
+    currency: str = "EUR"
+    
+class SellerSettings(BaseModel):
+    is_seller: bool = False
+    # Informations de contact
+    business_name: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    # Politiques
+    return_policy: Optional[str] = None
+    shipping_policy: Optional[str] = None
+    payment_methods: List[PaymentMethod] = []
+    shipping_rates: List[ShippingRate] = []
+    # Délais et conditions
+    processing_time_days: int = 3
+    return_days: int = 14
+    min_order_value: Optional[float] = None
+    # Notes et conditions
+    seller_notes: Optional[str] = None
+    terms_conditions: Optional[str] = None
+
+class BuyerSettings(BaseModel):
+    # Préférences de livraison
+    preferred_shipping_method: Optional[str] = None
+    max_shipping_cost: Optional[float] = None
+    # Budget et notifications
+    max_budget_per_item: Optional[float] = None
+    price_alert_threshold: Optional[float] = None
+    # Notifications
+    notify_new_matches: bool = True
+    notify_price_drops: bool = True
+    notify_watchlist_available: bool = True
+
+class CollectionSettings(BaseModel):
+    visibility: CollectionVisibility = CollectionVisibility.PUBLIC
+    show_statistics: bool = True
+    show_estimated_value: bool = False
+    show_acquisition_dates: bool = True
+    allow_export: bool = True
+    # Notifications pour collection
+    notify_similar_items: bool = True
+    notify_collection_updates: bool = False
+
+class PrivacySettings(BaseModel):
+    profile_visibility: ProfileVisibility = ProfileVisibility.PUBLIC
+    show_last_seen: bool = True
+    allow_private_messages: bool = True
+    show_location: bool = True
+    show_join_date: bool = True
+    allow_friend_requests: bool = True
+
+class UserRating(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rater_id: str  # Utilisateur qui note
+    rated_user_id: str  # Utilisateur noté
+    transaction_id: Optional[str] = None
+    rating_type: str  # "seller", "buyer"
+    score: int  # 1-5 étoiles
+    comment: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserProfile(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    # Informations personnelles étendues
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    languages: List[str] = []
+    website: Optional[str] = None
+    social_links: Dict[str, str] = {}
+    # Paramètres
+    seller_settings: SellerSettings = Field(default_factory=SellerSettings)
+    buyer_settings: BuyerSettings = Field(default_factory=BuyerSettings)
+    collection_settings: CollectionSettings = Field(default_factory=CollectionSettings)
+    privacy_settings: PrivacySettings = Field(default_factory=PrivacySettings)
+    # Statistiques
+    total_sales: int = 0
+    total_purchases: int = 0
+    avg_seller_rating: Optional[float] = None
+    avg_buyer_rating: Optional[float] = None
+    total_seller_ratings: int = 0
+    total_buyer_ratings: int = 0
+    # Badges et vérifications
+    verified_seller: bool = False
+    verified_buyer: bool = False
+    badges: List[str] = []
+    # Dates
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 class CheckoutRequest(BaseModel):
     listing_id: str
     origin_url: str
