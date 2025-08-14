@@ -3136,6 +3136,163 @@ async def get_conversation_messages(
         "total": len(messages)
     }
 
+# WebSocket Connection Manager for Real-time Messaging
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}  # user_id: websocket
+    
+    async def connect(self, websocket: WebSocket, user_id: str):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+        print(f"📱 User {user_id} connected to WebSocket")
+    
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+            print(f"📱 User {user_id} disconnected from WebSocket")
+    
+    async def send_personal_message(self, message: str, user_id: str):
+        if user_id in self.active_connections:
+            websocket = self.active_connections[user_id]
+            try:
+                await websocket.send_text(message)
+                return True
+            except:
+                # Connection might be stale, remove it
+                self.disconnect(user_id)
+                return False
+        return False
+    
+    async def notify_new_message(self, sender_id: str, recipient_id: str, message_data: dict):
+        """Notify recipient of new message in real-time"""
+        notification_data = {
+            "type": "new_message",
+            "sender_id": sender_id,
+            "message": message_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self.send_personal_message(json.dumps(notification_data), recipient_id)
+
+manager = ConnectionManager()
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for real-time messaging"""
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            # Keep connection alive
+            data = await websocket.receive_text()
+            # Handle any incoming WebSocket messages if needed
+            # For now, we'll just use it for receiving real-time notifications
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
+
+# Updated message creation endpoint with real-time notification
+@api_router.post("/conversations/send")
+async def send_message_realtime(
+    message_data: MessageCreateV2,
+    user_id: str = Depends(get_current_user)
+):
+    """Send a message with real-time notification"""
+    
+    if message_data.conversation_id:
+        # Add message to existing conversation
+        conversation = await db.conversations.find_one({"id": message_data.conversation_id})
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Check if user is participant
+        participant_ids = [p["user_id"] for p in conversation["participants"]]
+        if user_id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Not authorized to message in this conversation")
+        
+        conversation_id = message_data.conversation_id
+        recipient_id = None
+        for p in conversation["participants"]:
+            if p["user_id"] != user_id:
+                recipient_id = p["user_id"]
+                break
+        
+    else:
+        # Create new conversation with recipient
+        if not message_data.recipient_id:
+            raise HTTPException(status_code=400, detail="recipient_id required for new conversations")
+        
+        # Check if recipient exists
+        recipient = await db.users.find_one({"id": message_data.recipient_id})
+        if not recipient:
+            raise HTTPException(status_code=404, detail="Recipient not found")
+        
+        recipient_id = message_data.recipient_id
+        
+        # Check if conversation already exists between these users
+        existing_conversation = await db.conversations.find_one({
+            "participants": {
+                "$all": [
+                    {"$elemMatch": {"user_id": user_id}},
+                    {"$elemMatch": {"user_id": recipient_id}}
+                ]
+            }
+        })
+        
+        if existing_conversation:
+            conversation_id = existing_conversation["id"]
+        else:
+            # Create new conversation
+            conversation = Conversation(
+                participants=[
+                    ConversationParticipant(user_id=user_id),
+                    ConversationParticipant(user_id=recipient_id)
+                ]
+            )
+            await db.conversations.insert_one(conversation.dict())
+            conversation_id = conversation.id
+    
+    # Create message
+    message = Message(
+        sender_id=user_id,
+        recipient_id=recipient_id,
+        message=message_data.message
+    )
+    
+    await db.messages.insert_one(message.dict())
+    
+    # Update conversation last message time
+    await db.conversations.update_one(
+        {"id": conversation_id},
+        {
+            "$set": {
+                "last_message_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Get sender info for real-time notification
+    sender = await db.users.find_one({"id": user_id})
+    sender_name = sender.get("name", "Someone") if sender else "Someone"
+    
+    # Send real-time notification to recipient
+    message_notification = {
+        "id": message.id,
+        "conversation_id": conversation_id,
+        "sender_id": user_id,
+        "sender_name": sender_name,
+        "message": message.message,
+        "created_at": message.created_at.isoformat()
+    }
+    
+    await manager.notify_new_message(user_id, recipient_id, message_notification)
+    
+    return {
+        "message": "Message sent successfully",
+        "conversation_id": conversation_id,
+        "message_id": message.id,
+        "real_time_sent": recipient_id in manager.active_connections
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
