@@ -687,16 +687,6 @@ const Header = ({ currentView, setCurrentView }) => {
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  Profile
-                </button>
-                <button 
-                  onClick={() => setCurrentView('profile')}
-                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                    currentView === 'profile' 
-                      ? 'bg-white text-black' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
                   My Profil
                 </button>
                 {user.email === 'topkitfr@gmail.com' && (
