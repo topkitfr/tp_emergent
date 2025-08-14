@@ -3093,11 +3093,11 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
   );
 };
 
-// Enhanced Browse Jerseys Page with Dark Theme
+// Enhanced Browse Jerseys Page with Dark Theme  
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
   const { user } = useAuth();
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
-  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'team', 'season'
+  const [viewMode, setViewMode] = useState('list');
+  const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -3119,7 +3119,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
   const getFilteredJerseys = () => {
     let filtered = jerseys;
 
-    // Search filter
     if (searchQuery) {
       filtered = filtered.filter(jersey => 
         jersey.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -3129,7 +3128,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       );
     }
 
-    // Other filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter(jersey => 
@@ -3138,7 +3136,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       }
     });
 
-    // Sort
     switch (sortBy) {
       case 'team':
         filtered.sort((a, b) => (a.team || '').localeCompare(b.team || ''));
@@ -3149,79 +3146,30 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
       case 'oldest':
         filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         break;
-      default: // newest
+      default:
         filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
 
     return filtered;
   };
 
-  const handleJerseyDetailClick = (jersey) => {
-    // Navigate to jersey detail page using reference number
-    window.dispatchEvent(new CustomEvent('changeView', { 
-      detail: `jersey-detail-${jersey.reference_number || jersey.id}` 
-    }));
-  };
-
-  const handleQuickCollectionAction = async (jersey, action) => {
-    if (!user) {
-      alert('Veuillez vous connecter pour gérer votre collection');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Session expirée. Veuillez vous reconnecter.');
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${API}/api/collections`, {
-        jersey_id: jersey.id,
-        collection_type: action
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
-      alert(`✅ ${jersey.team} ajouté à ${actionText} !`);
-      
-      // Trigger profile refresh
-      window.dispatchEvent(new CustomEvent('refreshProfile'));
-      
-    } catch (error) {
-      console.error('Failed to add to collection:', error);
-      
-      if (error.response?.status === 400 && error.response?.data?.detail?.includes('already in collection')) {
-        const actionText = action === 'owned' ? 'votre collection' : 'votre wishlist';
-        alert(`ℹ️ ${jersey.team} est déjà dans ${actionText} !`);
-      } else {
-        alert('Erreur lors de l\'ajout à la collection. Veuillez réessayer.');
-      }
-    }
-  };
-
-  // Dark Theme Jersey Card Component with Collection Buttons
-  const DarkJerseyCard = ({ jersey, isListView = false }) => (
+  const DarkJerseyCard = ({ jersey, isListView }) => (
     <div 
-      className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all ${
-        isListView ? 'flex items-center p-4 mb-2' : 'rounded-lg overflow-hidden'
+      className={`bg-gray-900 border border-gray-700 hover:border-gray-600 transition-all duration-200 cursor-pointer group relative ${
+        isListView ? 'flex items-center p-4 rounded-lg mb-2' : 'rounded-lg overflow-hidden'
       }`}
+      onClick={() => onJerseyClick && onJerseyClick(jersey)}
     >
       {isListView ? (
         <>
-          {/* List View */}
-          <div 
-            className="w-16 h-16 bg-gray-800 rounded flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden cursor-pointer"
-            onClick={() => handleJerseyDetailClick(jersey)}
-          >
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-800 rounded flex items-center justify-center overflow-hidden mr-4 flex-shrink-0">
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
                 alt={`${jersey.team} ${jersey.season}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                  e.target.src = 'https://via.placeholder.com/80x80?text=Jersey';
                 }}
               />
             ) : (
@@ -3230,106 +3178,104 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 
-                  className="text-white font-semibold text-sm truncate cursor-pointer hover:text-blue-400"
-                  onClick={() => handleJerseyDetailClick(jersey)}
-                >
-                  {jersey.team} • {jersey.season}
-                </h3>
-                <p className="text-gray-400 text-xs mt-1">
-                  {jersey.player && `${jersey.player} • `}
-                  {jersey.home_away} • {jersey.manufacturer}
-                </p>
-                <p className="text-gray-500 text-xs mt-1">
-                  {jersey.league} • Size {jersey.size} • {jersey.condition}
-                </p>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <span className="bg-gray-800 px-2 py-1 rounded text-gray-300 text-xs">
-                  {jersey.reference_number}
-                </span>
-                
-                {/* Collection Buttons */}
-                {user && (
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleQuickCollectionAction(jersey, 'owned');
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
-                      title="Ajouter à ma collection"
-                    >
-                      📚
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleQuickCollectionAction(jersey, 'wanted');
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
-                      title="Ajouter à ma wishlist"
-                    >
-                      💫
-                    </button>
-                  </div>
-                )}
-              </div>
+            <h3 className="text-white font-semibold text-sm md:text-base mb-1 truncate">
+              {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
+            </h3>
+            <div className="text-gray-400 text-xs md:text-sm mb-2">
+              {jersey.league} • {jersey.season} • {jersey.home_away}
+            </div>
+            <div className="text-xs text-gray-500">
+              TK{jersey.reference_number} • Taille: {jersey.size}
             </div>
           </div>
+
+          {user && (
+            <div className="flex flex-col sm:flex-row gap-2 ml-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCollection && onAddToCollection(jersey.id, 'owned');
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors"
+                title="Ajouter à ma collection"
+              >
+                ❤️ Own
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCollection && onAddToCollection(jersey.id, 'wanted');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors"
+                title="Ajouter à ma wishlist"
+              >
+                ⭐ Want
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <>
-          {/* Grid View */}
-          <div 
-            className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer"
-            onClick={() => handleJerseyDetailClick(jersey)}
-          >
+          <div className="aspect-square bg-gray-800 flex items-center justify-center overflow-hidden">
             {jersey.images && jersey.images.length > 0 ? (
               <img
                 src={jersey.images[0]}
                 alt={`${jersey.team} ${jersey.season}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 onError={(e) => {
                   e.target.src = 'https://via.placeholder.com/200x200?text=Jersey';
                 }}
               />
             ) : (
-              <span className="text-gray-500 text-4xl">👕</span>
+              <div className="text-gray-500 text-center">
+                <div className="text-4xl mb-2">👕</div>
+                <div className="text-sm">No Image</div>
+              </div>
             )}
           </div>
           
-          <div className="p-3">
-            <h3 
-              className="text-white font-semibold text-sm mb-1 truncate cursor-pointer hover:text-blue-400"
-              onClick={() => handleJerseyDetailClick(jersey)}
-            >
-              {jersey.team}
+          <div className="p-4">
+            <h3 className="text-white font-semibold text-sm mb-1 truncate">
+              {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
             </h3>
-            <p className="text-gray-400 text-xs mb-1">{jersey.season}</p>
-            {jersey.player && (
-              <p className="text-white text-xs font-medium mb-1 truncate">{jersey.player}</p>
-            )}
-            <p className="text-gray-500 text-xs">
-              {jersey.home_away} • {jersey.condition}
+            <p className="text-gray-400 text-xs mb-2">
+              {jersey.league} • {jersey.season}
+            </p>
+            <p className="text-gray-500 text-xs mb-3">
+              TK{jersey.reference_number}
             </p>
             
-            <div className="mt-2 flex justify-between items-center">
-              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-                {jersey.reference_number}
-              </span>
-              
-              {/* Collection Buttons for Grid View */}
-              {user && (
-                <div className="flex space-x-1">
-                  <button
-                    onClick={(e) => {
+            {user && (
+              <div className="space-y-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddToCollection && onAddToCollection(jersey.id, 'owned');
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors"
+                >
+                  ❤️ Own
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddToCollection && onAddToCollection(jersey.id, 'wanted');
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-medium transition-colors"
+                >
+                  ⭐ Want
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-black">
-      {/* Dark Header */}
+      {/* Responsive Header */}
       <div className="bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between mb-4">
@@ -3339,7 +3285,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             </div>
           </div>
           
-          {/* Search Bar & Mobile Filter Toggle */}
+          {/* Responsive Search Bar */}
           <div className="flex space-x-2 md:space-x-4 mb-4">
             <div className="flex-1">
               <input
@@ -3351,42 +3297,22 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
               />
             </div>
             <button 
-              className="md:hidden bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              className="md:hidden bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
               onClick={() => setShowMobileFilters(!showMobileFilters)}
             >
               🔍
-            </button>
-            <button className="hidden md:block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Rechercher
             </button>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 md:px-6 py-6">
-        <div className="flex">
-          {/* Desktop Sidebar Filters */}
-          <div className="hidden md:block w-64 flex-shrink-0 mr-8">
-            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
-              <h3 className="font-semibold text-white mb-4">Filtrer les résultats</h3>
-              
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Mobile Filters */}
+          {showMobileFilters && (
+            <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
+              <h3 className="font-semibold text-white mb-4">Filtres</h3>
               <div className="space-y-4">
-                {/* League Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
-                  <select
-                    value={filters.league}
-                    onChange={(e) => setFilters({...filters, league: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Tous les championnats</option>
-                    {getUniqueValues('league').map(league => (
-                      <option key={league} value={league}>{league}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Team Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
                   <select
@@ -3400,63 +3326,42 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     ))}
                   </select>
                 </div>
+                <button
+                  onClick={() => {
+                    setFilters({
+                      league: '', team: '', season: '', size: '', condition: '', manufacturer: ''
+                    });
+                    setShowMobileFilters(false);
+                  }}
+                  className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                >
+                  Effacer
+                </button>
+              </div>
+            </div>
+          )}
 
-                {/* Season Filter */}
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block w-64 flex-shrink-0">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
+              <h3 className="font-semibold text-white mb-4">Filtres</h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
                   <select
-                    value={filters.season}
-                    onChange={(e) => setFilters({...filters, season: e.target.value})}
+                    value={filters.team}
+                    onChange={(e) => setFilters({...filters, team: e.target.value})}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Toutes les saisons</option>
-                    {getUniqueValues('season').map(season => (
-                      <option key={season} value={season}>{season}</option>
+                    <option value="">Toutes les équipes</option>
+                    {getUniqueValues('team').slice(0, 20).map(team => (
+                      <option key={team} value={team}>{team}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Size Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
-                  <select
-                    value={filters.size}
-                    onChange={(e) => setFilters({...filters, size: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Toutes les tailles</option>
-                    {getUniqueValues('size').map(size => (
-                      <option key={size} value={size}>{size}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Condition Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
-                  <select
-                    value={filters.condition}
-                    onChange={(e) => setFilters({...filters, condition: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Tous les états</option>
-                    <option value="new">Neuf</option>
-                    <option value="near_mint">Quasi-neuf</option>
-                    <option value="very_good">Très bon</option>
-                    <option value="good">Bon</option>
-                    <option value="poor">Correct</option>
-                  </select>
-                </div>
-
-                {/* Clear Filters */}
                 <button
                   onClick={() => setFilters({
-                    league: '',
-                    team: '',
-                    season: '',
-                    size: '',
-                    condition: '',
-                    manufacturer: ''
+                    league: '', team: '', season: '', size: '', condition: '', manufacturer: ''
                   })}
                   className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
                 >
@@ -3466,124 +3371,9 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             </div>
           </div>
 
-          {/* Mobile Filters Modal */}
-          {showMobileFilters && (
-            <>
-              <div 
-                className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-                onClick={() => setShowMobileFilters(false)}
-              />
-              <div className="md:hidden fixed top-0 left-0 w-80 h-full bg-gray-900 z-50 overflow-y-auto border-r border-gray-700">
-                <div className="p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-white">Filtrer</h3>
-                    <button 
-                      onClick={() => setShowMobileFilters(false)}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {/* Mobile filters - same as desktop */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
-                      <select
-                        value={filters.league}
-                        onChange={(e) => setFilters({...filters, league: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Tous les championnats</option>
-                        {getUniqueValues('league').map(league => (
-                          <option key={league} value={league}>{league}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
-                      <select
-                        value={filters.team}
-                        onChange={(e) => setFilters({...filters, team: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Toutes les équipes</option>
-                        {getUniqueValues('team').slice(0, 20).map(team => (
-                          <option key={team} value={team}>{team}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
-                      <select
-                        value={filters.season}
-                        onChange={(e) => setFilters({...filters, season: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Toutes les saisons</option>
-                        {getUniqueValues('season').map(season => (
-                          <option key={season} value={season}>{season}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
-                      <select
-                        value={filters.size}
-                        onChange={(e) => setFilters({...filters, size: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Toutes les tailles</option>
-                        {getUniqueValues('size').map(size => (
-                          <option key={size} value={size}>{size}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
-                      <select
-                        value={filters.condition}
-                        onChange={(e) => setFilters({...filters, condition: e.target.value})}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Tous les états</option>
-                        <option value="new">Neuf</option>
-                        <option value="near_mint">Quasi-neuf</option>
-                        <option value="very_good">Très bon</option>
-                        <option value="good">Bon</option>
-                        <option value="poor">Correct</option>
-                      </select>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setFilters({
-                          league: '',
-                          team: '',
-                          season: '',
-                          size: '',
-                          condition: '',
-                          manufacturer: ''
-                        });
-                        setShowMobileFilters(false);
-                      }}
-                      className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                    >
-                      Effacer les filtres
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Main Content Area */}
-          <div className="flex-1 w-full min-w-0">
-            {/* Sort and View Options */}
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* View Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
                 <select
@@ -3601,122 +3391,16 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  className={`p-2 rounded text-sm ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
                 >
                   📋
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  className={`p-2 rounded text-sm ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
                 >
                   🎯
                 </button>
-              </div>
-            </div>
-
-                {/* Season Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
-                  <select
-                    value={filters.season}
-                    onChange={(e) => setFilters({...filters, season: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Toutes les saisons</option>
-                    {getUniqueValues('season').map(season => (
-                      <option key={season} value={season}>{season}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Size Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
-                  <select
-                    value={filters.size}
-                    onChange={(e) => setFilters({...filters, size: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Toutes les tailles</option>
-                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
-                      <option key={size} value={size}>{size}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Condition Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
-                  <select
-                    value={filters.condition}
-                    onChange={(e) => setFilters({...filters, condition: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Tous les états</option>
-                    <option value="mint">Mint (M)</option>
-                    <option value="near_mint">Near Mint (NM)</option>
-                    <option value="very_good">Very Good (VG+)</option>
-                    <option value="good">Good (VG)</option>
-                    <option value="poor">Poor (P)</option>
-                  </select>
-                </div>
-
-                {/* Clear Filters */}
-                <button
-                  onClick={() => {
-                    setFilters({
-                      league: '', team: '', season: '', size: '', condition: '', manufacturer: ''
-                    });
-                    setSearchQuery('');
-                  }}
-                  className="w-full text-blue-400 hover:text-blue-300 text-sm font-medium"
-                >
-                  Effacer tous les filtres
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Dark Controls Bar */}
-            <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400">Trier par:</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-1 bg-gray-800 border border-gray-600 rounded text-sm text-white"
-                    >
-                      <option value="newest">Plus récent</option>
-                      <option value="oldest">Plus ancien</option>
-                      <option value="team">Équipe A-Z</option>
-                      <option value="season">Saison</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-400">Vue:</span>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-700' : 'hover:bg-gray-800'} text-gray-300`}
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-700' : 'hover:bg-gray-800'} text-gray-300`}
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 3a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V3zm-12 6a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9zm6 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V9z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -3728,7 +3412,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             ) : (
               <div>
                 {viewMode === 'list' ? (
-                  <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                  <div className="space-y-2">
                     {getFilteredJerseys().map((jersey) => (
                       <DarkJerseyCard 
                         key={jersey.id} 
@@ -3738,7 +3422,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {getFilteredJerseys().map((jersey) => (
                       <DarkJerseyCard 
                         key={jersey.id} 
@@ -3751,7 +3435,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 
                 {getFilteredJerseys().length === 0 && (
                   <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
-                    <div className="text-gray-400">Aucun maillot trouvé correspondant à vos critères.</div>
+                    <div className="text-gray-400">Aucun maillot trouvé.</div>
                     <button
                       onClick={() => {
                         setFilters({
@@ -3761,7 +3445,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                       }}
                       className="mt-4 text-blue-400 hover:text-blue-300 font-medium"
                     >
-                      Effacer les filtres pour voir tous les maillots
+                      Effacer les filtres
                     </button>
                   </div>
                 )}
