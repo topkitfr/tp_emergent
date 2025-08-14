@@ -7238,6 +7238,35 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
     }
   };
 
+  const fetchFriendsData = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/friends`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const { friends, received_requests, sent_requests } = response.data;
+      
+      setFriendsData({
+        friends: friends || [],
+        pendingReceived: received_requests || [],
+        pendingSent: sent_requests || [],
+        totalFriends: friends ? friends.length : 0
+      });
+      
+    } catch (error) {
+      console.error('Failed to fetch friends data:', error);
+      setFriendsData({
+        friends: [],
+        pendingReceived: [],
+        pendingSent: [],
+        totalFriends: 0
+      });
+    }
+  };
+
   const handleRemoveFromCollection = async (jerseyId, collectionType) => {
     try {
       const token = localStorage.getItem('token');
