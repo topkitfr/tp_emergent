@@ -8282,7 +8282,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
                 {submittedJerseys.length > 0 ? (
                   <div className="space-y-4">
                     {submittedJerseys.map((jersey) => (
-                      <EnhancedSubmissionCard key={jersey.id} jersey={jersey} onResubmit={fetchCollectionsData} />
+                      <EnhancedSubmissionCard key={jersey.id} jersey={jersey} onResubmit={fetchCollections} />
                     ))}
                   </div>
                 ) : (
