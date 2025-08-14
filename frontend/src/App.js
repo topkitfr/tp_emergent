@@ -5351,10 +5351,14 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
       
       if (response.ok) {
         const data = await response.json();
-        setUserCollections(data);
+        // Ensure data is always an array
+        setUserCollections(Array.isArray(data) ? data : []);
+      } else {
+        setUserCollections([]);
       }
     } catch (error) {
       console.error('Error fetching user collections:', error);
+      setUserCollections([]);
     } finally {
       setLoading(false);
     }
