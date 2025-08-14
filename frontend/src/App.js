@@ -5226,6 +5226,467 @@ const MessagesPage = () => {
   );
 };
 
+// User Profile Page Component
+const UserProfilePage = ({ selectedUserId, onBack }) => {
+  const { user } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  
+  const [profileData, setProfileData] = useState(null);
+  const [userJerseys, setUserJerseys] = useState([]);
+  const [userCollections, setUserCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isFriend, setIsFriend] = useState(false);
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      fetchUserProfile();
+      fetchUserJerseys();
+      fetchUserCollections();
+      checkFriendStatus();
+    }
+  }, [selectedUserId]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/${selectedUserId}/profile`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProfileData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const fetchUserJerseys = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/${selectedUserId}/jerseys`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserJerseys(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user jerseys:', error);
+    }
+  };
+
+  const fetchUserCollections = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/${selectedUserId}/collections`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserCollections(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user collections:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkFriendStatus = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const isAlreadyFriend = data.friends.some(friend => friend.friend_id === selectedUserId);
+        const hasSentRequest = data.pending_requests.sent.some(req => req.addressee_id === selectedUserId);
+        
+        setIsFriend(isAlreadyFriend);
+        setFriendRequestSent(hasSentRequest);
+      }
+    } catch (error) {
+      console.error('Error checking friend status:', error);
+    }
+  };
+
+  const sendFriendRequest = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends/request`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: selectedUserId })
+      });
+      
+      if (response.ok) {
+        setFriendRequestSent(true);
+        alert('Demande d\'ami envoyée !');
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Erreur lors de l\'envoi de la demande');
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      alert('Erreur lors de l\'envoi de la demande');
+    }
+  };
+
+  const startConversation = async () => {
+    if (!user || !isFriend) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recipient_id: selectedUserId,
+          message: "👋 Salut ! Comment ça va ?"
+        })
+      });
+      
+      if (response.ok) {
+        alert('Conversation démarrée ! Rendez-vous dans la section Messages.');
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Erreur lors du démarrage de la conversation');
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      alert('Erreur lors du démarrage de la conversation');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg">Chargement du profil...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="text-red-400 text-lg">Profil introuvable</div>
+            <button 
+              onClick={onBack}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Retour
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isOwnProfile = user && user.id === selectedUserId;
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header with Back Button */}
+        <div className="mb-6">
+          <button 
+            onClick={onBack}
+            className="text-blue-400 hover:text-blue-300 flex items-center space-x-2"
+          >
+            <span>←</span>
+            <span>Retour</span>
+          </button>
+        </div>
+
+        {/* Profile Header */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center space-x-6 mb-4 md:mb-0">
+              <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center">
+                {profileData.picture ? (
+                  <img src={profileData.picture} alt={profileData.display_name} className="w-20 h-20 rounded-full" />
+                ) : (
+                  <span className="text-gray-300 text-3xl">👤</span>
+                )}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">{profileData.display_name || profileData.name}</h1>
+                <p className="text-gray-400">{profileData.email}</p>
+                {profileData.location && (
+                  <p className="text-gray-500 flex items-center mt-2">
+                    <span className="mr-2">📍</span>
+                    {profileData.location}
+                  </p>
+                )}
+                {profileData.bio && (
+                  <p className="text-gray-300 mt-2 max-w-md">{profileData.bio}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            {!isOwnProfile && user && (
+              <div className="flex space-x-3">
+                {isFriend ? (
+                  <button
+                    onClick={startConversation}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                  >
+                    <span>💬</span>
+                    <span>Message</span>
+                  </button>
+                ) : friendRequestSent ? (
+                  <button
+                    disabled
+                    className="bg-yellow-600 text-white px-4 py-2 rounded-lg opacity-75 cursor-not-allowed"
+                  >
+                    ⏳ Demande envoyée
+                  </button>
+                ) : (
+                  <button
+                    onClick={sendFriendRequest}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                  >
+                    <span>👥</span>
+                    <span>Ajouter ami</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-700">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-400">{userJerseys.length}</div>
+              <div className="text-gray-400 text-sm">Maillots soumis</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-400">{userCollections.filter(c => c.collection_type === 'owned').length}</div>
+              <div className="text-gray-400 text-sm">Possédés</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">{userCollections.filter(c => c.collection_type === 'wanted').length}</div>
+              <div className="text-gray-400 text-sm">Recherchés</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">
+                {profileData.stats?.avg_seller_rating ? profileData.stats.avg_seller_rating.toFixed(1) : '-'}
+              </div>
+              <div className="text-gray-400 text-sm">Note vendeur</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-gray-900 rounded-lg border border-gray-700">
+          <div className="flex flex-wrap border-b border-gray-700">
+            {[
+              { id: 'overview', label: '📊 Vue d\'ensemble' },
+              { id: 'jerseys', label: '👕 Maillots soumis', count: userJerseys.length },
+              { id: 'collection', label: '📚 Collection', count: userCollections.length },
+              { id: 'badges', label: '🏆 Badges' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-b-2 border-white text-white bg-gray-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Recent Activity */}
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Activité récente</h3>
+                  <div className="bg-gray-800 rounded-lg p-4">
+                    <p className="text-gray-400">Aucune activité récente disponible</p>
+                  </div>
+                </div>
+
+                {/* Seller Info */}
+                {profileData.seller_info && (
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4">🏪 Informations vendeur</h3>
+                    <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+                      {profileData.seller_info.business_name && (
+                        <div>
+                          <span className="text-gray-400">Nom commercial: </span>
+                          <span className="text-white">{profileData.seller_info.business_name}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-gray-400">Délai de traitement: </span>
+                        <span className="text-white">{profileData.seller_info.processing_time_days} jours</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Retours acceptés: </span>
+                        <span className="text-white">{profileData.seller_info.return_days} jours</span>
+                      </div>
+                      {profileData.seller_info.payment_methods && profileData.seller_info.payment_methods.length > 0 && (
+                        <div>
+                          <span className="text-gray-400">Méthodes de paiement: </span>
+                          <span className="text-white">{profileData.seller_info.payment_methods.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Jerseys Tab */}
+            {activeTab === 'jerseys' && (
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Maillots soumis par {profileData.display_name || profileData.name}</h3>
+                {userJerseys.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg">Aucun maillot soumis</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {userJerseys.map((jersey) => (
+                      <div key={jersey.id} className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                        <div className="aspect-square bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+                          {jersey.images && jersey.images.length > 0 ? (
+                            <img src={jersey.images[0]} alt={jersey.team} className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            <span className="text-gray-400 text-4xl">👕</span>
+                          )}
+                        </div>
+                        <h4 className="text-white font-semibold">{jersey.team}</h4>
+                        <p className="text-gray-400 text-sm">{jersey.season}</p>
+                        {jersey.player && <p className="text-gray-300 text-sm">{jersey.player}</p>}
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs bg-gray-700 px-2 py-1 rounded">{jersey.size}</span>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            jersey.status === 'approved' ? 'bg-green-600' : 
+                            jersey.status === 'pending' ? 'bg-yellow-600' : 'bg-red-600'
+                          }`}>
+                            {jersey.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Collection Tab */}
+            {activeTab === 'collection' && (
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Collection de {profileData.display_name || profileData.name}</h3>
+                {userCollections.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 text-lg">Collection privée ou vide</div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Owned Collection */}
+                    <div>
+                      <h4 className="text-lg font-medium mb-3 text-green-400">📗 Maillots possédés ({userCollections.filter(c => c.collection_type === 'owned').length})</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {userCollections.filter(c => c.collection_type === 'owned').map((item) => (
+                          <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-600 p-3">
+                            <h5 className="text-white font-medium">{item.jersey?.team}</h5>
+                            <p className="text-gray-400 text-sm">{item.jersey?.season}</p>
+                            {item.jersey?.player && <p className="text-gray-300 text-sm">{item.jersey?.player}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Wanted Collection */}
+                    <div>
+                      <h4 className="text-lg font-medium mb-3 text-yellow-400">📒 Maillots recherchés ({userCollections.filter(c => c.collection_type === 'wanted').length})</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {userCollections.filter(c => c.collection_type === 'wanted').map((item) => (
+                          <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-600 p-3">
+                            <h5 className="text-white font-medium">{item.jersey?.team}</h5>
+                            <p className="text-gray-400 text-sm">{item.jersey?.season}</p>
+                            {item.jersey?.player && <p className="text-gray-300 text-sm">{item.jersey?.player}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Badges Tab */}
+            {activeTab === 'badges' && (
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Badges et récompenses</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {profileData.verified_seller && (
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-4 text-center">
+                      <div className="text-2xl mb-2">✅</div>
+                      <div className="text-white font-medium">Vendeur vérifié</div>
+                    </div>
+                  )}
+                  {profileData.badges && profileData.badges.length > 0 ? (
+                    profileData.badges.map((badge, index) => (
+                      <div key={index} className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-4 text-center">
+                        <div className="text-2xl mb-2">🏆</div>
+                        <div className="text-white font-medium">{badge}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-8">
+                      <div className="text-gray-400">Aucun badge pour le moment</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // Global Marketplace Page - Discogs Sell List Style
 const GlobalMarketplacePage = () => {
