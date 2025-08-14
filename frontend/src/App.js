@@ -8160,46 +8160,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             {activeTab === 'messages' && (
               <div>
                 <h2 className="text-2xl font-bold text-white mb-6">💬 Messages</h2>
-                
-                {/* Messages Interface */}
-                <div className="bg-gray-900 rounded-lg border border-gray-700">
-                  <div className="p-6">
-                    <div className="text-center py-12">
-                      <div className="text-gray-400 mb-4">
-                        <span className="text-6xl block mb-4">💬</span>
-                        Interface de messagerie
-                      </div>
-                      <p className="text-gray-500 mb-6">
-                        Communiquez avec vos amis et autres collectionneurs
-                      </p>
-                      <div className="max-w-md mx-auto">
-                        <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span className="text-white">Conversations en temps réel</span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <span className="text-white">Notifications de messages</span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                            <span className="text-white">Historique des conversations</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-8">
-                        <p className="text-gray-400 text-sm">
-                          💡 Astuce : Vous pouvez envoyer des messages à vos amis depuis la section "👥 Mes Amis"
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <MessagingInterface />
               </div>
             )}
           </>
