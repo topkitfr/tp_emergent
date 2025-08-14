@@ -3358,36 +3358,42 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     <div className="min-h-screen bg-black">
       {/* Dark Header */}
       <div className="bg-gray-900 border-b border-gray-700">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">Explorez</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-white">Explorez</h1>
             <div className="text-sm text-gray-400">
               {getFilteredJerseys().length} résultats
             </div>
           </div>
           
-          {/* Search Bar */}
-          <div className="flex space-x-4 mb-4">
+          {/* Search Bar & Mobile Filter Toggle */}
+          <div className="flex space-x-2 md:space-x-4 mb-4">
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Rechercher par équipe, joueur, championnat..."
+                placeholder="Rechercher par équipe, joueur..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 md:px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              className="md:hidden bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+            >
+              🔍
+            </button>
+            <button className="hidden md:block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Rechercher
             </button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-4 md:px-6 py-6">
         <div className="flex">
-          {/* Dark Sidebar Filters */}
-          <div className="w-64 flex-shrink-0 mr-8">
+          {/* Desktop Sidebar Filters */}
+          <div className="hidden md:block w-64 flex-shrink-0 mr-8">
             <div className="bg-gray-900 rounded-lg border border-gray-700 p-4 sticky top-6">
               <h3 className="font-semibold text-white mb-4">Filtrer les résultats</h3>
               
@@ -3421,6 +3427,219 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                     ))}
                   </select>
                 </div>
+
+                {/* Season Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
+                  <select
+                    value={filters.season}
+                    onChange={(e) => setFilters({...filters, season: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Toutes les saisons</option>
+                    {getUniqueValues('season').map(season => (
+                      <option key={season} value={season}>{season}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Size Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
+                  <select
+                    value={filters.size}
+                    onChange={(e) => setFilters({...filters, size: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Toutes les tailles</option>
+                    {getUniqueValues('size').map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Condition Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
+                  <select
+                    value={filters.condition}
+                    onChange={(e) => setFilters({...filters, condition: e.target.value})}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Tous les états</option>
+                    <option value="new">Neuf</option>
+                    <option value="near_mint">Quasi-neuf</option>
+                    <option value="very_good">Très bon</option>
+                    <option value="good">Bon</option>
+                    <option value="poor">Correct</option>
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                <button
+                  onClick={() => setFilters({
+                    league: '',
+                    team: '',
+                    season: '',
+                    size: '',
+                    condition: '',
+                    manufacturer: ''
+                  })}
+                  className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                >
+                  Effacer les filtres
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Filters Modal */}
+          {showMobileFilters && (
+            <>
+              <div 
+                className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+                onClick={() => setShowMobileFilters(false)}
+              />
+              <div className="md:hidden fixed top-0 left-0 w-80 h-full bg-gray-900 z-50 overflow-y-auto border-r border-gray-700">
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-white">Filtrer</h3>
+                    <button 
+                      onClick={() => setShowMobileFilters(false)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Mobile filters - same as desktop */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
+                      <select
+                        value={filters.league}
+                        onChange={(e) => setFilters({...filters, league: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Tous les championnats</option>
+                        {getUniqueValues('league').map(league => (
+                          <option key={league} value={league}>{league}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
+                      <select
+                        value={filters.team}
+                        onChange={(e) => setFilters({...filters, team: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Toutes les équipes</option>
+                        {getUniqueValues('team').slice(0, 20).map(team => (
+                          <option key={team} value={team}>{team}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
+                      <select
+                        value={filters.season}
+                        onChange={(e) => setFilters({...filters, season: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Toutes les saisons</option>
+                        {getUniqueValues('season').map(season => (
+                          <option key={season} value={season}>{season}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Taille</label>
+                      <select
+                        value={filters.size}
+                        onChange={(e) => setFilters({...filters, size: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Toutes les tailles</option>
+                        {getUniqueValues('size').map(size => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">État</label>
+                      <select
+                        value={filters.condition}
+                        onChange={(e) => setFilters({...filters, condition: e.target.value})}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Tous les états</option>
+                        <option value="new">Neuf</option>
+                        <option value="near_mint">Quasi-neuf</option>
+                        <option value="very_good">Très bon</option>
+                        <option value="good">Bon</option>
+                        <option value="poor">Correct</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setFilters({
+                          league: '',
+                          team: '',
+                          season: '',
+                          size: '',
+                          condition: '',
+                          manufacturer: ''
+                        });
+                        setShowMobileFilters(false);
+                      }}
+                      className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                    >
+                      Effacer les filtres
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Main Content Area */}
+          <div className="flex-1 w-full min-w-0">
+            {/* Sort and View Options */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-4">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="newest">Plus récents</option>
+                  <option value="oldest">Plus anciens</option>
+                  <option value="team">Par équipe</option>
+                  <option value="season">Par saison</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                >
+                  📋
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                >
+                  🎯
+                </button>
+              </div>
+            </div>
 
                 {/* Season Filter */}
                 <div>
