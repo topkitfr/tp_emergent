@@ -5004,111 +5004,191 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
 
   const renderCollectionList = (items, collectionType) => (
     <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
-      {/* Table Header */}
-      <div className="bg-gray-800 px-6 py-3 border-b border-gray-700">
-        <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-400 uppercase tracking-wide">
-          <div className="col-span-1"></div>
-          <div className="col-span-3">Maillot</div>
-          <div className="col-span-2">Équipe</div>
-          <div className="col-span-2">Saison</div>
-          <div className="col-span-1">Taille</div>
-          <div className="col-span-1">État</div>
-          {collectionType === 'owned' && <div className="col-span-1">Valeur</div>}
-          <div className="col-span-1">Actions</div>
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        {/* Table Header */}
+        <div className="bg-gray-800 px-6 py-3 border-b border-gray-700">
+          <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-400 uppercase tracking-wide">
+            <div className="col-span-1"></div>
+            <div className="col-span-3">Maillot</div>
+            <div className="col-span-2">Équipe</div>
+            <div className="col-span-2">Saison</div>
+            <div className="col-span-1">Taille</div>
+            <div className="col-span-1">État</div>
+            {collectionType === 'owned' && <div className="col-span-1">Valeur</div>}
+            <div className="col-span-1">Actions</div>
+          </div>
         </div>
-      </div>
-      
-      {/* Table Body */}
-      <div className="divide-y divide-gray-700">
-        {items.map((item, index) => (
-          <div key={item.id} className="px-6 py-4 hover:bg-gray-800 transition-colors">
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Image */}
-              <div className="col-span-1">
-                <div className="w-12 h-12 bg-gray-800 rounded flex items-center justify-center overflow-hidden">
-                  {item.jersey?.images && item.jersey.images.length > 0 ? (
-                    <img
-                      src={item.jersey.images[0]}
-                      alt={`${item.jersey.team} ${item.jersey.season}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/48x48?text=Jersey';
-                      }}
-                    />
-                  ) : (
-                    <span className="text-gray-500 text-lg">👕</span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Jersey Name */}
-              <div className="col-span-3">
-                <div className="text-white font-medium text-sm truncate">
-                  {item.jersey?.player ? `${item.jersey.team} - ${item.jersey.player}` : item.jersey?.team}
-                </div>
-                <div className="text-gray-400 text-xs">
-                  {item.jersey?.league} • {item.jersey?.home_away}
-                </div>
-              </div>
-              
-              {/* Team */}
-              <div className="col-span-2">
-                <div className="text-white text-sm truncate">{item.jersey?.team}</div>
-              </div>
-              
-              {/* Season */}
-              <div className="col-span-2">
-                <div className="text-white text-sm">{item.jersey?.season}</div>
-              </div>
-              
-              {/* Size */}
-              <div className="col-span-1">
-                <div className="text-white text-sm">{item.jersey?.size}</div>
-              </div>
-              
-              {/* Condition */}
-              <div className="col-span-1">
-                <span className={`px-2 py-1 text-xs font-medium rounded ${
-                  item.jersey?.condition === 'new' ? 'bg-green-800 text-green-200' :
-                  item.jersey?.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
-                  item.jersey?.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
-                  item.jersey?.condition === 'good' ? 'bg-orange-800 text-orange-200' :
-                  'bg-red-800 text-red-200'
-                }`}>
-                  {item.jersey?.condition === 'new' ? 'N' :
-                   item.jersey?.condition === 'near_mint' ? 'NM' :
-                   item.jersey?.condition === 'very_good' ? 'VG+' :
-                   item.jersey?.condition === 'good' ? 'VG' : 'P'}
-                </span>
-              </div>
-              
-              {/* Value (only for owned) */}
-              {collectionType === 'owned' && (
+        
+        {/* Table Body */}
+        <div className="divide-y divide-gray-700">
+          {items.map((item, index) => (
+            <div key={item.id} className="px-6 py-4 hover:bg-gray-800 transition-colors">
+              <div className="grid grid-cols-12 gap-4 items-center">
+                {/* Image */}
                 <div className="col-span-1">
-                  <div className="text-green-400 font-semibold text-sm">
-                    {Math.floor(Math.random() * 200) + 50}€
+                  <div className="w-12 h-12 bg-gray-800 rounded flex items-center justify-center overflow-hidden">
+                    {item.jersey?.images && item.jersey.images.length > 0 ? (
+                      <img
+                        src={item.jersey.images[0]}
+                        alt={`${item.jersey.team} ${item.jersey.season}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/48x48?text=Jersey';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-gray-500 text-lg">👕</span>
+                    )}
                   </div>
                 </div>
-              )}
+                
+                {/* Jersey Name */}
+                <div className="col-span-3">
+                  <div className="text-white font-medium text-sm truncate">
+                    {item.jersey?.player ? `${item.jersey.team} - ${item.jersey.player}` : item.jersey?.team}
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    {item.jersey?.league} • {item.jersey?.home_away}
+                  </div>
+                </div>
+                
+                {/* Team */}
+                <div className="col-span-2">
+                  <div className="text-white text-sm truncate">{item.jersey?.team}</div>
+                </div>
+                
+                {/* Season */}
+                <div className="col-span-2">
+                  <div className="text-white text-sm">{item.jersey?.season}</div>
+                </div>
+                
+                {/* Size */}
+                <div className="col-span-1">
+                  <div className="text-white text-sm">{item.jersey?.size}</div>
+                </div>
+                
+                {/* Condition */}
+                <div className="col-span-1">
+                  <span className={`px-2 py-1 text-xs font-medium rounded ${
+                    item.jersey?.condition === 'new' ? 'bg-green-800 text-green-200' :
+                    item.jersey?.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
+                    item.jersey?.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
+                    item.jersey?.condition === 'good' ? 'bg-orange-800 text-orange-200' :
+                    'bg-red-800 text-red-200'
+                  }`}>
+                    {item.jersey?.condition === 'new' ? 'N' :
+                     item.jersey?.condition === 'near_mint' ? 'NM' :
+                     item.jersey?.condition === 'very_good' ? 'VG+' :
+                     item.jersey?.condition === 'good' ? 'VG' : 'P'}
+                  </span>
+                </div>
+                
+                {/* Value (only for owned) */}
+                {collectionType === 'owned' && (
+                  <div className="col-span-1">
+                    <div className="text-green-400 font-semibold text-sm">
+                      {Math.floor(Math.random() * 200) + 50}€
+                    </div>
+                  </div>
+                )}
+                
+                {/* Actions */}
+                <div className="col-span-1">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                        detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
+                      }))}
+                      className="text-blue-400 hover:text-blue-300 text-xs"
+                      title="Voir le détail"
+                    >
+                      👁️
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFromCollection(item.jersey.id, collectionType)}
+                      className="text-red-400 hover:text-red-300 text-xs"
+                      title="Retirer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3 p-4">
+        {items.map((item, index) => (
+          <div key={item.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-start space-x-3">
+              {/* Mobile Image */}
+              <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                {item.jersey?.images && item.jersey.images.length > 0 ? (
+                  <img
+                    src={item.jersey.images[0]}
+                    alt={`${item.jersey.team} ${item.jersey.season}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                    }}
+                  />
+                ) : (
+                  <span className="text-gray-500 text-xl">👕</span>
+                )}
+              </div>
               
-              {/* Actions */}
-              <div className="col-span-1">
-                <div className="flex items-center space-x-2">
+              {/* Mobile Content */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-medium text-sm truncate">
+                  {item.jersey?.player ? `${item.jersey.team} - ${item.jersey.player}` : item.jersey?.team}
+                </h3>
+                <div className="text-gray-400 text-xs mt-1">
+                  {item.jersey?.league} • {item.jersey?.season} • {item.jersey?.home_away}
+                </div>
+                
+                {/* Mobile Details Row */}
+                <div className="flex items-center space-x-4 mt-2">
+                  <span className="text-white text-xs">
+                    <span className="text-gray-400">Taille:</span> {item.jersey?.size}
+                  </span>
+                  <span className={`px-2 py-1 text-xs font-medium rounded ${
+                    item.jersey?.condition === 'new' ? 'bg-green-800 text-green-200' :
+                    item.jersey?.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
+                    item.jersey?.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
+                    item.jersey?.condition === 'good' ? 'bg-orange-800 text-orange-200' :
+                    'bg-red-800 text-red-200'
+                  }`}>
+                    {item.jersey?.condition === 'new' ? 'Neuf' :
+                     item.jersey?.condition === 'near_mint' ? 'Quasi-neuf' :
+                     item.jersey?.condition === 'very_good' ? 'Très bon' :
+                     item.jersey?.condition === 'good' ? 'Bon' : 'Correct'}
+                  </span>
+                  {collectionType === 'owned' && (
+                    <span className="text-green-400 font-semibold text-sm">
+                      {Math.floor(Math.random() * 200) + 50}€
+                    </span>
+                  )}
+                </div>
+                
+                {/* Mobile Actions */}
+                <div className="flex items-center space-x-3 mt-3">
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
                       detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
                     }))}
-                    className="text-blue-400 hover:text-blue-300 text-xs"
-                    title="Voir le détail"
+                    className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-blue-700 transition-colors"
                   >
-                    👁️
+                    👁️ Voir détail
                   </button>
                   <button
                     onClick={() => handleRemoveFromCollection(item.jersey.id, collectionType)}
-                    className="text-red-400 hover:text-red-300 text-xs"
-                    title="Retirer"
+                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-red-700 transition-colors"
                   >
-                    🗑️
+                    🗑️ Retirer
                   </button>
                 </div>
               </div>
