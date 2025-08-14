@@ -330,7 +330,89 @@ class UserProfileAPITester:
             self.log_test("Profile Data Completeness", "FAIL", f"Exception: {str(e)}")
             return False
     
-    def test_enhanced_profile_endpoint(self, user_id):
+    def test_collections_with_data(self, user_id):
+        """Test collections endpoint with actual collection data"""
+        try:
+            print(f"📚 Testing User Collections endpoint with actual data for user: {user_id}")
+            
+            # First, let's try to get some jerseys to add to collection
+            jerseys_response = self.session.get(f"{self.base_url}/jerseys?limit=3")
+            if jerseys_response.status_code != 200:
+                self.log_test(f"Collections with Data Setup (User: {user_id})", "SKIP", 
+                            f"Cannot get jerseys for testing: {jerseys_response.status_code}")
+                return True  # Skip this test
+            
+            jerseys = jerseys_response.json()
+            if not jerseys:
+                self.log_test(f"Collections with Data Setup (User: {user_id})", "SKIP", 
+                            f"No jerseys available for testing")
+                return True  # Skip this test
+            
+            # Try to add a jersey to owned collection
+            test_jersey_id = jerseys[0]['id']
+            add_response = self.session.post(f"{self.base_url}/collections", 
+                                           json={"jersey_id": test_jersey_id, "collection_type": "owned"})
+            
+            if add_response.status_code not in [200, 400]:  # 400 might be "already in collection"
+                self.log_test(f"Collections with Data Setup (User: {user_id})", "FAIL", 
+                            f"Cannot add jersey to collection: {add_response.status_code} - {add_response.text}")
+                return False
+            
+            # Now test the collections endpoint
+            response = self.session.get(f"{self.base_url}/users/{user_id}/collections")
+            
+            if response.status_code == 200:
+                collections_response = response.json()
+                
+                # Handle both response formats
+                if isinstance(collections_response, dict) and 'collections' in collections_response:
+                    collections_data = collections_response['collections']
+                elif isinstance(collections_response, list):
+                    collections_data = collections_response
+                else:
+                    self.log_test(f"Collections with Data (User: {user_id})", "FAIL", 
+                                f"Unexpected response format: {type(collections_response)}")
+                    return False
+                
+                # Check if we have collections now
+                if collections_data:
+                    sample_collection = collections_data[0]
+                    
+                    # Verify jersey details are populated
+                    if 'jersey' in sample_collection and sample_collection['jersey']:
+                        jersey = sample_collection['jersey']
+                        required_jersey_fields = ['id', 'team', 'season']
+                        missing_fields = [field for field in required_jersey_fields if field not in jersey]
+                        
+                        if missing_fields:
+                            self.log_test(f"Collections with Data Jersey Details (User: {user_id})", "FAIL", 
+                                        f"Missing jersey fields: {missing_fields}")
+                            return False
+                        
+                        self.log_test(f"Collections with Data (User: {user_id})", "PASS", 
+                                    f"Collections with jersey details working. Jersey: {jersey.get('team')} {jersey.get('season')}")
+                        return True
+                    else:
+                        self.log_test(f"Collections with Data (User: {user_id})", "FAIL", 
+                                    f"Jersey details not populated in collection")
+                        return False
+                else:
+                    self.log_test(f"Collections with Data (User: {user_id})", "INFO", 
+                                f"No collections found (might be expected)")
+                    return True
+                    
+            elif response.status_code == 500:
+                self.log_test(f"Collections with Data (User: {user_id})", "FAIL", 
+                            f"Internal Server Error - likely MongoDB ObjectId serialization issue")
+                return False
+            else:
+                self.log_test(f"Collections with Data (User: {user_id})", "FAIL", 
+                            f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test(f"Collections with Data (User: {user_id})", "FAIL", f"Exception: {str(e)}")
+            return False
         """Test if the enhanced profile endpoint (with email, display_name, etc.) is accessible"""
         try:
             print(f"🔍 Testing Enhanced Profile endpoint (checking for newer implementation)...")
