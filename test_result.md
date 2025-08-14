@@ -741,11 +741,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Authentication Modal Form Login - Frontend Login State Management"
-    - "Collection Management with French Remove Text"
-    - "Browse Jerseys Collection Buttons"
-  stuck_tasks:
-    - "Authentication Modal Form Login - Frontend Login State Management"
+    - "TopKit Bug Corrections - Database Cleanup Verification"
+    - "TopKit Bug Corrections - Submit Jersey Button Functionality"
+    - "TopKit Bug Corrections - Own/Want Toggle Logic"
+    - "TopKit Bug Corrections - New Marketplace Catalog API"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
