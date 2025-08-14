@@ -3787,12 +3787,12 @@ const AdvancedSettingsPage = () => {
             <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
               <nav className="space-y-2">
                 {[
-                  { id: 'profile', label: '👤 Profil', icon: '👤' },
-                  { id: 'seller-settings', label: '🏪 Vendeur', icon: '🏪' },
-                  { id: 'buyer-settings', label: '🛒 Acheteur', icon: '🛒' },
-                  { id: 'collection-settings', label: '📚 Collection', icon: '📚' },
-                  { id: 'privacy-settings', label: '🔒 Confidentialité', icon: '🔒' },
-                  { id: 'ratings', label: '⭐ Évaluations', icon: '⭐' }
+                  { id: 'profile', label: 'Profil', icon: '👤' },
+                  { id: 'seller-settings', label: 'Vendeur', icon: '🏪' },
+                  { id: 'buyer-settings', label: 'Acheteur', icon: '🛒' },
+                  { id: 'collection-settings', label: 'Collection', icon: '📚' },
+                  { id: 'privacy-settings', label: 'Confidentialité', icon: '🔒' },
+                  { id: 'ratings', label: 'Évaluations', icon: '⭐' }
                 ].map(tab => (
                   <button
                     key={tab.id}
