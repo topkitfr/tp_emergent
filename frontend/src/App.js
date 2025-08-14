@@ -6188,26 +6188,9 @@ const GlobalMarketplacePage = () => {
     </div>
   );
 };
-      'good': 'VG',
-      'poor': 'P'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded ${colors[condition] || 'bg-gray-800 text-gray-200'}`}>
-        {labels[condition] || condition}
-      </span>
-    );
-  };
 
-  const handleJerseyClick = (listing) => {
-    if (listing.jersey?.reference_number) {
-      window.dispatchEvent(new CustomEvent('changeView', { 
-        detail: `jersey-detail-${listing.jersey.reference_number}` 
-      }));
-    }
-  };
-
-  return (
+// Jersey Detail Page Component (moved from marketplace)  
+const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-700">
