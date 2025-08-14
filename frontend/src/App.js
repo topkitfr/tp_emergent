@@ -4342,6 +4342,7 @@ const GlobalMarketplacePage = () => {
   });
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     fetchAllListings();
