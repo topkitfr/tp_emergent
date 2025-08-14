@@ -6220,14 +6220,10 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     </div>
   );
 };
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [showNewConversation, setShowNewConversation] = useState(false);
-  const [searchUsers, setSearchUsers] = useState('');
+
+// MessagingInterface Component
+const MessagingInterface = () => {
+  const { user } = useAuth();
   const [searchResults, setSearchResults] = useState([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
 
