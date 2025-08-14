@@ -6191,7 +6191,21 @@ const GlobalMarketplacePage = () => {
 
 // Jersey Detail Page Component (moved from marketplace)  
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
-    <div className="min-h-screen bg-black">
+  const { user } = useAuth();
+  const [jersey, setJersey] = useState(null);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userCollection, setUserCollection] = useState({ owned: false, wanted: false });
+  const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    fetchJerseyDetails();
+    if (user) {
+      checkUserCollection();
+    }
+  }, [jerseyId, referenceNumber, user]);
+
+  const fetchJerseyDetails = async () => {
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-4 md:px-6 py-4">
