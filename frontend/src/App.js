@@ -8242,10 +8242,48 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
 
             {activeTab === 'submitted' && (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-6">Mes Soumissions</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Mes Soumissions</h2>
+                  <div className="text-sm text-gray-400">
+                    {submittedJerseys.length} soumission{submittedJerseys.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* Submission Status Summary */}
+                {submittedJerseys.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-xl font-bold text-green-400">
+                        {submittedJerseys.filter(j => j.status === 'approved').length}
+                      </div>
+                      <div className="text-xs text-gray-400">Approuvés</div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-xl font-bold text-yellow-400">
+                        {submittedJerseys.filter(j => j.status === 'pending').length}
+                      </div>
+                      <div className="text-xs text-gray-400">En attente</div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-xl font-bold text-orange-400">
+                        {submittedJerseys.filter(j => j.status === 'needs_modification').length}
+                      </div>
+                      <div className="text-xs text-gray-400">Modifications requises</div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-xl font-bold text-red-400">
+                        {submittedJerseys.filter(j => j.status === 'rejected').length}
+                      </div>
+                      <div className="text-xs text-gray-400">Rejetés</div>
+                    </div>
+                  </div>
+                )}
+                
                 {submittedJerseys.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {submittedJerseys.map((jersey) => renderSubmittedJerseyCard(jersey))}
+                  <div className="space-y-4">
+                    {submittedJerseys.map((jersey) => (
+                      <EnhancedSubmissionCard key={jersey.id} jersey={jersey} onResubmit={fetchCollectionsData} />
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
