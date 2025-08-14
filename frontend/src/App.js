@@ -9143,6 +9143,20 @@ const AppContent = () => {
           />
         )}
 
+        {/* Submit Jersey Modal - Moved to ProfileCollectionPage */}
+        {showSubmitModal && (
+          <SubmitJerseyModal 
+            onClose={() => setShowSubmitModal(false)}
+            onSuccess={() => {
+              setShowSubmitModal(false);
+              // Refresh submissions
+              if (user) {
+                window.location.reload();
+              }
+            }}
+          />
+        )}
+
         {/* Footer */}
         <footer className="bg-black border-t border-gray-800 text-white py-12 mt-16">
           <div className="container mx-auto px-6">
