@@ -7142,6 +7142,404 @@ const JerseyMarketplacePage = ({ jerseyId, referenceNumber }) => {
   );
 };
 
+// MessagingInterface Component
+const MessagingInterface = () => {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [showNewConversation, setShowNewConversation] = useState(false);
+  const [searchUsers, setSearchUsers] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+
+  // Fetch conversations
+  const fetchConversations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setConversations(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+      setConversations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch messages for a specific conversation
+  const fetchMessages = async (conversationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/conversations/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      setMessages([]);
+    }
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation || sendingMessage) return;
+
+    try {
+      setSendingMessage(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${API}/api/conversations/send`, {
+        conversation_id: selectedConversation.id,
+        message: newMessage.trim()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setNewMessage('');
+      // Refresh messages
+      await fetchMessages(selectedConversation.id);
+      // Refresh conversations to update last message
+      await fetchConversations();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  // Start new conversation
+  const startConversation = async (recipientId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/api/conversations`, {
+        recipient_id: recipientId,
+        message: "Hello! I'd like to connect with you on TopKit."
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Refresh conversations
+      await fetchConversations();
+      setShowNewConversation(false);
+      setSearchUsers('');
+      setSearchResults([]);
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+    }
+  };
+
+  // Search users
+  const searchForUsers = async (query) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingUsers(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/users/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSearchResults(response.data.users || []);
+    } catch (error) {
+      console.error('Failed to search users:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  // Effect to handle search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchUsers) {
+        searchForUsers(searchUsers);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchUsers]);
+
+  // Load conversations on mount
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+    }
+  }, [user]);
+
+  // Load messages when conversation is selected
+  useEffect(() => {
+    if (selectedConversation) {
+      fetchMessages(selectedConversation.id);
+    }
+  }, [selectedConversation]);
+
+  const formatMessageTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatConversationTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Today';
+    } else if (diffDays === 2) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays - 1} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-900 rounded-lg border border-gray-700 p-8">
+        <div className="flex items-center justify-center">
+          <LoadingSpinner size="lg" className="mr-3" />
+          <span className="text-gray-400">Loading conversations...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-900 rounded-lg border border-gray-700 h-96 flex">
+      {/* Conversations List */}
+      <div className="w-1/3 border-r border-gray-700 flex flex-col">
+        <div className="p-4 border-b border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold">Conversations</h3>
+            <button
+              onClick={() => setShowNewConversation(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+            >
+              + New
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto">
+          {conversations.length === 0 ? (
+            <div className="p-4 text-center text-gray-400">
+              <div className="text-4xl mb-2">💬</div>
+              <p className="text-sm">No conversations yet</p>
+              <p className="text-xs mt-1">Start a new conversation!</p>
+            </div>
+          ) : (
+            conversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => setSelectedConversation(conversation)}
+                className={`p-4 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors ${
+                  selectedConversation?.id === conversation.id ? 'bg-gray-800' : ''
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <Avatar
+                    user={conversation.other_participant}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-white text-sm font-medium truncate">
+                        {conversation.other_participant?.name || 'Unknown User'}
+                      </p>
+                      {conversation.last_message && (
+                        <p className="text-xs text-gray-500">
+                          {formatConversationTime(conversation.last_message.created_at)}
+                        </p>
+                      )}
+                    </div>
+                    {conversation.last_message && (
+                      <p className="text-gray-400 text-xs truncate mt-1">
+                        {conversation.last_message.sent_by_me ? 'You: ' : ''}{conversation.last_message.message}
+                      </p>
+                    )}
+                  </div>
+                  {conversation.unread_count > 0 && (
+                    <div className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {conversation.unread_count}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Message Area */}
+      <div className="flex-1 flex flex-col">
+        {selectedConversation ? (
+          <>
+            {/* Conversation Header */}
+            <div className="p-4 border-b border-gray-700">
+              <div className="flex items-center space-x-3">
+                <Avatar
+                  user={selectedConversation.other_participant}
+                  size="sm"
+                />
+                <div>
+                  <h3 className="text-white font-medium">
+                    {selectedConversation.other_participant?.name || 'Unknown User'}
+                  </h3>
+                  <p className="text-gray-400 text-xs">
+                    {selectedConversation.other_participant?.name ? 'TopKit Collector' : 'User not found'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <p>Start the conversation!</p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      message.sender_id === user?.id 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-800 text-white'
+                    }`}>
+                      <p className="text-sm">{message.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        message.sender_id === user?.id ? 'text-blue-200' : 'text-gray-400'
+                      }`}>
+                        {formatMessageTime(message.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-gray-700">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={sendingMessage || !newMessage.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  {sendingMessage ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <div className="text-6xl mb-4">💬</div>
+              <p className="text-lg mb-2">Select a conversation to start chatting</p>
+              <p className="text-sm">Choose from your conversations on the left</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* New Conversation Modal */}
+      {showNewConversation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 w-96">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-white font-semibold">Start New Conversation</h3>
+              <button
+                onClick={() => {
+                  setShowNewConversation(false);
+                  setSearchUsers('');
+                  setSearchResults([]);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Search for users</label>
+                <input
+                  type="text"
+                  value={searchUsers}
+                  onChange={(e) => setSearchUsers(e.target.value)}
+                  placeholder="Type username or email..."
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="max-h-60 overflow-y-auto">
+                {searchingUsers ? (
+                  <div className="flex items-center justify-center py-4">
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    <span className="text-gray-400 text-sm">Searching...</span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {searchResults.map((searchUser) => (
+                      <div
+                        key={searchUser.id}
+                        className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Avatar user={searchUser} size="sm" />
+                          <div>
+                            <p className="text-white text-sm font-medium">{searchUser.name}</p>
+                            <p className="text-gray-400 text-xs">{searchUser.email}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => startConversation(searchUser.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Message
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : searchUsers.length >= 2 ? (
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    No users found
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    Type at least 2 characters to search
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Unified Profile & Collection Page with Dark Theme
 const ProfileCollectionPage = ({ shouldRefresh = false }) => {
   const { user, loading: authLoading } = useAuth();
