@@ -3191,12 +3191,18 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
 };
 
 // Enhanced Browse Jerseys Page with Dark Theme  
-const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
+const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick, onViewUserProfile }) => {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState('list');
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState('jerseys');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+
   const [filters, setFilters] = useState({
     league: '',
     team: '',
