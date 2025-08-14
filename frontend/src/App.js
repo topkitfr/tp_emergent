@@ -7749,6 +7749,16 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
             >
               👥 Mes Amis ({friendsData.totalFriends})
             </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'messages'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              💬 Messages
+            </button>
           </nav>
         </div>
       </div>
