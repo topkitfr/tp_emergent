@@ -2298,6 +2298,307 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
         "collections": collections
     }
 
+# Nouveaux endpoints pour profil utilisateur avancé
+
+@api_router.get("/profile/advanced")
+async def get_advanced_profile(user_id: str = Depends(get_current_user)):
+    """Récupère le profil avancé de l'utilisateur"""
+    # Chercher le profil utilisateur avancé
+    profile = await db.user_profiles.find_one({"user_id": user_id})
+    
+    if not profile:
+        # Créer un profil par défaut si il n'existe pas
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+        profile = profile.dict()
+    else:
+        profile.pop('_id', None)
+    
+    # Récupérer les ratings
+    seller_ratings = await db.user_ratings.find({
+        "rated_user_id": user_id, 
+        "rating_type": "seller"
+    }).to_list(1000)
+    
+    buyer_ratings = await db.user_ratings.find({
+        "rated_user_id": user_id, 
+        "rating_type": "buyer"  
+    }).to_list(1000)
+    
+    # Calculer moyennes
+    if seller_ratings:
+        profile["avg_seller_rating"] = sum(r["score"] for r in seller_ratings) / len(seller_ratings)
+        profile["total_seller_ratings"] = len(seller_ratings)
+    
+    if buyer_ratings:
+        profile["avg_buyer_rating"] = sum(r["score"] for r in buyer_ratings) / len(buyer_ratings)
+        profile["total_buyer_ratings"] = len(buyer_ratings)
+    
+    return profile
+
+@api_router.put("/profile/advanced")
+async def update_advanced_profile(profile_update: UserProfileUpdate, user_id: str = Depends(get_current_user)):
+    """Met à jour le profil avancé de l'utilisateur"""
+    # Vérifier si le profil existe
+    existing_profile = await db.user_profiles.find_one({"user_id": user_id})
+    
+    if not existing_profile:
+        # Créer un nouveau profil
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+    
+    # Construire les données de mise à jour
+    update_data = {}
+    for field, value in profile_update.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[field] = value
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Profil mis à jour avec succès"}
+
+@api_router.put("/profile/seller-settings")
+async def update_seller_settings(seller_settings: SellerSettingsUpdate, user_id: str = Depends(get_current_user)):
+    """Met à jour les paramètres vendeur"""
+    # S'assurer que le profil existe
+    existing_profile = await db.user_profiles.find_one({"user_id": user_id})
+    if not existing_profile:
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+    
+    # Construire les données de mise à jour
+    update_data = {}
+    for field, value in seller_settings.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[f"seller_settings.{field}"] = value
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Paramètres vendeur mis à jour"}
+
+@api_router.put("/profile/buyer-settings")
+async def update_buyer_settings(buyer_settings: BuyerSettingsUpdate, user_id: str = Depends(get_current_user)):
+    """Met à jour les paramètres acheteur"""
+    existing_profile = await db.user_profiles.find_one({"user_id": user_id})
+    if not existing_profile:
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+    
+    update_data = {}
+    for field, value in buyer_settings.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[f"buyer_settings.{field}"] = value
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Paramètres acheteur mis à jour"}
+
+@api_router.put("/profile/collection-settings")
+async def update_collection_settings(collection_settings: CollectionSettingsUpdate, user_id: str = Depends(get_current_user)):
+    """Met à jour les paramètres de collection"""
+    existing_profile = await db.user_profiles.find_one({"user_id": user_id})
+    if not existing_profile:
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+    
+    update_data = {}
+    for field, value in collection_settings.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[f"collection_settings.{field}"] = value
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Paramètres de collection mis à jour"}
+
+@api_router.put("/profile/privacy-settings")
+async def update_privacy_settings(privacy_settings: PrivacySettingsUpdate, user_id: str = Depends(get_current_user)):
+    """Met à jour les paramètres de confidentialité"""
+    existing_profile = await db.user_profiles.find_one({"user_id": user_id})
+    if not existing_profile:
+        profile = UserProfile(user_id=user_id)
+        await db.user_profiles.insert_one(profile.dict())
+    
+    update_data = {}
+    for field, value in privacy_settings.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[f"privacy_settings.{field}"] = value
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Paramètres de confidentialité mis à jour"}
+
+@api_router.post("/profile/rating")
+async def create_rating(rating_data: RatingCreate, user_id: str = Depends(get_current_user)):
+    """Créer une évaluation pour un utilisateur"""
+    # Vérifier que l'utilisateur évalué existe
+    rated_user = await db.users.find_one({"id": rating_data.rated_user_id})
+    if not rated_user:
+        raise HTTPException(status_code=404, detail="Utilisateur à évaluer introuvable")
+    
+    # Vérifier que l'utilisateur n'essaie pas de s'auto-évaluer
+    if user_id == rating_data.rated_user_id:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas vous auto-évaluer")
+    
+    # Créer l'évaluation
+    rating = UserRating(
+        rater_id=user_id,
+        rated_user_id=rating_data.rated_user_id,
+        transaction_id=rating_data.transaction_id,
+        rating_type=rating_data.rating_type,
+        score=rating_data.score,
+        comment=rating_data.comment
+    )
+    
+    await db.user_ratings.insert_one(rating.dict())
+    
+    # Mettre à jour les statistiques du profil
+    profile = await db.user_profiles.find_one({"user_id": rating_data.rated_user_id})
+    if profile:
+        if rating_data.rating_type == "seller":
+            ratings = await db.user_ratings.find({
+                "rated_user_id": rating_data.rated_user_id,
+                "rating_type": "seller"
+            }).to_list(1000)
+            avg_rating = sum(r["score"] for r in ratings) / len(ratings)
+            
+            await db.user_profiles.update_one(
+                {"user_id": rating_data.rated_user_id},
+                {
+                    "$set": {
+                        "avg_seller_rating": avg_rating,
+                        "total_seller_ratings": len(ratings)
+                    }
+                }
+            )
+        elif rating_data.rating_type == "buyer":
+            ratings = await db.user_ratings.find({
+                "rated_user_id": rating_data.rated_user_id,
+                "rating_type": "buyer"
+            }).to_list(1000)
+            avg_rating = sum(r["score"] for r in ratings) / len(ratings)
+            
+            await db.user_profiles.update_one(
+                {"user_id": rating_data.rated_user_id},
+                {
+                    "$set": {
+                        "avg_buyer_rating": avg_rating,
+                        "total_buyer_ratings": len(ratings)
+                    }
+                }
+            )
+    
+    return {"message": "Évaluation créée avec succès"}
+
+@api_router.get("/profile/ratings/{user_id}")
+async def get_user_ratings(user_id: str, rating_type: Optional[str] = None):
+    """Récupère les évaluations d'un utilisateur"""
+    query = {"rated_user_id": user_id}
+    if rating_type:
+        query["rating_type"] = rating_type
+    
+    ratings = await db.user_ratings.find(query).sort("created_at", -1).to_list(100)
+    
+    # Récupérer les informations des évaluateurs
+    for rating in ratings:
+        rating.pop('_id', None)
+        rater = await db.users.find_one({"id": rating["rater_id"]})
+        if rater:
+            rating["rater_name"] = rater["name"]
+            rating["rater_picture"] = rater.get("picture")
+    
+    return {"ratings": ratings}
+
+@api_router.get("/users/{user_id}/profile/public")
+async def get_public_advanced_profile(user_id: str, current_user_id: Optional[str] = Depends(get_current_user_optional)):
+    """Récupère le profil public avancé d'un utilisateur"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+    
+    profile = await db.user_profiles.find_one({"user_id": user_id})
+    
+    # Si pas de profil avancé, créer une réponse basique
+    if not profile:
+        return {
+            "user_id": user_id,
+            "display_name": user["name"],
+            "created_at": user["created_at"],
+            "privacy_settings": {"profile_visibility": "public"},
+            "stats": {
+                "total_sales": 0,
+                "total_purchases": 0,
+                "avg_seller_rating": None,
+                "avg_buyer_rating": None
+            }
+        }
+    
+    profile.pop('_id', None)
+    
+    # Vérifier la confidentialité
+    if profile.get("privacy_settings", {}).get("profile_visibility") == "private" and current_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Ce profil est privé")
+    
+    # Filtrer les informations sensibles pour les profils publics
+    public_profile = {
+        "user_id": user_id,
+        "display_name": profile.get("display_name") or user["name"],
+        "bio": profile.get("bio"),
+        "location": profile.get("location") if profile.get("privacy_settings", {}).get("show_location", True) else None,
+        "website": profile.get("website"),
+        "social_links": profile.get("social_links", {}),
+        "created_at": user["created_at"] if profile.get("privacy_settings", {}).get("show_join_date", True) else None,
+        "badges": profile.get("badges", []),
+        "verified_seller": profile.get("verified_seller", False),
+        "stats": {
+            "total_sales": profile.get("total_sales", 0),
+            "total_purchases": profile.get("total_purchases", 0),
+            "avg_seller_rating": profile.get("avg_seller_rating"),
+            "avg_buyer_rating": profile.get("avg_buyer_rating"),
+            "total_seller_ratings": profile.get("total_seller_ratings", 0),
+            "total_buyer_ratings": profile.get("total_buyer_ratings", 0)
+        }
+    }
+    
+    # Ajouter les paramètres vendeur si c'est un vendeur actif
+    if profile.get("seller_settings", {}).get("is_seller", False):
+        seller_settings = profile.get("seller_settings", {})
+        public_profile["seller_info"] = {
+            "is_seller": True,
+            "business_name": seller_settings.get("business_name"),
+            "return_policy": seller_settings.get("return_policy"),
+            "shipping_policy": seller_settings.get("shipping_policy"),
+            "payment_methods": seller_settings.get("payment_methods", []),
+            "processing_time_days": seller_settings.get("processing_time_days", 3),
+            "return_days": seller_settings.get("return_days", 14)
+        }
+    
+    return public_profile
+
 # Include the router in the main app
 app.include_router(api_router)
 
