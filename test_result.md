@@ -193,10 +193,29 @@ agent_communication:
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "TopKit continued development requested by user:
-1. COMPLETE MESSAGING SYSTEM IMPLEMENTATION - Full frontend for real-time conversations between users, replacing placeholder UI with functional messaging interface including conversation list, message sending/receiving, user search, and real-time updates
-2. ENHANCE USER SUBMISSIONS & NOTIFICATIONS - Complete the user submissions view with detailed status tracking and ensure notifications work properly for jersey submission lifecycle (submitted, approved, rejected, needs modification)
-3. TESTING & REFINEMENT - Comprehensive testing of all new messaging and notification features"
+user_problem_statement: "Corrections multiples demandées par l'utilisateur:
+
+PHASE 1 - Base de données vierge ✅ TERMINÉ
+- Nettoyage de la base de données en conservant seulement topkitfr@gmail.com et steinmetzlivio@gmail.com
+
+PHASE 2 - Bugs Utilisateur (Priorité Haute):
+1. Ajouter bouton 'Soumettre un maillot' dans section 'Mes Soumissions' 
+2. Corriger logique own/want pour permettre basculement bidirectionnel
+3. Restructurer marketplace selon logique Discogs (référence générale → articles en vente utilisateur)
+4. Réparer système de messagerie (réception messages, pas besoin d'être amis, contact vendeurs)
+
+PHASE 3 - Bugs Admin (Priorité Haute):
+1. Améliorer modération (confirmations, accès formulaire original, actions fonctionnelles)
+2. Réparer messagerie admin
+3. Désactiver fonctions achat/vente pour admin (garder accès explorer)
+4. Masquer admin des recherches utilisateur et amis
+5. Créer page dédiée activités/trafic admin
+
+PHASE 4 - Améliorations Générales:
+1. Réparer consultation profils autres utilisateurs
+2. Optimiser affichage mobile restant
+3. Restructurer navigation (pages principales sous header, menu auth/admin en haut gauche)
+4. Réduire logo de 20% et optimiser header"
 
 frontend:
   - task: "Complete Messaging System Frontend Implementation"
