@@ -8880,7 +8880,7 @@ const SearchFilter = ({ onFilter }) => {
 
 // Main App Component
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
