@@ -5574,7 +5574,7 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
             {[
               { id: 'overview', label: '📊 Vue d\'ensemble' },
               { id: 'jerseys', label: '👕 Maillots soumis', count: userJerseys.length },
-              { id: 'collection', label: '📚 Collection', count: userCollections.length },
+              { id: 'collection', label: '📚 Collection', count: Array.isArray(userCollections) ? userCollections.length : 0 },
               { id: 'badges', label: '🏆 Badges' }
             ].map((tab) => (
               <button
