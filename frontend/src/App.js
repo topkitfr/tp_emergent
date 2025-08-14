@@ -8980,7 +8980,7 @@ const AppContent = () => {
 
     switch (currentView) {
       case 'profile':
-        return <ProfileCollectionPage />;
+        return <ProfileCollectionPage setShowSubmitModal={setShowSubmitModal} />;
         
       case 'settings':
         return <AdvancedSettingsPage />;
