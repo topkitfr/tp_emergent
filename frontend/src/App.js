@@ -8068,7 +8068,6 @@ const SearchFilter = ({ onFilter }) => {
 const AppContent = () => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState('home');
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
