@@ -195,6 +195,21 @@ PHASE 4 - Améliorations Générales:
 3. Restructurer navigation (pages principales sous header, menu auth/admin en haut gauche)
 4. Réduire logo de 20% et optimiser header"
 
+  - task: "Jersey Submission Modal Bug Fix - setShowSubmitModal Error"
+    implemented: true
+    working: "unknown"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reports runtime error 'setShowSubmitModal is not defined' when clicking 'Soumettre un maillot' button in 'Mes Soumissions' section. Error prevents jersey submission modal from opening."
+      - working: "unknown"
+        agent: "main"
+        comment: "🔧 CRITICAL BUG FIX IMPLEMENTED: Fixed 'setShowSubmitModal is not defined' runtime error in jersey submission functionality. ROOT CAUSE IDENTIFIED: ProfileCollectionPage component was missing setShowSubmitModal prop that is required for the submission button click handler. CHANGES MADE: ✅ Updated ProfileCollectionPage component signature to accept setShowSubmitModal prop ✅ Modified ProfileCollectionPage call in AppContent to pass setShowSubmitModal={setShowSubmitModal} ✅ Fixed multiple missing state declarations in MessagingInterface component (conversations, loading, messages, etc.) ✅ Corrected inconsistent state variable naming (searchUsers → userSearchQuery) throughout component ✅ Frontend compilation now successful without JSX/React errors. The 'Soumettre un maillot' button should now properly trigger the submission modal opening without runtime errors."
+
 frontend:
   - task: "Complete Messaging System Frontend Implementation"
     implemented: true
