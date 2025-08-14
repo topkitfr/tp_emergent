@@ -8956,6 +8956,7 @@ const AppContent = () => {
             onAddToCollection={handleAddToCollection}
             onJerseyClick={handleJerseyClick}
             onCreatorClick={handleCreatorClick}
+            onViewUserProfile={(userId) => { setSelectedUserId(userId); setCurrentView('user-profile'); }}
           />
         );
       
