@@ -104,20 +104,32 @@ class TopKitTester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if response has required structure
-                required_keys = ["friends", "received_requests", "sent_requests"]
-                has_all_keys = all(key in data for key in required_keys)
+                # Check if response has required structure (updated based on actual API response)
+                has_friends = "friends" in data
+                has_pending = "pending_requests" in data
                 
-                if has_all_keys:
-                    friends_count = len(data.get("friends", []))
-                    received_count = len(data.get("received_requests", []))
-                    sent_count = len(data.get("sent_requests", []))
+                if has_friends and has_pending:
+                    pending = data.get("pending_requests", {})
+                    has_received = "received" in pending
+                    has_sent = "sent" in pending
                     
-                    self.log_test("Friends API Structure", True, 
-                                f"Friends: {friends_count}, Received: {received_count}, Sent: {sent_count}")
-                    return True
+                    if has_received and has_sent:
+                        friends_count = len(data.get("friends", []))
+                        received_count = len(pending.get("received", []))
+                        sent_count = len(pending.get("sent", []))
+                        
+                        self.log_test("Friends API Structure", True, 
+                                    f"Friends: {friends_count}, Received: {received_count}, Sent: {sent_count}")
+                        return True
+                    else:
+                        self.log_test("Friends API Structure", False, f"Missing received/sent in pending_requests")
+                        return False
                 else:
-                    missing_keys = [key for key in required_keys if key not in data]
+                    missing_keys = []
+                    if not has_friends:
+                        missing_keys.append("friends")
+                    if not has_pending:
+                        missing_keys.append("pending_requests")
                     self.log_test("Friends API Structure", False, f"Missing keys: {missing_keys}")
                     return False
             else:
