@@ -40,6 +40,146 @@ body {
   background: #4b5563;
 }
 
+/* MOBILE RESPONSIVE STYLES */
+/* Mobile Navigation Fix */
+@media (max-width: 768px) {
+  /* Header Navigation - Make it responsive */
+  .mobile-nav {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .mobile-nav button {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    min-width: fit-content;
+  }
+  
+  /* Logo responsive */
+  .mobile-logo {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  /* User avatar and controls */
+  .mobile-user-controls {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    z-index: 50;
+  }
+  
+  /* Tables - Make them horizontally scrollable */
+  .mobile-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  
+  .mobile-table {
+    min-width: 600px; /* Minimum width to ensure readability */
+  }
+  
+  /* Sidebar responsive */
+  .mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    z-index: 100;
+    transition: left 0.3s ease;
+    background: #1f2937;
+    overflow-y: auto;
+  }
+  
+  .mobile-sidebar.open {
+    left: 0;
+  }
+  
+  .mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+  
+  /* Jersey Cards - Stack vertically on mobile */
+  .mobile-jersey-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  /* Collection buttons - Make them visible and touchable */
+  .mobile-collection-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    width: 100%;
+  }
+  
+  .mobile-collection-buttons button {
+    flex: 1;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    touch-action: manipulation;
+    min-height: 44px; /* iOS minimum touch target */
+  }
+  
+  /* Modal responsive */
+  .mobile-modal {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+  
+  /* Statistics cards responsive */
+  .mobile-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  /* Navigation pills responsive */
+  .mobile-nav-pills {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .mobile-nav-pills button {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+  }
+}
+
+/* Small mobile (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .mobile-nav button {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+  
+  .mobile-logo {
+    font-size: 1.25rem;
+  }
+  
+  .mobile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mobile-collection-buttons button {
+    font-size: 0.75rem;
+    padding: 0.625rem 0.375rem;
+  }
+}
+
 /* Text Utilities */
 .line-clamp-2 {
   display: -webkit-box;
