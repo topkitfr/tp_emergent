@@ -7559,31 +7559,6 @@ const AppContent = () => {
           />
         );
       
-      case 'marketplace':
-        return (
-          <div>
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-4xl font-bold text-white">Marketplace</h1>
-            </div>
-            <SearchFilter onFilter={fetchListings} />
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">Loading listings...</div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {listings.map((listing) => (
-                  <ListingCard 
-                    key={listing.id} 
-                    listing={listing}
-                    onClick={handleJerseyClick}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      
       default:
         return (
           <div className="min-h-screen bg-black">
