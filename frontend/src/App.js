@@ -6230,6 +6230,8 @@ const MessagingInterface = () => {
   const { user } = useAuth();
   const [searchResults, setSearchResults] = useState([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch conversations
   const fetchConversations = async () => {
