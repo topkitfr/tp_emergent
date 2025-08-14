@@ -6188,36 +6188,6 @@ const GlobalMarketplacePage = () => {
     </div>
   );
 };
-      case 'price_high':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'condition':
-        const conditionOrder = { 'mint': 5, 'near_mint': 4, 'very_good': 3, 'good': 2, 'poor': 1 };
-        filtered.sort((a, b) => (conditionOrder[b.jersey?.condition] || 0) - (conditionOrder[a.jersey?.condition] || 0));
-        break;
-      case 'oldest':
-        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        break;
-      default: // newest
-        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    }
-
-    return filtered;
-  };
-
-  const getConditionBadge = (condition) => {
-    const colors = {
-      'mint': 'bg-green-800 text-green-200',
-      'near_mint': 'bg-blue-800 text-blue-200',
-      'very_good': 'bg-yellow-800 text-yellow-200',
-      'good': 'bg-orange-800 text-orange-200',
-      'poor': 'bg-red-800 text-red-200'
-    };
-    
-    const labels = {
-      'mint': 'M',
-      'near_mint': 'NM',
-      'very_good': 'VG+',
       'good': 'VG',
       'poor': 'P'
     };
