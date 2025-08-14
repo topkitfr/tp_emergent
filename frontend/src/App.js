@@ -6578,8 +6578,7 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   );
 };
 
-// Jersey Detail Page - Dark Theme
-// Jersey Detail Page - Dark Theme
+// Jersey Detail Page Component (moved from marketplace)  
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
   const [jersey, setJersey] = useState(null);
