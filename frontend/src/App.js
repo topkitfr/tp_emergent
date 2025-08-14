@@ -770,6 +770,32 @@ const Header = ({ currentView, setCurrentView }) => {
               >
                 Marketplace
               </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('friends');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                  currentView === 'friends' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                👥 Amis
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('messages');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors font-medium ${
+                  currentView === 'messages' 
+                    ? 'bg-white text-black' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                💬 Messages
+              </button>
               {user && (
                 <>
                   <button 
