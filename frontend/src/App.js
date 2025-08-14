@@ -8342,8 +8342,11 @@ const AppContent = () => {
       case 'settings':
         return <AdvancedSettingsPage />;
         
+      case 'user-profile':
+        return <UserProfilePage selectedUserId={selectedUserId} onBack={() => setCurrentView('home')} />;
+        
       case 'friends':
-        return <FriendsPage />;
+        return <FriendsPage onViewUserProfile={(userId) => { setSelectedUserId(userId); setCurrentView('user-profile'); }} />;
         
       case 'messages':
         return <MessagesPage />;
