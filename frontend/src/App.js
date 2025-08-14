@@ -4691,7 +4691,9 @@ const FriendsPage = () => {
                               </p>
                             )}
                           </div>
-                          <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                          <button 
+                            onClick={() => startConversation(friend.friend_id)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
                             💬 Message
                           </button>
                         </div>
