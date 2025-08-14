@@ -9893,6 +9893,13 @@ const AdminPanel = () => {
                         🔧 Suggest Changes
                       </button>
                       <button
+                        onClick={() => handleEdit(jersey)}
+                        disabled={actionLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+                      >
+                        ✏️ Corriger
+                      </button>
+                      <button
                         onClick={() => handleReject(jersey.id)}
                         disabled={actionLoading}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition-colors"
