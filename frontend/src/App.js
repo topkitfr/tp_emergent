@@ -4615,6 +4615,35 @@ const FriendsPage = () => {
     searchUsers(query);
   };
 
+  const startConversation = async (friendId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recipient_id: friendId,
+          message: "👋 Salut ! Comment ça va ?"
+        })
+      });
+      
+      if (response.ok) {
+        // Switch to messages page
+        // We need to access the setCurrentView from parent component
+        alert('Conversation démarrée ! Rendez-vous dans la section Messages.');
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Erreur lors du démarrage de la conversation');
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      alert('Erreur lors du démarrage de la conversation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white p-4">
