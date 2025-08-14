@@ -4174,6 +4174,7 @@ const AdvancedSettingsPage = () => {
     </div>
   );
 };
+
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick }) => {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState('list');
