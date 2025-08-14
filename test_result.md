@@ -267,6 +267,18 @@ backend:
         agent: "testing"
         comment: "🎉 CORE API ENDPOINTS COMPREHENSIVE TESTING COMPLETE - 100% SUCCESS RATE (10/10 tests passed)! Tested all requested core API endpoints to rule out backend issues before investigating frontend navigation problems. CRITICAL VERIFICATION: ✅ GET /api/jerseys: Working perfectly with proper data structure, filtering, and pagination ✅ GET /api/listings: Working perfectly with marketplace listings and jersey data populated ✅ POST /api/auth/login: Working correctly with steinmetzlivio@gmail.com/123 credentials ✅ POST /api/auth/register: Working correctly with proper JWT token generation ✅ GET /api/profile: Working with authentication, returns correct user stats ✅ Collection endpoints: All working with proper authentication ✅ Explorer endpoints: All operational (most-collected, most-wanted, latest-additions, leagues) ✅ Jersey/Listing creation: Both working with proper validation ✅ Complete workflow tested: Jersey creation → Admin approval → Public visibility → Listing creation - ALL WORKING PERFECTLY. DEFINITIVE CONCLUSION: Backend is NOT the cause of frontend navigation issues. All core API endpoints are production-ready and fully operational."
 
+  - task: "Core API Endpoints Testing - Frontend Navigation Issue Investigation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 CORE API ENDPOINTS COMPREHENSIVE TESTING COMPLETE - 100% SUCCESS RATE (10/10 tests passed)! Tested all requested core API endpoints to rule out backend issues before investigating frontend navigation problems. CRITICAL VERIFICATION: ✅ GET /api/jerseys: Working perfectly with proper data structure, filtering, and pagination ✅ GET /api/listings: Working perfectly with marketplace listings and jersey data populated ✅ POST /api/auth/login: Working correctly with steinmetzlivio@gmail.com/123 credentials ✅ POST /api/auth/register: Working correctly with proper JWT token generation ✅ GET /api/profile: Working with authentication, returns correct user stats ✅ Collection endpoints: All working with proper authentication ✅ Explorer endpoints: All operational (most-collected, most-wanted, latest-additions, leagues) ✅ Jersey/Listing creation: Both working with proper validation ✅ Complete workflow tested: Jersey creation → Admin approval → Public visibility → Listing creation - ALL WORKING PERFECTLY. DEFINITIVE CONCLUSION: Backend is NOT the cause of frontend navigation issues. All core API endpoints are production-ready and fully operational."
+
   - task: "Collection API Endpoints Testing - 404 Error Investigation"
     implemented: true
     working: true
