@@ -6310,7 +6310,7 @@ const MessagingInterface = () => {
       // Refresh conversations
       await fetchConversations();
       setShowNewConversation(false);
-      setSearchUsers('');
+      setUserSearchQuery('');
       setSearchResults([]);
     } catch (error) {
       console.error('Failed to start conversation:', error);
