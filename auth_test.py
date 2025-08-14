@@ -11,7 +11,7 @@ import jwt
 from datetime import datetime
 
 # Configuration - Using production URL from frontend/.env
-BASE_URL = "https://jersey-social.preview.emergentagent.com/api"
+BASE_URL = "https://kit-messenger.preview.emergentagent.com/api"
 
 # Test data as specified in review request
 TEST_EMAIL = "test@topkit.com"

@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://jersey-social.preview.emergentagent.com/api"
+BASE_URL = "https://kit-messenger.preview.emergentagent.com/api"
 
 class RapidEmptyDatabaseTester:
     def __init__(self):
