@@ -10236,7 +10236,7 @@ const AdminPanel = () => {
     </div>
 
     {/* Submit Jersey Modal - Moved to ProfileCollectionPage */}
-    {setShowSubmitModal && (
+    {showSubmitModal && (
       <SubmitJerseyModal 
         onClose={() => setShowSubmitModal(false)}
         onSuccess={() => {
