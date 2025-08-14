@@ -484,11 +484,14 @@ class UserProfileAPITester:
         # Step 5: Test data completeness for UserProfilePage component
         completeness_passed = 0
         enhanced_passed = 0
+        collections_data_passed = 0
         if existing_users:
             if self.test_profile_data_completeness(existing_users[0]):
                 completeness_passed += 1
             if self.test_enhanced_profile_endpoint(existing_users[0]):
                 enhanced_passed += 1
+            if self.test_collections_with_data(existing_users[0]):
+                collections_data_passed += 1
         
         # Summary
         print("\n" + "=" * 60)
