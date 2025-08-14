@@ -3486,7 +3486,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 // Nouveau composant : Paramètres Utilisateur Avancés  
 const AdvancedSettingsPage = () => {
   const { user } = useAuth();
-  const API = import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL;
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
   
   const [activeTab, setActiveTab] = useState('profile');  
   const [loading, setLoading] = useState(true);
