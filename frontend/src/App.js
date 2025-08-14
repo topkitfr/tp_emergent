@@ -7420,7 +7420,6 @@ const AdminPanel = () => {
       )}
     </div>
   );
-  );
 };
 
 const App = () => {
