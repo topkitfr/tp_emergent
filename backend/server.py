@@ -82,6 +82,27 @@ class UserRole(str, Enum):
     MODERATOR = "moderator" # Modérateur (peut valider les références)
     ADMIN = "admin"         # Admin principal (peut tout faire)
 
+class PaymentMethod(str, Enum):
+    PAYPAL = "paypal"
+    BANK_TRANSFER = "bank_transfer"
+    CRYPTO = "crypto"
+    CASH = "cash"
+    CHECK = "check"
+
+class ShippingZone(str, Enum):
+    DOMESTIC = "domestic"
+    EUROPE = "europe"
+    WORLDWIDE = "worldwide"
+    
+class CollectionVisibility(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    FRIENDS = "friends"
+
+class ProfileVisibility(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
