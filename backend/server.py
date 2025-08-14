@@ -1136,6 +1136,74 @@ async def reject_jersey(
     
     return {"message": "Jersey rejected successfully"}
 
+@api_router.put("/admin/jerseys/{jersey_id}/edit")
+async def edit_jersey(
+    jersey_id: str, 
+    jersey_data: JerseyCreate,
+    moderator_id: str = Depends(get_current_moderator_or_admin)
+):
+    """Edit a pending or needs_modification jersey"""
+    
+    # Verify jersey exists and can be edited (pending or needs_modification)
+    existing_jersey = await db.jerseys.find_one({"id": jersey_id, "status": {"$in": ["pending", "needs_modification"]}})
+    if not existing_jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found or cannot be edited")
+    
+    # Validate condition
+    valid_conditions = ["new", "near_mint", "very_good", "good", "poor"]
+    if jersey_data.condition not in valid_conditions:
+        raise HTTPException(status_code=400, detail=f"Invalid condition: {jersey_data.condition}")
+    
+    # Validate size
+    valid_sizes = ["XS", "S", "M", "L", "XL", "XXL"]
+    if jersey_data.size not in valid_sizes:
+        raise HTTPException(status_code=400, detail=f"Invalid size: {jersey_data.size}")
+    
+    # Update jersey with edited data
+    update_data = {
+        "team": jersey_data.team,
+        "season": jersey_data.season,
+        "player": jersey_data.player,
+        "size": jersey_data.size,
+        "condition": jersey_data.condition,
+        "manufacturer": jersey_data.manufacturer or "",
+        "home_away": jersey_data.home_away or "home",
+        "league": jersey_data.league or "",
+        "description": jersey_data.description or "",
+        "images": jersey_data.images or [],
+        "reference_code": jersey_data.reference_code,
+        "status": "pending",  # Reset to pending after edit
+        "approved_by": None,
+        "approved_at": None,
+        "rejection_reason": None
+    }
+    
+    result = await db.jerseys.update_one(
+        {"id": jersey_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update jersey")
+    
+    # Create notification for the user
+    await create_notification(
+        user_id=existing_jersey["created_by"],
+        notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
+        title="🔧 Jersey Updated by Moderator",
+        message=f"Your jersey '{existing_jersey.get('team', '')} {existing_jersey.get('season', '')}' has been updated by a moderator and is now pending review again.",
+        related_id=jersey_id
+    )
+    
+    # Log activity
+    await log_user_activity(moderator_id, "jersey_edited", jersey_id, {
+        "jersey_name": f"{jersey_data.team} {jersey_data.season}",
+        "original_team": existing_jersey.get("team"),
+        "original_season": existing_jersey.get("season")
+    })
+    
+    return {"message": "Jersey updated successfully"}
+
 # User management endpoints (Admin only)
 @api_router.get("/admin/users")
 async def get_all_users(admin_id: str = Depends(get_current_admin)):
