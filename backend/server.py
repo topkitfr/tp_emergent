@@ -407,6 +407,63 @@ class NotificationCreate(BaseModel):
     message: str
     related_id: Optional[str] = None
 
+# Modèles de requête pour profil avancé
+class UserProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    languages: Optional[List[str]] = None
+    website: Optional[str] = None
+    social_links: Optional[Dict[str, str]] = None
+
+class SellerSettingsUpdate(BaseModel):
+    is_seller: Optional[bool] = None
+    business_name: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    return_policy: Optional[str] = None
+    shipping_policy: Optional[str] = None
+    payment_methods: Optional[List[PaymentMethod]] = None
+    shipping_rates: Optional[List[ShippingRate]] = None
+    processing_time_days: Optional[int] = None
+    return_days: Optional[int] = None
+    min_order_value: Optional[float] = None
+    seller_notes: Optional[str] = None
+    terms_conditions: Optional[str] = None
+
+class BuyerSettingsUpdate(BaseModel):
+    preferred_shipping_method: Optional[str] = None
+    max_shipping_cost: Optional[float] = None
+    max_budget_per_item: Optional[float] = None
+    price_alert_threshold: Optional[float] = None
+    notify_new_matches: Optional[bool] = None
+    notify_price_drops: Optional[bool] = None
+    notify_watchlist_available: Optional[bool] = None
+
+class CollectionSettingsUpdate(BaseModel):
+    visibility: Optional[CollectionVisibility] = None
+    show_statistics: Optional[bool] = None
+    show_estimated_value: Optional[bool] = None
+    show_acquisition_dates: Optional[bool] = None
+    allow_export: Optional[bool] = None
+    notify_similar_items: Optional[bool] = None
+    notify_collection_updates: Optional[bool] = None
+
+class PrivacySettingsUpdate(BaseModel):
+    profile_visibility: Optional[ProfileVisibility] = None
+    show_last_seen: Optional[bool] = None
+    allow_private_messages: Optional[bool] = None
+    show_location: Optional[bool] = None
+    show_join_date: Optional[bool] = None
+    allow_friend_requests: Optional[bool] = None
+
+class RatingCreate(BaseModel):
+    rated_user_id: str
+    transaction_id: Optional[str] = None
+    rating_type: str  # "seller" or "buyer"
+    score: int  # 1-5
+    comment: Optional[str] = None
+
 # Authentication helpers
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
