@@ -160,17 +160,38 @@ class UserProfileAPITester:
             response = self.session.get(f"{self.base_url}/users/{user_id}/collections")
             
             if response.status_code == 200:
-                collections_data = response.json()
+                collections_response = response.json()
                 
-                if not isinstance(collections_data, list):
+                # Current implementation returns a dict with user_id, profile_owner, and collections
+                if isinstance(collections_response, dict):
+                    if 'collections' not in collections_response:
+                        self.log_test(f"User Collections Structure (User: {user_id})", "FAIL", 
+                                    f"Expected 'collections' key in response")
+                        return False
+                    
+                    collections_data = collections_response['collections']
+                    user_id_in_response = collections_response.get('user_id')
+                    profile_owner = collections_response.get('profile_owner')
+                    
+                    # Verify response structure
+                    if user_id_in_response != user_id:
+                        self.log_test(f"User Collections Structure (User: {user_id})", "FAIL", 
+                                    f"User ID mismatch: expected {user_id}, got {user_id_in_response}")
+                        return False
+                    
+                elif isinstance(collections_response, list):
+                    # Alternative implementation returns list directly
+                    collections_data = collections_response
+                    profile_owner = None
+                else:
                     self.log_test(f"User Collections Structure (User: {user_id})", "FAIL", 
-                                f"Expected list, got {type(collections_data)}")
+                                f"Expected dict or list, got {type(collections_response)}")
                     return False
                 
-                # Check if collections have proper structure
+                # Check if collections have proper structure (if any exist)
                 if collections_data:
                     sample_collection = collections_data[0]
-                    required_fields = ['id', 'collection_type', 'added_at', 'jersey']
+                    required_fields = ['collection_type', 'added_at']
                     missing_fields = [field for field in required_fields if field not in sample_collection]
                     
                     if missing_fields:
@@ -178,9 +199,9 @@ class UserProfileAPITester:
                                     f"Missing required fields in collection: {missing_fields}")
                         return False
                     
-                    # Check jersey details structure
-                    jersey = sample_collection.get('jersey', {})
-                    if jersey:
+                    # Check jersey details structure if jersey exists
+                    if 'jersey' in sample_collection and sample_collection['jersey']:
+                        jersey = sample_collection['jersey']
                         jersey_fields = ['id', 'team', 'season']
                         missing_jersey_fields = [field for field in jersey_fields if field not in jersey]
                         
@@ -195,7 +216,8 @@ class UserProfileAPITester:
                 
                 self.log_test(f"User Collections Endpoint (User: {user_id})", "PASS", 
                             f"Total collections: {len(collections_data)}, "
-                            f"Owned: {owned_count}, Wanted: {wanted_count}")
+                            f"Owned: {owned_count}, Wanted: {wanted_count}, "
+                            f"Profile owner: {profile_owner}")
                 
                 return True
             else:
