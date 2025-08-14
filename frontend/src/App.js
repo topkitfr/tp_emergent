@@ -7153,6 +7153,15 @@ const ProfileCollectionPage = ({ shouldRefresh = false }) => {
     mostValuableItem: null
   });
 
+  // Friends data states
+  const [friendsData, setFriendsData] = useState({
+    friends: [],
+    pendingReceived: [],
+    pendingSent: [],
+    totalFriends: 0
+  });
+  const [friendsActiveTab, setFriendsActiveTab] = useState('friends');
+
   useEffect(() => {
     if (user) {
       fetchCollectionData();
