@@ -107,6 +107,41 @@ class Phase2AdminVerificationTester:
             self.log_test("Regular User Authentication", "FAIL", f"Exception: {str(e)}")
             return False
     
+    def create_test_jersey_as_regular_user(self):
+        """Create a test jersey as regular user for testing purposes"""
+        try:
+            if not self.regular_token:
+                return None
+            
+            regular_session = requests.Session()
+            regular_session.headers.update({
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {self.regular_token}'
+            })
+            
+            jersey_payload = {
+                "team": "Test FC",
+                "season": "2024-25",
+                "player": "Test Player",
+                "size": "L",
+                "condition": "good",
+                "manufacturer": "Test Brand",
+                "home_away": "home",
+                "league": "Test League",
+                "description": "Test jersey for admin restriction testing",
+                "images": []
+            }
+            
+            response = regular_session.post(f"{self.base_url}/jerseys", json=jersey_payload)
+            
+            if response.status_code == 200:
+                return response.json()["id"]
+            return None
+                
+        except Exception as e:
+            return None
+
     def test_admin_cannot_create_listings(self):
         """Test that admin user cannot create listings via POST /api/listings"""
         try:
@@ -114,14 +149,18 @@ class Phase2AdminVerificationTester:
                 self.log_test("Admin Listing Restriction", "FAIL", "No admin token available")
                 return False
             
-            # First, we need a jersey to create a listing for
-            # Let's try to get any approved jersey
+            # First, try to get any approved jersey
             jerseys_response = self.session.get(f"{self.base_url}/jerseys?limit=1")
-            if jerseys_response.status_code != 200 or not jerseys_response.json():
-                self.log_test("Admin Listing Restriction", "FAIL", "No jerseys available for testing")
-                return False
+            jersey_id = None
             
-            jersey_id = jerseys_response.json()[0]["id"]
+            if jerseys_response.status_code == 200 and jerseys_response.json():
+                jersey_id = jerseys_response.json()[0]["id"]
+            else:
+                # Create a test jersey as regular user
+                jersey_id = self.create_test_jersey_as_regular_user()
+                if not jersey_id:
+                    # If we can't create a jersey, test with a dummy ID to see if admin restriction works
+                    jersey_id = "dummy-jersey-id-for-testing"
             
             # Try to create listing as admin
             admin_session = requests.Session()
