@@ -834,7 +834,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
                     <hr className="border-gray-700 my-4" />
                     <button 
                       onClick={() => {
-                        window.dispatchEvent(new CustomEvent('showAuthModal'));
+                        setShowAuthModal(true);
                         setMobileMenuOpen(false);
                       }}
                       className="w-full text-left px-4 py-3 rounded-lg transition-colors font-medium text-blue-400 hover:text-white hover:bg-blue-800"
