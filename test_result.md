@@ -1107,10 +1107,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Bug Corrections - Database Cleanup Verification"
-    - "TopKit Bug Corrections - Submit Jersey Button Functionality"
-    - "TopKit Bug Corrections - Own/Want Toggle Logic"
-    - "TopKit Bug Corrections - New Marketplace Catalog API"
+    - "Critical Login Modal Event Propagation Fix"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
