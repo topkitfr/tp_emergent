@@ -513,29 +513,32 @@ class TopKitTester:
                 self.log_test("Navigation - Messages Integration", False, "", str(e))
 
     def run_all_tests(self):
-        """Run all test suites"""
-        print("🚀 STARTING TOPKIT BACKEND COMPREHENSIVE TESTING")
-        print("=" * 60)
+        """Run all test suites focused on Discogs-style header backend support"""
+        print("🚀 STARTING TOPKIT BACKEND TESTING - POST DISCOGS-STYLE HEADER IMPLEMENTATION")
+        print("=" * 80)
         print(f"Backend URL: {BASE_URL}")
         print(f"Test User: {TEST_USER_EMAIL}")
         print(f"Admin User: {ADMIN_EMAIL}")
-        print("=" * 60)
+        print("Focus: API Connectivity, Authentication, Jersey Operations, Profile Access, Navigation")
+        print("=" * 80)
         print()
         
-        # Run test suites
+        # Run test suites in order of importance
+        self.test_api_connectivity()
         self.test_authentication_system()
-        self.test_friends_api_system()
-        self.test_anonymous_submission_system()
-        self.test_admin_edit_jersey_endpoint()
-        self.test_collection_system()
+        self.test_core_jersey_operations()
+        self.test_user_profile_access()
+        self.test_marketplace_api_endpoints()
+        self.test_search_related_api_endpoints()
+        self.test_navigation_integration()
         
         # Generate summary
         return self.generate_summary()
 
     def generate_summary(self):
         """Generate test summary"""
-        print("📊 TEST SUMMARY")
-        print("=" * 50)
+        print("📊 TEST SUMMARY - DISCOGS-STYLE HEADER BACKEND VERIFICATION")
+        print("=" * 60)
         
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -546,6 +549,43 @@ class TopKitTester:
         print(f"Passed: {passed_tests}")
         print(f"Failed: {failed_tests}")
         print(f"Success Rate: {success_rate:.1f}%")
+        print()
+        
+        # Categorize results by test area
+        test_categories = {
+            "API Connectivity": [],
+            "Authentication System": [],
+            "Core Jersey Operations": [],
+            "User Profile Access": [],
+            "Marketplace API": [],
+            "Search-Related API": [],
+            "Navigation Integration": []
+        }
+        
+        for result in self.test_results:
+            test_name = result["test"]
+            if "API Connectivity" in test_name:
+                test_categories["API Connectivity"].append(result)
+            elif "Authentication" in test_name or "Token" in test_name:
+                test_categories["Authentication System"].append(result)
+            elif "Jersey" in test_name or "Explorer" in test_name:
+                test_categories["Core Jersey Operations"].append(result)
+            elif "Profile" in test_name or "Collections" in test_name:
+                test_categories["User Profile Access"].append(result)
+            elif "Marketplace" in test_name or "Listings" in test_name:
+                test_categories["Marketplace API"].append(result)
+            elif "Search" in test_name:
+                test_categories["Search-Related API"].append(result)
+            elif "Navigation" in test_name or "Messages" in test_name:
+                test_categories["Navigation Integration"].append(result)
+        
+        # Print category summaries
+        for category, results in test_categories.items():
+            if results:
+                passed = sum(1 for r in results if r["success"])
+                total = len(results)
+                print(f"📋 {category}: {passed}/{total} passed ({passed/total*100:.1f}%)")
+        
         print()
         
         if failed_tests > 0:
@@ -561,7 +601,19 @@ class TopKitTester:
                 print(f"  - {result['test']}")
         
         print()
-        print("🎯 TESTING COMPLETE")
+        
+        # Final assessment
+        if success_rate >= 90:
+            print("🎉 EXCELLENT: Backend is fully operational and ready for Discogs-style header!")
+        elif success_rate >= 80:
+            print("✅ GOOD: Backend is mostly operational with minor issues.")
+        elif success_rate >= 70:
+            print("⚠️ ACCEPTABLE: Backend has some issues that should be addressed.")
+        else:
+            print("❌ CRITICAL: Backend has significant issues that need immediate attention.")
+        
+        print()
+        print("🎯 DISCOGS-STYLE HEADER BACKEND TESTING COMPLETE")
         
         # Return success rate for external use
         return success_rate
