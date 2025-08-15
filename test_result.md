@@ -49,12 +49,16 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "Task name 1"
-##     - "Task name 2"
-##   stuck_tasks:
-##     - "Task name with persistent issues"
+##     - "Fix Messaging System - Messages Not Visible"
+##     - "Remove Friend Requirement for Messaging" 
+##     - "Implement Seller Chat Functionality"
+##     - "Streamline Admin Moderation - Confirmation Messages"
+##     - "Fix Admin Submission Form Access"
+##     - "Correct Suggest Change vs Reject Behavior"
+##     - "Implement Rejection Notifications"
+##   stuck_tasks: []
 ##   test_all: false
-##   test_priority: "high_first"  # or "sequential" or "stuck_first"
+##   test_priority: "high_first"
 ##
 agent_communication:
     -agent: "main"  # or "testing"
