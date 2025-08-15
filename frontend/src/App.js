@@ -3003,7 +3003,12 @@ const AuthModal = ({ onClose }) => {
         const loginSuccess = login(response.data.token, response.data.user);
         if (loginSuccess) {
           console.log('✅ Login successful, closing modal...');
-          onClose();
+          // Force immediate UI update by dispatching a custom event
+          window.dispatchEvent(new Event('authStateChanged'));
+          // Small delay to ensure state propagation
+          setTimeout(() => {
+            onClose();
+          }, 100);
         } else {
           console.error('❌ Login context update failed');
           setError('Erreur lors de la mise à jour de la session. Veuillez réessayer.');
