@@ -7498,10 +7498,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
               <p className="text-gray-400 mb-2 md:mb-4 text-sm md:text-base truncate">{user.email}</p>
               
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-4">
                 <div className="bg-gray-800 rounded-lg p-2 md:p-3">
                   <div className="text-lg md:text-xl font-bold text-white">{collectionStats.totalItems}</div>
-                  <div className="text-xs text-gray-400">Maillots possédés</div>
+                  <div className="text-xs text-gray-400">Possédés</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-2 md:p-3">
                   <div className="text-lg md:text-xl font-bold text-green-400">{collectionStats.totalValue}€</div>
@@ -7512,12 +7512,16 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                   <div className="text-xs text-gray-400">En recherche</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-2 md:p-3">
+                  <div className="text-lg md:text-xl font-bold text-purple-400">{collectionStats.activeListings}</div>
+                  <div className="text-xs text-gray-400">En vente</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-2 md:p-3">
                   <div className="text-lg md:text-xl font-bold text-yellow-400">{submittedJerseys.length}</div>
                   <div className="text-xs text-gray-400">Soumis</div>
                 </div>
-                <div className="bg-gray-800 rounded-lg p-2 md:p-3 col-span-2 md:col-span-1">
-                  <div className="text-lg md:text-xl font-bold text-purple-400">{friendsData.totalFriends}</div>
-                  <div className="text-xs text-gray-400">Amis</div>
+                <div className="bg-gray-800 rounded-lg p-2 md:p-3">
+                  <div className="text-lg md:text-xl font-bold text-orange-400">{collectionStats.totalRevenue}€</div>
+                  <div className="text-xs text-gray-400">Revenus</div>
                 </div>
               </div>
             </div>
