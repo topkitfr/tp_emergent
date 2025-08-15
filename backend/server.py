@@ -1144,7 +1144,7 @@ async def reject_jersey(
         
         # Log activity
         await log_user_activity(moderator_id, "jersey_rejected", jersey_id, {"reason": reason})
-        await log_user_activity(jersey["created_by"], "jersey_rejected", jersey_id, {
+        await log_user_activity(jersey["submitted_by"], "jersey_rejected", jersey_id, {
             "rejected_by": moderator_id,
             "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}",
             "reason": reason
