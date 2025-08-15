@@ -358,8 +358,11 @@ class AdminModerationTester:
             response = self.session.get(f"{BASE_URL}/notifications", headers=user_headers)
             
             if response.status_code == 200:
-                notifications = response.json()
-                if isinstance(notifications, list):
+                data = response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    notifications = data["notifications"]
+                    unread_count = data.get("unread_count", 0)
+                    
                     # Look for notifications related to our test actions
                     jersey_notifications = [n for n in notifications if 
                                           n.get("type") in ["jersey_approved", "jersey_rejected", "jersey_needs_modification"]]
@@ -367,7 +370,7 @@ class AdminModerationTester:
                     self.log_test(
                         "User Notification Retrieval",
                         True,
-                        f"Retrieved {len(notifications)} total notifications ({len(jersey_notifications)} jersey-related)"
+                        f"Retrieved {len(notifications)} total notifications ({len(jersey_notifications)} jersey-related, {unread_count} unread)"
                     )
                     
                     # Test notification types
@@ -411,7 +414,7 @@ class AdminModerationTester:
                             )
                     
                 else:
-                    self.log_test("User Notification Retrieval", False, "", "Invalid notifications response format")
+                    self.log_test("User Notification Retrieval", False, "", "Invalid notifications response format - expected object with 'notifications' array")
             else:
                 self.log_test("User Notification Retrieval", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
