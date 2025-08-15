@@ -45,12 +45,58 @@ class TopKitTester:
             print(f"   Error: {error}")
         print()
 
+    def test_api_connectivity(self):
+        """Test 1: API Connectivity - Verify all main API endpoints are accessible"""
+        print("🌐 TESTING API CONNECTIVITY")
+        print("=" * 50)
+        
+        # Test core endpoints accessibility
+        endpoints_to_test = [
+            ("/jerseys", "GET", "Jersey browsing endpoint"),
+            ("/auth/login", "POST", "Authentication endpoint"),
+            ("/profile", "GET", "Profile endpoint (requires auth)"),
+            ("/marketplace/catalog", "GET", "Marketplace catalog endpoint"),
+            ("/explorer/most-collected", "GET", "Explorer most collected endpoint"),
+            ("/explorer/latest-additions", "GET", "Explorer latest additions endpoint"),
+            ("/users/search", "GET", "User search endpoint (requires auth)")
+        ]
+        
+        for endpoint, method, description in endpoints_to_test:
+            try:
+                if method == "GET":
+                    if "profile" in endpoint or "users/search" in endpoint:
+                        # Skip auth-required endpoints for now
+                        continue
+                    response = self.session.get(f"{BASE_URL}{endpoint}")
+                elif method == "POST":
+                    if endpoint == "/auth/login":
+                        # Test with invalid credentials to check endpoint exists
+                        response = self.session.post(f"{BASE_URL}{endpoint}", json={"email": "test", "password": "test"})
+                    else:
+                        continue
+                
+                if response.status_code in [200, 400, 401, 422]:  # Valid responses
+                    self.log_test(
+                        f"API Connectivity - {description}",
+                        True,
+                        f"Endpoint accessible (HTTP {response.status_code})"
+                    )
+                else:
+                    self.log_test(
+                        f"API Connectivity - {description}",
+                        False,
+                        "",
+                        f"Unexpected status code: {response.status_code}"
+                    )
+            except Exception as e:
+                self.log_test(f"API Connectivity - {description}", False, "", str(e))
+
     def test_authentication_system(self):
-        """Test core authentication functionality"""
+        """Test 2: Authentication System - Test user login/logout functionality"""
         print("🔐 TESTING AUTHENTICATION SYSTEM")
         print("=" * 50)
         
-        # Test 1: User Login
+        # Test 1: User Login with provided credentials
         try:
             login_data = {
                 "email": TEST_USER_EMAIL,
@@ -77,7 +123,34 @@ class TopKitTester:
         except Exception as e:
             self.log_test("User Authentication", False, "", str(e))
 
-        # Test 2: Profile Access with Token
+        # Test 2: Admin Login with provided credentials
+        try:
+            admin_login_data = {
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            }
+            response = self.session.post(f"{BASE_URL}/auth/login", json=admin_login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "user" in data:
+                    self.admin_token = data["token"]
+                    self.admin_id = data["user"]["id"]
+                    admin_name = data["user"]["name"]
+                    admin_role = data["user"]["role"]
+                    self.log_test(
+                        "Admin Authentication (topkitfr@gmail.com/adminpass123)",
+                        True,
+                        f"Admin login successful - User: {admin_name}, Role: {admin_role}"
+                    )
+                else:
+                    self.log_test("Admin Authentication", False, "", "Missing token or user data in response")
+            else:
+                self.log_test("Admin Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
+        except Exception as e:
+            self.log_test("Admin Authentication", False, "", str(e))
+
+        # Test 3: Token Validation
         if self.user_token:
             try:
                 headers = {"Authorization": f"Bearer {self.user_token}"}
@@ -85,458 +158,359 @@ class TopKitTester:
                 
                 if response.status_code == 200:
                     profile_data = response.json()
-                    owned_jerseys = profile_data.get("owned_jerseys", 0)
-                    wanted_jerseys = profile_data.get("wanted_jerseys", 0)
-                    active_listings = profile_data.get("active_listings", 0)
                     self.log_test(
-                        "Profile Access with Token Validation",
+                        "Token Validation via Profile Access",
                         True,
-                        f"Profile data retrieved - Owned: {owned_jerseys}, Wanted: {wanted_jerseys}, Listings: {active_listings}"
+                        f"Token valid - Profile data retrieved successfully"
                     )
                 else:
-                    self.log_test("Profile Access with Token Validation", False, "", f"HTTP {response.status_code}: {response.text}")
+                    self.log_test("Token Validation via Profile Access", False, "", f"HTTP {response.status_code}: {response.text}")
             except Exception as e:
-                self.log_test("Profile Access with Token Validation", False, "", str(e))
+                self.log_test("Token Validation via Profile Access", False, "", str(e))
 
-        # Test 3: Admin Login (if possible)
-        try:
-            # Try common admin passwords since password is unknown
-            admin_passwords = ["admin", "123", "password", "topkit", "admin123"]
-            admin_login_success = False
-            
-            for password in admin_passwords:
-                try:
-                    admin_login_data = {
-                        "email": ADMIN_EMAIL,
-                        "password": password
-                    }
-                    response = self.session.post(f"{BASE_URL}/auth/login", json=admin_login_data)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        if "token" in data and "user" in data:
-                            self.admin_token = data["token"]
-                            self.admin_id = data["user"]["id"]
-                            admin_name = data["user"]["name"]
-                            admin_role = data["user"]["role"]
-                            self.log_test(
-                                "Admin Authentication (topkitfr@gmail.com)",
-                                True,
-                                f"Admin login successful with password '{password}' - User: {admin_name}, Role: {admin_role}"
-                            )
-                            admin_login_success = True
-                            break
-                except:
-                    continue
-            
-            if not admin_login_success:
-                self.log_test(
-                    "Admin Authentication (topkitfr@gmail.com)",
-                    False,
-                    "",
-                    f"Could not authenticate admin with any common passwords: {admin_passwords}"
-                )
-        except Exception as e:
-            self.log_test("Admin Authentication", False, "", str(e))
-
-    def test_friends_api_system(self):
-        """Test Friends API System functionality"""
-        print("👥 TESTING FRIENDS API SYSTEM")
+    def test_core_jersey_operations(self):
+        """Test 3: Core Jersey Operations - Test jersey browsing, search, and basic CRUD operations"""
+        print("⚽ TESTING CORE JERSEY OPERATIONS")
         print("=" * 50)
         
-        if not self.user_token:
-            self.log_test("Friends API System", False, "", "No user token available for testing")
-            return
-
-        headers = {"Authorization": f"Bearer {self.user_token}"}
-
-        # Test 1: GET /api/friends - Friends data retrieval
+        # Test 1: GET /api/jerseys for Explorez page functionality
         try:
-            response = self.session.get(f"{BASE_URL}/friends", headers=headers)
+            response = self.session.get(f"{BASE_URL}/jerseys")
             
             if response.status_code == 200:
-                friends_data = response.json()
-                if isinstance(friends_data, dict) and "friends" in friends_data and "pending_requests" in friends_data:
-                    friends_count = len(friends_data.get("friends", []))
-                    received_requests = len(friends_data.get("pending_requests", {}).get("received", []))
-                    sent_requests = len(friends_data.get("pending_requests", {}).get("sent", []))
+                jerseys = response.json()
+                if isinstance(jerseys, list):
+                    approved_jerseys = [j for j in jerseys if j.get("status") == "approved"]
                     self.log_test(
-                        "GET /api/friends - Friends Data Retrieval",
+                        "GET /api/jerseys - Explorez Page Functionality",
                         True,
-                        f"Friends: {friends_count}, Received requests: {received_requests}, Sent requests: {sent_requests}"
+                        f"Retrieved {len(jerseys)} total jerseys ({len(approved_jerseys)} approved) for browsing"
                     )
                 else:
-                    self.log_test("GET /api/friends - Friends Data Retrieval", False, "", "Invalid response structure")
+                    self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", "Invalid response format")
             else:
-                self.log_test("GET /api/friends - Friends Data Retrieval", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
-            self.log_test("GET /api/friends - Friends Data Retrieval", False, "", str(e))
+            self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", str(e))
 
-        # Test 2: User Search for Friend Requests
+        # Test 2: Jersey Search Functionality
         try:
-            response = self.session.get(f"{BASE_URL}/users/search?query=test", headers=headers)
+            search_params = {"search": "Real Madrid"}
+            response = self.session.get(f"{BASE_URL}/jerseys", params=search_params)
             
             if response.status_code == 200:
                 search_results = response.json()
                 if isinstance(search_results, list):
                     self.log_test(
-                        "User Search for Friend Requests",
+                        "Jersey Search Functionality",
                         True,
-                        f"Found {len(search_results)} users in search results"
-                    )
-                    
-                    # Test 3: POST /api/friends/request - Send Friend Request (if users found)
-                    if len(search_results) > 0:
-                        target_user = search_results[0]
-                        target_user_id = target_user.get("id")
-                        
-                        if target_user_id and target_user_id != self.user_id:
-                            try:
-                                friend_request_data = {
-                                    "user_id": target_user_id,
-                                    "message": "Test friend request from automated testing"
-                                }
-                                response = self.session.post(f"{BASE_URL}/friends/request", json=friend_request_data, headers=headers)
-                                
-                                if response.status_code in [200, 201]:
-                                    self.log_test(
-                                        "POST /api/friends/request - Send Friend Request",
-                                        True,
-                                        f"Friend request sent to user {target_user.get('name', 'Unknown')}"
-                                    )
-                                elif response.status_code == 400:
-                                    # Might already be friends or request already sent
-                                    self.log_test(
-                                        "POST /api/friends/request - Send Friend Request",
-                                        True,
-                                        f"Request handled (possibly duplicate): {response.text}"
-                                    )
-                                else:
-                                    self.log_test("POST /api/friends/request - Send Friend Request", False, "", f"HTTP {response.status_code}: {response.text}")
-                            except Exception as e:
-                                self.log_test("POST /api/friends/request - Send Friend Request", False, "", str(e))
-                else:
-                    self.log_test("User Search for Friend Requests", False, "", "Invalid search results format")
-            else:
-                self.log_test("User Search for Friend Requests", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("User Search for Friend Requests", False, "", str(e))
-
-        # Test 4: POST /api/friends/respond - Friend Request Response (test endpoint exists)
-        try:
-            # Test with invalid request ID to check endpoint exists and validates properly
-            response_data = {
-                "request_id": "invalid-request-id",
-                "accept": True
-            }
-            response = self.session.post(f"{BASE_URL}/friends/respond", json=response_data, headers=headers)
-            
-            # We expect this to fail with 404 or 400, but endpoint should exist
-            if response.status_code in [400, 404]:
-                self.log_test(
-                    "POST /api/friends/respond - Friend Request Response Endpoint",
-                    True,
-                    f"Endpoint exists and validates requests properly (HTTP {response.status_code})"
-                )
-            elif response.status_code == 200:
-                self.log_test(
-                    "POST /api/friends/respond - Friend Request Response Endpoint",
-                    True,
-                    "Endpoint working (unexpected success with invalid ID)"
-                )
-            else:
-                self.log_test("POST /api/friends/respond - Friend Request Response Endpoint", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("POST /api/friends/respond - Friend Request Response Endpoint", False, "", str(e))
-
-    def test_anonymous_submission_system(self):
-        """Test Anonymous Submission System"""
-        print("📝 TESTING ANONYMOUS SUBMISSION SYSTEM")
-        print("=" * 50)
-        
-        if not self.user_token:
-            self.log_test("Anonymous Submission System", False, "", "No user token available for testing")
-            return
-
-        headers = {"Authorization": f"Bearer {self.user_token}"}
-
-        # Test 1: GET /api/users/{user_id}/jerseys - User's submissions
-        try:
-            response = self.session.get(f"{BASE_URL}/users/{self.user_id}/jerseys", headers=headers)
-            
-            if response.status_code == 200:
-                submissions = response.json()
-                if isinstance(submissions, list):
-                    pending_count = sum(1 for jersey in submissions if jersey.get("status") == "pending")
-                    approved_count = sum(1 for jersey in submissions if jersey.get("status") == "approved")
-                    rejected_count = sum(1 for jersey in submissions if jersey.get("status") == "rejected")
-                    
-                    self.log_test(
-                        "GET /api/users/{user_id}/jerseys - User Submissions",
-                        True,
-                        f"Total submissions: {len(submissions)} (Pending: {pending_count}, Approved: {approved_count}, Rejected: {rejected_count})"
+                        f"Search for 'Real Madrid' returned {len(search_results)} results"
                     )
                 else:
-                    self.log_test("GET /api/users/{user_id}/jerseys - User Submissions", False, "", "Invalid response format")
+                    self.log_test("Jersey Search Functionality", False, "", "Invalid search results format")
             else:
-                self.log_test("GET /api/users/{user_id}/jerseys - User Submissions", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Jersey Search Functionality", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
-            self.log_test("GET /api/users/{user_id}/jerseys - User Submissions", False, "", str(e))
+            self.log_test("Jersey Search Functionality", False, "", str(e))
 
-        # Test 2: Jersey Submission Workflow (create test jersey)
-        try:
-            test_jersey_data = {
-                "team": "Test FC",
-                "season": "2024-25",
-                "player": "Test Player",
-                "size": "M",
-                "condition": "new",
-                "manufacturer": "Nike",
-                "home_away": "home",
-                "league": "Test League",
-                "description": "Test jersey for automated testing - should not auto-add to collection"
-            }
-            
-            response = self.session.post(f"{BASE_URL}/jerseys", json=test_jersey_data, headers=headers)
-            
-            if response.status_code in [200, 201]:
-                jersey_data = response.json()
-                jersey_id = jersey_data.get("id")
-                jersey_status = jersey_data.get("status")
-                reference_number = jersey_data.get("reference_number")
-                
-                self.log_test(
-                    "Jersey Submission Workflow",
-                    True,
-                    f"Jersey created successfully - ID: {jersey_id}, Status: {jersey_status}, Ref: {reference_number}"
-                )
-                
-                # Test 3: Verify jersey NOT auto-added to collection
-                try:
-                    response = self.session.get(f"{BASE_URL}/collections/owned", headers=headers)
-                    
-                    if response.status_code == 200:
-                        owned_collection = response.json()
-                        if isinstance(owned_collection, list):
-                            # Check if the test jersey is in owned collection
-                            test_jersey_in_collection = any(
-                                item.get("jersey", {}).get("id") == jersey_id 
-                                for item in owned_collection
-                            )
-                            
-                            if not test_jersey_in_collection:
-                                self.log_test(
-                                    "Anonymous Submission - No Auto-Collection",
-                                    True,
-                                    f"Confirmed: Test jersey {jersey_id} NOT automatically added to owned collection"
-                                )
-                            else:
-                                self.log_test(
-                                    "Anonymous Submission - No Auto-Collection",
-                                    False,
-                                    "",
-                                    f"Test jersey {jersey_id} was automatically added to collection (should not happen)"
-                                )
-                        else:
-                            self.log_test("Anonymous Submission - No Auto-Collection", False, "", "Invalid collection response format")
-                    else:
-                        self.log_test("Anonymous Submission - No Auto-Collection", False, "", f"HTTP {response.status_code}: {response.text}")
-                except Exception as e:
-                    self.log_test("Anonymous Submission - No Auto-Collection", False, "", str(e))
-                    
-            else:
-                self.log_test("Jersey Submission Workflow", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Jersey Submission Workflow", False, "", str(e))
-
-    def test_admin_edit_jersey_endpoint(self):
-        """Test Admin Edit Jersey Endpoint"""
-        print("🔧 TESTING ADMIN EDIT JERSEY ENDPOINT")
-        print("=" * 50)
-        
-        if not self.admin_token:
-            self.log_test("Admin Edit Jersey Endpoint", False, "", "No admin token available for testing")
-            return
-
-        admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
-
-        # Test 1: GET pending jerseys for admin
-        try:
-            response = self.session.get(f"{BASE_URL}/admin/jerseys/pending", headers=admin_headers)
-            
-            if response.status_code == 200:
-                pending_jerseys = response.json()
-                if isinstance(pending_jerseys, list):
-                    self.log_test(
-                        "GET /api/admin/jerseys/pending - Admin Access",
-                        True,
-                        f"Found {len(pending_jerseys)} pending jerseys for admin review"
-                    )
-                    
-                    # Test 2: PUT /api/admin/jerseys/{jersey_id}/edit - Admin Edit
-                    if len(pending_jerseys) > 0:
-                        test_jersey = pending_jerseys[0]
-                        jersey_id = test_jersey.get("id")
-                        
-                        if jersey_id:
-                            try:
-                                edit_data = {
-                                    "team": test_jersey.get("team", "Updated Team"),
-                                    "season": test_jersey.get("season", "2024-25"),
-                                    "player": "Updated Player Name",
-                                    "size": test_jersey.get("size", "M"),
-                                    "condition": test_jersey.get("condition", "very_good"),
-                                    "manufacturer": "Updated Manufacturer",
-                                    "home_away": test_jersey.get("home_away", "home"),
-                                    "league": test_jersey.get("league", "Updated League"),
-                                    "description": "Updated by admin during automated testing"
-                                }
-                                
-                                response = self.session.put(f"{BASE_URL}/admin/jerseys/{jersey_id}/edit", json=edit_data, headers=admin_headers)
-                                
-                                if response.status_code == 200:
-                                    self.log_test(
-                                        "PUT /api/admin/jerseys/{jersey_id}/edit - Admin Jersey Edit",
-                                        True,
-                                        f"Successfully edited jersey {jersey_id}"
-                                    )
-                                else:
-                                    self.log_test("PUT /api/admin/jerseys/{jersey_id}/edit - Admin Jersey Edit", False, "", f"HTTP {response.status_code}: {response.text}")
-                            except Exception as e:
-                                self.log_test("PUT /api/admin/jerseys/{jersey_id}/edit - Admin Jersey Edit", False, "", str(e))
-                    else:
-                        self.log_test(
-                            "PUT /api/admin/jerseys/{jersey_id}/edit - Admin Jersey Edit",
-                            True,
-                            "No pending jerseys available for edit testing (system clean)"
-                        )
-                else:
-                    self.log_test("GET /api/admin/jerseys/pending - Admin Access", False, "", "Invalid response format")
-            else:
-                self.log_test("GET /api/admin/jerseys/pending - Admin Access", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("GET /api/admin/jerseys/pending - Admin Access", False, "", str(e))
-
-        # Test 3: Admin authentication validation (test with user token)
+        # Test 3: Jersey Submission (CRUD - Create)
         if self.user_token:
             try:
-                user_headers = {"Authorization": f"Bearer {self.user_token}"}
-                response = self.session.get(f"{BASE_URL}/admin/jerseys/pending", headers=user_headers)
+                headers = {"Authorization": f"Bearer {self.user_token}"}
+                test_jersey_data = {
+                    "team": "Real Madrid CF",
+                    "season": "2024-25",
+                    "player": "Vinicius Jr",
+                    "size": "M",
+                    "condition": "new",
+                    "manufacturer": "Adidas",
+                    "home_away": "home",
+                    "league": "La Liga",
+                    "description": "Test jersey submission for Discogs header testing"
+                }
                 
-                if response.status_code == 403:
+                response = self.session.post(f"{BASE_URL}/jerseys", json=test_jersey_data, headers=headers)
+                
+                if response.status_code in [200, 201]:
+                    jersey_data = response.json()
+                    jersey_id = jersey_data.get("id")
+                    jersey_status = jersey_data.get("status")
+                    reference_number = jersey_data.get("reference_number")
+                    
                     self.log_test(
-                        "Admin Authentication Validation",
+                        "Jersey Submission (CRUD - Create)",
                         True,
-                        "Non-admin user correctly rejected with 403 Forbidden"
+                        f"Jersey created successfully - ID: {jersey_id}, Status: {jersey_status}, Ref: {reference_number}"
                     )
                 else:
-                    self.log_test("Admin Authentication Validation", False, "", f"Expected 403, got HTTP {response.status_code}")
+                    self.log_test("Jersey Submission (CRUD - Create)", False, "", f"HTTP {response.status_code}: {response.text}")
             except Exception as e:
-                self.log_test("Admin Authentication Validation", False, "", str(e))
+                self.log_test("Jersey Submission (CRUD - Create)", False, "", str(e))
 
-    def test_collection_system(self):
-        """Test Collection System"""
-        print("📚 TESTING COLLECTION SYSTEM")
+        # Test 4: Explorer Endpoints for Header Navigation
+        explorer_endpoints = [
+            ("/explorer/most-collected", "Most Collected Jerseys"),
+            ("/explorer/most-wanted", "Most Wanted Jerseys"),
+            ("/explorer/latest-additions", "Latest Additions"),
+            ("/explorer/leagues", "Leagues Overview")
+        ]
+        
+        for endpoint, description in explorer_endpoints:
+            try:
+                response = self.session.get(f"{BASE_URL}{endpoint}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data, list):
+                        self.log_test(
+                            f"Explorer - {description}",
+                            True,
+                            f"Retrieved {len(data)} items"
+                        )
+                    else:
+                        self.log_test(f"Explorer - {description}", False, "", "Invalid response format")
+                else:
+                    self.log_test(f"Explorer - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test(f"Explorer - {description}", False, "", str(e))
+
+    def test_user_profile_access(self):
+        """Test 4: User Profile Access - Verify profile data retrieval works correctly"""
+        print("👤 TESTING USER PROFILE ACCESS")
         print("=" * 50)
         
         if not self.user_token:
-            self.log_test("Collection System", False, "", "No user token available for testing")
+            self.log_test("User Profile Access", False, "", "No user token available for testing")
             return
 
         headers = {"Authorization": f"Bearer {self.user_token}"}
 
-        # Test 1: GET /api/collections/owned
+        # Test 1: Profile Data Retrieval
         try:
-            response = self.session.get(f"{BASE_URL}/collections/owned", headers=headers)
+            response = self.session.get(f"{BASE_URL}/profile", headers=headers)
             
             if response.status_code == 200:
-                owned_collection = response.json()
-                if isinstance(owned_collection, list):
-                    # Check data structure
-                    has_proper_structure = True
-                    for item in owned_collection[:3]:  # Check first 3 items
-                        if not isinstance(item, dict) or "jersey" not in item:
-                            has_proper_structure = False
-                            break
-                    
-                    if has_proper_structure:
-                        self.log_test(
-                            "GET /api/collections/owned - Owned Collection",
-                            True,
-                            f"Retrieved {len(owned_collection)} owned jerseys with proper jersey data aggregation"
-                        )
-                    else:
-                        self.log_test("GET /api/collections/owned - Owned Collection", False, "", "Collection items missing jersey data aggregation")
-                else:
-                    self.log_test("GET /api/collections/owned - Owned Collection", False, "", "Invalid response format")
+                profile_data = response.json()
+                owned_jerseys = profile_data.get("owned_jerseys", 0)
+                wanted_jerseys = profile_data.get("wanted_jerseys", 0)
+                active_listings = profile_data.get("active_listings", 0)
+                self.log_test(
+                    "Profile Data Retrieval",
+                    True,
+                    f"Profile data retrieved - Owned: {owned_jerseys}, Wanted: {wanted_jerseys}, Listings: {active_listings}"
+                )
             else:
-                self.log_test("GET /api/collections/owned - Owned Collection", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Profile Data Retrieval", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
-            self.log_test("GET /api/collections/owned - Owned Collection", False, "", str(e))
+            self.log_test("Profile Data Retrieval", False, "", str(e))
 
-        # Test 2: GET /api/collections/wanted
-        try:
-            response = self.session.get(f"{BASE_URL}/collections/wanted", headers=headers)
-            
-            if response.status_code == 200:
-                wanted_collection = response.json()
-                if isinstance(wanted_collection, list):
-                    # Check data structure
-                    has_proper_structure = True
-                    for item in wanted_collection[:3]:  # Check first 3 items
-                        if not isinstance(item, dict) or "jersey" not in item:
-                            has_proper_structure = False
-                            break
-                    
-                    if has_proper_structure:
-                        self.log_test(
-                            "GET /api/collections/wanted - Wanted Collection",
-                            True,
-                            f"Retrieved {len(wanted_collection)} wanted jerseys with proper jersey data aggregation"
-                        )
-                    else:
-                        self.log_test("GET /api/collections/wanted - Wanted Collection", False, "", "Collection items missing jersey data aggregation")
+        # Test 2: User Profile Endpoints for Profile Dropdown
+        profile_endpoints = [
+            (f"/users/{self.user_id}/profile", "User Profile Details"),
+            (f"/users/{self.user_id}/collections", "User Collections"),
+            (f"/users/{self.user_id}/jerseys", "User Submissions")
+        ]
+        
+        for endpoint, description in profile_endpoints:
+            try:
+                response = self.session.get(f"{BASE_URL}{endpoint}", headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_test(
+                        f"Profile Dropdown - {description}",
+                        True,
+                        f"Data retrieved successfully"
+                    )
                 else:
-                    self.log_test("GET /api/collections/wanted - Wanted Collection", False, "", "Invalid response format")
-            else:
-                self.log_test("GET /api/collections/wanted - Wanted Collection", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("GET /api/collections/wanted - Wanted Collection", False, "", str(e))
+                    self.log_test(f"Profile Dropdown - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test(f"Profile Dropdown - {description}", False, "", str(e))
 
-        # Test 3: Collection Statistics Consistency
+        # Test 3: Collections Access
         try:
-            # Get profile stats
-            profile_response = self.session.get(f"{BASE_URL}/profile", headers=headers)
             owned_response = self.session.get(f"{BASE_URL}/collections/owned", headers=headers)
             wanted_response = self.session.get(f"{BASE_URL}/collections/wanted", headers=headers)
             
-            if all(r.status_code == 200 for r in [profile_response, owned_response, wanted_response]):
-                profile_data = profile_response.json()
+            if owned_response.status_code == 200 and wanted_response.status_code == 200:
                 owned_data = owned_response.json()
                 wanted_data = wanted_response.json()
+                owned_count = len(owned_data) if isinstance(owned_data, list) else 0
+                wanted_count = len(wanted_data) if isinstance(wanted_data, list) else 0
                 
-                profile_owned = profile_data.get("owned_jerseys", 0)
-                profile_wanted = profile_data.get("wanted_jerseys", 0)
-                actual_owned = len(owned_data) if isinstance(owned_data, list) else 0
-                actual_wanted = len(wanted_data) if isinstance(wanted_data, list) else 0
-                
-                if profile_owned == actual_owned and profile_wanted == actual_wanted:
+                self.log_test(
+                    "Collections Access",
+                    True,
+                    f"Collections retrieved - Owned: {owned_count}, Wanted: {wanted_count}"
+                )
+            else:
+                self.log_test("Collections Access", False, "", f"Owned: {owned_response.status_code}, Wanted: {wanted_response.status_code}")
+        except Exception as e:
+            self.log_test("Collections Access", False, "", str(e))
+
+    def test_marketplace_api_endpoints(self):
+        """Test 5: Marketplace API Endpoints - Test marketplace API endpoints for navigation"""
+        print("🛒 TESTING MARKETPLACE API ENDPOINTS")
+        print("=" * 50)
+        
+        # Test 1: Marketplace Catalog (Discogs-style)
+        try:
+            response = self.session.get(f"{BASE_URL}/marketplace/catalog")
+            
+            if response.status_code == 200:
+                catalog_data = response.json()
+                if isinstance(catalog_data, list):
                     self.log_test(
-                        "Collection Statistics Consistency",
+                        "Marketplace Catalog (Discogs-style)",
                         True,
-                        f"Profile stats match collection data - Owned: {profile_owned}, Wanted: {profile_wanted}"
+                        f"Catalog retrieved with {len(catalog_data)} items"
                     )
                 else:
-                    self.log_test(
-                        "Collection Statistics Consistency",
-                        False,
-                        "",
-                        f"Mismatch - Profile: {profile_owned}/{profile_wanted}, Actual: {actual_owned}/{actual_wanted}"
-                    )
+                    self.log_test("Marketplace Catalog (Discogs-style)", False, "", "Invalid catalog format")
             else:
-                self.log_test("Collection Statistics Consistency", False, "", "Failed to retrieve all required data")
+                self.log_test("Marketplace Catalog (Discogs-style)", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
-            self.log_test("Collection Statistics Consistency", False, "", str(e))
+            self.log_test("Marketplace Catalog (Discogs-style)", False, "", str(e))
+
+        # Test 2: Listings Endpoints
+        if self.user_token:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            try:
+                response = self.session.get(f"{BASE_URL}/listings", headers=headers)
+                
+                if response.status_code == 200:
+                    listings_data = response.json()
+                    if isinstance(listings_data, list):
+                        active_listings = [l for l in listings_data if l.get("status") == "active"]
+                        self.log_test(
+                            "Marketplace Listings",
+                            True,
+                            f"Retrieved {len(listings_data)} total listings ({len(active_listings)} active)"
+                        )
+                    else:
+                        self.log_test("Marketplace Listings", False, "", "Invalid listings format")
+                else:
+                    self.log_test("Marketplace Listings", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test("Marketplace Listings", False, "", str(e))
+
+    def test_search_related_api_endpoints(self):
+        """Test 6: Search-Related API Endpoints - Verify search-related API endpoints work with new search bar"""
+        print("🔍 TESTING SEARCH-RELATED API ENDPOINTS")
+        print("=" * 50)
+        
+        # Test 1: Jersey Search with various parameters
+        search_tests = [
+            ({"search": "Real Madrid"}, "Team Search"),
+            ({"search": "2024"}, "Season Search"),
+            ({"league": "La Liga"}, "League Filter"),
+            ({"team": "Barcelona"}, "Team Filter")
+        ]
+        
+        for params, description in search_tests:
+            try:
+                response = self.session.get(f"{BASE_URL}/jerseys", params=params)
+                
+                if response.status_code == 200:
+                    results = response.json()
+                    if isinstance(results, list):
+                        self.log_test(
+                            f"Search API - {description}",
+                            True,
+                            f"Search returned {len(results)} results"
+                        )
+                    else:
+                        self.log_test(f"Search API - {description}", False, "", "Invalid search results format")
+                else:
+                    self.log_test(f"Search API - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test(f"Search API - {description}", False, "", str(e))
+
+        # Test 2: User Search (for header search functionality)
+        if self.user_token:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            try:
+                response = self.session.get(f"{BASE_URL}/users/search?query=test", headers=headers)
+                
+                if response.status_code == 200:
+                    user_results = response.json()
+                    if isinstance(user_results, list):
+                        self.log_test(
+                            "User Search API",
+                            True,
+                            f"User search returned {len(user_results)} results"
+                        )
+                    else:
+                        self.log_test("User Search API", False, "", "Invalid user search results format")
+                else:
+                    self.log_test("User Search API", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test("User Search API", False, "", str(e))
+
+    def test_navigation_integration(self):
+        """Test 7: Navigation Integration - Ensure backend properly supports the new header navigation flow"""
+        print("🧭 TESTING NAVIGATION INTEGRATION")
+        print("=" * 50)
+        
+        # Test navigation-related endpoints that support the new header
+        navigation_endpoints = [
+            ("/jerseys", "Home/Explorez Navigation"),
+            ("/marketplace/catalog", "Marketplace Navigation"),
+            ("/explorer/leagues", "Explorer Navigation"),
+            ("/notifications", "Notifications (Header Bell)", True),  # Requires auth
+            ("/profile", "Profile Dropdown", True)  # Requires auth
+        ]
+        
+        for endpoint_info in navigation_endpoints:
+            endpoint = endpoint_info[0]
+            description = endpoint_info[1]
+            requires_auth = len(endpoint_info) > 2 and endpoint_info[2]
+            
+            try:
+                headers = {}
+                if requires_auth and self.user_token:
+                    headers = {"Authorization": f"Bearer {self.user_token}"}
+                elif requires_auth and not self.user_token:
+                    self.log_test(f"Navigation - {description}", False, "", "No auth token available")
+                    continue
+                
+                response = self.session.get(f"{BASE_URL}{endpoint}", headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_test(
+                        f"Navigation - {description}",
+                        True,
+                        f"Endpoint accessible and returns data"
+                    )
+                else:
+                    self.log_test(f"Navigation - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test(f"Navigation - {description}", False, "", str(e))
+
+        # Test messaging endpoints for header messages icon
+        if self.user_token:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            try:
+                response = self.session.get(f"{BASE_URL}/conversations", headers=headers)
+                
+                if response.status_code == 200:
+                    conversations = response.json()
+                    if isinstance(conversations, list):
+                        self.log_test(
+                            "Navigation - Messages Integration",
+                            True,
+                            f"Messages endpoint accessible - {len(conversations)} conversations"
+                        )
+                    else:
+                        self.log_test("Navigation - Messages Integration", False, "", "Invalid conversations format")
+                else:
+                    self.log_test("Navigation - Messages Integration", False, "", f"HTTP {response.status_code}: {response.text}")
+            except Exception as e:
+                self.log_test("Navigation - Messages Integration", False, "", str(e))
 
     def run_all_tests(self):
         """Run all test suites"""
