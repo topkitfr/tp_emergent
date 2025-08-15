@@ -254,7 +254,17 @@ frontend:
     status_history:
       - working: "unknown"
         agent: "main"
-        comment: "🎨 PHASE 3 - HEADER REDESIGN COMPLETED: Completely redesigned header according to specifications. IMPLEMENTATION: ✅ Logo reduced by 20% (h-8 → h-6 mobile, h-12 → h-10 desktop) ✅ Added top bar with auth/settings/admin controls in compact design ✅ Restructured main header with centered logo and navigation below ✅ Enhanced mobile menu with overlay style and better UX ✅ Improved French localization (Se connecter, Mon Profil, Déconnexion) ✅ Fixed mobile menu button as floating element ✅ Better visual hierarchy and separation of concerns. The new header provides cleaner design with better organization of utility functions vs. main navigation."
+  - task: "Phase 3 - Enhanced User Profile View"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "🎨 PHASE 3 - ENHANCED PROFILE VIEW COMPLETED: Completely redesigned user profile with comprehensive improvements. IMPLEMENTATION: ✅ Added fetchUserListings() function to retrieve user's marketplace listings ✅ Enhanced Quick Stats grid with 6 statistics (Possédés, Valeur estimée, En recherche, En vente, Soumis, Revenus) ✅ Added new 'Mes Listings' tab (💰) with complete listing management ✅ Created detailed listings view with desktop table and mobile cards ✅ Added listing statistics (Total listings, En vente, Vendus, Revenus totaux) ✅ Integrated listing status badges and condition indicators ✅ Added management actions (View, Edit, Remove) for user listings ✅ Enhanced mobile responsiveness for all profile sections. The profile now provides complete overview of user's collection, wishlist, submissions, AND marketplace activities including revenue tracking."
 
   - task: "Complete Messaging System Frontend Implementation"
     implemented: true
