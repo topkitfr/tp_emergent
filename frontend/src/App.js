@@ -6090,7 +6090,7 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
 
 
 // Global Marketplace Page - Discogs Style (Jersey References then Listings)
-const GlobalMarketplacePage = () => {
+const GlobalMarketplacePage = ({ onAddToCart = null }) => {
   const [jerseys, setJerseys] = useState([]); // Jersey references available for sale
   const [selectedJersey, setSelectedJersey] = useState(null); // Selected jersey to view listings
   const [selectedJerseyListings, setSelectedJerseyListings] = useState([]);
