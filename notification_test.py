@@ -425,9 +425,10 @@ class AdminModerationTester:
             response = self.session.get(f"{BASE_URL}/notifications", headers=user_headers)
             
             if response.status_code == 200:
-                notifications = response.json()
-                if isinstance(notifications, list):
-                    unread_count = sum(1 for n in notifications if not n.get("is_read", True))
+                data = response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    notifications = data["notifications"]
+                    unread_count = data.get("unread_count", 0)
                     total_count = len(notifications)
                     
                     self.log_test(
@@ -436,7 +437,7 @@ class AdminModerationTester:
                         f"Unread notifications: {unread_count}/{total_count}"
                     )
                 else:
-                    self.log_test("Notification Unread Count", False, "", "Invalid notifications format")
+                    self.log_test("Notification Unread Count", False, "", "Invalid notifications format - expected object with 'notifications' array")
             else:
                 self.log_test("Notification Unread Count", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
