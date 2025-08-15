@@ -385,6 +385,54 @@ frontend:
         agent: "main"
         comment: "💬 SELLER CHAT INTEGRATION REQUIRED: Need to integrate direct messaging functionality into marketplace listings so buyers can contact sellers directly. Currently, ContactSellerModal exists but may not be properly integrated with the messaging system. IMPLEMENTATION PLAN: 1) Ensure 'Contact Seller' buttons in marketplace redirect to messaging interface 2) Auto-create conversations between buyer and seller 3) Pre-populate initial message context about specific jersey listing 4) Test complete buyer-to-seller communication workflow."
 
+  - task: "Streamline Admin Moderation - Confirmation Messages"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "🔧 ADMIN MODERATION IMPROVEMENTS NEEDED: Current admin moderation system needs streamlining with proper confirmation messages for all admin actions (approve, reject, suggest changes). Users report lack of clear feedback when admins perform moderation actions. IMPLEMENTATION PLAN: 1) Add confirmation dialogs for all admin moderation actions 2) Improve success/error feedback messaging 3) Add loading states during moderation operations 4) Ensure all admin actions provide clear confirmation to both admin and affected user."
+
+  - task: "Fix Admin Submission Form Access"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "📝 ADMIN FORM ACCESS ISSUE: Admins report difficulty accessing original submission forms when moderating jerseys. Need to ensure admins can easily view complete jersey submission details including all fields, images, and user-provided information during moderation process. IMPLEMENTATION PLAN: 1) Improve admin panel jersey detail view 2) Ensure all submission data is visible to admins 3) Add direct access to jersey editing interface for admins 4) Test complete admin moderation workflow from submission review to approval/rejection."
+
+  - task: "Correct Suggest Change vs Reject Behavior"
+    implemented: false
+    working: false  
+    file: "/app/frontend/src/App.js, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "🔀 ADMIN ACTION DIFFERENTIATION NEEDED: Current system may not properly differentiate between 'Suggest Changes' and 'Reject' actions. Need to ensure these actions have distinct behaviors - suggest changes should allow resubmission while reject should be final. IMPLEMENTATION PLAN: 1) Review and fix backend logic for suggest_modifications vs reject status 2) Ensure frontend displays correct options and actions for each status 3) Test that suggested changes allow resubmission while rejections do not 4) Verify proper user notifications for each action type."
+
+  - task: "Implement Rejection Notifications"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "📢 REJECTION NOTIFICATION SYSTEM: Users report not receiving proper notifications when their jersey submissions are rejected by admins. Need to ensure rejection notifications are properly sent and displayed. IMPLEMENTATION PLAN: 1) Verify rejection notification creation in backend 2) Ensure rejection notifications include proper details and reasoning 3) Test notification delivery and display in frontend 4) Add email notification option for critical status changes like rejections."
+
 backend:
   - task: "Discogs-Style Header Backend Support - API Connectivity & Navigation Integration"
     implemented: true
