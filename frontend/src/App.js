@@ -9332,6 +9332,88 @@ const AppContent = () => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
+  
+  // Shopping Cart State
+  const [cart, setCart] = useState([]);
+  
+  // Load cart from localStorage on app start
+  useEffect(() => {
+    const savedCart = localStorage.getItem('topkit_cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+        setCart([]);
+      }
+    }
+  }, []);
+  
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('topkit_cart', JSON.stringify(cart));
+  }, [cart]);
+  
+  // Cart management functions
+  const addToCart = (listing, quantity = 1) => {
+    const cartItem = {
+      id: `${listing.jersey.id}-${listing.size}-${listing.id}`,
+      jerseyId: listing.jersey.id,
+      listingId: listing.id,
+      team: listing.jersey.team,
+      season: listing.jersey.season,
+      player: listing.jersey.player,
+      size: listing.size,
+      condition: listing.condition,
+      manufacturer: listing.jersey.manufacturer,
+      images: listing.jersey.images || [],
+      price: listing.price,
+      sellerId: listing.user.id,
+      sellerName: listing.user.name,
+      quantity: quantity
+    };
+    
+    // Check if item already exists in cart
+    const existingItemIndex = cart.findIndex(item => item.id === cartItem.id);
+    
+    if (existingItemIndex >= 0) {
+      // Update quantity if item exists
+      const newCart = [...cart];
+      newCart[existingItemIndex].quantity += quantity;
+      setCart(newCart);
+    } else {
+      // Add new item to cart
+      setCart([...cart, cartItem]);
+    }
+    
+    // Show success notification
+    console.log('Article ajouté au panier:', cartItem.team, cartItem.season);
+  };
+  
+  const removeFromCart = (itemToRemove) => {
+    setCart(cart.filter(item => item.id !== itemToRemove.id));
+  };
+  
+  const updateCartItemQuantity = (itemToUpdate, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemToUpdate);
+      return;
+    }
+    
+    setCart(cart.map(item => 
+      item.id === itemToUpdate.id 
+        ? { ...item, quantity: newQuantity }
+        : item
+    ));
+  };
+  
+  const clearCart = () => {
+    setCart([]);
+  };
+  
+  const getCartCount = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
 
   // Debug user state changes  
   useEffect(() => {
