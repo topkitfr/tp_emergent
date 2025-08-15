@@ -9823,6 +9823,7 @@ const AppContent = () => {
           currentView={currentView} 
           setCurrentView={setCurrentView}
           setShowAuthModal={setShowAuthModalFromAction}
+          cartCount={getCartCount()}
         />
         
         {/* Main Content */}
