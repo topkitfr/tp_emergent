@@ -630,7 +630,8 @@ const Header = ({ currentView, setCurrentView }) => {
               ) : (
                 <button 
                   onClick={() => {
-                    window.dispatchEvent(new CustomEvent('showAuthModal'));
+                    setShowAuthModal(true);
+                    setAuthMode('login');
                   }}
                   className="text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
                 >
