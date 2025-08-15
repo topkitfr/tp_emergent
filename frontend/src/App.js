@@ -7072,6 +7072,37 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
     }
   };
 
+  const fetchUserListings = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/listings?seller_id=${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const listings = response.data || [];
+      setUserListings(listings);
+      
+      // Calculate listing stats and update collection stats
+      const activeListings = listings.filter(listing => listing.status === 'active');
+      const soldListings = listings.filter(listing => listing.status === 'sold');
+      const totalRevenue = soldListings.reduce((sum, listing) => sum + (listing.price || 0), 0);
+      
+      setCollectionStats(prev => ({
+        ...prev,
+        totalListings: listings.length,
+        activeListings: activeListings.length,
+        soldListings: soldListings.length,
+        totalRevenue
+      }));
+      
+    } catch (error) {
+      console.error('Failed to fetch user listings:', error);
+      setUserListings([]);
+    }
+  };
+
   const handleRemoveFromCollection = async (jerseyId, collectionType) => {
     try {
       const token = localStorage.getItem('token');
