@@ -459,12 +459,15 @@ class AdminModerationTester:
             response = self.session.get(f"{BASE_URL}/notifications", headers=user_headers)
             
             if response.status_code == 200:
-                notifications = response.json()
-                if isinstance(notifications, list):
+                data = response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    notifications = data["notifications"]
+                    unread_count = data.get("unread_count", 0)
+                    
                     self.log_test(
                         "Notifications Endpoint Access",
                         True,
-                        f"Successfully accessed notifications endpoint - {len(notifications)} notifications found"
+                        f"Successfully accessed notifications endpoint - {len(notifications)} notifications found ({unread_count} unread)"
                     )
                     
                     # Test notification details
@@ -484,7 +487,7 @@ class AdminModerationTester:
                             )
                     
                 else:
-                    self.log_test("Notifications Endpoint Access", False, "", "Invalid notifications response format")
+                    self.log_test("Notifications Endpoint Access", False, "", "Invalid notifications response format - expected object with 'notifications' array")
             else:
                 self.log_test("Notifications Endpoint Access", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
