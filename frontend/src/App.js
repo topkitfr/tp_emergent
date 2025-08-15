@@ -572,292 +572,314 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   );
 };
 
-// Header Component
+// Discogs-Style Header Component
 const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
   const { user, logout } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showGeneralMenu, setShowGeneralMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Debug user state in Header
-  useEffect(() => {
-    console.log('🎯 Header - user state changed:', user);
-    console.log('🎯 Header - user is:', user ? 'LOGGED IN' : 'NOT LOGGED IN');
-    console.log('🎯 Header - will show navigation:', user ? 'YES' : 'NO');
-  }, [user]);
+  // Handle search functionality
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to Explorez page and pass search query
+      setCurrentView('jerseys');
+      // You can add search query state management here if needed
+      console.log('Searching for:', searchQuery);
+    }
+  };
 
   return (
     <>
-      {/* Top Bar - Auth/Settings/Admin (Phase 3 Design) */}
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex justify-between items-center text-xs">
-            {/* Left side - Auth/Settings/Admin */}
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <div className="flex items-center space-x-2">
-                    {user.picture && (
-                      <img 
-                        src={user.picture} 
-                        alt={user.name}
-                        className="w-5 h-5 rounded-full"
-                      />
-                    )}
-                    <span className="text-gray-300">{user.name}</span>
-                  </div>
-                  <button 
-                    onClick={() => setCurrentView('settings')}
-                    className={`px-2 py-1 rounded transition-colors ${
-                      currentView === 'settings' 
-                        ? 'bg-gray-700 text-white' 
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    }`}
-                  >
-                    ⚙️ Paramètres
-                  </button>
-                  {user.email === 'topkitfr@gmail.com' && (
-                    <button 
-                      onClick={() => setCurrentView('admin')}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        currentView === 'admin' 
-                          ? 'bg-red-600 text-white' 
-                          : 'text-red-400 hover:text-white hover:bg-red-700'
-                      }`}
-                    >
-                      🔧 Admin
-                    </button>
-                  )}
-                </>
-              ) : (
-                <button 
-                  onClick={() => {
-                    setShowAuthModal(true);
-                  }}
-                  className="text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
-                >
-                  Se connecter
-                </button>
-              )}
-            </div>
+      {/* Main Discogs-Style Header */}
+      <header className="bg-black text-white shadow-lg border-b border-gray-800">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
             
-            {/* Right side - User actions */}
-            <div className="flex items-center space-x-3">
-              {user && (
-                <>
-                  <NotificationBell />
-                  <button 
-                    onClick={logout}
-                    className="text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
-                  >
-                    Déconnexion
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header - Logo and Primary Navigation (Phase 3 Design) */}
-      <header className="bg-black text-white shadow-2xl">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col items-center space-y-4">
-            {/* Logo - Centered */}
-            <div>
+            {/* Left side - Logo */}
+            <div className="flex items-center">
               <img 
                 src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
                 alt="TopKit Logo"
-                className="h-6 md:h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                className="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setCurrentView('home')}
               />
             </div>
-            
-            {/* Main Navigation - Below Logo */}
-            <nav className="flex space-x-8 text-sm">
-              <button 
-                onClick={() => setCurrentView('home')}
-                className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                  currentView === 'home' 
-                    ? 'bg-white text-black' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                Home
-              </button>
-              <button 
-                onClick={() => setCurrentView('jerseys')}
-                className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                  currentView === 'jerseys' 
-                    ? 'bg-white text-black' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                Explorez
-              </button>
-              <button 
-                onClick={() => setCurrentView('marketplace')}
-                className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                  currentView === 'marketplace' 
-                    ? 'bg-white text-black' 
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                Marketplace
-              </button>
-              {user && (
-                <button 
-                  onClick={() => setCurrentView('profile')}
-                  className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-                    currentView === 'profile' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-blue-300 hover:text-white hover:bg-blue-800'
-                  }`}
-                >
-                  Mon Profil
-                </button>
-              )}
-            </nav>
-          </div>
-        </div>
 
-        {/* Mobile Menu - Overlay style for Phase 3 */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-            <div className="bg-gray-900 rounded-2xl p-8 m-4 w-full max-w-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">Menu</h3>
-                <button 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-gray-400 hover:text-white"
+            {/* Center-left - Search Bar */}
+            <div className="flex-1 max-w-xl mx-8 hidden md:block">
+              <form onSubmit={handleSearch} className="relative">
+                <input
+                  type="text"
+                  placeholder="Rechercher des maillots..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-gray-900 text-white placeholder-gray-400 border border-gray-700 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                 >
-                  ✕
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </button>
-              </div>
+              </form>
+            </div>
+
+            {/* Right side - Navigation and Utility Icons */}
+            <div className="flex items-center space-x-1">
               
-              <div className="space-y-3">
+              {/* Main Navigation - Desktop */}
+              <nav className="hidden lg:flex items-center space-x-1 mr-4">
                 <button 
-                  onClick={() => {
-                    setCurrentView('home');
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                  onClick={() => setCurrentView('home')}
+                  className={`px-3 py-2 rounded transition-colors text-sm font-medium ${
                     currentView === 'home' 
-                      ? 'bg-white text-black' 
+                      ? 'bg-gray-700 text-white' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
                   Home
                 </button>
                 <button 
-                  onClick={() => {
-                    setCurrentView('jerseys');
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                  onClick={() => setCurrentView('jerseys')}
+                  className={`px-3 py-2 rounded transition-colors text-sm font-medium ${
                     currentView === 'jerseys' 
-                      ? 'bg-white text-black' 
+                      ? 'bg-gray-700 text-white' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
                   Explorez
                 </button>
                 <button 
-                  onClick={() => {
-                    setCurrentView('marketplace');
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                  onClick={() => setCurrentView('marketplace')}
+                  className={`px-3 py-2 rounded transition-colors text-sm font-medium ${
                     currentView === 'marketplace' 
-                      ? 'bg-white text-black' 
+                      ? 'bg-gray-700 text-white' 
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
                   Marketplace
                 </button>
+              </nav>
+
+              {/* Utility Icons */}
+              <div className="flex items-center space-x-2">
                 
+                {/* Cart Icon (future feature) */}
+                <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 5H20M7 13v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                  </svg>
+                </button>
+
+                {/* Messages Icon */}
+                <button 
+                  onClick={() => user ? setCurrentView('profile') : setShowAuthModal(true)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                </button>
+
+                {/* Notifications */}
+                {user && <NotificationBell />}
+
+                {/* Profile Menu */}
                 {user ? (
-                  <>
-                    <hr className="border-gray-700 my-4" />
-                    <button 
-                      onClick={() => {
-                        setCurrentView('profile');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                        currentView === 'profile' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'text-blue-300 hover:text-white hover:bg-blue-800'
-                      }`}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className="flex items-center space-x-2 p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded transition-colors"
                     >
-                      Mon Profil
+                      {user.picture ? (
+                        <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full" />
+                      ) : (
+                        <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center text-xs">
+                          {user.name?.[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <svg className={`w-3 h-3 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 12 12">
+                        <path d="M6 8L2 4h8l-4 4z"/>
+                      </svg>
                     </button>
-                    <button 
-                      onClick={() => {
-                        setCurrentView('settings');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                        currentView === 'settings' 
-                          ? 'bg-gray-700 text-white' 
-                          : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                      }`}
-                    >
-                      ⚙️ Paramètres
-                    </button>
-                    {user.email === 'topkitfr@gmail.com' && (
-                      <button 
-                        onClick={() => {
-                          setCurrentView('admin');
-                          setMobileMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                          currentView === 'admin' 
-                            ? 'bg-red-600 text-white' 
-                            : 'text-red-400 hover:text-white hover:bg-red-800'
-                        }`}
-                      >
-                        🔧 Admin Panel
-                      </button>
+                    
+                    {/* Profile Dropdown */}
+                    {showProfileMenu && (
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+                        <div className="p-3 border-b border-gray-700">
+                          <div className="text-sm font-medium text-white">{user.name}</div>
+                          <div className="text-xs text-gray-400">{user.email}</div>
+                        </div>
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              setCurrentView('profile');
+                              setShowProfileMenu(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800"
+                          >
+                            👤 Mon Profil
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentView('settings');
+                              setShowProfileMenu(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800"
+                          >
+                            ⚙️ Paramètres
+                          </button>
+                          {user.email === 'topkitfr@gmail.com' && (
+                            <button
+                              onClick={() => {
+                                setCurrentView('admin');
+                                setShowProfileMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-white hover:bg-red-800"
+                            >
+                              🔧 Admin Panel
+                            </button>
+                          )}
+                          <hr className="border-gray-700 my-1" />
+                          <button
+                            onClick={() => {
+                              logout();
+                              setShowProfileMenu(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-white hover:bg-red-800"
+                          >
+                            Déconnexion
+                          </button>
+                        </div>
+                      </div>
                     )}
-                    <hr className="border-gray-700 my-4" />
-                    <button 
-                      onClick={() => {
-                        logout();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-3 rounded-lg transition-colors font-medium text-red-400 hover:text-white hover:bg-red-800"
-                    >
-                      Déconnexion
-                    </button>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <hr className="border-gray-700 my-4" />
-                    <button 
-                      onClick={() => {
-                        setShowAuthModal(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-3 rounded-lg transition-colors font-medium text-blue-400 hover:text-white hover:bg-blue-800"
-                    >
-                      Se connecter
-                    </button>
-                  </>
+                  <button 
+                    onClick={() => setShowAuthModal(true)}
+                    className="px-3 py-2 text-sm font-medium text-blue-400 hover:text-white hover:bg-blue-800 rounded transition-colors"
+                  >
+                    Se connecter
+                  </button>
                 )}
+
+                {/* General Menu Button */}
+                <button
+                  onClick={() => setShowGeneralMenu(!showGeneralMenu)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors lg:hidden"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
-        )}
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden mt-3">
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher des maillots..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-gray-900 text-white placeholder-gray-400 border border-gray-700 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
       </header>
 
-      {/* Mobile Menu Button - Fixed position for Phase 3 */}
-      <button 
-        className="md:hidden fixed top-4 right-4 z-40 bg-gray-900 text-white p-2 rounded-lg shadow-lg"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+      {/* General Menu Side Panel */}
+      {showGeneralMenu && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden" onClick={() => setShowGeneralMenu(false)}>
+          <div 
+            className="fixed left-0 top-0 h-full w-80 bg-gray-900 shadow-xl transform transition-transform"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-white">Navigation</h3>
+                <button 
+                  onClick={() => setShowGeneralMenu(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <nav className="space-y-2">
+                <button 
+                  onClick={() => {
+                    setCurrentView('home');
+                    setShowGeneralMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                    currentView === 'home' 
+                      ? 'bg-gray-700 text-white' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  🏠 Home
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentView('jerseys');
+                    setShowGeneralMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                    currentView === 'jerseys' 
+                      ? 'bg-gray-700 text-white' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  🔍 Explorez
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentView('marketplace');
+                    setShowGeneralMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                    currentView === 'marketplace' 
+                      ? 'bg-gray-700 text-white' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  🛒 Marketplace
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close dropdowns when clicking outside */}
+      {(showProfileMenu || showGeneralMenu) && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => {
+            setShowProfileMenu(false);
+            setShowGeneralMenu(false);
+          }}
+        />
+      )}
     </>
   );
 };
