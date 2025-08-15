@@ -9786,6 +9786,273 @@ const AppContent = () => {
           />
         );
       
+// Discogs-Style Homepage Component
+const DiscogsStyleHomepage = ({ onNavigate }) => {
+  const [featuredJerseys, setFeaturedJerseys] = useState([]);
+  const [trendingJerseys, setTrendingJerseys] = useState([]);
+  const [staffPicks, setStaffPicks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHomepageData();
+  }, []);
+
+  const fetchHomepageData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch different sections of content
+      const [featuredResponse, trendingResponse, staffPicksResponse] = await Promise.all([
+        axios.get(`${API}/api/explorer/latest-additions?limit=8`),
+        axios.get(`${API}/api/explorer/most-collected?limit=6`),
+        axios.get(`${API}/api/explorer/most-wanted?limit=6`)
+      ]);
+
+      setFeaturedJerseys(featuredResponse.data || []);
+      setTrendingJerseys(trendingResponse.data || []);
+      setStaffPicks(staffPicksResponse.data || []);
+    } catch (error) {
+      console.error('Failed to fetch homepage data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const JerseyCard = ({ jersey, size = 'normal' }) => (
+    <div
+      className={`bg-gray-900 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all cursor-pointer group hover:shadow-xl ${
+        size === 'large' ? 'col-span-2 row-span-2' : ''
+      }`}
+      onClick={() => onNavigate('jerseys')}
+    >
+      <div className={`bg-gray-800 overflow-hidden ${size === 'large' ? 'aspect-square' : 'aspect-[4/3]'}`}>
+        {jersey.images?.[0] ? (
+          <img
+            src={jersey.images[0]}
+            alt={jersey.team}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500 text-4xl">
+            👕
+          </div>
+        )}
+        <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+          {jersey.league}
+        </div>
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold text-white mb-1 truncate">
+          {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
+        </h3>
+        <p className="text-gray-400 text-sm truncate">{jersey.season}</p>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-gray-500">{jersey.manufacturer}</span>
+          {jersey.collection_count > 0 && (
+            <span className="text-xs text-blue-400">❤️ {jersey.collection_count}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mb-4"></div>
+          <div className="text-gray-400">Chargement...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black">
+      
+      {/* Hero Section with Search */}
+      <section className="bg-gradient-to-b from-gray-900 to-black py-16">
+        <div className="container mx-auto px-6 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+            Découvrez les maillots <br />
+            <span className="text-blue-400">les plus recherchés</span>
+          </h1>
+          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
+            La plus grande base de données de maillots de football au monde. 
+            Achetez, vendez et collectionnez avec des passionnés du monde entier.
+          </p>
+          
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-12">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher par équipe, joueur, championnat..."
+                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-xl px-6 py-4 pr-16 text-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={() => onNavigate('jerseys')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <button
+              onClick={() => onNavigate('jerseys')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+            >
+              🔍 Explorez la base de données
+            </button>
+            <button
+              onClick={() => onNavigate('marketplace')}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+            >
+              🛒 Marketplace
+            </button>
+            <button
+              onClick={() => onNavigate('profile')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+            >
+              📚 Ma Collection
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Additions */}
+      {featuredJerseys.length > 0 && (
+        <section className="py-16 bg-black">
+          <div className="container mx-auto px-6">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-3xl font-bold text-white">Derniers ajouts</h2>
+              <button
+                onClick={() => onNavigate('jerseys')}
+                className="text-blue-400 hover:text-white transition-colors font-medium"
+              >
+                Voir tout →
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
+              {featuredJerseys.slice(0, 8).map((jersey) => (
+                <JerseyCard key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Trending & Staff Picks */}
+      <section className="py-16 bg-gray-950">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            
+            {/* Most Collected */}
+            {trendingJerseys.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-white">Plus collectionnés</h2>
+                  <button
+                    onClick={() => onNavigate('jerseys')}
+                    className="text-blue-400 hover:text-white transition-colors"
+                  >
+                    Voir tout →
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {trendingJerseys.slice(0, 6).map((jersey) => (
+                    <JerseyCard key={jersey.id} jersey={jersey} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Most Wanted */}
+            {staffPicks.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-white">Plus recherchés</h2>
+                  <button
+                    onClick={() => onNavigate('jerseys')}
+                    className="text-blue-400 hover:text-white transition-colors"
+                  >
+                    Voir tout →
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {staffPicks.slice(0, 6).map((jersey) => (
+                    <JerseyCard key={jersey.id} jersey={jersey} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories/Leagues */}
+      <section className="py-16 bg-black">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-bold text-white mb-12 text-center">Parcourir par championnat</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {[
+              { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', color: 'bg-purple-600' },
+              { name: 'La Liga', flag: '🇪🇸', color: 'bg-red-600' },
+              { name: 'Serie A', flag: '🇮🇹', color: 'bg-green-600' },
+              { name: 'Bundesliga', flag: '🇩🇪', color: 'bg-yellow-600' },
+              { name: 'Ligue 1', flag: '🇫🇷', color: 'bg-blue-600' },
+              { name: 'Champions League', flag: '⚽', color: 'bg-indigo-600' },
+              { name: 'Nations', flag: '🌍', color: 'bg-teal-600' },
+              { name: 'MLS', flag: '🇺🇸', color: 'bg-orange-600' },
+              { name: 'Liga MX', flag: '🇲🇽', color: 'bg-pink-600' },
+              { name: 'Autres', flag: '🏆', color: 'bg-gray-600' }
+            ].map((league) => (
+              <button
+                key={league.name}
+                onClick={() => onNavigate('jerseys')}
+                className={`${league.color} hover:opacity-90 text-white p-6 rounded-xl font-semibold transition-all hover:shadow-lg hover:scale-105`}
+              >
+                <div className="text-3xl mb-2">{league.flag}</div>
+                <div className="text-sm font-medium">{league.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics */}
+      <section className="py-16 bg-gray-950">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-12">TopKit en chiffres</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <div className="text-4xl font-bold text-blue-400 mb-2">50K+</div>
+              <div className="text-gray-400">Maillots référencés</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-green-400 mb-2">15K+</div>
+              <div className="text-gray-400">Collectionneurs</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-yellow-400 mb-2">200+</div>
+              <div className="text-gray-400">Équipes</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-purple-400 mb-2">30+</div>
+              <div className="text-gray-400">Championnats</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
       default:
         return (
           <div className="min-h-screen bg-black">
