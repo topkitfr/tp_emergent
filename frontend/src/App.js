@@ -6937,13 +6937,18 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
   const [ownedJerseys, setOwnedJerseys] = useState([]);
   const [wantedJerseys, setWantedJerseys] = useState([]);
   const [submittedJerseys, setSubmittedJerseys] = useState([]);
+  const [userListings, setUserListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   const [collectionStats, setCollectionStats] = useState({
     totalValue: 0,
     averageValue: 0,
     totalItems: 0,
-    mostValuableItem: null
+    mostValuableItem: null,
+    totalListings: 0,
+    activeListings: 0,
+    soldListings: 0,
+    totalRevenue: 0
   });
 
   // Friends data states
