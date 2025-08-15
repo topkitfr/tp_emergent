@@ -2908,14 +2908,16 @@ async def search_users(
     limit: int = 10,
     user_id: str = Depends(get_current_user)
 ):
-    """Search for users to add as friends"""
+    """Search for users to add as friends - excludes admin users"""
     if len(query) < 2:
         return []
     
-    # Search by name or email (exclude current user)
+    # Search by name or email (exclude current user and admin users)
     search_filter = {
         "$and": [
             {"id": {"$ne": user_id}},  # Exclude current user
+            {"email": {"$ne": ADMIN_EMAIL}},  # Exclude admin by email
+            {"role": {"$ne": "admin"}},  # Exclude admin by role
             {
                 "$or": [
                     {"name": {"$regex": query, "$options": "i"}},
