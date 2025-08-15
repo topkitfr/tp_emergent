@@ -1715,7 +1715,8 @@ async def update_jersey(jersey_id: str, jersey_data: JerseyCreate, user_id: str 
 
 # Marketplace endpoints
 @api_router.post("/listings", response_model=Listing)
-async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get_current_user)):
+async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get_current_non_admin_user)):
+    """Create a new listing - restricted to non-admin users only"""
     # Verify jersey exists
     jersey = await db.jerseys.find_one({"id": listing_data.jersey_id})
     if not jersey:
