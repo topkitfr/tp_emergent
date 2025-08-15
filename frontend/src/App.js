@@ -7824,6 +7824,256 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
               </div>
             )}
 
+            {activeTab === 'listings' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">💰 Mes Listings</h2>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span className="text-gray-400">{collectionStats.totalListings} listing{collectionStats.totalListings > 1 ? 's' : ''}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-purple-400 font-semibold">{collectionStats.activeListings} actif{collectionStats.activeListings > 1 ? 's' : ''}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-green-400 font-semibold">{collectionStats.totalRevenue}€ de revenus</span>
+                  </div>
+                </div>
+
+                {/* Listings Status Summary */}
+                {userListings.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-400 mb-2">{collectionStats.totalListings}</div>
+                        <div className="text-xs text-gray-400">Total listings</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-400 mb-2">{collectionStats.activeListings}</div>
+                        <div className="text-xs text-gray-400">En vente</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-400 mb-2">{collectionStats.soldListings}</div>
+                        <div className="text-xs text-gray-400">Vendus</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 p-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-400 mb-2">{collectionStats.totalRevenue}€</div>
+                        <div className="text-xs text-gray-400">Revenus totaux</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {userListings.length > 0 ? (
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block">
+                      <div className="bg-gray-800 px-6 py-4 border-b border-gray-700">
+                        <div className="grid grid-cols-7 gap-4 text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          <div className="col-span-2">Maillot</div>
+                          <div>Taille</div>
+                          <div>Condition</div>
+                          <div>Prix</div>
+                          <div>Status</div>
+                          <div>Actions</div>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-gray-700">
+                        {userListings.map((listing, index) => (
+                          <div key={listing.id} className="px-6 py-4 hover:bg-gray-800 transition-colors">
+                            <div className="grid grid-cols-7 gap-4 items-center">
+                              {/* Jersey Info */}
+                              <div className="col-span-2 flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                                  {listing.jersey?.images && listing.jersey.images.length > 0 ? (
+                                    <img
+                                      src={listing.jersey.images[0]}
+                                      alt={`${listing.jersey.team} ${listing.jersey.season}`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.target.src = 'https://via.placeholder.com/48x48?text=Jersey';
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-gray-500 text-lg">👕</span>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="text-white font-medium text-sm truncate">
+                                    {listing.jersey?.player ? `${listing.jersey.team} - ${listing.jersey.player}` : listing.jersey?.team}
+                                  </h3>
+                                  <div className="text-gray-400 text-xs truncate">
+                                    {listing.jersey?.season} • {listing.jersey?.home_away}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Size */}
+                              <div className="text-white text-sm">{listing.jersey?.size}</div>
+                              
+                              {/* Condition */}
+                              <div>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                  listing.jersey?.condition === 'new' ? 'bg-green-800 text-green-200' :
+                                  listing.jersey?.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
+                                  listing.jersey?.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
+                                  listing.jersey?.condition === 'good' ? 'bg-orange-800 text-orange-200' :
+                                  'bg-red-800 text-red-200'
+                                }`}>
+                                  {listing.jersey?.condition === 'new' ? 'Neuf' :
+                                   listing.jersey?.condition === 'near_mint' ? 'Quasi-neuf' :
+                                   listing.jersey?.condition === 'very_good' ? 'Très bon' :
+                                   listing.jersey?.condition === 'good' ? 'Bon' : 'Correct'}
+                                </span>
+                              </div>
+                              
+                              {/* Price */}
+                              <div className="text-green-400 font-semibold">{listing.price}€</div>
+                              
+                              {/* Status */}
+                              <div>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                  listing.status === 'active' ? 'bg-green-800 text-green-200' :
+                                  listing.status === 'sold' ? 'bg-blue-800 text-blue-200' :
+                                  listing.status === 'paused' ? 'bg-yellow-800 text-yellow-200' :
+                                  'bg-gray-800 text-gray-200'
+                                }`}>
+                                  {listing.status === 'active' ? 'Actif' :
+                                   listing.status === 'sold' ? 'Vendu' :
+                                   listing.status === 'paused' ? 'Suspendu' : listing.status}
+                                </span>
+                              </div>
+                              
+                              {/* Actions */}
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                                    detail: `jersey-detail-${listing.jersey?.reference_number || listing.jersey?.id}` 
+                                  }))}
+                                  className="text-blue-400 hover:text-blue-300 text-xs"
+                                  title="Voir le détail"
+                                >
+                                  👁️
+                                </button>
+                                {listing.status === 'active' && (
+                                  <button
+                                    className="text-yellow-400 hover:text-yellow-300 text-xs"
+                                    title="Modifier"
+                                  >
+                                    ✏️
+                                  </button>
+                                )}
+                                <button
+                                  className="text-red-400 hover:text-red-300 text-xs"
+                                  title="Retirer"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3 p-4">
+                      {userListings.map((listing, index) => (
+                        <div key={listing.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                          <div className="flex items-start space-x-3">
+                            {/* Mobile Image */}
+                            <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                              {listing.jersey?.images && listing.jersey.images.length > 0 ? (
+                                <img
+                                  src={listing.jersey.images[0]}
+                                  alt={`${listing.jersey.team} ${listing.jersey.season}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-gray-500 text-xl">👕</span>
+                              )}
+                            </div>
+                            
+                            {/* Mobile Content */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-medium text-sm truncate">
+                                {listing.jersey?.player ? `${listing.jersey.team} - ${listing.jersey.player}` : listing.jersey?.team}
+                              </h3>
+                              <div className="text-gray-400 text-xs mt-1">
+                                {listing.jersey?.league} • {listing.jersey?.season} • {listing.jersey?.home_away}
+                              </div>
+                              
+                              {/* Mobile Details Row */}
+                              <div className="flex items-center space-x-4 mt-2">
+                                <span className="text-white text-xs">
+                                  <span className="text-gray-400">Taille:</span> {listing.jersey?.size}
+                                </span>
+                                <span className="text-green-400 font-semibold text-sm">
+                                  {listing.price}€
+                                </span>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                  listing.status === 'active' ? 'bg-green-800 text-green-200' :
+                                  listing.status === 'sold' ? 'bg-blue-800 text-blue-200' :
+                                  listing.status === 'paused' ? 'bg-yellow-800 text-yellow-200' :
+                                  'bg-gray-800 text-gray-200'
+                                }`}>
+                                  {listing.status === 'active' ? 'Actif' :
+                                   listing.status === 'sold' ? 'Vendu' :
+                                   listing.status === 'paused' ? 'Suspendu' : listing.status}
+                                </span>
+                              </div>
+                              
+                              {/* Mobile Actions */}
+                              <div className="flex items-center space-x-3 mt-3">
+                                <button
+                                  onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
+                                    detail: `jersey-detail-${listing.jersey?.reference_number || listing.jersey?.id}` 
+                                  }))}
+                                  className="text-blue-400 hover:text-blue-300 text-xs px-2 py-1 bg-blue-900/30 rounded"
+                                >
+                                  👁️ Voir
+                                </button>
+                                {listing.status === 'active' && (
+                                  <button className="text-yellow-400 hover:text-yellow-300 text-xs px-2 py-1 bg-yellow-900/30 rounded">
+                                    ✏️ Modifier
+                                  </button>
+                                )}
+                                <button className="text-red-400 hover:text-red-300 text-xs px-2 py-1 bg-red-900/30 rounded">
+                                  🗑️ Retirer
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-4">
+                      <span className="text-4xl block mb-4">💰</span>
+                      Aucun listing actuel
+                    </div>
+                    <p className="text-gray-500 mb-6">
+                      Vous n'avez pas encore créé de listing de vente.
+                    </p>
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Parcourir pour vendre
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Friends Tab */}
             {activeTab === 'friends' && (
               <div>
