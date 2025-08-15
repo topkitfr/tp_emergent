@@ -573,7 +573,7 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
 };
 
 // Header Component
-const Header = ({ currentView, setCurrentView }) => {
+const Header = ({ currentView, setCurrentView, setShowAuthModal, setAuthMode }) => {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
