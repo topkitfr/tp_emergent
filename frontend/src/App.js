@@ -3580,7 +3580,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
                 alt={`${jersey.team} ${jersey.season}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/80x80?text=Jersey';
+                  e.target.src = 'https://dummyimage.com/80x80/333/fff.png&text=Jersey';
                 }}
               />
             ) : (
