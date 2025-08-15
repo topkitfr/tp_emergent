@@ -3037,14 +3037,14 @@ const AuthModal = ({ onClose }) => {
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" 
          onClick={(e) => {
            // Only close modal if clicking directly on backdrop, not on form elements or their children
            if (e.target === e.currentTarget) {
              onClose();
            }
          }}>
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-50" 
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[9999]" 
            onClick={(e) => {
              // Prevent any clicks within the modal from closing it
              e.stopPropagation();
