@@ -498,39 +498,43 @@ class AdminModerationTester:
             response = self.session.get(f"{BASE_URL}/notifications", headers=user_headers)
             
             if response.status_code == 200:
-                notifications = response.json()
-                jersey_notifications = [n for n in notifications if 
-                                      n.get("type") in ["jersey_approved", "jersey_rejected", "jersey_needs_modification"]]
-                
-                if jersey_notifications:
-                    # Check if notifications contain jersey information
-                    notifications_with_jersey_info = []
-                    for notification in jersey_notifications:
-                        message = notification.get("message", "")
-                        # Look for jersey team names or reference numbers in message
-                        if any(team in message for team in ["Barcelona", "Real Madrid", "Manchester United"]) or "TK-" in message:
-                            notifications_with_jersey_info.append(notification)
+                data = response.json()
+                if isinstance(data, dict) and "notifications" in data:
+                    notifications = data["notifications"]
+                    jersey_notifications = [n for n in notifications if 
+                                          n.get("type") in ["jersey_approved", "jersey_rejected", "jersey_needs_modification"]]
                     
-                    if notifications_with_jersey_info:
-                        self.log_test(
-                            "Jersey Information in Notifications",
-                            True,
-                            f"{len(notifications_with_jersey_info)}/{len(jersey_notifications)} notifications contain jersey details"
-                        )
+                    if jersey_notifications:
+                        # Check if notifications contain jersey information
+                        notifications_with_jersey_info = []
+                        for notification in jersey_notifications:
+                            message = notification.get("message", "")
+                            # Look for jersey team names or reference numbers in message
+                            if any(team in message for team in ["Barcelona", "Real Madrid", "Manchester United"]) or "TK-" in message:
+                                notifications_with_jersey_info.append(notification)
+                        
+                        if notifications_with_jersey_info:
+                            self.log_test(
+                                "Jersey Information in Notifications",
+                                True,
+                                f"{len(notifications_with_jersey_info)}/{len(jersey_notifications)} notifications contain jersey details"
+                            )
+                        else:
+                            self.log_test(
+                                "Jersey Information in Notifications",
+                                False,
+                                "",
+                                "Notifications do not contain specific jersey information"
+                            )
                     else:
                         self.log_test(
                             "Jersey Information in Notifications",
                             False,
                             "",
-                            "Notifications do not contain specific jersey information"
+                            "No jersey-related notifications found"
                         )
                 else:
-                    self.log_test(
-                        "Jersey Information in Notifications",
-                        False,
-                        "",
-                        "No jersey-related notifications found"
-                    )
+                    self.log_test("Jersey Information in Notifications", False, "", "Invalid notifications response format")
             else:
                 self.log_test("Jersey Information in Notifications", False, "", f"HTTP {response.status_code}: {response.text}")
         except Exception as e:
