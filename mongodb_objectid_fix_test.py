@@ -398,7 +398,7 @@ class MongoObjectIdFixTester:
                 
                 # Check for ObjectId serialization issues in jersey data
                 response_text = jerseys_response.text
-                has_objectid_issues = "ObjectId" in response_text or "not JSON serializable" in response_text
+                has_objectid_issues = "ObjectId(" in response_text or '"_id":' in response_text or "not JSON serializable" in response_text
                 
                 if not has_objectid_issues:
                     jersey_count = len(jerseys_data) if isinstance(jerseys_data, list) else 0
