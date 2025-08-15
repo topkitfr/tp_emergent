@@ -9740,7 +9740,11 @@ const AppContent = () => {
         return <AdminPanel />;
       
       case 'marketplace':
-        return <GlobalMarketplacePage />;
+        return (
+          <GlobalMarketplacePage
+            onAddToCart={addToCart}
+          />
+        );
       
       case 'jerseys':
         return (
