@@ -296,7 +296,7 @@ class MongoObjectIdFixTester:
                 # We expect 404 or similar errors, but NOT 500 errors due to ObjectId issues
                 if response.status_code == 500:
                     response_text = response.text
-                    if "ObjectId" in response_text or "not JSON serializable" in response_text:
+                    if "ObjectId(" in response_text or '"_id":' in response_text or "not JSON serializable" in response_text:
                         self.log_test(
                             f"Error Handling - {description}",
                             False,
