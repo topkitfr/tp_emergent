@@ -920,6 +920,22 @@ async def get_current_moderator_or_admin(user_id: str = Depends(get_current_user
     
     return user_id
 
+async def check_user_is_admin(user_id: str) -> bool:
+    """Check if the current user is an admin (for restrictions)"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return False
+    
+    # Check both email and role
+    return user["email"] == ADMIN_EMAIL or user.get("role") == "admin"
+
+async def get_current_non_admin_user(user_id: str = Depends(get_current_user)):
+    """Ensure current user is not an admin (for marketplace/collection restrictions)"""
+    is_admin = await check_user_is_admin(user_id)
+    if is_admin:
+        raise HTTPException(status_code=403, detail="Admin users cannot access marketplace or collection features")
+    return user_id
+
 async def log_user_activity(user_id: str, action: str, target_id: str = None, details: Dict[str, Any] = None):
     """Log user activity for admin tracking"""
     if details is None:
