@@ -9157,7 +9157,7 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
       {/* Image Container with Overlay */}
       <div className="relative overflow-hidden">
         <img
-          src={jersey.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
+          src={jersey.images?.[0] || 'https://dummyimage.com/300x400/333/fff.png&text=Jersey+Image'}
           alt={`${jersey.team} ${jersey.season}`}
           className={`w-full h-48 object-cover transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}
         />
