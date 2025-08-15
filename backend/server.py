@@ -1204,7 +1204,7 @@ async def edit_jersey(
     
     # Create notification for the user
     await create_notification(
-        user_id=existing_jersey["created_by"],
+        user_id=existing_jersey["submitted_by"],
         notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
         title="🔧 Jersey Updated by Moderator",
         message=f"Your jersey '{existing_jersey.get('team', '')} {existing_jersey.get('season', '')}' has been updated by a moderator and is now pending review again.",
