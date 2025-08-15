@@ -8626,7 +8626,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                             <div key={request.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
                               <div className="flex items-center space-x-4">
                                 <img
-                                  src={request.picture || 'https://via.placeholder.com/40x40?text=👤'}
+                                  src={request.picture || 'https://dummyimage.com/40x40/666/fff.png&text=👤'}
                                   alt={request.name}
                                   className="w-10 h-10 rounded-full"
                                 />
