@@ -1221,7 +1221,7 @@ const ImageUpload = ({ images, setImages }) => {
                 alt={`Jersey ${index + 1}`}
                 className="w-full h-24 object-cover rounded border border-gray-600"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/100x100?text=Invalid+Image';
+                  e.target.src = 'https://dummyimage.com/100x100/333/fff.png&text=Invalid+Image';
                 }}
               />
               <button
