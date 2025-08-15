@@ -1883,7 +1883,8 @@ async def get_marketplace_catalog():
 
 # Collection endpoints
 @api_router.post("/collections")
-async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depends(get_current_user)):
+async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
+    """Add jersey to collection - restricted to non-admin users only"""
     # Check if already in collection
     existing = await db.collections.find_one({
         "user_id": user_id,
@@ -1899,7 +1900,8 @@ async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depen
     return {"message": "Added to collection"}
 
 @api_router.post("/collections/remove")
-async def remove_from_collection_post(collection_data: CollectionAdd, user_id: str = Depends(get_current_user)):
+async def remove_from_collection_post(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
+    """Remove jersey from collection - restricted to non-admin users only"""
     result = await db.collections.delete_one({
         "user_id": user_id,
         "jersey_id": collection_data.jersey_id,
