@@ -6410,7 +6410,11 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
                         <span>Ajouter au panier</span>
                       </button>
                       <button 
-                        onClick={() => alert('Fonctionnalité de contact à venir !')}
+                        onClick={() => {
+                          // TODO: Implement contact seller functionality
+                          // This would open the messaging interface with a pre-filled message to the seller
+                          alert('Fonctionnalité de contact vendeur à venir ! Pour l\'instant, utilisez la section Messages.');
+                        }}
                         className="block bg-gray-800 text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition-colors text-center"
                       >
                         Contacter vendeur
