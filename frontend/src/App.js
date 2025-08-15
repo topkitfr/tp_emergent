@@ -6969,6 +6969,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
     if (user) {
       fetchCollectionData();
       fetchFriendsData();
+      fetchUserListings();
     }
   }, [user, lastRefresh]);
 
