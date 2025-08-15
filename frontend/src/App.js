@@ -6096,6 +6096,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
   const [selectedJerseyListings, setSelectedJerseyListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listingsLoading, setListingsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [filters, setFilters] = useState({
     team: '',
     league: '',
