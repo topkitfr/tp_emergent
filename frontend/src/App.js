@@ -6365,7 +6365,23 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
                     
                     <div className="ml-6 space-y-2">
                       <button 
-                        onClick={() => onAddToCart && onAddToCart(listing, 1)}
+                        onClick={() => {
+                          if (onAddToCart) {
+                            // Créer un objet listing compatible avec le panier
+                            const cartListing = {
+                              jersey: selectedJersey,
+                              id: listing.id,
+                              price: listing.price,
+                              size: listing.jersey?.size || listing.size,
+                              condition: listing.jersey?.condition || listing.condition,
+                              user: { 
+                                id: listing.user_id || 'anonymous',
+                                name: 'Vendeur anonyme' 
+                              }
+                            };
+                            onAddToCart(cartListing, 1);
+                          }
+                        }}
                         className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
