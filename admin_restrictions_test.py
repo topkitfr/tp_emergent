@@ -81,7 +81,7 @@ class AdminRestrictionsTestSuite:
 
         # Test 2: Admin Login (try common passwords)
         try:
-            admin_passwords = ["admin", "123", "password", "topkit", "admin123", "topkitfr", "topkit123"]
+            admin_passwords = ["adminpass123", "admin", "123", "password", "topkit", "admin123", "topkitfr", "topkit123"]
             admin_login_success = False
             
             for password in admin_passwords:
