@@ -631,7 +631,6 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
                 <button 
                   onClick={() => {
                     setShowAuthModal(true);
-                    setAuthMode('login');
                   }}
                   className="text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
                 >
