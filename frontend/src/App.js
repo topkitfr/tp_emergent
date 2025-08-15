@@ -9146,7 +9146,12 @@ const AppContent = () => {
   return (
     <>
       <div className="min-h-screen bg-black text-white">
-        <Header currentView={currentView} setCurrentView={setCurrentView} />
+        <Header 
+          currentView={currentView} 
+          setCurrentView={setCurrentView}
+          setShowAuthModal={setShowAuthModal}
+          setAuthMode={setAuthMode}
+        />
         
         {/* Main Content */}
         <main className="container mx-auto px-6 py-8">
