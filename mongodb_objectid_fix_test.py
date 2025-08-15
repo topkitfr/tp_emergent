@@ -236,7 +236,8 @@ class MongoObjectIdFixTester:
                     # Check for ObjectId serialization issues in response
                     response_text = response.text
                     has_objectid_issues = (
-                        "ObjectId" in response_text or 
+                        "ObjectId(" in response_text or 
+                        '"_id":' in response_text or
                         "not JSON serializable" in response_text
                     )
                     
