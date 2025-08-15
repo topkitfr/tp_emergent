@@ -572,6 +572,241 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   );
 };
 
+// Shopping Cart Page Component
+const ShoppingCartPage = ({ 
+  cart, 
+  setCart, 
+  onRemoveFromCart, 
+  onUpdateQuantity, 
+  onClearCart 
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [orderSummary, setOrderSummary] = useState({
+    subtotal: 0,
+    shipping: 0,
+    taxes: 0,
+    total: 0
+  });
+
+  // Calculate order totals
+  useEffect(() => {
+    if (cart && cart.length > 0) {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const shipping = subtotal > 50 ? 0 : 9.99; // Free shipping over 50€
+      const taxes = subtotal * 0.20; // 20% VAT
+      const total = subtotal + shipping + taxes;
+      
+      setOrderSummary({
+        subtotal: subtotal.toFixed(2),
+        shipping: shipping.toFixed(2), 
+        taxes: taxes.toFixed(2),
+        total: total.toFixed(2)
+      });
+    }
+  }, [cart]);
+
+  const handleProceedToCheckout = () => {
+    // Future checkout integration
+    alert('Fonctionnalité de checkout à venir !');
+  };
+
+  if (!cart || cart.length === 0) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-24">
+            <div className="text-6xl mb-8">🛒</div>
+            <h1 className="text-4xl font-bold mb-4">Votre panier est vide</h1>
+            <p className="text-xl text-gray-400 mb-12">
+              Découvrez des milliers de maillots de football dans notre marketplace
+            </p>
+            
+            <div className="space-y-4 max-w-md mx-auto">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }))}
+                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+              >
+                Commencer vos achats
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+                className="w-full bg-gray-700 text-white px-8 py-4 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+              >
+                Explorez les maillots
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-6 py-8">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Mon Panier</h1>
+          <p className="text-gray-400">{cart.length} article{cart.length > 1 ? 's' : ''} dans votre panier</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Cart Items */}
+          <div className="lg:col-span-2">
+            <div className="bg-gray-900 rounded-lg border border-gray-700">
+              
+              {/* Cart Header */}
+              <div className="p-6 border-b border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Articles</h2>
+                  <button
+                    onClick={onClearCart}
+                    className="text-red-400 hover:text-red-300 text-sm font-medium"
+                  >
+                    Vider le panier
+                  </button>
+                </div>
+              </div>
+
+              {/* Cart Items List */}
+              <div className="divide-y divide-gray-700">
+                {cart.map((item, index) => (
+                  <div key={`${item.jerseyId}-${item.size}-${index}`} className="p-6">
+                    <div className="flex items-start space-x-4">
+                      
+                      {/* Jersey Image */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={item.images?.[0] || '/placeholder-jersey.png'}
+                          alt={`${item.team} ${item.season}`}
+                          className="w-20 h-20 object-cover rounded-lg bg-gray-800"
+                        />
+                      </div>
+
+                      {/* Jersey Details */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-white mb-1">
+                          {item.team}
+                        </h3>
+                        <p className="text-gray-400 text-sm mb-2">
+                          {item.season} • {item.player || 'Maillot d\'équipe'} • Taille {item.size}
+                        </p>
+                        <p className="text-gray-400 text-sm mb-2">
+                          État: {item.condition} • {item.manufacturer}
+                        </p>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-sm text-gray-400">Quantité:</span>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => onUpdateQuantity(item, Math.max(1, item.quantity - 1))}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-700 text-white rounded hover:bg-gray-600"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <button
+                              onClick={() => onUpdateQuantity(item, item.quantity + 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-700 text-white rounded hover:bg-gray-600"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price and Actions */}
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-white">
+                            {item.price.toFixed(2)} €
+                          </div>
+                          {item.quantity > 1 && (
+                            <div className="text-sm text-gray-400">
+                              {(item.price * item.quantity).toFixed(2)} € total
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => onRemoveFromCart(item)}
+                          className="text-red-400 hover:text-red-300 text-sm font-medium"
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 sticky top-8">
+              
+              <h2 className="text-xl font-semibold mb-6">Récapitulatif</h2>
+              
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Sous-total</span>
+                  <span className="text-white">{orderSummary.subtotal} €</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">
+                    Livraison
+                    {parseFloat(orderSummary.subtotal) > 50 && (
+                      <span className="text-green-400 text-sm ml-1">(Gratuite)</span>
+                    )}
+                  </span>
+                  <span className="text-white">{orderSummary.shipping} €</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">TVA (20%)</span>
+                  <span className="text-white">{orderSummary.taxes} €</span>
+                </div>
+                <hr className="border-gray-700" />
+                <div className="flex justify-between text-lg font-semibold">
+                  <span className="text-white">Total</span>
+                  <span className="text-white">{orderSummary.total} €</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleProceedToCheckout}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50"
+                >
+                  {loading ? 'Traitement...' : 'Finaliser la commande'}
+                </button>
+                
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }))}
+                  className="w-full bg-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Continuer mes achats
+                </button>
+              </div>
+
+              {/* Trust & Security */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <div className="text-center">
+                  <div className="text-green-400 text-2xl mb-2">🔒</div>
+                  <p className="text-sm text-gray-400">
+                    Paiement sécurisé SSL
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Discogs-Style Header Component
 const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
   const { user, logout } = useAuth();
