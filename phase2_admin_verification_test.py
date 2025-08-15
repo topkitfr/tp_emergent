@@ -359,8 +359,8 @@ class Phase2AdminVerificationTester:
                 'Authorization': f'Bearer {self.regular_token}'
             })
             
-            # Search for users that might include admin
-            search_response = regular_session.get(f"{self.base_url}/users/search?q=topkit")
+            # Search for users that might include admin (using correct parameter name)
+            search_response = regular_session.get(f"{self.base_url}/users/search?query=topkit")
             
             if search_response.status_code == 200:
                 users = search_response.json()
@@ -377,8 +377,8 @@ class Phase2AdminVerificationTester:
                                 "Admin user found in search results (should be excluded)")
                     return False
             else:
-                # Try a broader search
-                search_response2 = regular_session.get(f"{self.base_url}/users/search?q=stein")
+                # Try a broader search with different query
+                search_response2 = regular_session.get(f"{self.base_url}/users/search?query=stein")
                 
                 if search_response2.status_code == 200:
                     users = search_response2.json()
