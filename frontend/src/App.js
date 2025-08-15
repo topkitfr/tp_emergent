@@ -1280,7 +1280,7 @@ const JerseyDetailModal = ({ jersey, listing = null, onClose }) => {
             <div>
               <div className="bg-gray-800 rounded-lg overflow-hidden mb-4">
                 <img
-                  src={jersey.images?.[0] || 'https://via.placeholder.com/400x500?text=Jersey+Image'}
+                  src={jersey.images?.[0] || 'https://dummyimage.com/400x500/333/fff.png&text=Jersey+Image'}
                   alt={`${jersey.team} ${jersey.season}`}
                   className="w-full h-96 object-cover"
                 />
