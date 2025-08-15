@@ -808,7 +808,7 @@ const ShoppingCartPage = ({
 };
 
 // Discogs-Style Header Component
-const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
+const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }) => {
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -904,11 +904,21 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
               {/* Utility Icons */}
               <div className="flex items-center space-x-2">
                 
-                {/* Cart Icon (future feature) */}
-                <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                {/* Cart Icon with Badge */}
+                <button 
+                  onClick={() => setCurrentView('cart')}
+                  className={`p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors relative ${
+                    currentView === 'cart' ? 'bg-gray-700 text-white' : ''
+                  }`}
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 5H20M7 13v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
                   </svg>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Messages Icon */}
@@ -1098,6 +1108,19 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal }) => {
                   }`}
                 >
                   🛒 Marketplace
+                </button>
+                <button 
+                  onClick={() => {
+                    setCurrentView('cart');
+                    setShowGeneralMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                    currentView === 'cart' 
+                      ? 'bg-gray-700 text-white' 
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  🛍️ Mon Panier {cartCount > 0 && `(${cartCount})`}
                 </button>
               </nav>
             </div>
