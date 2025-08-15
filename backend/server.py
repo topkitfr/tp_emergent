@@ -1099,7 +1099,7 @@ async def approve_jersey(jersey_id: str, moderator_id: str = Depends(get_current
         
         # Log activity
         await log_user_activity(moderator_id, "jersey_approved", jersey_id)
-        await log_user_activity(jersey["created_by"], "jersey_approved", jersey_id, {
+        await log_user_activity(jersey["submitted_by"], "jersey_approved", jersey_id, {
             "approved_by": moderator_id,
             "jersey_name": f"{jersey.get('team', '')} {jersey.get('season', '')}"
         })
