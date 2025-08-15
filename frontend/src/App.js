@@ -6433,6 +6433,37 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-white focus:border-transparent"
               />
             </div>
+            
+            {/* View Toggle Buttons */}
+            <div className="flex bg-gray-800 rounded-lg border border-gray-700 p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+                </svg>
+                <span className="hidden sm:inline">Grille</span>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
+                </svg>
+                <span className="hidden sm:inline">Liste</span>
+              </button>
+            </div>
+            
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
               className="lg:hidden bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700"
