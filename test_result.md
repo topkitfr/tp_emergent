@@ -349,6 +349,42 @@ frontend:
         agent: "testing"
         comment: "🎉 ENHANCED SUBMISSIONS INTERFACE TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing reveals EXCELLENT IMPLEMENTATION: ✅ AUTHENTICATION WORKING: Login with steinmetzlivio@gmail.com/123 successful, backend API connectivity verified (200 status), authentication flow working perfectly with proper token management ✅ PROFILE NAVIGATION: My Profil page accessible, Mes Soumissions tab working correctly, all profile tabs functional ✅ STATUS SUMMARY CARDS: Found 4 status summary cards displaying counts (1 Approved, 13 En attente, 0 Modifications requises, 0 Rejected) with proper color coding and French labels ✅ ENHANCED SUBMISSION CARDS: Found 14 submission cards with EnhancedSubmissionCard component displaying jersey images, team names, seasons, reference numbers, status badges, and formatted dates ✅ STATUS INDICATORS: Proper color coding found (3 green approved, 2 yellow pending, 1 orange needs modification, 1 red rejected indicators) ✅ MOBILE RESPONSIVENESS: Perfect mobile adaptation (390x844 viewport), responsive grid layout working, 42 elements properly displayed on mobile ✅ INTEGRATION TESTING: All navigation working (Home, Explorez, Marketplace), profile tabs functional (Ma Collection, Ma Wishlist, Mes Soumissions), notification system accessible ✅ BACKEND INTEGRATION: API calls successful, user data properly loaded (14 submissions total), no JavaScript errors detected. The enhanced submissions interface is PRODUCTION-READY with comprehensive status tracking, professional UI/UX, and seamless mobile responsiveness."
 
+  - task: "Fix Messaging System - Messages Not Visible"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "🚨 IDENTIFIED MESSAGING SYSTEM ISSUES: MessagingInterface component exists with comprehensive functionality but users report messages not visible. Backend APIs present (/api/conversations, /api/conversations/send, /api/conversations/{id}/messages) with real-time WebSocket integration. POTENTIAL ROOT CAUSES: 1) API response structure mismatch between frontend expectations and backend response format 2) Message loading/fetching logic errors 3) Authentication/authorization issues preventing message retrieval 4) WebSocket connection failures for real-time updates. NEXT STEPS: Test backend messaging APIs to identify actual issues, then implement targeted fixes for message visibility and real-time functionality."
+
+  - task: "Remove Friend Requirement for Messaging"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "🔧 FRIEND REQUIREMENT ANALYSIS NEEDED: Currently investigating if messaging system requires users to be friends before they can message each other. This restriction needs to be removed to allow direct messaging between buyers and sellers in marketplace context. Will analyze backend conversation creation logic and remove any friend relationship checks that prevent direct messaging between any users."
+
+  - task: "Implement Seller Chat Functionality"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "💬 SELLER CHAT INTEGRATION REQUIRED: Need to integrate direct messaging functionality into marketplace listings so buyers can contact sellers directly. Currently, ContactSellerModal exists but may not be properly integrated with the messaging system. IMPLEMENTATION PLAN: 1) Ensure 'Contact Seller' buttons in marketplace redirect to messaging interface 2) Auto-create conversations between buyer and seller 3) Pre-populate initial message context about specific jersey listing 4) Test complete buyer-to-seller communication workflow."
+
 backend:
   - task: "Discogs-Style Header Backend Support - API Connectivity & Navigation Integration"
     implemented: true
