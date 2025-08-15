@@ -9746,6 +9746,17 @@ const AppContent = () => {
           />
         );
       
+      case 'cart':
+        return (
+          <ShoppingCartPage
+            cart={cart}
+            setCart={setCart}
+            onRemoveFromCart={removeFromCart}
+            onUpdateQuantity={updateCartItemQuantity}
+            onClearCart={clearCart}
+          />
+        );
+      
       default:
         return (
           <div className="min-h-screen bg-black">
