@@ -3004,61 +3004,6 @@ async def get_user_public_profile(user_id: str):
         logger.error(f"Error fetching user profile: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@api_router.get("/users/{user_id}/collections")
-async def get_user_collections(user_id: str):
-    """Get user's public collections (owned and wanted jerseys)"""
-    try:
-        # Check if user exists
-        user = await db.users.find_one({"id": user_id})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Check privacy settings (for future implementation)
-        privacy_settings = user.get("privacy_settings", {})
-        if not privacy_settings.get("show_collection", True):
-            return []  # Return empty if collection is private
-        
-        # Get collections with jersey details
-        pipeline = [
-            {"$match": {"user_id": user_id}},
-            {
-                "$lookup": {
-                    "from": "jerseys",
-                    "localField": "jersey_id",
-                    "foreignField": "id",
-                    "as": "jersey"
-                }
-            },
-            {"$unwind": {"path": "$jersey", "preserveNullAndEmptyArrays": True}},
-            {
-                "$project": {
-                    "id": 1,
-                    "collection_type": 1,
-                    "added_at": 1,
-                    "jersey": {
-                        "id": "$jersey.id",
-                        "team": "$jersey.team",
-                        "season": "$jersey.season",
-                        "player": "$jersey.player",
-                        "league": "$jersey.league",
-                        "manufacturer": "$jersey.manufacturer",
-                        "images": "$jersey.images"
-                    },
-                    "_id": 0  # Exclude MongoDB ObjectId
-                }
-            }
-        ]
-        
-        collections = await db.collections.aggregate(pipeline).to_list(1000)
-        
-        return collections
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error fetching user collections: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
 # Friends System API Endpoints
 @api_router.get("/users/search")
 async def search_users(
