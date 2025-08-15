@@ -7163,7 +7163,7 @@ const EnhancedSubmissionCard = ({ jersey, onResubmit }) => {
                 alt={`${jersey.team} ${jersey.season}`}
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/80x80?text=Jersey';
+                  e.target.src = 'https://dummyimage.com/80x80/333/fff.png&text=Jersey';
                 }}
               />
             ) : (
