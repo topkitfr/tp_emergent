@@ -334,49 +334,60 @@ class MongoObjectIdFixTester:
             response = self.session.get(f"{BASE_URL}/users/{self.user_id}/collections", headers=headers)
             
             if response.status_code == 200:
-                collections_data = response.json()
+                collections_response = response.json()
                 
-                # Verify data structure integrity
-                if isinstance(collections_data, list):
-                    # Check each collection item for proper structure
-                    valid_structure = True
-                    jersey_details_found = False
+                # The response is a dict with 'collections' key containing the list
+                if isinstance(collections_response, dict) and 'collections' in collections_response:
+                    collections_data = collections_response['collections']
                     
-                    for collection in collections_data:
-                        if isinstance(collection, dict):
-                            # Check for required fields without MongoDB ObjectId
-                            required_fields = ["jersey_id", "collection_type", "added_at"]
-                            for field in required_fields:
-                                if field not in collection:
-                                    valid_structure = False
-                                    break
-                            
-                            # Check if jersey details are properly aggregated
-                            if "jersey" in collection or "jersey_details" in collection:
-                                jersey_details_found = True
+                    # Verify data structure integrity
+                    if isinstance(collections_data, list):
+                        # Check each collection item for proper structure
+                        valid_structure = True
+                        jersey_details_found = False
+                        
+                        for collection in collections_data:
+                            if isinstance(collection, dict):
+                                # Check for required fields without MongoDB ObjectId
+                                required_fields = ["jersey_id", "collection_type", "added_at"]
+                                for field in required_fields:
+                                    if field not in collection:
+                                        valid_structure = False
+                                        break
+                                
+                                # Check if jersey details are properly aggregated
+                                if "jersey" in collection or "jersey_details" in collection:
+                                    jersey_details_found = True
+                            else:
+                                valid_structure = False
+                                break
+                        
+                        if valid_structure:
+                            self.log_test(
+                                "Data Integrity - Collections Structure",
+                                True,
+                                f"Collections data properly structured ({len(collections_data)} items) with jersey details aggregated: {jersey_details_found}"
+                            )
                         else:
-                            valid_structure = False
-                            break
-                    
-                    if valid_structure:
-                        self.log_test(
-                            "Data Integrity - Collections Structure",
-                            True,
-                            f"Collections data properly structured ({len(collections_data)} items) with jersey details aggregated: {jersey_details_found}"
-                        )
+                            self.log_test(
+                                "Data Integrity - Collections Structure",
+                                False,
+                                "",
+                                "Collections data structure is invalid or missing required fields"
+                            )
                     else:
                         self.log_test(
                             "Data Integrity - Collections Structure",
                             False,
                             "",
-                            "Collections data structure is invalid or missing required fields"
+                            "Collections data in response is not a list"
                         )
                 else:
                     self.log_test(
                         "Data Integrity - Collections Structure",
                         False,
                         "",
-                        "Collections endpoint returns invalid data format"
+                        "Collections endpoint response missing 'collections' key or invalid format"
                     )
             else:
                 self.log_test(
