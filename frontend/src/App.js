@@ -9765,6 +9765,7 @@ const AdminPanel = () => {
   const [pendingJerseys, setPendingJerseys] = useState([]);
   const [users, setUsers] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [trafficStats, setTrafficStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
