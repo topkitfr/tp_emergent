@@ -3067,7 +3067,12 @@ const AuthModal = ({ onClose }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" 
+              onClick={(e) => e.stopPropagation()}
+              onSubmit={(e) => {
+                e.stopPropagation();
+                handleSubmit(e);
+              }}>
           {!isLogin && (
             <input
               type="text"
