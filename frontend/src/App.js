@@ -10334,7 +10334,7 @@ const AdminPanel = () => {
             </div>
           )}
         </div>
-      ) : (
+      )}
       
       {/* Edit Jersey Modal */}
       {showEditModal && jerseyToEdit && (
