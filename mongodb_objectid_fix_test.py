@@ -128,10 +128,12 @@ class MongoObjectIdFixTester:
                     response_text = response.text
                     
                     # Look for signs of ObjectId serialization issues
+                    # Note: _id in field names like user_id, jersey_id is normal
                     has_objectid_issues = (
-                        "ObjectId" in response_text or 
-                        "_id" in response_text or
-                        "not JSON serializable" in response_text
+                        "ObjectId(" in response_text or 
+                        '"_id":' in response_text or
+                        "not JSON serializable" in response_text or
+                        "ObjectId is not JSON serializable" in response_text
                     )
                     
                     if not has_objectid_issues:
