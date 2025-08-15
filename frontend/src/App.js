@@ -9989,7 +9989,7 @@ const AdminPanel = () => {
                 : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
-            📊 Activities
+            📊 Traffic & Analytics
           </button>
         </div>
       </div>
