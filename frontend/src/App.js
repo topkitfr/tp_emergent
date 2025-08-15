@@ -10054,49 +10054,7 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
 };
 
       default:
-        return (
-          <div className="min-h-screen bg-black">
-            <div className="text-center py-24">
-              <h2 className="text-5xl font-bold text-white mb-4">Welcome to TopKit</h2>
-              <p className="text-xl text-gray-400 mb-12">The ultimate soccer jersey marketplace</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 hover:border-gray-600 transition-all hover:shadow-3xl">
-                  <div className="text-white text-5xl mb-6">🔍</div>
-                  <h3 className="text-2xl font-semibold mb-4 text-white">Explorez & Découvrez</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">Explorez des milliers de maillots de football des équipes du monde entier</p>
-                  <button 
-                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
-                    className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
-                  >
-                    Commencer l'exploration
-                  </button>
-                </div>
-                <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 hover:border-gray-600 transition-all hover:shadow-3xl">
-                  <div className="text-white text-5xl mb-6">🛒</div>
-                  <h3 className="text-2xl font-semibold mb-4 text-white">Acheter & Vendre</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">Échangez des maillots avec des collectionneurs du monde entier</p>
-                  <button 
-                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }))}
-                    className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
-                  >
-                    Voir le Marketplace
-                  </button>
-                </div>
-                <div className="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 hover:border-gray-600 transition-all hover:shadow-3xl">
-                  <div className="text-white text-5xl mb-6">📚</div>
-                  <h3 className="text-2xl font-semibold mb-4 text-white">Mon Profil & Collection</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">Gérez votre profil, collection et estimations de valeur</p>
-                  <button 
-                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }))}
-                    className="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
-                  >
-                    Mon Profil
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <DiscogsStyleHomepage onNavigate={setCurrentView} />;
     }
   };
 
