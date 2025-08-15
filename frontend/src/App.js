@@ -9149,8 +9149,7 @@ const AppContent = () => {
         <Header 
           currentView={currentView} 
           setCurrentView={setCurrentView}
-          setShowAuthModal={setShowAuthModal}
-          setAuthMode={setAuthMode}
+          setShowAuthModal={setShowAuthModalFromAction}
         />
         
         {/* Main Content */}
