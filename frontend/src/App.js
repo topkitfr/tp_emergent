@@ -1399,9 +1399,8 @@ const ContactSellerModal = ({ listing, onClose }) => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/messages`, {
+      await axios.post(`${API}/api/conversations`, {
         recipient_id: listing.seller_id,
-        listing_id: listing.id,
         message: message.trim()
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1410,6 +1409,7 @@ const ContactSellerModal = ({ listing, onClose }) => {
       alert('Message sent successfully!');
       onClose();
     } catch (error) {
+      console.error('Error sending message:', error);
       alert('Failed to send message. Please try again.');
     }
   };
