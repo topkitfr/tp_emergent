@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-TopKit Backend API Comprehensive Testing Suite
-Testing authentication fixes and core functionality as requested
+TopKit Backend API Testing Suite - Post Discogs-Style Header Implementation
+Testing backend functionality after implementing the new Discogs-style header
+Focus areas: API Connectivity, Authentication, Jersey Operations, User Profile, Navigation Integration
 """
 
 import requests
@@ -14,6 +15,7 @@ BASE_URL = "https://kit-trading.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "adminpass123"
 
 class TopKitTester:
     def __init__(self):
