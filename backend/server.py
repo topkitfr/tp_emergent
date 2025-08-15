@@ -2583,39 +2583,65 @@ async def get_public_user_info(user_id: str, current_user_id: Optional[str] = No
 @api_router.get("/users/{user_id}/collections")
 async def get_user_public_collections(user_id: str, current_user_id: str = Depends(get_current_user)):
     """Get user's public collections (no valuations shown to others)"""
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Check if profile is private
-    if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
-        raise HTTPException(status_code=403, detail="This user's profile is private")
-    
-    # Get collection without valuations
-    pipeline = [
-        {"$match": {"user_id": user_id}},
-        {
-            "$lookup": {
-                "from": "jerseys",
-                "localField": "jersey_id",
-                "foreignField": "id",
-                "as": "jersey"
+    try:
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if profile is private
+        if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
+            raise HTTPException(status_code=403, detail="This user's profile is private")
+        
+        # Get collection without valuations - fixed to exclude MongoDB ObjectId
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "jerseys",
+                    "localField": "jersey_id",
+                    "foreignField": "id",
+                    "as": "jersey"
+                }
+            },
+            {"$unwind": {"path": "$jersey", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "id": 1,
+                    "collection_type": 1,
+                    "added_at": 1,
+                    "user_id": 1,
+                    "jersey_id": 1,
+                    "jersey": {
+                        "id": "$jersey.id",
+                        "team": "$jersey.team",
+                        "season": "$jersey.season",
+                        "player": "$jersey.player",
+                        "league": "$jersey.league",
+                        "manufacturer": "$jersey.manufacturer",
+                        "images": "$jersey.images",
+                        "status": "$jersey.status"
+                    },
+                    "_id": 0  # Exclude MongoDB ObjectId to prevent serialization errors
+                }
             }
-        },
-        {"$unwind": "$jersey"}
-    ]
-    
-    collections = await db.collections.aggregate(pipeline).to_list(1000)
-    
-    # Remove valuation data for privacy
-    for collection in collections:
-        collection.pop('valuation', None)
-    
-    return {
-        "user_id": user_id,
-        "profile_owner": current_user_id == user_id,
-        "collections": collections
-    }
+        ]
+        
+        collections = await db.collections.aggregate(pipeline).to_list(1000)
+        
+        # Remove valuation data for privacy (already excluded in projection)
+        for collection in collections:
+            collection.pop('valuation', None)
+        
+        return {
+            "user_id": user_id,
+            "profile_owner": current_user_id == user_id,
+            "collections": collections
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching user collections: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Nouveaux endpoints pour profil utilisateur avancé
 
