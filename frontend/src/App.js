@@ -6531,48 +6531,106 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
         </div>
 
         {/* Jersey Catalog */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {getFilteredJerseys().map((jersey) => (
-            <div
-              key={jersey.id}
-              onClick={() => handleJerseyClick(jersey)}
-              className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-all cursor-pointer group hover:shadow-xl"
-            >
-              <div className="aspect-square bg-gray-800 overflow-hidden">
-                {jersey.images?.[0] ? (
-                  <img
-                    src={jersey.images[0]}
-                    alt={jersey.team}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-6xl">
-                    👕
+        {viewMode === 'grid' ? (
+          // Grid View
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {getFilteredJerseys().map((jersey) => (
+              <div
+                key={jersey.id}
+                onClick={() => handleJerseyClick(jersey)}
+                className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-all cursor-pointer group hover:shadow-xl"
+              >
+                <div className="aspect-square bg-gray-800 overflow-hidden">
+                  {jersey.images?.[0] ? (
+                    <img
+                      src={jersey.images[0]}
+                      alt={jersey.team}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-6xl">
+                      👕
+                    </div>
+                  )}
+                  {/* Price overlay */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm font-medium">
+                    dès {jersey.min_price || '?'}€
                   </div>
-                )}
-                {/* Price overlay */}
-                <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm font-medium">
-                  dès {jersey.min_price || '?'}€
+                </div>
+                
+                <div className="p-4">
+                  <h3 className="font-semibold text-white text-sm mb-1 truncate">
+                    {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
+                  </h3>
+                  <p className="text-gray-400 text-xs mb-2">
+                    {jersey.league} • {jersey.season}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 text-xs">{jersey.reference_number}</span>
+                    <span className="text-blue-400 text-xs font-medium">
+                      {jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-4">
-                <h3 className="font-semibold text-white text-sm mb-1 truncate">
-                  {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
-                </h3>
-                <p className="text-gray-400 text-xs mb-2">
-                  {jersey.league} • {jersey.season}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 text-xs">{jersey.reference_number}</span>
-                  <span className="text-blue-400 text-xs font-medium">
-                    {jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}
-                  </span>
+            ))}
+          </div>
+        ) : (
+          // List View
+          <div className="space-y-4">
+            {getFilteredJerseys().map((jersey) => (
+              <div
+                key={jersey.id}
+                onClick={() => handleJerseyClick(jersey)}
+                className="bg-gray-900 rounded-lg border border-gray-700 p-6 hover:border-gray-600 transition-all cursor-pointer group hover:shadow-lg"
+              >
+                <div className="flex items-center space-x-6">
+                  {/* Jersey Image */}
+                  <div className="w-20 h-20 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
+                    {jersey.images?.[0] ? (
+                      <img
+                        src={jersey.images[0]}
+                        alt={jersey.team}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl">
+                        👕
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Jersey Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white text-lg mb-1 truncate">
+                      {jersey.player ? `${jersey.team} - ${jersey.player}` : jersey.team}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-2">
+                      {jersey.league} • {jersey.season} • {jersey.home_away}
+                    </p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>Réf: {jersey.reference_number}</span>
+                      <span>•</span>
+                      <span>{jersey.manufacturer}</span>
+                      <span>•</span>
+                      <span>{jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Price and Action */}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-white mb-1">
+                      dès {jersey.min_price || '?'}€
+                    </div>
+                    <div className="text-sm text-blue-400 group-hover:text-blue-300">
+                      Voir les annonces →
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {getFilteredJerseys().length === 0 && (
           <div className="text-center py-12">
