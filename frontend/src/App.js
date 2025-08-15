@@ -8572,7 +8572,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                             <div key={friend.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
                               <div className="flex items-center space-x-4">
                                 <img
-                                  src={friend.picture || 'https://via.placeholder.com/40x40?text=👤'}
+                                  src={friend.picture || 'https://dummyimage.com/40x40/666/fff.png&text=👤'}
                                   alt={friend.name}
                                   className="w-10 h-10 rounded-full"
                                 />
