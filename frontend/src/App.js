@@ -7685,7 +7685,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                     alt={`${item.jersey.team} ${item.jersey.season}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/64x64?text=Jersey';
+                      e.target.src = 'https://dummyimage.com/64x64/333/fff.png&text=Jersey';
                     }}
                   />
                 ) : (
