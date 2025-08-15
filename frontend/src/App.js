@@ -600,12 +600,12 @@ const Header = ({ currentView, setCurrentView }) => {
               </svg>
             </button>
             
-            {/* Logo - Responsive sizing */}
+            {/* Logo - Responsive sizing with 20% reduction */}
             <div className="flex justify-center flex-1 md:flex-none">
               <img 
                 src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
                 alt="TopKit Logo"
-                className="h-8 md:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity mobile-logo"
+                className="h-6 md:h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity mobile-logo"
                 onClick={() => setCurrentView('home')}
                 style={{ maxWidth: 'none', flexShrink: 0 }}
               />
