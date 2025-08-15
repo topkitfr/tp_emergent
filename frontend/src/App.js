@@ -10166,57 +10166,175 @@ const AdminPanel = () => {
             ))}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'activities' ? (
         <div>
           <h2 className="text-xl font-bold text-white mb-6">
-            📊 System Activities ({activities.length} recent)
+            📊 Traffic & Analytics Dashboard
           </h2>
           
-          <div className="space-y-3">
-            {activities.map((activity) => (
-              <div key={activity.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-sm font-medium text-white">
-                        {activity.user_name || activity.user_email}
-                      </span>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-sm text-gray-400">
-                        {activity.action.replace('_', ' ')}
-                      </span>
+          {trafficStats && (
+            <div className="space-y-6">
+              {/* Overview Stats */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">System Overview</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-white">{trafficStats.overview.total_users}</div>
+                    <div className="text-sm text-gray-400">Total Users</div>
+                    <div className="text-xs text-green-400 mt-1">
+                      +{trafficStats.recent_activity.new_users_7d} this week
                     </div>
-                    
-                    {activity.details && Object.keys(activity.details).length > 0 && (
-                      <div className="text-xs text-gray-500">
-                        {activity.details.jersey_name && (
-                          <span>Jersey: {activity.details.jersey_name}</span>
-                        )}
-                        {activity.details.new_role && (
-                          <span>New role: {activity.details.new_role}</span>
-                        )}
-                        {activity.details.reason && (
-                          <span>Reason: {activity.details.reason}</span>
-                        )}
-                      </div>
-                    )}
                   </div>
-                  
-                  <span className="text-xs text-gray-500">
-                    {new Date(activity.created_at).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-white">{trafficStats.overview.total_jerseys}</div>
+                    <div className="text-sm text-gray-400">Total Jerseys</div>
+                    <div className="text-xs text-green-400 mt-1">
+                      +{trafficStats.recent_activity.new_jerseys_7d} this week
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-white">{trafficStats.overview.total_listings}</div>
+                    <div className="text-sm text-gray-400">Total Listings</div>
+                    <div className="text-xs text-green-400 mt-1">
+                      +{trafficStats.recent_activity.new_listings_7d} this week
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="text-2xl font-bold text-white">{trafficStats.overview.total_collections}</div>
+                    <div className="text-sm text-gray-400">Total Collections</div>
+                    <div className="text-xs text-green-400 mt-1">
+                      +{trafficStats.recent_activity.new_collections_7d} this week
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Moderation Queue */}
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-red-300 mb-3">
+                  🚨 Moderation Queue
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-800 rounded-lg p-3 border border-red-700">
+                    <div className="text-xl font-bold text-red-400">{trafficStats.overview.pending_jerseys}</div>
+                    <div className="text-sm text-gray-400">Pending Approval</div>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-3 border border-yellow-700">
+                    <div className="text-xl font-bold text-yellow-400">{trafficStats.overview.needs_modification}</div>
+                    <div className="text-sm text-gray-400">Needs Modification</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Jersey Status Breakdown */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Jersey Status Distribution</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {trafficStats.jersey_statuses.map((status, index) => (
+                    <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                      <div className="text-lg font-bold text-white">{status.count}</div>
+                      <div className="text-sm text-gray-400 capitalize">{status.status.replace('_', ' ')}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Leagues */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Top Leagues by Jersey Count</h3>
+                <div className="bg-gray-800 rounded-lg border border-gray-700">
+                  {trafficStats.top_leagues.slice(0, 8).map((league, index) => (
+                    <div key={index} className={`flex justify-between items-center p-3 ${index < trafficStats.top_leagues.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                      <span className="text-white">{league.league}</span>
+                      <span className="text-gray-400">{league.count} jerseys</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Most Active Users */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Most Active Collectors</h3>
+                <div className="bg-gray-800 rounded-lg border border-gray-700">
+                  {trafficStats.active_users.slice(0, 8).map((user, index) => (
+                    <div key={index} className={`flex justify-between items-center p-3 ${index < trafficStats.active_users.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                      <div>
+                        <span className="text-white font-medium">{user.user_name}</span>
+                        <div className="text-xs text-gray-500">{user.user_email}</div>
+                      </div>
+                      <span className="text-blue-400">{user.collection_count} items</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent System Activities */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Recent System Activities</h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {activities.slice(0, 20).map((activity) => (
+                    <div key={activity.id} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-sm font-medium text-white">
+                              {activity.user_name || activity.user_email}
+                            </span>
+                            <span className="text-gray-500">•</span>
+                            <span className="text-sm text-gray-400">
+                              {activity.action.replace('_', ' ')}
+                            </span>
+                          </div>
+                          
+                          {activity.details && Object.keys(activity.details).length > 0 && (
+                            <div className="text-xs text-gray-500">
+                              {activity.details.jersey_name && (
+                                <span>Jersey: {activity.details.jersey_name}</span>
+                              )}
+                              {activity.details.new_role && (
+                                <span>New role: {activity.details.new_role}</span>
+                              )}
+                              {activity.details.reason && (
+                                <span>Reason: {activity.details.reason}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <span className="text-xs text-gray-500">
+                          {new Date(activity.created_at).toLocaleDateString('fr-FR', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!trafficStats && loading && (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-2xl font-bold text-white mb-4">Loading Analytics...</h3>
+              <p className="text-gray-400">Fetching system statistics and traffic data.</p>
+            </div>
+          )}
+
+          {!trafficStats && !loading && (
+            <div className="text-center py-16 bg-gray-800 rounded-2xl">
+              <div className="text-6xl mb-4">❌</div>
+              <h3 className="text-2xl font-bold text-white mb-4">Analytics Unavailable</h3>
+              <p className="text-gray-400">Unable to load system analytics data.</p>
+            </div>
+          )}
         </div>
-      )}
+      ) : (
       
       {/* Edit Jersey Modal */}
       {showEditModal && jerseyToEdit && (
