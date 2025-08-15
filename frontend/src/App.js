@@ -6364,10 +6364,19 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
                     </div>
                     
                     <div className="ml-6 space-y-2">
-                      <button className="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition-colors font-medium">
-                        Acheter maintenant
+                      <button 
+                        onClick={() => onAddToCart && onAddToCart(listing, 1)}
+                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 5H20M7 13v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                        </svg>
+                        <span>Ajouter au panier</span>
                       </button>
-                      <button className="block bg-gray-800 text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition-colors text-center">
+                      <button 
+                        onClick={() => alert('Fonctionnalité de contact à venir !')}
+                        className="block bg-gray-800 text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition-colors text-center"
+                      >
                         Contacter vendeur
                       </button>
                     </div>
