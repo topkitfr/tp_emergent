@@ -9314,7 +9314,7 @@ const ListingCard = ({ listing, onClick }) => {
     <div className="bg-gray-900 rounded-xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all border border-gray-800 hover:border-gray-700 cursor-pointer"
          onClick={() => onClick && onClick(listing.jersey, listing)}>
       <img
-        src={listing.images?.[0] || listing.jersey?.images?.[0] || 'https://via.placeholder.com/300x400?text=Jersey+Image'}
+        src={listing.images?.[0] || listing.jersey?.images?.[0] || 'https://dummyimage.com/300x400/333/fff.png&text=Jersey+Image'}
         alt={`${listing.jersey?.team} ${listing.jersey?.season}`}
         className="w-full h-48 object-cover"
       />
