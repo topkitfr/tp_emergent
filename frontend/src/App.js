@@ -9803,9 +9803,9 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
       
       // Fetch different sections of content
       const [featuredResponse, trendingResponse, staffPicksResponse] = await Promise.all([
-        axios.get(`${API}/api/explorer/latest-additions?limit=8`),
-        axios.get(`${API}/api/explorer/most-collected?limit=6`),
-        axios.get(`${API}/api/explorer/most-wanted?limit=6`)
+        axios.get(`${API}/api/explorer/latest-additions?limit=8`).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/explorer/most-collected?limit=6`).catch(() => ({ data: [] })),
+        axios.get(`${API}/api/explorer/most-wanted?limit=6`).catch(() => ({ data: [] }))
       ]);
 
       setFeaturedJerseys(featuredResponse.data || []);
@@ -9813,6 +9813,10 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
       setStaffPicks(staffPicksResponse.data || []);
     } catch (error) {
       console.error('Failed to fetch homepage data:', error);
+      // Set empty arrays as fallback
+      setFeaturedJerseys([]);
+      setTrendingJerseys([]);
+      setStaffPicks([]);
     } finally {
       setLoading(false);
     }
@@ -9838,7 +9842,7 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
           </div>
         )}
         <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
-          {jersey.league}
+          {jersey.league || 'Football'}
         </div>
       </div>
       <div className="p-4">
@@ -9861,7 +9865,7 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mb-4"></div>
-          <div className="text-gray-400">Chargement...</div>
+          <div className="text-gray-400">Chargement de la page d'accueil...</div>
         </div>
       </div>
     );
@@ -9926,26 +9930,38 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
       </section>
 
       {/* Latest Additions */}
-      {featuredJerseys.length > 0 && (
-        <section className="py-16 bg-black">
-          <div className="container mx-auto px-6">
-            <div className="flex items-center justify-between mb-12">
-              <h2 className="text-3xl font-bold text-white">Derniers ajouts</h2>
-              <button
-                onClick={() => onNavigate('jerseys')}
-                className="text-blue-400 hover:text-white transition-colors font-medium"
-              >
-                Voir tout →
-              </button>
-            </div>
+      <section className="py-16 bg-black">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-between mb-12">
+            <h2 className="text-3xl font-bold text-white">Derniers ajouts</h2>
+            <button
+              onClick={() => onNavigate('jerseys')}
+              className="text-blue-400 hover:text-white transition-colors font-medium"
+            >
+              Voir tout →
+            </button>
+          </div>
+          
+          {featuredJerseys.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
               {featuredJerseys.slice(0, 8).map((jersey) => (
                 <JerseyCard key={jersey.id} jersey={jersey} />
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👕</div>
+              <p className="text-gray-400 text-lg mb-6">Aucun maillot disponible pour le moment</p>
+              <button
+                onClick={() => onNavigate('jerseys')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Explorer la base de données
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Trending & Staff Picks */}
       <section className="py-16 bg-gray-950">
@@ -9953,44 +9969,54 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             
             {/* Most Collected */}
-            {trendingJerseys.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-white">Plus collectionnés</h2>
-                  <button
-                    onClick={() => onNavigate('jerseys')}
-                    className="text-blue-400 hover:text-white transition-colors"
-                  >
-                    Voir tout →
-                  </button>
-                </div>
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Plus collectionnés</h2>
+                <button
+                  onClick={() => onNavigate('jerseys')}
+                  className="text-blue-400 hover:text-white transition-colors"
+                >
+                  Voir tout →
+                </button>
+              </div>
+              
+              {trendingJerseys.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {trendingJerseys.slice(0, 6).map((jersey) => (
                     <JerseyCard key={jersey.id} jersey={jersey} />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-gray-400">Aucun maillot populaire pour le moment</div>
+                </div>
+              )}
+            </div>
 
             {/* Most Wanted */}
-            {staffPicks.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-white">Plus recherchés</h2>
-                  <button
-                    onClick={() => onNavigate('jerseys')}
-                    className="text-blue-400 hover:text-white transition-colors"
-                  >
-                    Voir tout →
-                  </button>
-                </div>
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Plus recherchés</h2>
+                <button
+                  onClick={() => onNavigate('jerseys')}
+                  className="text-blue-400 hover:text-white transition-colors"
+                >
+                  Voir tout →
+                </button>
+              </div>
+              
+              {staffPicks.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {staffPicks.slice(0, 6).map((jersey) => (
                     <JerseyCard key={jersey.id} jersey={jersey} />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-gray-400">Aucun maillot recherché pour le moment</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
