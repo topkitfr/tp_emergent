@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv('/app/backend/.env')
 
 async def add_sample_listings():
     """Add sample listings to help with cart testing"""
