@@ -1325,6 +1325,138 @@ async def get_all_activities(admin_id: str = Depends(get_current_admin), limit: 
     
     return {"activities": activities, "total": len(activities)}
 
+@api_router.get("/admin/traffic-stats")
+async def get_admin_traffic_stats(admin_id: str = Depends(get_current_admin)):
+    """Get comprehensive traffic and usage statistics for admin dashboard"""
+    
+    # Get total counts
+    total_users = await db.users.count_documents({})
+    total_jerseys = await db.jerseys.count_documents({})
+    total_listings = await db.listings.count_documents({})
+    total_collections = await db.collections.count_documents({})
+    
+    # Get pending jerseys count
+    pending_jerseys = await db.jerseys.count_documents({"status": "pending"})
+    needs_modification = await db.jerseys.count_documents({"status": "needs_modification"})
+    
+    # Get recent activity counts (last 7 days)
+    from datetime import datetime, timedelta
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    
+    recent_users = await db.users.count_documents({"created_at": {"$gte": seven_days_ago}})
+    recent_jerseys = await db.jerseys.count_documents({"created_at": {"$gte": seven_days_ago}})
+    recent_listings = await db.listings.count_documents({"created_at": {"$gte": seven_days_ago}})
+    recent_collections = await db.collections.count_documents({"added_at": {"$gte": seven_days_ago}})
+    
+    # Get jersey status breakdown
+    jersey_status_pipeline = [
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+    ]
+    jersey_statuses = await db.jerseys.aggregate(jersey_status_pipeline).to_list(10)
+    
+    # Get top leagues by jersey count
+    league_pipeline = [
+        {"$match": {"status": "approved"}},
+        {"$group": {"_id": "$league", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    top_leagues = await db.jerseys.aggregate(league_pipeline).to_list(10)
+    
+    # Get most active users (by collections)
+    active_users_pipeline = [
+        {"$group": {"_id": "$user_id", "collection_count": {"$sum": 1}}},
+        {"$sort": {"collection_count": -1}},
+        {"$limit": 10},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "_id",
+                "foreignField": "id",
+                "as": "user"
+            }
+        },
+        {"$unwind": "$user"},
+        {
+            "$project": {
+                "user_id": "$_id",
+                "user_name": "$user.name",
+                "user_email": "$user.email",
+                "collection_count": 1,
+                "_id": 0
+            }
+        }
+    ]
+    active_users = await db.collections.aggregate(active_users_pipeline).to_list(10)
+    
+    return {
+        "overview": {
+            "total_users": total_users,
+            "total_jerseys": total_jerseys,
+            "total_listings": total_listings,
+            "total_collections": total_collections,
+            "pending_moderation": pending_jerseys + needs_modification,
+            "pending_jerseys": pending_jerseys,
+            "needs_modification": needs_modification
+        },
+        "recent_activity": {
+            "new_users_7d": recent_users,
+            "new_jerseys_7d": recent_jerseys,
+            "new_listings_7d": recent_listings,
+            "new_collections_7d": recent_collections
+        },
+        "jersey_statuses": [{"status": item["_id"], "count": item["count"]} for item in jersey_statuses],
+        "top_leagues": [{"league": item["_id"], "count": item["count"]} for item in top_leagues],
+        "active_users": active_users
+    }
+
+@api_router.get("/admin/user-stats/{user_id}")
+async def get_user_detailed_stats(user_id: str, admin_id: str = Depends(get_current_admin)):
+    """Get detailed statistics for a specific user"""
+    
+    # Get user info
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get user's activities
+    activities = await db.user_activities.find({"user_id": user_id}).sort("created_at", -1).limit(20).to_list(20)
+    
+    # Get user's collections count by type
+    owned_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "owned"})
+    wanted_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "wanted"})
+    
+    # Get user's jersey submissions
+    jerseys_submitted = await db.jerseys.count_documents({"submitted_by": user_id})
+    jerseys_approved = await db.jerseys.count_documents({"submitted_by": user_id, "status": "approved"})
+    jerseys_pending = await db.jerseys.count_documents({"submitted_by": user_id, "status": "pending"})
+    jerseys_rejected = await db.jerseys.count_documents({"submitted_by": user_id, "status": "rejected"})
+    
+    # Get user's listings
+    active_listings = await db.listings.count_documents({"seller_id": user_id, "status": "active"})
+    sold_listings = await db.listings.count_documents({"seller_id": user_id, "status": "sold"})
+    
+    # Clean activities
+    for activity in activities:
+        activity.pop('_id', None)
+    
+    user.pop('_id', None)
+    
+    return {
+        "user": user,
+        "stats": {
+            "owned_jerseys": owned_count,
+            "wanted_jerseys": wanted_count,
+            "jerseys_submitted": jerseys_submitted,
+            "jerseys_approved": jerseys_approved,
+            "jerseys_pending": jerseys_pending,
+            "jerseys_rejected": jerseys_rejected,
+            "active_listings": active_listings,
+            "sold_listings": sold_listings
+        },
+        "recent_activities": activities
+    }
+
 
 # Explorer endpoints
 @api_router.get("/explorer/most-collected")
