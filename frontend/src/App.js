@@ -9780,6 +9780,7 @@ const AdminPanel = () => {
         fetchUsers();
       } else if (activeTab === 'activities') {
         fetchActivities();
+        fetchTrafficStats();
       }
     }
   }, [user, activeTab]);
@@ -9829,6 +9830,18 @@ const AdminPanel = () => {
       alert('Failed to load activities');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTrafficStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/admin/traffic-stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTrafficStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch traffic stats:', error);
     }
   };
 
