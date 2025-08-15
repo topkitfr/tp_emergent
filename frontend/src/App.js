@@ -2970,49 +2970,60 @@ const AuthModal = ({ onClose }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🚀 handleSubmit called - starting authentication process');
+    console.log('🚀 Form submitted - handleSubmit called');
     console.log('📧 Form data:', { email: formData.email, password: formData.password ? '***' : 'empty', name: formData.name });
+    console.log('🔄 isLogin:', isLogin);
+    console.log('🌐 API URL:', API);
+    
+    if (!formData.email || !formData.password) {
+      console.error('❌ Missing required fields');
+      setError('Please fill in all required fields');
+      return;
+    }
     
     setLoading(true);
     setError('');
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      console.log('🔄 Attempting authentication:', `${API}${endpoint}`);
+      const fullUrl = `${API}${endpoint}`;
+      console.log('🔄 Making request to:', fullUrl);
       
-      const response = await axios.post(`${API}${endpoint}`, formData, {
-        timeout: 10000, // 10 second timeout
+      const response = await axios.post(fullUrl, formData, {
+        timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
         }
       });
       
-      console.log('✅ Authentication response received:', response.data);
+      console.log('✅ Response received:', response.status, response.data);
       
       if (response.data?.token && response.data?.user) {
-        console.log('🔑 Authentication successful, calling login...');
+        console.log('🔑 Token and user received, calling login...');
         const loginSuccess = login(response.data.token, response.data.user);
         if (loginSuccess) {
-          console.log('✅ Login completed successfully, closing modal...');
+          console.log('✅ Login successful, closing modal...');
           onClose();
         } else {
-          console.error('❌ Login failed during context update');
+          console.error('❌ Login context update failed');
           setError('Erreur lors de la mise à jour de la session. Veuillez réessayer.');
         }
       } else {
-        console.error('❌ Invalid authentication response:', response.data);
-        setError('Authentication response was invalid. Please try again.');
+        console.error('❌ Invalid response structure:', response.data);
+        setError('Réponse d\'authentification invalide. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('❌ Authentication error:', error);
+      console.error('❌ Authentication request failed:', error);
       if (error.code === 'ECONNABORTED') {
         setError('Connexion timeout - Vérifiez votre connexion internet');
       } else if (error.response?.status === 404) {
         setError('Service d\'authentification non disponible');
       } else if (error.response?.status === 500) {
         setError('Erreur serveur - Réessayez plus tard');
+      } else if (error.response?.status === 401) {
+        setError('Email ou mot de passe incorrect');
       } else {
-        setError(error.response?.data?.detail || 'Erreur d\'authentification');
+        setError(error.response?.data?.detail || error.message || 'Erreur d\'authentification');
       }
     } finally {
       setLoading(false);
