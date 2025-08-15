@@ -10080,7 +10080,119 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
 };
 
       default:
-        return <DiscogsStyleHomepage onNavigate={setCurrentView} />;
+        return (
+          <div className="min-h-screen bg-black">
+            {/* Hero Section with Search */}
+            <section className="bg-gradient-to-b from-gray-900 to-black py-16">
+              <div className="container mx-auto px-6 text-center">
+                <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+                  Découvrez les maillots <br />
+                  <span className="text-blue-400">les plus recherchés</span>
+                </h1>
+                <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
+                  La plus grande base de données de maillots de football au monde. 
+                  Achetez, vendez et collectionnez avec des passionnés du monde entier.
+                </p>
+                
+                {/* Search Bar */}
+                <div className="max-w-2xl mx-auto mb-12">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Rechercher par équipe, joueur, championnat..."
+                      className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-xl px-6 py-4 pr-16 text-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() => setCurrentView('jerseys')}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  <button
+                    onClick={() => setCurrentView('jerseys')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+                  >
+                    🔍 Explorez la base de données
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('marketplace')}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+                  >
+                    🛒 Marketplace
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('profile')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
+                  >
+                    📚 Ma Collection
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Categories/Leagues */}
+            <section className="py-16 bg-black">
+              <div className="container mx-auto px-6">
+                <h2 className="text-3xl font-bold text-white mb-12 text-center">Parcourir par championnat</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                  {[
+                    { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', color: 'bg-purple-600' },
+                    { name: 'La Liga', flag: '🇪🇸', color: 'bg-red-600' },
+                    { name: 'Serie A', flag: '🇮🇹', color: 'bg-green-600' },
+                    { name: 'Bundesliga', flag: '🇩🇪', color: 'bg-yellow-600' },
+                    { name: 'Ligue 1', flag: '🇫🇷', color: 'bg-blue-600' },
+                    { name: 'Champions League', flag: '⚽', color: 'bg-indigo-600' },
+                    { name: 'Nations', flag: '🌍', color: 'bg-teal-600' },
+                    { name: 'MLS', flag: '🇺🇸', color: 'bg-orange-600' },
+                    { name: 'Liga MX', flag: '🇲🇽', color: 'bg-pink-600' },
+                    { name: 'Autres', flag: '🏆', color: 'bg-gray-600' }
+                  ].map((league) => (
+                    <button
+                      key={league.name}
+                      onClick={() => setCurrentView('jerseys')}
+                      className={`${league.color} hover:opacity-90 text-white p-6 rounded-xl font-semibold transition-all hover:shadow-lg hover:scale-105`}
+                    >
+                      <div className="text-3xl mb-2">{league.flag}</div>
+                      <div className="text-sm font-medium">{league.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Statistics */}
+            <section className="py-16 bg-gray-950">
+              <div className="container mx-auto px-6 text-center">
+                <h2 className="text-3xl font-bold text-white mb-12">TopKit en chiffres</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <div>
+                    <div className="text-4xl font-bold text-blue-400 mb-2">50K+</div>
+                    <div className="text-gray-400">Maillots référencés</div>
+                  </div>
+                  <div>
+                    <div className="text-4xl font-bold text-green-400 mb-2">15K+</div>
+                    <div className="text-gray-400">Collectionneurs</div>
+                  </div>
+                  <div>
+                    <div className="text-4xl font-bold text-yellow-400 mb-2">200+</div>
+                    <div className="text-gray-400">Équipes</div>
+                  </div>
+                  <div>
+                    <div className="text-4xl font-bold text-purple-400 mb-2">30+</div>
+                    <div className="text-gray-400">Championnats</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        );
     }
   };
 
