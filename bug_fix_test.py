@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://kit-trading.preview.emergentagent.com/api"
+BASE_URL = "https://soccer-jersey-hub-2.preview.emergentagent.com/api"
 
 # Test accounts as specified in review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
