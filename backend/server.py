@@ -189,6 +189,10 @@ class Listing(BaseModel):
     images: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    # New fields for payment tracking
+    sold_to: Optional[str] = None
+    sold_at: Optional[datetime] = None
+    final_price: Optional[float] = None
 
 class Collection(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
