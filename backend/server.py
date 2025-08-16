@@ -204,13 +204,17 @@ class PaymentTransaction(BaseModel):
     user_id: Optional[str] = None
     user_email: Optional[str] = None
     amount: float
-    currency: str = "usd"
+    currency: str = "eur"
     listing_id: str
     payment_status: str = "pending"
     status: str = "initiated"
     metadata: Dict[str, Any] = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    # New fields for enhanced tracking
+    sold_to: Optional[str] = None
+    sold_at: Optional[datetime] = None
+    final_price: Optional[float] = None
 
 class JerseyValuation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
