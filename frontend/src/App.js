@@ -700,6 +700,32 @@ const ShoppingCartPage = ({
     }
   };
 
+  const fetchPaymentHistoryProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Fetch both purchase and sales history
+      const [purchasesRes, salesRes] = await Promise.all([
+        axios.get(`${API}/api/payments/history`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/api/payments/sales`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      
+      setPurchaseHistory(purchasesRes.data.purchases || []);
+      setSalesHistory(salesRes.data.sales || []);
+      
+    } catch (error) {
+      console.error('Failed to fetch payment history:', error);
+      setPurchaseHistory([]);
+      setSalesHistory([]);
+    }
+  };
+
   const handleProceedToCheckout = async () => {
     if (!cart || cart.length === 0) return;
     
