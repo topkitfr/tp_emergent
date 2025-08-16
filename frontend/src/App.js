@@ -7640,6 +7640,8 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
   const [wantedJerseys, setWantedJerseys] = useState([]);
   const [submittedJerseys, setSubmittedJerseys] = useState([]);
   const [userListings, setUserListings] = useState([]);
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [salesHistory, setSalesHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   const [collectionStats, setCollectionStats] = useState({
