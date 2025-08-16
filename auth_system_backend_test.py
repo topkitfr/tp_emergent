@@ -15,7 +15,7 @@ BACKEND_URL = "https://a2f51004-8f23-4586-9350-b895a5ea9451.preview.emergentagen
 TEST_USER_EMAIL = "topkitfr@gmail.com"
 TEST_USER_PASSWORD = "adminpass123"
 NEW_USER_EMAIL = f"testuser_{int(time.time())}@example.com"
-NEW_USER_PASSWORD = "StrongTestPassword456@"
+NEW_USER_PASSWORD = "SecureAuth789#"
 NEW_USER_NAME = "Test User"
 
 class AuthenticationTester:
