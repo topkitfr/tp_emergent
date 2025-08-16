@@ -54,6 +54,24 @@ api_router = APIRouter(prefix="/api")
 
 # Security
 security = HTTPBearer()
+# Security configurations
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_REQUIREMENTS = {
+    'min_length': 8,
+    'require_uppercase': True,
+    'require_lowercase': True, 
+    'require_number': True,
+    'require_special': True
+}
+
+# Rate limiting for account creation (IP-based)
+account_creation_attempts = defaultdict(list)
+ACCOUNT_CREATION_LIMIT = 3  # Max 3 accounts per IP per hour
+ACCOUNT_CREATION_WINDOW = 3600  # 1 hour in seconds
+
+# Email verification tokens storage (in production, use Redis or database)
+email_verification_tokens = {}
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'topkit-secret-key-2024')
 
 # Enums
