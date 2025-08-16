@@ -1071,21 +1071,42 @@ async def resend_verification_email(email: EmailStr):
 
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin):
+    """Enhanced login with email verification check"""
     user = await db.users.find_one({"email": user_data.email, "provider": "custom"})
     if not user or not verify_password(user_data.password, user["password_hash"]):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Email ou mot de passe incorrect")
+    
+    # Check if email is verified (allow admin to bypass this check)
+    if not user.get("email_verified", False) and user["email"] != ADMIN_EMAIL:
+        raise HTTPException(
+            status_code=403, 
+            detail="Veuillez d'abord vérifier votre adresse email. Vérifiez votre boîte mail ou demandez un nouveau lien de vérification."
+        )
     
     # Ensure admin account has admin role
     if user["email"] == ADMIN_EMAIL and user.get("role") != "admin":
         await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin"}})
         user["role"] = "admin"
     
+    # Update last login
+    await db.users.update_one(
+        {"id": user["id"]}, 
+        {"$set": {"last_login": datetime.utcnow()}}
+    )
+    
+    # Log successful login
+    await log_user_activity(user["id"], "user_logged_in", None, {
+        "login_time": datetime.utcnow().isoformat(),
+        "email_verified": user.get("email_verified", False)
+    })
+    
     token = create_jwt_token(user["id"])
     return {"token": token, "user": {
         "id": user["id"], 
         "email": user["email"], 
         "name": user["name"],
-        "role": user.get("role", "user")
+        "role": user.get("role", "user"),
+        "email_verified": user.get("email_verified", False)
     }}
 
 @api_router.get("/auth/google")
