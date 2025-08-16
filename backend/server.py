@@ -3962,6 +3962,411 @@ async def send_message_realtime(
         "real_time_sent": recipient_id in manager.active_connections
     }
 
+# Payment System Endpoints
+@api_router.post("/payments/checkout/session")
+async def create_checkout_session(
+    checkout_data: CheckoutRequest,
+    user_id: str = Depends(get_current_user_optional)
+):
+    """Create Stripe checkout session for marketplace purchase"""
+    
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment system not configured")
+    
+    # Get listing details
+    listing = await db.listings.find_one({"id": checkout_data.listing_id, "status": "active"})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found or inactive")
+    
+    # Get jersey details
+    jersey = await db.jerseys.find_one({"id": listing["jersey_id"]})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    # Get seller details
+    seller = await db.users.find_one({"id": listing["seller_id"]})
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+    
+    # Validate price
+    if not listing.get("price") or listing["price"] < MINIMUM_LISTING_PRICE or listing["price"] > MAXIMUM_LISTING_PRICE:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid listing price. Must be between €{MINIMUM_LISTING_PRICE} and €{MAXIMUM_LISTING_PRICE}"
+        )
+    
+    # Calculate commission
+    listing_price = float(listing["price"])
+    commission_amount = round(listing_price * TOPKIT_COMMISSION_RATE, 2)
+    seller_amount = round(listing_price - commission_amount, 2)
+    
+    # Create URLs
+    success_url = f"{checkout_data.origin_url}?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = checkout_data.origin_url
+    
+    # Initialize Stripe
+    host_url = checkout_data.origin_url
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    
+    # Prepare metadata
+    metadata = {
+        "listing_id": checkout_data.listing_id,
+        "jersey_id": listing["jersey_id"],
+        "seller_id": listing["seller_id"],
+        "buyer_id": user_id or "anonymous",
+        "commission_rate": str(TOPKIT_COMMISSION_RATE),
+        "commission_amount": str(commission_amount),
+        "seller_amount": str(seller_amount),
+        "jersey_name": f"{jersey['team']} {jersey['season']} - {jersey.get('player', 'No Player')}",
+        "seller_name": seller["name"]
+    }
+    
+    try:
+        # Create checkout session
+        checkout_request = CheckoutSessionRequest(
+            amount=listing_price,
+            currency="eur",  # Using EUR for European marketplace
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        transaction = PaymentTransaction(
+            session_id=session.session_id,
+            user_id=user_id,
+            user_email=None,  # Will be filled from Stripe data later
+            amount=listing_price,
+            currency="eur",
+            listing_id=checkout_data.listing_id,
+            payment_status="pending",
+            status="initiated",
+            metadata=metadata
+        )
+        
+        await db.payment_transactions.insert_one(transaction.dict())
+        
+        # Log activity
+        if user_id:
+            await log_user_activity(user_id, "payment_initiated", checkout_data.listing_id, {
+                "amount": listing_price,
+                "currency": "eur",
+                "session_id": session.session_id,
+                "jersey_name": metadata["jersey_name"]
+            })
+        
+        return {
+            "url": session.url,
+            "session_id": session.session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create checkout session")
+
+@api_router.get("/payments/checkout/status/{session_id}")
+async def get_checkout_status(
+    session_id: str,
+    user_id: str = Depends(get_current_user_optional)
+):
+    """Get payment status and process successful payments"""
+    
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment system not configured")
+    
+    # Get transaction record
+    transaction = await db.payment_transactions.find_one({"session_id": session_id})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # Initialize Stripe
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+    
+    try:
+        # Get status from Stripe
+        checkout_status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update transaction status
+        update_data = {
+            "payment_status": checkout_status.payment_status,
+            "status": checkout_status.status,
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": update_data}
+        )
+        
+        # Process successful payment (only once)
+        if checkout_status.payment_status == "paid" and transaction.get("payment_status") != "paid":
+            await process_successful_payment(session_id, checkout_status, transaction)
+        
+        # Get listing and jersey info for response
+        listing = await db.listings.find_one({"id": transaction["listing_id"]})
+        jersey = await db.jerseys.find_one({"id": listing["jersey_id"]}) if listing else None
+        seller = await db.users.find_one({"id": transaction["metadata"]["seller_id"]}) if transaction.get("metadata") else None
+        
+        commission_amount = float(transaction["metadata"].get("commission_amount", 0))
+        seller_amount = float(transaction["metadata"].get("seller_amount", transaction["amount"]))
+        
+        return PaymentStatusResponse(
+            status=checkout_status.status,
+            payment_status=checkout_status.payment_status,
+            amount_total=transaction["amount"],
+            currency=transaction["currency"],
+            listing_id=transaction["listing_id"],
+            seller_id=transaction["metadata"]["seller_id"],
+            buyer_id=transaction.get("user_id"),
+            commission_amount=commission_amount,
+            seller_amount=seller_amount,
+            metadata={
+                "jersey_name": transaction["metadata"].get("jersey_name", "Unknown Jersey"),
+                "seller_name": transaction["metadata"].get("seller_name", "Unknown Seller"),
+                "purchase_date": datetime.utcnow().isoformat() if checkout_status.payment_status == "paid" else None
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting checkout status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get payment status")
+
+async def process_successful_payment(session_id: str, checkout_status: CheckoutStatusResponse, transaction: dict):
+    """Process a successful payment - mark listing as sold, create notifications, etc."""
+    
+    try:
+        listing_id = transaction["listing_id"]
+        seller_id = transaction["metadata"]["seller_id"]
+        buyer_id = transaction.get("user_id")
+        
+        # Mark listing as sold
+        await db.listings.update_one(
+            {"id": listing_id},
+            {
+                "$set": {
+                    "status": "sold",
+                    "updated_at": datetime.utcnow(),
+                    "sold_to": buyer_id,
+                    "sold_at": datetime.utcnow(),
+                    "final_price": transaction["amount"]
+                }
+            }
+        )
+        
+        # Create notifications
+        jersey_name = transaction["metadata"].get("jersey_name", "Jersey")
+        
+        # Notify seller
+        await create_notification(
+            user_id=seller_id,
+            notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+            title="🎉 Jersey Sold!",
+            message=f"Great news! Your jersey '{jersey_name}' has been sold for €{transaction['amount']:.2f}. After TopKit's 5% commission, you'll receive €{float(transaction['metadata']['seller_amount']):.2f}.",
+            related_id=listing_id
+        )
+        
+        # Notify buyer (if logged in)
+        if buyer_id:
+            await create_notification(
+                user_id=buyer_id,
+                notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+                title="✅ Purchase Confirmed!",
+                message=f"Your purchase of '{jersey_name}' for €{transaction['amount']:.2f} has been confirmed. The seller will be in touch about shipping details.",
+                related_id=listing_id
+            )
+        
+        # Log activities
+        await log_user_activity(seller_id, "jersey_sold", listing_id, {
+            "amount": transaction["amount"],
+            "commission": transaction["metadata"]["commission_amount"],
+            "net_amount": transaction["metadata"]["seller_amount"],
+            "buyer_id": buyer_id,
+            "jersey_name": jersey_name
+        })
+        
+        if buyer_id:
+            await log_user_activity(buyer_id, "jersey_purchased", listing_id, {
+                "amount": transaction["amount"],
+                "seller_id": seller_id,
+                "jersey_name": jersey_name
+            })
+        
+        logger.info(f"Successfully processed payment for listing {listing_id}, session {session_id}")
+        
+    except Exception as e:
+        logger.error(f"Error processing successful payment: {e}")
+        # Don't raise exception to avoid blocking status check
+        
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment system not configured")
+    
+    body = await request.body()
+    signature = request.headers.get("Stripe-Signature")
+    
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing Stripe signature")
+    
+    try:
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        # Process webhook event
+        if webhook_response.event_type in ["checkout.session.completed", "payment_intent.succeeded"]:
+            # Find and update transaction
+            transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
+            if transaction:
+                await db.payment_transactions.update_one(
+                    {"session_id": webhook_response.session_id},
+                    {
+                        "$set": {
+                            "payment_status": webhook_response.payment_status,
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+                )
+                
+                # Process successful payment if not already processed
+                if webhook_response.payment_status == "paid" and transaction.get("payment_status") != "paid":
+                    checkout_status = CheckoutStatusResponse(
+                        status="complete",
+                        payment_status="paid",
+                        amount_total=int(transaction["amount"] * 100),  # Convert to cents
+                        currency=transaction["currency"],
+                        metadata=transaction["metadata"]
+                    )
+                    await process_successful_payment(webhook_response.session_id, checkout_status, transaction)
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        logger.error(f"Error processing Stripe webhook: {e}")
+        raise HTTPException(status_code=400, detail="Webhook processing failed")
+
+@api_router.get("/payments/history")
+async def get_purchase_history(
+    user_id: str = Depends(get_current_user),
+    limit: int = 20
+):
+    """Get user's purchase history"""
+    
+    # Get user's transactions
+    transactions = await db.payment_transactions.find(
+        {"user_id": user_id, "payment_status": "paid"}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    purchase_history = []
+    
+    for transaction in transactions:
+        transaction.pop('_id', None)
+        
+        # Get listing and jersey details
+        listing = await db.listings.find_one({"id": transaction["listing_id"]})
+        if listing:
+            jersey = await db.jerseys.find_one({"id": listing["jersey_id"]})
+            seller = await db.users.find_one({"id": listing["seller_id"]})
+            
+            if jersey and seller:
+                jersey.pop('_id', None)
+                seller.pop('_id', None)
+                
+                purchase_item = PurchaseHistoryItem(
+                    transaction_id=transaction["id"],
+                    listing_id=transaction["listing_id"],
+                    jersey_info={
+                        "id": jersey["id"],
+                        "team": jersey["team"],
+                        "season": jersey["season"],
+                        "player": jersey.get("player"),
+                        "size": jersey["size"],
+                        "condition": jersey["condition"],
+                        "reference_number": jersey.get("reference_number")
+                    },
+                    seller_info={
+                        "id": seller["id"],
+                        "name": seller["name"],
+                        "email": seller["email"]
+                    },
+                    amount_paid=transaction["amount"],
+                    commission_paid=float(transaction["metadata"].get("commission_amount", 0)),
+                    currency=transaction["currency"],
+                    purchase_date=transaction["created_at"],
+                    status=transaction["payment_status"]
+                )
+                
+                purchase_history.append(purchase_item.dict())
+    
+    return {
+        "purchases": purchase_history,
+        "total": len(purchase_history)
+    }
+
+@api_router.get("/payments/sales")
+async def get_sales_history(
+    user_id: str = Depends(get_current_user),
+    limit: int = 20
+):
+    """Get user's sales history"""
+    
+    # Get user's sales (transactions where they are the seller)
+    transactions = await db.payment_transactions.find(
+        {"metadata.seller_id": user_id, "payment_status": "paid"}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    sales_history = []
+    
+    for transaction in transactions:
+        transaction.pop('_id', None)
+        
+        # Get listing and jersey details
+        listing = await db.listings.find_one({"id": transaction["listing_id"]})
+        if listing:
+            jersey = await db.jerseys.find_one({"id": listing["jersey_id"]})
+            buyer = await db.users.find_one({"id": transaction["user_id"]}) if transaction.get("user_id") else None
+            
+            if jersey:
+                jersey.pop('_id', None)
+                
+                sale_item = {
+                    "transaction_id": transaction["id"],
+                    "listing_id": transaction["listing_id"],
+                    "jersey_info": {
+                        "id": jersey["id"],
+                        "team": jersey["team"],
+                        "season": jersey["season"],
+                        "player": jersey.get("player"),
+                        "size": jersey["size"],
+                        "condition": jersey["condition"],
+                        "reference_number": jersey.get("reference_number")
+                    },
+                    "buyer_info": {
+                        "name": buyer["name"] if buyer else "Anonymous Buyer",
+                        "email": buyer["email"] if buyer else "N/A"
+                    },
+                    "gross_amount": transaction["amount"],
+                    "commission_amount": float(transaction["metadata"].get("commission_amount", 0)),
+                    "net_amount": float(transaction["metadata"].get("seller_amount", transaction["amount"])),
+                    "currency": transaction["currency"],
+                    "sale_date": transaction["created_at"],
+                    "status": transaction["payment_status"]
+                }
+                
+                sales_history.append(sale_item)
+    
+    return {
+        "sales": sales_history,
+        "total": len(sales_history),
+        "total_gross": sum(sale["gross_amount"] for sale in sales_history),
+        "total_commission": sum(sale["commission_amount"] for sale in sales_history),
+        "total_net": sum(sale["net_amount"] for sale in sales_history)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
