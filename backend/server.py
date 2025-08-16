@@ -897,44 +897,93 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
 
 # Authentication endpoints
 @api_router.post("/auth/register")
-async def register(user_data: UserRegister):
-    # Check if user already exists
+async def register(user_data: UserRegister, request: Request):
+    """Enhanced user registration with security validations"""
+    
+    # Get client IP for rate limiting
+    client_ip = request.client.host
+    
+    # 1. Check rate limiting
+    rate_limit_ok, rate_limit_message = check_rate_limit_for_registration(client_ip)
+    if not rate_limit_ok:
+        raise HTTPException(status_code=429, detail=rate_limit_message)
+    
+    # 2. Validate password strength
+    password_valid, password_message = validate_password_strength(user_data.password)
+    if not password_valid:
+        raise HTTPException(status_code=400, detail=password_message)
+    
+    # 3. Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise HTTPException(status_code=400, detail="Un utilisateur avec cette adresse email existe déjà")
+    
+    # 4. Validate name (basic sanitization)
+    if len(user_data.name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Le nom doit contenir au moins 2 caractères")
+    
+    if len(user_data.name.strip()) > 50:
+        raise HTTPException(status_code=400, detail="Le nom ne peut pas dépasser 50 caractères")
+    
+    # Record the registration attempt for rate limiting
+    record_account_creation_attempt(client_ip)
     
     # Determine role - admin for main account
     user_role = "admin" if user_data.email == ADMIN_EMAIL else "user"
     
-    # Create new user
+    # Create new user with email_verified = False
     hashed_password = hash_password(user_data.password)
     user = User(
         email=user_data.email,
-        name=user_data.name,
+        name=user_data.name.strip(),
         provider="custom",
         password_hash=hashed_password,
-        role=user_role
+        role=user_role,
+        email_verified=False,  # Require email verification
+        created_at=datetime.utcnow(),
+        last_login=None
     )
     
+    # Insert user into database
     await db.users.insert_one(user.dict())
-    token = create_jwt_token(user.id)
+    
+    # Generate email verification token
+    verification_token = generate_email_verification_token(user.id, user.email)
     
     # Log registration activity
     await log_user_activity(user.id, "user_registered", None, {
         "provider": "custom",
-        "role": user_role
+        "role": user_role,
+        "email_verified": False,
+        "ip_address": client_ip
     })
     
-    # Send welcome notification
+    # Send welcome notification (will be accessible after email verification)
     await create_notification(
         user_id=user.id,
         notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
-        title="🎉 Welcome to TopKit!",
-        message=f"Welcome {user.name}! You're now part of the TopKit community. Start building your jersey collection by browsing our database and submitting your own jerseys for review.",
+        title="🎉 Bienvenue sur TopKit!",
+        message=f"Bienvenue {user.name}! Votre compte a été créé avec succès. Veuillez vérifier votre email pour activer votre compte et commencer à construire votre collection de maillots.",
         related_id=None
     )
     
-    return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.name, "role": user_role}}
+    # In production, send actual email here
+    # For now, return the verification link in response (development only)
+    verification_link = f"https://soccer-swap.preview.emergentagent.com/verify-email?token={verification_token}"
+    
+    return {
+        "message": "Compte créé avec succès! Veuillez vérifier votre email pour activer votre compte.",
+        "user": {
+            "id": user.id, 
+            "email": user.email, 
+            "name": user.name,
+            "role": user_role,
+            "email_verified": False
+        },
+        # Remove this in production - only for development
+        "dev_verification_link": verification_link,
+        "instructions": "Cliquez sur le lien de vérification envoyé à votre email pour activer votre compte."
+    }
 
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin):
