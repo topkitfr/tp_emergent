@@ -3051,8 +3051,17 @@ const AuthModal = ({ onClose }) => {
          }}>
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[9999]" 
            onClick={(e) => {
-             // Prevent any clicks within the modal from closing it
-             e.stopPropagation();
+             // Only prevent clicks that would close the modal, but allow form interactions
+             // Don't stopPropagation on form elements or their children
+             const target = e.target;
+             const isFormElement = target.tagName === 'INPUT' || 
+                                   target.tagName === 'BUTTON' || 
+                                   target.tagName === 'FORM' ||
+                                   target.closest('form');
+             
+             if (!isFormElement) {
+               e.stopPropagation();
+             }
            }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
