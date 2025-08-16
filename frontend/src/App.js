@@ -3059,6 +3059,21 @@ const AuthModal = ({ onClose }) => {
         setError('Erreur serveur - Réessayez plus tard');
       } else if (error.response?.status === 401) {
         setError('Email ou mot de passe incorrect');
+      } else if (error.response?.status === 403 && isLogin) {
+        // Email not verified error
+        const errorMessage = error.response?.data?.detail || '';
+        if (errorMessage.includes('vérifier') || errorMessage.includes('email')) {
+          setError(errorMessage + '\n\nSouhaitez-vous recevoir un nouveau lien de vérification ?');
+          // TODO: Add resend verification button here
+        } else {
+          setError(errorMessage);
+        }
+      } else if (error.response?.status === 429) {
+        // Rate limiting error
+        setError(error.response?.data?.detail || 'Trop de tentatives. Réessayez plus tard.');
+      } else if (error.response?.status === 400) {
+        // Validation errors (password strength, user exists, etc.)
+        setError(error.response?.data?.detail || 'Données invalides');
       } else {
         setError(error.response?.data?.detail || error.message || 'Erreur d\'authentification');
       }
