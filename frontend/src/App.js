@@ -8307,6 +8307,16 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
               💰 Mes Listings ({collectionStats.totalListings})
             </button>
             <button
+              onClick={() => setActiveTab('purchases')}
+              className={`py-3 md:py-4 px-2 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'purchases'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              🛒 Mes Achats ({purchaseHistory.length})
+            </button>
+            <button
               onClick={() => setActiveTab('stats')}
               className={`py-3 md:py-4 px-2 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'stats'
