@@ -146,6 +146,8 @@ class AuthenticationTester:
             )
             
         return False
+    
+    def test_login_invalid_credentials(self):
         """Test login with invalid credentials"""
         print("🚫 Testing Invalid Credentials...")
         
