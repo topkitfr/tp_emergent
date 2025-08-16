@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://cd697a52-f790-47ca-9d2b-bf2e0d4d8598.preview.emergentagent.com"
+BACKEND_URL = "https://kit-bazaar-2.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class GoogleOAuthTester:

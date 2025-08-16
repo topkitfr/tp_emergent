@@ -17,7 +17,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://cd697a52-f790-47ca-9d2b-bf2e0d4d8598.preview.emergentagent.com/api"
+BASE_URL = "https://kit-bazaar-2.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
