@@ -135,7 +135,7 @@ class SecurityTester:
                 "reason": "Contains common weak pattern '123'"
             },
             {
-                "password": "StrongPass123!",
+                "password": "StrongPass456!",
                 "expected_fail": False,
                 "reason": "Valid strong password"
             }
