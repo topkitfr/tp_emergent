@@ -7674,6 +7674,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
       fetchCollectionData();
       fetchFriendsData();
       fetchUserListings();
+      fetchPaymentHistory();
     }
   }, [user, lastRefresh]);
 
