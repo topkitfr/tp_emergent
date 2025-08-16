@@ -96,7 +96,56 @@ class AuthenticationTester:
             
         return False
     
-    def test_login_invalid_credentials(self):
+    def test_regular_user_login(self):
+        """Test login with regular user credentials"""
+        print("👤 Testing Regular User Login...")
+        
+        try:
+            payload = {
+                "email": "steinmetzlivio@gmail.com",
+                "password": "123"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "user" in data:
+                    self.log_result(
+                        "Regular User Login",
+                        True,
+                        f"Successfully logged in as {data['user'].get('name', 'Unknown')} (Role: {data['user'].get('role', 'Unknown')})",
+                        data
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Regular User Login",
+                        False,
+                        "Login response missing token or user data",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Regular User Login",
+                    False,
+                    f"Regular user login failed with status {response.status_code}: {response.text}",
+                    {"status_code": response.status_code, "response": response.text}
+                )
+                
+        except Exception as e:
+            self.log_result(
+                "Regular User Login",
+                False,
+                f"Regular user login request failed with exception: {str(e)}"
+            )
+            
+        return False
         """Test login with invalid credentials"""
         print("🚫 Testing Invalid Credentials...")
         
