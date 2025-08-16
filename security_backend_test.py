@@ -422,7 +422,7 @@ class SecurityTester:
             # Create unverified account
             reg_response = self.session.post(f"{BASE_URL}/auth/register", json={
                 "email": unverified_email,
-                "password": "StrongPass123!",
+                "password": "ValidPass456!",
                 "name": "Unverified Test User"
             })
             
