@@ -430,7 +430,7 @@ class SecurityTester:
                 # Try to login with unverified account
                 login_response = self.session.post(f"{BASE_URL}/auth/login", json={
                     "email": unverified_email,
-                    "password": "StrongPass123!"
+                    "password": "ValidPass456!"
                 })
                 
                 if login_response.status_code == 403:
