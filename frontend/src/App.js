@@ -8843,6 +8843,230 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
               </div>
             )}
 
+            {/* Purchases Tab */}
+            {activeTab === 'purchases' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">🛒 Mes Achats</h2>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span className="text-gray-400">{purchaseHistory.length} achat{purchaseHistory.length > 1 ? 's' : ''}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-green-400 font-semibold">
+                      {purchaseHistory.reduce((sum, purchase) => sum + purchase.amount_paid, 0).toFixed(2)}€ dépensés
+                    </span>
+                  </div>
+                </div>
+
+                {purchaseHistory.length > 0 ? (
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block">
+                      <div className="bg-gray-800 px-6 py-4 border-b border-gray-700">
+                        <div className="grid grid-cols-7 gap-4 text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          <div className="col-span-2">Maillot</div>
+                          <div>Vendeur</div>
+                          <div>Taille</div>
+                          <div>Condition</div>
+                          <div>Prix payé</div>
+                          <div>Date d'achat</div>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-gray-700">
+                        {purchaseHistory.map((purchase, index) => (
+                          <div key={purchase.transaction_id} className="px-6 py-4 hover:bg-gray-800 transition-colors">
+                            <div className="grid grid-cols-7 gap-4 items-center">
+                              {/* Jersey Info */}
+                              <div className="col-span-2 flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                                  <span className="text-gray-500 text-lg">👕</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="text-white font-medium text-sm truncate">
+                                    {purchase.jersey_info.player ? 
+                                      `${purchase.jersey_info.team} - ${purchase.jersey_info.player}` : 
+                                      purchase.jersey_info.team
+                                    }
+                                  </h3>
+                                  <div className="text-gray-400 text-xs truncate">
+                                    {purchase.jersey_info.season}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Seller */}
+                              <div className="text-white text-sm truncate">{purchase.seller_info.name}</div>
+                              
+                              {/* Size */}
+                              <div className="text-white text-sm">{purchase.jersey_info.size}</div>
+                              
+                              {/* Condition */}
+                              <div>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                  purchase.jersey_info.condition === 'new' ? 'bg-green-800 text-green-200' :
+                                  purchase.jersey_info.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
+                                  purchase.jersey_info.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
+                                  purchase.jersey_info.condition === 'good' ? 'bg-orange-800 text-orange-200' :
+                                  'bg-red-800 text-red-200'
+                                }`}>
+                                  {purchase.jersey_info.condition === 'new' ? 'Neuf' :
+                                   purchase.jersey_info.condition === 'near_mint' ? 'Quasi-neuf' :
+                                   purchase.jersey_info.condition === 'very_good' ? 'Très bon' :
+                                   purchase.jersey_info.condition === 'good' ? 'Bon' : 'Correct'}
+                                </span>
+                              </div>
+                              
+                              {/* Price */}
+                              <div className="text-green-400 font-semibold text-sm">
+                                {purchase.amount_paid.toFixed(2)}€
+                              </div>
+                              
+                              {/* Purchase Date */}
+                              <div className="text-gray-400 text-sm">
+                                {new Date(purchase.purchase_date).toLocaleDateString('fr-FR')}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden divide-y divide-gray-700">
+                      {purchaseHistory.map((purchase, index) => (
+                        <div key={purchase.transaction_id} className="p-4">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <span className="text-gray-500 text-xl">👕</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-medium mb-1">
+                                {purchase.jersey_info.player ? 
+                                  `${purchase.jersey_info.team} - ${purchase.jersey_info.player}` : 
+                                  purchase.jersey_info.team
+                                }
+                              </h3>
+                              <div className="text-gray-400 text-sm mb-2">
+                                {purchase.jersey_info.season} • Taille {purchase.jersey_info.size}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-green-400 font-semibold">
+                                  {purchase.amount_paid.toFixed(2)}€
+                                </div>
+                                <div className="text-gray-400 text-sm">
+                                  {new Date(purchase.purchase_date).toLocaleDateString('fr-FR')}
+                                </div>
+                              </div>
+                              <div className="text-gray-400 text-sm mt-1">
+                                Vendeur: {purchase.seller_info.name}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-900 rounded-lg border border-gray-700 p-12">
+                    <div className="text-center">
+                      <div className="text-gray-400 mb-4">
+                        <span className="text-6xl block mb-4">🛒</span>
+                        Aucun achat pour le moment
+                      </div>
+                      <p className="text-gray-500 mb-6">
+                        Vous n'avez pas encore acheté de maillots sur TopKit. Explorez notre marketplace pour découvrir des pièces uniques !
+                      </p>
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }))}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                      >
+                        Explorer la Marketplace
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sales History Section */}
+                {salesHistory.length > 0 && (
+                  <div className="mt-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-white">💰 Mes Ventes</h3>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <span className="text-gray-400">{salesHistory.length} vente{salesHistory.length > 1 ? 's' : ''}</span>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-green-400 font-semibold">
+                          {salesHistory.reduce((sum, sale) => sum + sale.net_amount, 0).toFixed(2)}€ reçus
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block">
+                        <div className="bg-gray-800 px-6 py-4 border-b border-gray-700">
+                          <div className="grid grid-cols-7 gap-4 text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            <div className="col-span-2">Maillot</div>
+                            <div>Acheteur</div>
+                            <div>Prix brut</div>
+                            <div>Commission</div>
+                            <div>Montant net</div>
+                            <div>Date de vente</div>
+                          </div>
+                        </div>
+                        <div className="divide-y divide-gray-700">
+                          {salesHistory.map((sale, index) => (
+                            <div key={sale.transaction_id} className="px-6 py-4 hover:bg-gray-800 transition-colors">
+                              <div className="grid grid-cols-7 gap-4 items-center">
+                                {/* Jersey Info */}
+                                <div className="col-span-2 flex items-center space-x-3">
+                                  <div className="w-12 h-12 bg-gray-700 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <span className="text-gray-500 text-lg">👕</span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="text-white font-medium text-sm truncate">
+                                      {sale.jersey_info.player ? 
+                                        `${sale.jersey_info.team} - ${sale.jersey_info.player}` : 
+                                        sale.jersey_info.team
+                                      }
+                                    </h3>
+                                    <div className="text-gray-400 text-xs truncate">
+                                      {sale.jersey_info.season}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Buyer */}
+                                <div className="text-white text-sm truncate">{sale.buyer_info.name}</div>
+                                
+                                {/* Gross Amount */}
+                                <div className="text-white text-sm font-medium">
+                                  {sale.gross_amount.toFixed(2)}€
+                                </div>
+                                
+                                {/* Commission */}
+                                <div className="text-red-400 text-sm">
+                                  -{sale.commission_amount.toFixed(2)}€
+                                </div>
+                                
+                                {/* Net Amount */}
+                                <div className="text-green-400 font-semibold text-sm">
+                                  {sale.net_amount.toFixed(2)}€
+                                </div>
+                                
+                                {/* Sale Date */}
+                                <div className="text-gray-400 text-sm">
+                                  {new Date(sale.sale_date).toLocaleDateString('fr-FR')}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Friends Tab */}
             {activeTab === 'friends' && (
               <div>
