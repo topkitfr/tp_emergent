@@ -530,6 +530,91 @@ class MessageCreateV2(BaseModel):
     message: str
     message_type: str = "text"  # "text", "image", "file"
 
+# Security helpers
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    """Validate password meets security requirements"""
+    if len(password) < PASSWORD_REQUIREMENTS['min_length']:
+        return False, f"Le mot de passe doit contenir au moins {PASSWORD_REQUIREMENTS['min_length']} caractères"
+    
+    if PASSWORD_REQUIREMENTS['require_uppercase'] and not re.search(r'[A-Z]', password):
+        return False, "Le mot de passe doit contenir au moins une majuscule"
+    
+    if PASSWORD_REQUIREMENTS['require_lowercase'] and not re.search(r'[a-z]', password):
+        return False, "Le mot de passe doit contenir au moins une minuscule"
+    
+    if PASSWORD_REQUIREMENTS['require_number'] and not re.search(r'\d', password):
+        return False, "Le mot de passe doit contenir au moins un chiffre"
+    
+    if PASSWORD_REQUIREMENTS['require_special'] and not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        return False, "Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*(),.?\":{}|<>)"
+    
+    # Check for common weak patterns
+    weak_patterns = ['123', 'abc', 'password', 'admin', 'user']
+    password_lower = password.lower()
+    for pattern in weak_patterns:
+        if pattern in password_lower:
+            return False, f"Le mot de passe ne doit pas contenir de séquences courantes comme '{pattern}'"
+    
+    return True, "Mot de passe valide"
+
+def check_rate_limit_for_registration(client_ip: str) -> tuple[bool, str]:
+    """Check if IP has exceeded account creation rate limit"""
+    current_time = time.time()
+    
+    # Clean old attempts outside the window
+    account_creation_attempts[client_ip] = [
+        timestamp for timestamp in account_creation_attempts[client_ip]
+        if current_time - timestamp < ACCOUNT_CREATION_WINDOW
+    ]
+    
+    # Check if limit exceeded
+    if len(account_creation_attempts[client_ip]) >= ACCOUNT_CREATION_LIMIT:
+        return False, f"Trop de tentatives de création de compte depuis cette adresse IP. Réessayez dans une heure."
+    
+    return True, "OK"
+
+def record_account_creation_attempt(client_ip: str):
+    """Record a new account creation attempt for rate limiting"""
+    account_creation_attempts[client_ip].append(time.time())
+
+def generate_email_verification_token(user_id: str, email: str) -> str:
+    """Generate email verification token"""
+    payload = {
+        'user_id': user_id,
+        'email': email,
+        'type': 'email_verification',
+        'exp': datetime.utcnow() + timedelta(hours=24)  # 24h expiration
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    email_verification_tokens[token] = {
+        'user_id': user_id,
+        'email': email,
+        'created_at': datetime.utcnow()
+    }
+    return token
+
+def verify_email_verification_token(token: str) -> tuple[bool, str, dict]:
+    """Verify email verification token"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        if payload.get('type') != 'email_verification':
+            return False, "Token invalide", {}
+        
+        user_id = payload.get('user_id')
+        email = payload.get('email')
+        
+        if token in email_verification_tokens:
+            # Remove token after successful verification
+            token_data = email_verification_tokens.pop(token)
+            return True, "Token valide", {'user_id': user_id, 'email': email}
+        else:
+            return False, "Token non trouvé ou déjà utilisé", {}
+            
+    except jwt.ExpiredSignatureError:
+        return False, "Token expiré", {}
+    except jwt.PyJWTError:
+        return False, "Token invalide", {}
+
 # Authentication helpers
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
