@@ -543,14 +543,9 @@ class StripePaymentTester:
             user_auth = await self.authenticate_user()
             admin_auth = await self.authenticate_admin()
             
-            if not user_auth and not admin_auth:
-                print("❌ Cannot proceed without any authentication")
+            if not user_auth:
+                print("❌ Cannot proceed without user authentication")
                 return
-            
-            # Use admin token if user auth failed
-            if not user_auth and admin_auth:
-                print("⚠️ Using admin authentication for testing (user email not verified)")
-                self.user_token = self.admin_token
                 
             # Run all payment tests
             tests = [
