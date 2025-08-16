@@ -3085,38 +3085,69 @@ const AuthModal = ({ onClose }) => {
           {!isLogin && (
             <input
               type="text"
-              placeholder="Full Name"
+              placeholder="Nom complet"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
               required={!isLogin}
+              minLength={2}
+              maxLength={50}
             />
           )}
           
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Adresse email"
             value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
             required
           />
           
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
-            required
-          />
+          <div className="space-y-2">
+            <input
+              type="password"
+              placeholder={isLogin ? "Mot de passe" : "Mot de passe (min. 8 caractères)"}
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
+              required
+              minLength={isLogin ? 1 : 8}
+            />
+            
+            {!isLogin && formData.password && (
+              <div className="text-xs space-y-1 px-2">
+                <div className="text-gray-600">Votre mot de passe doit contenir :</div>
+                <div className={`flex items-center space-x-1 ${formData.password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span>{formData.password.length >= 8 ? '✓' : '○'}</span>
+                  <span>Au moins 8 caractères</span>
+                </div>
+                <div className={`flex items-center space-x-1 ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span>{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
+                  <span>Une majuscule</span>
+                </div>
+                <div className={`flex items-center space-x-1 ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span>{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
+                  <span>Une minuscule</span>
+                </div>
+                <div className={`flex items-center space-x-1 ${/\d/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span>{/\d/.test(formData.password) ? '✓' : '○'}</span>
+                  <span>Un chiffre</span>
+                </div>
+                <div className={`flex items-center space-x-1 ${/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span>{/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '○'}</span>
+                  <span>Un caractère spécial</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
+            {loading ? 'Chargement...' : (isLogin ? 'Se connecter' : 'Créer mon compte')}
           </button>
         </form>
 
