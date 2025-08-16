@@ -142,6 +142,12 @@ class User(BaseModel):
     role: str = "user"  # Default role is user
     assigned_by: Optional[str] = None  # ID of admin who assigned the role
     role_assigned_at: Optional[datetime] = None
+    # Enhanced security fields
+    email_verified: bool = False  # Email verification status
+    email_verified_at: Optional[datetime] = None  # When email was verified
+    last_login: Optional[datetime] = None  # Last successful login
+    failed_login_attempts: int = 0  # Count of consecutive failed logins
+    account_locked_until: Optional[datetime] = None  # Account lockout expiration
 
 class Jersey(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
