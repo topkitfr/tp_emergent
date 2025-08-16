@@ -280,7 +280,7 @@ class SecurityTester:
             # Step 1: Register new account
             response = self.session.post(f"{BASE_URL}/auth/register", json={
                 "email": test_email,
-                "password": "StrongPass123!",
+                "password": "ValidPass456!",
                 "name": "Email Verification Test User"
             })
             
