@@ -572,7 +572,7 @@ const Avatar = ({ user, size = 'sm', className = '', onClick }) => {
   );
 };
 
-// Shopping Cart Page Component
+// Shopping Cart Page Component with Stripe Integration
 const ShoppingCartPage = ({ 
   cart, 
   setCart, 
@@ -580,13 +580,28 @@ const ShoppingCartPage = ({
   onUpdateQuantity, 
   onClearCart 
 }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [orderSummary, setOrderSummary] = useState({
     subtotal: 0,
     shipping: 0,
     taxes: 0,
     total: 0
   });
+  
+  // Check for payment return from Stripe
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    
+    if (sessionId && !processingPayment) {
+      setProcessingPayment(true);
+      setPaymentStatus('checking');
+      checkPaymentStatus(sessionId);
+    }
+  }, []);
 
   // Calculate order totals
   useEffect(() => {
@@ -605,10 +620,202 @@ const ShoppingCartPage = ({
     }
   }, [cart]);
 
-  const handleProceedToCheckout = () => {
-    // Future checkout integration
-    alert('Fonctionnalité de checkout à venir !');
+  const checkPaymentStatus = async (sessionId, attempts = 0) => {
+    const maxAttempts = 5;
+    const pollInterval = 2000; // 2 seconds
+
+    if (attempts >= maxAttempts) {
+      setPaymentStatus('timeout');
+      setProcessingPayment(false);
+      return;
+    }
+
+    try {
+      const headers = {};
+      if (user?.token) {
+        headers.Authorization = `Bearer ${user.token}`;
+      }
+
+      const response = await fetch(`${API}/api/payments/checkout/status/${sessionId}`, {
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to check payment status');
+      }
+
+      const data = await response.json();
+      
+      if (data.payment_status === 'paid') {
+        setPaymentStatus('success');
+        setProcessingPayment(false);
+        // Clear cart on successful payment
+        if (onClearCart) {
+          onClearCart();
+        }
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      } else if (data.status === 'expired' || data.status === 'failed') {
+        setPaymentStatus('failed');
+        setProcessingPayment(false);
+        return;
+      }
+
+      // If payment is still pending, continue polling
+      setPaymentStatus('processing');
+      setTimeout(() => checkPaymentStatus(sessionId, attempts + 1), pollInterval);
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      setPaymentStatus('error');
+      setProcessingPayment(false);
+    }
   };
+
+  const handleProceedToCheckout = async () => {
+    if (!cart || cart.length === 0) return;
+    
+    // For now, handle single item checkout (cart should have one item for marketplace)
+    // In a full implementation, you'd need to handle multiple items or batch processing
+    const firstItem = cart[0];
+    
+    if (!firstItem.listingId) {
+      alert('Erreur: Informations de listing manquantes. Veuillez réessayer.');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const checkoutData = {
+        listing_id: firstItem.listingId,
+        origin_url: window.location.origin + '/cart'
+      };
+
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (user?.token) {
+        headers.Authorization = `Bearer ${user.token}`;
+      }
+
+      const response = await fetch(`${API}/api/payments/checkout/session`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(checkoutData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(`Erreur de paiement: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Payment status display
+  if (paymentStatus === 'checking' || paymentStatus === 'processing') {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-2">Vérification du paiement...</h2>
+          <p className="text-gray-400">Veuillez patienter pendant que nous confirmons votre paiement.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'success') {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-24">
+            <div className="text-6xl mb-8">✅</div>
+            <h1 className="text-4xl font-bold mb-4 text-green-400">Paiement réussi !</h1>
+            <p className="text-xl text-gray-400 mb-12">
+              Votre achat a été confirmé. Le vendeur sera contacté pour les détails de livraison.
+            </p>
+            
+            <div className="space-y-4 max-w-md mx-auto">
+              <button
+                onClick={() => {
+                  setPaymentStatus(null);
+                  window.dispatchEvent(new CustomEvent('changeView', { detail: 'profile' }));
+                }}
+                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+              >
+                Voir mes achats
+              </button>
+              <button
+                onClick={() => {
+                  setPaymentStatus(null);
+                  window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }));
+                }}
+                className="w-full bg-gray-700 text-white px-8 py-4 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+              >
+                Continuer mes achats
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'failed' || paymentStatus === 'error' || paymentStatus === 'timeout') {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-24">
+            <div className="text-6xl mb-8">❌</div>
+            <h1 className="text-4xl font-bold mb-4 text-red-400">Paiement échoué</h1>
+            <p className="text-xl text-gray-400 mb-12">
+              {paymentStatus === 'timeout' 
+                ? "Le délai de vérification du paiement a expiré. Veuillez vérifier votre email pour confirmation."
+                : "Votre paiement n'a pas pu être traité. Veuillez réessayer."
+              }
+            </p>
+            
+            <div className="space-y-4 max-w-md mx-auto">
+              <button
+                onClick={() => {
+                  setPaymentStatus(null);
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                }}
+                className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+              >
+                Réessayer
+              </button>
+              <button
+                onClick={() => {
+                  setPaymentStatus(null);
+                  window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }));
+                }}
+                className="w-full bg-gray-700 text-white px-8 py-4 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+              >
+                Retour au marketplace
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!cart || cart.length === 0) {
     return (
