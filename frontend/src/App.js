@@ -590,6 +590,8 @@ const ShoppingCartPage = ({
     taxes: 0,
     total: 0
   });
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [salesHistory, setSalesHistory] = useState([]);
   
   // Check for payment return from Stripe
   useEffect(() => {
