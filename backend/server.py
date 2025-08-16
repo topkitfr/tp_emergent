@@ -34,20 +34,12 @@ db = client[os.environ['DB_NAME']]
 # Create the main app
 app = FastAPI(title="TopKit - Soccer Jersey Marketplace")
 
-# Add session middleware for OAuth
-app.add_middleware(SessionMiddleware, secret_key=os.environ.get('SECRET_KEY', 'topkit-secret-key-2024'))
+# Add session middleware for potential future OAuth (currently disabled)
+# app.add_middleware(SessionMiddleware, secret_key=os.environ.get('SECRET_KEY', 'topkit-secret-key-2024'))
 
-# OAuth setup for Google
-oauth = OAuth()
-oauth.register(
-    name='google',
-    client_id="920523740769-d74f1dsdajtilkqasrhtrei4blmf8ujj.apps.googleusercontent.com",
-    client_secret="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",
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
-)
+# OAuth disabled - using email/password authentication only
+# oauth = OAuth()
+# Previous Google OAuth configuration removed for security and functionality reasons
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
