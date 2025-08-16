@@ -223,6 +223,15 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     name: str
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "password": "SecurePass123!",
+                "name": "John Doe"
+            }
+        }
 
 class UserLogin(BaseModel):
     email: EmailStr
