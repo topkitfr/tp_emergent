@@ -985,6 +985,90 @@ async def register(user_data: UserRegister, request: Request):
         "instructions": "Cliquez sur le lien de vérification envoyé à votre email pour activer votre compte."
     }
 
+@api_router.post("/auth/verify-email")
+async def verify_email(token: str):
+    """Verify user email with token"""
+    
+    # Verify the token
+    token_valid, message, token_data = verify_email_verification_token(token)
+    
+    if not token_valid:
+        raise HTTPException(status_code=400, detail=message)
+    
+    user_id = token_data['user_id']
+    email = token_data['email']
+    
+    # Update user's email_verified status
+    result = await db.users.update_one(
+        {"id": user_id, "email": email},
+        {"$set": {
+            "email_verified": True,
+            "email_verified_at": datetime.utcnow()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Get updated user
+    user = await db.users.find_one({"id": user_id})
+    
+    # Log email verification activity
+    await log_user_activity(user_id, "email_verified", None, {
+        "email": email,
+        "verified_at": datetime.utcnow().isoformat()
+    })
+    
+    # Create JWT token now that email is verified
+    jwt_token = create_jwt_token(user_id)
+    
+    # Send verification success notification
+    await create_notification(
+        user_id=user_id,
+        notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+        title="✅ Email vérifié avec succès!",
+        message=f"Votre email {email} a été vérifié avec succès. Vous pouvez maintenant utiliser toutes les fonctionnalités de TopKit!",
+        related_id=None
+    )
+    
+    return {
+        "message": "Email vérifié avec succès! Vous pouvez maintenant vous connecter.",
+        "token": jwt_token,
+        "user": {
+            "id": user["id"],
+            "email": user["email"], 
+            "name": user["name"],
+            "role": user.get("role", "user"),
+            "email_verified": True
+        }
+    }
+
+@api_router.post("/auth/resend-verification")
+async def resend_verification_email(email: EmailStr):
+    """Resend email verification token"""
+    
+    # Find user
+    user = await db.users.find_one({"email": email, "provider": "custom"})
+    if not user:
+        # Don't reveal if email exists or not for security
+        return {"message": "Si cette adresse email existe, un nouveau lien de vérification a été envoyé."}
+    
+    # Check if already verified
+    if user.get("email_verified", False):
+        return {"message": "Cette adresse email est déjà vérifiée."}
+    
+    # Generate new verification token
+    verification_token = generate_email_verification_token(user["id"], user["email"])
+    
+    # In production, send actual email here
+    verification_link = f"https://soccer-swap.preview.emergentagent.com/verify-email?token={verification_token}"
+    
+    return {
+        "message": "Un nouveau lien de vérification a été envoyé à votre email.",
+        # Remove this in production - only for development
+        "dev_verification_link": verification_link
+    }
+
 @api_router.post("/auth/login")
 async def login(user_data: UserLogin):
     user = await db.users.find_one({"email": user_data.email, "provider": "custom"})
