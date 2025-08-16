@@ -528,6 +528,7 @@ class AuthenticationTester:
         
         # Core Authentication Tests
         login_success = self.test_login_endpoint()
+        self.test_regular_user_login()
         self.test_login_invalid_credentials()
         
         # Registration Tests
