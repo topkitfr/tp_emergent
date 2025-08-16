@@ -1115,58 +1115,59 @@ async def login(user_data: UserLogin):
         "email_verified": user.get("email_verified", False)
     }}
 
-@api_router.get("/auth/google")
-async def google_auth(request: Request):
-    redirect_uri = f"{request.base_url}api/auth/google/callback"
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+# OAuth endpoints disabled - using email/password authentication only
+# @api_router.get("/auth/google")
+# async def google_auth(request: Request):
+#     redirect_uri = f"{request.base_url}api/auth/google/callback"
+#     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@api_router.get("/auth/google/callback")
-async def google_callback(request: Request):
-    token = await oauth.google.authorize_access_token(request)
-    user_info = await oauth.google.parse_id_token(request, token)
-    
-    # Check if user exists
-    existing_user = await db.users.find_one({"email": user_info["email"]})
-    
-    if existing_user:
-        user_id = existing_user["id"]
-        # Ensure admin account has admin role
-        if existing_user["email"] == ADMIN_EMAIL and existing_user.get("role") != "admin":
-            await db.users.update_one({"id": user_id}, {"$set": {"role": "admin"}})
-    else:
-        # Determine role - admin for main account
-        user_role = "admin" if user_info["email"] == ADMIN_EMAIL else "user"
-        
-        # Create new user
-        user = User(
-            email=user_info["email"],
-            name=user_info.get("name", ""),
-            picture=user_info.get("picture"),
-            provider="google",
-            role=user_role
-        )
-        await db.users.insert_one(user.dict())
-        user_id = user.id
-        
-        # Log registration activity
-        await log_user_activity(user_id, "user_registered", None, {
-            "provider": "google",
-            "role": user_role
-        })
-        
-        # Send welcome notification for new users
-        await create_notification(
-            user_id=user_id,
-            notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
-            title="🎉 Welcome to TopKit!",
-            message=f"Welcome {user.name}! You're now part of the TopKit community. Start building your jersey collection by browsing our database and submitting your own jerseys for review.",
-            related_id=None
-        )
-    
-    token = create_jwt_token(user_id)
-    # Redirect to frontend with token
-    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
-    return f"<script>window.location.href = '{frontend_url}/auth/success?token={token}';</script>"
+# @api_router.get("/auth/google/callback")
+# async def google_callback(request: Request):
+#     token = await oauth.google.authorize_access_token(request)
+#     user_info = await oauth.google.parse_id_token(request, token)
+#     
+#     # Check if user exists
+#     existing_user = await db.users.find_one({"email": user_info["email"]})
+#     
+#     if existing_user:
+#         user_id = existing_user["id"]
+#         # Ensure admin account has admin role
+#         if existing_user["email"] == ADMIN_EMAIL and existing_user.get("role") != "admin":
+#             await db.users.update_one({"id": user_id}, {"$set": {"role": "admin"}})
+#     else:
+#         # Determine role - admin for main account
+#         user_role = "admin" if user_info["email"] == ADMIN_EMAIL else "user"
+#         
+#         # Create new user
+#         user = User(
+#             email=user_info["email"],
+#             name=user_info.get("name", ""),
+#             picture=user_info.get("picture"),
+#             provider="google",
+#             role=user_role
+#         )
+#         await db.users.insert_one(user.dict())
+#         user_id = user.id
+#         
+#         # Log registration activity
+#         await log_user_activity(user_id, "user_registered", None, {
+#             "provider": "google",
+#             "role": user_role
+#         })
+#         
+#         # Send welcome notification for new users
+#         await create_notification(
+#             user_id=user_id,
+#             notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+#             title="🎉 Welcome to TopKit!",
+#             message=f"Welcome {user.name}! You're now part of the TopKit community. Start building your jersey collection by browsing our database and submitting your own jerseys for review.",
+#             related_id=None
+#         )
+#     
+#     token = create_jwt_token(user_id)
+#     # Redirect to frontend with token
+#     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+#     return f"<script>window.location.href = '{frontend_url}/auth/success?token={token}';</script>"
 
 # Admin functions
 ADMIN_EMAIL = "topkitfr@gmail.com"
