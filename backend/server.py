@@ -69,6 +69,19 @@ email_verification_tokens = {}
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'topkit-secret-key-2024')
 
+# Logger setup
+logger = logging.getLogger(__name__)
+
+# Stripe Configuration
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+if not STRIPE_API_KEY:
+    logger.warning("STRIPE_API_KEY not found in environment variables")
+
+# Commission Configuration for TopKit Marketplace
+TOPKIT_COMMISSION_RATE = 0.05  # 5% commission on all sales
+MINIMUM_LISTING_PRICE = 10.0   # Minimum €10 for listings
+MAXIMUM_LISTING_PRICE = 5000.0 # Maximum €5000 for listings
+
 # Enums
 class JerseyCondition(str, Enum):
     NEW = "new"
