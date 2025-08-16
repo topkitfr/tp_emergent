@@ -2998,24 +2998,56 @@ const AuthModal = ({ onClose }) => {
       
       console.log('✅ Response received:', response.status, response.data);
       
-      if (response.data?.token && response.data?.user) {
-        console.log('🔑 Token and user received, calling login...');
-        const loginSuccess = login(response.data.token, response.data.user);
-        if (loginSuccess) {
-          console.log('✅ Login successful, closing modal...');
-          // Force immediate UI update by dispatching a custom event
-          window.dispatchEvent(new Event('authStateChanged'));
-          // Small delay to ensure state propagation
-          setTimeout(() => {
-            onClose();
-          }, 100);
+      // Handle different response types for login vs registration
+      if (isLogin) {
+        // Login flow - expect token and user
+        if (response.data?.token && response.data?.user) {
+          console.log('🔑 Token and user received, calling login...');
+          const loginSuccess = login(response.data.token, response.data.user);
+          if (loginSuccess) {
+            console.log('✅ Login successful, closing modal...');
+            // Force immediate UI update by dispatching a custom event
+            window.dispatchEvent(new Event('authStateChanged'));
+            // Small delay to ensure state propagation
+            setTimeout(() => {
+              onClose();
+            }, 100);
+          } else {
+            console.error('❌ Login context update failed');
+            setError('Erreur lors de la mise à jour de la session. Veuillez réessayer.');
+          }
         } else {
-          console.error('❌ Login context update failed');
-          setError('Erreur lors de la mise à jour de la session. Veuillez réessayer.');
+          console.error('❌ Invalid login response structure:', response.data);
+          setError('Réponse d\'authentification invalide. Veuillez réessayer.');
         }
       } else {
-        console.error('❌ Invalid response structure:', response.data);
-        setError('Réponse d\'authentification invalide. Veuillez réessayer.');
+        // Registration flow - expect message and user (no immediate token)
+        if (response.data?.message && response.data?.user) {
+          console.log('✅ Registration successful:', response.data.message);
+          
+          // Show success message with email verification instructions
+          setError(''); // Clear any previous errors
+          alert(`✅ ${response.data.message}\n\n${response.data.instructions}\n\n${response.data.dev_verification_link ? 'Lien de développement: ' + response.data.dev_verification_link : ''}`);
+          
+          // Switch to login mode after successful registration
+          setIsLogin(true);
+          setFormData({ email: formData.email, password: '', name: '' }); // Clear password but keep email
+          
+        } else if (response.data?.token && response.data?.user) {
+          // Fallback: immediate login after registration (for admin accounts)
+          console.log('🔑 Registration with immediate token received');
+          const loginSuccess = login(response.data.token, response.data.user);
+          if (loginSuccess) {
+            console.log('✅ Registration and login successful');
+            window.dispatchEvent(new Event('authStateChanged'));
+            setTimeout(() => {
+              onClose();
+            }, 100);
+          }
+        } else {
+          console.error('❌ Invalid registration response structure:', response.data);
+          setError('Erreur lors de la création du compte. Veuillez réessayer.');
+        }
       }
     } catch (error) {
       console.error('❌ Authentication request failed:', error);
