@@ -1229,7 +1229,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Critical Login Modal Event Propagation Fix"
+    - "Google OAuth Authentication System Removal Verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
