@@ -3198,37 +3198,26 @@ const AuthModal = ({ onClose }) => {
           </button>
         </form>
 
-        <div className="mt-6 space-y-3">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGoogleAuth}
-            className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <img 
-              src="https://developers.google.com/identity/images/g-logo.png" 
-              alt="Google" 
-              className="w-5 h-5 mr-3"
-            />
-            Continue with Google
-          </button>
-
-        </div>
-
+        {/* OAuth options removed - using email/password authentication only */}
+        {/* Google OAuth was non-functional and has been disabled for security reasons */}
+        
         <div className="mt-4 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-green-600 hover:text-green-700"
-          >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-          </button>
+          <p className="text-sm text-gray-600">
+            {isLogin ? 
+              "Pas encore de compte ? " : 
+              "Vous avez déjà un compte ? "
+            }
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setFormData({ email: '', password: '', name: '' });
+              }}
+              className="text-green-600 hover:text-green-500 font-medium"
+            >
+              {isLogin ? 'Créer un compte' : 'Se connecter'}
+            </button>
+          </p>
         </div>
       </div>
     </div>
