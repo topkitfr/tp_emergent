@@ -13,8 +13,8 @@ from typing import Dict, Any, Optional
 
 # Configuration
 BACKEND_URL = "https://kit-bazaar-2.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "emailverify_e9a660e6@test.com"  # Verified user
-TEST_USER_PASSWORD = "SecurePass123!"  # Standard test password
+TEST_USER_EMAIL = "stripe_test_b2d8722d@test.com"  # Verified user
+TEST_USER_PASSWORD = "StripeTestPass9!@"  # Verified password
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
 
