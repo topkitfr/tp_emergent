@@ -3082,9 +3082,10 @@ const AuthModal = ({ onClose }) => {
     }
   };
 
-  const handleGoogleAuth = () => {
-    window.location.href = `${API}/api/auth/google`;
-  };
+  // Google OAuth removed - function no longer needed
+  // const handleGoogleAuth = () => {
+  //   window.location.href = `${API}/api/auth/google`;
+  // };
 
 
 
