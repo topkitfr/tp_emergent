@@ -441,6 +441,29 @@ class CheckoutRequest(BaseModel):
     listing_id: str
     origin_url: str
 
+class PaymentStatusResponse(BaseModel):
+    status: str
+    payment_status: str
+    amount_total: float
+    currency: str
+    listing_id: str
+    seller_id: str
+    buyer_id: Optional[str] = None
+    commission_amount: float
+    seller_amount: float
+    metadata: Dict[str, Any] = {}
+
+class PurchaseHistoryItem(BaseModel):
+    transaction_id: str
+    listing_id: str
+    jersey_info: Dict[str, Any]
+    seller_info: Dict[str, str]
+    amount_paid: float
+    commission_paid: float
+    currency: str
+    purchase_date: datetime
+    status: str
+
 class ModificationSuggestionCreate(BaseModel):
     jersey_id: str
     suggested_changes: str
