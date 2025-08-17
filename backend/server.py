@@ -4261,7 +4261,7 @@ async def approve_beta_access_request(
 @api_router.post("/admin/beta/requests/{request_id}/reject")
 async def reject_beta_access_request(
     request_id: str,
-    reason: str,
+    reject_data: RejectBetaRequest,
     user_id: str = Depends(get_current_user)
 ):
     """Reject a beta access request (admin only)"""
@@ -4285,7 +4285,7 @@ async def reject_beta_access_request(
         {
             "$set": {
                 "status": "rejected",
-                "rejection_reason": reason,
+                "rejection_reason": reject_data.reason,
                 "processed_at": datetime.utcnow(),
                 "processed_by": user_id
             }
@@ -4297,12 +4297,12 @@ async def reject_beta_access_request(
         "request_id": request_id,
         "user_name": f"{access_request['first_name']} {access_request['last_name']}",
         "user_email": access_request["email"],
-        "reason": reason
+        "reason": reject_data.reason
     })
     
     return {
         "message": f"Demande d'accès de {access_request['first_name']} {access_request['last_name']} rejetée",
-        "reason": reason
+        "reason": reject_data.reason
     }
 
 # Payment System Endpoints
