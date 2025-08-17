@@ -11940,7 +11940,142 @@ const AppContent = () => {
             onClearCart={clearCart}
           />
         );
-      
+        
+      case 'my-collection':
+        return (
+          <MyCollectionPage
+            ownedItems={myOwnedCollection}
+            onFetch={fetchMyOwnedCollection}
+            onCreateListing={(collectionItem) => {
+              setSelectedJerseyForListing(collectionItem);
+              setShowCreateListingModal(true);
+            }}
+          />
+        );
+        
+      default:
+        return (
+          <DiscogsStyleHomepage 
+            onNavigate={setCurrentView}
+          />
+        );
+    }
+  };
+
+// My Collection Page Component
+const MyCollectionPage = ({ ownedItems, onFetch, onCreateListing }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredItems, setFilteredItems] = useState([]);
+
+  useEffect(() => {
+    onFetch();
+  }, []);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredItems(ownedItems);
+    } else {
+      const filtered = ownedItems.filter(item =>
+        item.jersey.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.jersey.season.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.jersey.player && item.jersey.player.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredItems(filtered);
+    }
+  }, [ownedItems, searchTerm]);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-4">My Collection - Owned Jerseys</h1>
+        <p className="text-gray-400 mb-6">Manage your owned jerseys and create marketplace listings.</p>
+        
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search your collection..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
+          />
+        </div>
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-gray-400 text-lg mb-4">
+            {searchTerm ? 'No items found matching your search.' : 'Your collection is empty.'}
+          </div>
+          {!searchTerm && (
+            <p className="text-gray-500 text-sm">Add jerseys to your owned collection from the Explorer to see them here.</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredItems.map((item) => (
+            <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
+              <div className="relative">
+                {item.jersey.images && item.jersey.images[0] ? (
+                  <img
+                    src={item.jersey.images[0]}
+                    alt={`${item.jersey.team} ${item.jersey.season}`}
+                    className="w-full h-48 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-gray-700 flex items-center justify-center">
+                    <svg className="h-12 w-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                
+                {item.is_listed && (
+                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                    Listed
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4">
+                <h3 className="text-white font-semibold text-lg mb-1">{item.jersey.team}</h3>
+                <p className="text-gray-300 text-sm mb-2">{item.jersey.season}</p>
+                {item.jersey.player && (
+                  <p className="text-gray-400 text-sm mb-2">#{item.jersey.player}</p>
+                )}
+                
+                <div className="space-y-1 text-sm mb-4">
+                  {item.size && (
+                    <p className="text-blue-400">Size: {item.size}</p>
+                  )}
+                  {item.condition && (
+                    <p className="text-green-400">Condition: {item.condition}</p>
+                  )}
+                  {item.personal_description && (
+                    <p className="text-gray-300 text-xs italic">{item.personal_description}</p>
+                  )}
+                </div>
+                
+                {!item.is_listed ? (
+                  <button
+                    onClick={() => onCreateListing(item)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors font-medium"
+                  >
+                    💰 Create Listing
+                  </button>
+                ) : (
+                  <div className="text-center text-gray-400 text-sm py-2">
+                    Already listed on marketplace
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Discogs-Style Homepage Component
 const DiscogsStyleHomepage = ({ onNavigate }) => {
   const [featuredJerseys, setFeaturedJerseys] = useState([]);
