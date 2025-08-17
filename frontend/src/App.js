@@ -4275,32 +4275,19 @@ const AuthModal = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" 
          onClick={(e) => {
-           // Only close modal if clicking directly on backdrop, not on form elements or their children
            if (e.target === e.currentTarget) {
              onClose();
            }
          }}>
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[9999]" 
-           onClick={(e) => {
-             // Only prevent clicks that would close the modal, but allow form interactions
-             // Don't stopPropagation on form elements or their children
-             const target = e.target;
-             const isFormElement = target.tagName === 'INPUT' || 
-                                   target.tagName === 'BUTTON' || 
-                                   target.tagName === 'FORM' ||
-                                   target.closest('form');
-             
-             if (!isFormElement) {
-               e.stopPropagation();
-             }
-           }}>
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative z-[9999]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
-            {isLogin ? 'Login' : 'Sign Up'}
+            {isLogin ? 'Connexion' : 'Inscription'}
           </h2>
           <button 
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
+            type="button"
           >
             ✕
           </button>
@@ -4318,6 +4305,55 @@ const AuthModal = ({ onClose }) => {
               type="text"
               placeholder="Nom complet"
               value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
+          
+          <input
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={formData.password}
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Connexion...' : (isLogin ? 'Se connecter' : 'S\'inscrire')}
+          </button>
+        </form>
+
+        <p className="text-center text-gray-600 mt-4">
+          {isLogin ? 'Pas de compte ?' : 'Déjà un compte ?'}
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError('');
+              setFormData({email: formData.email, password: '', name: ''});
+            }}
+            className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
+            type="button"
+          >
+            {isLogin ? 'Créer un compte' : 'Se connecter'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
               required={!isLogin}
