@@ -11951,7 +11951,7 @@ const SubmitJerseyPage = () => {
       if (response.status === 200 || response.status === 201) {
         setSubmitted(true);
         setFormData({
-          team: '', season: '', player: '', size: '', condition: '', 
+          team: '', season: '', player: '', 
           manufacturer: '', home_away: '', league: '', description: '', reference_code: ''
         });
         setImages([]);
