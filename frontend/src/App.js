@@ -2701,8 +2701,6 @@ const ResubmissionModal = ({ originalJersey, onClose, onSuccess }) => {
     team: originalJersey?.team || '',
     season: originalJersey?.season || '',
     player: originalJersey?.player || '',
-    size: originalJersey?.size || 'M',
-    condition: originalJersey?.condition || 'excellent',
     manufacturer: originalJersey?.manufacturer || '',
     home_away: originalJersey?.home_away || 'home',
     league: originalJersey?.league || '',
