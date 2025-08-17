@@ -1121,7 +1121,7 @@ const NotificationBell = ({ onNotificationClick }) => {
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-400">
-                No notifications yet
+                Aucune notification
               </div>
             ) : (
               notifications.map((notification) => (
