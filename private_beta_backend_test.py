@@ -24,7 +24,7 @@ TEST_USER_EMAIL = f"test.user.{int(time.time())}@example.com"
 TEST_USER_PASSWORD = "SecurePass2024!"
 # Use the hardcoded admin email from backend
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "AdminSecure2024!"
+ADMIN_PASSWORD = "TopKitSecure2024!"
 
 class PrivateBetaTester:
     def __init__(self):
