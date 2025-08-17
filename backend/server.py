@@ -4092,6 +4092,215 @@ async def check_site_access(user_id: str = Depends(get_current_user_optional)):
         "message": "Accès non autorisé - site en mode bêta privée"
     }
 
+@api_router.post("/beta/request-access")
+async def request_beta_access(request: BetaAccessRequest):
+    """Submit a beta access request"""
+    
+    try:
+        # Check if email already requested access
+        existing_request = await db.beta_access_requests.find_one({"email": request.email})
+        if existing_request:
+            return {
+                "message": "Une demande d'accès a déjà été soumise avec cette adresse email",
+                "request_id": existing_request["id"]
+            }
+        
+        # Create new beta access request
+        access_request = {
+            "id": str(uuid.uuid4()),
+            "email": request.email,
+            "first_name": request.first_name,
+            "last_name": request.last_name,
+            "message": request.message or "",
+            "status": "pending",  # pending, approved, rejected
+            "requested_at": datetime.utcnow(),
+            "processed_at": None,
+            "processed_by": None
+        }
+        
+        await db.beta_access_requests.insert_one(access_request)
+        
+        # Log the activity
+        await log_user_activity("system", "beta_access_requested", request.email, {
+            "name": f"{request.first_name} {request.last_name}",
+            "email": request.email,
+            "message": request.message or "No message"
+        })
+        
+        return BetaAccessResponse(
+            message="Demande d'accès soumise avec succès ! Nous examinerons votre demande et vous contacterons bientôt.",
+            request_id=access_request["id"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error submitting beta access request: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la soumission de la demande")
+
+@api_router.get("/admin/beta/requests")
+async def get_beta_access_requests(
+    user_id: str = Depends(get_current_user),
+    status: Optional[str] = None,
+    limit: int = 50
+):
+    """Get beta access requests (admin only)"""
+    
+    # Check if user is admin
+    user = await db.users.find_one({"id": user_id})
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
+    
+    # Build query
+    query = {}
+    if status:
+        query["status"] = status
+    
+    # Get requests
+    requests_cursor = db.beta_access_requests.find(query).sort("requested_at", -1).limit(limit)
+    requests = await requests_cursor.to_list(limit)
+    
+    # Remove MongoDB _id field
+    for request in requests:
+        request.pop('_id', None)
+    
+    return {
+        "requests": requests,
+        "total": len(requests),
+        "filter": status or "all"
+    }
+
+@api_router.post("/admin/beta/requests/{request_id}/approve")
+async def approve_beta_access_request(
+    request_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Approve a beta access request and grant access to user (admin only)"""
+    
+    # Check if user is admin
+    admin_user = await db.users.find_one({"id": user_id})
+    if not admin_user or admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
+    
+    # Get the request
+    access_request = await db.beta_access_requests.find_one({"id": request_id})
+    if not access_request:
+        raise HTTPException(status_code=404, detail="Demande d'accès non trouvée")
+    
+    if access_request["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée")
+    
+    try:
+        # Check if user already exists
+        existing_user = await db.users.find_one({"email": access_request["email"]})
+        
+        if existing_user:
+            # Grant beta access to existing user
+            await db.users.update_one(
+                {"id": existing_user["id"]},
+                {
+                    "$set": {
+                        "beta_access": True,
+                        "beta_granted_at": datetime.utcnow(),
+                        "beta_granted_by": user_id
+                    }
+                }
+            )
+        else:
+            # Create a temporary password for the user
+            temp_password = f"{access_request['first_name'].lower()}{random.randint(1000, 9999)}"
+            hashed_password = hash_password(temp_password)
+            
+            # Create new user with beta access
+            new_user = User(
+                email=access_request["email"],
+                password=hashed_password,
+                name=f"{access_request['first_name']} {access_request['last_name']}",
+                role="user",
+                email_verified=True,  # Auto-verify for beta users
+                beta_access=True,
+                beta_granted_at=datetime.utcnow(),
+                beta_granted_by=user_id
+            )
+            
+            await db.users.insert_one(new_user.dict())
+            
+            # TODO: Send welcome email with temporary password
+            logger.info(f"Created beta user: {access_request['email']} with temp password: {temp_password}")
+        
+        # Update request status
+        await db.beta_access_requests.update_one(
+            {"id": request_id},
+            {
+                "$set": {
+                    "status": "approved",
+                    "processed_at": datetime.utcnow(),
+                    "processed_by": user_id
+                }
+            }
+        )
+        
+        # Log activity
+        await log_user_activity(user_id, "beta_access_approved", access_request["email"], {
+            "request_id": request_id,
+            "user_name": f"{access_request['first_name']} {access_request['last_name']}",
+            "user_email": access_request["email"]
+        })
+        
+        return {
+            "message": f"Accès bêta accordé à {access_request['first_name']} {access_request['last_name']}",
+            "user_created": not bool(existing_user)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error approving beta access request: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'approbation de la demande")
+
+@api_router.post("/admin/beta/requests/{request_id}/reject")
+async def reject_beta_access_request(
+    request_id: str,
+    reason: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Reject a beta access request (admin only)"""
+    
+    # Check if user is admin
+    admin_user = await db.users.find_one({"id": user_id})
+    if not admin_user or admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
+    
+    # Get the request
+    access_request = await db.beta_access_requests.find_one({"id": request_id})
+    if not access_request:
+        raise HTTPException(status_code=404, detail="Demande d'accès non trouvée")
+    
+    if access_request["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée")
+    
+    # Update request status
+    await db.beta_access_requests.update_one(
+        {"id": request_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejection_reason": reason,
+                "processed_at": datetime.utcnow(),
+                "processed_by": user_id
+            }
+        }
+    )
+    
+    # Log activity
+    await log_user_activity(user_id, "beta_access_rejected", access_request["email"], {
+        "request_id": request_id,
+        "user_name": f"{access_request['first_name']} {access_request['last_name']}",
+        "user_email": access_request["email"],
+        "reason": reason
+    })
+    
+    return {
+        "message": f"Demande d'accès de {access_request['first_name']} {access_request['last_name']} rejetée",
+        "reason": reason
+    }
+
 # Payment System Endpoints
 @api_router.post("/payments/checkout/session")
 async def create_checkout_session(
