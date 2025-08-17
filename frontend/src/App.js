@@ -12086,42 +12086,7 @@ const SubmitJerseyPage = () => {
             />
           </div>
 
-          {/* Size */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Size *</label>
-            <select
-              required
-              value={formData.size}
-              onChange={(e) => setFormData({...formData, size: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
-            >
-              <option value="">Select Size</option>
-              <option value="XS" className="bg-gray-800">XS</option>
-              <option value="S" className="bg-gray-800">S</option>
-              <option value="M" className="bg-gray-800">M</option>
-              <option value="L" className="bg-gray-800">L</option>
-              <option value="XL" className="bg-gray-800">XL</option>
-              <option value="XXL" className="bg-gray-800">XXL</option>
-            </select>
-          </div>
 
-          {/* Condition */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Condition *</label>
-            <select
-              required
-              value={formData.condition}
-              onChange={(e) => setFormData({...formData, condition: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
-            >
-              <option value="">Select Condition</option>
-              <option value="new" className="bg-gray-800">New</option>
-              <option value="near_mint" className="bg-gray-800">Near Mint</option>
-              <option value="very_good" className="bg-gray-800">Very Good</option>
-              <option value="good" className="bg-gray-800">Good</option>
-              <option value="poor" className="bg-gray-800">Poor</option>
-            </select>
-          </div>
 
           {/* Manufacturer */}
           <div>
