@@ -14492,11 +14492,15 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
           />
         )}
 
-        {showAuthModalFromAction && (
-          <AuthModal 
-            onClose={() => setShowAuthModalFromAction(false)} 
-          />
-        )}
+        {/* Auth Modal - NEW REFACTORED VERSION */}
+        <AuthModal 
+          isOpen={showAuthModalFromAction}
+          onClose={() => setShowAuthModalFromAction(false)}
+          onLoginSuccess={(token, user) => {
+            console.log('Login success callback - AppContent AuthModal');
+            setShowAuthModalFromAction(false);
+          }}
+        />
 
         {/* Submit Jersey Modal - Moved to ProfileCollectionPage */}
         {showSubmitModal && (
