@@ -191,19 +191,27 @@ class PrivateBetaTester:
             self.log_test("POST /api/site/mode (Unauthorized)", False, "", str(e))
         
         # Test 3: POST /api/site/mode with regular user (should fail)
-        try:
-            headers = {"Authorization": f"Bearer {self.user_token}"}
-            response = self.session.post(f"{BASE_URL}/site/mode", 
-                                       json={"mode": "private"}, headers=headers)
-            
-            if response.status_code == 403:
-                self.log_test("POST /api/site/mode (Non-Admin)", True, 
-                            "Correctly rejected non-admin user")
-            else:
-                self.log_test("POST /api/site/mode (Non-Admin)", False, 
-                            f"Expected 403, got {response.status_code}", response.text)
-        except Exception as e:
-            self.log_test("POST /api/site/mode (Non-Admin)", False, "", str(e))
+        if self.user_token:
+            try:
+                headers = {"Authorization": f"Bearer {self.user_token}"}
+                response = self.session.post(f"{BASE_URL}/site/mode", 
+                                           json={"mode": "private"}, headers=headers)
+                
+                if response.status_code == 403:
+                    self.log_test("POST /api/site/mode (Non-Admin)", True, 
+                                "Correctly rejected non-admin user")
+                else:
+                    self.log_test("POST /api/site/mode (Non-Admin)", False, 
+                                f"Expected 403, got {response.status_code}", response.text)
+            except Exception as e:
+                self.log_test("POST /api/site/mode (Non-Admin)", False, "", str(e))
+        else:
+            self.log_test("POST /api/site/mode (Non-Admin)", False, "No user token available", "Skipped")
+        
+        # Skip admin tests if no admin token
+        if not self.admin_token:
+            self.log_test("POST /api/site/mode (Admin Tests)", False, "No admin token available", "Skipped admin-only tests")
+            return
         
         # Test 4: POST /api/site/mode with admin (should succeed)
         try:
