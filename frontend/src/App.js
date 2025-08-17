@@ -1738,7 +1738,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
 
                 {/* Messages Icon */}
                 <button 
-                  onClick={() => user ? setCurrentView('messages') : setShowAuthModal(true)}
+                  onClick={() => user ? setCurrentView('friends') : setShowAuthModal(true)}
                   className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
