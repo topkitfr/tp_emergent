@@ -8275,8 +8275,9 @@ const UserSettingsPanel = ({ user, profileData, onProfileUpdated }) => {
 
       {showPasswordChange && (
         <PasswordChangeModal
+          isOpen={showPasswordChange}
           onClose={() => setShowPasswordChange(false)}
-          onPasswordChanged={() => {
+          onSuccess={() => {
             setShowPasswordChange(false);
           }}
         />
