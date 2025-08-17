@@ -1082,17 +1082,30 @@ const NotificationBell = ({ onNotificationClick }) => {
                   className={`p-4 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors ${
                     !notification.is_read ? 'bg-blue-900/20' : ''
                   }`}
-                  onClick={() => !notification.is_read && markAsRead(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className={`font-medium ${!notification.is_read ? 'text-white' : 'text-gray-300'}`}>
-                        {notification.title}
-                      </h4>
-                      <p className="text-gray-400 text-sm mt-1">{notification.message}</p>
-                      <p className="text-gray-500 text-xs mt-2">
-                        {new Date(notification.created_at).toLocaleDateString()} {new Date(notification.created_at).toLocaleTimeString()}
-                      </p>
+                      <div className="flex items-start space-x-3">
+                        {/* Notification Icon */}
+                        <div className="flex-shrink-0 mt-1">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className={`font-medium ${!notification.is_read ? 'text-white' : 'text-gray-300'}`}>
+                            {notification.title}
+                          </h4>
+                          <p className="text-gray-400 text-sm mt-1">{notification.message}</p>
+                          <div className="flex items-center mt-2 space-x-2">
+                            <p className="text-gray-500 text-xs">
+                              {formatNotificationTime(notification.created_at)}
+                            </p>
+                            <span className="text-blue-400 text-xs hover:underline">
+                              👆 Cliquer pour voir
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     {!notification.is_read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2"></div>
