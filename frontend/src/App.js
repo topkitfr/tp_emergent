@@ -11914,8 +11914,8 @@ const SubmitJerseyPage = () => {
       return;
     }
 
-    if (!formData.team || !formData.season || !formData.size || !formData.condition) {
-      alert('Please fill in all required fields (Team, Season, Size, Condition)');
+    if (!formData.team || !formData.season) {
+      alert('Please fill in all required fields (Team, Season)');
       return;
     }
 
