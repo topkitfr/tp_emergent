@@ -2699,40 +2699,11 @@ async def remove_user_moderator(
         "new_role": "user"
     }
 
-@api_router.get("/admin/users")
-async def get_all_users(
-    role: Optional[str] = None,
-    admin_id: str = Depends(get_current_admin)
-):
-    """Get all users with their roles (Admin only)"""
-    
-    # Build query filter
-    query = {}
-    if role and role in ["user", "moderator", "admin"]:
-        query["role"] = role
-    
-    # Get users
-    users_cursor = db.users.find(query).sort("created_at", -1)
-    users = []
-    
-    async for user in users_cursor:
-        users.append({
-            "id": user["id"],
-            "email": user["email"],
-            "name": user["name"],
-            "role": user.get("role", "user"),
-            "created_at": user.get("created_at"),
-            "last_login": user.get("last_login"),
-            "email_verified": user.get("email_verified", False)
-        })
-    
-    return {"users": users}
-
 @api_router.post("/admin/users/{user_id}/assign-role")
 async def assign_user_role(
     user_id: str, 
     role_data: RoleAssignment,
-    admin_id: str = Depends(get_current_admin)
+    admin_user: dict = Depends(get_current_user_admin)
 ):
     """Assign a role to a user (Admin only)"""
     
@@ -2754,7 +2725,7 @@ async def assign_user_role(
         {
             "$set": {
                 "role": role_data.role,
-                "assigned_by": admin_id,
+                "assigned_by": admin_user["id"],
                 "role_assigned_at": datetime.utcnow()
             }
         }
@@ -2764,7 +2735,7 @@ async def assign_user_role(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Log activity
-    await log_user_activity(admin_id, "role_assigned", user_id, {
+    await log_user_activity(admin_user["id"], "role_assigned", user_id, {
         "new_role": role_data.role,
         "reason": role_data.reason,
         "user_email": user["email"]
@@ -2772,7 +2743,7 @@ async def assign_user_role(
     
     await log_user_activity(user_id, "role_received", None, {
         "new_role": role_data.role,
-        "assigned_by": admin_id,
+        "assigned_by": admin_user["id"],
         "reason": role_data.reason
     })
     
