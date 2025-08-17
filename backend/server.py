@@ -672,6 +672,47 @@ def generate_email_verification_token(user_id: str, email: str) -> str:
     }
     return token
 
+# Password reset tokens storage (in production, use Redis or database)
+password_reset_tokens = {}
+
+def generate_password_reset_token(user_id: str, email: str) -> str:
+    """Generate password reset token"""
+    payload = {
+        'user_id': user_id,
+        'email': email,
+        'type': 'password_reset',
+        'exp': datetime.utcnow() + timedelta(hours=2)  # 2h expiration for security
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    password_reset_tokens[token] = {
+        'user_id': user_id,
+        'email': email,
+        'created_at': datetime.utcnow()
+    }
+    return token
+
+def verify_password_reset_token(token: str) -> tuple[bool, str, dict]:
+    """Verify password reset token"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        if payload.get('type') != 'password_reset':
+            return False, "Token invalide", {}
+        
+        user_id = payload.get('user_id')
+        email = payload.get('email')
+        
+        if token in password_reset_tokens:
+            # Don't remove token yet - it will be removed after password reset
+            token_data = password_reset_tokens[token]
+            return True, "Token valide", {'user_id': user_id, 'email': email}
+        else:
+            return False, "Token non trouvé ou déjà utilisé", {}
+            
+    except jwt.ExpiredSignatureError:
+        return False, "Token expiré", {}
+    except jwt.PyJWTError:
+        return False, "Token invalide", {}
+
 def verify_email_verification_token(token: str) -> tuple[bool, str, dict]:
     """Verify email verification token"""
     try:
