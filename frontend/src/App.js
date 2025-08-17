@@ -11984,6 +11984,16 @@ const AdminPanel = () => {
           >
             📊 Traffic & Analytics
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'settings'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            ⚙️ Site Settings
+          </button>
         </div>
       </div>
 
