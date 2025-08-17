@@ -6573,6 +6573,366 @@ const FriendsPage = () => {
   );
 };
 
+// User Profile View Component (for viewing other users)
+const UserProfileView = ({ userId, onClose }) => {
+  const [userProfile, setUserProfile] = useState(null);
+  const [userCollection, setUserCollection] = useState([]);
+  const [userListings, setUserListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('info');
+  const { user: currentUser } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+    }
+  }, [userId]);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Fetch user profile
+      const profileResponse = await fetch(`${API}/api/users/${userId}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        setUserProfile(profileData);
+      }
+
+      // Fetch user's public collection
+      const collectionResponse = await fetch(`${API}/api/users/${userId}/collection`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (collectionResponse.ok) {
+        const collectionData = await collectionResponse.json();
+        setUserCollection(collectionData);
+      }
+
+      // Fetch user's active listings
+      const listingsResponse = await fetch(`${API}/api/users/${userId}/listings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+     
+      if (listingsResponse.ok) {
+        const listingsData = await listingsResponse.json();
+        setUserListings(listingsData);
+      }
+
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendFriendRequest = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/friends/request`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ friend_id: userId })
+      });
+
+      if (response.ok) {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: '✅ Demande d\'amitié envoyée !', type: 'success' }
+        }));
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: 'Erreur lors de l\'envoi de la demande', type: 'error' }
+      }));
+    }
+  };
+
+  const startConversation = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ other_user_id: userId })
+      });
+
+      if (response.ok) {
+        const conversationData = await response.json();
+        // Navigate to messages with this conversation
+        onClose(); // Close the profile modal
+        // TODO: Navigate to messages with specific conversation
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: '✅ Conversation créée !', type: 'success' }
+        }));
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: 'Erreur lors de la création de la conversation', type: 'error' }
+      }));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-gray-800 rounded-lg p-8">
+          <div className="text-center text-white">
+            <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            Chargement du profil...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4">
+          <div className="text-center text-white">
+            <h3 className="text-xl mb-4">Profil non trouvé</h3>
+            <button
+              onClick={onClose}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+                {userProfile.picture ? (
+                  <img 
+                    src={userProfile.picture} 
+                    alt={userProfile.name} 
+                    className="w-16 h-16 rounded-full" 
+                  />
+                ) : (
+                  <span className="text-2xl">👤</span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">{userProfile.name}</h2>
+                <p className="text-blue-100">@{userProfile.username || userProfile.email}</p>
+                <div className="flex items-center space-x-4 mt-2 text-sm">
+                  <span>📚 {userCollection.length} maillots</span>
+                  <span>🏪 {userListings.length} annonces</span>
+                  <span>📅 Inscrit en {new Date(userProfile.created_at).getFullYear()}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg"
+            >
+              ✕
+            </button>
+          </div>
+          
+          {/* Action Buttons */}
+          {currentUser?.id !== userId && (
+            <div className="flex space-x-3 mt-4">
+              <button
+                onClick={sendFriendRequest}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center space-x-2"
+              >
+                <span>👥</span>
+                <span>Ajouter aux amis</span>
+              </button>
+              <button
+                onClick={startConversation}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center space-x-2"
+              >
+                <span>💬</span>
+                <span>Message</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-700">
+          <div className="flex space-x-1 p-1">
+            {[
+              { id: 'info', label: '📋 Informations', count: null },
+              { id: 'collection', label: '📚 Collection', count: userCollection.length },
+              { id: 'listings', label: '🏪 Annonces', count: userListings.length }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== null && (
+                  <span className="ml-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 max-h-[60vh] overflow-y-auto">
+          {activeTab === 'info' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">📋 Informations</h3>
+                <div className="bg-gray-700 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email:</span>
+                    <span className="text-white">{userProfile.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Membre depuis:</span>
+                    <span className="text-white">
+                      {new Date(userProfile.created_at).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
+                  {userProfile.last_login && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Dernière connexion:</span>
+                      <span className="text-white">
+                        {new Date(userProfile.last_login).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">📊 Statistiques</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-green-600 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-white">{userCollection.length}</div>
+                    <div className="text-green-100 text-sm">Maillots en collection</div>
+                  </div>
+                  <div className="bg-blue-600 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-white">{userListings.length}</div>
+                    <div className="text-blue-100 text-sm">Annonces actives</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'collection' && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">📚 Collection de {userProfile.name}</h3>
+              {userCollection.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <div className="text-6xl mb-4">📚</div>
+                  <p>Aucun maillot dans la collection</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {userCollection.map((item) => (
+                    <div key={item.id} className="bg-gray-700 rounded-lg p-4">
+                      <img
+                        src={item.jersey.images?.[0] || 'https://dummyimage.com/200x250/333/fff.png&text=Jersey'}
+                        alt={`${item.jersey.team} ${item.jersey.season}`}
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                      />
+                      <h4 className="text-white font-medium text-sm">
+                        {item.jersey.team} {item.jersey.season}
+                      </h4>
+                      {item.jersey.player && (
+                        <p className="text-gray-400 text-xs">{item.jersey.player}</p>
+                      )}
+                      {item.size && (
+                        <div className="flex space-x-2 mt-2">
+                          <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                            {item.size}
+                          </span>
+                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                            {item.condition}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'listings' && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">🏪 Annonces de {userProfile.name}</h3>
+              {userListings.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <div className="text-6xl mb-4">🏪</div>
+                  <p>Aucune annonce active</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {userListings.map((listing) => (
+                    <div key={listing.id} className="bg-gray-700 rounded-lg p-4">
+                      <img
+                        src={listing.images?.[0] || listing.jersey.images?.[0] || 'https://dummyimage.com/200x250/333/fff.png&text=Jersey'}
+                        alt={`${listing.jersey.team} ${listing.jersey.season}`}
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                      />
+                      <h4 className="text-white font-medium">
+                        {listing.jersey.team} {listing.jersey.season}
+                      </h4>
+                      {listing.jersey.player && (
+                        <p className="text-gray-400 text-sm">{listing.jersey.player}</p>
+                      )}
+                      <div className="flex justify-between items-center mt-3">
+                        <span className="text-green-400 font-bold text-lg">
+                          {listing.price}€
+                        </span>
+                        <div className="flex space-x-1">
+                          <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                            {listing.size}
+                          </span>
+                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                            {listing.condition}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Messages Page Component
 const MessagesPage = () => {
   const { user } = useAuth();
