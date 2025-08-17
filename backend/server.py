@@ -1241,6 +1241,22 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
     except jwt.PyJWTError:
         return None
 
+async def get_current_user_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get current user and verify admin role"""
+    token = credentials.credentials
+    user_id = verify_jwt_token(token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    if user.get('role') not in ['admin', 'moderator']:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    return user
+
 # Authentication endpoints
 @api_router.post("/auth/register")
 async def register(user_data: UserRegister, request: Request):
