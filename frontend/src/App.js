@@ -15197,6 +15197,8 @@ const AdminPanel = () => {
   const [siteSettingsLoading, setSiteSettingsLoading] = useState(false);
   const [betaRequests, setBetaRequests] = useState([]);
   const [betaRequestsLoading, setBetaRequestsLoading] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     if (user?.email === 'topkitfr@gmail.com') {
