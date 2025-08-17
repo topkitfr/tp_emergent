@@ -6445,62 +6445,6 @@ const FriendsPage = () => {
   );
 };
 
-
-
-// Extract Messages Page Content (without the header/wrapper)
-const MessagesPageContent = () => {
-  const { user } = useAuth();
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
-  
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [ws, setWs] = useState(null);
-
-  useEffect(() => {
-    if (user) {
-      fetchConversations();
-      // Initialize WebSocket connection for real-time messaging
-      initializeWebSocket();
-    }
-    
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, [user]);
-
-  const initializeWebSocket = () => {
-    try {
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsHost = API.replace('http://', '').replace('https://', '');
-      const wsUrl = `${wsProtocol}//${wsHost}/ws/${user.id}`;
-      
-      const websocket = new WebSocket(wsUrl);
-      
-      websocket.onopen = () => {
-        console.log('WebSocket connected for real-time messaging');
-      };
-      
-      websocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'new_message') {
-          // Add new message to current conversation if it's the active one
-          if (selectedConversation && data.message.conversation_id === selectedConversation.conversation_id) {
-            setMessages(prev => [...prev, {
-              ...data.message,
-              sent_by_me: false
-            }]);
-          }
-          // Refresh conversations list to update last message
-          fetchConversations();
-        }
-      };
-
 // Messages Page Component
 const MessagesPage = () => {
   const { user } = useAuth();
