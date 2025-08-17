@@ -660,22 +660,6 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const fetchBetaRequests = async () => {
-    try {
-      setBetaRequestsLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/api/admin/beta/requests`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setBetaRequests(response.data.requests || []);
-    } catch (error) {
-      console.error('Failed to fetch beta requests:', error);
-      setBetaRequests([]);
-    } finally {
-      setBetaRequestsLoading(false);
-    }
-  };
-
   const approveBetaRequest = async (requestId) => {
     if (!window.confirm('Approuver cette demande d\'accès bêta ?')) return;
 
