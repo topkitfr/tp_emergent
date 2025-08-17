@@ -242,7 +242,7 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
               <img 
                 src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
                 alt="TopKit Logo"
-                className="h-16 w-auto hover:opacity-80 transition-opacity"
+                className="h-10 w-auto hover:opacity-80 transition-opacity"
               />
             </div>
             <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
