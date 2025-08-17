@@ -1103,6 +1103,7 @@ const NotificationBell = ({ onNotificationClick }) => {
           <div className="p-4 border-b border-gray-700">
             <div className="flex justify-between items-center">
               <h3 className="text-white font-semibold">🔔 Notifications</h3>
+              <div className="text-green-400 text-xs">DEBUG: Dropdown is visible</div>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
