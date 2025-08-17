@@ -12491,12 +12491,12 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
         )}
 
         {showCreateListingModal && selectedJerseyForListing && (
-          <MarketplaceListingModal 
+          <CollectionListingModal 
             onClose={() => {
               setShowCreateListingModal(false);
               setSelectedJerseyForListing(null);
             }}
-            jersey={selectedJerseyForListing}
+            collectionItem={selectedJerseyForListing}
             onSubmit={createListingFromCollection}
           />
         )}
