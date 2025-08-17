@@ -6293,6 +6293,13 @@ const FriendsPage = () => {
               </div>
             )}
 
+            {/* Messages Tab */}
+            {activeTab === 'messages' && (
+              <div>
+                <MessagingInterface />
+              </div>
+            )}
+
             {/* Pending Requests - Received */}
             {activeTab === 'received' && (
               <div>
