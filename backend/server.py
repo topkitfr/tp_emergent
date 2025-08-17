@@ -1360,7 +1360,7 @@ async def register(user_data: UserRegister, request: Request):
     verification_link = f"https://topkit-admin.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
-        "message": "Compte créé avec succès! Veuillez vérifier votre email pour activer votre compte.",
+        "message": "Compte créé avec succès! " + ("Un email de confirmation a été envoyé à votre adresse." if email_sent else "Veuillez vérifier votre email pour activer votre compte."),
         "user": {
             "id": user.id, 
             "email": user.email, 
@@ -1368,9 +1368,10 @@ async def register(user_data: UserRegister, request: Request):
             "role": user_role,
             "email_verified": False
         },
-        # Remove this in production - only for development
-        "dev_verification_link": verification_link,
-        "instructions": "Cliquez sur le lien de vérification envoyé à votre email pour activer votre compte."
+        "email_sent": email_sent,
+        # Remove this in production - only for development  
+        "dev_verification_link": verification_link if not email_sent else None,
+        "instructions": "Vérifiez votre boîte mail et cliquez sur le lien de confirmation pour activer votre compte."
     }
 
 @api_router.post("/auth/verify-email")
