@@ -285,8 +285,8 @@ class JerseyCreate(BaseModel):
     team: str
     season: str
     player: Optional[str] = None
-    size: str  # Allow string input, validate in endpoint
-    condition: str  # Allow string input, validate in endpoint  
+    size: Optional[str] = None  # Optional - will be specified when creating listings
+    condition: Optional[str] = None  # Optional - will be specified when creating listings
     manufacturer: Optional[str] = ""
     home_away: Optional[str] = ""
     league: Optional[str] = ""
