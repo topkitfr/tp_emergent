@@ -1804,13 +1804,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Private Beta Mode Backend - Site Configuration Endpoints"
-    - "Private Beta Mode Backend - Beta Access Request System"
-    - "Private Beta Mode Frontend - SiteAccessGate Component"
-    - "Private Beta Mode Frontend - Admin Panel Integration"
-    - "Private Beta Mode - Admin Login and Access Control"
-    - "Private Beta Mode - Unauthorized User Access Blocking"
-  stuck_tasks: []
+    - "TopKit Private Beta Mode Backend Testing"
+  stuck_tasks:
+    - "TopKit Private Beta Mode Backend Testing"
   test_all: false
   test_priority: "high_first"
 
