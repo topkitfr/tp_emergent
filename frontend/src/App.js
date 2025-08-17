@@ -11541,6 +11541,23 @@ const AppContent = () => {
     localStorage.setItem('topkit_cart', JSON.stringify(cart));
   }, [cart]);
   
+  // Fetch dynamic stats on component mount
+  useEffect(() => {
+    fetchDynamicStats();
+  }, []);
+  
+  const fetchDynamicStats = async () => {
+    try {
+      const response = await fetch(`${API}/api/stats/dynamic`);
+      if (response.ok) {
+        const stats = await response.json();
+        setDynamicStats(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching dynamic stats:', error);
+    }
+  };
+  
   // Cart management functions
   const addToCart = (listing, quantity = 1) => {
     const cartItem = {
