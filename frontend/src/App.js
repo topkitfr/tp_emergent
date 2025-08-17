@@ -6445,7 +6445,110 @@ const FriendsPage = () => {
   );
 };
 
-// Messages Page Component
+// Messages and Friends Combined Page Component
+const MessagesAndFriendsPage = () => {
+  const [activeTab, setActiveTab] = useState('messages');
+  
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-4">
+        {/* Header with Tabs */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-6">💬 Communication</h1>
+          
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700 max-w-md">
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'messages'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              💬 Messages
+            </button>
+            <button
+              onClick={() => setActiveTab('friends')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'friends'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              👥 Amis
+            </button>
+          </div>
+        </div>
+        
+        {/* Tab Content */}
+        <div className="tab-content">
+          {activeTab === 'messages' && (
+            <MessagesPageContent />
+          )}
+          
+          {activeTab === 'friends' && (
+            <FriendsPageContent />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Extract Messages Page Content (without the header/wrapper)
+const MessagesPageContent = () => {
+  const { user } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [ws, setWs] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+      // Initialize WebSocket connection for real-time messaging
+      initializeWebSocket();
+    }
+    
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [user]);
+
+  const initializeWebSocket = () => {
+    try {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = API.replace('http://', '').replace('https://', '');
+      const wsUrl = `${wsProtocol}//${wsHost}/ws/${user.id}`;
+      
+      const websocket = new WebSocket(wsUrl);
+      
+      websocket.onopen = () => {
+        console.log('WebSocket connected for real-time messaging');
+      };
+      
+      websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_message') {
+          // Add new message to current conversation if it's the active one
+          if (selectedConversation && data.message.conversation_id === selectedConversation.conversation_id) {
+            setMessages(prev => [...prev, {
+              ...data.message,
+              sent_by_me: false
+            }]);
+          }
+          // Refresh conversations list to update last message
+          fetchConversations();
+        }
+      };
 const MessagesPage = () => {
   const { user } = useAuth();
   const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
