@@ -2750,7 +2750,7 @@ async def assign_user_role(
     return {"message": f"Role '{role_data.role}' assigned to user successfully"}
 
 @api_router.get("/admin/activities")
-async def get_all_activities(admin_id: str = Depends(get_current_admin), limit: int = 50):
+async def get_all_activities(admin_user: dict = Depends(get_current_user_admin), limit: int = 50):
     """Get recent system activities"""
     activities = await db.user_activities.find({}).sort("created_at", -1).limit(limit).to_list(limit)
     
