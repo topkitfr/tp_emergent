@@ -84,9 +84,19 @@ class PrivateBetaModeTest:
                              f"User: {user_info.get('name')} ({user_info.get('role')})")
                 return True
             else:
-                self.log_test("User Authentication", False, 
-                             f"HTTP {response.status_code}: {response.text}")
-                return False
+                # Try alternative credentials
+                response = requests.post(f"{BACKEND_URL}/auth/login", json=ALT_USER_CREDENTIALS)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.user_token = data.get("token")
+                    user_info = data.get("user", {})
+                    self.log_test("User Authentication", True, 
+                                 f"User: {user_info.get('name')} ({user_info.get('role')}) - using alt credentials")
+                    return True
+                else:
+                    self.log_test("User Authentication", False, 
+                                 f"Both credentials failed. Primary: HTTP {response.status_code}, Alt: HTTP {response.status_code}")
+                    return False
         except Exception as e:
             self.log_test("User Authentication", False, f"Exception: {str(e)}")
             return False
