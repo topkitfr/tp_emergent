@@ -16,8 +16,9 @@ async def create_admin_user():
     
     # MongoDB connection
     mongo_url = os.environ['MONGO_URL']
+    db_name = os.environ.get('DB_NAME', 'test_database')
     client = AsyncIOMotorClient(mongo_url)
-    db = client.get_default_database()
+    db = client[db_name]
     
     try:
         # Admin user data
