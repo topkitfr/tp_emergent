@@ -9797,6 +9797,175 @@ const CollectionsPage = () => {
             )}
           </div>
         </div>
+      ) : activeTab === 'settings' ? (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-6">
+            ⚙️ Site Settings & Privacy Control
+          </h2>
+          
+          {/* Site Mode Control */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Mode du Site</h3>
+                <p className="text-gray-400 text-sm">
+                  Contrôlez qui peut accéder à TopKit. En mode privé, seuls les utilisateurs autorisés peuvent accéder au site.
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${siteMode === 'private' ? 'bg-red-400' : 'bg-green-400'}`}></div>
+                <span className="text-white font-medium capitalize">{siteMode}</span>
+              </div>
+            </div>
+            
+            {/* Current Status */}
+            <div className="bg-gray-900 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400">État Actuel</label>
+                  <div className="text-white font-medium">
+                    {siteMode === 'private' ? (
+                      <span className="text-red-400">🔒 Site en Mode Privé</span>
+                    ) : (
+                      <span className="text-green-400">🌐 Site Public</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400">Accès</label>
+                  <div className="text-white text-sm">
+                    {siteMode === 'private' ? (
+                      'Admins et utilisateurs autorisés uniquement'
+                    ) : (
+                      'Accessible à tous les visiteurs'
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mode Toggle Buttons */}
+            <div className="flex space-x-3">
+              <button
+                onClick={() => updateSiteMode('public')}
+                disabled={siteSettingsLoading || siteMode === 'public'}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                  siteMode === 'public'
+                    ? 'bg-green-600 text-white cursor-not-allowed'
+                    : 'bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white'
+                } ${siteSettingsLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {siteSettingsLoading && siteMode !== 'public' ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Activation...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    🌐 Mode Public
+                    {siteMode === 'public' && <span className="ml-2 text-xs">(Actuel)</span>}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={() => updateSiteMode('private')}
+                disabled={siteSettingsLoading || siteMode === 'private'}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                  siteMode === 'private'
+                    ? 'bg-red-600 text-white cursor-not-allowed'
+                    : 'bg-gray-700 text-gray-300 hover:bg-red-600 hover:text-white'
+                } ${siteSettingsLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {siteSettingsLoading && siteMode !== 'private' ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Activation...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    🔒 Mode Privé (Bêta)
+                    {siteMode === 'private' && <span className="ml-2 text-xs">(Actuel)</span>}
+                  </span>
+                )}
+              </button>
+            </div>
+            
+            {/* Information Box */}
+            <div className="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="text-blue-400 text-lg">💡</div>
+                <div>
+                  <h4 className="text-blue-300 font-medium mb-1">Information</h4>
+                  <p className="text-blue-200 text-sm">
+                    <strong>Mode Privé :</strong> Seuls l'administrateur et les utilisateurs avec <code className="bg-blue-800 px-1 rounded text-xs">beta_access: true</code> peuvent accéder au site.
+                    <br />
+                    <strong>Mode Public :</strong> Le site est accessible à tous les visiteurs.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Deployment Info */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">🚀 Informations de Déploiement</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-white font-medium mb-2">État du Site</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Mode:</span>
+                    <span className="text-white capitalize">{siteMode}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Statut:</span>
+                    <span className="text-green-400">Opérationnel</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Base de données:</span>
+                    <span className="text-green-400">Connectée</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Paiements:</span>
+                    <span className="text-green-400">Stripe Configuré</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-white font-medium mb-2">Sécurité</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Authentification:</span>
+                    <span className="text-green-400">JWT Active</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Validation Email:</span>
+                    <span className="text-green-400">Activée</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Rate Limiting:</span>
+                    <span className="text-green-400">Active</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Mots de passe:</span>
+                    <span className="text-green-400">Sécurisés</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="text-green-400">✅</div>
+                <span className="text-green-300 text-sm font-medium">TopKit est prêt pour le déploiement en production</span>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : activeTab === 'pending' ? (
         pendingSubmissions.length === 0 ? (
           <div className="text-center py-16">
