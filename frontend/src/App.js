@@ -962,6 +962,54 @@ const NotificationBell = ({ onNotificationClick }) => {
     }
   };
 
+  // Get notification icon based on type
+  const getNotificationIcon = (type) => {
+    const iconClasses = "w-5 h-5 text-blue-400";
+    
+    switch (type) {
+      case 'friend_request':
+        return <span className="text-green-400">👥</span>;
+      case 'friend_request_accepted':
+        return <span className="text-green-400">✅</span>;
+      case 'new_message':
+        return <span className="text-blue-400">💬</span>;
+      case 'jersey_approved':
+        return <span className="text-green-400">👕</span>;
+      case 'jersey_rejected':
+        return <span className="text-red-400">❌</span>;
+      case 'jersey_modification_suggested':
+        return <span className="text-yellow-400">✏️</span>;
+      case 'jersey_purchased':
+        return <span className="text-green-400">🛒</span>;
+      case 'listing_sold':
+        return <span className="text-green-400">💰</span>;
+      case 'collection_shared':
+        return <span className="text-purple-400">📚</span>;
+      case 'user_profile_visit':
+        return <span className="text-blue-400">👤</span>;
+      default:
+        return <span className="text-gray-400">🔔</span>;
+    }
+  };
+
+  // Format notification time
+  const formatNotificationTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 2) {
+      return 'Hier';
+    } else if (diffDays <= 7) {
+      return `Il y a ${diffDays - 1}j`;
+    } else {
+      return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    }
+  };
+
   // Fetch notifications
   const fetchNotifications = async () => {
     if (!user) return;
