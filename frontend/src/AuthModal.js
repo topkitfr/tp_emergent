@@ -178,8 +178,9 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Nom complet"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
               disabled={loading}
+              style={{ backgroundColor: '#ffffff', color: '#111827' }}
             />
           )}
           
