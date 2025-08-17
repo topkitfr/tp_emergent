@@ -77,6 +77,10 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 if not STRIPE_API_KEY:
     logger.warning("STRIPE_API_KEY not found in environment variables")
 
+# Site Mode Configuration (private/public)
+SITE_MODE = os.environ.get('SITE_MODE', 'public')
+logger.info(f"Site mode: {SITE_MODE}")
+
 # Commission Configuration for TopKit Marketplace
 TOPKIT_COMMISSION_RATE = 0.05  # 5% commission on all sales
 MINIMUM_LISTING_PRICE = 10.0   # Minimum €10 for listings
