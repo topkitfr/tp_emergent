@@ -5654,16 +5654,11 @@ async def request_beta_access(request: BetaAccessRequest):
 
 @api_router.get("/admin/beta/requests")
 async def get_beta_access_requests(
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_admin),
     status: Optional[str] = None,
     limit: int = 50
 ):
     """Get beta access requests (admin only)"""
-    
-    # Check if user is admin
-    user = await db.users.find_one({"id": user_id})
-    if not user or user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
     
     # Build query
     query = {}
