@@ -1445,7 +1445,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Improved Cart Functionality & Marketplace UX"
+    - "TopKit New Features Testing - Moderator Roles, Dynamic Stats & Database Cleanup"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
