@@ -188,9 +188,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             placeholder="Email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
             disabled={loading}
             required
+            style={{ backgroundColor: '#ffffff', color: '#111827' }}
           />
           
           <input
@@ -198,9 +199,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             placeholder="Mot de passe"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
             disabled={loading}
             required
+            style={{ backgroundColor: '#ffffff', color: '#111827' }}
           />
           
           <button
