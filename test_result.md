@@ -1780,12 +1780,15 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Robust Authentication Context with useReducer - Collection Bug Fix"
-    - "Dark Theme Monochrome UI/UX - Complete Discogs-Style Redesign"
-  stuck_tasks:
-    - "Robust Authentication Context with useReducer - Collection Bug Fix"
+    - "Private Beta Mode Backend - Site Configuration Endpoints"
+    - "Private Beta Mode Backend - Beta Access Request System"
+    - "Private Beta Mode Frontend - SiteAccessGate Component"
+    - "Private Beta Mode Frontend - Admin Panel Integration"
+    - "Private Beta Mode - Admin Login and Access Control"
+    - "Private Beta Mode - Unauthorized User Access Blocking"
+  stuck_tasks: []
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
