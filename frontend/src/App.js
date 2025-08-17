@@ -8297,6 +8297,11 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isFriend, setIsFriend] = useState(false);
   const [friendRequestSent, setFriendRequestSent] = useState(false);
+  
+  // Security Level 2 states
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showUserSettings, setShowUserSettings] = useState(false);
 
   useEffect(() => {
     if (selectedUserId) {
