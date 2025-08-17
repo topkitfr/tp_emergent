@@ -12499,26 +12499,34 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
               </div>
             </section>
 
-            {/* Statistics */}
+            {/* Statistics - Dynamiques */}
             <section className="py-16 bg-gray-950">
               <div className="container mx-auto px-6 text-center">
                 <h2 className="text-3xl font-bold text-white mb-12">TopKit en chiffres</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                   <div>
-                    <div className="text-4xl font-bold text-blue-400 mb-2">50K+</div>
-                    <div className="text-gray-400">Maillots référencés</div>
+                    <div className="text-4xl font-bold text-blue-400 mb-2">
+                      {dynamicStats.approved_jerseys > 0 ? `${dynamicStats.approved_jerseys}` : '0'}
+                    </div>
+                    <div className="text-gray-400">Maillots approuvés</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-green-400 mb-2">15K+</div>
+                    <div className="text-4xl font-bold text-green-400 mb-2">
+                      {dynamicStats.total_users > 0 ? `${dynamicStats.total_users}` : '0'}
+                    </div>
                     <div className="text-gray-400">Collectionneurs</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-yellow-400 mb-2">200+</div>
-                    <div className="text-gray-400">Équipes</div>
+                    <div className="text-4xl font-bold text-yellow-400 mb-2">
+                      {dynamicStats.total_listings > 0 ? `${dynamicStats.total_listings}` : '0'}
+                    </div>
+                    <div className="text-gray-400">Annonces actives</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-purple-400 mb-2">30+</div>
-                    <div className="text-gray-400">Championnats</div>
+                    <div className="text-4xl font-bold text-purple-400 mb-2">
+                      {dynamicStats.total_collections > 0 ? `${dynamicStats.total_collections}` : '0'}
+                    </div>
+                    <div className="text-gray-400">Collections créées</div>
                   </div>
                 </div>
               </div>
