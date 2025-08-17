@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration from frontend/.env
-BACKEND_URL = "https://topkit-auth-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-ui-fix.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_EMAIL = "steinmetzlivio@gmail.com"
