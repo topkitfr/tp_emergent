@@ -13244,6 +13244,18 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
   );
 };
 
+      case 'user-profile':
+        return showUserProfile && selectedUserId ? (
+          <UserProfileView 
+            userId={selectedUserId}
+            onClose={() => {
+              setShowUserProfile(false);
+              setSelectedUserId(null);
+            }}
+          />
+        ) : null;
+
+      case 'home':
       default:
         return (
           <div className="min-h-screen bg-black">
