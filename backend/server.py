@@ -2206,19 +2206,22 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
         if not jersey_data.team or not jersey_data.season:
             raise HTTPException(status_code=422, detail="Team and season are required")
         
-        if not jersey_data.size or not jersey_data.condition:
-            raise HTTPException(status_code=422, detail="Size and condition are required")
+        # Size and condition are now optional for catalog submissions
+        # They will be specified when creating listings on the marketplace
+        size_enum = None
+        condition_enum = None
         
-        # Validate enums
-        try:
-            size_enum = JerseySize(jersey_data.size.upper() if jersey_data.size else "")
-        except ValueError:
-            raise HTTPException(status_code=422, detail=f"Invalid size: {jersey_data.size}. Must be one of: XS, S, M, L, XL, XXL")
+        if jersey_data.size:
+            try:
+                size_enum = JerseySize(jersey_data.size.upper())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Invalid size: {jersey_data.size}. Must be one of: XS, S, M, L, XL, XXL")
         
-        try:
-            condition_enum = JerseyCondition(jersey_data.condition.lower() if jersey_data.condition else "")
-        except ValueError:
-            raise HTTPException(status_code=422, detail=f"Invalid condition: {jersey_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+        if jersey_data.condition:
+            try:
+                condition_enum = JerseyCondition(jersey_data.condition.lower())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Invalid condition: {jersey_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
         
         # Check if this is a resubmission
         is_resubmission = False
