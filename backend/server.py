@@ -2852,7 +2852,7 @@ async def get_admin_traffic_stats(admin_user: dict = Depends(get_current_user_ad
     }
 
 @api_router.get("/admin/user-stats/{user_id}")
-async def get_user_detailed_stats(user_id: str, admin_id: str = Depends(get_current_admin)):
+async def get_user_detailed_stats(user_id: str, admin_user: dict = Depends(get_current_user_admin)):
     """Get detailed statistics for a specific user"""
     
     # Get user info
