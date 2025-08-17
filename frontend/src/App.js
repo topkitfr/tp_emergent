@@ -15846,6 +15846,40 @@ const AdminPanel = () => {
           }}
         />
       )}
+      
+      {/* Security Level 2 Modals */}
+      {show2FASetup && (
+        <TwoFactorAuthSetup
+          user={user}
+          onClose={() => setShow2FASetup(false)}
+          onSuccess={() => {
+            setShow2FASetup(false);
+            // Refresh profile data to update security status
+            fetchUserProfile();
+          }}
+        />
+      )}
+      
+      {showPasswordModal && (
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            // Success handled by modal
+          }}
+        />
+      )}
+      
+      {showUserSettings && (
+        <UserSettingsPanel
+          user={user}
+          onClose={() => setShowUserSettings(false)}
+          onUpdate={() => {
+            // Refresh profile data
+            fetchUserProfile();
+          }}
+        />
+      )}
     </div>
   );
 };
