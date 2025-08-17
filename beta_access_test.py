@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://a2f51004-8f23-4586-9350-b895a5ea9451.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-beta.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD_1 = "TopKitSecure789#"  # From review request
 ADMIN_PASSWORD_2 = "adminpass123"      # From existing tests

@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://kit-bazaar-2.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
 
 class ExtendedAuthTester:
     def __init__(self):

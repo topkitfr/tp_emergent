@@ -1039,7 +1039,7 @@ async def register(user_data: UserRegister, request: Request):
     
     # In production, send actual email here
     # For now, return the verification link in response (development only)
-    verification_link = f"https://kit-bazaar-2.preview.emergentagent.com/verify-email?token={verification_token}"
+    verification_link = f"https://topkit-beta.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
         "message": "Compte créé avec succès! Veuillez vérifier votre email pour activer votre compte.",
@@ -1131,7 +1131,7 @@ async def resend_verification_email(email: EmailStr):
     verification_token = generate_email_verification_token(user["id"], user["email"])
     
     # In production, send actual email here
-    verification_link = f"https://kit-bazaar-2.preview.emergentagent.com/verify-email?token={verification_token}"
+    verification_link = f"https://topkit-beta.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
         "message": "Un nouveau lien de vérification a été envoyé à votre email.",
