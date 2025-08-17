@@ -173,8 +173,8 @@ class Jersey(BaseModel):
     team: str
     season: str
     player: Optional[str] = None
-    size: JerseySize
-    condition: JerseyCondition
+    size: Optional[JerseySize] = None  # Optional - specified when creating listings
+    condition: Optional[JerseyCondition] = None  # Optional - specified when creating listings
     manufacturer: str
     home_away: str  # "home", "away", "third"
     league: str
