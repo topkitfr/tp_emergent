@@ -8263,10 +8263,10 @@ const UserSettingsPanel = ({ user, profileData, onProfileUpdated }) => {
 
       {/* Modals */}
       {show2FASetup && (
-        <TwoFactorSetup
+        <TwoFactorAuthSetup
           user={user}
           onClose={() => setShow2FASetup(false)}
-          onSetupComplete={() => {
+          onSuccess={() => {
             setShow2FASetup(false);
             if (onProfileUpdated) onProfileUpdated();
           }}
