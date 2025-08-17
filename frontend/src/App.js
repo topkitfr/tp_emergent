@@ -8067,6 +8067,430 @@ const MessagesPage = () => {
   );
 };
 
+// Security Level 2: User Settings Panel
+const UserSettingsPanel = ({ user, profileData, onProfileUpdated }) => {
+  const [activeSettingsTab, setActiveSettingsTab] = useState('profile');
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [settingsData, setSettingsData] = useState({
+    seller_settings: {
+      address_settings: {
+        full_name: '',
+        address_line_1: '',
+        address_line_2: '',
+        city: '',
+        postal_code: '',
+        country: '',
+        phone_number: ''
+      }
+    },
+    buyer_settings: {
+      address_settings: {
+        full_name: '',
+        address_line_1: '',
+        address_line_2: '',
+        city: '',
+        postal_code: '',
+        country: '',
+        phone_number: ''
+      }
+    }
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (profileData) {
+      setSettingsData({
+        seller_settings: profileData.seller_settings || {
+          address_settings: {
+            full_name: '',
+            address_line_1: '',
+            address_line_2: '',
+            city: '',
+            postal_code: '',
+            country: '',
+            phone_number: ''
+          }
+        },
+        buyer_settings: profileData.buyer_settings || {
+          address_settings: {
+            full_name: '',
+            address_line_1: '',
+            address_line_2: '',
+            city: '',
+            postal_code: '',
+            country: '',
+            phone_number: ''
+          }
+        }
+      });
+    }
+  }, [profileData]);
+
+  const updateSettings = async (section, data) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.put(`${API}/api/users/profile/settings`, {
+        [section]: data
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Paramètres mis à jour avec succès!', type: 'success' }
+      }));
+
+      if (onProfileUpdated) onProfileUpdated();
+
+    } catch (error) {
+      console.error('Settings update error:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors de la mise à jour', 
+          type: 'error' 
+        }
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddressChange = (section, field, value) => {
+    setSettingsData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        address_settings: {
+          ...prev[section].address_settings,
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const saveAddressSettings = (section) => {
+    updateSettings(section, settingsData[section]);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">⚙️ Paramètres du compte</h2>
+      </div>
+
+      {/* Settings Tabs */}
+      <div className="border-b border-gray-700">
+        <nav className="flex space-x-8">
+          {[
+            { id: 'security', label: '🔒 Sécurité' },
+            { id: 'seller', label: '💼 Paramètres vendeur' },
+            { id: 'buyer', label: '🛒 Paramètres acheteur' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSettingsTab(tab.id)}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeSettingsTab === tab.id
+                  ? 'border-blue-500 text-blue-400'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Security Settings */}
+      {activeSettingsTab === 'security' && (
+        <div className="space-y-6">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Sécurité du compte</h3>
+            
+            <div className="space-y-4">
+              {/* Password Change */}
+              <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-white">Mot de passe</h4>
+                  <p className="text-sm text-gray-400">Modifiez votre mot de passe de connexion</p>
+                </div>
+                <button
+                  onClick={() => setShowPasswordChange(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Modifier
+                </button>
+              </div>
+
+              {/* Two-Factor Authentication */}
+              <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-white">Authentification à deux facteurs (2FA)</h4>
+                  <p className="text-sm text-gray-400">
+                    {user.two_factor_enabled 
+                      ? 'Protection supplémentaire activée avec Google Authenticator'
+                      : 'Ajoutez une couche de sécurité supplémentaire à votre compte'
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    user.two_factor_enabled ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                  }`}>
+                    {user.two_factor_enabled ? 'Activé' : 'Désactivé'}
+                  </span>
+                  <button
+                    onClick={() => setShow2FASetup(true)}
+                    disabled={user.two_factor_enabled}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {user.two_factor_enabled ? 'Configuré' : 'Configurer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seller Settings */}
+      {activeSettingsTab === 'seller' && (
+        <div className="space-y-6">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Informations vendeur</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Nom complet
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.full_name}
+                  onChange={(e) => handleAddressChange('seller_settings', 'full_name', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Votre nom complet"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={settingsData.seller_settings.address_settings.phone_number}
+                  onChange={(e) => handleAddressChange('seller_settings', 'phone_number', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="+33 6 12 34 56 78"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Adresse
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.address_line_1}
+                  onChange={(e) => handleAddressChange('seller_settings', 'address_line_1', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white mb-2"
+                  placeholder="123 rue de la République"
+                />
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.address_line_2}
+                  onChange={(e) => handleAddressChange('seller_settings', 'address_line_2', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Appartement, suite, etc. (optionnel)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Ville
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.city}
+                  onChange={(e) => handleAddressChange('seller_settings', 'city', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Paris"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Code postal
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.postal_code}
+                  onChange={(e) => handleAddressChange('seller_settings', 'postal_code', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="75001"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Pays
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.seller_settings.address_settings.country}
+                  onChange={(e) => handleAddressChange('seller_settings', 'country', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="France"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={() => saveAddressSettings('seller_settings')}
+                disabled={loading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Sauvegarde...' : 'Sauvegarder les informations vendeur'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Buyer Settings */}
+      {activeSettingsTab === 'buyer' && (
+        <div className="space-y-6">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Informations acheteur</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Nom complet
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.full_name}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'full_name', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Votre nom complet"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={settingsData.buyer_settings.address_settings.phone_number}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'phone_number', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="+33 6 12 34 56 78"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Adresse de livraison
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.address_line_1}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'address_line_1', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white mb-2"
+                  placeholder="123 rue de la République"
+                />
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.address_line_2}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'address_line_2', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Appartement, suite, etc. (optionnel)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Ville
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.city}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'city', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="Paris"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Code postal
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.postal_code}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'postal_code', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="75001"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Pays
+                </label>
+                <input
+                  type="text"
+                  value={settingsData.buyer_settings.address_settings.country}
+                  onChange={(e) => handleAddressChange('buyer_settings', 'country', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+                  placeholder="France"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={() => saveAddressSettings('buyer_settings')}
+                disabled={loading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Sauvegarde...' : 'Sauvegarder les informations acheteur'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {show2FASetup && (
+        <TwoFactorSetup
+          user={user}
+          onClose={() => setShow2FASetup(false)}
+          onSetupComplete={() => {
+            setShow2FASetup(false);
+            if (onProfileUpdated) onProfileUpdated();
+          }}
+        />
+      )}
+
+      {showPasswordChange && (
+        <PasswordChangeModal
+          onClose={() => setShowPasswordChange(false)}
+          onPasswordChanged={() => {
+            setShowPasswordChange(false);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
 // User Profile Page Component
 const UserProfilePage = ({ selectedUserId, onBack }) => {
   const { user } = useAuth();
