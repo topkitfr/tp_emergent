@@ -2196,43 +2196,6 @@ async def reset_password(request: PasswordReset):
     
     return {"message": "Mot de passe réinitialisé avec succès"}
 
-@api_router.post("/auth/change-password")
-async def change_password(request: PasswordChange, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Change password for authenticated user"""
-    # Get current user
-    current_user = await get_current_user(credentials)
-    
-    # Verify current password
-    user = await db.users.find_one({"id": current_user["id"]})
-    if not user or not verify_password(request.current_password, user["password_hash"]):
-        raise HTTPException(status_code=400, detail="Mot de passe actuel incorrect")
-    
-    # Validate new password strength
-    is_valid, message = validate_password_strength(request.new_password)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=message)
-    
-    # Check that new password is different from current
-    if verify_password(request.new_password, user["password_hash"]):
-        raise HTTPException(status_code=400, detail="Le nouveau mot de passe doit être différent de l'ancien")
-    
-    # Update password
-    new_password_hash = hash_password(request.new_password)
-    result = await db.users.update_one(
-        {"id": current_user["id"]},
-        {"$set": {"password_hash": new_password_hash, "updated_at": datetime.utcnow()}}
-    )
-    
-    if result.modified_count == 0:
-        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du mot de passe")
-    
-    # Log password change
-    await log_user_activity(current_user["id"], "password_changed", None, {
-        "change_time": datetime.utcnow().isoformat()
-    })
-    
-    return {"message": "Mot de passe modifié avec succès"}
-
 # OAuth endpoints disabled - using email/password authentication only
 # @api_router.get("/auth/google")
 # async def google_auth(request: Request):
