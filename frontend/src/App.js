@@ -14416,7 +14416,7 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
         <Header 
           currentView={currentView} 
           setCurrentView={setCurrentView}
-          setShowAuthModal={setShowAuthModalFromAction}
+          setShowAuthModal={setShowAuthModal}
           cartCount={getCartCount()}
           handleNotificationClick={handleNotificationClick}
         />
