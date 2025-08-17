@@ -56,7 +56,7 @@ class PrivateBetaTester:
         """Authenticate both admin and regular user"""
         print("🔐 AUTHENTICATING USERS")
         
-        # Authenticate admin user
+        # Try to authenticate existing admin user first
         try:
             admin_response = self.session.post(f"{BASE_URL}/auth/login", json={
                 "email": ADMIN_EMAIL,
@@ -70,15 +70,51 @@ class PrivateBetaTester:
                 self.log_test("Admin Authentication", True, 
                             f"Admin authenticated: {admin_data['user']['name']} (Role: {admin_data['user']['role']})")
             else:
-                self.log_test("Admin Authentication", False, 
-                            f"HTTP {admin_response.status_code}", admin_response.text)
-                return False
+                # Try to create admin user if login fails
+                self.log_test("Admin Authentication (Existing)", False, 
+                            f"HTTP {admin_response.status_code} - Will try to create admin user", admin_response.text)
+                
+                # Create admin user
+                try:
+                    register_response = self.session.post(f"{BASE_URL}/auth/register", json={
+                        "email": ADMIN_EMAIL,
+                        "password": ADMIN_PASSWORD,
+                        "name": "TopKit Admin"
+                    })
+                    
+                    if register_response.status_code == 200:
+                        self.log_test("Admin User Creation", True, "Admin user created successfully")
+                        
+                        # Now try to login
+                        admin_response = self.session.post(f"{BASE_URL}/auth/login", json={
+                            "email": ADMIN_EMAIL,
+                            "password": ADMIN_PASSWORD
+                        })
+                        
+                        if admin_response.status_code == 200:
+                            admin_data = admin_response.json()
+                            self.admin_token = admin_data["token"]
+                            self.admin_id = admin_data["user"]["id"]
+                            self.log_test("Admin Authentication (New)", True, 
+                                        f"Admin authenticated: {admin_data['user']['name']} (Role: {admin_data['user']['role']})")
+                        else:
+                            self.log_test("Admin Authentication (New)", False, 
+                                        f"HTTP {admin_response.status_code}", admin_response.text)
+                            return False
+                    else:
+                        self.log_test("Admin User Creation", False, 
+                                    f"HTTP {register_response.status_code}", register_response.text)
+                        return False
+                        
+                except Exception as e:
+                    self.log_test("Admin User Creation", False, "", str(e))
+                    return False
                 
         except Exception as e:
             self.log_test("Admin Authentication", False, "", str(e))
             return False
         
-        # Authenticate regular user
+        # Try to authenticate existing regular user
         try:
             user_response = self.session.post(f"{BASE_URL}/auth/login", json={
                 "email": TEST_USER_EMAIL,
@@ -92,9 +128,45 @@ class PrivateBetaTester:
                 self.log_test("User Authentication", True, 
                             f"User authenticated: {user_data['user']['name']} (Role: {user_data['user']['role']})")
             else:
-                self.log_test("User Authentication", False, 
-                            f"HTTP {user_response.status_code}", user_response.text)
-                return False
+                # Try to create regular user if login fails
+                self.log_test("User Authentication (Existing)", False, 
+                            f"HTTP {user_response.status_code} - Will try to create user", user_response.text)
+                
+                # Create regular user
+                try:
+                    register_response = self.session.post(f"{BASE_URL}/auth/register", json={
+                        "email": TEST_USER_EMAIL,
+                        "password": TEST_USER_PASSWORD,
+                        "name": "Test User"
+                    })
+                    
+                    if register_response.status_code == 200:
+                        self.log_test("User Creation", True, "Regular user created successfully")
+                        
+                        # Now try to login
+                        user_response = self.session.post(f"{BASE_URL}/auth/login", json={
+                            "email": TEST_USER_EMAIL,
+                            "password": TEST_USER_PASSWORD
+                        })
+                        
+                        if user_response.status_code == 200:
+                            user_data = user_response.json()
+                            self.user_token = user_data["token"]
+                            self.user_id = user_data["user"]["id"]
+                            self.log_test("User Authentication (New)", True, 
+                                        f"User authenticated: {user_data['user']['name']} (Role: {user_data['user']['role']})")
+                        else:
+                            self.log_test("User Authentication (New)", False, 
+                                        f"HTTP {user_response.status_code}", user_response.text)
+                            return False
+                    else:
+                        self.log_test("User Creation", False, 
+                                    f"HTTP {register_response.status_code}", register_response.text)
+                        return False
+                        
+                except Exception as e:
+                    self.log_test("User Creation", False, "", str(e))
+                    return False
                 
         except Exception as e:
             self.log_test("User Authentication", False, "", str(e))
