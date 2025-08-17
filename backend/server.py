@@ -173,6 +173,16 @@ class User(BaseModel):
     last_login: Optional[datetime] = None  # Last successful login
     failed_login_attempts: int = 0  # Count of consecutive failed logins
     account_locked_until: Optional[datetime] = None  # Account lockout expiration
+    # Security Level 2 fields
+    two_factor_enabled: bool = False  # 2FA status
+    two_factor_secret: Optional[str] = None  # Secret for TOTP
+    two_factor_backup_codes: List[str] = []  # Backup codes for 2FA
+    # User status fields  
+    is_banned: bool = False  # Ban status
+    banned_by: Optional[str] = None  # ID of admin who banned user
+    banned_at: Optional[datetime] = None  # When user was banned
+    ban_reason: Optional[str] = None  # Reason for ban
+    suspicious_activity_score: int = 0  # Suspicious activity tracking
 
 class Jersey(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
