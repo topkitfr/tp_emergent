@@ -1342,8 +1342,21 @@ async def register(user_data: UserRegister, request: Request):
         related_id=None
     )
     
-    # In production, send actual email here
-    # For now, return the verification link in response (development only)
+    # Send email confirmation using Gmail SMTP
+    email_sent = False
+    if gmail_service:
+        try:
+            email_sent = gmail_service.send_user_confirmation_email(
+                user_email=user.email,
+                user_name=user.name,
+                confirmation_token=verification_token
+            )
+            if email_sent:
+                logger.info(f"Confirmation email sent successfully to {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send confirmation email to {user.email}: {e}")
+    
+    # Fallback verification link for development
     verification_link = f"https://topkit-admin.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
