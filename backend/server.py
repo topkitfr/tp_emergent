@@ -192,12 +192,14 @@ class Jersey(BaseModel):
 
 class Listing(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    jersey_id: str
+    jersey_id: str  # Reference to jersey in catalog
     seller_id: str
-    price: Optional[float] = None  # Price is optional - market determined like Discogs
+    size: JerseySize  # Size of this specific item
+    condition: JerseyCondition  # Condition of this specific item  
+    price: float  # Price for this specific listing (required)
     status: ListingStatus = ListingStatus.ACTIVE
-    description: str
-    images: List[str] = []
+    description: str  # Seller's description of this specific item
+    images: List[str] = []  # Photos of this specific item
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     # New fields for payment tracking
