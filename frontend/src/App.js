@@ -5146,7 +5146,7 @@ const AuthModal = ({ onClose }) => {
         )}
 
         <form 
-          onSubmit={handleSubmit} 
+          onSubmit={handleAuthSubmit} 
           noValidate
           className="space-y-4"
         >
