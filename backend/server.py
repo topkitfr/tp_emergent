@@ -5716,6 +5716,19 @@ async def approve_beta_access_request(
                     }
                 }
             )
+            
+            # Send welcome email for existing user
+            if gmail_service:
+                try:
+                    welcome_sent = gmail_service.send_beta_access_approved_email(
+                        user_email=access_request["email"],
+                        user_name=f"{access_request['first_name']} {access_request['last_name']}",
+                        temp_password=None  # Existing user, no temp password
+                    )
+                    if welcome_sent:
+                        logger.info(f"Beta access approval email sent to existing user {access_request['email']}")
+                except Exception as e:
+                    logger.error(f"Failed to send beta access approval email to existing user: {e}")
         else:
             # Create a temporary password for the user
             temp_password = f"{access_request['first_name'].lower()}{random.randint(1000, 9999)}"
