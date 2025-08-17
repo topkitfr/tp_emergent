@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://securekit.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-admin.preview.emergentagent.com/api"
 
 class JerseyReferenceSystemTester:
     def __init__(self):
