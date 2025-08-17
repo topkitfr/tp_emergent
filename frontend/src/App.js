@@ -11740,7 +11740,10 @@ const AppContent = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const actionText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
-        alert(`✅ Maillot retiré de ${actionText} !`);
+        // Create custom toast event
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: `✅ Maillot retiré de ${actionText} !`, type: 'success' }
+        }));
         return;
       }
       
@@ -11764,11 +11767,20 @@ const AppContent = () => {
       );
       
       const actionText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
-      alert(`✅ Maillot ajouté à ${actionText} !`);
+      // Create custom toast event
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: `✅ Maillot ajouté à ${actionText} !`, type: 'success' }
+      }));
       
     } catch (error) {
       console.error('Collection action error:', error);
-      alert(error.response?.data?.detail || 'Erreur lors de la gestion de la collection');
+      // Create custom toast event for errors
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors de la gestion de la collection',
+          type: 'error' 
+        }
+      }));
     }
   };
 
