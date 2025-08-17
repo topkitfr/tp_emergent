@@ -2767,7 +2767,7 @@ async def get_all_activities(admin_user: dict = Depends(get_current_user_admin),
     return {"activities": activities, "total": len(activities)}
 
 @api_router.get("/admin/traffic-stats")
-async def get_admin_traffic_stats(admin_id: str = Depends(get_current_admin)):
+async def get_admin_traffic_stats(admin_user: dict = Depends(get_current_user_admin)):
     """Get comprehensive traffic and usage statistics for admin dashboard"""
     
     # Get total counts
