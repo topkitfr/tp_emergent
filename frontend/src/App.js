@@ -11056,6 +11056,23 @@ const AppContent = () => {
     }
   };
 
+  const fetchApprovedJerseys = async () => {
+    try {
+      const response = await fetch(`${API}/api/jerseys/approved`, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setApprovedJerseys(data);
+      }
+    } catch (error) {
+      console.error('Error fetching approved jerseys:', error);
+    }
+  };
+
   const fetchListings = async (filters = {}) => {
     setLoading(true);
     try {
