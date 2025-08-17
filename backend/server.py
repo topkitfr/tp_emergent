@@ -3802,10 +3802,9 @@ async def create_checkout(request_data: CheckoutRequest, user_id: str = Depends(
 
 # User profile endpoint
 @api_router.get("/profile")
-async def get_profile(user_id: str = Depends(get_current_user)):
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    user = current_user
+    user_id = user["id"]
     
     # Get user stats
     owned_count = await db.collections.count_documents({"user_id": user_id, "collection_type": "owned"})
