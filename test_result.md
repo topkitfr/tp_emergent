@@ -1445,7 +1445,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit New Features Testing - Moderator Roles, Dynamic Stats & Database Cleanup"
+    - "TopKit Notifications Cliquables Testing"
+    - "TopKit User Profile Viewing Testing"
+    - "TopKit Mobile Interface Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
