@@ -15199,6 +15199,18 @@ const AdminPanel = () => {
   const [betaRequestsLoading, setBetaRequestsLoading] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showUserSettings, setShowUserSettings] = useState(false);
+
+  // Function to refresh user profile data (placeholder for AdminPanel)
+  const fetchUserProfile = async () => {
+    try {
+      // In AdminPanel context, we might want to refresh admin-specific data
+      // For now, this is a placeholder to prevent the error
+      console.log('Profile refresh requested in AdminPanel');
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
 
   useEffect(() => {
     if (user?.email === 'topkitfr@gmail.com') {
