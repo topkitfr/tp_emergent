@@ -49,7 +49,7 @@ app = FastAPI(title="TopKit - Soccer Jersey Marketplace")
 api_router = APIRouter(prefix="/api")
 
 # Security
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 # Security configurations
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_REQUIREMENTS = {
