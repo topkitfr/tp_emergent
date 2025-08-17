@@ -174,6 +174,44 @@ const SiteAccessGate = ({ children }) => {
 // Private Beta Landing Page
 const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showBetaRequestForm, setShowBetaRequestForm] = useState(false);
+  const [betaFormData, setBetaFormData] = useState({
+    email: '',
+    first_name: '',
+    last_name: '',
+    message: ''
+  });
+  const [betaFormSubmitting, setBetaFormSubmitting] = useState(false);
+  const [betaFormSuccess, setBetaFormSuccess] = useState(false);
+
+  const handleBetaFormSubmit = async (e) => {
+    e.preventDefault();
+    setBetaFormSubmitting(true);
+
+    try {
+      const response = await fetch(`${API}/api/beta/request-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(betaFormData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBetaFormSuccess(true);
+        setBetaFormData({ email: '', first_name: '', last_name: '', message: '' });
+      } else {
+        const errorData = await response.json();
+        alert(`Erreur: ${errorData.detail || 'Échec de la soumission'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting beta request:', error);
+      alert('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setBetaFormSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
