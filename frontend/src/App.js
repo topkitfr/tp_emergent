@@ -12241,6 +12241,8 @@ const AdminPanel = () => {
         fetchTrafficStats();
       } else if (activeTab === 'settings') {
         fetchSiteSettings();
+      } else if (activeTab === 'beta-requests') {
+        fetchBetaRequests();
       }
     }
   }, [user, activeTab]);
