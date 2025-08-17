@@ -4300,16 +4300,6 @@ const AuthModal = ({ onClose }) => {
         <form 
           onSubmit={handleSubmit} 
           className="space-y-4"
-          onLoad={() => console.log('📋 Form loaded')}
-          ref={(form) => {
-            if (form) {
-              console.log('📋 Form ref attached:', form);
-              // Add event listener as backup
-              form.addEventListener('submit', (e) => {
-                console.log('📋 NATIVE submit event triggered');
-              });
-            }
-          }}
         >
           {!isLogin && (
             <input
