@@ -116,15 +116,6 @@ const SiteAccessGate = ({ children }) => {
       const headers = {};
       const token = user?.token || localStorage.getItem('token');
       
-      // Temporary: If user is authenticated, grant access
-      if (token) {
-        console.log('User is authenticated, granting access');
-        setHasAccess(true);
-        setSiteMode('public');
-        setLoading(false);
-        return;
-      }
-      
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -138,6 +129,12 @@ const SiteAccessGate = ({ children }) => {
         setHasAccess(data.has_access);
         setSiteMode(data.mode);
         console.log('Access check result:', data);
+        
+        // If user is authenticated and site is in any mode, grant access
+        if (token && data.mode) {
+          console.log('User is authenticated, granting access to', data.mode, 'mode');
+          setHasAccess(true);
+        }
       } else {
         // If endpoint fails, fall back to environment variable
         setHasAccess(SITE_MODE === 'public');
