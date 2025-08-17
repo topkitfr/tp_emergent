@@ -12481,6 +12481,8 @@ const AdminPanel = () => {
   const [jerseyToEdit, setJerseyToEdit] = useState(null);
   const [siteMode, setSiteMode] = useState('public');
   const [siteSettingsLoading, setSiteSettingsLoading] = useState(false);
+  const [betaRequests, setBetaRequests] = useState([]);
+  const [betaRequestsLoading, setBetaRequestsLoading] = useState(false);
 
   useEffect(() => {
     if (user?.email === 'topkitfr@gmail.com') {
