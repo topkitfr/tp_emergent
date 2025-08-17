@@ -1607,14 +1607,14 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                 </button>
                 {user && (
                   <button 
-                    onClick={() => setCurrentView('create-listing')}
+                    onClick={() => setCurrentView('my-collection')}
                     className={`px-3 py-2 rounded transition-colors text-sm font-medium ${
-                      currentView === 'create-listing' 
+                      currentView === 'my-collection' 
                         ? 'bg-gray-700 text-white' 
                         : 'text-gray-300 hover:text-white hover:bg-gray-800'
                     }`}
                   >
-                    Create Listing
+                    My Collection
                   </button>
                 )}
               </nav>
