@@ -2433,18 +2433,57 @@ async def update_jersey(jersey_id: str, jersey_data: JerseyCreate, user_id: str 
 @api_router.post("/listings", response_model=Listing)
 async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get_current_non_admin_user)):
     """Create a new listing - restricted to non-admin users only"""
-    # Verify jersey exists
+    # Verify jersey exists and is approved
     jersey = await db.jerseys.find_one({"id": listing_data.jersey_id})
     if not jersey:
         raise HTTPException(status_code=404, detail="Jersey not found")
     
-    listing = Listing(**listing_data.dict(), seller_id=user_id)
+    # Only allow listings for approved jerseys
+    if jersey.get("status") != "approved":
+        raise HTTPException(status_code=400, detail="Can only create listings for approved jerseys")
+    
+    # Validate required fields
+    if not listing_data.size or not listing_data.condition:
+        raise HTTPException(status_code=422, detail="Size and condition are required for listings")
+    
+    if not listing_data.price or listing_data.price <= 0:
+        raise HTTPException(status_code=422, detail="Price is required and must be greater than 0")
+        
+    # Validate enums
+    try:
+        size_enum = JerseySize(listing_data.size.upper())
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid size: {listing_data.size}. Must be one of: XS, S, M, L, XL, XXL")
+    
+    try:
+        condition_enum = JerseyCondition(listing_data.condition.lower())
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid condition: {listing_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+    
+    # Create listing with validated data
+    listing = Listing(
+        jersey_id=listing_data.jersey_id,
+        seller_id=user_id,
+        size=size_enum,
+        condition=condition_enum,
+        price=listing_data.price,
+        description=listing_data.description.strip() if listing_data.description else "",
+        images=listing_data.images or []
+    )
+    
     await db.listings.insert_one(listing.dict())
     
-    # Update jersey valuation with new listing price (if price is provided)
-    if listing_data.price:
-        jersey_obj = Jersey(**jersey)
-        await update_jersey_valuation(jersey_obj, listing_data.price, "listing", listing.id)
+    # Update jersey valuation with new listing price
+    jersey_obj = Jersey(**jersey)
+    await update_jersey_valuation(jersey_obj, listing_data.price, "listing", listing.id)
+    
+    # Log listing creation
+    await log_user_activity(user_id, "listing_created", listing.id, {
+        "jersey_id": listing_data.jersey_id,
+        "size": listing_data.size,
+        "condition": listing_data.condition,
+        "price": listing_data.price
+    })
     
     return listing
 
