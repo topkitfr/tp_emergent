@@ -12399,6 +12399,28 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
           />
         )}
 
+        {showAddToCollectionModal && (
+          <AddToCollectionModal 
+            onClose={() => {
+              setShowAddToCollectionModal(false);
+              setSelectedJerseyForCollection(null);
+            }}
+            jersey={selectedJerseyForCollection}
+            onSubmit={addToCollectionDiscogs}
+          />
+        )}
+
+        {showCreateListingModal && selectedJerseyForListing && (
+          <MarketplaceListingModal 
+            onClose={() => {
+              setShowCreateListingModal(false);
+              setSelectedJerseyForListing(null);
+            }}
+            jersey={selectedJerseyForListing}
+            onSubmit={createListingFromCollection}
+          />
+        )}
+
         {showEditJersey && selectedEditJersey && (
           <EditJerseyModal 
             jersey={selectedEditJersey}
