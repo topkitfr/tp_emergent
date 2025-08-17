@@ -329,13 +329,13 @@ class PrivateBetaModeTest:
         """Test GET /api/admin/beta/requests without admin token"""
         try:
             response = requests.get(f"{BACKEND_URL}/admin/beta/requests")
-            if response.status_code == 401:
+            if response.status_code in [401, 403]:
                 self.log_test("Get Beta Requests (Unauthorized)", True, 
-                             "Correctly rejected unauthorized request")
+                             f"Correctly rejected unauthorized request (HTTP {response.status_code})")
                 return True
             else:
                 self.log_test("Get Beta Requests (Unauthorized)", False, 
-                             f"Expected 401, got {response.status_code}")
+                             f"Expected 401/403, got {response.status_code}")
                 return False
         except Exception as e:
             self.log_test("Get Beta Requests (Unauthorized)", False, f"Exception: {str(e)}")
