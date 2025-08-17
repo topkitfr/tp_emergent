@@ -401,6 +401,15 @@ class ShippingRate(BaseModel):
     zone: ShippingZone
     price: float
     currency: str = "EUR"
+
+class UserAddressSettings(BaseModel):
+    full_name: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    phone_number: Optional[str] = None
     
 class SellerSettings(BaseModel):
     is_seller: bool = False
