@@ -1415,45 +1415,86 @@ async def resend_verification_email(email: EmailStr):
         "dev_verification_link": verification_link
     }
 
+# Enhanced authentication endpoint with 2FA support and suspicious activity monitoring
 @api_router.post("/auth/login")
-async def login(user_data: UserLogin):
-    """Enhanced login with email verification check"""
-    user = await db.users.find_one({"email": user_data.email, "provider": "custom"})
-    if not user or not verify_password(user_data.password, user["password_hash"]):
-        raise HTTPException(status_code=400, detail="Email ou mot de passe incorrect")
-    
-    # Check if email is verified (allow admin to bypass this check)
-    if not user.get("email_verified", False) and user["email"] != ADMIN_EMAIL:
-        raise HTTPException(
-            status_code=403, 
-            detail="Veuillez d'abord vérifier votre adresse email. Vérifiez votre boîte mail ou demandez un nouveau lien de vérification."
+async def login(user_data: UserLogin, request: Request):
+    try:
+        # Check if IP has too many failed attempts
+        client_ip = request.client.host
+        
+        # Find user
+        user = await db.users.find_one({"email": user_data.email})
+        if not user:
+            await log_suspicious_activity("unknown", "failed_login_unknown_email", f"Login attempt with non-existent email: {user_data.email}")
+            raise HTTPException(status_code=401, detail="Identifiants incorrects")
+        
+        # Check if account is banned
+        if user.get('is_banned', False):
+            await log_suspicious_activity(user['id'], "login_attempt_banned_account", f"Login attempt on banned account: {user_data.email}")
+            raise HTTPException(status_code=403, detail="Compte suspendu. Contactez l'administration.")
+        
+        # Check if account is locked
+        if user.get('account_locked_until') and datetime.fromisoformat(user['account_locked_until'].replace('Z', '+00:00')) > datetime.utcnow():
+            await log_suspicious_activity(user['id'], "login_attempt_locked_account", f"Login attempt on locked account: {user_data.email}")
+            raise HTTPException(status_code=423, detail="Compte temporairement verrouillé")
+        
+        # Verify password
+        if not verify_password(user_data.password, user['password_hash']):
+            # Increment failed login attempts
+            failed_attempts = user.get('failed_login_attempts', 0) + 1
+            update_data = {'failed_login_attempts': failed_attempts}
+            
+            # Lock account after 5 failed attempts
+            if failed_attempts >= 5:
+                update_data['account_locked_until'] = datetime.utcnow() + timedelta(hours=1)
+                await log_suspicious_activity(user['id'], "multiple_failed_logins", f"Account locked after {failed_attempts} failed login attempts")
+            
+            await db.users.update_one({"id": user['id']}, {"$set": update_data})
+            await log_suspicious_activity(user['id'], "failed_login", f"Failed password attempt #{failed_attempts}")
+            raise HTTPException(status_code=401, detail="Identifiants incorrects")
+        
+        # Reset failed login attempts on successful password verification
+        await db.users.update_one(
+            {"id": user['id']}, 
+            {"$set": {"failed_login_attempts": 0, "last_login": datetime.utcnow()}}
         )
-    
-    # Ensure admin account has admin role
-    if user["email"] == ADMIN_EMAIL and user.get("role") != "admin":
-        await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin"}})
-        user["role"] = "admin"
-    
-    # Update last login
-    await db.users.update_one(
-        {"id": user["id"]}, 
-        {"$set": {"last_login": datetime.utcnow()}}
-    )
-    
-    # Log successful login
-    await log_user_activity(user["id"], "user_logged_in", None, {
-        "login_time": datetime.utcnow().isoformat(),
-        "email_verified": user.get("email_verified", False)
-    })
-    
-    token = create_jwt_token(user["id"])
-    return {"token": token, "user": {
-        "id": user["id"], 
-        "email": user["email"], 
-        "name": user["name"],
-        "role": user.get("role", "user"),
-        "email_verified": user.get("email_verified", False)
-    }}
+        
+        # Check if 2FA is enabled
+        if user.get('two_factor_enabled', False):
+            # For 2FA users, return a temporary token for 2FA verification
+            temp_payload = {
+                'user_id': user['id'],
+                'type': '2fa_pending',
+                'exp': datetime.utcnow() + timedelta(minutes=5)
+            }
+            temp_token = jwt.encode(temp_payload, SECRET_KEY, algorithm='HS256')
+            return {
+                "requires_2fa": True,
+                "temp_token": temp_token,
+                "message": "Code d'authentification à deux facteurs requis"
+            }
+        
+        # Generate main token for non-2FA users
+        token = create_jwt_token(user['id'])
+        
+        return {
+            "token": token,
+            "user": {
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                "role": user.get('role', 'user'),
+                "picture": user.get('picture'),
+                "two_factor_enabled": user.get('two_factor_enabled', False)
+            },
+            "message": "Connexion réussie"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la connexion")
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
