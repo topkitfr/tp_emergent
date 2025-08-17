@@ -8648,6 +8648,18 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
             >
               💬 Messages
             </button>
+            {user?.email === 'topkitfr@gmail.com' && (
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`py-3 md:py-4 px-2 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'settings'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                ⚙️ Paramètres
+              </button>
+            )}
           </nav>
         </div>
       </div>
