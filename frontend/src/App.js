@@ -7944,6 +7944,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
       fetchFriendsData();
       fetchUserListings();
       fetchPaymentHistoryProfile();
+      fetchSiteSettings();
     }
   }, [user, lastRefresh]);
 
