@@ -325,7 +325,7 @@ class TopKitProfileNotificationTester:
             # Find an unread notification
             unread_notification = None
             for notification in notifications:
-                if not notification.get("is_read", True):  # Default to True if field missing
+                if not notification.get("is_read", False):  # Look for unread notifications
                     unread_notification = notification
                     break
             
