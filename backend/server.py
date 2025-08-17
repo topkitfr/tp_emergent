@@ -1751,6 +1751,377 @@ async def regenerate_backup_codes(verification_data: TwoFactorVerify, current_us
         logger.error(f"Backup codes regeneration error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la régénération des codes de sauvegarde")
 
+# Password change endpoint
+@api_router.post("/auth/change-password")
+async def change_password(password_data: PasswordChange, current_user: dict = Depends(get_current_user)):
+    """Change user password"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user from database
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Verify current password
+        if not verify_password(password_data.current_password, user['password_hash']):
+            raise HTTPException(status_code=400, detail="Mot de passe actuel incorrect")
+        
+        # Validate new password strength
+        is_valid, message = validate_password_strength(password_data.new_password)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=message)
+        
+        # Hash new password
+        new_password_hash = hash_password(password_data.new_password)
+        
+        # Update password
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "password_hash": new_password_hash,
+                "failed_login_attempts": 0  # Reset failed attempts
+            }}
+        )
+        
+        await log_user_activity(user_id, "password_changed", None, {
+            "changed_at": datetime.utcnow().isoformat()
+        })
+        
+        return {"message": "Mot de passe modifié avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password change error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du changement de mot de passe")
+
+# Admin User Management Endpoints (Security Level 2)
+@api_router.post("/admin/users/{user_id}/ban")
+async def ban_user(user_id: str, ban_data: UserBan, current_user: dict = Depends(get_current_user_admin)):
+    """Ban a user account"""
+    try:
+        # Check if trying to ban admin
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        if target_user.get('role') in ['admin', 'moderator']:
+            raise HTTPException(status_code=403, detail="Impossible de bannir un administrateur ou modérateur")
+        
+        # Calculate ban expiration if not permanent
+        ban_expires = None
+        if not ban_data.permanent and ban_data.ban_duration_days:
+            ban_expires = datetime.utcnow() + timedelta(days=ban_data.ban_duration_days)
+        
+        # Update user ban status
+        update_data = {
+            "is_banned": True,
+            "banned_by": current_user['id'],
+            "banned_at": datetime.utcnow(),
+            "ban_reason": ban_data.reason
+        }
+        
+        if ban_expires:
+            update_data["ban_expires"] = ban_expires
+        
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+        
+        # Log admin activity
+        await log_user_activity(current_user['id'], "user_banned", user_id, {
+            "banned_user_email": target_user['email'],
+            "reason": ban_data.reason,
+            "permanent": ban_data.permanent,
+            "expires": ban_expires.isoformat() if ban_expires else None
+        })
+        
+        # Log suspicious activity for the banned user
+        await log_suspicious_activity(user_id, "account_banned", f"Account banned by admin: {ban_data.reason}", "high")
+        
+        ban_type = "permanent" if ban_data.permanent else f"temporaire ({ban_data.ban_duration_days} jours)"
+        return {"message": f"Utilisateur banni avec succès ({ban_type})"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ban user error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du bannissement")
+
+@api_router.post("/admin/users/{user_id}/unban")
+async def unban_user(user_id: str, current_user: dict = Depends(get_current_user_admin)):
+    """Unban a user account"""
+    try:
+        # Check if user exists and is banned
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        if not target_user.get('is_banned'):
+            raise HTTPException(status_code=400, detail="Utilisateur non banni")
+        
+        # Remove ban
+        await db.users.update_one(
+            {"id": user_id}, 
+            {"$set": {
+                "is_banned": False,
+                "banned_by": None,
+                "banned_at": None,
+                "ban_reason": None,
+                "ban_expires": None
+            }}
+        )
+        
+        # Log admin activity
+        await log_user_activity(current_user['id'], "user_unbanned", user_id, {
+            "unbanned_user_email": target_user['email']
+        })
+        
+        return {"message": "Utilisateur débanni avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unban user error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du débannissement")
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user_account(user_id: str, current_user: dict = Depends(get_current_user_admin)):
+    """Delete a user account permanently"""
+    try:
+        # Check if user exists
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Check if trying to delete admin
+        if target_user.get('role') in ['admin']:
+            raise HTTPException(status_code=403, detail="Impossible de supprimer un administrateur")
+        
+        # Check if trying to delete self
+        if user_id == current_user['id']:
+            raise HTTPException(status_code=403, detail="Impossible de supprimer votre propre compte")
+        
+        # Delete all user-related data
+        user_email = target_user['email']
+        
+        # Delete user's jerseys, collections, listings, messages, etc.
+        await db.jerseys.delete_many({"created_by": user_id})
+        await db.collections.delete_many({"user_id": user_id})
+        await db.listings.delete_many({"seller_id": user_id})
+        await db.messages.delete_many({"$or": [{"sender_id": user_id}, {"recipient_id": user_id}]})
+        await db.notifications.delete_many({"user_id": user_id})
+        await db.user_activities.delete_many({"user_id": user_id})
+        await db.suspicious_activities.delete_many({"user_id": user_id})
+        await db.friendships.delete_many({"$or": [{"requester_id": user_id}, {"addressee_id": user_id}]})
+        
+        # Delete user profile and user account
+        await db.user_profiles.delete_one({"user_id": user_id})
+        await db.users.delete_one({"id": user_id})
+        
+        # Log admin activity
+        await log_user_activity(current_user['id'], "user_deleted", user_id, {
+            "deleted_user_email": user_email,
+            "deletion_reason": "Admin deletion"
+        })
+        
+        return {"message": f"Compte utilisateur {user_email} supprimé définitivement"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete user error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la suppression")
+
+@api_router.get("/admin/users/{user_id}/security")
+async def get_user_security_info(user_id: str, current_user: dict = Depends(get_current_user_admin)):
+    """Get user security information for admin review"""
+    try:
+        # Get user
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Get suspicious activities
+        suspicious_activities = await db.suspicious_activities.find(
+            {"user_id": user_id}
+        ).sort("detected_at", -1).limit(50).to_list(50)
+        
+        # Remove MongoDB ObjectId
+        for activity in suspicious_activities:
+            activity.pop('_id', None)
+        
+        # Get recent login activities
+        recent_activities = await db.user_activities.find(
+            {"user_id": user_id, "action": {"$in": ["user_logged_in", "failed_login", "2fa_enabled", "password_changed"]}}
+        ).sort("created_at", -1).limit(20).to_list(20)
+        
+        # Remove MongoDB ObjectId
+        for activity in recent_activities:
+            activity.pop('_id', None)
+        
+        security_info = {
+            "user_id": user_id,
+            "email": user['email'],
+            "name": user['name'],
+            "role": user.get('role', 'user'),
+            "account_status": {
+                "is_banned": user.get('is_banned', False),
+                "ban_reason": user.get('ban_reason'),
+                "banned_at": user.get('banned_at'),
+                "ban_expires": user.get('ban_expires'),
+                "banned_by": user.get('banned_by'),
+                "account_locked_until": user.get('account_locked_until'),
+                "email_verified": user.get('email_verified', False)
+            },
+            "security_features": {
+                "two_factor_enabled": user.get('two_factor_enabled', False),
+                "failed_login_attempts": user.get('failed_login_attempts', 0),
+                "suspicious_activity_score": user.get('suspicious_activity_score', 0)
+            },
+            "timestamps": {
+                "created_at": user.get('created_at'),
+                "last_login": user.get('last_login'),
+                "email_verified_at": user.get('email_verified_at')
+            },
+            "suspicious_activities": suspicious_activities,
+            "recent_activities": recent_activities
+        }
+        
+        return security_info
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get user security info error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des informations de sécurité")
+
+# Enhanced user profile endpoints with address settings
+@api_router.get("/users/{user_id}/profile")
+async def get_user_profile_detailed(user_id: str, current_user: dict = Depends(get_current_user_optional)):
+    """Get detailed user profile with privacy controls"""
+    try:
+        # Get user basic info
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Check if user is banned
+        if user.get('is_banned', False):
+            raise HTTPException(status_code=403, detail="Profil non accessible")
+        
+        # Get user profile
+        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        
+        # Determine what information to show based on privacy settings and current user
+        is_owner = current_user and current_user['id'] == user_id
+        is_admin = current_user and current_user.get('role') in ['admin', 'moderator']
+        
+        # Base profile info
+        profile_info = {
+            "id": user['id'],
+            "email": user['email'] if (is_owner or is_admin) else None,
+            "name": user['name'],
+            "role": user.get('role', 'user'),
+            "created_at": user.get('created_at'),
+            "last_login": user.get('last_login') if (is_owner or is_admin) else None,
+            "two_factor_enabled": user.get('two_factor_enabled', False) if is_owner else None
+        }
+        
+        if user_profile:
+            # Remove MongoDB ObjectId
+            user_profile.pop('_id', None)
+            
+            privacy_settings = user_profile.get('privacy_settings', {})
+            
+            # Apply privacy controls
+            if not is_owner and not is_admin:
+                # Hide sensitive information based on privacy settings
+                if not privacy_settings.get('show_location', True):
+                    user_profile.pop('location', None)
+                if not privacy_settings.get('show_join_date', True):
+                    profile_info.pop('created_at', None)
+                
+                # Hide address information for non-owners
+                if 'seller_settings' in user_profile and 'address_settings' in user_profile['seller_settings']:
+                    user_profile['seller_settings'].pop('address_settings', None)
+                if 'buyer_settings' in user_profile and 'address_settings' in user_profile['buyer_settings']:
+                    user_profile['buyer_settings'].pop('address_settings', None)
+            
+            profile_info.update(user_profile)
+        
+        return profile_info
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get user profile error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération du profil")
+
+@api_router.put("/users/profile/settings")
+async def update_profile_settings(
+    settings_data: Dict[str, Any], 
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user profile settings including address information"""
+    try:
+        user_id = current_user['id']
+        
+        # Get or create user profile
+        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        if not user_profile:
+            # Create new profile
+            user_profile = UserProfile(user_id=user_id).dict()
+            await db.user_profiles.insert_one(user_profile)
+        
+        # Prepare update data
+        update_data = {"updated_at": datetime.utcnow()}
+        
+        # Update basic profile info
+        if 'display_name' in settings_data:
+            update_data['display_name'] = settings_data['display_name']
+        if 'bio' in settings_data:
+            update_data['bio'] = settings_data['bio']
+        if 'location' in settings_data:
+            update_data['location'] = settings_data['location']
+        
+        # Update seller settings including address
+        if 'seller_settings' in settings_data:
+            seller_data = settings_data['seller_settings']
+            update_data['seller_settings'] = {**user_profile.get('seller_settings', {}), **seller_data}
+        
+        # Update buyer settings including address
+        if 'buyer_settings' in settings_data:
+            buyer_data = settings_data['buyer_settings']
+            update_data['buyer_settings'] = {**user_profile.get('buyer_settings', {}), **buyer_data}
+        
+        # Update privacy settings
+        if 'privacy_settings' in settings_data:
+            privacy_data = settings_data['privacy_settings']
+            update_data['privacy_settings'] = {**user_profile.get('privacy_settings', {}), **privacy_data}
+        
+        # Update collection settings
+        if 'collection_settings' in settings_data:
+            collection_data = settings_data['collection_settings']
+            update_data['collection_settings'] = {**user_profile.get('collection_settings', {}), **collection_data}
+        
+        # Apply update
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+        
+        await log_user_activity(user_id, "profile_settings_updated", None, {
+            "updated_sections": list(settings_data.keys())
+        })
+        
+        return {"message": "Paramètres du profil mis à jour avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update profile settings error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour des paramètres")
+
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
     """Request password reset email"""
