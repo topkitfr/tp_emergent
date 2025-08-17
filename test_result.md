@@ -1260,7 +1260,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Google OAuth Authentication System Removal Verification"
+    - "TopKit Improved Cart Functionality & Marketplace UX"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
