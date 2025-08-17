@@ -2487,6 +2487,44 @@ async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get
     
     return listing
 
+@api_router.get("/jerseys/approved", response_model=List[Dict])
+async def get_approved_jerseys(
+    team: Optional[str] = None,
+    season: Optional[str] = None,
+    league: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20
+):
+    """Get approved jerseys available for creating listings"""
+    # Build query for approved jerseys only
+    query = {"status": "approved"}
+    
+    if team:
+        query["team"] = {"$regex": team, "$options": "i"}
+    if season:
+        query["season"] = {"$regex": season, "$options": "i"}
+    if league:
+        query["league"] = {"$regex": league, "$options": "i"}
+    
+    jerseys = await db.jerseys.find(query).skip(skip).limit(limit).to_list(length=limit)
+    
+    # Convert for JSON serialization and add listing count
+    result = []
+    for jersey in jerseys:
+        # Remove MongoDB ObjectId to avoid serialization issues
+        jersey.pop('_id', None)
+        
+        # Count active listings for this jersey
+        listing_count = await db.listings.count_documents({
+            "jersey_id": jersey["id"],
+            "status": "active"
+        })
+        jersey["active_listings"] = listing_count
+        
+        result.append(jersey)
+    
+    return result
+
 @api_router.get("/listings", response_model=List[Dict])
 async def get_listings(
     team: Optional[str] = None,
