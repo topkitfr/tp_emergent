@@ -12414,7 +12414,9 @@ const AdminPanel = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <SiteAccessGate>
+        <AppContent />
+      </SiteAccessGate>
     </AuthProvider>
   );
 };
