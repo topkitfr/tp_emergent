@@ -90,11 +90,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           // Show success message
           console.log('✅ Login completed successfully');
           
-          // Call success callback to update app state
-          if (onLoginSuccess) {
-            onLoginSuccess(token, user);
-          }
-          
         } else {
           console.error('❌ Invalid login response structure');
           setError('Réponse d\'authentification invalide');
