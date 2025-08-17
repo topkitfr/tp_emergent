@@ -14627,8 +14627,13 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onLoginSuccess={(token, user) => {
-            console.log('Login success callback - AppContent AuthModal');
+            console.log('🔄 Login success callback - updating authentication state in AppContent');
             setShowAuthModal(false);
+            
+            // Update authentication state using AuthProvider
+            if (login) {
+              login(token, user);
+            }
           }}
         />
       </div>
