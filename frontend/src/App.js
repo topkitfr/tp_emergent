@@ -183,6 +183,7 @@ const SiteAccessGate = ({ children }) => {
 
 // Private Beta Landing Page
 const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
+  const { login } = useAuth(); // Add useAuth hook
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showBetaRequestForm, setShowBetaRequestForm] = useState(false);
   const [betaFormData, setBetaFormData] = useState({
