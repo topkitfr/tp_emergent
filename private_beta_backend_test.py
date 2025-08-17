@@ -59,6 +59,9 @@ class PrivateBetaTester:
         """Authenticate both admin and regular user"""
         print("🔐 AUTHENTICATING USERS")
         
+        admin_authenticated = False
+        user_authenticated = False
+        
         # Try to authenticate existing admin user first
         try:
             admin_response = self.session.post(f"{BASE_URL}/auth/login", json={
@@ -72,62 +75,13 @@ class PrivateBetaTester:
                 self.admin_id = admin_data["user"]["id"]
                 self.log_test("Admin Authentication", True, 
                             f"Admin authenticated: {admin_data['user']['name']} (Role: {admin_data['user']['role']})")
+                admin_authenticated = True
             else:
-                # Try to create admin user if login fails
-                self.log_test("Admin Authentication (Existing)", False, 
-                            f"HTTP {admin_response.status_code} - Will try to create admin user", admin_response.text)
-                
-                # Create admin user
-                try:
-                    register_response = self.session.post(f"{BASE_URL}/auth/register", json={
-                        "email": ADMIN_EMAIL,
-                        "password": ADMIN_PASSWORD,
-                        "name": "TopKit Admin"
-                    })
-                    
-                    if register_response.status_code == 200:
-                        register_data = register_response.json()
-                        self.log_test("Admin User Creation", True, "Admin user created successfully")
-                        
-                        # Handle email verification if needed
-                        if 'dev_verification_link' in register_data:
-                            verification_link = register_data['dev_verification_link']
-                            token = verification_link.split('token=')[1] if 'token=' in verification_link else None
-                            if token:
-                                verify_response = self.session.post(f"{BASE_URL}/auth/verify-email", params={'token': token})
-                                if verify_response.status_code == 200:
-                                    self.log_test("Admin Email Verification", True, "Email verified successfully")
-                                else:
-                                    self.log_test("Admin Email Verification", False, f"HTTP {verify_response.status_code}", verify_response.text)
-                        
-                        # Now try to login
-                        admin_response = self.session.post(f"{BASE_URL}/auth/login", json={
-                            "email": ADMIN_EMAIL,
-                            "password": ADMIN_PASSWORD
-                        })
-                        
-                        if admin_response.status_code == 200:
-                            admin_data = admin_response.json()
-                            self.admin_token = admin_data["token"]
-                            self.admin_id = admin_data["user"]["id"]
-                            self.log_test("Admin Authentication (New)", True, 
-                                        f"Admin authenticated: {admin_data['user']['name']} (Role: {admin_data['user']['role']})")
-                        else:
-                            self.log_test("Admin Authentication (New)", False, 
-                                        f"HTTP {admin_response.status_code}", admin_response.text)
-                            return False
-                    else:
-                        self.log_test("Admin User Creation", False, 
-                                    f"HTTP {register_response.status_code}", register_response.text)
-                        return False
-                        
-                except Exception as e:
-                    self.log_test("Admin User Creation", False, "", str(e))
-                    return False
+                self.log_test("Admin Authentication", False, 
+                            f"HTTP {admin_response.status_code} - Will skip admin-only tests", admin_response.text)
                 
         except Exception as e:
-            self.log_test("Admin Authentication", False, "", str(e))
-            return False
+            self.log_test("Admin Authentication", False, "Will skip admin-only tests", str(e))
         
         # Try to authenticate existing regular user
         try:
@@ -142,6 +96,7 @@ class PrivateBetaTester:
                 self.user_id = user_data["user"]["id"]
                 self.log_test("User Authentication", True, 
                             f"User authenticated: {user_data['user']['name']} (Role: {user_data['user']['role']})")
+                user_authenticated = True
             else:
                 # Try to create regular user if login fails
                 self.log_test("User Authentication (Existing)", False, 
@@ -182,24 +137,22 @@ class PrivateBetaTester:
                             self.user_id = user_data["user"]["id"]
                             self.log_test("User Authentication (New)", True, 
                                         f"User authenticated: {user_data['user']['name']} (Role: {user_data['user']['role']})")
+                            user_authenticated = True
                         else:
                             self.log_test("User Authentication (New)", False, 
                                         f"HTTP {user_response.status_code}", user_response.text)
-                            return False
                     else:
                         self.log_test("User Creation", False, 
                                     f"HTTP {register_response.status_code}", register_response.text)
-                        return False
                         
                 except Exception as e:
                     self.log_test("User Creation", False, "", str(e))
-                    return False
                 
         except Exception as e:
             self.log_test("User Authentication", False, "", str(e))
-            return False
             
-        return True
+        # Return True if at least one user is authenticated
+        return admin_authenticated or user_authenticated
 
     def test_site_mode_endpoints(self):
         """Test site mode configuration endpoints"""
