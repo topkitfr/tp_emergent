@@ -3197,6 +3197,187 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   );
 };
 
+// Marketplace Listing Modal - Discogs-style (from approved catalog)
+const MarketplaceListingModal = ({ onClose, jersey, onSubmit }) => {
+  const [formData, setFormData] = useState({
+    size: '',
+    condition: '',
+    price: '',
+    description: '',
+    images: []
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (!formData.size || !formData.condition || !formData.price) {
+        throw new Error('Size, condition, and price are required');
+      }
+
+      if (parseFloat(formData.price) <= 0) {
+        throw new Error('Price must be greater than 0');
+      }
+
+      const listingData = {
+        jersey_id: jersey.id,
+        size: formData.size,
+        condition: formData.condition,
+        price: parseFloat(formData.price),
+        description: formData.description.trim(),
+        images: formData.images
+      };
+
+      await onSubmit(listingData);
+    } catch (error) {
+      setError(error.message || 'Failed to create listing');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Create Marketplace Listing</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        {jersey && (
+          <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">Jersey from Catalog</h3>
+            <div className="flex items-center space-x-4">
+              {jersey.images && jersey.images[0] && (
+                <img 
+                  src={jersey.images[0]} 
+                  alt={`${jersey.team} ${jersey.season}`}
+                  className="w-16 h-16 object-cover rounded border border-gray-600"
+                />
+              )}
+              <div>
+                <p className="text-white font-semibold">{jersey.team} - {jersey.season}</p>
+                {jersey.player && <p className="text-gray-300">{jersey.player}</p>}
+                {jersey.league && <p className="text-gray-400 text-sm">{jersey.league}</p>}
+                <p className="text-blue-400 text-sm">{jersey.active_listings || 0} active listing(s)</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Size */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Size *</label>
+              <select
+                required
+                value={formData.size}
+                onChange={(e) => setFormData({...formData, size: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+              >
+                <option value="">Select Size</option>
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+              </select>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Condition *</label>
+              <select
+                required
+                value={formData.condition}
+                onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+              >
+                <option value="">Select Condition</option>
+                <option value="new">New</option>
+                <option value="near_mint">Near Mint</option>
+                <option value="very_good">Very Good</option>
+                <option value="good">Good</option>
+                <option value="poor">Poor</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Price (€) *</label>
+            <input
+              type="number"
+              placeholder="Enter price (minimum 0.10€)"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+              step="0.01"
+              min="0.10"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Description *</label>
+            <textarea
+              placeholder="Describe the condition of your specific item, any flaws, special features, authenticity details, etc."
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white h-32"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Photos of Your Item</label>
+            <ImageUpload 
+              images={formData.images}
+              setImages={(images) => setFormData({...formData, images})}
+            />
+            <p className="text-xs text-gray-400 mt-2">
+              Upload photos of your specific item. High-quality images showing condition help with sales.
+            </p>
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-white text-black py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-semibold"
+            >
+              {loading ? 'Creating Listing...' : 'Create Listing'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Edit Jersey Modal Component
 const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
   const [formData, setFormData] = useState({
