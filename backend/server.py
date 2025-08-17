@@ -730,6 +730,79 @@ def verify_password_reset_token(token: str) -> tuple[bool, str, dict]:
     except jwt.PyJWTError:
         return False, "Token invalide", {}
 
+async def send_password_reset_email(email: str, token: str, user_name: str = ""):
+    """Send password reset email using SendGrid"""
+    if not SENDGRID_API_KEY:
+        logger.error("Cannot send password reset email: SENDGRID_API_KEY not configured")
+        return False
+    
+    try:
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+        
+        # Create reset link (in production, use your actual domain)
+        reset_link = f"https://topkit-beta.preview.emergentagent.com/reset-password?token={token}"
+        
+        # HTML email content
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #1a56db;">TopKit</h1>
+                    <h2 style="color: #333;">Réinitialisation de mot de passe</h2>
+                </div>
+                
+                <p>Bonjour{f" {user_name}" if user_name else ""},</p>
+                
+                <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte TopKit.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_link}" 
+                       style="background-color: #1a56db; color: white; padding: 12px 30px; 
+                              text-decoration: none; border-radius: 5px; display: inline-block;">
+                        Réinitialiser mon mot de passe
+                    </a>
+                </div>
+                
+                <p><strong>Ce lien est valide pendant 2 heures seulement.</strong></p>
+                
+                <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité.</p>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                
+                <p style="font-size: 12px; color: #666;">
+                    Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :<br>
+                    <a href="{reset_link}">{reset_link}</a>
+                </p>
+                
+                <p style="font-size: 12px; color: #666; text-align: center;">
+                    TopKit - Marketplace de maillots de football
+                </p>
+            </body>
+        </html>
+        """
+        
+        message = Mail(
+            from_email=SENDER_EMAIL,
+            to_emails=email,
+            subject="TopKit - Réinitialisation de mot de passe",
+            html_content=html_content
+        )
+        
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        
+        if response.status_code == 202:
+            logger.info(f"Password reset email sent successfully to {email}")
+            return True
+        else:
+            logger.error(f"Failed to send password reset email: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error sending password reset email: {e}")
+        return False
+
 def verify_email_verification_token(token: str) -> tuple[bool, str, dict]:
     """Verify email verification token"""
     try:
