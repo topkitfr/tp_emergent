@@ -115,6 +115,16 @@ const SiteAccessGate = ({ children }) => {
     try {
       const headers = {};
       const token = user?.token || localStorage.getItem('token');
+      
+      // Temporary: If user is authenticated, grant access
+      if (token) {
+        console.log('User is authenticated, granting access');
+        setHasAccess(true);
+        setSiteMode('public');
+        setLoading(false);
+        return;
+      }
+      
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
