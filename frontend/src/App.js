@@ -1867,7 +1867,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                 </button>
 
                 {/* Notifications */}
-                {user && <NotificationBell />}
+                {user && <NotificationBell onNotificationClick={handleNotificationClick} />}
 
                 {/* Bouton de connexion pour utilisateurs non connectés */}
                 {!user && (
