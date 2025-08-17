@@ -5765,14 +5765,9 @@ async def approve_beta_access_request(
 async def reject_beta_access_request(
     request_id: str,
     reject_data: RejectBetaRequest,
-    user_id: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_admin)
 ):
     """Reject a beta access request (admin only)"""
-    
-    # Check if user is admin
-    admin_user = await db.users.find_one({"id": user_id})
-    if not admin_user or admin_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
     
     # Get the request
     access_request = await db.beta_access_requests.find_one({"id": request_id})
@@ -5790,13 +5785,13 @@ async def reject_beta_access_request(
                 "status": "rejected",
                 "rejection_reason": reject_data.reason,
                 "processed_at": datetime.utcnow(),
-                "processed_by": user_id
+                "processed_by": current_user["id"]
             }
         }
     )
     
     # Log activity
-    await log_user_activity(user_id, "beta_access_rejected", access_request["email"], {
+    await log_user_activity(current_user["id"], "beta_access_rejected", access_request["email"], {
         "request_id": request_id,
         "user_name": f"{access_request['first_name']} {access_request['last_name']}",
         "user_email": access_request["email"],
