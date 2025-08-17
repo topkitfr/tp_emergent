@@ -90,11 +90,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           // Show success message
           console.log('✅ Login completed successfully');
           
-          // Reload page to update UI state
-          setTimeout(() => {
-            console.log('🔄 Reloading page to update authentication state');
-            window.location.reload();
-          }, 500);
+          // Call success callback to update app state
+          if (onLoginSuccess) {
+            onLoginSuccess(token, user);
+          }
           
         } else {
           console.error('❌ Invalid login response structure');
