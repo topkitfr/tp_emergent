@@ -13831,7 +13831,7 @@ const AppContent = () => {
 
   // Event listeners for custom events from subcomponents
   useEffect(() => {
-    const handleShowAuthModal = () => setShowAuthModalFromAction(true);
+    const handleShowAuthModal = () => setShowAuthModal(true);
     const handleChangeView = (e) => setCurrentView(e.detail);
     
     window.addEventListener('showAuthModal', handleShowAuthModal);
