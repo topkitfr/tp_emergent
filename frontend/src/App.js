@@ -11096,6 +11096,108 @@ const SearchFilter = ({ onFilter }) => {
   );
 };
 
+// Approved Jerseys Catalog Component
+const ApprovedJerseysCatalog = ({ onCreateListing, approvedJerseys, onFetch }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredJerseys, setFilteredJerseys] = useState([]);
+
+  useEffect(() => {
+    onFetch();
+  }, []);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredJerseys(approvedJerseys);
+    } else {
+      const filtered = approvedJerseys.filter(jersey =>
+        jersey.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        jersey.season.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (jersey.player && jersey.player.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (jersey.league && jersey.league.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredJerseys(filtered);
+    }
+  }, [approvedJerseys, searchTerm]);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-4">Create Marketplace Listing</h1>
+        <p className="text-gray-400 mb-6">Select a jersey from our approved catalog to create your listing with specific size, condition, and price.</p>
+        
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search jerseys by team, season, player, or league..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
+          />
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {filteredJerseys.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-gray-400 text-lg mb-4">
+            {searchTerm ? 'No jerseys found matching your search.' : 'No approved jerseys available yet.'}
+          </div>
+          {!searchTerm && (
+            <p className="text-gray-500 text-sm">Jerseys need to be submitted and approved by admins before they can be listed on the marketplace.</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredJerseys.map((jersey) => (
+            <div key={jersey.id} className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-colors">
+              <div className="relative">
+                {jersey.images && jersey.images[0] ? (
+                  <img
+                    src={jersey.images[0]}
+                    alt={`${jersey.team} ${jersey.season}`}
+                    className="w-full h-48 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-gray-700 flex items-center justify-center">
+                    <svg className="h-12 w-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                  {jersey.active_listings || 0} listing(s)
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <h3 className="text-white font-semibold text-lg mb-1">{jersey.team}</h3>
+                <p className="text-gray-300 text-sm mb-2">{jersey.season}</p>
+                {jersey.player && (
+                  <p className="text-gray-400 text-sm mb-2">#{jersey.player}</p>
+                )}
+                {jersey.league && (
+                  <p className="text-blue-400 text-xs mb-3">{jersey.league}</p>
+                )}
+                
+                <button
+                  onClick={() => onCreateListing(jersey)}
+                  className="w-full bg-white text-black py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Create Listing
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, loading: authLoading } = useAuth();
