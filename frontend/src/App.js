@@ -2736,13 +2736,11 @@ const ResubmissionModal = ({ originalJersey, onClose, onSuccess }) => {
         throw new Error('Please login to resubmit a jersey');
       }
 
-      // Create jersey resubmission with the original jersey ID
+      // Create jersey resubmission with the original jersey ID (no size/condition - Discogs-style)
       const jerseyData = {
         team: formData.team,
         season: formData.season,
         player: formData.player || null,
-        size: formData.size,
-        condition: formData.condition,
         manufacturer: formData.manufacturer,
         home_away: formData.home_away,
         league: formData.league,
