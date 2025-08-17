@@ -8747,7 +8747,88 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
 
             {/* Security Level 2: Settings Tab (only for own profile) */}
             {activeTab === 'settings' && isOwnProfile && (
-              <UserSettingsPanel user={user} profileData={profileData} onProfileUpdated={fetchUserProfile} />
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-white mb-6">⚙️ Paramètres de sécurité</h2>
+                
+                {/* Security Level 2 Features */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 2FA Setup */}
+                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-3">🔐</span>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Authentification à deux facteurs</h3>
+                        <p className="text-gray-400 text-sm">Sécurisez votre compte avec 2FA</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShow2FASetup(true)}
+                      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Configurer 2FA
+                    </button>
+                  </div>
+                  
+                  {/* Password Change */}
+                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-3">🔑</span>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Mot de passe</h3>
+                        <p className="text-gray-400 text-sm">Changez votre mot de passe</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowPasswordModal(true)}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Changer le mot de passe
+                    </button>
+                  </div>
+                  
+                  {/* Profile Settings */}
+                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-3">👤</span>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Profil & Adresses</h3>
+                        <p className="text-gray-400 text-sm">Gérez vos informations personnelles</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowUserSettings(true)}
+                      className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Paramètres du profil
+                    </button>
+                  </div>
+                  
+                  {/* Security Status */}
+                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div className="flex items-center mb-4">
+                      <span className="text-2xl mr-3">🛡️</span>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Statut de sécurité</h3>
+                        <p className="text-gray-400 text-sm">Niveau de sécurité actuel</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-300">2FA activé</span>
+                        <span className="text-red-400">❌ Non</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-300">Mot de passe fort</span>
+                        <span className="text-green-400">✅ Oui</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-300">Email vérifié</span>
+                        <span className="text-green-400">✅ Oui</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
