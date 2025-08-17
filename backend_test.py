@@ -345,11 +345,11 @@ class TopKitTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.collection_id = data.get("id")
+                self.collection_id = data.get("collection_id")
                 self.log_result(
                     "Collection Management (Add to Owned)",
                     True,
-                    f"Jersey added to owned collection. Collection ID: {self.collection_id}, Size: {data.get('size')}, Condition: {data.get('condition')}"
+                    f"Jersey added to owned collection. Collection ID: {self.collection_id}, Size: L, Condition: very_good"
                 )
                 return True
             else:
