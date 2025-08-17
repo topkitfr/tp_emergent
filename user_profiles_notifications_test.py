@@ -101,7 +101,7 @@ class TopKitProfileNotificationTester:
                 profile_data = response.json()
                 
                 # Verify profile structure
-                expected_fields = ["id", "name", "email"]
+                expected_fields = ["id", "name"]  # Email is not included in public profile
                 missing_fields = [field for field in expected_fields if field not in profile_data]
                 
                 # Check for sensitive data that should NOT be exposed
