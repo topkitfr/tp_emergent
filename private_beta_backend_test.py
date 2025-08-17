@@ -19,9 +19,9 @@ from datetime import datetime
 # Configuration
 BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "TestPass123!"
+TEST_USER_PASSWORD = "SecurePass2024!"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "AdminPass123!"
+ADMIN_PASSWORD = "AdminSecure2024!"
 
 class PrivateBetaTester:
     def __init__(self):
