@@ -11904,6 +11904,40 @@ const AdminPanel = () => {
     }
   };
 
+  const fetchSiteSettings = async () => {
+    try {
+      setSiteSettingsLoading(true);
+      const response = await axios.get(`${API}/api/site/mode`);
+      setSiteMode(response.data.mode);
+    } catch (error) {
+      console.error('Failed to fetch site settings:', error);
+    } finally {
+      setSiteSettingsLoading(false);
+    }
+  };
+
+  const updateSiteMode = async (newMode) => {
+    if (!window.confirm(`Changer le mode du site vers "${newMode}" ?`)) return;
+
+    try {
+      setSiteSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/site/mode`, {
+        mode: newMode
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setSiteMode(newMode);
+      alert(`Mode du site changé vers: ${newMode}`);
+    } catch (error) {
+      console.error('Failed to update site mode:', error);
+      alert('Erreur lors du changement de mode');
+    } finally {
+      setSiteSettingsLoading(false);
+    }
+  };
+
   const handleApprove = async (jerseyId) => {
     if (!confirm('Approve this jersey submission?')) return;
     
