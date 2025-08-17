@@ -6928,8 +6928,9 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 text-xs">{jersey.reference_number}</span>
-                    <span className="text-blue-400 text-xs font-medium">
-                      {jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}
+                    <span className="text-blue-400 text-xs font-medium flex items-center space-x-1">
+                      <span>{jersey.listing_count || 1} annonce{(jersey.listing_count || 1) > 1 ? 's' : ''}</span>
+                      <span>→</span>
                     </span>
                   </div>
                 </div>
