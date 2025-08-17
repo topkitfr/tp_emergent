@@ -6902,7 +6902,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
               <div
                 key={jersey.id}
                 onClick={() => handleJerseyClick(jersey)}
-                className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden hover:border-gray-600 transition-all cursor-pointer group hover:shadow-xl"
+                className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden hover:border-blue-500 hover:shadow-blue-500/25 transition-all cursor-pointer group hover:shadow-xl transform hover:scale-102"
               >
                 <div className="aspect-square bg-gray-800 overflow-hidden">
                   {jersey.images?.[0] ? (
