@@ -17,8 +17,8 @@ ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD_NEW = "TopKitSecure789#"  # From review request
 ADMIN_PASSWORD_OLD = "adminpass123"      # From previous tests
 
-USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "123"
+USER_EMAIL = "testuser@topkit.fr"
+USER_PASSWORD = "SecurePass789!"
 
 class TopKitTester:
     def __init__(self):
