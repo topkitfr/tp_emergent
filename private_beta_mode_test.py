@@ -23,6 +23,12 @@ USER_CREDENTIALS = {
     "password": "123"
 }
 
+# Alternative user credentials if the first one doesn't work
+ALT_USER_CREDENTIALS = {
+    "email": "admin.test@topkit.com",
+    "password": "TestPass123!"
+}
+
 class PrivateBetaModeTest:
     def __init__(self):
         self.admin_token = None
