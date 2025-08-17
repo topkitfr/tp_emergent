@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-marketplace.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-auth-fix.preview.emergentagent.com/api"
 
 class DiscogsSystemTester:
     def __init__(self):

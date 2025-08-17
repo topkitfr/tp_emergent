@@ -23,7 +23,7 @@ import uuid
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-marketplace.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-auth-fix.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
 

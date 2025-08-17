@@ -14,7 +14,7 @@ import sys
 from datetime import datetime
 
 # Configuration - Use environment variables from frontend/.env
-BASE_URL = "https://topkit-marketplace.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-auth-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
