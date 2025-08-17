@@ -2508,6 +2508,49 @@ async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get
     
     return listing
 
+@api_router.get("/collections/my-owned", response_model=List[Dict])
+async def get_my_owned_collection(user_id: str = Depends(get_current_non_admin_user)):
+    """Get user's owned collection items available for listing"""
+    # Get user's owned items
+    pipeline = [
+        {"$match": {"user_id": user_id, "collection_type": "owned"}},
+        {
+            "$lookup": {
+                "from": "jerseys",
+                "localField": "jersey_id",
+                "foreignField": "id",
+                "as": "jersey"
+            }
+        },
+        {"$unwind": "$jersey"},
+        {"$match": {"jersey.status": "approved"}}  # Only approved jerseys
+    ]
+    
+    collection_items = await db.collections.aggregate(pipeline).to_list(length=None)
+    
+    # Convert for JSON serialization and add listing status
+    result = []
+    for item in collection_items:
+        # Remove MongoDB ObjectId to avoid serialization issues
+        item.pop('_id', None)
+        item['jersey'].pop('_id', None)
+        
+        # Check if already listed
+        existing_listing = await db.listings.find_one({
+            "seller_id": user_id,
+            "jersey_id": item["jersey_id"],
+            "size": item.get("size"),
+            "condition": item.get("condition"),
+            "status": "active"
+        })
+        
+        item["is_listed"] = bool(existing_listing)
+        item["listing_id"] = existing_listing.get("id") if existing_listing else None
+        
+        result.append(item)
+    
+    return result
+
 @api_router.get("/jerseys/approved", response_model=List[Dict])
 async def get_approved_jerseys(
     team: Optional[str] = None,
