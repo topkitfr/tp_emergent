@@ -300,12 +300,10 @@ class JerseyCreate(BaseModel):
     reference_code: Optional[str] = None
 
 class ListingCreate(BaseModel):
-    jersey_id: str  # Reference to approved jersey in catalog
-    size: str  # Size of this specific item (XS, S, M, L, XL, XXL)
-    condition: str  # Condition of this specific item (new, near_mint, very_good, good, poor)
+    collection_id: str  # Reference to item in user's collection (not jersey_id directly)
     price: float  # Price for this specific listing (required for marketplace)
-    description: str  # Seller's description of this specific item
-    images: List[str] = []  # Photos of this specific item
+    marketplace_description: Optional[str] = None  # Additional marketplace description
+    images: List[str] = []  # Photos of this specific item for marketplace
 
 class CollectionAdd(BaseModel):
     jersey_id: str
