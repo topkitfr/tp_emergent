@@ -1217,7 +1217,10 @@ def verify_jwt_token(token: str) -> Optional[str]:
     except jwt.InvalidTokenError:
         return None
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[str]:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     token = credentials.credentials
     user_id = verify_jwt_token(token)
     if not user_id:
@@ -1227,7 +1230,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
-    return user_id
+    # Remove MongoDB ObjectId to avoid serialization issues
+    user.pop('_id', None)
+    return user
 
 async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     """Récupère l'utilisateur actuel si le token est fourni, sinon renvoie None"""
