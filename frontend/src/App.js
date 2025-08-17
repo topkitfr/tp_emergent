@@ -238,9 +238,13 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
           
           {/* Logo */}
           <div className="mb-8">
-            <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent mb-4">
-              TopKit
-            </h1>
+            <div className="flex justify-center mb-4">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_football-threads-5/artifacts/d38ypztj_ho7nwfgn_topkit_logo_nobc_wh.png"
+                alt="TopKit Logo"
+                className="h-16 w-auto hover:opacity-80 transition-opacity"
+              />
+            </div>
             <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
           </div>
 
