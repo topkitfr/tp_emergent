@@ -483,6 +483,16 @@ class SiteModeResponse(BaseModel):
     mode: str
     message: str
 
+class BetaAccessRequest(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    message: Optional[str] = None
+
+class BetaAccessResponse(BaseModel):
+    message: str
+    request_id: str
+
 class ModificationSuggestionCreate(BaseModel):
     jersey_id: str
     suggested_changes: str
