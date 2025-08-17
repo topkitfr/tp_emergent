@@ -11134,20 +11134,17 @@ const JerseyCard = ({ jersey, showActions = false, onAddToCollection, showCollec
         {onAddToCollection && (
           <div className="flex space-x-2 mt-4" onClick={(e) => e.stopPropagation()}>
             <Button
-              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'owned'); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                // Use new Discogs-style modal
+                setSelectedJerseyForCollection(jersey);
+                setShowAddToCollectionModal(true);
+              }}
               variant="primary"
               size="sm"
               className="flex-1"
             >
-              ❤️ Own
-            </Button>
-            <Button
-              onClick={(e) => { e.stopPropagation(); onAddToCollection(jersey.id, 'wanted'); }}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              ⭐ Want
+              📚 Add to Collection
             </Button>
           </div>
         )}
