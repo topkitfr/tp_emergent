@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext, useReducer } from 'react';
 import './App.css';
 import axios from 'axios';
+import AuthModal from './AuthModal';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
