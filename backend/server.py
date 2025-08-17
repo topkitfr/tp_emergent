@@ -891,7 +891,7 @@ async def send_password_reset_email(email: str, token: str, user_name: str = "")
         from sendgrid.helpers.mail import Mail
         
         # Create reset link (in production, use your actual domain)
-        reset_link = f"https://jersey-2fa.preview.emergentagent.com/reset-password?token={token}"
+        reset_link = f"https://securekit.preview.emergentagent.com/reset-password?token={token}"
         
         # HTML email content
         html_content = f"""
@@ -1341,7 +1341,7 @@ async def register(user_data: UserRegister, request: Request):
     
     # In production, send actual email here
     # For now, return the verification link in response (development only)
-    verification_link = f"https://jersey-2fa.preview.emergentagent.com/verify-email?token={verification_token}"
+    verification_link = f"https://securekit.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
         "message": "Compte créé avec succès! Veuillez vérifier votre email pour activer votre compte.",
@@ -1433,7 +1433,7 @@ async def resend_verification_email(email: EmailStr):
     verification_token = generate_email_verification_token(user["id"], user["email"])
     
     # In production, send actual email here
-    verification_link = f"https://jersey-2fa.preview.emergentagent.com/verify-email?token={verification_token}"
+    verification_link = f"https://securekit.preview.emergentagent.com/verify-email?token={verification_token}"
     
     return {
         "message": "Un nouveau lien de vérification a été envoyé à votre email.",

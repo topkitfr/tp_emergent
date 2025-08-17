@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://jersey-2fa.preview.emergentagent.com/api"
+BASE_URL = "https://securekit.preview.emergentagent.com/api"
 
 class ProfileSettingsAPITester:
     def __init__(self):
