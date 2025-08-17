@@ -15710,24 +15710,7 @@ const AdminPanel = () => {
           )}
         </div>
       ) : activeTab === 'users' ? (
-        <div>
-          <h2 className="text-xl font-bold text-white mb-6">
-            👥 User Management ({users.length} users)
-          </h2>
-          
-          <div className="space-y-4">
-            {users.map((userData) => (
-              <div key={userData.id} className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <Avatar user={userData} size="md" />
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{userData.name}</h3>
-                        <p className="text-gray-400 text-sm">{userData.email}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            userData.role === 'admin' ? 'bg-red-900 text-red-300' :
+        <AdminUserManagement users={users} onRefresh={fetchUsers} />
                             userData.role === 'moderator' ? 'bg-blue-900 text-blue-300' :
                             'bg-gray-900 text-gray-300'
                           }`}>
