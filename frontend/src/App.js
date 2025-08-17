@@ -11928,8 +11928,6 @@ const SubmitJerseyPage = () => {
         team: formData.team.trim(),
         season: formData.season,
         player: formData.player?.trim() || null,
-        size: formData.size,
-        condition: formData.condition,
         manufacturer: formData.manufacturer?.trim() || "",
         home_away: formData.home_away || "",
         league: formData.league?.trim() || "",
