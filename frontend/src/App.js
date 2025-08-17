@@ -587,6 +587,65 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const fetchBetaRequests = async () => {
+    try {
+      setBetaRequestsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/admin/beta/requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBetaRequests(response.data.requests || []);
+    } catch (error) {
+      console.error('Failed to fetch beta requests:', error);
+      setBetaRequests([]);
+    } finally {
+      setBetaRequestsLoading(false);
+    }
+  };
+
+  const approveBetaRequest = async (requestId) => {
+    if (!window.confirm('Approuver cette demande d\'accès bêta ?')) return;
+
+    try {
+      setBetaRequestsLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/beta/requests/${requestId}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Demande approuvée avec succès !');
+      fetchBetaRequests(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to approve beta request:', error);
+      alert('Erreur lors de l\'approbation');
+    } finally {
+      setBetaRequestsLoading(false);
+    }
+  };
+
+  const rejectBetaRequest = async (requestId) => {
+    const reason = window.prompt('Raison du refus (optionnel):');
+    if (reason === null) return; // User cancelled
+
+    try {
+      setBetaRequestsLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/admin/beta/requests/${requestId}/reject`, {
+        reason: reason || 'Aucune raison fournie'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Demande rejetée.');
+      fetchBetaRequests(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to reject beta request:', error);
+      alert('Erreur lors du rejet');
+    } finally {
+      setBetaRequestsLoading(false);
+    }
+  };
+
   const login = (token, userData) => {
     console.log('🔑 Login called with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
     console.log('👤 Login called with user data:', userData);
