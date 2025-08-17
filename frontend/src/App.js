@@ -6225,6 +6225,7 @@ const FriendsPage = () => {
           <div className="flex flex-wrap border-b border-gray-700">
             {[
               { id: 'friends', label: '👥 Amis', count: friends.length },
+              { id: 'messages', label: '💬 Messages' },
               { id: 'received', label: '📨 Reçues', count: pendingRequests.received.length },
               { id: 'sent', label: '📤 Envoyées', count: pendingRequests.sent.length },
               { id: 'search', label: '🔍 Rechercher' }
