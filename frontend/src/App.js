@@ -6296,7 +6296,7 @@ const FriendsPage = () => {
             {/* Messages Tab */}
             {activeTab === 'messages' && (
               <div>
-                <MessagingInterface />
+                <FriendsMessagingInterface />
               </div>
             )}
 
