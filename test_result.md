@@ -2024,10 +2024,12 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Notification Dropdown Functionality Testing"
     - "TopKit Marketplace Page Testing"
     - "TopKit User Access Control Testing"
     - "TopKit Admin Panel Interface Testing"
   stuck_tasks:
+    - "Notification Dropdown Functionality Testing"
     - "TopKit Marketplace Page Testing"
     - "TopKit User Access Control Testing"
   test_all: false
