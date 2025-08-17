@@ -446,7 +446,7 @@ class TopKitProfileNotificationTester:
         self.test_cross_user_access_security()
         
         # Summary
-        self.print_summary()
+        return self.print_summary()
 
     def print_summary(self):
         """Print test summary"""
