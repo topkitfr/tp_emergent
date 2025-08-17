@@ -1945,14 +1945,17 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: true
 
 test_plan:
   current_focus:
-    - "TopKit Private Beta Mode Backend Testing"
+    - "TopKit Marketplace Page Testing"
+    - "TopKit User Access Control Testing"
+    - "TopKit Admin Panel Interface Testing"
   stuck_tasks:
-    - "TopKit Private Beta Mode Backend Testing"
+    - "TopKit Marketplace Page Testing"
+    - "TopKit User Access Control Testing"
   test_all: false
   test_priority: "high_first"
 
