@@ -153,7 +153,19 @@ class PrivateBetaTester:
                     })
                     
                     if register_response.status_code == 200:
+                        register_data = register_response.json()
                         self.log_test("User Creation", True, "Regular user created successfully")
+                        
+                        # Handle email verification if needed
+                        if 'dev_verification_link' in register_data:
+                            verification_link = register_data['dev_verification_link']
+                            token = verification_link.split('token=')[1] if 'token=' in verification_link else None
+                            if token:
+                                verify_response = self.session.post(f"{BASE_URL}/auth/verify-email", params={'token': token})
+                                if verify_response.status_code == 200:
+                                    self.log_test("User Email Verification", True, "Email verified successfully")
+                                else:
+                                    self.log_test("User Email Verification", False, f"HTTP {verify_response.status_code}", verify_response.text)
                         
                         # Now try to login
                         user_response = self.session.post(f"{BASE_URL}/auth/login", json={
