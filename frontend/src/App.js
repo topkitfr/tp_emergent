@@ -2237,13 +2237,11 @@ const AddJerseyModal = ({ onClose }) => {
         throw new Error('Please login to add a jersey');
       }
 
-      // Create jersey only (no listing)
+      // Create jersey catalog submission (no size/condition - they'll be specified when adding to collection)
       const jerseyData = {
         team: formData.team,
         season: formData.season,
         player: formData.player || null,
-        size: formData.size,
-        condition: formData.condition,
         manufacturer: formData.manufacturer,
         home_away: formData.home_away,
         league: formData.league,
