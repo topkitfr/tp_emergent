@@ -4379,6 +4379,37 @@ async def get_conversation_messages(
         "total": len(messages)
     }
 
+@api_router.get("/stats/dynamic")
+async def get_dynamic_stats():
+    """Get dynamic site statistics for homepage"""
+    
+    # Count approved jerseys
+    approved_jerseys = await db.jerseys.count_documents({"status": "approved"})
+    
+    # Count total users (excluding admins)
+    total_users = await db.users.count_documents({"role": {"$ne": "admin"}})
+    
+    # Count total listings
+    total_listings = await db.listings.count_documents({})
+    
+    # Count collections (owned + wanted)
+    total_collections = await db.collections.count_documents({})
+    
+    # Count pending jerseys for admin info
+    pending_jerseys = await db.jerseys.count_documents({"status": "pending"})
+    
+    # Count moderators
+    moderators = await db.users.count_documents({"role": "moderator"})
+    
+    return {
+        "approved_jerseys": approved_jerseys,
+        "total_users": total_users,
+        "total_listings": total_listings, 
+        "total_collections": total_collections,
+        "pending_jerseys": pending_jerseys,
+        "moderators": moderators
+    }
+
 # WebSocket Connection Manager for Real-time Messaging
 class ConnectionManager:
     def __init__(self):
