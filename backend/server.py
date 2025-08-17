@@ -306,7 +306,10 @@ class ListingCreate(BaseModel):
 
 class CollectionAdd(BaseModel):
     jersey_id: str
-    collection_type: str
+    collection_type: str  # "owned", "wanted"
+    size: Optional[str] = None  # Size of the specific item in user's collection
+    condition: Optional[str] = None  # Condition of the specific item in user's collection  
+    personal_description: Optional[str] = None  # User's personal description (signed, worn, etc.)
 
 class Message(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
