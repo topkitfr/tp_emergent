@@ -820,10 +820,10 @@ const ToastContainer = () => {
 };
 const Toast = ({ message, type = 'success', onClose }) => {
   const typeClasses = {
-    success: 'bg-green-600 text-white',
-    error: 'bg-red-600 text-white',
-    info: 'bg-blue-600 text-white',
-    warning: 'bg-yellow-600 text-white'
+    success: 'bg-green-600 text-white border-green-500',
+    error: 'bg-red-600 text-white border-red-500',
+    info: 'bg-blue-600 text-white border-blue-500',
+    warning: 'bg-yellow-600 text-white border-yellow-500'
   };
   
   const icons = {
@@ -842,13 +842,13 @@ const Toast = ({ message, type = 'success', onClose }) => {
   }, [onClose]);
   
   return (
-    <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${typeClasses[type]} animate-pulse`}>
-      <div className="flex items-center space-x-2">
-        <span className="text-lg">{icons[type]}</span>
-        <span className="font-medium">{message}</span>
+    <div className={`${typeClasses[type]} p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out border-l-4 min-w-80 pointer-events-auto`}>
+      <div className="flex items-center space-x-3">
+        <span className="text-xl font-bold">{icons[type]}</span>
+        <span className="font-medium flex-1">{message}</span>
         <button 
           onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200 font-bold"
+          className="text-white hover:text-gray-200 font-bold text-xl leading-none ml-2"
         >
           ×
         </button>
