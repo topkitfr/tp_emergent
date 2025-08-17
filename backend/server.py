@@ -433,6 +433,8 @@ class SellerSettings(BaseModel):
     terms_conditions: Optional[str] = None
 
 class BuyerSettings(BaseModel):
+    # Address settings
+    address_settings: Optional[UserAddressSettings] = None
     # Préférences de livraison
     preferred_shipping_method: Optional[str] = None
     max_shipping_cost: Optional[float] = None
