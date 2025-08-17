@@ -5492,14 +5492,9 @@ async def get_site_mode():
 @api_router.post("/site/mode")
 async def update_site_mode(
     site_mode_request: SiteModeRequest,
-    user_id: str = Depends(get_current_user)
+    admin_user: dict = Depends(get_current_user_admin)
 ):
     """Update site mode (admin only)"""
-    
-    # Check if user is admin
-    user = await db.users.find_one({"id": user_id})
-    if not user or user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
     
     # Validate mode
     if site_mode_request.mode not in ["private", "public"]:
@@ -5513,7 +5508,7 @@ async def update_site_mode(
             "$set": {
                 "setting": "site_mode",
                 "value": site_mode_request.mode,
-                "updated_by": user_id,
+                "updated_by": admin_user["id"],
                 "updated_at": datetime.utcnow()
             }
         },
@@ -5521,7 +5516,7 @@ async def update_site_mode(
     )
     
     # Log the change
-    await log_user_activity(user_id, "site_mode_changed", "", {
+    await log_user_activity(admin_user["id"], "site_mode_changed", "", {
         "old_mode": SITE_MODE,
         "new_mode": site_mode_request.mode,
         "timestamp": datetime.utcnow().isoformat()
