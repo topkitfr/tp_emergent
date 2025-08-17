@@ -8,12 +8,17 @@ from email import encoders
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import ssl
+from dotenv import load_dotenv
+from pathlib import Path
 
 # Configure logging for email operations
 logger = logging.getLogger(__name__)
 
 class GmailSMTPService:
     def __init__(self):
+        # Load environment variables
+        env_path = Path(__file__).parent / '.env'
+        load_dotenv(env_path)
         self.smtp_server = os.getenv("GMAIL_SMTP_SERVER", "smtp.gmail.com")
         self.smtp_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
         self.username = os.getenv("GMAIL_USERNAME")
