@@ -1117,7 +1117,7 @@ const NotificationBell = ({ onNotificationClick }) => {
             {loading ? (
               <div className="p-4 text-center text-gray-400">
                 <LoadingSpinner size="sm" className="mx-auto mb-2" />
-                Loading notifications...
+                Chargement...
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-400">
