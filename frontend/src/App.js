@@ -286,6 +286,130 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
             </div>
           </div>
 
+          {/* Beta Access Request Section */}
+          <div className="mt-12 p-6 bg-gray-900/50 border border-gray-700 rounded-xl">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-3">🚀 Rejoignez la Bêta !</h3>
+              <p className="text-gray-300">
+                Pas encore d'accès ? Demandez une invitation à la phase de test privée.
+              </p>
+            </div>
+
+            {!showBetaRequestForm && !betaFormSuccess ? (
+              <div className="text-center">
+                <button
+                  onClick={() => setShowBetaRequestForm(true)}
+                  className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+                >
+                  Demander un Accès Bêta
+                </button>
+                <p className="text-gray-400 text-sm mt-2">
+                  Gratuit • Traitement sous 24-48h
+                </p>
+              </div>
+            ) : betaFormSuccess ? (
+              <div className="text-center p-6 bg-green-900/20 border border-green-500/30 rounded-lg">
+                <div className="text-4xl mb-3">✅</div>
+                <h4 className="text-xl font-bold text-green-400 mb-2">Demande Soumise !</h4>
+                <p className="text-green-300 mb-4">
+                  Votre demande d'accès bêta a été envoyée avec succès. Nous examinerons votre demande et vous contacterons bientôt !
+                </p>
+                <button
+                  onClick={() => {
+                    setBetaFormSuccess(false);
+                    setShowBetaRequestForm(false);
+                  }}
+                  className="text-green-400 hover:text-green-300 text-sm underline"
+                >
+                  Faire une autre demande
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleBetaFormSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Prénom *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={betaFormData.first_name}
+                      onChange={(e) => setBetaFormData({...betaFormData, first_name: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      placeholder="Jean"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Nom *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={betaFormData.last_name}
+                      onChange={(e) => setBetaFormData({...betaFormData, last_name: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      placeholder="Dupont"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={betaFormData.email}
+                    onChange={(e) => setBetaFormData({...betaFormData, email: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="jean.dupont@example.com"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Message (optionnel)
+                  </label>
+                  <textarea
+                    value={betaFormData.message}
+                    onChange={(e) => setBetaFormData({...betaFormData, message: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="Dites-nous pourquoi vous souhaitez rejoindre la bêta..."
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={betaFormSubmitting}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                  >
+                    {betaFormSubmitting ? (
+                      <span className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Envoi en cours...
+                      </span>
+                    ) : (
+                      '📨 Envoyer ma Demande'
+                    )}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowBetaRequestForm(false)}
+                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
           {/* Status Info */}
           <div className="mt-16 p-6 bg-gray-900/30 border border-gray-700 rounded-xl">
             <h4 className="text-lg font-semibold mb-3 text-blue-400">État de la Bêta</h4>
