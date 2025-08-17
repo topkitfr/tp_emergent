@@ -78,6 +78,12 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 if not STRIPE_API_KEY:
     logger.warning("STRIPE_API_KEY not found in environment variables")
 
+# Email Configuration
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@topkit.fr')
+if not SENDGRID_API_KEY:
+    logger.warning("SENDGRID_API_KEY not found in environment variables - password reset emails will be disabled")
+
 # Site Mode Configuration (private/public)
 SITE_MODE = os.environ.get('SITE_MODE', 'public')
 logger.info(f"Site mode: {SITE_MODE}")
