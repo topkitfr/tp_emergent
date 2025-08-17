@@ -783,7 +783,41 @@ const LoadingSpinner = ({ size = 'md', className = '' }) => {
   );
 };
 
-// Toast Notification Component
+// Simple Toast Container Component
+const ToastContainer = () => {
+  const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    const handleShowToast = (event) => {
+      const { message, type = 'success' } = event.detail;
+      const id = Date.now() + Math.random();
+      const newToast = { id, message, type };
+      
+      setToasts(prev => [...prev, newToast]);
+      
+      // Auto remove after 4 seconds
+      setTimeout(() => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+      }, 4000);
+    };
+
+    window.addEventListener('show-toast', handleShowToast);
+    return () => window.removeEventListener('show-toast', handleShowToast);
+  }, []);
+
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+        />
+      ))}
+    </div>
+  );
+};
 const Toast = ({ message, type = 'success', onClose }) => {
   const typeClasses = {
     success: 'bg-green-600 text-white',
