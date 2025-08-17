@@ -4185,14 +4185,12 @@ const AuthModal = ({ onClose }) => {
           console.log('🔑 Token and user received, calling login...');
           const loginSuccess = login(response.data.token, response.data.user);
           if (loginSuccess) {
-            console.log('✅ Login successful, closing modal and triggering access check');
-            // Dispatch event to trigger site access check
-            window.dispatchEvent(new Event('login-success'));
-            // Force immediate UI update by dispatching a custom event
-            window.dispatchEvent(new Event('authStateChanged'));
-            // Small delay to ensure state propagation
+            console.log('✅ Login successful, closing modal and reloading page');
+            // Close modal first
+            onClose();
+            // Small delay then reload to ensure proper state update
             setTimeout(() => {
-              onClose();
+              window.location.reload();
             }, 100);
           } else {
             console.error('❌ Login context update failed');
