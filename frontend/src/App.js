@@ -446,8 +446,13 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLoginSuccess={(token, user) => {
-          console.log('Login success callback - AuthModal will handle the rest');
+          console.log('🔄 Login success callback - updating authentication state');
           setShowAuthModal(false);
+          
+          // Update authentication state using AuthProvider
+          if (login) {
+            login(token, user);
+          }
         }}
       />
     </div>
