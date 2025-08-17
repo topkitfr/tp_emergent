@@ -3802,9 +3802,10 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     }
 
 @api_router.put("/profile/settings")
-async def update_profile_settings(settings: ProfileSettings, user_id: str = Depends(get_current_user)):
+async def update_profile_settings(settings: ProfileSettings, current_user: dict = Depends(get_current_user)):
     # Build update dictionary only with provided fields
     update_data = {}
+    user_id = current_user["id"]
     
     if settings.name is not None:
         update_data["name"] = settings.name
