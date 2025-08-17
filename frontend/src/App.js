@@ -11776,6 +11776,8 @@ const AdminPanel = () => {
       } else if (activeTab === 'activities') {
         fetchActivities();
         fetchTrafficStats();
+      } else if (activeTab === 'settings') {
+        fetchSiteSettings();
       }
     }
   }, [user, activeTab]);
