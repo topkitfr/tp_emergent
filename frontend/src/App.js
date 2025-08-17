@@ -4997,10 +4997,10 @@ const AuthModal = ({ onClose }) => {
   const [error, setError] = useState('');
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault(); // Explicit preventDefault to stop browser default form submission
+    console.log('🚀 DEBUG - handleAuthSubmit called successfully!');
     
-    console.log('🚀 DEBUG - handleSubmit called successfully!');
     console.log('📧 Form data:', { email: formData.email, password: formData.password ? '***' : 'empty', name: formData.name });
     console.log('🔄 isLogin:', isLogin);
     console.log('🌐 API URL:', API);
