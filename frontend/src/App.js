@@ -3209,13 +3209,11 @@ const CreateListingModal = ({ onClose, jerseyId, jersey = null }) => {
   );
 };
 
-// Marketplace Listing Modal - Discogs-style (from approved catalog)
-const MarketplaceListingModal = ({ onClose, jersey, onSubmit }) => {
+// Collection Listing Modal - Create listing from owned collection item
+const CollectionListingModal = ({ onClose, collectionItem, onSubmit }) => {
   const [formData, setFormData] = useState({
-    size: '',
-    condition: '',
     price: '',
-    description: '',
+    marketplace_description: '',
     images: []
   });
   const [loading, setLoading] = useState(false);
@@ -3227,20 +3225,14 @@ const MarketplaceListingModal = ({ onClose, jersey, onSubmit }) => {
     setError('');
 
     try {
-      if (!formData.size || !formData.condition || !formData.price) {
-        throw new Error('Size, condition, and price are required');
-      }
-
-      if (parseFloat(formData.price) <= 0) {
+      if (!formData.price || parseFloat(formData.price) <= 0) {
         throw new Error('Price must be greater than 0');
       }
 
       const listingData = {
-        jersey_id: jersey.id,
-        size: formData.size,
-        condition: formData.condition,
+        collection_id: collectionItem.id,
         price: parseFloat(formData.price),
-        description: formData.description.trim(),
+        marketplace_description: formData.marketplace_description.trim() || null,
         images: formData.images
       };
 
