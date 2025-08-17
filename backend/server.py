@@ -6334,13 +6334,17 @@ async def email_service_health():
             gmail_service.from_email
         ])
         
+        # Get email manager status
+        manager_status = email_manager.get_service_status() if email_manager else {"status": "unavailable"}
+        
         return {
             "status": "healthy" if config_valid else "misconfigured",
             "message": "Service d'email opérationnel" if config_valid else "Configuration incomplète",
             "gmail_configured": config_valid,
             "smtp_server": gmail_service.smtp_server,
             "smtp_port": gmail_service.smtp_port,
-            "from_email": gmail_service.from_email
+            "from_email": gmail_service.from_email,
+            "email_manager": manager_status
         }
         
     except Exception as e:
@@ -6350,6 +6354,173 @@ async def email_service_health():
             "message": f"Erreur de service: {str(e)}",
             "gmail_configured": False
         }
+
+@api_router.post("/emails/test-all-types")
+async def test_all_email_types(
+    test_data: dict,
+    admin_user: dict = Depends(get_current_user_admin)
+):
+    """Test all types of emails (admin only)"""
+    
+    if not email_manager:
+        raise HTTPException(status_code=500, detail="Email manager non disponible")
+    
+    recipient_email = test_data.get("recipient_email", admin_user["email"])
+    email_types = test_data.get("email_types", ["basic", "jersey_submitted", "password_reset", "newsletter"])
+    
+    results = {}
+    
+    for email_type in email_types:
+        try:
+            success = email_manager.send_test_email(recipient_email, email_type)
+            results[email_type] = {
+                "success": success,
+                "status": "sent" if success else "failed"
+            }
+            logger.info(f"Test email {email_type} sent to {recipient_email}: {'success' if success else 'failed'}")
+        except Exception as e:
+            results[email_type] = {
+                "success": False,
+                "status": "error",
+                "error": str(e)
+            }
+            logger.error(f"Error sending test email {email_type}: {e}")
+    
+    return {
+        "message": "Tests d'emails terminés",
+        "recipient": recipient_email,
+        "results": results,
+        "total_tests": len(email_types),
+        "successful": sum(1 for r in results.values() if r["success"]),
+        "failed": sum(1 for r in results.values() if not r["success"])
+    }
+
+@api_router.post("/emails/jersey/submitted")
+async def send_jersey_submitted_email(
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send jersey submission confirmation email"""
+    
+    if not email_manager:
+        raise HTTPException(status_code=500, detail="Email manager non disponible")
+    
+    try:
+        jersey_data = email_data.get("jersey_data", {})
+        success = email_manager.send_jersey_submitted_confirmation(
+            user_email=current_user["email"],
+            user_name=current_user["name"],
+            jersey_data=jersey_data
+        )
+        
+        if success:
+            return {"message": "Email de confirmation de soumission envoyé", "status": "sent"}
+        else:
+            raise HTTPException(status_code=500, detail="Échec de l'envoi de l'email")
+            
+    except Exception as e:
+        logger.error(f"Error sending jersey submitted email: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de l'email")
+
+@api_router.post("/emails/password/reset")
+async def send_password_reset_email(
+    email_data: dict
+):
+    """Send password reset email"""
+    
+    if not email_manager:
+        raise HTTPException(status_code=500, detail="Email manager non disponible")
+    
+    try:
+        user_email = email_data.get("email")
+        if not user_email:
+            raise HTTPException(status_code=400, detail="Email requis")
+        
+        # Check if user exists
+        user = await db.users.find_one({"email": user_email})
+        if not user:
+            # Don't reveal if user exists or not for security
+            return {"message": "Si cet email existe, un lien de réinitialisation a été envoyé"}
+        
+        # Generate reset token (in real app, store this in database with expiration)
+        reset_token = secrets.token_urlsafe(32)
+        
+        success = email_manager.send_password_reset_email(
+            user_email=user_email,
+            user_name=user["name"],
+            reset_token=reset_token
+        )
+        
+        if success:
+            logger.info(f"Password reset email sent to {user_email}")
+            return {"message": "Un lien de réinitialisation a été envoyé à votre email"}
+        else:
+            raise HTTPException(status_code=500, detail="Échec de l'envoi de l'email")
+            
+    except Exception as e:
+        logger.error(f"Error sending password reset email: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de l'email")
+
+@api_router.post("/emails/newsletter/send")
+async def send_newsletter(
+    newsletter_data: dict,
+    admin_user: dict = Depends(get_current_user_admin)
+):
+    """Send newsletter to users (admin only)"""
+    
+    if not email_manager:
+        raise HTTPException(status_code=500, detail="Email manager non disponible")
+    
+    try:
+        # Get all users (or specific user if provided)
+        recipient_email = newsletter_data.get("recipient_email")
+        if recipient_email:
+            # Send to specific user
+            user = await db.users.find_one({"email": recipient_email})
+            if not user:
+                raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+            
+            success = email_manager.send_weekly_newsletter(
+                user_email=user["email"],
+                user_name=user["name"],
+                newsletter_data=newsletter_data
+            )
+            
+            return {
+                "message": "Newsletter envoyée",
+                "recipient": recipient_email,
+                "success": success
+            }
+        else:
+            # Send to all users (in real app, use background task)
+            users_cursor = db.users.find({"email_verified": True})
+            users = await users_cursor.to_list(length=100)  # Limit for test
+            
+            results = {"sent": 0, "failed": 0}
+            for user in users:
+                try:
+                    success = email_manager.send_weekly_newsletter(
+                        user_email=user["email"],
+                        user_name=user["name"],
+                        newsletter_data=newsletter_data
+                    )
+                    if success:
+                        results["sent"] += 1
+                    else:
+                        results["failed"] += 1
+                except Exception as e:
+                    logger.error(f"Failed to send newsletter to {user['email']}: {e}")
+                    results["failed"] += 1
+            
+            return {
+                "message": "Newsletter envoyée en masse",
+                "total_users": len(users),
+                "results": results
+            }
+            
+    except Exception as e:
+        logger.error(f"Error sending newsletter: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de la newsletter")
 
 # Include the router in the main app
 app.include_router(api_router)
