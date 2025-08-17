@@ -13341,6 +13341,7 @@ const AppContent = () => {
   const [selectedEditJersey, setSelectedEditJersey] = useState(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   
   // Handle notification clicks with intelligent navigation
