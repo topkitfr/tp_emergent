@@ -33,6 +33,9 @@ import qrcode
 import io
 import base64
 
+# Import Gmail SMTP service
+from email_service import gmail_service
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
