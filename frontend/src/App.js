@@ -1749,10 +1749,20 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                 {/* Notifications */}
                 {user && <NotificationBell />}
 
+                {/* Bouton de connexion pour utilisateurs non connectés */}
+                {!user && (
+                  <button 
+                    onClick={() => setShowAuthModal(true)}
+                    className="px-3 py-2 text-sm font-medium text-blue-400 hover:text-white hover:bg-blue-800 rounded transition-colors hidden lg:block"
+                  >
+                    Se connecter
+                  </button>
+                )}
+
                 {/* Menu Hamburger - Maintenant inclut le profil */}
                 <button
                   onClick={() => setShowGeneralMenu(!showGeneralMenu)}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors lg:hidden"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
