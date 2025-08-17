@@ -6549,6 +6549,8 @@ const MessagesPageContent = () => {
           fetchConversations();
         }
       };
+
+// Messages Page Component
 const MessagesPage = () => {
   const { user } = useAuth();
   const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
