@@ -1807,13 +1807,16 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
         comment: "🚨 CRITICAL NOTIFICATION DROPDOWN ISSUE CONFIRMED - AUTHENTICATION & UI INTEGRATION PROBLEMS IDENTIFIED! Comprehensive testing of notification dropdown functionality with steinmetzlivio@gmail.com/TopKit123! reveals MAJOR IMPLEMENTATION GAPS: ❌ AUTHENTICATION SYSTEM BROKEN: Login modal appears but authentication fails - user remains unauthenticated after form submission, 'Se connecter' button still visible in header, no JWT token storage detected, no authenticated UI elements appear (notification bell, user profile, etc.) ❌ NOTIFICATION BELL NOT ACCESSIBLE: No actual notification bell found in header - only search button and other non-notification elements present, clicked elements do not trigger notification dropdown, NotificationBell component appears implemented in code but not integrated into authenticated UI ❌ DROPDOWN FUNCTIONALITY MISSING: No notification dropdown appears when clicking potential bell candidates, no notification-related content found (no 'Notifications' text, 'Mark all read' buttons, etc.), dropdown positioning and z-index issues not testable due to missing dropdown ✅ BASIC UI WORKING: Page loads correctly with professional Discogs-style header, main navigation functional (Home, Explorez, Marketplace, Ma Collection), search functionality operational, responsive design confirmed. ROOT CAUSE ANALYSIS: 1) Authentication system not properly connecting frontend to backend API 2) NotificationBell component not rendering for authenticated users 3) UI state not updating after login attempts 4) Notification dropdown integration missing from header. CONCLUSION: The reported notification dropdown display issue is CONFIRMED - the dropdown is not displaying because the notification bell itself is not accessible due to authentication failures. This is a CRITICAL BLOCKER preventing testing of notification functionality. URGENT ACTION REQUIRED: Fix authentication system and ensure NotificationBell component renders in header for authenticated users."
+      - working: false
+        agent: "main"
+        comment: "🔧 AUTHENTICATION SYSTEM INVESTIGATION COMPLETED - ROOT CAUSE IDENTIFIED: Fixed critical backend issue where HTTPBearer() was preventing optional authentication for /api/site/access-check endpoint. Changed security = HTTPBearer() to security = HTTPBearer(auto_error=False) to allow anonymous access to public site mode. Backend authentication API working correctly (verified with curl), but frontend login modal not properly submitting to API or updating UI state. AuthModal component implementation appears comprehensive with proper error handling, token storage, and state management. Need to investigate frontend form submission event handling and ensure login function properly updates React context state. Next steps: Debug frontend login flow and ensure NotificationBell component renders after successful authentication."
 
   - task: "Authentication UI with Dual Login Options"
     implemented: true
