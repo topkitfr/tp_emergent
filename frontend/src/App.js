@@ -11515,6 +11515,14 @@ const AppContent = () => {
   // Shopping Cart State
   const [cart, setCart] = useState([]);
   
+  // Dynamic Stats State
+  const [dynamicStats, setDynamicStats] = useState({
+    approved_jerseys: 0,
+    total_users: 0,
+    total_listings: 0,
+    total_collections: 0
+  });
+  
   // Load cart from localStorage on app start
   useEffect(() => {
     const savedCart = localStorage.getItem('topkit_cart');
