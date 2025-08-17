@@ -1605,6 +1605,18 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                 >
                   Marketplace
                 </button>
+                {user && (
+                  <button 
+                    onClick={() => setCurrentView('create-listing')}
+                    className={`px-3 py-2 rounded transition-colors text-sm font-medium ${
+                      currentView === 'create-listing' 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    Create Listing
+                  </button>
+                )}
               </nav>
 
               {/* Utility Icons */}
