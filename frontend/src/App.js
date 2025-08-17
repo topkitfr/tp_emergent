@@ -97,13 +97,26 @@ const SiteAccessGate = ({ children }) => {
 
   useEffect(() => {
     checkSiteAccess();
-  }, [user]);
+  }, [user, user?.token]); // Added user.token as dependency
+
+  useEffect(() => {
+    // Listen for login events to refresh access
+    const handleLoginSuccess = () => {
+      setTimeout(() => {
+        checkSiteAccess();
+      }, 500); // Small delay to ensure token is saved
+    };
+
+    window.addEventListener('login-success', handleLoginSuccess);
+    return () => window.removeEventListener('login-success', handleLoginSuccess);
+  }, []);
 
   const checkSiteAccess = async () => {
     try {
       const headers = {};
-      if (user?.token) {
-        headers.Authorization = `Bearer ${user.token}`;
+      const token = user?.token || localStorage.getItem('token');
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await fetch(`${API}/api/site/access-check`, {
@@ -114,10 +127,12 @@ const SiteAccessGate = ({ children }) => {
         const data = await response.json();
         setHasAccess(data.has_access);
         setSiteMode(data.mode);
+        console.log('Access check result:', data);
       } else {
         // If endpoint fails, fall back to environment variable
         setHasAccess(SITE_MODE === 'public');
         setSiteMode(SITE_MODE);
+        console.log('Access check failed, using fallback');
       }
     } catch (error) {
       console.error('Error checking site access:', error);
