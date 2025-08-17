@@ -417,6 +417,8 @@ class SellerSettings(BaseModel):
     business_name: Optional[str] = None
     address: Optional[str] = None
     phone: Optional[str] = None
+    # Address settings
+    address_settings: Optional[UserAddressSettings] = None
     # Politiques
     return_policy: Optional[str] = None
     shipping_policy: Optional[str] = None
