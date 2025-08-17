@@ -1795,16 +1795,16 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
         </div>
       </header>
 
-      {/* General Menu Side Panel */}
+      {/* Menu Hamburger Réorganisé avec Profil */}
       {showGeneralMenu && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden" onClick={() => setShowGeneralMenu(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowGeneralMenu(false)}>
           <div 
             className="fixed left-0 top-0 h-full w-80 bg-gray-900 shadow-xl transform transition-transform"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-white">Navigation</h3>
+                <h3 className="text-lg font-bold text-white">Menu Principal</h3>
                 <button 
                   onClick={() => setShowGeneralMenu(false)}
                   className="text-gray-400 hover:text-white"
@@ -1815,60 +1815,167 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                 </button>
               </div>
               
-              <nav className="space-y-2">
-                <button 
+              {/* Section Profil - En haut si connecté */}
+              {user && (
+                <>
+                  <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      {user.picture ? (
+                        <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-lg font-medium">
+                          {user.name?.[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-sm font-medium text-white">{user.name}</div>
+                        <div className="text-xs text-gray-400">{user.email}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setCurrentView('profile');
+                          setShowGeneralMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                          currentView === 'profile' 
+                            ? 'bg-gray-700 text-white' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        }`}
+                      >
+                        👤 Mon Profil
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCurrentView('my-collection');
+                          setShowGeneralMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                          currentView === 'my-collection' 
+                            ? 'bg-gray-700 text-white' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        }`}
+                      >
+                        📚 Ma Collection
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCurrentView('settings');
+                          setShowGeneralMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                          currentView === 'settings' 
+                            ? 'bg-gray-700 text-white' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        }`}
+                      >
+                        ⚙️ Paramètres
+                      </button>
+                      {user.email === 'topkitfr@gmail.com' && (
+                        <button
+                          onClick={() => {
+                            setCurrentView('admin');
+                            setShowGeneralMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                            currentView === 'admin' 
+                              ? 'bg-red-700 text-white' 
+                              : 'text-red-400 hover:text-white hover:bg-red-800'
+                          }`}
+                        >
+                          🔧 Admin Panel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <hr className="border-gray-700 mb-4" />
+                </>
+              )}
+              
+              {/* Section Navigation */}
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Navigation</h4>
+                <nav className="space-y-1">
+                  <button 
+                    onClick={() => {
+                      setCurrentView('home');
+                      setShowGeneralMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                      currentView === 'home' 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    🏠 Home
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setCurrentView('jerseys');
+                      setShowGeneralMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                      currentView === 'jerseys' 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    🔍 Explorez
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setCurrentView('marketplace');
+                      setShowGeneralMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                      currentView === 'marketplace' 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    🛒 Marketplace
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setCurrentView('cart');
+                      setShowGeneralMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
+                      currentView === 'cart' 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    🛍️ Mon Panier {cartCount > 0 && `(${cartCount})`}
+                  </button>
+                </nav>
+              </div>
+              
+              {/* Section Connexion/Déconnexion */}
+              <hr className="border-gray-700 mb-4" />
+              {user ? (
+                <button
                   onClick={() => {
-                    setCurrentView('home');
+                    logout();
                     setShowGeneralMenu(false);
                   }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                    currentView === 'home' 
-                      ? 'bg-gray-700 text-white' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
+                  className="w-full text-left px-4 py-3 rounded-lg transition-colors font-medium text-red-400 hover:text-white hover:bg-red-800"
                 >
-                  🏠 Home
+                  🚪 Déconnexion
                 </button>
-                <button 
+              ) : (
+                <button
                   onClick={() => {
-                    setCurrentView('jerseys');
+                    setShowAuthModal(true);
                     setShowGeneralMenu(false);
                   }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                    currentView === 'jerseys' 
-                      ? 'bg-gray-700 text-white' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
+                  className="w-full text-left px-4 py-3 rounded-lg transition-colors font-medium text-blue-400 hover:text-white hover:bg-blue-800"
                 >
-                  🔍 Explorez
+                  🔐 Se connecter
                 </button>
-                <button 
-                  onClick={() => {
-                    setCurrentView('marketplace');
-                    setShowGeneralMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                    currentView === 'marketplace' 
-                      ? 'bg-gray-700 text-white' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  🛒 Marketplace
-                </button>
-                <button 
-                  onClick={() => {
-                    setCurrentView('cart');
-                    setShowGeneralMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-                    currentView === 'cart' 
-                      ? 'bg-gray-700 text-white' 
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  🛍️ Mon Panier {cartCount > 0 && `(${cartCount})`}
-                </button>
-              </nav>
+              )}
             </div>
           </div>
         </div>
