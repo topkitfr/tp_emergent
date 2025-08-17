@@ -310,9 +310,13 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
+            <a href="https://topkit-admin.preview.emergentagent.com/#beta-requests" 
+               style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
+                ✅ Gérer la demande
+            </a>
             <a href="https://topkit-admin.preview.emergentagent.com/admin" 
-               style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                🔧 Gérer la demande
+               style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                🔧 Panel Admin
             </a>
         </div>
         
