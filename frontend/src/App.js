@@ -660,49 +660,6 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const approveBetaRequest = async (requestId) => {
-    if (!window.confirm('Approuver cette demande d\'accès bêta ?')) return;
-
-    try {
-      setBetaRequestsLoading(true);
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/admin/beta/requests/${requestId}/approve`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      alert('Demande approuvée avec succès !');
-      // Note: fetchBetaRequests will be called in AdminPanel context
-    } catch (error) {
-      console.error('Failed to approve beta request:', error);
-      alert('Erreur lors de l\'approbation');
-    } finally {
-      setBetaRequestsLoading(false);
-    }
-  };
-
-  const rejectBetaRequest = async (requestId) => {
-    const reason = window.prompt('Raison du refus (optionnel):');
-    if (reason === null) return; // User cancelled
-
-    try {
-      setBetaRequestsLoading(true);
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/admin/beta/requests/${requestId}/reject`, {
-        reason: reason || 'Aucune raison fournie'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      alert('Demande rejetée.');
-      // Note: fetchBetaRequests will be called in AdminPanel context
-    } catch (error) {
-      console.error('Failed to reject beta request:', error);
-      alert('Erreur lors du rejet');
-    } finally {
-      setBetaRequestsLoading(false);
-    }
-  };
-
   const login = (token, userData) => {
     console.log('🔑 Login called with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
     console.log('👤 Login called with user data:', userData);
