@@ -5619,11 +5619,34 @@ async def request_beta_access(request: BetaAccessRequest):
         
         await db.beta_access_requests.insert_one(access_request)
         
+        # Send notification email to admin about new beta request
+        admin_notified = False
+        if gmail_service:
+            try:
+                # Get admin email for notification
+                admin_user = await db.users.find_one({"role": "admin"})
+                if admin_user:
+                    admin_notified = gmail_service.send_beta_access_notification(
+                        admin_email=admin_user["email"],
+                        request_data={
+                            "email": request.email,
+                            "first_name": request.first_name,
+                            "last_name": request.last_name,
+                            "message": request.message or "Aucun message",
+                            "request_id": access_request["id"]
+                        }
+                    )
+                    if admin_notified:
+                        logger.info(f"Beta access notification sent to admin {admin_user['email']}")
+            except Exception as e:
+                logger.error(f"Failed to send beta access notification: {e}")
+        
         # Log the activity
         await log_user_activity("system", "beta_access_requested", request.email, {
             "name": f"{request.first_name} {request.last_name}",
-            "email": request.email,
-            "message": request.message or "No message"
+            "email": request.email,  
+            "message": request.message or "No message",
+            "admin_notified": admin_notified
         })
         
         return BetaAccessResponse(
