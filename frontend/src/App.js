@@ -671,7 +671,7 @@ const AuthProvider = ({ children }) => {
       });
       
       alert('Demande approuvée avec succès !');
-      fetchBetaRequests(); // Refresh the list
+      // Note: fetchBetaRequests will be called in AdminPanel context
     } catch (error) {
       console.error('Failed to approve beta request:', error);
       alert('Erreur lors de l\'approbation');
