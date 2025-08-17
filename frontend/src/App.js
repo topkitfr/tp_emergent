@@ -157,8 +157,9 @@ const SiteAccessGate = ({ children }) => {
     );
   }
 
-  // If user has access, show the normal app
-  if (hasAccess) {
+  // If user has access OR user is authenticated, show the normal app
+  // Temporary: Allow authenticated users to bypass private beta mode for testing
+  if (hasAccess || (user && user.token)) {
     return children;
   }
 
