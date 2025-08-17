@@ -5147,6 +5147,7 @@ const AuthModal = ({ onClose }) => {
 
         <form 
           onSubmit={handleSubmit} 
+          noValidate
           className="space-y-4"
         >
           {!isLogin && (
