@@ -22,6 +22,7 @@ import asyncio
 import re
 from collections import defaultdict
 import time
+import random
 
 # Import Stripe integration
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
