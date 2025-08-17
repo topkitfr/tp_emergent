@@ -4149,7 +4149,6 @@ const AuthModal = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    e.stopPropagation();
     
     console.log('🚀 Form submitted - handleSubmit called');
     console.log('📧 Form data:', { email: formData.email, password: formData.password ? '***' : 'empty', name: formData.name });
