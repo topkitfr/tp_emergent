@@ -11402,7 +11402,10 @@ const AppContent = () => {
   const [showAddJersey, setShowAddJersey] = useState(false); // For adding new jerseys
   const [showSubmitModal, setShowSubmitModal] = useState(false); // For submitting new jerseys
   const [showCreateListingModal, setShowCreateListingModal] = useState(false); // For creating marketplace listings
+  const [showAddToCollectionModal, setShowAddToCollectionModal] = useState(false); // For adding to collection
+  const [selectedJerseyForCollection, setSelectedJerseyForCollection] = useState(null); // Jersey selected for collection
   const [approvedJerseys, setApprovedJerseys] = useState([]); // For approved jerseys available for listings
+  const [myOwnedCollection, setMyOwnedCollection] = useState([]); // User's owned collection items
   const [selectedJerseyForListing, setSelectedJerseyForListing] = useState(null); // Jersey selected for creating listing
   const [selectedListingJersey, setSelectedListingJersey] = useState(null); // For selling from collection
   const [showJerseyDetail, setShowJerseyDetail] = useState(false);
