@@ -11896,8 +11896,6 @@ const SubmitJerseyPage = () => {
     team: '',
     season: '',
     player: '',
-    size: '',
-    condition: '',
     manufacturer: '',
     home_away: '',
     league: '',
