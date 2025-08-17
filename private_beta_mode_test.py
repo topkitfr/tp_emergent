@@ -502,14 +502,24 @@ class PrivateBetaModeTest:
             
             # Test approval/rejection if we have requests
             if test_request_id:
-                # Create another request for rejection test
-                reject_request_id = self.test_beta_access_request()
-                
-                if test_request_id:
-                    self.test_approve_beta_request(test_request_id)
-                
-                if reject_request_id:
-                    self.test_reject_beta_request(reject_request_id)
+                self.test_approve_beta_request(test_request_id)
+            
+            # Create a separate request for rejection test
+            reject_test_request = {
+                "email": f"reject.test.{datetime.now().strftime('%Y%m%d%H%M%S')}@example.com",
+                "first_name": "Reject",
+                "last_name": "Test",
+                "message": "Testing rejection functionality"
+            }
+            
+            try:
+                response = requests.post(f"{BACKEND_URL}/beta/request-access", json=reject_test_request)
+                if response.status_code == 200:
+                    reject_request_id = response.json().get("request_id")
+                    if reject_request_id:
+                        self.test_reject_beta_request(reject_request_id)
+            except Exception as e:
+                self.log_test("Create Reject Test Request", False, f"Exception: {str(e)}")
         
         # Final Results
         print("\n" + "=" * 60)
