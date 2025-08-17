@@ -2483,13 +2483,11 @@ const SubmitJerseyModal = ({ onClose, onSuccess }) => {
         throw new Error('Please login to submit a jersey');
       }
 
-      // Create jersey submission
+      // Create jersey catalog submission (no size/condition - Discogs-style)
       const jerseyData = {
         team: formData.team,
         season: formData.season,
         player: formData.player || null,
-        size: formData.size,
-        condition: formData.condition,
         manufacturer: formData.manufacturer,
         home_away: formData.home_away,
         league: formData.league,
