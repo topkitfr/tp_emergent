@@ -694,7 +694,7 @@ const AuthProvider = ({ children }) => {
       });
       
       alert('Demande rejetée.');
-      fetchBetaRequests(); // Refresh the list
+      // Note: fetchBetaRequests will be called in AdminPanel context
     } catch (error) {
       console.error('Failed to reject beta request:', error);
       alert('Erreur lors du rejet');
