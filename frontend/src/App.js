@@ -15170,6 +15170,16 @@ const AdminPanel = () => {
     }
   }, [user, activeTab]);
 
+  // Detect URL hash for direct navigation to beta-requests
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#beta-requests' && user?.email === 'topkitfr@gmail.com') {
+      setActiveTab('beta-requests');
+      // Clear the hash after navigation
+      window.history.replaceState(null, null, window.location.pathname);
+    }
+  }, [user]);
+
   const fetchPendingJerseys = async () => {
     try {
       setLoading(true);
