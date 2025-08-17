@@ -86,6 +86,175 @@ const SEASONS = [
 
 // Get the backend URL from environment variables
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const SITE_MODE = process.env.REACT_APP_SITE_MODE || 'public';
+
+// Site Access Check Component
+const SiteAccessGate = ({ children }) => {
+  const { user, loading: authLoading } = useAuth();
+  const [hasAccess, setHasAccess] = useState(null);
+  const [siteMode, setSiteMode] = useState('public');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkSiteAccess();
+  }, [user]);
+
+  const checkSiteAccess = async () => {
+    try {
+      const headers = {};
+      if (user?.token) {
+        headers.Authorization = `Bearer ${user.token}`;
+      }
+
+      const response = await fetch(`${API}/api/site/access-check`, {
+        headers
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHasAccess(data.has_access);
+        setSiteMode(data.mode);
+      } else {
+        // If endpoint fails, fall back to environment variable
+        setHasAccess(SITE_MODE === 'public');
+        setSiteMode(SITE_MODE);
+      }
+    } catch (error) {
+      console.error('Error checking site access:', error);
+      // Fall back to environment variable on error
+      setHasAccess(SITE_MODE === 'public');
+      setSiteMode(SITE_MODE);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show loading while checking access
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-white">TopKit</h2>
+          <p className="text-gray-400">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user has access, show the normal app
+  if (hasAccess) {
+    return children;
+  }
+
+  // Show private beta page for unauthorized users
+  return (
+    <PrivateBetaPage 
+      siteMode={siteMode} 
+      onAccessRequest={() => checkSiteAccess()} 
+    />
+  );
+};
+
+// Private Beta Landing Page
+const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+      </div>
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          
+          {/* Logo */}
+          <div className="mb-8">
+            <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent mb-4">
+              TopKit
+            </h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full"></div>
+          </div>
+
+          {/* Status Badge */}
+          <div className="inline-flex items-center space-x-2 bg-blue-900/30 border border-blue-500/50 rounded-full px-6 py-2 mb-8">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            <span className="text-blue-300 font-medium text-sm">Bêta Privée</span>
+          </div>
+
+          {/* Main Content */}
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+            La Révolution du
+            <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Marketplace Football
+            </span>
+          </h2>
+
+          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+            TopKit transforme l'achat et la vente de maillots de football. 
+            Découvrez une plateforme dédiée aux passionnés, avec un système 
+            de collection révolutionnaire inspiré de Discogs.
+          </p>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+              <div className="text-3xl mb-3">👕</div>
+              <h3 className="text-lg font-semibold mb-2">Marketplace Unique</h3>
+              <p className="text-gray-400 text-sm">Achetez et vendez des maillots authentiques dans un environnement sécurisé</p>
+            </div>
+            <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+              <div className="text-3xl mb-3">📊</div>
+              <h3 className="text-lg font-semibold mb-2">Collections Privées</h3>
+              <p className="text-gray-400 text-sm">Gérez vos collections avec un système avancé de wishlist et inventaire</p>
+            </div>
+            <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+              <div className="text-3xl mb-3">💳</div>
+              <h3 className="text-lg font-semibold mb-2">Paiements Sécurisés</h3>
+              <p className="text-gray-400 text-sm">Transactions protégées avec Stripe et commission transparente</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-blue-500/25"
+            >
+              Accéder à la Bêta Privée
+            </button>
+            
+            <div className="text-gray-400 text-sm">
+              Réservé aux utilisateurs invités • Connexion requise
+            </div>
+          </div>
+
+          {/* Status Info */}
+          <div className="mt-16 p-6 bg-gray-900/30 border border-gray-700 rounded-xl">
+            <h4 className="text-lg font-semibold mb-3 text-blue-400">État de la Bêta</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Mode:</span>
+                <span className="text-white capitalize">{siteMode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Statut:</span>
+                <span className="text-green-400">En développement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
+    </div>
+  );
+};
 
 // Auth Context with useReducer for robust state management
 const AuthContext = createContext();
