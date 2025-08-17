@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-TopKit Backend API Testing Suite - Post Discogs-Style Header Implementation
-Testing backend functionality after implementing the new Discogs-style header
-Focus areas: API Connectivity, Authentication, Jersey Operations, User Profile, Navigation Integration
+TopKit Backend Testing - Discogs-Style Workflow Implementation
+Testing the complete workflow: Jersey Submission → Admin Approval → Collection → Listing Creation
 """
 
 import requests
@@ -11,23 +10,27 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+BACKEND_URL = "https://topkit-beta.preview.emergentagent.com/api"
+
+# Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD_NEW = "TopKitSecure789#"  # From review request
+ADMIN_PASSWORD_OLD = "adminpass123"      # From previous tests
+
+USER_EMAIL = "steinmetzlivio@gmail.com"
+USER_PASSWORD = "123"
 
 class TopKitTester:
     def __init__(self):
-        self.session = requests.Session()
-        self.user_token = None
         self.admin_token = None
-        self.user_id = None
-        self.admin_id = None
+        self.user_token = None
         self.test_results = []
+        self.jersey_id = None
+        self.collection_id = None
+        self.listing_id = None
         
-    def log_test(self, test_name, success, details="", error=""):
-        """Log test results"""
+    def log_result(self, test_name, success, details="", error=""):
+        """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
         result = {
             "test": test_name,
@@ -45,582 +48,541 @@ class TopKitTester:
             print(f"   Error: {error}")
         print()
 
-    def test_api_connectivity(self):
-        """Test 1: API Connectivity - Verify all main API endpoints are accessible"""
-        print("🌐 TESTING API CONNECTIVITY")
-        print("=" * 50)
+    def authenticate_admin(self):
+        """Test admin authentication with both possible passwords"""
+        print("🔐 Testing Admin Authentication...")
         
-        # Test core endpoints accessibility
-        endpoints_to_test = [
-            ("/jerseys", "GET", "Jersey browsing endpoint"),
-            ("/auth/login", "POST", "Authentication endpoint"),
-            ("/profile", "GET", "Profile endpoint (requires auth)"),
-            ("/marketplace/catalog", "GET", "Marketplace catalog endpoint"),
-            ("/explorer/most-collected", "GET", "Explorer most collected endpoint"),
-            ("/explorer/latest-additions", "GET", "Explorer latest additions endpoint"),
-            ("/users/search", "GET", "User search endpoint (requires auth)")
-        ]
-        
-        for endpoint, method, description in endpoints_to_test:
-            try:
-                if method == "GET":
-                    if "profile" in endpoint or "users/search" in endpoint:
-                        # Skip auth-required endpoints for now
-                        continue
-                    response = self.session.get(f"{BASE_URL}{endpoint}")
-                elif method == "POST":
-                    if endpoint == "/auth/login":
-                        # Test with invalid credentials to check endpoint exists
-                        response = self.session.post(f"{BASE_URL}{endpoint}", json={"email": "test", "password": "test"})
-                    else:
-                        continue
-                
-                if response.status_code in [200, 400, 401, 422]:  # Valid responses
-                    self.log_test(
-                        f"API Connectivity - {description}",
-                        True,
-                        f"Endpoint accessible (HTTP {response.status_code})"
-                    )
-                else:
-                    self.log_test(
-                        f"API Connectivity - {description}",
-                        False,
-                        "",
-                        f"Unexpected status code: {response.status_code}"
-                    )
-            except Exception as e:
-                self.log_test(f"API Connectivity - {description}", False, "", str(e))
-
-    def test_authentication_system(self):
-        """Test 2: Authentication System - Test user login/logout functionality"""
-        print("🔐 TESTING AUTHENTICATION SYSTEM")
-        print("=" * 50)
-        
-        # Test 1: User Login with provided credentials
+        # Try new password first
         try:
-            login_data = {
-                "email": TEST_USER_EMAIL,
-                "password": TEST_USER_PASSWORD
-            }
-            response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if "token" in data and "user" in data:
-                    self.user_token = data["token"]
-                    self.user_id = data["user"]["id"]
-                    user_name = data["user"]["name"]
-                    user_role = data["user"]["role"]
-                    self.log_test(
-                        "User Authentication (steinmetzlivio@gmail.com/123)",
-                        True,
-                        f"Login successful - User: {user_name}, Role: {user_role}, ID: {self.user_id}"
-                    )
-                else:
-                    self.log_test("User Authentication", False, "", "Missing token or user data in response")
-            else:
-                self.log_test("User Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("User Authentication", False, "", str(e))
-
-        # Test 2: Admin Login with provided credentials
-        try:
-            admin_login_data = {
+            response = requests.post(f"{BACKEND_URL}/auth/login", json={
                 "email": ADMIN_EMAIL,
-                "password": ADMIN_PASSWORD
-            }
-            response = self.session.post(f"{BASE_URL}/auth/login", json=admin_login_data)
+                "password": ADMIN_PASSWORD_NEW
+            })
             
             if response.status_code == 200:
                 data = response.json()
-                if "token" in data and "user" in data:
-                    self.admin_token = data["token"]
-                    self.admin_id = data["user"]["id"]
-                    admin_name = data["user"]["name"]
-                    admin_role = data["user"]["role"]
-                    self.log_test(
-                        "Admin Authentication (topkitfr@gmail.com/adminpass123)",
-                        True,
-                        f"Admin login successful - User: {admin_name}, Role: {admin_role}"
-                    )
-                else:
-                    self.log_test("Admin Authentication", False, "", "Missing token or user data in response")
-            else:
-                self.log_test("Admin Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.admin_token = data.get("token")
+                admin_info = data.get("user", {})
+                self.log_result(
+                    "Admin Authentication (New Password)",
+                    True,
+                    f"Admin logged in: {admin_info.get('name')} (Role: {admin_info.get('role')})"
+                )
+                return True
         except Exception as e:
-            self.log_test("Admin Authentication", False, "", str(e))
-
-        # Test 3: Token Validation
-        if self.user_token:
-            try:
-                headers = {"Authorization": f"Bearer {self.user_token}"}
-                response = self.session.get(f"{BASE_URL}/profile", headers=headers)
-                
-                if response.status_code == 200:
-                    profile_data = response.json()
-                    self.log_test(
-                        "Token Validation via Profile Access",
-                        True,
-                        f"Token valid - Profile data retrieved successfully"
-                    )
-                else:
-                    self.log_test("Token Validation via Profile Access", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test("Token Validation via Profile Access", False, "", str(e))
-
-    def test_core_jersey_operations(self):
-        """Test 3: Core Jersey Operations - Test jersey browsing, search, and basic CRUD operations"""
-        print("⚽ TESTING CORE JERSEY OPERATIONS")
-        print("=" * 50)
+            pass
         
-        # Test 1: GET /api/jerseys for Explorez page functionality
+        # Try old password as fallback
         try:
-            response = self.session.get(f"{BASE_URL}/jerseys")
+            response = requests.post(f"{BACKEND_URL}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD_OLD
+            })
             
             if response.status_code == 200:
-                jerseys = response.json()
-                if isinstance(jerseys, list):
-                    approved_jerseys = [j for j in jerseys if j.get("status") == "approved"]
-                    self.log_test(
-                        "GET /api/jerseys - Explorez Page Functionality",
-                        True,
-                        f"Retrieved {len(jerseys)} total jerseys ({len(approved_jerseys)} approved) for browsing"
-                    )
-                else:
-                    self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", "Invalid response format")
+                data = response.json()
+                self.admin_token = data.get("token")
+                admin_info = data.get("user", {})
+                self.log_result(
+                    "Admin Authentication (Fallback Password)",
+                    True,
+                    f"Admin logged in: {admin_info.get('name')} (Role: {admin_info.get('role')})"
+                )
+                return True
             else:
-                self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_result(
+                    "Admin Authentication",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
         except Exception as e:
-            self.log_test("GET /api/jerseys - Explorez Page Functionality", False, "", str(e))
+            self.log_result(
+                "Admin Authentication",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
-        # Test 2: Jersey Search Functionality
+    def authenticate_user(self):
+        """Test user authentication"""
+        print("👤 Testing User Authentication...")
+        
         try:
-            search_params = {"search": "Real Madrid"}
-            response = self.session.get(f"{BASE_URL}/jerseys", params=search_params)
+            response = requests.post(f"{BACKEND_URL}/auth/login", json={
+                "email": USER_EMAIL,
+                "password": USER_PASSWORD
+            })
             
             if response.status_code == 200:
-                search_results = response.json()
-                if isinstance(search_results, list):
-                    self.log_test(
-                        "Jersey Search Functionality",
-                        True,
-                        f"Search for 'Real Madrid' returned {len(search_results)} results"
-                    )
-                else:
-                    self.log_test("Jersey Search Functionality", False, "", "Invalid search results format")
+                data = response.json()
+                self.user_token = data.get("token")
+                user_info = data.get("user", {})
+                self.log_result(
+                    "User Authentication",
+                    True,
+                    f"User logged in: {user_info.get('name')} (Role: {user_info.get('role')})"
+                )
+                return True
             else:
-                self.log_test("Jersey Search Functionality", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_result(
+                    "User Authentication",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
         except Exception as e:
-            self.log_test("Jersey Search Functionality", False, "", str(e))
+            self.log_result(
+                "User Authentication",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
-        # Test 3: Jersey Submission (CRUD - Create)
-        if self.user_token:
-            try:
-                headers = {"Authorization": f"Bearer {self.user_token}"}
-                test_jersey_data = {
-                    "team": "Real Madrid CF",
-                    "season": "2024-25",
-                    "player": "Vinicius Jr",
-                    "size": "M",
-                    "condition": "new",
-                    "manufacturer": "Adidas",
-                    "home_away": "home",
-                    "league": "La Liga",
-                    "description": "Test jersey submission for Discogs header testing"
-                }
-                
-                response = self.session.post(f"{BASE_URL}/jerseys", json=test_jersey_data, headers=headers)
-                
-                if response.status_code in [200, 201]:
-                    jersey_data = response.json()
-                    jersey_id = jersey_data.get("id")
-                    jersey_status = jersey_data.get("status")
-                    reference_number = jersey_data.get("reference_number")
-                    
-                    self.log_test(
-                        "Jersey Submission (CRUD - Create)",
-                        True,
-                        f"Jersey created successfully - ID: {jersey_id}, Status: {jersey_status}, Ref: {reference_number}"
-                    )
-                else:
-                    self.log_test("Jersey Submission (CRUD - Create)", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test("Jersey Submission (CRUD - Create)", False, "", str(e))
-
-        # Test 4: Explorer Endpoints for Header Navigation
-        explorer_endpoints = [
-            ("/explorer/most-collected", "Most Collected Jerseys"),
-            ("/explorer/most-wanted", "Most Wanted Jerseys"),
-            ("/explorer/latest-additions", "Latest Additions"),
-            ("/explorer/leagues", "Leagues Overview")
-        ]
-        
-        for endpoint, description in explorer_endpoints:
-            try:
-                response = self.session.get(f"{BASE_URL}{endpoint}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list):
-                        self.log_test(
-                            f"Explorer - {description}",
-                            True,
-                            f"Retrieved {len(data)} items"
-                        )
-                    else:
-                        self.log_test(f"Explorer - {description}", False, "", "Invalid response format")
-                else:
-                    self.log_test(f"Explorer - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test(f"Explorer - {description}", False, "", str(e))
-
-    def test_user_profile_access(self):
-        """Test 4: User Profile Access - Verify profile data retrieval works correctly"""
-        print("👤 TESTING USER PROFILE ACCESS")
-        print("=" * 50)
+    def test_jersey_submission_without_size_condition(self):
+        """Test jersey submission without size/condition (catalog submission)"""
+        print("📝 Testing Jersey Submission (Catalog Entry)...")
         
         if not self.user_token:
-            self.log_test("User Profile Access", False, "", "No user token available for testing")
-            return
-
-        headers = {"Authorization": f"Bearer {self.user_token}"}
-
-        # Test 1: Profile Data Retrieval
+            self.log_result("Jersey Submission", False, "", "User not authenticated")
+            return False
+        
+        jersey_data = {
+            "team": "FC Barcelona",
+            "season": "2024-25",
+            "player": "Pedri",
+            "manufacturer": "Nike",
+            "home_away": "home",
+            "league": "La Liga",
+            "description": "Official FC Barcelona home jersey for 2024-25 season featuring Pedri #8",
+            "images": ["https://example.com/barca-pedri.jpg"]
+        }
+        
         try:
-            response = self.session.get(f"{BASE_URL}/profile", headers=headers)
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=headers)
             
             if response.status_code == 200:
-                profile_data = response.json()
-                owned_jerseys = profile_data.get("owned_jerseys", 0)
-                wanted_jerseys = profile_data.get("wanted_jerseys", 0)
-                active_listings = profile_data.get("active_listings", 0)
-                self.log_test(
-                    "Profile Data Retrieval",
+                data = response.json()
+                self.jersey_id = data.get("id")
+                jersey_ref = data.get("reference_number", "N/A")
+                self.log_result(
+                    "Jersey Submission (Catalog Entry)",
                     True,
-                    f"Profile data retrieved - Owned: {owned_jerseys}, Wanted: {wanted_jerseys}, Listings: {active_listings}"
+                    f"Jersey submitted successfully. ID: {self.jersey_id}, Ref: {jersey_ref}, Status: {data.get('status')}"
                 )
+                return True
             else:
-                self.log_test("Profile Data Retrieval", False, "", f"HTTP {response.status_code}: {response.text}")
-        except Exception as e:
-            self.log_test("Profile Data Retrieval", False, "", str(e))
-
-        # Test 2: User Profile Endpoints for Profile Dropdown
-        profile_endpoints = [
-            (f"/users/{self.user_id}/profile", "User Profile Details"),
-            (f"/users/{self.user_id}/collections", "User Collections"),
-            (f"/users/{self.user_id}/jerseys", "User Submissions")
-        ]
-        
-        for endpoint, description in profile_endpoints:
-            try:
-                response = self.session.get(f"{BASE_URL}{endpoint}", headers=headers)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    self.log_test(
-                        f"Profile Dropdown - {description}",
-                        True,
-                        f"Data retrieved successfully"
-                    )
-                else:
-                    self.log_test(f"Profile Dropdown - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test(f"Profile Dropdown - {description}", False, "", str(e))
-
-        # Test 3: Collections Access
-        try:
-            owned_response = self.session.get(f"{BASE_URL}/collections/owned", headers=headers)
-            wanted_response = self.session.get(f"{BASE_URL}/collections/wanted", headers=headers)
-            
-            if owned_response.status_code == 200 and wanted_response.status_code == 200:
-                owned_data = owned_response.json()
-                wanted_data = wanted_response.json()
-                owned_count = len(owned_data) if isinstance(owned_data, list) else 0
-                wanted_count = len(wanted_data) if isinstance(wanted_data, list) else 0
-                
-                self.log_test(
-                    "Collections Access",
-                    True,
-                    f"Collections retrieved - Owned: {owned_count}, Wanted: {wanted_count}"
+                self.log_result(
+                    "Jersey Submission (Catalog Entry)",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
                 )
-            else:
-                self.log_test("Collections Access", False, "", f"Owned: {owned_response.status_code}, Wanted: {wanted_response.status_code}")
+                return False
         except Exception as e:
-            self.log_test("Collections Access", False, "", str(e))
+            self.log_result(
+                "Jersey Submission (Catalog Entry)",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
-    def test_marketplace_api_endpoints(self):
-        """Test 5: Marketplace API Endpoints - Test marketplace API endpoints for navigation"""
-        print("🛒 TESTING MARKETPLACE API ENDPOINTS")
-        print("=" * 50)
+    def test_admin_approval_workflow(self):
+        """Test admin jersey approval workflow"""
+        print("👨‍💼 Testing Admin Approval Workflow...")
         
-        # Test 1: Marketplace Catalog (Discogs-style)
+        if not self.admin_token or not self.jersey_id:
+            self.log_result("Admin Approval Workflow", False, "", "Admin not authenticated or no jersey to approve")
+            return False
+        
+        # First, get pending jerseys
         try:
-            response = self.session.get(f"{BASE_URL}/marketplace/catalog")
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{BACKEND_URL}/admin/jerseys/pending", headers=headers)
             
             if response.status_code == 200:
-                catalog_data = response.json()
-                if isinstance(catalog_data, list):
-                    self.log_test(
-                        "Marketplace Catalog (Discogs-style)",
+                pending_jerseys = response.json()
+                found_jersey = None
+                for jersey in pending_jerseys:
+                    if jersey.get("id") == self.jersey_id:
+                        found_jersey = jersey
+                        break
+                
+                if found_jersey:
+                    self.log_result(
+                        "Get Pending Jerseys",
                         True,
-                        f"Catalog retrieved with {len(catalog_data)} items"
+                        f"Found submitted jersey in pending list: {found_jersey.get('team')} {found_jersey.get('season')}"
                     )
                 else:
-                    self.log_test("Marketplace Catalog (Discogs-style)", False, "", "Invalid catalog format")
+                    self.log_result(
+                        "Get Pending Jerseys",
+                        False,
+                        f"Submitted jersey not found in pending list. Found {len(pending_jerseys)} pending jerseys"
+                    )
+                    return False
             else:
-                self.log_test("Marketplace Catalog (Discogs-style)", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_result(
+                    "Get Pending Jerseys",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
         except Exception as e:
-            self.log_test("Marketplace Catalog (Discogs-style)", False, "", str(e))
+            self.log_result(
+                "Get Pending Jerseys",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
+        
+        # Now approve the jersey
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/jerseys/{self.jersey_id}/approve", headers=headers)
+            
+            if response.status_code == 200:
+                self.log_result(
+                    "Admin Jersey Approval",
+                    True,
+                    "Jersey approved successfully"
+                )
+                return True
+            else:
+                self.log_result(
+                    "Admin Jersey Approval",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "Admin Jersey Approval",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
-        # Test 2: Listings Endpoints
-        if self.user_token:
+    def test_approved_jerseys_endpoint(self):
+        """Test GET /api/jerseys/approved to get approved jerseys for collection"""
+        print("✅ Testing Approved Jerseys Endpoint...")
+        
+        if not self.user_token:
+            self.log_result("Approved Jerseys Endpoint", False, "", "User not authenticated")
+            return False
+        
+        try:
             headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.get(f"{BACKEND_URL}/jerseys/approved", headers=headers)
             
-            try:
-                response = self.session.get(f"{BASE_URL}/listings", headers=headers)
+            if response.status_code == 200:
+                approved_jerseys = response.json()
+                found_jersey = None
+                for jersey in approved_jerseys:
+                    if jersey.get("id") == self.jersey_id:
+                        found_jersey = jersey
+                        break
                 
-                if response.status_code == 200:
-                    listings_data = response.json()
-                    if isinstance(listings_data, list):
-                        active_listings = [l for l in listings_data if l.get("status") == "active"]
-                        self.log_test(
-                            "Marketplace Listings",
-                            True,
-                            f"Retrieved {len(listings_data)} total listings ({len(active_listings)} active)"
-                        )
-                    else:
-                        self.log_test("Marketplace Listings", False, "", "Invalid listings format")
-                else:
-                    self.log_test("Marketplace Listings", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test("Marketplace Listings", False, "", str(e))
-
-    def test_search_related_api_endpoints(self):
-        """Test 6: Search-Related API Endpoints - Verify search-related API endpoints work with new search bar"""
-        print("🔍 TESTING SEARCH-RELATED API ENDPOINTS")
-        print("=" * 50)
-        
-        # Test 1: Jersey Search with various parameters
-        search_tests = [
-            ({"search": "Real Madrid"}, "Team Search"),
-            ({"search": "2024"}, "Season Search"),
-            ({"league": "La Liga"}, "League Filter"),
-            ({"team": "Barcelona"}, "Team Filter")
-        ]
-        
-        for params, description in search_tests:
-            try:
-                response = self.session.get(f"{BASE_URL}/jerseys", params=params)
-                
-                if response.status_code == 200:
-                    results = response.json()
-                    if isinstance(results, list):
-                        self.log_test(
-                            f"Search API - {description}",
-                            True,
-                            f"Search returned {len(results)} results"
-                        )
-                    else:
-                        self.log_test(f"Search API - {description}", False, "", "Invalid search results format")
-                else:
-                    self.log_test(f"Search API - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test(f"Search API - {description}", False, "", str(e))
-
-        # Test 2: User Search (for header search functionality)
-        if self.user_token:
-            headers = {"Authorization": f"Bearer {self.user_token}"}
-            
-            try:
-                response = self.session.get(f"{BASE_URL}/users/search?query=test", headers=headers)
-                
-                if response.status_code == 200:
-                    user_results = response.json()
-                    if isinstance(user_results, list):
-                        self.log_test(
-                            "User Search API",
-                            True,
-                            f"User search returned {len(user_results)} results"
-                        )
-                    else:
-                        self.log_test("User Search API", False, "", "Invalid user search results format")
-                else:
-                    self.log_test("User Search API", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test("User Search API", False, "", str(e))
-
-    def test_navigation_integration(self):
-        """Test 7: Navigation Integration - Ensure backend properly supports the new header navigation flow"""
-        print("🧭 TESTING NAVIGATION INTEGRATION")
-        print("=" * 50)
-        
-        # Test navigation-related endpoints that support the new header
-        navigation_endpoints = [
-            ("/jerseys", "Home/Explorez Navigation"),
-            ("/marketplace/catalog", "Marketplace Navigation"),
-            ("/explorer/leagues", "Explorer Navigation"),
-            ("/notifications", "Notifications (Header Bell)", True),  # Requires auth
-            ("/profile", "Profile Dropdown", True)  # Requires auth
-        ]
-        
-        for endpoint_info in navigation_endpoints:
-            endpoint = endpoint_info[0]
-            description = endpoint_info[1]
-            requires_auth = len(endpoint_info) > 2 and endpoint_info[2]
-            
-            try:
-                headers = {}
-                if requires_auth and self.user_token:
-                    headers = {"Authorization": f"Bearer {self.user_token}"}
-                elif requires_auth and not self.user_token:
-                    self.log_test(f"Navigation - {description}", False, "", "No auth token available")
-                    continue
-                
-                response = self.session.get(f"{BASE_URL}{endpoint}", headers=headers)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    self.log_test(
-                        f"Navigation - {description}",
+                if found_jersey:
+                    self.log_result(
+                        "Approved Jerseys Endpoint",
                         True,
-                        f"Endpoint accessible and returns data"
+                        f"Found approved jersey: {found_jersey.get('team')} {found_jersey.get('season')} (Status: {found_jersey.get('status')})"
                     )
+                    return True
                 else:
-                    self.log_test(f"Navigation - {description}", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test(f"Navigation - {description}", False, "", str(e))
+                    self.log_result(
+                        "Approved Jerseys Endpoint",
+                        False,
+                        f"Approved jersey not found in list. Found {len(approved_jerseys)} approved jerseys"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Approved Jerseys Endpoint",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "Approved Jerseys Endpoint",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
-        # Test messaging endpoints for header messages icon
-        if self.user_token:
+    def test_collection_management_with_size_condition(self):
+        """Test POST /api/collections with new size/condition fields for owned items"""
+        print("📚 Testing Collection Management (with Size/Condition)...")
+        
+        if not self.user_token or not self.jersey_id:
+            self.log_result("Collection Management", False, "", "User not authenticated or no jersey available")
+            return False
+        
+        collection_data = {
+            "jersey_id": self.jersey_id,
+            "collection_type": "owned",
+            "size": "L",
+            "condition": "very_good",
+            "personal_description": "Purchased from official store, worn twice"
+        }
+        
+        try:
             headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.post(f"{BACKEND_URL}/collections", json=collection_data, headers=headers)
             
-            try:
-                response = self.session.get(f"{BASE_URL}/conversations", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.collection_id = data.get("id")
+                self.log_result(
+                    "Collection Management (Add to Owned)",
+                    True,
+                    f"Jersey added to owned collection. Collection ID: {self.collection_id}, Size: {data.get('size')}, Condition: {data.get('condition')}"
+                )
+                return True
+            else:
+                self.log_result(
+                    "Collection Management (Add to Owned)",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "Collection Management (Add to Owned)",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
+
+    def test_my_owned_collection_endpoint(self):
+        """Test GET /api/collections/my-owned to get listable items"""
+        print("🏠 Testing My Owned Collection Endpoint...")
+        
+        if not self.user_token:
+            self.log_result("My Owned Collection Endpoint", False, "", "User not authenticated")
+            return False
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.get(f"{BACKEND_URL}/collections/my-owned", headers=headers)
+            
+            if response.status_code == 200:
+                owned_items = response.json()
+                found_item = None
+                for item in owned_items:
+                    if item.get("id") == self.collection_id:
+                        found_item = item
+                        break
                 
-                if response.status_code == 200:
-                    conversations = response.json()
-                    if isinstance(conversations, list):
-                        self.log_test(
-                            "Navigation - Messages Integration",
-                            True,
-                            f"Messages endpoint accessible - {len(conversations)} conversations"
-                        )
-                    else:
-                        self.log_test("Navigation - Messages Integration", False, "", "Invalid conversations format")
+                if found_item:
+                    self.log_result(
+                        "My Owned Collection Endpoint",
+                        True,
+                        f"Found owned item: {found_item.get('jersey', {}).get('team')} {found_item.get('jersey', {}).get('season')} (Size: {found_item.get('size')}, Condition: {found_item.get('condition')})"
+                    )
+                    return True
                 else:
-                    self.log_test("Navigation - Messages Integration", False, "", f"HTTP {response.status_code}: {response.text}")
-            except Exception as e:
-                self.log_test("Navigation - Messages Integration", False, "", str(e))
+                    self.log_result(
+                        "My Owned Collection Endpoint",
+                        False,
+                        f"Owned item not found in collection. Found {len(owned_items)} owned items"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "My Owned Collection Endpoint",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "My Owned Collection Endpoint",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
+
+    def test_listing_creation_from_collection(self):
+        """Test POST /api/listings using collection_id (not jersey_id directly)"""
+        print("🏪 Testing Listing Creation from Collection...")
+        
+        if not self.user_token or not self.collection_id:
+            self.log_result("Listing Creation from Collection", False, "", "User not authenticated or no collection item available")
+            return False
+        
+        listing_data = {
+            "collection_id": self.collection_id,
+            "price": 89.99,
+            "marketplace_description": "Excellent condition FC Barcelona jersey, worn only twice. Perfect for collectors!",
+            "images": ["https://example.com/my-barca-jersey-1.jpg", "https://example.com/my-barca-jersey-2.jpg"]
+        }
+        
+        try:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.post(f"{BACKEND_URL}/listings", json=listing_data, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.listing_id = data.get("id")
+                self.log_result(
+                    "Listing Creation from Collection",
+                    True,
+                    f"Listing created successfully. ID: {self.listing_id}, Price: €{data.get('price')}, Status: {data.get('status')}"
+                )
+                return True
+            else:
+                self.log_result(
+                    "Listing Creation from Collection",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "Listing Creation from Collection",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
+
+    def test_complete_discogs_workflow_validation(self):
+        """Validate the complete Discogs workflow end-to-end"""
+        print("🔄 Testing Complete Discogs Workflow Validation...")
+        
+        if not all([self.jersey_id, self.collection_id, self.listing_id]):
+            self.log_result(
+                "Complete Discogs Workflow Validation",
+                False,
+                "",
+                f"Missing components: Jersey ID: {bool(self.jersey_id)}, Collection ID: {bool(self.collection_id)}, Listing ID: {bool(self.listing_id)}"
+            )
+            return False
+        
+        # Verify the listing contains proper references
+        try:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            response = requests.get(f"{BACKEND_URL}/listings/{self.listing_id}", headers=headers)
+            
+            if response.status_code == 200:
+                listing = response.json()
+                
+                # Check that listing references collection, not jersey directly
+                has_collection_ref = "collection_id" in listing or listing.get("jersey_id") != self.jersey_id
+                has_proper_size_condition = listing.get("size") and listing.get("condition")
+                
+                workflow_valid = has_proper_size_condition
+                
+                self.log_result(
+                    "Complete Discogs Workflow Validation",
+                    workflow_valid,
+                    f"Workflow validation: Size/Condition from collection: {has_proper_size_condition}, Listing Price: €{listing.get('price')}"
+                )
+                return workflow_valid
+            else:
+                self.log_result(
+                    "Complete Discogs Workflow Validation",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_result(
+                "Complete Discogs Workflow Validation",
+                False,
+                "",
+                f"Exception: {str(e)}"
+            )
+            return False
 
     def run_all_tests(self):
-        """Run all test suites focused on Discogs-style header backend support"""
-        print("🚀 STARTING TOPKIT BACKEND TESTING - POST DISCOGS-STYLE HEADER IMPLEMENTATION")
-        print("=" * 80)
-        print(f"Backend URL: {BASE_URL}")
-        print(f"Test User: {TEST_USER_EMAIL}")
-        print(f"Admin User: {ADMIN_EMAIL}")
-        print("Focus: API Connectivity, Authentication, Jersey Operations, Profile Access, Navigation")
-        print("=" * 80)
-        print()
+        """Run all tests in the correct sequence"""
+        print("🚀 Starting TopKit Discogs-Style Workflow Testing")
+        print("=" * 60)
         
-        # Run test suites in order of importance
-        self.test_api_connectivity()
-        self.test_authentication_system()
-        self.test_core_jersey_operations()
-        self.test_user_profile_access()
-        self.test_marketplace_api_endpoints()
-        self.test_search_related_api_endpoints()
-        self.test_navigation_integration()
+        # Authentication tests
+        admin_auth_success = self.authenticate_admin()
+        user_auth_success = self.authenticate_user()
         
-        # Generate summary
+        if not admin_auth_success or not user_auth_success:
+            print("❌ Authentication failed - cannot proceed with workflow tests")
+            return self.generate_summary()
+        
+        # Core workflow tests
+        tests = [
+            self.test_jersey_submission_without_size_condition,
+            self.test_admin_approval_workflow,
+            self.test_approved_jerseys_endpoint,
+            self.test_collection_management_with_size_condition,
+            self.test_my_owned_collection_endpoint,
+            self.test_listing_creation_from_collection,
+            self.test_complete_discogs_workflow_validation
+        ]
+        
+        for test in tests:
+            test()
+        
         return self.generate_summary()
 
     def generate_summary(self):
         """Generate test summary"""
-        print("📊 TEST SUMMARY - DISCOGS-STYLE HEADER BACKEND VERIFICATION")
-        print("=" * 60)
-        
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
         failed_tests = total_tests - passed_tests
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
+        print("\n" + "=" * 60)
+        print("📊 TEST SUMMARY")
+        print("=" * 60)
         print(f"Total Tests: {total_tests}")
         print(f"Passed: {passed_tests}")
         print(f"Failed: {failed_tests}")
         print(f"Success Rate: {success_rate:.1f}%")
         print()
         
-        # Categorize results by test area
-        test_categories = {
-            "API Connectivity": [],
-            "Authentication System": [],
-            "Core Jersey Operations": [],
-            "User Profile Access": [],
-            "Marketplace API": [],
-            "Search-Related API": [],
-            "Navigation Integration": []
-        }
-        
-        for result in self.test_results:
-            test_name = result["test"]
-            if "API Connectivity" in test_name:
-                test_categories["API Connectivity"].append(result)
-            elif "Authentication" in test_name or "Token" in test_name:
-                test_categories["Authentication System"].append(result)
-            elif "Jersey" in test_name or "Explorer" in test_name:
-                test_categories["Core Jersey Operations"].append(result)
-            elif "Profile" in test_name or "Collections" in test_name:
-                test_categories["User Profile Access"].append(result)
-            elif "Marketplace" in test_name or "Listings" in test_name:
-                test_categories["Marketplace API"].append(result)
-            elif "Search" in test_name:
-                test_categories["Search-Related API"].append(result)
-            elif "Navigation" in test_name or "Messages" in test_name:
-                test_categories["Navigation Integration"].append(result)
-        
-        # Print category summaries
-        for category, results in test_categories.items():
-            if results:
-                passed = sum(1 for r in results if r["success"])
-                total = len(results)
-                print(f"📋 {category}: {passed}/{total} passed ({passed/total*100:.1f}%)")
-        
-        print()
-        
         if failed_tests > 0:
             print("❌ FAILED TESTS:")
             for result in self.test_results:
                 if not result["success"]:
-                    print(f"  - {result['test']}: {result['error']}")
+                    print(f"  • {result['test']}: {result['error']}")
             print()
         
         print("✅ PASSED TESTS:")
         for result in self.test_results:
             if result["success"]:
-                print(f"  - {result['test']}")
+                print(f"  • {result['test']}")
         
-        print()
-        
-        # Final assessment
-        if success_rate >= 90:
-            print("🎉 EXCELLENT: Backend is fully operational and ready for Discogs-style header!")
-        elif success_rate >= 80:
-            print("✅ GOOD: Backend is mostly operational with minor issues.")
-        elif success_rate >= 70:
-            print("⚠️ ACCEPTABLE: Backend has some issues that should be addressed.")
-        else:
-            print("❌ CRITICAL: Backend has significant issues that need immediate attention.")
-        
-        print()
-        print("🎯 DISCOGS-STYLE HEADER BACKEND TESTING COMPLETE")
-        
-        # Return success rate for external use
-        return success_rate
+        return {
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "success_rate": success_rate,
+            "results": self.test_results
+        }
 
 if __name__ == "__main__":
     tester = TopKitTester()
-    success_rate = tester.run_all_tests()
+    summary = tester.run_all_tests()
     
     # Exit with appropriate code
-    sys.exit(0 if success_rate >= 80 else 1)
+    sys.exit(0 if summary["failed_tests"] == 0 else 1)
