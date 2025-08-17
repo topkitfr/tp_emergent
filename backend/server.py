@@ -2436,42 +2436,58 @@ async def update_jersey(jersey_id: str, jersey_data: JerseyCreate, user_id: str 
 # Marketplace endpoints
 @api_router.post("/listings", response_model=Listing)
 async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get_current_non_admin_user)):
-    """Create a new listing - restricted to non-admin users only"""
-    # Verify jersey exists and is approved
-    jersey = await db.jerseys.find_one({"id": listing_data.jersey_id})
+    """Create a new listing from user's collection - restricted to non-admin users only"""
+    # Verify collection item exists and belongs to user
+    collection_item = await db.collections.find_one({
+        "id": listing_data.collection_id,
+        "user_id": user_id,
+        "collection_type": "owned"  # Can only list owned items
+    })
+    
+    if not collection_item:
+        raise HTTPException(status_code=404, detail="Collection item not found or not owned by you")
+    
+    # Verify the jersey still exists and is approved
+    jersey = await db.jerseys.find_one({"id": collection_item["jersey_id"]})
     if not jersey:
-        raise HTTPException(status_code=404, detail="Jersey not found")
+        raise HTTPException(status_code=404, detail="Jersey reference not found")
     
-    # Only allow listings for approved jerseys
     if jersey.get("status") != "approved":
-        raise HTTPException(status_code=400, detail="Can only create listings for approved jerseys")
+        raise HTTPException(status_code=400, detail="Jersey reference is no longer approved")
     
-    # Validate required fields
-    if not listing_data.size or not listing_data.condition:
-        raise HTTPException(status_code=422, detail="Size and condition are required for listings")
-    
+    # Validate price
     if not listing_data.price or listing_data.price <= 0:
         raise HTTPException(status_code=422, detail="Price is required and must be greater than 0")
-        
-    # Validate enums
-    try:
-        size_enum = JerseySize(listing_data.size.upper())
-    except ValueError:
-        raise HTTPException(status_code=422, detail=f"Invalid size: {listing_data.size}. Must be one of: XS, S, M, L, XL, XXL")
     
-    try:
-        condition_enum = JerseyCondition(listing_data.condition.lower())
-    except ValueError:
-        raise HTTPException(status_code=422, detail=f"Invalid condition: {listing_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+    # Check if this collection item is already listed
+    existing_listing = await db.listings.find_one({
+        "seller_id": user_id,
+        "jersey_id": collection_item["jersey_id"],
+        "size": collection_item.get("size"),
+        "condition": collection_item.get("condition"),
+        "status": "active"
+    })
     
-    # Create listing with validated data
+    if existing_listing:
+        raise HTTPException(status_code=400, detail="This item is already listed on the marketplace")
+    
+    # Combine descriptions (collection personal description + marketplace description)
+    combined_description = ""
+    if collection_item.get("personal_description"):
+        combined_description += collection_item["personal_description"]
+    if listing_data.marketplace_description:
+        if combined_description:
+            combined_description += "\n\n"
+        combined_description += listing_data.marketplace_description.strip()
+    
+    # Create listing using collection item data
     listing = Listing(
-        jersey_id=listing_data.jersey_id,
+        jersey_id=collection_item["jersey_id"],
         seller_id=user_id,
-        size=size_enum,
-        condition=condition_enum,
+        size=JerseySize(collection_item["size"]) if collection_item.get("size") else None,
+        condition=JerseyCondition(collection_item["condition"]) if collection_item.get("condition") else None,
         price=listing_data.price,
-        description=listing_data.description.strip() if listing_data.description else "",
+        description=combined_description,
         images=listing_data.images or []
     )
     
@@ -2483,9 +2499,10 @@ async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get
     
     # Log listing creation
     await log_user_activity(user_id, "listing_created", listing.id, {
-        "jersey_id": listing_data.jersey_id,
-        "size": listing_data.size,
-        "condition": listing_data.condition,
+        "collection_id": listing_data.collection_id,
+        "jersey_id": collection_item["jersey_id"],
+        "size": collection_item.get("size"),
+        "condition": collection_item.get("condition"),
         "price": listing_data.price
     })
     
