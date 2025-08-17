@@ -2906,39 +2906,6 @@ const ResubmissionModal = ({ originalJersey, onClose, onSuccess }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Size*</label>
-                <select
-                  value={formData.size}
-                  onChange={(e) => setFormData({...formData, size: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                  required
-                >
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Condition*</label>
-                <select
-                  value={formData.condition}
-                  onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-white text-white"
-                  required
-                >
-                  <option value="mint">Mint</option>
-                  <option value="excellent">Excellent</option>
-                  <option value="very_good">Very Good</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                </select>
-              </div>
-
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                 <textarea
