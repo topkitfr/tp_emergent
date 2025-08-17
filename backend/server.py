@@ -2619,7 +2619,7 @@ async def get_all_users(admin_user: dict = Depends(get_current_user_admin)):
 @api_router.post("/admin/users/{user_id}/make-moderator")
 async def make_user_moderator(
     user_id: str,
-    admin_id: str = Depends(get_current_admin)
+    admin_user: dict = Depends(get_current_user_admin)
 ):
     """Make a user a moderator (Admin only)"""
     
@@ -2641,7 +2641,7 @@ async def make_user_moderator(
     # Log the role assignment activity
     await db.user_activities.insert_one({
         "id": str(uuid.uuid4()),
-        "user_id": admin_id,
+        "user_id": admin_user["id"],
         "action": "role_assigned",
         "target_id": user_id,
         "details": {
