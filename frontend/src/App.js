@@ -7857,6 +7857,311 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   );
 };
 
+// Improved MessagingInterface Component for Friends Page
+const FriendsMessagingInterface = () => {
+  const { user } = useAuth();
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  // Fetch conversations
+  const fetchConversations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConversations(data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+      setConversations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch messages for a specific conversation
+  const fetchMessages = async (conversationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/conversations/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      setMessages([]);
+    }
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation || sendingMessage) return;
+
+    try {
+      setSendingMessage(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API}/api/conversations/${selectedConversation.id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: newMessage })
+      });
+
+      if (response.ok) {
+        setNewMessage('');
+        fetchMessages(selectedConversation.id);
+        fetchConversations(); // Refresh to update last message
+        // Create success toast
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: '✅ Message envoyé !', type: 'success' }
+        }));
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: 'Erreur lors de l\'envoi du message', type: 'error' }
+      }));
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const formatMessageTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatConversationTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Aujourd\'hui';
+    } else if (diffDays === 2) {
+      return 'Hier';
+    } else if (diffDays <= 7) {
+      return `Il y a ${diffDays - 1} jours`;
+    } else {
+      return date.toLocaleDateString('fr-FR');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-800 rounded-lg border border-gray-600 p-6">
+        <div className="text-center">
+          <div className="text-gray-400">Chargement des conversations...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800 rounded-lg border border-gray-600 h-[500px] flex">
+      {/* Conversations List */}
+      <div className="w-2/5 border-r border-gray-600 flex flex-col">
+        <div className="p-4 border-b border-gray-600">
+          <h3 className="text-white font-semibold">💬 Vos Conversations</h3>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto">
+          {conversations.length === 0 ? (
+            <div className="p-6 text-center text-gray-400">
+              <div className="text-6xl mb-4">💭</div>
+              <h4 className="text-lg font-medium text-gray-300 mb-2">Aucune conversation</h4>
+              <p className="text-sm text-gray-500">
+                Vos conversations avec vos amis apparaîtront ici.
+              </p>
+              <p className="text-xs text-gray-600 mt-2">
+                💡 Utilisez le bouton "💬 Message" sur la liste de vos amis pour commencer une conversation !
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-700">
+              {conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  onClick={() => {
+                    setSelectedConversation(conversation);
+                    fetchMessages(conversation.id);
+                  }}
+                  className={`p-4 cursor-pointer hover:bg-gray-700 transition-colors ${
+                    selectedConversation?.id === conversation.id ? 'bg-gray-700 border-l-4 border-blue-600' : ''
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      {conversation.other_participant?.picture ? (
+                        <img 
+                          src={conversation.other_participant.picture} 
+                          alt={conversation.other_participant.name} 
+                          className="w-10 h-10 rounded-full" 
+                        />
+                      ) : (
+                        <span className="text-gray-300 text-sm">👤</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-white text-sm font-medium truncate">
+                          {conversation.other_participant?.name || 'Utilisateur'}
+                        </p>
+                        {conversation.last_message && (
+                          <p className="text-xs text-gray-500 flex-shrink-0">
+                            {formatConversationTime(conversation.last_message.created_at)}
+                          </p>
+                        )}
+                      </div>
+                      {conversation.last_message && (
+                        <p className="text-gray-400 text-xs truncate">
+                          {conversation.last_message.sent_by_me ? 'Vous: ' : ''}
+                          {conversation.last_message.message}
+                        </p>
+                      )}
+                      {conversation.unread_count > 0 && (
+                        <div className="mt-1">
+                          <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1">
+                            {conversation.unread_count} nouveau{conversation.unread_count > 1 ? 'x' : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Message Area */}
+      <div className="flex-1 flex flex-col">
+        {selectedConversation ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b border-gray-600 bg-gray-750">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                  {selectedConversation.other_participant?.picture ? (
+                    <img 
+                      src={selectedConversation.other_participant.picture} 
+                      alt={selectedConversation.other_participant.name} 
+                      className="w-8 h-8 rounded-full" 
+                    />
+                  ) : (
+                    <span className="text-gray-300 text-xs">👤</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">
+                    {selectedConversation.other_participant?.name || 'Utilisateur'}
+                  </p>
+                  <p className="text-gray-400 text-xs">En ligne</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <div className="text-4xl mb-2">👋</div>
+                  <p className="text-sm">Début de votre conversation</p>
+                </div>
+              ) : (
+                messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.sent_by_me ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg text-sm ${
+                        message.sent_by_me
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-100'
+                      }`}
+                    >
+                      <p>{message.message}</p>
+                      <p
+                        className={`text-xs mt-1 ${
+                          message.sent_by_me ? 'text-blue-100' : 'text-gray-400'
+                        }`}
+                      >
+                        {formatMessageTime(message.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-gray-600">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Tapez votre message..."
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  disabled={sendingMessage}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || sendingMessage}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  {sendingMessage ? '📤' : '▶️'}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center bg-gray-750">
+            <div className="text-center text-gray-400">
+              <div className="text-6xl mb-4">💬</div>
+              <h3 className="text-lg font-medium text-gray-300 mb-2">Sélectionnez une conversation</h3>
+              <p className="text-sm">Choisissez une conversation dans la liste pour commencer à chatter</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // MessagingInterface Component
 const MessagingInterface = () => {
   const { user } = useAuth();
