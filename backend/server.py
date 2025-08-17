@@ -476,6 +476,13 @@ class PurchaseHistoryItem(BaseModel):
     purchase_date: datetime
     status: str
 
+class SiteModeRequest(BaseModel):
+    mode: str  # 'private' or 'public'
+
+class SiteModeResponse(BaseModel):
+    mode: str
+    message: str
+
 class ModificationSuggestionCreate(BaseModel):
     jersey_id: str
     suggested_changes: str
