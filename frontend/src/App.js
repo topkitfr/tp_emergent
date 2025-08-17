@@ -12033,6 +12033,30 @@ const AppContent = () => {
       console.error('Error fetching dynamic stats:', error);
     }
   };
+
+  // Handle notification clicks with intelligent navigation
+  const handleNotificationClick = (redirectInfo) => {
+    const { view, tab, conversationId, userId } = redirectInfo;
+    
+    // Set the main view
+    setCurrentView(view);
+    
+    // Handle specific navigation logic
+    if (view === 'friends' && tab) {
+      // Navigate to friends page with specific tab
+      setTimeout(() => {
+        // This will be handled by the FriendsPage component internally
+        if (tab === 'messages' && conversationId) {
+          // TODO: Set specific conversation ID for direct navigation
+        }
+      }, 100);
+    }
+    
+    if (view === 'user-profile' && userId) {
+      setSelectedUserId(userId);
+      setShowUserProfile(true);
+    }
+  };
   
   // Cart management functions
   const addToCart = (listing, quantity = 1) => {
