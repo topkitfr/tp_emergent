@@ -1843,6 +1843,118 @@ async def get_all_users(admin_id: str = Depends(get_current_admin)):
     
     return {"users": user_list, "total": len(user_list)}
 
+@api_router.post("/admin/users/{user_id}/make-moderator")
+async def make_user_moderator(
+    user_id: str,
+    admin_id: str = Depends(get_current_admin)
+):
+    """Make a user a moderator (Admin only)"""
+    
+    # Get the target user
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Check if user is already admin (can't make admin a moderator)
+    if target_user.get("role") == "admin":
+        raise HTTPException(status_code=400, detail="Impossible de modifier le rôle d'un administrateur")
+    
+    # Update user role to moderator
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"role": "moderator"}}
+    )
+    
+    # Log the role assignment activity
+    await db.user_activities.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": admin_id,
+        "action": "role_assigned",
+        "target_id": user_id,
+        "details": {
+            "new_role": "moderator",
+            "target_user_email": target_user["email"]
+        },
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {
+        "message": f"Utilisateur {target_user['email']} est maintenant modérateur",
+        "user_id": user_id,
+        "new_role": "moderator"
+    }
+
+@api_router.post("/admin/users/{user_id}/remove-moderator")
+async def remove_user_moderator(
+    user_id: str,
+    admin_id: str = Depends(get_current_admin)
+):
+    """Remove moderator role from a user (Admin only)"""
+    
+    # Get the target user
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Check if user is admin (can't remove admin role)
+    if target_user.get("role") == "admin":
+        raise HTTPException(status_code=400, detail="Impossible de modifier le rôle d'un administrateur")
+    
+    # Update user role to user
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"role": "user"}}
+    )
+    
+    # Log the role assignment activity
+    await db.user_activities.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": admin_id,
+        "action": "role_removed",
+        "target_id": user_id,
+        "details": {
+            "previous_role": "moderator",
+            "new_role": "user",
+            "target_user_email": target_user["email"]
+        },
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {
+        "message": f"Rôle modérateur retiré à {target_user['email']}",
+        "user_id": user_id,
+        "new_role": "user"
+    }
+
+@api_router.get("/admin/users")
+async def get_all_users(
+    role: Optional[str] = None,
+    admin_id: str = Depends(get_current_admin)
+):
+    """Get all users with their roles (Admin only)"""
+    
+    # Build query filter
+    query = {}
+    if role and role in ["user", "moderator", "admin"]:
+        query["role"] = role
+    
+    # Get users
+    users_cursor = db.users.find(query).sort("created_at", -1)
+    users = []
+    
+    async for user in users_cursor:
+        users.append({
+            "id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "role": user.get("role", "user"),
+            "created_at": user.get("created_at"),
+            "last_login": user.get("last_login"),
+            "email_verified": user.get("email_verified", False)
+        })
+    
+    return {"users": users}
+
 @api_router.post("/admin/users/{user_id}/assign-role")
 async def assign_user_role(
     user_id: str, 
