@@ -1078,7 +1078,11 @@ const NotificationBell = ({ onNotificationClick }) => {
     <div className="relative">
       {/* Notification Bell Button */}
       <button
-        onClick={() => setShowDropdown(!showDropdown)}
+        onClick={() => {
+          console.log('🔔 Notification bell clicked, current showDropdown:', showDropdown);
+          setShowDropdown(!showDropdown);
+          console.log('🔔 showDropdown will be set to:', !showDropdown);
+        }}
         className="relative p-2 text-gray-300 hover:text-white transition-colors"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
