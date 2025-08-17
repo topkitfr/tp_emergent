@@ -13407,7 +13407,7 @@ const MyCollectionPage = ({ ownedItems, onFetch, onCreateListing }) => {
 
 // Main App Component
 const AppContent = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, login } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [jerseys, setJerseys] = useState([]);
   const [listings, setListings] = useState([]);
