@@ -14528,6 +14528,16 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
             </div>
           </div>
         </footer>
+
+        {/* Auth Modal */}
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={(token, user) => {
+            console.log('Login success callback - AppContent AuthModal');
+            setShowAuthModal(false);
+          }}
+        />
       </div>
     </>
   );
