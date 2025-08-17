@@ -1099,7 +1099,7 @@ const NotificationBell = ({ onNotificationClick }) => {
 
       {/* Notifications Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-[9999] max-w-sm">
           <div className="p-4 border-b border-gray-700">
             <div className="flex justify-between items-center">
               <h3 className="text-white font-semibold">🔔 Notifications</h3>
