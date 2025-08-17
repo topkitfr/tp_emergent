@@ -1847,19 +1847,22 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0 }
                       >
                         👤 Mon Profil
                       </button>
-                      <button
-                        onClick={() => {
-                          setCurrentView('my-collection');
-                          setShowGeneralMenu(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
-                          currentView === 'my-collection' 
-                            ? 'bg-gray-700 text-white' 
-                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
-                        }`}
-                      >
-                        📚 Ma Collection
-                      </button>
+                      {/* Ma Collection - Seulement pour les utilisateurs et modérateurs, pas les admins */}
+                      {user.role !== 'admin' && (
+                        <button
+                          onClick={() => {
+                            setCurrentView('my-collection');
+                            setShowGeneralMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                            currentView === 'my-collection' 
+                              ? 'bg-gray-700 text-white' 
+                              : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                          }`}
+                        >
+                          📚 Ma Collection
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setCurrentView('settings');
