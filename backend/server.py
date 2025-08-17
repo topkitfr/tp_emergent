@@ -5125,7 +5125,7 @@ async def get_conversation_messages(
 
 @api_router.post("/admin/cleanup/database")
 async def cleanup_database(
-    admin_id: str = Depends(get_current_admin)
+    admin_user: dict = Depends(get_current_user_admin)
 ):
     """Clean database - keep only admin and steinmetzlivio@gmail.com accounts (Admin only)"""
     
@@ -5187,7 +5187,7 @@ async def cleanup_database(
     # Log cleanup activity
     await db.user_activities.insert_one({
         "id": str(uuid.uuid4()),
-        "user_id": admin_id,
+        "user_id": admin_user['id'],
         "action": "database_cleanup",
         "details": {
             "initial_counts": initial_counts,
