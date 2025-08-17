@@ -441,9 +441,16 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
       </div>
 
       {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} />
-      )}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLoginSuccess={(token, user) => {
+          console.log('Login success callback - updating context');
+          // The new AuthModal will handle localStorage, we just need to update context
+          setUser(user);
+          setShowAuthModal(false);
+        }}
+      />
     </div>
   );
 };
