@@ -13,11 +13,11 @@ from datetime import datetime
 # Configuration
 BACKEND_URL = "https://topkit-beta.preview.emergentagent.com/api"
 
-# Test credentials
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+# Test credentials - Updated based on actual working credentials
+ADMIN_EMAIL = "admin.test@topkit.com"  # Note: This user may not have admin privileges
+ADMIN_PASSWORD = "TopKitSecure2024!"
 USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "123"
+USER_PASSWORD = "Livio2024!Secure"
 
 class TopKitPrivateBetaTester:
     def __init__(self):
