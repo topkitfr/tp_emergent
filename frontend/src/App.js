@@ -12068,11 +12068,30 @@ const DiscogsStyleHomepage = ({ onNavigate }) => {
   const [featuredJerseys, setFeaturedJerseys] = useState([]);
   const [trendingJerseys, setTrendingJerseys] = useState([]);
   const [staffPicks, setStaffPicks] = useState([]);
+  const [dynamicStats, setDynamicStats] = useState({
+    approved_jerseys: 0,
+    total_users: 0,
+    total_listings: 0,
+    total_collections: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHomepageData();
+    fetchDynamicStats();
   }, []);
+
+  const fetchDynamicStats = async () => {
+    try {
+      const response = await fetch(`${API}/api/stats/dynamic`);
+      if (response.ok) {
+        const stats = await response.json();
+        setDynamicStats(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching dynamic stats:', error);
+    }
+  };
 
   const fetchHomepageData = async () => {
     try {
