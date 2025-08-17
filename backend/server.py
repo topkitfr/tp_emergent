@@ -2580,7 +2580,7 @@ async def edit_jersey(
 
 # User management endpoints (Admin only)
 @api_router.get("/admin/users")
-async def get_all_users(admin_id: str = Depends(get_current_admin)):
+async def get_all_users(admin_user: dict = Depends(get_current_user_admin)):
     """Get all users with their stats and activities"""
     users = await db.users.find({}).to_list(1000)
     
