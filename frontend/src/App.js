@@ -3927,6 +3927,851 @@ const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
   );
 };
 
+// Security Level 2: Two-Factor Authentication Setup Component
+const TwoFactorSetup = ({ user, onClose, onSetupComplete }) => {
+  const [step, setStep] = useState('setup'); // 'setup', 'verify', 'complete'
+  const [qrCode, setQrCode] = useState('');
+  const [secret, setSecret] = useState('');
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const initiate2FASetup = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/api/auth/2fa/setup`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setQrCode(response.data.qr_code);
+      setSecret(response.data.secret);
+      setBackupCodes(response.data.backup_codes);
+      setStep('verify');
+      
+    } catch (error) {
+      console.error('2FA setup error:', error);
+      setError(error.response?.data?.detail || 'Erreur lors de la configuration 2FA');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify2FASetup = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/auth/2fa/enable`, {
+        token: verificationCode
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setStep('complete');
+      
+      // Show success toast
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Authentification à deux facteurs activée avec succès!', type: 'success' }
+      }));
+      
+      if (onSetupComplete) onSetupComplete();
+      
+    } catch (error) {
+      console.error('2FA verification error:', error);
+      setError(error.response?.data?.detail || 'Code de vérification invalide');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadBackupCodes = () => {
+    const codesText = backupCodes.join('\n');
+    const blob = new Blob([`TopKit - Codes de sauvegarde 2FA\n\n${codesText}\n\nConservez ces codes en lieu sûr!`], 
+                          { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'topkit-backup-codes.txt';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  useEffect(() => {
+    if (step === 'setup') {
+      initiate2FASetup();
+    }
+  }, [step]);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-lg max-w-md w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-white">Configuration 2FA</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-600/20 border border-red-600 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {step === 'setup' && loading && (
+          <div className="text-center py-8">
+            <LoadingSpinner className="mx-auto mb-4" />
+            <p className="text-gray-400">Configuration en cours...</p>
+          </div>
+        )}
+
+        {step === 'verify' && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-white mb-2">Scannez le QR Code</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Utilisez Google Authenticator, Authy ou une autre application TOTP
+              </p>
+              
+              {qrCode && (
+                <div className="bg-white p-4 rounded-lg inline-block mb-4">
+                  <img src={qrCode} alt="QR Code 2FA" className="w-48 h-48" />
+                </div>
+              )}
+              
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-2">Code secret (si besoin):</p>
+                <code className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300 break-all">
+                  {secret}
+                </code>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Code de vérification
+              </label>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-center text-lg tracking-widest"
+                maxLength={6}
+              />
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setStep('setup')}
+                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Retour
+              </button>
+              <button
+                onClick={verify2FASetup}
+                disabled={loading || verificationCode.length !== 6}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Vérification...' : 'Activer 2FA'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'complete' && (
+          <div className="text-center space-y-4">
+            <div className="text-6xl mb-4">✅</div>
+            <h3 className="text-lg font-semibold text-green-400">2FA Activé!</h3>
+            <p className="text-gray-400 text-sm">
+              Votre authentification à deux facteurs est maintenant active.
+            </p>
+
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="font-medium text-white mb-2">Codes de sauvegarde</h4>
+              <p className="text-xs text-gray-400 mb-3">
+                Conservez ces codes en lieu sûr. Ils permettent l'accès si vous perdez votre téléphone.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-3 text-xs font-mono">
+                {backupCodes.map((code, index) => (
+                  <div key={index} className="bg-gray-700 px-2 py-1 rounded text-center">
+                    {code}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={downloadBackupCodes}
+                className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+              >
+                📥 Télécharger les codes
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Terminé
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Security Level 2: Password Change Component
+const PasswordChangeModal = ({ onClose, onPasswordChanged }) => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+
+  const validatePassword = (password) => {
+    const requirements = [
+      { test: password.length >= 8, message: 'Au moins 8 caractères' },
+      { test: /[A-Z]/.test(password), message: 'Une majuscule' },
+      { test: /[a-z]/.test(password), message: 'Une minuscule' },
+      { test: /\d/.test(password), message: 'Un chiffre' },
+      { test: /[!@#$%^&*(),.?":{}|<>]/.test(password), message: 'Un caractère spécial' }
+    ];
+    
+    return requirements;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    const requirements = validatePassword(newPassword);
+    const unmetRequirements = requirements.filter(req => !req.test);
+    
+    if (unmetRequirements.length > 0) {
+      setError(`Mot de passe faible: ${unmetRequirements.map(req => req.message).join(', ')}`);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/auth/change-password`, {
+        current_password: currentPassword,
+        new_password: newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Mot de passe modifié avec succès!', type: 'success' }
+      }));
+      
+      if (onPasswordChanged) onPasswordChanged();
+      onClose();
+      
+    } catch (error) {
+      console.error('Password change error:', error);
+      setError(error.response?.data?.detail || 'Erreur lors du changement de mot de passe');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const passwordRequirements = validatePassword(newPassword);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-lg max-w-md w-full mx-4 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-white">Changer le mot de passe</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-600/20 border border-red-600 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Mot de passe actuel
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white pr-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Nouveau mot de passe
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white pr-10"
+              />
+            </div>
+            
+            {newPassword && (
+              <div className="mt-2 space-y-1">
+                {passwordRequirements.map((req, index) => (
+                  <div key={index} className={`text-xs flex items-center ${req.test ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className="mr-2">{req.test ? '✓' : '✗'}</span>
+                    {req.message}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Confirmer le nouveau mot de passe
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white pr-10"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showPasswords"
+              checked={showPasswords}
+              onChange={(e) => setShowPasswords(e.target.checked)}
+              className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="showPasswords" className="ml-2 text-sm text-gray-400">
+              Afficher les mots de passe
+            </label>
+          </div>
+
+          <div className="flex space-x-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? 'Modification...' : 'Modifier'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Admin User Management Component
+const AdminUserManagement = ({ users, onRefresh }) => {
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [banReason, setBanReason] = useState('');
+  const [banDuration, setBanDuration] = useState('');
+  const [isPermanentBan, setIsPermanentBan] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [securityInfo, setSecurityInfo] = useState(null);
+
+  const handleBanUser = async () => {
+    if (!selectedUser || !banReason.trim()) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${API}/api/admin/users/${selectedUser.id}/ban`, {
+        user_id: selectedUser.id,
+        reason: banReason,
+        permanent: isPermanentBan,
+        ban_duration_days: isPermanentBan ? null : parseInt(banDuration) || 7
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Utilisateur banni avec succès', type: 'success' }
+      }));
+
+      setShowBanModal(false);
+      setBanReason('');
+      setBanDuration('');
+      setIsPermanentBan(false);
+      setSelectedUser(null);
+      if (onRefresh) onRefresh();
+
+    } catch (error) {
+      console.error('Ban user error:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors du bannissement', 
+          type: 'error' 
+        }
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnbanUser = async (user) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${API}/api/admin/users/${user.id}/unban`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Utilisateur débanni avec succès', type: 'success' }
+      }));
+
+      if (onRefresh) onRefresh();
+
+    } catch (error) {
+      console.error('Unban user error:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors du débannissement', 
+          type: 'error' 
+        }
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${user.email} ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      await axios.delete(`${API}/api/admin/users/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Compte utilisateur supprimé définitivement', type: 'success' }
+      }));
+
+      if (onRefresh) onRefresh();
+
+    } catch (error) {
+      console.error('Delete user error:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors de la suppression', 
+          type: 'error' 
+        }
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewSecurity = async (user) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get(`${API}/api/admin/users/${user.id}/security`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setSecurityInfo(response.data);
+      setSelectedUser(user);
+      setShowSecurityModal(true);
+
+    } catch (error) {
+      console.error('Get security info error:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { 
+          message: error.response?.data?.detail || 'Erreur lors de la récupération des informations', 
+          type: 'error' 
+        }
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Jamais';
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold text-white mb-4">Gestion des utilisateurs</h3>
+      
+      <div className="bg-gray-800 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-700">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Utilisateur
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Rôle
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Dernière connexion
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-gray-800 divide-y divide-gray-700">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-700">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Avatar user={user} size="sm" className="mr-3" />
+                      <div>
+                        <div className="text-sm font-medium text-white">{user.name}</div>
+                        <div className="text-sm text-gray-400">{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      user.role === 'moderator' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.is_banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {user.is_banned ? 'Banni' : 'Actif'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-400">
+                    {formatDate(user.last_login)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
+                    <button
+                      onClick={() => handleViewSecurity(user)}
+                      className="text-blue-400 hover:text-blue-300"
+                      title="Voir les informations de sécurité"
+                    >
+                      🔍
+                    </button>
+                    
+                    {!user.is_banned ? (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowBanModal(true);
+                        }}
+                        disabled={user.role === 'admin'}
+                        className="text-red-400 hover:text-red-300 disabled:opacity-50"
+                        title="Bannir l'utilisateur"
+                      >
+                        🚫
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleUnbanUser(user)}
+                        className="text-green-400 hover:text-green-300"
+                        title="Débannir l'utilisateur"
+                      >
+                        ✅
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => handleDeleteUser(user)}
+                      disabled={user.role === 'admin'}
+                      className="text-red-600 hover:text-red-500 disabled:opacity-50"
+                      title="Supprimer définitivement"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Ban User Modal */}
+      {showBanModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Bannir l'utilisateur</h2>
+              <button
+                onClick={() => {
+                  setShowBanModal(false);
+                  setSelectedUser(null);
+                  setBanReason('');
+                  setBanDuration('');
+                  setIsPermanentBan(false);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-yellow-600/20 border border-yellow-600 rounded-lg">
+              <p className="text-yellow-400 text-sm">
+                Vous allez bannir <strong>{selectedUser.name}</strong> ({selectedUser.email})
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Raison du bannissement
+                </label>
+                <textarea
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="Expliquez la raison du bannissement..."
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white resize-none"
+                  rows="3"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="permanentBan"
+                    checked={isPermanentBan}
+                    onChange={(e) => setIsPermanentBan(e.target.checked)}
+                    className="rounded border-gray-600 text-red-600 focus:ring-red-500"
+                  />
+                  <label htmlFor="permanentBan" className="ml-2 text-sm text-gray-400">
+                    Bannissement permanent
+                  </label>
+                </div>
+
+                {!isPermanentBan && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                      Durée (en jours)
+                    </label>
+                    <input
+                      type="number"
+                      value={banDuration}
+                      onChange={(e) => setBanDuration(e.target.value)}
+                      placeholder="7"
+                      min="1"
+                      max="365"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBanModal(false);
+                    setSelectedUser(null);
+                    setBanReason('');
+                    setBanDuration('');
+                    setIsPermanentBan(false);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleBanUser}
+                  disabled={loading || !banReason.trim()}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Bannissement...' : 'Bannir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Security Info Modal */}
+      {showSecurityModal && securityInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg max-w-2xl w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Informations de sécurité</h2>
+              <button
+                onClick={() => {
+                  setShowSecurityModal(false);
+                  setSecurityInfo(null);
+                  setSelectedUser(null);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* User Info */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="font-semibold text-white mb-2">Utilisateur</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">Nom:</span>
+                    <span className="text-white ml-2">{securityInfo.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Email:</span>
+                    <span className="text-white ml-2">{securityInfo.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Rôle:</span>
+                    <span className="text-white ml-2">{securityInfo.role}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Score suspect:</span>
+                    <span className={`ml-2 ${
+                      securityInfo.security_features.suspicious_activity_score > 10 ? 'text-red-400' :
+                      securityInfo.security_features.suspicious_activity_score > 5 ? 'text-yellow-400' :
+                      'text-green-400'
+                    }`}>
+                      {securityInfo.security_features.suspicious_activity_score}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Status */}
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="font-semibold text-white mb-2">Statut de sécurité</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">2FA:</span>
+                    <span className={`ml-2 ${securityInfo.security_features.two_factor_enabled ? 'text-green-400' : 'text-red-400'}`}>
+                      {securityInfo.security_features.two_factor_enabled ? 'Activé' : 'Désactivé'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Tentatives échouées:</span>
+                    <span className="text-white ml-2">{securityInfo.security_features.failed_login_attempts}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Statut:</span>
+                    <span className={`ml-2 ${securityInfo.account_status.is_banned ? 'text-red-400' : 'text-green-400'}`}>
+                      {securityInfo.account_status.is_banned ? 'Banni' : 'Actif'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Email vérifié:</span>
+                    <span className={`ml-2 ${securityInfo.account_status.email_verified ? 'text-green-400' : 'text-red-400'}`}>
+                      {securityInfo.account_status.email_verified ? 'Oui' : 'Non'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activities */}
+              {securityInfo.recent_activities.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Activités récentes</h3>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {securityInfo.recent_activities.slice(0, 5).map((activity, index) => (
+                      <div key={index} className="text-sm text-gray-300 border-l-2 border-blue-500 pl-3">
+                        <div className="font-medium">{activity.action}</div>
+                        <div className="text-xs text-gray-400">{formatDate(activity.created_at)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suspicious Activities */}
+              {securityInfo.suspicious_activities.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Activités suspectes</h3>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {securityInfo.suspicious_activities.slice(0, 5).map((activity, index) => (
+                      <div key={index} className="text-sm border-l-2 border-red-500 pl-3">
+                        <div className="font-medium text-red-400">{activity.activity_type}</div>
+                        <div className="text-gray-300">{activity.description}</div>
+                        <div className="text-xs text-gray-400">{formatDate(activity.detected_at)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // User Profile Modal Component
 const UserProfileModal = ({ userId, onClose }) => {
   const [userProfile, setUserProfile] = useState(null);
