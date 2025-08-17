@@ -265,7 +265,7 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
             TopKit transforme l'achat et la vente de maillots de football. 
             Découvrez une plateforme dédiée aux passionnés, avec un système 
-            de collection révolutionnaire inspiré de Discogs.
+            de collection révolutionnaire pour les amateurs de maillots vintage et modernes.
           </p>
 
           {/* Features */}
