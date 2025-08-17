@@ -212,6 +212,9 @@ class Collection(BaseModel):
     user_id: str
     jersey_id: str
     collection_type: str  # "owned", "wanted"
+    size: Optional[JerseySize] = None  # Size of the specific item in user's collection
+    condition: Optional[JerseyCondition] = None  # Condition of the specific item in user's collection
+    personal_description: Optional[str] = None  # User's personal description (signed, worn, etc.)
     added_at: datetime = Field(default_factory=datetime.utcnow)
 
 class PaymentTransaction(BaseModel):
