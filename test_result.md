@@ -247,6 +247,18 @@ PHASE 4 - Améliorations Générales:
 4. Réduire logo de 20% et optimiser header"
 
 backend:
+  - task: "TopKit Private Beta Mode Backend Testing"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🚨 TOPKIT PRIVATE BETA MODE BACKEND TESTING COMPLETE - 40.6% SUCCESS RATE! Comprehensive testing of Private Beta Mode implementation reveals MIXED RESULTS with critical admin authentication issues: ✅ SITE MODE ENDPOINTS (PARTIAL): GET /api/site/mode working perfectly - returns current mode (private), is_private flag, and proper message. Site mode persistence in database confirmed working. ✅ BETA ACCESS REQUEST SYSTEM (WORKING): POST /api/beta/request-access working correctly - successfully submits beta requests, handles duplicate emails properly, returns proper request IDs and success messages. ✅ ACCESS CONTROL LOGIC (WORKING): GET /api/site/access-check correctly blocks regular users in private mode, returns proper access control responses with detailed messages. ❌ CRITICAL ADMIN AUTHENTICATION FAILURE: Cannot authenticate with existing admin account (topkitfr@gmail.com) - password appears to have changed or account corrupted. Admin user creation fails due to email already existing but with unknown password. This blocks testing of ALL admin-only endpoints. ❌ ADMIN-ONLY ENDPOINTS UNTESTABLE: POST /api/site/mode (admin mode switching), GET /api/admin/beta/requests (request management), POST /api/admin/beta/requests/{id}/approve (approval), POST /api/admin/beta/requests/{id}/reject (rejection) all return 401 Invalid token due to admin authentication failure. ❌ DATABASE OPERATIONS (PARTIAL): Site mode persistence working, but beta request storage/retrieval untestable due to admin access issues. ✅ AUTHENTICATION INTEGRATION (PARTIAL): Regular user authentication working, token validation working, but admin bypass functionality untestable. TECHNICAL FINDINGS: Created test user successfully with email verification, beta access request system functional, site mode configuration endpoints accessible, but 60% of functionality blocked by admin authentication issues. CRITICAL BLOCKER: Admin authentication system appears corrupted - existing admin account inaccessible and new admin creation blocked. This prevents comprehensive testing of the Private Beta Mode's core administrative features. RECOMMENDATION: Fix admin authentication system before proceeding with Private Beta Mode deployment."
+
   - task: "TopKit Authentication System Comprehensive Testing"
     implemented: true
     working: true
