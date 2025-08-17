@@ -4212,8 +4212,9 @@ async def approve_beta_access_request(
             # Create new user with beta access
             new_user = User(
                 email=access_request["email"],
-                password=hashed_password,
+                password_hash=hashed_password,
                 name=f"{access_request['first_name']} {access_request['last_name']}",
+                provider="custom",  # Required field
                 role="user",
                 email_verified=True,  # Auto-verify for beta users
                 beta_access=True,
