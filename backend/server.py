@@ -5736,7 +5736,19 @@ async def approve_beta_access_request(
             
             await db.users.insert_one(new_user.dict())
             
-            # TODO: Send welcome email with temporary password
+            # Send welcome email with access approval
+            if gmail_service:
+                try:
+                    welcome_sent = gmail_service.send_beta_access_approved_email(
+                        user_email=access_request["email"],
+                        user_name=f"{access_request['first_name']} {access_request['last_name']}",
+                        temp_password=temp_password
+                    )
+                    if welcome_sent:
+                        logger.info(f"Beta access approval email sent to {access_request['email']}")
+                except Exception as e:
+                    logger.error(f"Failed to send beta access approval email: {e}")
+            
             logger.info(f"Created beta user: {access_request['email']} with temp password: {temp_password}")
         
         # Update request status
