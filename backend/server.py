@@ -631,16 +631,6 @@ class SuspiciousActivity(BaseModel):
     resolved_by: Optional[str] = None
     resolved_at: Optional[datetime] = None
 
-# Enhanced User Settings Models
-class UserAddressSettings(BaseModel):
-    full_name: Optional[str] = None
-    address_line_1: Optional[str] = None
-    address_line_2: Optional[str] = None
-    city: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
-    phone_number: Optional[str] = None
-
 # Friends System Models
 class FriendshipStatus(str, Enum):
     PENDING = "pending"
