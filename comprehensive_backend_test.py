@@ -238,9 +238,10 @@ class TopKitTester:
         
         try:
             collection_response = response.json()
-            collection_id = collection_response.get("id")
+            collection_id = collection_response.get("id") or collection_response.get("collection_id")
             if not collection_id:
-                self.log_test("discogs_workflow", "Collection Addition", False, "No collection ID returned")
+                self.log_test("discogs_workflow", "Collection Addition", False, 
+                             f"No collection ID returned. Response: {collection_response}")
                 return
             
             self.log_test("discogs_workflow", "Collection Addition", True, 
