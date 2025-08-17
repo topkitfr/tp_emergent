@@ -14,14 +14,16 @@ import requests
 import json
 import sys
 import uuid
+import time
 from datetime import datetime
 
 # Configuration
 BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+# Use unique emails to avoid conflicts
+TEST_USER_EMAIL = f"test.user.{int(time.time())}@example.com"
+TEST_USER_PASSWORD = "SecurePass2024!"
+ADMIN_EMAIL = f"test.admin.{int(time.time())}@topkit.com"
+ADMIN_PASSWORD = "AdminSecure2024!"
 
 class PrivateBetaTester:
     def __init__(self):
