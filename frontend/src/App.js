@@ -11586,6 +11586,71 @@ const AppContent = () => {
     }
   };
 
+  // Function to add jersey to collection (Discogs-style)
+  const addToCollectionDiscogs = async (collectionData) => {
+    try {
+      const response = await fetch(`${API}/api/collections`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(collectionData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Jersey added to ${collectionData.collection_type} collection!`);
+        setShowAddToCollectionModal(false);
+        setSelectedJerseyForCollection(null);
+        // Refresh owned collection if needed
+        if (collectionData.collection_type === 'owned') {
+          fetchMyOwnedCollection();
+        }
+        return result;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add to collection');
+      }
+    } catch (error) {
+      console.error('Error adding to collection:', error);
+      throw error;
+    }
+  };
+
+  // Function to create a marketplace listing from collection
+  const createListingFromCollection = async (listingData) => {
+    try {
+      const response = await fetch(`${API}/api/listings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(listingData),
+      });
+
+      if (response.ok) {
+        const createdListing = await response.json();
+        alert('Listing created successfully!');
+        setShowCreateListingModal(false);
+        setSelectedJerseyForListing(null);
+        // Refresh listings and collection
+        fetchListings();
+        fetchMyOwnedCollection();
+        return createdListing;
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create listing: ${errorData.detail}`);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      alert('An error occurred while creating listing');
+      return null;
+    }
+  };
+
   // Add event listener for sell jersey functionality
   useEffect(() => {
     const handleSellJersey = (event) => {
