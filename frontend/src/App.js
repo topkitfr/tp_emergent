@@ -3390,6 +3390,187 @@ const MarketplaceListingModal = ({ onClose, jersey, onSubmit }) => {
   );
 };
 
+// Add to Collection Modal - Discogs-style (with size/condition for owned items)
+const AddToCollectionModal = ({ onClose, jersey, onSubmit }) => {
+  const [formData, setFormData] = useState({
+    collection_type: 'wanted',
+    size: '',
+    condition: '',
+    personal_description: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const collectionData = {
+        jersey_id: jersey.id,
+        collection_type: formData.collection_type,
+        size: formData.collection_type === 'owned' && formData.size ? formData.size : null,
+        condition: formData.collection_type === 'owned' && formData.condition ? formData.condition : null,
+        personal_description: formData.personal_description.trim() || null
+      };
+
+      await onSubmit(collectionData);
+    } catch (error) {
+      setError(error.message || 'Failed to add to collection');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Add to Collection</h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-900 border border-red-700 text-red-300 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        {jersey && (
+          <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">Jersey Reference</h3>
+            <div className="flex items-center space-x-4">
+              {jersey.images && jersey.images[0] && (
+                <img 
+                  src={jersey.images[0]} 
+                  alt={`${jersey.team} ${jersey.season}`}
+                  className="w-16 h-16 object-cover rounded border border-gray-600"
+                />
+              )}
+              <div>
+                <p className="text-white font-semibold">{jersey.team} - {jersey.season}</p>
+                {jersey.player && <p className="text-gray-300">{jersey.player}</p>}
+                {jersey.league && <p className="text-gray-400 text-sm">{jersey.league}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Collection Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Collection Type *</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, collection_type: 'wanted', size: '', condition: ''})}
+                className={`p-4 rounded-lg border text-center transition-colors ${
+                  formData.collection_type === 'wanted'
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="font-semibold">Wanted</div>
+                <div className="text-sm opacity-75">I want this jersey</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, collection_type: 'owned'})}
+                className={`p-4 rounded-lg border text-center transition-colors ${
+                  formData.collection_type === 'owned'
+                    ? 'bg-green-600 border-green-500 text-white'
+                    : 'bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="font-semibold">Owned</div>
+                <div className="text-sm opacity-75">I own this jersey</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Size and Condition - Only for Owned items */}
+          {formData.collection_type === 'owned' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Size</label>
+                <select
+                  value={formData.size}
+                  onChange={(e) => setFormData({...formData, size: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+                >
+                  <option value="">Select Size (Optional)</option>
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Condition</label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
+                >
+                  <option value="">Select Condition (Optional)</option>
+                  <option value="new">New</option>
+                  <option value="near_mint">Near Mint</option>
+                  <option value="very_good">Very Good</option>
+                  <option value="good">Good</option>
+                  <option value="poor">Poor</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Personal Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Personal Description (Optional)
+            </label>
+            <textarea
+              placeholder="Add personal notes about your item (signed, match-worn, special edition, etc.)"
+              value={formData.personal_description}
+              onChange={(e) => setFormData({...formData, personal_description: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white h-24"
+            />
+          </div>
+
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors border border-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`flex-1 py-3 rounded-lg transition-colors disabled:opacity-50 font-semibold ${
+                formData.collection_type === 'owned'
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {loading ? 'Adding...' : `Add to ${formData.collection_type === 'owned' ? 'Owned' : 'Wanted'}`}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Edit Jersey Modal Component
 const EditJerseyModal = ({ jersey, onClose, onJerseyUpdated }) => {
   const [formData, setFormData] = useState({
