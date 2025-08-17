@@ -896,12 +896,71 @@ const Button = ({ children, variant = 'primary', size = 'md', loading = false, d
 };
 
 // Notification Bell Component
-const NotificationBell = () => {
+const NotificationBell = ({ onNotificationClick }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Handle notification click with intelligent redirection
+  const handleNotificationClick = (notification) => {
+    // Mark as read first
+    if (!notification.is_read) {
+      markAsRead(notification.id);
+    }
+    
+    // Close dropdown
+    setShowDropdown(false);
+    
+    // Intelligent redirection based on notification type and data
+    if (onNotificationClick) {
+      const redirectInfo = getRedirectInfo(notification);
+      onNotificationClick(redirectInfo);
+    }
+  };
+
+  // Get redirect information based on notification type
+  const getRedirectInfo = (notification) => {
+    const data = notification.data || {};
+    const type = notification.type;
+
+    switch (type) {
+      case 'friend_request':
+        return { view: 'friends', tab: 'received' };
+      
+      case 'friend_request_accepted':
+        return { view: 'friends', tab: 'friends' };
+      
+      case 'new_message':
+        return { 
+          view: 'friends', 
+          tab: 'messages', 
+          conversationId: data.conversation_id 
+        };
+      
+      case 'jersey_approved':
+      case 'jersey_rejected':
+      case 'jersey_modification_suggested':
+        return { view: 'my-submissions' };
+      
+      case 'jersey_purchased':
+      case 'listing_sold':
+        return { view: 'marketplace' };
+      
+      case 'collection_shared':
+        return { view: 'my-collection' };
+      
+      case 'user_profile_visit':
+        return { 
+          view: 'user-profile', 
+          userId: data.user_id 
+        };
+      
+      default:
+        return { view: 'profile' };
+    }
+  };
 
   // Fetch notifications
   const fetchNotifications = async () => {
