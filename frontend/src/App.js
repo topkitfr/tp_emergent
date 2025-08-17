@@ -3290,45 +3290,6 @@ const CollectionListingModal = ({ onClose, collectionItem, onSubmit }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Size */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Size *</label>
-              <select
-                required
-                value={formData.size}
-                onChange={(e) => setFormData({...formData, size: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
-              >
-                <option value="">Select Size</option>
-                <option value="XS">XS</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option>
-              </select>
-            </div>
-
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Condition *</label>
-              <select
-                required
-                value={formData.condition}
-                onChange={(e) => setFormData({...formData, condition: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white"
-              >
-                <option value="">Select Condition</option>
-                <option value="new">New</option>
-                <option value="near_mint">Near Mint</option>
-                <option value="very_good">Very Good</option>
-                <option value="good">Good</option>
-                <option value="poor">Poor</option>
-              </select>
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Price (€) *</label>
             <input
@@ -3344,24 +3305,23 @@ const CollectionListingModal = ({ onClose, collectionItem, onSubmit }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Description *</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Additional Marketplace Description</label>
             <textarea
-              placeholder="Describe the condition of your specific item, any flaws, special features, authenticity details, etc."
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white h-32"
-              required
+              placeholder="Add any additional details for the marketplace (optional). Your personal description from collection will be automatically included."
+              value={formData.marketplace_description}
+              onChange={(e) => setFormData({...formData, marketplace_description: e.target.value})}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-white focus:border-transparent text-white h-24"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Photos of Your Item</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Marketplace Photos</label>
             <ImageUpload 
               images={formData.images}
               setImages={(images) => setFormData({...formData, images})}
             />
             <p className="text-xs text-gray-400 mt-2">
-              Upload photos of your specific item. High-quality images showing condition help with sales.
+              Upload additional photos for your marketplace listing. High-quality images help with sales.
             </p>
           </div>
 
