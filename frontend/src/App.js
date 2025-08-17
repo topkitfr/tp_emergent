@@ -2448,8 +2448,6 @@ const SubmitJerseyModal = ({ onClose, onSuccess }) => {
     team: '',
     season: '',
     player: '',
-    size: 'M',
-    condition: 'excellent',
     manufacturer: '',
     home_away: 'home',
     league: '',
