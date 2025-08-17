@@ -3981,6 +3981,106 @@ async def send_message_realtime(
         "real_time_sent": recipient_id in manager.active_connections
     }
 
+# Site Mode Management Endpoints
+@api_router.get("/site/mode")
+async def get_site_mode():
+    """Get current site mode (public/private)"""
+    return {
+        "mode": SITE_MODE,
+        "is_private": SITE_MODE == "private",
+        "message": "Site en mode privé - accès limité aux utilisateurs autorisés" if SITE_MODE == "private" else "Site en mode public"
+    }
+
+@api_router.post("/site/mode")
+async def update_site_mode(
+    site_mode_request: SiteModeRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Update site mode (admin only)"""
+    
+    # Check if user is admin
+    user = await db.users.find_one({"id": user_id})
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
+    
+    # Validate mode
+    if site_mode_request.mode not in ["private", "public"]:
+        raise HTTPException(status_code=400, detail="Mode invalide - utiliser 'private' ou 'public'")
+    
+    # For production deployment, this would update environment variable
+    # For now, we'll store in database as a site setting
+    await db.site_settings.update_one(
+        {"setting": "site_mode"},
+        {
+            "$set": {
+                "setting": "site_mode",
+                "value": site_mode_request.mode,
+                "updated_by": user_id,
+                "updated_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    # Log the change
+    await log_user_activity(user_id, "site_mode_changed", "", {
+        "old_mode": SITE_MODE,
+        "new_mode": site_mode_request.mode,
+        "timestamp": datetime.utcnow().isoformat()
+    })
+    
+    return SiteModeResponse(
+        mode=site_mode_request.mode,
+        message=f"Mode du site changé vers: {site_mode_request.mode}"
+    )
+
+@api_router.get("/site/access-check")
+async def check_site_access(user_id: str = Depends(get_current_user_optional)):
+    """Check if current user has access to the site when in private mode"""
+    
+    # Get site mode from database (overrides environment)
+    site_setting = await db.site_settings.find_one({"setting": "site_mode"})
+    current_mode = site_setting.get("value", SITE_MODE) if site_setting else SITE_MODE
+    
+    if current_mode == "public":
+        return {
+            "has_access": True,
+            "mode": "public",
+            "message": "Site accessible à tous"
+        }
+    
+    # Private mode - check user access
+    if not user_id:
+        return {
+            "has_access": False,
+            "mode": "private",
+            "message": "Connexion requise - site en mode privé"
+        }
+    
+    # Check if user has access (admin always has access)
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return {
+            "has_access": False,
+            "mode": "private",
+            "message": "Utilisateur non trouvé"
+        }
+    
+    # Admin and authorized users have access
+    if user.get("role") == "admin" or user.get("beta_access", False):
+        return {
+            "has_access": True,
+            "mode": "private",
+            "user_role": user.get("role", "user"),
+            "message": "Accès autorisé au site privé"
+        }
+    
+    return {
+        "has_access": False,
+        "mode": "private",
+        "message": "Accès non autorisé - site en mode bêta privée"
+    }
+
 # Payment System Endpoints
 @api_router.post("/payments/checkout/session")
 async def create_checkout_session(
