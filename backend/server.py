@@ -4468,6 +4468,85 @@ async def cleanup_database(
         }
     }
 
+@api_router.get("/users/{user_id}/profile")
+async def get_user_profile(
+    user_id: str,
+    current_user_id: str = Depends(get_current_user)
+):
+    """Get public profile of a user"""
+    
+    # Get user profile
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    # Public profile data (no sensitive info)
+    profile_data = {
+        "id": user["id"],
+        "name": user["name"],
+        "email": user["email"],  # Could be hidden based on privacy settings
+        "username": user.get("username"),
+        "picture": user.get("picture"),
+        "created_at": user.get("created_at"),
+        "last_login": user.get("last_login"),
+        "role": user.get("role", "user")
+    }
+    
+    return profile_data
+
+@api_router.get("/users/{user_id}/collection")
+async def get_user_collection(
+    user_id: str,
+    current_user_id: str = Depends(get_current_user)
+):
+    """Get public collection of a user"""
+    
+    # Get user's collection (public items only)
+    collection_cursor = db.collections.find({
+        "user_id": user_id,
+        "collection_type": "owned"  # Only show owned items in public profile
+    })
+    
+    collection_items = []
+    async for item in collection_cursor:
+        # Get jersey details
+        jersey = await db.jerseys.find_one({"id": item["jersey_id"]})
+        if jersey and jersey.get("status") == "approved":  # Only show approved jerseys
+            collection_items.append({
+                "id": item["id"],
+                "jersey": jersey,
+                "size": item.get("size"),
+                "condition": item.get("condition"),
+                "personal_description": item.get("personal_description"),
+                "added_at": item.get("added_at")
+            })
+    
+    return collection_items
+
+@api_router.get("/users/{user_id}/listings")
+async def get_user_listings(
+    user_id: str,
+    current_user_id: str = Depends(get_current_user)
+):
+    """Get active listings of a user"""
+    
+    # Get user's active listings
+    listings_cursor = db.listings.find({
+        "user_id": user_id,
+        "status": "active"
+    })
+    
+    user_listings = []
+    async for listing in listings_cursor:
+        # Get jersey details
+        jersey = await db.jerseys.find_one({"id": listing["jersey_id"]})
+        if jersey:
+            listing_data = dict(listing)
+            listing_data["jersey"] = jersey
+            user_listings.append(listing_data)
+    
+    return user_listings
+
 @api_router.get("/stats/dynamic")
 async def get_dynamic_stats():
     """Get dynamic site statistics for homepage"""
