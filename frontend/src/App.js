@@ -4150,14 +4150,14 @@ const AuthModal = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🚀 Form submitted - handleSubmit called');
+    console.log('🚀 DEBUG - handleSubmit called successfully!');
     console.log('📧 Form data:', { email: formData.email, password: formData.password ? '***' : 'empty', name: formData.name });
     console.log('🔄 isLogin:', isLogin);
     console.log('🌐 API URL:', API);
     
     if (!formData.email || !formData.password) {
       console.error('❌ Missing required fields');
-      setError('Please fill in all required fields');
+      setError('Veuillez remplir tous les champs requis');
       return;
     }
     
@@ -4246,7 +4246,6 @@ const AuthModal = ({ onClose }) => {
         const errorMessage = error.response?.data?.detail || '';
         if (errorMessage.includes('vérifier') || errorMessage.includes('email')) {
           setError(errorMessage + '\n\nSouhaitez-vous recevoir un nouveau lien de vérification ?');
-          // TODO: Add resend verification button here
         } else {
           setError(errorMessage);
         }
@@ -4257,7 +4256,7 @@ const AuthModal = ({ onClose }) => {
         // Validation errors (password strength, user exists, etc.)
         setError(error.response?.data?.detail || 'Données invalides');
       } else {
-        setError(error.response?.data?.detail || error.message || 'Erreur d\'authentification');
+        setError('Erreur de connexion. Veuillez réessayer.');
       }
     } finally {
       setLoading(false);
