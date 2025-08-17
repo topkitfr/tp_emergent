@@ -5682,14 +5682,9 @@ async def get_beta_access_requests(
 @api_router.post("/admin/beta/requests/{request_id}/approve")
 async def approve_beta_access_request(
     request_id: str,
-    user_id: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_admin)
 ):
     """Approve a beta access request and grant access to user (admin only)"""
-    
-    # Check if user is admin
-    admin_user = await db.users.find_one({"id": user_id})
-    if not admin_user or admin_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Accès refusé - Admin requis")
     
     # Get the request
     access_request = await db.beta_access_requests.find_one({"id": request_id})
@@ -5711,7 +5706,7 @@ async def approve_beta_access_request(
                     "$set": {
                         "beta_access": True,
                         "beta_granted_at": datetime.utcnow(),
-                        "beta_granted_by": user_id
+                        "beta_granted_by": current_user['id']
                     }
                 }
             )
@@ -5730,7 +5725,7 @@ async def approve_beta_access_request(
                 email_verified=True,  # Auto-verify for beta users
                 beta_access=True,
                 beta_granted_at=datetime.utcnow(),
-                beta_granted_by=user_id
+                beta_granted_by=current_user['id']
             )
             
             await db.users.insert_one(new_user.dict())
@@ -5745,13 +5740,13 @@ async def approve_beta_access_request(
                 "$set": {
                     "status": "approved",
                     "processed_at": datetime.utcnow(),
-                    "processed_by": user_id
+                    "processed_by": current_user['id']
                 }
             }
         )
         
         # Log activity
-        await log_user_activity(user_id, "beta_access_approved", access_request["email"], {
+        await log_user_activity(current_user['id'], "beta_access_approved", access_request["email"], {
             "request_id": request_id,
             "user_name": f"{access_request['first_name']} {access_request['last_name']}",
             "user_email": access_request["email"]
