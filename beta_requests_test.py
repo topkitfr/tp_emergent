@@ -85,13 +85,16 @@ class BetaRequestsTester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if data is a list
-                if isinstance(data, list):
-                    request_count = len(data)
+                # Check if data is a dict with 'requests' key (correct format)
+                if isinstance(data, dict) and 'requests' in data:
+                    requests_list = data['requests']
+                    request_count = len(requests_list)
+                    total_count = data.get('total', request_count)
+                    filter_type = data.get('filter', 'unknown')
                     
                     if request_count > 0:
                         # Analyze the first request to verify structure
-                        first_request = data[0]
+                        first_request = requests_list[0]
                         required_fields = ['id', 'email', 'first_name', 'last_name', 'message', 'status', 'requested_at']
                         missing_fields = []
                         present_fields = []
@@ -103,7 +106,7 @@ class BetaRequestsTester:
                                 missing_fields.append(field)
                         
                         # Log detailed analysis
-                        details = f"Found {request_count} beta request(s). "
+                        details = f"Found {request_count} beta request(s) (Total: {total_count}, Filter: {filter_type}). "
                         details += f"Present fields: {present_fields}. "
                         if missing_fields:
                             details += f"Missing fields: {missing_fields}. "
@@ -120,23 +123,61 @@ class BetaRequestsTester:
                         )
                         
                         # Additional analysis of all requests
-                        self.analyze_all_requests(data)
+                        self.analyze_all_requests(requests_list)
+                        
+                        # Test individual request fields for the first request
+                        self.test_individual_request_fields(first_request)
                         
                     else:
                         self.log_result(
                             "Beta Requests Endpoint - Data Structure", 
                             False, 
-                            "No beta requests found in database",
+                            f"No beta requests found in database (Total: {total_count}, Filter: {filter_type})",
                             "Expected to find beta requests but got empty list"
                         )
                     
+                    return True
+                elif isinstance(data, list):
+                    # Handle legacy format (direct list)
+                    request_count = len(data)
+                    
+                    if request_count > 0:
+                        # Analyze the first request to verify structure
+                        first_request = data[0]
+                        required_fields = ['id', 'email', 'first_name', 'last_name', 'message', 'status', 'requested_at']
+                        missing_fields = []
+                        present_fields = []
+                        
+                        for field in required_fields:
+                            if field in first_request:
+                                present_fields.append(field)
+                            else:
+                                missing_fields.append(field)
+                        
+                        # Log detailed analysis
+                        details = f"Found {request_count} beta request(s) (Legacy format). "
+                        details += f"Present fields: {present_fields}. "
+                        if missing_fields:
+                            details += f"Missing fields: {missing_fields}. "
+                        
+                        success = len(missing_fields) == 0
+                        self.log_result(
+                            "Beta Requests Endpoint - Data Structure", 
+                            success, 
+                            details,
+                            f"Missing required fields: {missing_fields}" if missing_fields else ""
+                        )
+                        
+                        # Additional analysis of all requests
+                        self.analyze_all_requests(data)
+                        
                     return True
                 else:
                     self.log_result(
                         "Beta Requests Endpoint - Data Structure", 
                         False, 
-                        f"Expected list but got {type(data)}: {data}",
-                        "Response is not a list"
+                        f"Unexpected response format. Got {type(data)}: {json.dumps(data, indent=2, default=str)}",
+                        "Response is neither a list nor a dict with 'requests' key"
                     )
                     return False
                     
