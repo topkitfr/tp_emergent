@@ -3,7 +3,6 @@ import './App.css';
 import axios from 'axios';
 import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
-import PasswordChangeModal from './PasswordChangeModal';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
