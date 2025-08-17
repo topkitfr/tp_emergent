@@ -19,10 +19,11 @@ from datetime import datetime
 
 # Configuration
 BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
-# Use unique emails to avoid conflicts
+# Use unique email for regular user
 TEST_USER_EMAIL = f"test.user.{int(time.time())}@example.com"
 TEST_USER_PASSWORD = "SecurePass2024!"
-ADMIN_EMAIL = f"test.admin.{int(time.time())}@topkit.com"
+# Use the hardcoded admin email from backend
+ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "AdminSecure2024!"
 
 class PrivateBetaTester:
