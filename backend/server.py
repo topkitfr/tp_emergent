@@ -2660,7 +2660,7 @@ async def make_user_moderator(
 @api_router.post("/admin/users/{user_id}/remove-moderator")
 async def remove_user_moderator(
     user_id: str,
-    admin_id: str = Depends(get_current_admin)
+    admin_user: dict = Depends(get_current_user_admin)
 ):
     """Remove moderator role from a user (Admin only)"""
     
@@ -2682,7 +2682,7 @@ async def remove_user_moderator(
     # Log the role assignment activity
     await db.user_activities.insert_one({
         "id": str(uuid.uuid4()),
-        "user_id": admin_id,
+        "user_id": admin_user["id"],
         "action": "role_removed",
         "target_id": user_id,
         "details": {
