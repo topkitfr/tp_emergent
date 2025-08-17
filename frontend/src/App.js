@@ -11966,7 +11966,29 @@ const AppContent = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModalFromAction, setShowAuthModalFromAction] = useState(false);
   
-  // Shopping Cart State
+  // Handle notification clicks with intelligent navigation
+  const handleNotificationClick = (redirectInfo) => {
+    const { view, tab, conversationId, userId } = redirectInfo;
+    
+    // Set the main view
+    setCurrentView(view);
+    
+    // Handle specific navigation logic
+    if (view === 'friends' && tab) {
+      // Navigate to friends page with specific tab
+      setTimeout(() => {
+        // This will be handled by the FriendsPage component internally
+        if (tab === 'messages' && conversationId) {
+          // TODO: Set specific conversation ID for direct navigation
+        }
+      }, 100);
+    }
+    
+    if (view === 'user-profile' && userId) {
+      setSelectedUserId(userId);
+      setShowUserProfile(true);
+    }
+  };
   const [cart, setCart] = useState([]);
   
   // Dynamic Stats State
