@@ -7934,6 +7934,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
 
+  // Site settings states
+  const [siteMode, setSiteMode] = useState('public');
+  const [siteSettingsLoading, setSiteSettingsLoading] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchCollectionData();
