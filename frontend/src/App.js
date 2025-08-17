@@ -11552,6 +11552,23 @@ const AppContent = () => {
     }
   };
 
+  const fetchMyOwnedCollection = async () => {
+    try {
+      const response = await fetch(`${API}/api/collections/my-owned`, {
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMyOwnedCollection(data);
+      }
+    } catch (error) {
+      console.error('Error fetching owned collection:', error);
+    }
+  };
+
   const fetchListings = async (filters = {}) => {
     setLoading(true);
     try {
