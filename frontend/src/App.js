@@ -3,7 +3,6 @@ import './App.css';
 import axios from 'axios';
 import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
-import PasswordChangeModal from './PasswordChangeModal';
 import AdminUserManagement from './AdminUserManagement';
 import UserSettingsPanel from './UserSettingsPanel';
 
