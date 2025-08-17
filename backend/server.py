@@ -714,6 +714,90 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
     
     return True, "Mot de passe valide"
 
+# Security Level 2: 2FA Helper Functions
+def generate_2fa_secret() -> str:
+    """Generate a new TOTP secret for 2FA"""
+    return pyotp.random_base32()
+
+def generate_2fa_qr_code(user_email: str, secret: str) -> str:
+    """Generate QR code for 2FA setup"""
+    try:
+        # Create TOTP URI
+        totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+            name=user_email,
+            issuer_name="TopKit"
+        )
+        
+        # Generate QR code
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(totp_uri)
+        qr.make(fit=True)
+        
+        # Create image
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64 string
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+        
+        return f"data:image/png;base64,{img_base64}"
+        
+    except Exception as e:
+        logger.error(f"Error generating QR code: {e}")
+        return ""
+
+def verify_2fa_token(secret: str, token: str) -> bool:
+    """Verify TOTP token"""
+    try:
+        totp = pyotp.TOTP(secret)
+        return totp.verify(token, valid_window=1)  # Allow 30s window
+    except Exception as e:
+        logger.error(f"Error verifying 2FA token: {e}")
+        return False
+
+def generate_backup_codes(count: int = 10) -> List[str]:
+    """Generate backup codes for 2FA"""
+    import random
+    import string
+    codes = []
+    for _ in range(count):
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        codes.append(f"{code[:4]}-{code[4:]}")
+    return codes
+
+def verify_backup_code(user_backup_codes: List[str], entered_code: str) -> tuple[bool, List[str]]:
+    """Verify backup code and remove it from list if valid"""
+    if entered_code in user_backup_codes:
+        updated_codes = [code for code in user_backup_codes if code != entered_code]
+        return True, updated_codes
+    return False, user_backup_codes
+
+# Security Level 2: Suspicious Activity Detection
+async def log_suspicious_activity(user_id: str, activity_type: str, description: str, severity: str = "low"):
+    """Log suspicious activity for monitoring"""
+    try:
+        activity = SuspiciousActivity(
+            user_id=user_id,
+            activity_type=activity_type,
+            description=description,
+            severity=severity
+        )
+        await db.suspicious_activities.insert_one(activity.dict())
+        
+        # Update user's suspicious activity score
+        score_increase = {"low": 1, "medium": 5, "high": 10}.get(severity, 1)
+        await db.users.update_one(
+            {"id": user_id},
+            {"$inc": {"suspicious_activity_score": score_increase}}
+        )
+        
+        logger.warning(f"Suspicious activity logged for user {user_id}: {activity_type} - {description}")
+        
+    except Exception as e:
+        logger.error(f"Error logging suspicious activity: {e}")
+
 def check_rate_limit_for_registration(client_ip: str) -> tuple[bool, str]:
     """Check if IP has exceeded account creation rate limit"""
     current_time = time.time()
