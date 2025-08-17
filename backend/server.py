@@ -1808,7 +1808,7 @@ async def change_password(password_data: PasswordChange, current_user: dict = De
 
 # Admin User Management Endpoints (Security Level 2)
 @api_router.post("/admin/users/{user_id}/ban")
-async def ban_user(user_id: str, ban_data: UserBan, current_user: dict = Depends(get_current_user_admin)):
+async def ban_user(user_id: str, ban_data: BanRequest, current_user: dict = Depends(get_current_user_admin)):
     """Ban a user account"""
     try:
         # Check if trying to ban admin
