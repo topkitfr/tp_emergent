@@ -12087,9 +12087,6 @@ const AppContent = () => {
             }}
           />
         );
-        
-      case 'home':
-        return <DiscogsStyleHomepage onNavigate={setCurrentView} />;
 
 // Discogs-Style Homepage Component
 const DiscogsStyleHomepage = ({ onNavigate }) => {
