@@ -2683,8 +2683,16 @@ async def get_marketplace_catalog():
 # Collection endpoints
 @api_router.post("/collections")
 async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
-    """Add jersey to collection - restricted to non-admin users only"""
-    # Check if already in collection
+    """Add jersey to collection with specific size/condition - restricted to non-admin users only"""
+    # Verify jersey exists and is approved
+    jersey = await db.jerseys.find_one({"id": collection_data.jersey_id})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    if jersey.get("status") != "approved":
+        raise HTTPException(status_code=400, detail="Can only add approved jerseys to collection")
+    
+    # Check if already in collection (same jersey, same collection type)
     existing = await db.collections.find_one({
         "user_id": user_id,
         "jersey_id": collection_data.jersey_id,
@@ -2694,9 +2702,45 @@ async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depen
     if existing:
         raise HTTPException(status_code=400, detail="Already in collection")
     
-    collection = Collection(**collection_data.dict(), user_id=user_id)
+    # Validate size and condition if provided (for "owned" items)
+    size_enum = None
+    condition_enum = None
+    
+    if collection_data.collection_type == "owned":
+        # For owned items, size and condition are recommended
+        if collection_data.size:
+            try:
+                size_enum = JerseySize(collection_data.size.upper())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Invalid size: {collection_data.size}. Must be one of: XS, S, M, L, XL, XXL")
+        
+        if collection_data.condition:
+            try:
+                condition_enum = JerseyCondition(collection_data.condition.lower())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Invalid condition: {collection_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+    
+    # Create collection entry
+    collection = Collection(
+        user_id=user_id,
+        jersey_id=collection_data.jersey_id,
+        collection_type=collection_data.collection_type,
+        size=size_enum,
+        condition=condition_enum,
+        personal_description=collection_data.personal_description.strip() if collection_data.personal_description else None
+    )
+    
     await db.collections.insert_one(collection.dict())
-    return {"message": "Added to collection"}
+    
+    # Log collection activity
+    await log_user_activity(user_id, "collection_added", collection.id, {
+        "jersey_id": collection_data.jersey_id,
+        "collection_type": collection_data.collection_type,
+        "size": collection_data.size,
+        "condition": collection_data.condition
+    })
+    
+    return {"message": f"Added to {collection_data.collection_type} collection", "collection_id": collection.id}
 
 @api_router.post("/collections/remove")
 async def remove_from_collection_post(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
