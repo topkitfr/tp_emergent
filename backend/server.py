@@ -295,10 +295,12 @@ class JerseyCreate(BaseModel):
     reference_code: Optional[str] = None
 
 class ListingCreate(BaseModel):
-    jersey_id: str
-    price: Optional[float] = None  # Price is optional - market determined like Discogs
-    description: str
-    images: List[str] = []
+    jersey_id: str  # Reference to approved jersey in catalog
+    size: str  # Size of this specific item (XS, S, M, L, XL, XXL)
+    condition: str  # Condition of this specific item (new, near_mint, very_good, good, poor)
+    price: float  # Price for this specific listing (required for marketplace)
+    description: str  # Seller's description of this specific item
+    images: List[str] = []  # Photos of this specific item
 
 class CollectionAdd(BaseModel):
     jersey_id: str
