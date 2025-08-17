@@ -13484,7 +13484,7 @@ const AppContent = () => {
     const token = localStorage.getItem('token');
     if (!token) {
       alert(`Please login to ${actionName}`);
-      setShowAuthModalFromAction(true);
+      setShowAuthModal(true);
       return false;
     }
     return true;
