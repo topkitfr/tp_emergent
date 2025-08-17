@@ -13889,6 +13889,7 @@ const App = () => {
     <AuthProvider>
       <SiteAccessGate>
         <AppContent />
+        <ToastContainer />
       </SiteAccessGate>
     </AuthProvider>
   );
