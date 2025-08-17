@@ -13434,6 +13434,23 @@ const AppContent = () => {
   useEffect(() => {
     fetchDynamicStats();
   }, []);
+
+  // Auto-redirect admin users to admin panel and handle direct links
+  useEffect(() => {
+    // Check for direct link to beta-requests
+    const hash = window.location.hash;
+    if (hash === '#beta-requests' && user?.email === 'topkitfr@gmail.com') {
+      setCurrentView('admin');
+      // Clear the hash after navigation
+      window.history.replaceState(null, null, window.location.pathname);
+      return;
+    }
+
+    // Auto-redirect admin to admin panel (only if not already there and not on a specific view)
+    if (user?.email === 'topkitfr@gmail.com' && currentView === 'home') {
+      setCurrentView('admin');
+    }
+  }, [user, currentView]);
   
   const fetchDynamicStats = async () => {
     try {
