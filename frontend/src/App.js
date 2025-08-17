@@ -8526,6 +8526,11 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
                 </div>
               </div>
             )}
+
+            {/* Security Level 2: Settings Tab (only for own profile) */}
+            {activeTab === 'settings' && isOwnProfile && (
+              <UserSettingsPanel user={user} profileData={profileData} onProfileUpdated={fetchUserProfile} />
+            )}
           </div>
         </div>
       </div>
