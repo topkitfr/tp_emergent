@@ -4379,6 +4379,95 @@ async def get_conversation_messages(
         "total": len(messages)
     }
 
+@api_router.post("/admin/cleanup/database")
+async def cleanup_database(
+    admin_id: str = Depends(get_current_admin)
+):
+    """Clean database - keep only admin and steinmetzlivio@gmail.com accounts (Admin only)"""
+    
+    # Define accounts to keep
+    accounts_to_keep = ["topkitfr@gmail.com", "steinmetzlivio@gmail.com"]
+    
+    # Get users to keep
+    users_to_keep = []
+    for email in accounts_to_keep:
+        user = await db.users.find_one({"email": email})
+        if user:
+            users_to_keep.append(user["id"])
+    
+    # Count before deletion
+    initial_counts = {
+        "users": await db.users.count_documents({}),
+        "jerseys": await db.jerseys.count_documents({}),
+        "collections": await db.collections.count_documents({}),
+        "listings": await db.listings.count_documents({}),
+        "messages": await db.messages.count_documents({}),
+        "conversations": await db.conversations.count_documents({})
+    }
+    
+    # Delete users except those to keep
+    await db.users.delete_many({"email": {"$nin": accounts_to_keep}})
+    
+    # Delete all jerseys
+    await db.jerseys.delete_many({})
+    
+    # Delete all collections
+    await db.collections.delete_many({})
+    
+    # Delete all listings
+    await db.listings.delete_many({})
+    
+    # Delete all messages and conversations
+    await db.messages.delete_many({})
+    await db.conversations.delete_many({})
+    
+    # Delete all user activities except for kept users
+    await db.user_activities.delete_many({"user_id": {"$nin": users_to_keep}})
+    
+    # Delete all beta access requests 
+    await db.beta_access_requests.delete_many({})
+    
+    # Delete all notifications except for kept users
+    await db.notifications.delete_many({"user_id": {"$nin": users_to_keep}})
+    
+    # Count after deletion
+    final_counts = {
+        "users": await db.users.count_documents({}),
+        "jerseys": await db.jerseys.count_documents({}),
+        "collections": await db.collections.count_documents({}),
+        "listings": await db.listings.count_documents({}),
+        "messages": await db.messages.count_documents({}),
+        "conversations": await db.conversations.count_documents({})
+    }
+    
+    # Log cleanup activity
+    await db.user_activities.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": admin_id,
+        "action": "database_cleanup",
+        "details": {
+            "initial_counts": initial_counts,
+            "final_counts": final_counts,
+            "accounts_kept": accounts_to_keep
+        },
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {
+        "message": "Base de données nettoyée avec succès",
+        "accounts_kept": accounts_to_keep,
+        "initial_counts": initial_counts,
+        "final_counts": final_counts,
+        "deleted": {
+            "users": initial_counts["users"] - final_counts["users"],
+            "jerseys": initial_counts["jerseys"],
+            "collections": initial_counts["collections"],
+            "listings": initial_counts["listings"],
+            "messages": initial_counts["messages"],
+            "conversations": initial_counts["conversations"]
+        }
+    }
+
 @api_router.get("/stats/dynamic")
 async def get_dynamic_stats():
     """Get dynamic site statistics for homepage"""
