@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://soccer-ui-fix.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-2fa.preview.emergentagent.com/api"
 
 class RapidEmptyDatabaseTester:
     def __init__(self):

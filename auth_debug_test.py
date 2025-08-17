@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Using correct backend URL from frontend .env
-BASE_URL = "https://soccer-ui-fix.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-2fa.preview.emergentagent.com/api"
 
 class AuthDebugTester:
     def __init__(self):

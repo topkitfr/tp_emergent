@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://soccer-ui-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-2fa.preview.emergentagent.com/api"
 
 # Test accounts
 ADMIN_EMAIL = "topkitfr@gmail.com"
