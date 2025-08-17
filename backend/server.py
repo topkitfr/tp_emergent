@@ -1496,6 +1496,245 @@ async def login(user_data: UserLogin, request: Request):
         logger.error(f"Login error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la connexion")
 
+@api_router.post("/auth/2fa/verify")
+async def verify_2fa_login(verification_data: TwoFactorVerify, authorization: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify 2FA token during login process"""
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Token temporaire requis")
+        
+        # Decode temp token
+        try:
+            payload = jwt.decode(authorization.credentials, SECRET_KEY, algorithms=['HS256'])
+            if payload.get('type') != '2fa_pending':
+                raise HTTPException(status_code=401, detail="Token invalide")
+            user_id = payload.get('user_id')
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token temporaire expiré")
+        except jwt.PyJWTError:
+            raise HTTPException(status_code=401, detail="Token temporaire invalide")
+        
+        # Get user
+        user = await db.users.find_one({"id": user_id})
+        if not user or not user.get('two_factor_enabled'):
+            raise HTTPException(status_code=401, detail="2FA non configuré")
+        
+        # Verify 2FA token
+        token_valid = False
+        
+        # First try TOTP token
+        if user.get('two_factor_secret'):
+            token_valid = verify_2fa_token(user['two_factor_secret'], verification_data.token)
+        
+        # If TOTP fails, try backup codes
+        if not token_valid and user.get('two_factor_backup_codes'):
+            is_backup_valid, updated_codes = verify_backup_code(
+                user['two_factor_backup_codes'], 
+                verification_data.token
+            )
+            if is_backup_valid:
+                # Update backup codes (remove used code)
+                await db.users.update_one(
+                    {"id": user_id},
+                    {"$set": {"two_factor_backup_codes": updated_codes}}
+                )
+                token_valid = True
+        
+        if not token_valid:
+            await log_suspicious_activity(user_id, "failed_2fa_verification", "Invalid 2FA token provided during login")
+            raise HTTPException(status_code=401, detail="Code d'authentification invalide")
+        
+        # Generate main token
+        token = create_jwt_token(user['id'])
+        
+        return {
+            "token": token,
+            "user": {
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                "role": user.get('role', 'user'),
+                "picture": user.get('picture'),
+                "two_factor_enabled": True
+            },
+            "message": "Authentification réussie"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"2FA verification error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la vérification 2FA")
+
+# Security Level 2: 2FA Management Endpoints
+@api_router.post("/auth/2fa/setup")
+async def setup_2fa(current_user: dict = Depends(get_current_user)):
+    """Setup 2FA for user account"""
+    try:
+        user_id = current_user['id']
+        user_email = current_user['email']
+        
+        # Check if 2FA is already enabled
+        user = await db.users.find_one({"id": user_id})
+        if user.get('two_factor_enabled'):
+            raise HTTPException(status_code=400, detail="2FA déjà activé")
+        
+        # Generate secret
+        secret = generate_2fa_secret()
+        
+        # Generate QR code
+        qr_code = generate_2fa_qr_code(user_email, secret)
+        
+        # Generate backup codes
+        backup_codes = generate_backup_codes()
+        
+        # Store secret temporarily (not enabled until verified)
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "two_factor_secret": secret,
+                "two_factor_backup_codes": backup_codes
+            }}
+        )
+        
+        return {
+            "secret": secret,
+            "qr_code": qr_code,
+            "backup_codes": backup_codes,
+            "message": "Configurez votre application d'authentification avec le QR code, puis vérifiez avec un code"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"2FA setup error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la configuration 2FA")
+
+@api_router.post("/auth/2fa/enable") 
+async def enable_2fa(verification_data: TwoFactorSetup, current_user: dict = Depends(get_current_user)):
+    """Enable 2FA after verification"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user with secret
+        user = await db.users.find_one({"id": user_id})
+        if not user.get('two_factor_secret'):
+            raise HTTPException(status_code=400, detail="2FA non configuré. Configurez d'abord 2FA.")
+        
+        if user.get('two_factor_enabled'):
+            raise HTTPException(status_code=400, detail="2FA déjà activé")
+        
+        # Verify token
+        if not verify_2fa_token(user['two_factor_secret'], verification_data.token):
+            raise HTTPException(status_code=400, detail="Code d'authentification invalide")
+        
+        # Enable 2FA
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"two_factor_enabled": True}}
+        )
+        
+        await log_user_activity(user_id, "2fa_enabled", None, {
+            "enabled_at": datetime.utcnow().isoformat()
+        })
+        
+        return {"message": "Authentification à deux facteurs activée avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"2FA enable error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'activation 2FA")
+
+@api_router.post("/auth/2fa/disable")
+async def disable_2fa(verification_data: TwoFactorVerify, current_user: dict = Depends(get_current_user)):
+    """Disable 2FA after verification"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user
+        user = await db.users.find_one({"id": user_id})
+        if not user.get('two_factor_enabled'):
+            raise HTTPException(status_code=400, detail="2FA non activé")
+        
+        # Verify token (TOTP or backup code)
+        token_valid = False
+        
+        if user.get('two_factor_secret'):
+            token_valid = verify_2fa_token(user['two_factor_secret'], verification_data.token)
+        
+        if not token_valid and user.get('two_factor_backup_codes'):
+            is_backup_valid, updated_codes = verify_backup_code(
+                user['two_factor_backup_codes'], 
+                verification_data.token
+            )
+            if is_backup_valid:
+                token_valid = True
+        
+        if not token_valid:
+            raise HTTPException(status_code=400, detail="Code d'authentification invalide")
+        
+        # Disable 2FA and clear secrets
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "two_factor_enabled": False,
+                "two_factor_secret": None,
+                "two_factor_backup_codes": []
+            }}
+        )
+        
+        await log_user_activity(user_id, "2fa_disabled", None, {
+            "disabled_at": datetime.utcnow().isoformat()
+        })
+        
+        return {"message": "Authentification à deux facteurs désactivée"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"2FA disable error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la désactivation 2FA")
+
+@api_router.post("/auth/2fa/backup-codes")
+async def regenerate_backup_codes(verification_data: TwoFactorVerify, current_user: dict = Depends(get_current_user)):
+    """Regenerate 2FA backup codes"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user
+        user = await db.users.find_one({"id": user_id})
+        if not user.get('two_factor_enabled'):
+            raise HTTPException(status_code=400, detail="2FA non activé")
+        
+        # Verify token
+        if not verify_2fa_token(user['two_factor_secret'], verification_data.token):
+            raise HTTPException(status_code=400, detail="Code d'authentification invalide")
+        
+        # Generate new backup codes
+        backup_codes = generate_backup_codes()
+        
+        # Update backup codes
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"two_factor_backup_codes": backup_codes}}
+        )
+        
+        await log_user_activity(user_id, "2fa_backup_codes_regenerated", None, {
+            "regenerated_at": datetime.utcnow().isoformat()
+        })
+        
+        return {
+            "backup_codes": backup_codes,
+            "message": "Codes de sauvegarde régénérés avec succès"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Backup codes regeneration error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la régénération des codes de sauvegarde")
+
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
     """Request password reset email"""
