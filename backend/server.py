@@ -494,6 +494,9 @@ class BetaAccessResponse(BaseModel):
     message: str
     request_id: str
 
+class RejectBetaRequest(BaseModel):
+    reason: str
+
 class ModificationSuggestionCreate(BaseModel):
     jersey_id: str
     suggested_changes: str
