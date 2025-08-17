@@ -434,8 +434,16 @@ class TopKitTester:
             response, error = self.make_request("GET", "/users/search?q=test", token=self.user_token)
             
             success = not error and response and response.status_code == 200
-            self.log_test("core_apis", "User Search", success, 
-                         error or "User search functional")
+            if success:
+                try:
+                    search_results = response.json()
+                    self.log_test("core_apis", "User Search", True, 
+                                 f"User search returned {len(search_results)} results")
+                except Exception as e:
+                    self.log_test("core_apis", "User Search", False, f"JSON parse error: {e}")
+            else:
+                self.log_test("core_apis", "User Search", False, 
+                             error or f"Status: {response.status_code}")
     
     def test_messaging_system(self):
         """Test messaging system endpoints"""
