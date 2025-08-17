@@ -6779,7 +6779,10 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Marketplace</h1>
-          <p className="text-gray-400">Découvrez et achetez des maillots mis en vente par la communauté</p>
+          <p className="text-gray-400 mb-4">Découvrez et achetez des maillots mis en vente par la communauté</p>
+          <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3 text-blue-300 text-sm">
+            💡 <strong>Astuce :</strong> Cliquez sur un maillot pour voir les annonces disponibles et ajouter au panier
+          </div>
         </div>
 
         {/* Search and Filters */}
