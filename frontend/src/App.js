@@ -12493,6 +12493,16 @@ const AdminPanel = () => {
           >
             ⚙️ Site Settings
           </button>
+          <button
+            onClick={() => setActiveTab('beta-requests')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'beta-requests'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            🚀 Beta Requests
+          </button>
         </div>
       </div>
 
