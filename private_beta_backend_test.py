@@ -18,8 +18,8 @@ from datetime import datetime
 
 # Configuration
 BASE_URL = "https://topkit-beta.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "test.user@example.com"
-TEST_USER_PASSWORD = "SecurePass2024!"
+TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
+TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
 
