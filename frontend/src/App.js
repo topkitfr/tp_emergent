@@ -6445,56 +6445,7 @@ const FriendsPage = () => {
   );
 };
 
-// Messages and Friends Combined Page Component
-const MessagesAndFriendsPage = () => {
-  const [activeTab, setActiveTab] = useState('messages');
-  
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto p-4">
-        {/* Header with Tabs */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-6">💬 Communication</h1>
-          
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700 max-w-md">
-            <button
-              onClick={() => setActiveTab('messages')}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'messages'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              💬 Messages
-            </button>
-            <button
-              onClick={() => setActiveTab('friends')}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'friends'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              👥 Amis
-            </button>
-          </div>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="tab-content">
-          {activeTab === 'messages' && (
-            <MessagesPageContent />
-          )}
-          
-          {activeTab === 'friends' && (
-            <FriendsPageContent />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+
 
 // Extract Messages Page Content (without the header/wrapper)
 const MessagesPageContent = () => {
