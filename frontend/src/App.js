@@ -3263,22 +3263,27 @@ const CollectionListingModal = ({ onClose, collectionItem, onSubmit }) => {
           </div>
         )}
 
-        {jersey && (
+        {collectionItem && (
           <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-2">Jersey from Catalog</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">Your Jersey</h3>
             <div className="flex items-center space-x-4">
-              {jersey.images && jersey.images[0] && (
+              {collectionItem.jersey.images && collectionItem.jersey.images[0] && (
                 <img 
-                  src={jersey.images[0]} 
-                  alt={`${jersey.team} ${jersey.season}`}
+                  src={collectionItem.jersey.images[0]} 
+                  alt={`${collectionItem.jersey.team} ${collectionItem.jersey.season}`}
                   className="w-16 h-16 object-cover rounded border border-gray-600"
                 />
               )}
               <div>
-                <p className="text-white font-semibold">{jersey.team} - {jersey.season}</p>
-                {jersey.player && <p className="text-gray-300">{jersey.player}</p>}
-                {jersey.league && <p className="text-gray-400 text-sm">{jersey.league}</p>}
-                <p className="text-blue-400 text-sm">{jersey.active_listings || 0} active listing(s)</p>
+                <p className="text-white font-semibold">{collectionItem.jersey.team} - {collectionItem.jersey.season}</p>
+                {collectionItem.jersey.player && <p className="text-gray-300">{collectionItem.jersey.player}</p>}
+                <div className="flex space-x-4 text-sm mt-2">
+                  {collectionItem.size && <span className="text-blue-400">Size: {collectionItem.size}</span>}
+                  {collectionItem.condition && <span className="text-green-400">Condition: {collectionItem.condition}</span>}
+                </div>
+                {collectionItem.personal_description && (
+                  <p className="text-gray-300 text-sm mt-1 italic">{collectionItem.personal_description}</p>
+                )}
               </div>
             </div>
           </div>
