@@ -3452,7 +3452,7 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
             # Verify the original jersey exists and belongs to the user
             original_jersey = await db.jerseys.find_one({
                 "id": resubmission_id, 
-                "submitted_by": current_user["id"],
+                "submitted_by": user_id,
                 "status": "needs_modification"
             })
             if original_jersey:
