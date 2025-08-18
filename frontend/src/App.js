@@ -14773,72 +14773,69 @@ const AdminPanel = () => {
         </div>
       ) : null}
       
-      {/* Modals */}
-      <>
-        {/* Edit Jersey Modal */}
-        {showEditModal && jerseyToEdit && (
-          <AdminEditJerseyModal
-            jersey={jerseyToEdit}
-            onClose={() => {
+      {/* Edit Jersey Modal */}
+      {showEditModal && jerseyToEdit && (
+        <AdminEditJerseyModal
+          jersey={jerseyToEdit}
+          onClose={() => {
+            setShowEditModal(false);
+            setJerseyToEdit(null);
+          }}
+          onSave={async (updatedJersey) => {
+            try {
+              setActionLoading(true);
+              const token = localStorage.getItem('token');
+              await axios.put(`${API}/api/admin/jerseys/${jerseyToEdit.id}/edit`, updatedJersey, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              alert('Jersey mis à jour avec succès !');
+              fetchPendingJerseys();
               setShowEditModal(false);
               setJerseyToEdit(null);
-            }}
-            onSave={async (updatedJersey) => {
-              try {
-                setActionLoading(true);
-                const token = localStorage.getItem('token');
-                await axios.put(`${API}/api/admin/jerseys/${jerseyToEdit.id}/edit`, updatedJersey, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-                alert('Jersey mis à jour avec succès !');
-                fetchPendingJerseys();
-                setShowEditModal(false);
-                setJerseyToEdit(null);
-              } catch (error) {
-                console.error('Update error:', error);
-                alert('Erreur lors de la mise à jour du jersey');
-              } finally {
-                setActionLoading(false);
-              }
-            }}
-          />
-        )}
-        
-        {/* Security Level 2 Modals */}
-        {show2FASetup && (
-          <TwoFactorAuthSetup
-            user={user}
-            onClose={() => setShow2FASetup(false)}
-            onSuccess={() => {
-              setShow2FASetup(false);
-              // Refresh profile data to update security status
-              fetchUserProfile();
-            }}
-          />
-        )}
-        
-        {showPasswordModal && (
-          <PasswordChangeModal
-            isOpen={showPasswordModal}
-            onClose={() => setShowPasswordModal(false)}
-            onSuccess={() => {
-              // Success handled by modal
-            }}
-          />
-        )}
-        
-        {showUserSettings && (
-          <UserSettingsPanel
-            user={user}
-            profileData={profileData}
-            onProfileUpdated={() => {
-              // Refresh profile data
-              fetchUserProfile();
-            }}
-            onClose={() => setShowUserSettings(false)}
-          />
-        )}
-      </>
+            } catch (error) {
+              console.error('Update error:', error);
+              alert('Erreur lors de la mise à jour du jersey');
+            } finally {
+              setActionLoading(false);
+            }
+          }}
+        />
+      )}
+      
+      {/* Security Level 2 Modals */}
+      {show2FASetup && (
+        <TwoFactorAuthSetup
+          user={user}
+          onClose={() => setShow2FASetup(false)}
+          onSuccess={() => {
+            setShow2FASetup(false);
+            // Refresh profile data to update security status
+            fetchUserProfile();
+          }}
+        />
+      )}
+      
+      {showPasswordModal && (
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            // Success handled by modal
+          }}
+        />
+      )}
+      
+      {showUserSettings && (
+        <UserSettingsPanel
+          user={user}
+          profileData={profileData}
+          onProfileUpdated={() => {
+            // Refresh profile data
+            fetchUserProfile();
+          }}
+          onClose={() => setShowUserSettings(false)}
+        />
+      )}
       </div>
     </div>
   );
