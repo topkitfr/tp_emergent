@@ -54,10 +54,10 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
   const loadJerseyDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/api/collections/owned/${jersey.id}/details`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await tokenManager.apiCall(
+        'get',
+        `/api/collections/owned/${jersey.id}/details`
+      );
       
       if (response.data) {
         setDetailData(prev => ({
