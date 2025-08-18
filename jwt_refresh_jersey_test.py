@@ -506,7 +506,7 @@ class JWTRefreshJerseyTester:
                 
                 if new_token:
                     # Test that the new token works for API operations
-                    profile_response = self.make_request('GET', '/auth/profile', token=new_token)
+                    profile_response = self.make_request('GET', '/profile', token=new_token)
                     
                     if profile_response and profile_response.status_code == 200:
                         profile_data = profile_response.json()
