@@ -23,6 +23,14 @@ async def add_test_friends():
         # Find the target user
         target_user = await db.users.find_one({"email": target_email})
         if not target_user:
+            # Try to find by name pattern
+            target_user = await db.users.find_one({"name": {"$regex": "Livio", "$options": "i"}})
+        if not target_user:
+            # Show all users to debug
+            users = await db.users.find({}).to_list(10)
+            print("Available users:")
+            for user in users:
+                print(f"  - {user.get('name', 'No name')} ({user.get('email', 'No email')}) - ID: {user.get('id', 'No ID')}")
             print(f"❌ User {target_email} not found")
             return False
             
