@@ -227,7 +227,8 @@ def main():
     """Main test execution"""
     print("=" * 80)
     print("🎯 FIXED USER ACCOUNT BACKEND TESTING")
-    print("Testing steinmetzlivio@gmail.com with password T0p_Mdp_1288*")
+    print("Testing steinmetzlivio.fixed@gmail.com with password T0p_Mdp_1288*")
+    print("(Alternative account created due to original account being locked)")
     print("Focus: Authentication and Jersey Submission")
     print("=" * 80)
     
