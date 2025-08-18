@@ -122,10 +122,11 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
       setLoading(true);
       setError('');
       
-      const token = localStorage.getItem('token');
-      await axios.put(`${API}/api/collections/owned/${jersey.id}/details`, detailData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await tokenManager.apiCall(
+        'put',
+        `/api/collections/owned/${jersey.id}/details`,
+        detailData
+      );
       
       if (onSave) {
         onSave(detailData);
@@ -134,7 +135,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
       onClose();
       
     } catch (error) {
-      setError(error.response?.data?.detail || 'Failed to save jersey details');
+      console.error('Error saving jersey details:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to save jersey details';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
