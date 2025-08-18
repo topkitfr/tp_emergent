@@ -4502,8 +4502,10 @@ async def get_jersey_details(jersey_id: str, current_user: dict = Depends(get_cu
         }
 
 @api_router.put("/collections/owned/{jersey_id}/details")
-async def update_jersey_details(jersey_id: str, detail_data: JerseyDetailData, user_id: str = Depends(get_current_user)):
+async def update_jersey_details(jersey_id: str, detail_data: JerseyDetailData, current_user: dict = Depends(get_current_user)):
     """Update detailed information for a jersey in user's owned collection"""
+    user_id = current_user["id"]
+    
     # Verify user owns this jersey
     collection_item = await db.collections.find_one({
         "user_id": user_id,
