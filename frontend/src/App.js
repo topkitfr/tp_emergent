@@ -5522,6 +5522,8 @@ const AdvancedSettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [siteMode, setSiteMode] = useState('public');
+  const [siteSettingsLoading, setSiteSettingsLoading] = useState(false);
 
   // États pour les différentes sections
   const [profileData, setProfileData] = useState({
