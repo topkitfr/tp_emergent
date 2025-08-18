@@ -4227,7 +4227,7 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
             "email": user["email"],
             "name": user["name"],
             "picture": user.get("picture"),
-            "provider": user["provider"],
+            "provider": user.get("provider", "custom"),
             "created_at": user["created_at"],
             "profile_privacy": user.get("profile_privacy", "public"),
             "show_collection_value": user.get("show_collection_value", False)
