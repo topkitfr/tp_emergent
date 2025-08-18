@@ -143,7 +143,7 @@ class ReviewFocusedTester:
         }
         
         try:
-            response = requests.post(f"{BACKEND_URL}/beta/requests", json=beta_request_data)
+            response = requests.post(f"{BACKEND_URL}/beta/request-access", json=beta_request_data)
             
             if response.status_code == 200:
                 data = response.json()
