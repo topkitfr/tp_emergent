@@ -14867,6 +14867,14 @@ const AdminPanel = () => {
           onClose={() => setShowUserSettings(false)}
         />
       )}
+      
+      {showSecurityModal && (
+        <SecuritySettingsModal
+          user={user}
+          isOpen={showSecurityModal}
+          onClose={() => setShowSecurityModal(false)}
+        />
+      )}
       </div>
     </>
   );
