@@ -9408,11 +9408,43 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
       setWantedJerseys(wanted);
       setSubmittedJerseys(submitted);
       
-      // Calculate collection value estimate (mock values for demo)
-      const estimatedValues = owned.map(() => Math.floor(Math.random() * 200) + 50); // Random values 50-250€
+      // Calculate collection value estimate based on jersey data
+      const estimatedValues = owned.map(item => {
+        const jersey = item.jersey;
+        let baseValue = 75; // Base value for any jersey
+        
+        // Add value based on team popularity
+        if (jersey.team?.toLowerCase().includes('psg') || 
+            jersey.team?.toLowerCase().includes('paris saint-germain') ||
+            jersey.team?.toLowerCase().includes('real madrid') ||
+            jersey.team?.toLowerCase().includes('barcelona')) {
+          baseValue += 50;
+        }
+        
+        // Add value based on season (newer = more expensive)
+        const currentYear = new Date().getFullYear();
+        const seasonYear = parseInt(jersey.season?.split('/')[0] || currentYear);
+        if (seasonYear >= currentYear - 1) baseValue += 30; // Current/last season
+        else if (seasonYear >= currentYear - 3) baseValue += 15; // Recent seasons
+        
+        // Add value for special players
+        if (jersey.player?.toLowerCase().includes('messi') ||
+            jersey.player?.toLowerCase().includes('neymar') ||
+            jersey.player?.toLowerCase().includes('mbappé') ||
+            jersey.player?.toLowerCase().includes('mbappe')) {
+          baseValue += 40;
+        }
+        
+        return Math.round(baseValue + (Math.random() * 20 - 10)); // Add small random variation ±10€
+      });
+      
       const totalValue = estimatedValues.reduce((sum, val) => sum + val, 0);
       const averageValue = owned.length > 0 ? Math.round(totalValue / owned.length) : 0;
-      const mostValuable = owned.length > 0 ? owned[estimatedValues.indexOf(Math.max(...estimatedValues))] : null;
+      const maxValueIndex = estimatedValues.indexOf(Math.max(...estimatedValues));
+      const mostValuable = owned.length > 0 ? { 
+        ...owned[maxValueIndex], 
+        estimatedValue: estimatedValues[maxValueIndex] 
+      } : null;
       
       setCollectionStats({
         totalValue,
