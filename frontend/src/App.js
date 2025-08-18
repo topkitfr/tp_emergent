@@ -1539,7 +1539,7 @@ const ShoppingCartPage = ({
 };
 
 // Discogs-Style Header Component
-const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0, handleNotificationClick }) => {
+const Header = ({ currentView, setCurrentView, setShowAuthModal, setShowSecurityModal, cartCount = 0, handleNotificationClick }) => {
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
