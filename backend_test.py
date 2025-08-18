@@ -800,6 +800,8 @@ class TopKitBackendTester:
                 False,
                 error=str(e)
             )
+
+    def test_core_endpoints(self):
         """Test all core API endpoints for basic functionality"""
         print("🌐 TESTING CORE ENDPOINTS...")
         
