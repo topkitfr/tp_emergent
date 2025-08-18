@@ -18,8 +18,8 @@ ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
 # Test user credentials - try existing user first
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "TopKit123!"
+TEST_USER_EMAIL = "test.beta@example.com"
+TEST_USER_PASSWORD = "TestBetaSecure789#"
 
 class AntiFraudPaymentTester:
     def __init__(self):
