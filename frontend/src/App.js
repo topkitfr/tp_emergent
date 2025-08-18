@@ -12741,6 +12741,9 @@ const AppContent = () => {
       case 'profile':
         return <ProfileCollectionPage setShowSubmitModal={setShowSubmitModal} />;
         
+      case 'security':
+        return <SecurityPrivacyPage />;
+        
       case 'settings':
         return <AdvancedSettingsPage />;
         
