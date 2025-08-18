@@ -765,6 +765,19 @@ class MessageCreateV2(BaseModel):
     transaction_id: Optional[str] = None
     system_data: Optional[dict] = {}  # Données pour les messages système
 
+class MessageV2(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    conversation_id: str
+    sender_id: str
+    message: str
+    message_type: str = "text"  # "text", "image", "file", "system", "tracking", "payment_action"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    read: bool = False
+    
+    # Pour les messages système liés aux transactions
+    transaction_id: Optional[str] = None
+    system_data: Optional[dict] = {}  # Données pour les messages système
+
 # Modèle pour les actions de l'acheteur dans la conversation
 class BuyerAction(BaseModel):
     action_type: str  # "confirm_receipt", "report_issue", "request_info"
