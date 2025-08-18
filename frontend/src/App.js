@@ -5137,8 +5137,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
     league: '',
     team: '',
     season: '',
-    size: '',
-    condition: '',
     manufacturer: ''
   });
 
