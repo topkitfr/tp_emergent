@@ -13964,6 +13964,7 @@ const AdminPanel = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showSmartSubmissionModal, setShowSmartSubmissionModal] = useState(false);
 
   // Function to refresh user profile data (placeholder for AdminPanel)
   const fetchUserProfile = async () => {
