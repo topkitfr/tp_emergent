@@ -170,8 +170,45 @@ class JerseyDetailsBackendTester:
                     )
                     return False
                 
-                # Note: Jersey will be in pending status, but we can still add it to collection
-                # and test the details endpoints
+                # Note: Jersey will be in pending status, need admin approval first
+                # Let's use admin token to approve the jersey
+                admin_token = None
+                try:
+                    admin_response = self.session.post(
+                        f"{BACKEND_URL}/auth/login",
+                        json={"email": "topkitfr@gmail.com", "password": "TopKitSecure789#"},
+                        timeout=10
+                    )
+                    if admin_response.status_code == 200:
+                        admin_data = admin_response.json()
+                        admin_token = admin_data.get('token')
+                        
+                        if admin_token:
+                            admin_headers = {"Authorization": f"Bearer {admin_token}"}
+                            approve_response = self.session.post(
+                                f"{BACKEND_URL}/admin/jerseys/{jersey_id}/approve",
+                                headers=admin_headers,
+                                timeout=10
+                            )
+                            
+                            if approve_response.status_code == 200:
+                                self.log_test(
+                                    "Setup Test Jersey - Admin Approval",
+                                    True,
+                                    f"Successfully approved jersey: {jersey_id}"
+                                )
+                            else:
+                                self.log_test(
+                                    "Setup Test Jersey - Admin Approval",
+                                    False,
+                                    f"Failed to approve jersey: {approve_response.status_code} - {approve_response.text}"
+                                )
+                except Exception as e:
+                    self.log_test(
+                        "Setup Test Jersey - Admin Approval",
+                        False,
+                        f"Error during admin approval: {str(e)}"
+                    )
                 
                 # Add jersey to owned collection
                 collection_data = {
