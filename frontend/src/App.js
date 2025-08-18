@@ -12109,6 +12109,7 @@ const AppContent = () => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [siteMode, setSiteMode] = useState('public'); // Site mode state
 
   
   // Handle notification clicks with intelligent navigation
