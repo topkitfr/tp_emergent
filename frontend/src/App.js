@@ -10103,16 +10103,6 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
             >
               👥 Mes Amis ({friendsData.totalFriends})
             </button>
-            <button
-              onClick={() => setActiveTab('messages')}
-              className={`py-3 md:py-4 px-2 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
-                activeTab === 'messages'
-                  ? 'border-white text-white'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              💬 Messages
-            </button>
             {user?.email === 'topkitfr@gmail.com' && (
               <button
                 onClick={() => setActiveTab('settings')}
