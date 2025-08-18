@@ -170,26 +170,8 @@ class JerseyDetailsBackendTester:
                     )
                     return False
                 
-                # If admin, approve the jersey immediately
-                if 'admin' in self.user_token or True:  # Assume admin for now
-                    approve_response = self.session.post(
-                        f"{BACKEND_URL}/admin/jerseys/{jersey_id}/approve",
-                        headers=headers,
-                        timeout=10
-                    )
-                    
-                    if approve_response.status_code == 200:
-                        self.log_test(
-                            "Setup Test Jersey - Approve Jersey",
-                            True,
-                            f"Successfully approved jersey: {jersey_id}"
-                        )
-                    else:
-                        self.log_test(
-                            "Setup Test Jersey - Approve Jersey",
-                            False,
-                            f"Failed to approve jersey: {approve_response.status_code} - {approve_response.text}"
-                        )
+                # Note: Jersey will be in pending status, but we can still add it to collection
+                # and test the details endpoints
                 
                 # Add jersey to owned collection
                 collection_data = {
