@@ -14892,7 +14892,20 @@ const AdminPanel = () => {
           onClose={() => setShowSecurityModal(false)}
         />
       )}
-      </div>
+    </div>
+    
+    {/* Smart Jersey Submission Modal */}
+    {showSmartSubmissionModal && (
+      <SmartJerseySubmissionForm
+        isOpen={showSmartSubmissionModal}
+        onClose={() => setShowSmartSubmissionModal(false)}
+        onSuccess={() => {
+          setShowSmartSubmissionModal(false);
+          // Optionally refresh the data
+          setLastRefresh(Date.now());
+        }}
+      />
+    )}
     </>
   );
 };
