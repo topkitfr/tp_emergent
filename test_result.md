@@ -369,33 +369,9 @@ test_plan:
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Corrections multiples demandées par l'utilisateur:
+user_problem_statement: "LATEST CRITICAL BUG REPORT: User reported two critical bugs with jersey details editing in 'My Collection': (1) 'Jersey not found in your collection' error after editing and saving via Details button, (2) Black screen when clicking 'Save Details' without making changes requiring page reload. Previous issues also tracked: Corrections multiples demandées par l'utilisateur: corrections syntaxiques JSX, cleanup BDD, bugs utilisateur (modal et soumission), bugs admin (endpoints et gestion).
 
-BUG CRITIQUE - Erreur de syntaxe JSX ✅ RÉSOLU
-- Erreur de compilation: 'Adjacent JSX elements must be wrapped in an enclosing tag' ligne 6243
-- Composants dupliqués et JSX orphelins causant l'échec de compilation
-
-PHASE 1 - Base de données vierge ✅ TERMINÉ
-- Nettoyage de la base de données en conservant seulement topkitfr@gmail.com et steinmetzlivio@gmail.com
-
-PHASE 2 - Bugs Utilisateur (Priorité Haute) ✅ EN COURS:
-1. ✅ Ajouter bouton 'Soumettre un maillot' dans section 'Mes Soumissions' 
-2. ✅ Corriger logique own/want pour permettre basculement bidirectionnel
-3. ✅ Restructurer marketplace selon logique Discogs (référence générale → articles en vente utilisateur)
-4. ⏳ Réparer système de messagerie (réception messages, pas besoin d'être amis, contact vendeurs)
-
-PHASE 3 - Bugs Admin (Priorité Haute):
-1. Améliorer modération (confirmations, accès formulaire original, actions fonctionnelles)
-2. Réparer messagerie admin
-3. Désactiver fonctions achat/vente pour admin (garder accès explorer)
-4. Masquer admin des recherches utilisateur et amis
-5. Créer page dédiée activités/trafic admin
-
-PHASE 4 - Améliorations Générales:
-1. Réparer consultation profils autres utilisateurs
-2. Optimiser affichage mobile restant
-3. Restructurer navigation (pages principales sous header, menu auth/admin en haut gauche)
-4. Réduire logo de 20% et optimiser header"
+CURRENT FOCUS: Fix jersey details editor critical bugs to restore collection management functionality."
 
 PHASE 1 - Base de données vierge ✅ TERMINÉ
 - Nettoyage de la base de données en conservant seulement topkitfr@gmail.com et steinmetzlivio@gmail.com
