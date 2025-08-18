@@ -8513,29 +8513,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const getConditionBadge = (condition) => {
-    const badges = {
-      'mint': 'bg-green-100 text-green-800',
-      'excellent': 'bg-blue-100 text-blue-800', 
-      'very_good': 'bg-yellow-100 text-yellow-800',
-      'good': 'bg-orange-100 text-orange-800',
-      'fair': 'bg-red-100 text-red-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badges[condition] || 'bg-gray-100 text-gray-800'}`}>
-        {condition?.toUpperCase() || 'N/A'}
-      </span>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading marketplace...</div>
-      </div>
-    );
-  }
+// Jersey Detail Page Component (moved from marketplace)
 
   // Show listings for selected jersey (Step C in Discogs flow)
   if (selectedJersey) {
