@@ -5026,9 +5026,12 @@ async def search_users(
 @api_router.post("/friends/request")
 async def send_friend_request(
     friend_request: FriendRequest,
-    user_id: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Send a friend request"""
+    
+    user_id = current_user["id"]  # 🔧 FIX: Extract user_id from user object
+    
     # Check if user exists
     target_user = await db.users.find_one({"id": friend_request.user_id})
     if not target_user:
@@ -5063,8 +5066,7 @@ async def send_friend_request(
     await db.friendships.insert_one(friendship.dict())
     
     # Get requester info for notification
-    requester = await db.users.find_one({"id": user_id})
-    requester_name = requester.get("name", "Someone") if requester else "Someone"
+    requester_name = current_user.get("name", "Someone")  # 🔧 FIX: Use current_user directly
     
     # Create notification for the target user
     await create_notification(
