@@ -1379,8 +1379,8 @@ const ShoppingCartPage = ({
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Mon Panier</h1>
-          <p className="text-gray-400">{cart.length} article{cart.length > 1 ? 's' : ''} dans votre panier</p>
+          <h1 className="text-3xl font-bold mb-2">My Cart</h1>
+          <p className="text-gray-400">{cart.length} item{cart.length > 1 ? 's' : ''} in your cart</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
