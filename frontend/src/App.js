@@ -1773,7 +1773,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0, 
                             : 'text-gray-300 hover:text-white hover:bg-gray-700'
                         }`}
                       >
-                        👤 Mon Profil
+                        👤 My Profile
                       </button>
                       {/* Ma Collection - Seulement pour les utilisateurs et modérateurs, pas les admins */}
                       {user.role !== 'admin' && (
@@ -1788,9 +1788,18 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0, 
                               : 'text-gray-300 hover:text-white hover:bg-gray-700'
                           }`}
                         >
-                          📚 Ma Collection
+                          📚 My Collection
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          setShowSecurityModal(true);
+                          setShowGeneralMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-lg transition-colors text-sm text-gray-300 hover:text-white hover:bg-gray-700"
+                      >
+                        🔒 Security & Privacy
+                      </button>
                       <button
                         onClick={() => {
                           setCurrentView('settings');
@@ -1802,7 +1811,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, cartCount = 0, 
                             : 'text-gray-300 hover:text-white hover:bg-gray-700'
                         }`}
                       >
-                        ⚙️ Paramètres
+                        ⚙️ Settings
                       </button>
                       {user.email === 'topkitfr@gmail.com' && (
                         <button
