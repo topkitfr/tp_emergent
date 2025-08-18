@@ -162,11 +162,15 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
       setLoading(true);
       setError('');
       
+      console.log('Saving jersey details for jersey ID:', jersey.id, 'Data:', detailData);
+      
       const response = await tokenManager.makeAuthenticatedRequest(
         'put',
         `/api/collections/owned/${jersey.id}/details`,
         detailData
       );
+      
+      console.log('Jersey details saved successfully:', response.data);
       
       if (onSave) {
         onSave(detailData);
