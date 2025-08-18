@@ -13053,18 +13053,7 @@ const AppContent = () => {
             onClearCart={clearCart}
           />
         );
-        
-      case 'my-collection':
-        return (
-          <MyCollectionPage
-            ownedItems={myOwnedCollection}
-            onFetch={fetchMyOwnedCollection}
-            onCreateListing={(collectionItem) => {
-              setSelectedJerseyForListing(collectionItem);
-              setShowCreateListingModal(true);
-            }}
-          />
-        );
+
 
 // Discogs-Style Homepage Component
 const DiscogsStyleHomepage = ({ onNavigate }) => {
