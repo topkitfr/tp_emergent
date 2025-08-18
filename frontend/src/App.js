@@ -14548,29 +14548,17 @@ const AdminPanel = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-white">🔧 Admin Panel</h1>
         
-        <div className="flex items-center space-x-4">
-          {/* Settings Button for Admin */}
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
           <button
-            onClick={() => setShowSecurityModal(true)}
-            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-600 flex items-center space-x-2"
-            title="Security & Privacy Settings"
+            onClick={() => setActiveTab('jerseys')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'jerseys'
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
           >
-            <span>🔒</span>
-            <span className="hidden sm:inline">Settings</span>
+            📝 Jersey Validation
           </button>
-          
-          {/* Navigation Tabs */}
-          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
-            <button
-              onClick={() => setActiveTab('jerseys')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'jerseys'
-                  ? 'bg-red-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              📝 Jersey Validation
-            </button>
           <button
             onClick={() => setActiveTab('users')}
             className={`px-4 py-2 rounded-lg transition-colors ${
