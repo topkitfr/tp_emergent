@@ -11263,12 +11263,12 @@ const CollectionsPage = () => {
             <div className="bg-gray-900 rounded-lg p-4 mb-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-400">État Actuel</label>
+                  <label className="text-sm text-gray-400">Current Status</label>
                   <div className="text-white font-medium">
-                    {siteMode === 'private' ? (
-                      <span className="text-red-400">🔒 Site en Mode Privé</span>
+                    {(siteMode || 'public') === 'private' ? (
+                      <span className="text-red-400">🔒 Private Site Mode</span>
                     ) : (
-                      <span className="text-green-400">🌐 Site Public</span>
+                      <span className="text-green-400">🌐 Public Site</span>
                     )}
                   </div>
                 </div>
