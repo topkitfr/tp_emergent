@@ -14235,7 +14235,6 @@ const AdminPanel = () => {
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showUserSettings, setShowUserSettings] = useState(false);
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showSmartSubmissionModal, setShowSmartSubmissionModal] = useState(false);
   const [showJerseyDetailEditor, setShowJerseyDetailEditor] = useState(false);
   const [selectedJerseyForDetails, setSelectedJerseyForDetails] = useState(null);
