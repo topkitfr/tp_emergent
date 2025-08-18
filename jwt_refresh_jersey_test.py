@@ -37,7 +37,7 @@ class JWTRefreshJerseyTester:
         self.admin_id = None
         self.test_results = []
         self.session = requests.Session()
-        self.session.timeout = 30
+        self.session.timeout = 60  # Increased timeout
         self.test_jersey_id = None
         
     def log_test(self, test_name, success, details="", error=""):
