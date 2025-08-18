@@ -8513,10 +8513,8 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-// Jersey Detail Page Component (moved from marketplace)
-
-  // Show listings for selected jersey (Step C in Discogs flow)
-  if (selectedJersey) {
+// Jersey Detail Page Component (moved from marketplace)  
+const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     return (
       <div className="min-h-screen bg-black">
         <div className="container mx-auto px-4 py-8">
