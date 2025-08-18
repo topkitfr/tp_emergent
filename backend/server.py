@@ -1981,6 +1981,57 @@ async def change_password(password_data: PasswordChange, current_user: dict = De
         logger.error(f"Password change error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors du changement de mot de passe")
 
+# Token refresh endpoint
+@api_router.post("/auth/refresh-token")
+async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Refresh JWT token for authenticated users"""
+    try:
+        if not credentials:
+            raise HTTPException(status_code=401, detail="Token requis")
+        
+        token = credentials.credentials
+        token_info = verify_jwt_token_with_info(token)
+        
+        # Allow refresh for both valid and recently expired tokens (within 1 hour)
+        if not token_info['user_id']:
+            raise HTTPException(status_code=401, detail="Token invalide")
+        
+        # Get user from database to ensure they still exist and are not banned
+        user = await db.users.find_one({"id": token_info['user_id']})
+        if not user:
+            raise HTTPException(status_code=401, detail="Utilisateur non trouvé")
+        
+        if user.get('is_banned', False):
+            raise HTTPException(status_code=403, detail="Compte suspendu")
+        
+        # Generate new token
+        new_token = create_jwt_token(user['id'])
+        
+        # Update last login
+        await db.users.update_one(
+            {"id": user['id']}, 
+            {"$set": {"last_login": datetime.utcnow()}}
+        )
+        
+        return {
+            "token": new_token,
+            "user": {
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                "role": user.get('role', 'user'),
+                "picture": user.get('picture'),
+                "two_factor_enabled": user.get('two_factor_enabled', False)
+            },
+            "message": "Token rafraîchi avec succès"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du rafraîchissement du token")
+
 # Admin User Management Endpoints (Security Level 2)
 @api_router.post("/admin/users/{user_id}/ban")
 async def ban_user(user_id: str, ban_data: BanRequest, current_user: dict = Depends(get_current_user_admin)):
