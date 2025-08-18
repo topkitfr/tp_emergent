@@ -145,10 +145,12 @@ const SmartJerseySubmissionForm = ({ isOpen, onClose, onSuccess, csvData = null 
       setLoading(true);
       setError('');
       
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/api/jerseys`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Use tokenManager for authenticated request with automatic refresh
+      const response = await tokenManager.makeAuthenticatedRequest(
+        'post',
+        '/api/jerseys',
+        formData
+      );
 
       if (onSuccess) {
         onSuccess(response.data);
@@ -168,7 +170,8 @@ const SmartJerseySubmissionForm = ({ isOpen, onClose, onSuccess, csvData = null 
       onClose();
       
     } catch (error) {
-      setError(error.response?.data?.detail || 'Failed to submit jersey');
+      console.error('Jersey submission error:', error);
+      setError(error.response?.data?.detail || 'Erreur lors de la soumission du maillot');
     } finally {
       setLoading(false);
     }
