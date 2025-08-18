@@ -5119,10 +5119,10 @@ const JerseySuggestionsModal = ({ jersey, onClose, onResubmit }) => {
   );
 };
 
-// Enhanced Browse Jerseys Page with Dark Theme  
+// Enhanced Browse Jerseys Page with Dark Theme - Same style as Marketplace
 const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJerseyClick, onCreatorClick, onViewUserProfile }) => {
   const { user } = useAuth();
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('grid'); // Changed to grid like Marketplace
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
