@@ -163,178 +163,183 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <h2 className="text-2xl font-bold text-white">
             {isLogin ? 'Connexion' : 'Inscription'}
           </h2>
-          <button
+          <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-            type="button"
+            className="text-gray-400 hover:text-white text-2xl transition-colors"
           >
             ×
           </button>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {/* Content */}
+        <div className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Beta Access Information */}
-        {!isLogin && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-            <div className="flex items-start">
-              <div className="text-amber-400 mr-3 mt-0.5">⚠️</div>
-              <div>
-                <h4 className="text-amber-800 font-semibold text-sm mb-1">
-                  Accès Beta Requis
-                </h4>
-                <p className="text-amber-700 text-xs leading-relaxed">
-                  La création de compte nécessite une <strong>approbation beta préalable</strong>. 
-                  Si vous n'avez pas encore reçu d'email d'approbation, veuillez d'abord 
-                  <span className="font-medium"> demander l'accès beta</span> via le formulaire ci-dessous.
-                </p>
+          {/* Beta Access Information */}
+          {!isLogin && (
+            <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg p-4 mb-6">
+              <div className="flex items-start">
+                <div className="text-amber-400 mr-3 mt-0.5">⚠️</div>
+                <div>
+                  <h4 className="text-amber-300 font-semibold text-sm mb-1">
+                    Accès Beta Requis
+                  </h4>
+                  <p className="text-amber-200 text-xs leading-relaxed">
+                    La création de compte nécessite une <strong>approbation beta préalable</strong>. 
+                    Si vous n'avez pas encore reçu d'email d'approbation, veuillez d'abord 
+                    <span className="font-medium"> demander l'accès beta</span> via le formulaire ci-dessous.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
-          {!isLogin && (
+          <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
+            {!isLogin && (
+              <input
+                type="text"
+                placeholder="Nom complet"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={loading}
+              />
+            )}
+
             <input
-              type="text"
-              placeholder="Nom complet"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={loading}
-              style={{ backgroundColor: '#ffffff', color: '#111827' }}
             />
-          )}
-          
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
-            disabled={loading}
-            required
-            style={{ backgroundColor: '#ffffff', color: '#111827' }}
-          />
-          
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
-            disabled={loading}
-            required
-            style={{ backgroundColor: '#ffffff', color: '#111827' }}
-          />
-          
-          {/* Password Requirements */}
-          {!isLogin && (
-            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="text-xs text-gray-600 mb-2 font-medium">
-                🔒 Exigences du mot de passe :
-              </div>
-              <div className="grid grid-cols-1 gap-1 text-xs">
-                <div className="flex items-center">
-                  <span className={`mr-2 ${passwordValidation.minLength ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordValidation.minLength ? '✓' : '•'}
-                  </span>
-                  <span className={passwordValidation.minLength ? 'text-green-600' : 'text-gray-600'}>
-                    Au moins <strong>8 caractères</strong>
-                  </span>
+
+            <input
+              type="password"
+              placeholder="Mot de passe"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={loading}
+            />
+        
+            {/* Password Requirements */}
+            {!isLogin && (
+              <div className="mt-2 p-3 bg-gray-800/50 border border-gray-600 rounded-lg">
+                <div className="text-xs text-gray-300 mb-2 font-medium">
+                  🔒 Exigences du mot de passe :
                 </div>
-                <div className="flex items-center">
-                  <span className={`mr-2 ${passwordValidation.hasUppercase ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordValidation.hasUppercase ? '✓' : '•'}
-                  </span>
-                  <span className={passwordValidation.hasUppercase ? 'text-green-600' : 'text-gray-600'}>
-                    Au moins <strong>1 majuscule</strong> (A-Z)
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <span className={`mr-2 ${passwordValidation.hasLowercase ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordValidation.hasLowercase ? '✓' : '•'}
-                  </span>
-                  <span className={passwordValidation.hasLowercase ? 'text-green-600' : 'text-gray-600'}>
-                    Au moins <strong>1 minuscule</strong> (a-z)
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <span className={`mr-2 ${passwordValidation.hasNumber ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordValidation.hasNumber ? '✓' : '•'}
-                  </span>
-                  <span className={passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-600'}>
-                    Au moins <strong>1 chiffre</strong> (0-9)
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <span className={`mr-2 ${passwordValidation.hasSpecial ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordValidation.hasSpecial ? '✓' : '•'}
-                  </span>
-                  <span className={passwordValidation.hasSpecial ? 'text-green-600' : 'text-gray-600'}>
-                    Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
-                  </span>
+                <div className="grid grid-cols-1 gap-1 text-xs">
+                  <div className="flex items-center">
+                    <span className={`mr-2 ${passwordValidation.minLength ? 'text-green-400' : 'text-gray-500'}`}>
+                      {passwordValidation.minLength ? '✓' : '•'}
+                    </span>
+                    <span className={passwordValidation.minLength ? 'text-green-300' : 'text-gray-400'}>
+                      Au moins <strong>8 caractères</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`mr-2 ${passwordValidation.hasUppercase ? 'text-green-400' : 'text-gray-500'}`}>
+                      {passwordValidation.hasUppercase ? '✓' : '•'}
+                    </span>
+                    <span className={passwordValidation.hasUppercase ? 'text-green-300' : 'text-gray-400'}>
+                      Au moins <strong>1 majuscule</strong> (A-Z)
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`mr-2 ${passwordValidation.hasLowercase ? 'text-green-400' : 'text-gray-500'}`}>
+                      {passwordValidation.hasLowercase ? '✓' : '•'}
+                    </span>
+                    <span className={passwordValidation.hasLowercase ? 'text-green-300' : 'text-gray-400'}>
+                      Au moins <strong>1 minuscule</strong> (a-z)
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`mr-2 ${passwordValidation.hasNumber ? 'text-green-400' : 'text-gray-500'}`}>
+                      {passwordValidation.hasNumber ? '✓' : '•'}
+                    </span>
+                    <span className={passwordValidation.hasNumber ? 'text-green-300' : 'text-gray-400'}>
+                      Au moins <strong>1 chiffre</strong> (0-9)
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`mr-2 ${passwordValidation.hasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
+                      {passwordValidation.hasSpecial ? '✓' : '•'}
+                    </span>
+                    <span className={passwordValidation.hasSpecial ? 'text-green-300' : 'text-gray-400'}>
+                      Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
+                    </span>
+                  </div>
                 </div>
               </div>
+            )}
+        
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105 disabled:transform-none"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {isLogin ? 'Connexion...' : 'Inscription...'}
+                </span>
+              ) : (
+                isLogin ? 'Se connecter' : 'S\'inscrire'
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-gray-400 mt-4">
+            {isLogin ? (
+              <>
+                Pas encore d'accès beta ?
+                <button
+                  onClick={switchMode}
+                  className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
+                  type="button"
+                  disabled={loading}
+                >
+                  Demander l'accès
+                </button>
+              </>
+            ) : (
+              <>
+                Déjà approuvé pour la beta ?
+                <button
+                  onClick={switchMode}
+                  className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
+                  type="button"
+                  disabled={loading}
+                >
+                  Se connecter
+                </button>
+              </>
+            )}
+          </p>
+
+          {/* Beta Request Information */}
+          {isLogin && (
+            <div className="mt-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+              <p className="text-blue-200 text-xs text-center">
+                <strong>Nouveau sur TopKit ?</strong> Vous devez d'abord demander et recevoir 
+                l'approbation beta avant de pouvoir créer un compte.
+              </p>
             </div>
           )}
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Chargement...' : (isLogin ? 'Se connecter' : 'S\'inscrire')}
-          </button>
-        </form>
-
-        <p className="text-center text-gray-600 mt-4">
-          {isLogin ? (
-            <>
-              Pas encore d'accès beta ?
-              <button
-                onClick={switchMode}
-                className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
-                type="button"
-                disabled={loading}
-              >
-                Demander l'accès
-              </button>
-            </>
-          ) : (
-            <>
-              Déjà approuvé pour la beta ?
-              <button
-                onClick={switchMode}
-                className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
-                type="button"
-                disabled={loading}
-              >
-                Se connecter
-              </button>
-            </>
-          )}
-        </p>
-
-        {/* Beta Request Information */}
-        {isLogin && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-700 text-xs text-center">
-              <strong>Nouveau sur TopKit ?</strong> Vous devez d'abord demander et recevoir 
-              l'approbation beta avant de pouvoir créer un compte.
-            </p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
