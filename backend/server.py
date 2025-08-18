@@ -4069,8 +4069,10 @@ async def get_marketplace_catalog():
 
 # Collection endpoints
 @api_router.post("/collections")
-async def add_to_collection(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
-    """Add jersey to collection with specific size/condition - restricted to non-admin users only"""
+async def add_to_collection(collection_data: CollectionAdd, current_user: dict = Depends(get_current_user)):
+    """Add jersey to collection with specific size/condition"""
+    user_id = current_user["id"]
+    
     # Verify jersey exists and is approved
     jersey = await db.jerseys.find_one({"id": collection_data.jersey_id})
     if not jersey:
