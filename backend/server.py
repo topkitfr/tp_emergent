@@ -1339,6 +1339,32 @@ def verify_jwt_token(token: str) -> Optional[str]:
     except jwt.InvalidTokenError:
         return None
 
+def verify_jwt_token_with_info(token: str) -> dict:
+    """
+    Enhanced token verification that returns more information
+    Returns: {'user_id': str, 'expired': bool, 'valid': bool}
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        return {
+            'user_id': payload.get('user_id'),
+            'expired': False,
+            'valid': True
+        }
+    except jwt.ExpiredSignatureError:
+        try:
+            # Decode without verification to get user_id for potential refresh
+            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
+            return {
+                'user_id': payload.get('user_id'),
+                'expired': True,
+                'valid': False
+            }
+        except:
+            return {'user_id': None, 'expired': True, 'valid': False}
+    except jwt.InvalidTokenError:
+        return {'user_id': None, 'expired': False, 'valid': False}
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not credentials:
         raise HTTPException(status_code=401, detail="Authentication required")
