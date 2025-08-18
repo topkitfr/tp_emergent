@@ -8475,8 +8475,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
     </div>
   );
 
-  // ORIGINAL CODE (commented out for "Coming Soon" mode)
-  /*
+  /* ORIGINAL MARKETPLACE CODE (temporarily disabled for "Coming Soon" mode)
 
   useEffect(() => {
     fetchAvailableJerseys();
