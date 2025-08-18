@@ -11040,14 +11040,6 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                 </div>
               </div>
             )}
-
-            {/* Messages Tab */}
-            {activeTab === 'messages' && (
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-6">💬 Messages</h2>
-                <MessagingInterface />
-              </div>
-            )}
           </>
         )}
       </div>
