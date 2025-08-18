@@ -8397,28 +8397,8 @@ const UserProfilePage = ({ selectedUserId, onBack }) => {
 };
 
 
-// Global Marketplace Page - Discogs Style (Jersey References then Listings)
+// Global Marketplace Page - Coming Soon Mode
 const GlobalMarketplacePage = ({ onAddToCart = null }) => {
-  const [jerseys, setJerseys] = useState([]); // Jersey references available for sale
-  const [selectedJersey, setSelectedJersey] = useState(null); // Selected jersey to view listings
-  const [selectedJerseyListings, setSelectedJerseyListings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [listingsLoading, setListingsLoading] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // grid or list
-  const [filters, setFilters] = useState({
-    team: '',
-    league: '',
-    season: '',
-    condition: '',
-    size: '',
-    minPrice: '',
-    maxPrice: ''
-  });
-  const [sortBy, setSortBy] = useState('newest');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-
-  // TEMPORARY: Show "Coming Soon" message
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-8">
@@ -8462,20 +8442,22 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
             </div>
             
             <div className="mt-6">
-              <a href="#browse" className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => window.location.hash = 'browse'}
+                className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <span>🔍 Explorez le catalogue</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-
-  /* ORIGINAL MARKETPLACE CODE (temporarily disabled for "Coming Soon" mode)
+};
 
   useEffect(() => {
     fetchAvailableJerseys();
