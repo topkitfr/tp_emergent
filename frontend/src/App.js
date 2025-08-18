@@ -7,6 +7,7 @@ import SecuritySettingsModal from './SecuritySettingsModal';
 import SmartJerseySubmissionForm from './SmartJerseySubmissionForm';
 import JerseyDetailEditor from './JerseyDetailEditor';
 import { useCSVData } from './utils/csvLoader';
+import tokenManager from './utils/tokenManager';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
