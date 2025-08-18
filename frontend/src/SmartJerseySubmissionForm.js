@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import tokenManager from './utils/tokenManager';
 
 const SmartJerseySubmissionForm = ({ isOpen, onClose, onSuccess, csvData = null }) => {
   const [formData, setFormData] = useState({
