@@ -10316,7 +10316,9 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                             <span className="text-white font-medium">
                               {collectionStats.mostValuableItem.jersey?.team} {collectionStats.mostValuableItem.jersey?.season}
                             </span>
-                            <span className="text-green-400 font-bold ml-2">~250€</span>
+                            <span className="text-green-400 font-bold ml-2">
+                              ~{collectionStats.mostValuableItem.estimatedValue}€
+                            </span>
                           </div>
                         </div>
                       )}
