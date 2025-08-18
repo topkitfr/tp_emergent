@@ -6661,7 +6661,7 @@ const AdvancedSettingsPage = () => {
               )}
 
               {/* Onglet Évaluations */}
-              {activeTab === 'ratings' && (
+              {activeTab === 'ratings' ? (
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-6">Mes Évaluations</h2>
                   <div className="space-y-6">
