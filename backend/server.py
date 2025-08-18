@@ -3417,10 +3417,10 @@ async def get_league_jerseys(league: str, limit: int = 20):
 
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
-async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_current_user), resubmission_id: Optional[str] = None):
+async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(get_current_user), resubmission_id: Optional[str] = None):
     """Create a new jersey submission (pending approval) or resubmit with modifications"""
     try:
-        print(f"🟡 Jersey submission received from user {user_id}")
+        print(f"🟡 Jersey submission received from user {current_user['id']}")
         print(f"🟡 Jersey data: {jersey_data.dict()}")
         
         # Validate required fields
@@ -3451,7 +3451,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             # Verify the original jersey exists and belongs to the user
             original_jersey = await db.jerseys.find_one({
                 "id": resubmission_id, 
-                "submitted_by": user_id,
+                "submitted_by": current_user["id"],
                 "status": "needs_modification"
             })
             if original_jersey:
@@ -3481,8 +3481,8 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             images=jersey_data.images or [],
             reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
             reference_number=reference_number,
-            created_by=user_id,
-            submitted_by=user_id,
+            created_by=current_user["id"],
+            submitted_by=current_user["id"],
             status=JerseyStatus.PENDING  # Always start as pending for moderation
         )
         
@@ -3505,7 +3505,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             )
             
             # Log resubmission activity
-            await log_user_activity(user_id, "jersey_resubmission", jersey.id, {
+            await log_user_activity(current_user["id"], "jersey_resubmission", jersey.id, {
                 "original_jersey_id": resubmission_id,
                 "jersey_name": f"{jersey.team} {jersey.season}",
                 "reference_number": jersey.reference_number,
@@ -3514,7 +3514,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             
             # Notification for resubmission
             await create_notification(
-                user_id=user_id,
+                user_id=current_user["id"],
                 notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
                 title="Resubmission Received",
                 message=f"Your updated jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been resubmitted and is now under review.",
@@ -3522,7 +3522,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             )
         else:
             # Log regular submission activity
-            await log_user_activity(user_id, "jersey_submission", jersey.id, {
+            await log_user_activity(current_user["id"], "jersey_submission", jersey.id, {
                 "jersey_name": f"{jersey.team} {jersey.season}",
                 "player": jersey.player,
                 "reference_number": jersey.reference_number,
@@ -3531,7 +3531,7 @@ async def create_jersey(jersey_data: JerseyCreate, user_id: str = Depends(get_cu
             
             # Notification for new submission
             await create_notification(
-                user_id=user_id,
+                user_id=current_user["id"],
                 notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
                 title="Jersey Submitted Successfully!",
                 message=f"Thank you! Your jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been submitted and will be reviewed by our moderators.",
