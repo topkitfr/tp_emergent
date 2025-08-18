@@ -157,7 +157,7 @@ class GmailSMTPService:
         subject = f"Confirmez votre compte - {self.app_name}"
         
         # Create confirmation URL
-        confirmation_url = f"https://jersey-marketplace.preview.emergentagent.com/verify-email?token={confirmation_token}"
+        confirmation_url = f"https://topkit-marketplace-1.preview.emergentagent.com/verify-email?token={confirmation_token}"
         
         # Plain text version
         text_body = f"""
@@ -310,11 +310,11 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jersey-marketplace.preview.emergentagent.com/#beta-requests" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com/#beta-requests" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 ✅ Gérer la demande
             </a>
-            <a href="https://jersey-marketplace.preview.emergentagent.com/admin" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com/admin" 
                style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔧 Panel Admin
             </a>
@@ -343,7 +343,7 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         
         subject = f"🎉 Accès accordé à {self.app_name} !"
         
-        login_url = "https://jersey-marketplace.preview.emergentagent.com"
+        login_url = "https://topkit-marketplace-1.preview.emergentagent.com"
         
         # Plain text version
         text_body = f"""
@@ -630,11 +630,11 @@ Connectez-vous au panel admin pour approuver ou rejeter cette soumission.
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jersey-marketplace.preview.emergentagent.com/admin" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com/admin" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 ✅ Approuver
             </a>
-            <a href="https://jersey-marketplace.preview.emergentagent.com/admin" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com/admin" 
                style="background-color: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 ❌ Rejeter
             </a>
@@ -727,7 +727,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jersey-marketplace.preview.emergentagent.com" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px;">
                 🔍 Voir mon maillot
             </a>
@@ -778,7 +778,7 @@ Recommandations :
 
 Vous pouvez re-soumettre votre maillot une fois les modifications effectuées.
 
-Notre guide de soumission : https://jersey-marketplace.preview.emergentagent.com/guide
+Notre guide de soumission : https://topkit-marketplace-1.preview.emergentagent.com/guide
 
 L'équipe {self.app_name}
 """
@@ -824,11 +824,11 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://jersey-marketplace.preview.emergentagent.com/guide" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com/guide" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 📖 Guide de soumission
             </a>
-            <a href="https://jersey-marketplace.preview.emergentagent.com" 
+            <a href="https://topkit-marketplace-1.preview.emergentagent.com" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔄 Re-soumettre
             </a>
@@ -865,7 +865,7 @@ L'équipe {self.app_name}
         
         subject = f"🔑 Réinitialisation de votre mot de passe - {self.app_name}"
         
-        reset_url = f"https://jersey-marketplace.preview.emergentagent.com/reset-password?token={reset_token}"
+        reset_url = f"https://topkit-marketplace-1.preview.emergentagent.com/reset-password?token={reset_token}"
         
         text_body = f"""
 Bonjour {user_name},

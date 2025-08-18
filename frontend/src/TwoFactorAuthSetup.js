@@ -11,7 +11,7 @@ const TwoFactorAuthSetup = ({ user, onClose, onSuccess }) => {
   const [error, setError] = useState('');
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://jersey-marketplace.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-marketplace-1.preview.emergentagent.com';
 
   useEffect(() => {
     setupTwoFactor();

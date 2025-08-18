@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-BACKEND_URL = "https://886eb379-c61c-4ded-a172-57262818cd89.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-marketplace-1.preview.emergentagent.com/api"
 
 # Admin credentials (confirmed working)
 ADMIN_EMAIL = "topkitfr@gmail.com"
