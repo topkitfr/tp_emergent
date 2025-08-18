@@ -14836,7 +14836,6 @@ const AdminPanel = () => {
           onClose={() => setShowUserSettings(false)}
         />
       )}
-        </div>
       </div>
     </div>
   );
