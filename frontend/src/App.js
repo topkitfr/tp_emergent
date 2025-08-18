@@ -1397,7 +1397,7 @@ const ShoppingCartPage = ({
                     onClick={onClearCart}
                     className="text-red-400 hover:text-red-300 text-sm font-medium"
                   >
-                    Vider le panier
+                    Clear Cart
                   </button>
                 </div>
               </div>
