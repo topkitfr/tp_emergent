@@ -263,6 +263,19 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
             </div>
           </div>
 
+          {/* Beta Access Information */}
+          <div className="mt-12 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+            <div className="text-center">
+              <div className="text-blue-400 text-sm mb-2">
+                💡 <strong>Nouveau sur TopKit ?</strong>
+              </div>
+              <p className="text-blue-300 text-sm">
+                Pour rejoindre la beta, cliquez sur "Se Connecter à la Bêta" ci-dessus, 
+                puis suivez les instructions d'inscription avec approbation préalable.
+              </p>
+            </div>
+          </div>
+
           {/* Status Info */}
           <div className="mt-16 p-6 bg-gray-900/30 border border-gray-700 rounded-xl">
             <h4 className="text-lg font-semibold mb-3 text-blue-400">État de la Bêta</h4>
