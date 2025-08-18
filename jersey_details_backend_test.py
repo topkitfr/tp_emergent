@@ -153,12 +153,22 @@ class JerseyDetailsBackendTester:
             
             if response.status_code == 200:
                 jersey_result = response.json()
-                jersey_id = jersey_result.get('jersey_id')
+                # Check different possible field names for jersey ID
+                jersey_id = jersey_result.get('jersey_id') or jersey_result.get('id') or jersey_result.get('jersey', {}).get('id')
+                
                 self.log_test(
                     "Setup Test Jersey - Create Jersey",
                     True,
-                    f"Successfully created test jersey: {jersey_id}"
+                    f"Successfully created test jersey: {jersey_id} (Response: {jersey_result})"
                 )
+                
+                if not jersey_id:
+                    self.log_test(
+                        "Setup Test Jersey - Parse Jersey ID",
+                        False,
+                        f"Could not extract jersey ID from response: {jersey_result}"
+                    )
+                    return False
                 
                 # If admin, approve the jersey immediately
                 if 'admin' in self.user_token or True:  # Assume admin for now
