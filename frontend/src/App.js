@@ -9796,9 +9796,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                 {/* Mobile Actions */}
                 <div className="flex items-center space-x-2 mt-3">
                   <button
-                    onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
-                      detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
-                    }))}
+                    onClick={() => {
+                      setSelectedJerseyForView(item.jersey);
+                      setShowJerseyViewModal(true);
+                    }}
                     className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-blue-700 transition-colors"
                   >
                     👁️ View
