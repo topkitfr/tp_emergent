@@ -8459,62 +8459,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
   );
 };
 
-// Jersey Detail Page Component (moved from marketplace)
-
-  const handleBackToCatalog = () => {
-    setSelectedJersey(null);
-    setSelectedJerseyListings([]);
-  };
-
-  // Get unique values for filters
-  const getUniqueValues = (field) => {
-    const values = jerseys
-      .map(jersey => jersey[field])
-      .filter(v => v && v.trim());
-    return [...new Set(values)].sort();
-  };
-
-  // Filter and search jerseys
-  const getFilteredJerseys = () => {
-    let filtered = jerseys;
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(jersey => 
-        jersey.team?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        jersey.player?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        jersey.league?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filters
-    if (filters.team) {
-      filtered = filtered.filter(jersey => 
-        jersey.team?.toLowerCase().includes(filters.team.toLowerCase())
-      );
-    }
-    if (filters.league) {
-      filtered = filtered.filter(jersey => 
-        jersey.league?.toLowerCase().includes(filters.league.toLowerCase())
-      );
-    }
-    if (filters.season) {
-      filtered = filtered.filter(jersey => 
-        jersey.season === filters.season
-      );
-    }
-
-    return filtered;
-  };
-
-// Jersey Detail Page Component (moved from marketplace)
-
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
 // Jersey Detail Page Component (moved from marketplace)  
-const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
   const [jersey, setJersey] = useState(null);
