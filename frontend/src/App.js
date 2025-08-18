@@ -11273,12 +11273,12 @@ const CollectionsPage = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400">Accès</label>
+                  <label className="text-sm text-gray-400">Access</label>
                   <div className="text-white text-sm">
-                    {siteMode === 'private' ? (
-                      'Admins et utilisateurs autorisés uniquement'
+                    {(siteMode || 'public') === 'private' ? (
+                      'Admins and authorized users only'
                     ) : (
-                      'Accessible à tous les visiteurs'
+                      'Accessible to all visitors'
                     )}
                   </div>
                 </div>
@@ -11289,17 +11289,17 @@ const CollectionsPage = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => updateSiteMode('public')}
-                disabled={siteSettingsLoading || siteMode === 'public'}
+                disabled={siteSettingsLoading || (siteMode || 'public') === 'public'}
                 className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                  siteMode === 'public'
+                  (siteMode || 'public') === 'public'
                     ? 'bg-green-600 text-white cursor-not-allowed'
                     : 'bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white'
                 } ${siteSettingsLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {siteSettingsLoading && siteMode !== 'public' ? (
+                {siteSettingsLoading && (siteMode || 'public') !== 'public' ? (
                   <span className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Activation...
+                    Activating...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
