@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """
 Database Cleanup Script for TopKit
-Removes all jerseys, listings, collections, notifications, and user activities.
-Keeps only specified user accounts: topkitfr@gmail.com and steinmetzlivio@gmail.com
+Complètement vide la base de données - 0 maillot, 0 user
+Ne garde que les profils de steinmetzlivio@gmail.com et topkitfr@gmail.com
 """
 
 import asyncio
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Database configuration
-MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+MONGO_URL = os.environ.get('MONGO_URL')
+if not MONGO_URL:
+    print("❌ MONGO_URL not found in environment variables")
+    exit(1)
+
 DB_NAME = os.environ.get('DB_NAME', 'test_database')
 
 # Users to preserve
