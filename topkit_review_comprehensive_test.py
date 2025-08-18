@@ -150,36 +150,36 @@ class TopKitReviewTester:
         
         headers = {"Authorization": f"Bearer {self.user_token}"}
         
-        # Test GET /api/users/security-info
+        # Test GET /api/profile (user profile info)
         try:
             response = self.session.get(
-                f"{BACKEND_URL}/users/security-info",
+                f"{BACKEND_URL}/profile",
                 headers=headers,
                 timeout=10
             )
             
             if response.status_code == 200:
-                security_info = response.json()
+                profile_info = response.json()
                 self.log_test(
-                    "Security Endpoints - GET security-info",
+                    "Security Endpoints - GET profile",
                     True,
-                    f"Security info retrieved successfully: {len(security_info)} fields"
+                    f"Profile info retrieved successfully with user data"
                 )
             else:
                 self.log_test(
-                    "Security Endpoints - GET security-info",
+                    "Security Endpoints - GET profile",
                     False,
                     f"Failed with status {response.status_code}: {response.text}"
                 )
                 
         except Exception as e:
             self.log_test(
-                "Security Endpoints - GET security-info",
+                "Security Endpoints - GET profile",
                 False,
                 error=str(e)
             )
         
-        # Test PUT /api/users/security-settings
+        # Test PUT /api/users/profile/settings (profile settings update)
         try:
             security_update = {
                 "profile_privacy": "public",
@@ -187,7 +187,7 @@ class TopKitReviewTester:
             }
             
             response = self.session.put(
-                f"{BACKEND_URL}/users/security-settings",
+                f"{BACKEND_URL}/users/profile/settings",
                 headers=headers,
                 json=security_update,
                 timeout=10
@@ -195,20 +195,20 @@ class TopKitReviewTester:
             
             if response.status_code == 200:
                 self.log_test(
-                    "Security Endpoints - PUT security-settings",
+                    "Security Endpoints - PUT profile settings",
                     True,
-                    "Security settings updated successfully"
+                    "Profile settings updated successfully"
                 )
             else:
                 self.log_test(
-                    "Security Endpoints - PUT security-settings",
+                    "Security Endpoints - PUT profile settings",
                     False,
                     f"Failed with status {response.status_code}: {response.text}"
                 )
                 
         except Exception as e:
             self.log_test(
-                "Security Endpoints - PUT security-settings",
+                "Security Endpoints - PUT profile settings",
                 False,
                 error=str(e)
             )
