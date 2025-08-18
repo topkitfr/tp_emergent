@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {

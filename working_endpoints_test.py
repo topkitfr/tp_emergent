@@ -6,7 +6,7 @@ Test only the endpoints that should work based on correct dependency injection
 import requests
 import json
 
-BACKEND_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "steinmetzlivio@gmail.com"

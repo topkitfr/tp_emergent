@@ -7,7 +7,7 @@ import requests
 import json
 import jwt
 
-BACKEND_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
