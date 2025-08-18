@@ -9782,23 +9782,8 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                   {item.jersey?.league} • {item.jersey?.season} • {item.jersey?.home_away}
                 </div>
                 
-                {/* Mobile Details Row */}
-                <div className="flex items-center space-x-4 mt-2">
-                  <span className="text-white text-xs">
-                    <span className="text-gray-400">Taille:</span> {item.jersey?.size}
-                  </span>
-                  <span className={`px-2 py-1 text-xs font-medium rounded ${
-                    item.jersey?.condition === 'new' ? 'bg-green-800 text-green-200' :
-                    item.jersey?.condition === 'near_mint' ? 'bg-blue-800 text-blue-200' :
-                    item.jersey?.condition === 'very_good' ? 'bg-yellow-800 text-yellow-200' :
-                    item.jersey?.condition === 'good' ? 'bg-orange-800 text-orange-200' :
-                    'bg-red-800 text-red-200'
-                  }`}>
-                    {item.jersey?.condition === 'new' ? 'Neuf' :
-                     item.jersey?.condition === 'near_mint' ? 'Quasi-neuf' :
-                     item.jersey?.condition === 'very_good' ? 'Très bon' :
-                     item.jersey?.condition === 'good' ? 'Bon' : 'Correct'}
-                  </span>
+                {/* Mobile Details Row - Only Estimation */}
+                <div className="flex items-center mt-2">
                   {collectionType === 'owned' && (
                     <span className="text-green-400 font-semibold text-sm">
                       {Math.floor(Math.random() * 200) + 50}€
