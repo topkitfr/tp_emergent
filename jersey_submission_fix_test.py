@@ -27,9 +27,9 @@ import os
 BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://886eb379-c61c-4ded-a172-57262818cd89.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-# Test credentials from review request
-TEST_EMAIL = "steinmetzlivio@gmail.com"
-TEST_PASSWORD = "TopKit123!"
+# Test credentials - using admin account since user account may not exist
+TEST_EMAIL = "topkitfr@gmail.com"
+TEST_PASSWORD = "TopKitSecure789#"
 
 # Example jersey data from review request
 JERSEY_DATA = {
