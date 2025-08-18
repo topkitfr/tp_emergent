@@ -17,8 +17,8 @@ BACKEND_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_CREDENTIALS = {
-    "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "email": "jersey.details.test@topkit.com",
+    "password": "JerseyTest2024!"
 }
 
 class JerseyDetailsBackendTester:
