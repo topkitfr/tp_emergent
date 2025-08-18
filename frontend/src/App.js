@@ -5251,7 +5251,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
               {jersey.league} • {jersey.season} • {jersey.home_away}
             </div>
             <div className="text-xs text-gray-500">
-              TK{jersey.reference_number} • Taille: {jersey.size}
+              TK{jersey.reference_number}
             </div>
           </div>
 
