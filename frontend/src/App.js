@@ -5338,36 +5338,65 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Responsive Header */}
-      <div className="bg-gray-900 border-b border-gray-700">
-        <div className="container mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl md:text-2xl font-bold text-white">Explorez</h1>
-            <div className="text-sm text-gray-400">
-              {getFilteredJerseys().length} résultats
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Explorez</h1>
+          <p className="text-gray-400 mb-4">Découvrez et explorez la collection complète de maillots de football</p>
+          <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3 text-blue-300 text-sm">
+            💡 <strong>Astuce :</strong> Utilisez les filtres pour affiner votre recherche et trouvez le maillot parfait
           </div>
-          
-          {/* Responsive Search Bar */}
-          <div className="flex space-x-2 md:space-x-4 mb-4">
+        </div>
+
+        {/* Search and Filters */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Rechercher par équipe, joueur..."
+                placeholder="Rechercher par équipe, joueur, championnat..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 md:px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-white focus:border-transparent"
               />
             </div>
-            <button 
-              className="md:hidden bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+            
+            {/* View Toggle Buttons */}
+            <div className="flex bg-gray-800 rounded-lg border border-gray-700 p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+                </svg>
+                <span className="hidden sm:inline">Grille</span>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
+                </svg>
+                <span className="hidden sm:inline">Liste</span>
+              </button>
+            </div>
+            
+            <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="lg:hidden bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700"
             >
-              🔍
+              Filtres {showMobileFilters ? '▲' : '▼'}
             </button>
           </div>
-        </div>
-      </div>
 
       <div className="container mx-auto px-4 md:px-6 py-6">
         <div className="flex flex-col md:flex-row gap-6">
