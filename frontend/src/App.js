@@ -14950,7 +14950,6 @@ const AdminPanel = () => {
         }}
       />
     )}
-    </>
     
     {/* Smart Jersey Submission Modal for Admin */}
     {showSmartSubmissionModal && (
@@ -14964,6 +14963,7 @@ const AdminPanel = () => {
         }}
       />
     )}
+    </>
   );
 };
 
