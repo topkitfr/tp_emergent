@@ -9719,9 +9719,10 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                 <div className="col-span-1">
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
-                        detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
-                      }))}
+                      onClick={() => {
+                        setSelectedJerseyForView(item.jersey);
+                        setShowJerseyViewModal(true);
+                      }}
                       className="text-blue-400 hover:text-blue-300 text-xs"
                       title="View Details"
                     >
