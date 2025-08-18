@@ -128,7 +128,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
       setLoading(true);
       setError('');
       
-      const response = await tokenManager.apiCall(
+      const response = await tokenManager.makeAuthenticatedRequest(
         'put',
         `/api/collections/owned/${jersey.id}/details`,
         detailData
