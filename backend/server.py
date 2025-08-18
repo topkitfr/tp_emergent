@@ -5995,7 +5995,7 @@ async def request_beta_access(request: BetaAccessRequest):
         })
         
         return BetaAccessResponse(
-            message="Demande d'accès soumise avec succès ! Nous examinerons votre demande et vous contacterons bientôt.",
+            message="Demande d'accès soumise avec succès ! Votre demande sera examinée par notre équipe administrative. Vous serez contacté uniquement si votre demande est approuvée.",
             request_id=access_request["id"]
         )
         
