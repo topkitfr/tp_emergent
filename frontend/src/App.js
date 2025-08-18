@@ -12111,6 +12111,21 @@ const AppContent = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [siteMode, setSiteMode] = useState('public'); // Site mode state
 
+  // Fetch site mode
+  const fetchSiteSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/api/site/mode`);
+      setSiteMode(response.data.mode);
+    } catch (error) {
+      console.error('Failed to fetch site settings:', error);
+    }
+  };
+
+  // Fetch site settings on component mount
+  useEffect(() => {
+    fetchSiteSettings();
+  }, []);
+
   
   // Handle notification clicks with intelligent navigation
   const handleNotificationClick = (redirectInfo) => {
