@@ -257,7 +257,7 @@ class TopKitBackendTester:
                 # Test user's jersey submissions retrieval
                 try:
                     response = self.session.get(
-                        f"{BACKEND_URL}/users/me/jerseys",
+                        f"{BACKEND_URL}/collections/pending",
                         headers=headers,
                         timeout=10
                     )
