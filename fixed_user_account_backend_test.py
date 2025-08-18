@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://soccer-kit-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_EMAIL = "steinmetzlivio.fixed@gmail.com"

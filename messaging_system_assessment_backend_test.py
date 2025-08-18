@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://soccer-kit-hub.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-vault-2.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {
