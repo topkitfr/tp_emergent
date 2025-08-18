@@ -7416,7 +7416,7 @@ const MessagesPage = () => {
 
 // Security Level 2: User Settings Panel
 const UserSettingsPanel = ({ user, profileData, onProfileUpdated }) => {
-  const [activeSettingsTab, setActiveSettingsTab] = useState('profile');
+  const [activeSettingsTab, setActiveSettingsTab] = useState('security');
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [settingsData, setSettingsData] = useState({
