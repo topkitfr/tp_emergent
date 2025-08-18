@@ -6296,6 +6296,26 @@ async def create_secure_checkout(
         # Sauvegarder la transaction
         await db.secure_transactions.insert_one(secure_transaction.dict())
         
+        # 🎯 CRÉER AUTOMATIQUEMENT LA CONVERSATION (STYLE LEBONCOIN)
+        conversation_id = await create_transaction_conversation(secure_transaction, 
+                                                              {"id": user_id, "name": "Acheteur"}, 
+                                                              {"id": listing["seller_id"], "name": seller["name"]})
+        
+        if conversation_id:
+            # Mettre à jour la transaction avec l'ID de conversation
+            await db.secure_transactions.update_one(
+                {"id": secure_transaction.id},
+                {"$set": {"conversation_id": conversation_id}}
+            )
+            
+            # Envoyer le premier message système
+            await send_system_message(conversation_id, "payment_confirmed", {
+                "amount": listing_price,
+                "jersey_name": f"{jersey['team']} - {jersey.get('player_name', 'Maillot')}",
+                "buyer_name": "Acheteur",  # Sera mis à jour avec le vrai nom
+                "seller_name": seller["name"]
+            }, secure_transaction.id)
+        
         # Envoyer les notifications par email
         asyncio.create_task(send_secure_payment_notifications(secure_transaction))
         
@@ -6303,7 +6323,8 @@ async def create_secure_checkout(
             "url": session.url,
             "session_id": session.session_id,
             "transaction_id": secure_transaction.id,
-            "message": "🛡️ Paiement sécurisé créé. Vos fonds seront protégés jusqu'à vérification du maillot."
+            "conversation_id": conversation_id,
+            "message": "🛡️ Paiement sécurisé créé. Conversation automatique créée avec le vendeur."
         }
         
     except Exception as e:
