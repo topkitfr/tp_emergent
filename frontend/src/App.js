@@ -8516,13 +8516,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
 // Jersey Detail Page Component (moved from marketplace)  
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
-              <span>←</span>
-              <span>Retour au catalogue</span>
-            </button>
-            
-            <div className="bg-gray-900 rounded-xl border border-gray-700 p-6">
-              <div className="flex items-start space-x-6">
-                <div className="w-32 h-32 bg-gray-800 rounded overflow-hidden flex-shrink-0">
+  const { user } = useAuth();
                   {selectedJersey.images?.[0] ? (
                     <img 
                       src={selectedJersey.images[0]} 
