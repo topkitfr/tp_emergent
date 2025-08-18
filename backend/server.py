@@ -6172,6 +6172,173 @@ async def reject_beta_access_request(
         "reason": reject_data.reason
     }
 
+# =============================================================================
+# 🛡️ SECURE PAYMENT SYSTEM - ANTI-FRAUD (LEBONCOIN STYLE)
+# =============================================================================
+
+@api_router.post("/payments/secure/checkout")
+async def create_secure_checkout(
+    checkout_data: CheckoutRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    🛡️ Créer un paiement sécurisé avec blocage de fonds (style Leboncoin)
+    L'argent reste bloqué jusqu'à vérification de l'authenticité du maillot
+    """
+    
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment system not configured")
+    
+    # Vérifications de base
+    listing = await db.listings.find_one({"id": checkout_data.listing_id, "status": "active"})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found or inactive")
+    
+    jersey = await db.jerseys.find_one({"id": listing["jersey_id"]})
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Jersey not found")
+    
+    seller = await db.users.find_one({"id": listing["seller_id"]})
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+    
+    # Vérification que l'acheteur n'est pas le vendeur
+    if user_id == listing["seller_id"]:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas acheter votre propre maillot")
+    
+    # Calculs financiers
+    listing_price = float(listing["price"])
+    commission_amount = round(listing_price * TOPKIT_COMMISSION_RATE, 2)
+    seller_amount = round(listing_price - commission_amount, 2)
+    
+    try:
+        # 🔑 CLEF DU SYSTÈME : Créer un Payment Intent avec capture MANUELLE
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        
+        # Créer la session Stripe avec paiement BLOQUÉ
+        session_request = CheckoutSessionRequest(
+            line_items=[{
+                "price_data": {
+                    "currency": "eur",
+                    "product_data": {
+                        "name": f"🏆 {jersey['team']} - {jersey.get('player_name', 'Maillot')} ({jersey.get('season', 'N/A')})",
+                        "description": f"Taille: {listing.get('size', 'N/A')} • Condition: {listing.get('condition', 'N/A')} • Vérification authenticité garantie",
+                        "images": jersey.get("images", [])[:1]  # Première image
+                    },
+                    "unit_amount": int(listing_price * 100)  # En centimes
+                },
+                "quantity": 1
+            }],
+            mode="payment",
+            success_url=f"{checkout_data.origin_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{checkout_data.origin_url}/payment/cancelled",
+            customer_email=None,  # Sera rempli automatiquement
+            metadata={
+                "listing_id": listing["id"],
+                "jersey_id": jersey["id"],
+                "seller_id": listing["seller_id"],
+                "buyer_id": user_id,
+                "jersey_name": f"{jersey['team']} - {jersey.get('player_name', 'Maillot')}",
+                "seller_name": seller["name"],
+                "commission_amount": str(commission_amount),
+                "seller_amount": str(seller_amount),
+                "secure_transaction": "true",  # 🛡️ Indicateur paiement sécurisé
+                "requires_verification": "true"
+            },
+            payment_intent_data={
+                "capture_method": "manual",  # 🔑 PAIEMENT BLOQUÉ JUSQU'À VALIDATION
+                "description": f"TopKit - Achat sécurisé maillot {jersey['team']}",
+            }
+        )
+        
+        session = await stripe_checkout.create_checkout_session(session_request)
+        
+        # Créer la transaction sécurisée dans notre DB
+        secure_transaction = SecureTransaction(
+            listing_id=listing["id"],
+            buyer_id=user_id,
+            seller_id=listing["seller_id"],
+            amount=listing_price,
+            stripe_session_id=session.session_id,
+            stripe_payment_intent_id="",  # Sera mis à jour après paiement
+            status=TransactionStatus.PENDING_PAYMENT,
+            jersey_info={
+                "id": jersey["id"],
+                "team": jersey["team"],
+                "player_name": jersey.get("player_name", ""),
+                "season": jersey.get("season", ""),
+                "size": listing.get("size", ""),
+                "condition": listing.get("condition", "")
+            },
+            auto_release_date=datetime.utcnow() + timedelta(days=14),  # Auto-libération après 14 jours
+            buyer_notifications=[{
+                "type": "payment_created",
+                "message": "Paiement sécurisé créé. Votre argent sera bloqué jusqu'à vérification de l'authenticité du maillot.",
+                "timestamp": datetime.utcnow().isoformat()
+            }],
+            seller_notifications=[{
+                "type": "sale_pending",
+                "message": "Nouvelle vente en attente. Expédiez le maillot dès réception du paiement.",
+                "timestamp": datetime.utcnow().isoformat()
+            }]
+        )
+        
+        # Calcul du score de risque
+        risk_score = await calculate_fraud_risk_score(user_id, listing["seller_id"], listing_price)
+        secure_transaction.risk_score = risk_score
+        
+        if risk_score >= 7:  # Score élevé = révision manuelle
+            secure_transaction.requires_manual_review = True
+            secure_transaction.fraud_indicators.append("High risk score detected")
+        
+        # Sauvegarder la transaction
+        await db.secure_transactions.insert_one(secure_transaction.dict())
+        
+        # Envoyer les notifications par email
+        asyncio.create_task(send_secure_payment_notifications(secure_transaction))
+        
+        return {
+            "url": session.url,
+            "session_id": session.session_id,
+            "transaction_id": secure_transaction.id,
+            "message": "🛡️ Paiement sécurisé créé. Vos fonds seront protégés jusqu'à vérification du maillot."
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating secure checkout: {e}")
+        raise HTTPException(status_code=500, detail="Impossible de créer le paiement sécurisé")
+
+@api_router.get("/payments/secure/{transaction_id}/status")
+async def get_secure_transaction_status(
+    transaction_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Obtenir le statut d'une transaction sécurisée"""
+    
+    transaction = await db.secure_transactions.find_one({"id": transaction_id})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # Vérifier que l'utilisateur est soit l'acheteur soit le vendeur
+    if user_id not in [transaction["buyer_id"], transaction["seller_id"]]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Obtenir les informations utilisateur pour l'affichage
+    buyer = await db.users.find_one({"id": transaction["buyer_id"]})
+    seller = await db.users.find_one({"id": transaction["seller_id"]})
+    listing = await db.listings.find_one({"id": transaction["listing_id"]})
+    
+    return {
+        "transaction": {
+            **transaction,
+            "buyer_name": buyer["name"] if buyer else "Unknown",
+            "seller_name": seller["name"] if seller else "Unknown",
+            "listing_title": f"{transaction['jersey_info']['team']} - {transaction['jersey_info'].get('player_name', 'Maillot')}"
+        },
+        "timeline": generate_transaction_timeline(transaction),
+        "next_actions": get_available_actions(transaction, user_id)
+    }
+
 # Payment System Endpoints
 @api_router.post("/payments/checkout/session")
 async def create_checkout_session(
