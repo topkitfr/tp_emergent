@@ -1110,7 +1110,10 @@ def create_jwt_token(user_id: str) -> str:
 def generate_jersey_signature(team: str, season: str, player: Optional[str], size: str, condition: str) -> str:
     """Generate a unique signature for jersey valuation grouping"""
     player_part = f"_{player}" if player else ""
-    return f"{team.lower().replace(' ', '_')}_{season}_{size.lower()}_{condition.lower()}{player_part}"
+    # Handle None values for size and condition
+    size_part = size.lower() if size else "unknown"
+    condition_part = condition.lower() if condition else "unknown"
+    return f"{team.lower().replace(' ', '_')}_{season}_{size_part}_{condition_part}{player_part}"
 
 async def update_jersey_valuation(jersey: Jersey, price: float, transaction_type: str, listing_id: Optional[str] = None):
     """Update jersey valuation based on new price data"""
