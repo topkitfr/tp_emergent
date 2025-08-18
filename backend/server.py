@@ -1370,13 +1370,27 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Authentication required")
     
     token = credentials.credentials
-    user_id = verify_jwt_token(token)
+    token_info = verify_jwt_token_with_info(token)
+    
+    if not token_info['valid'] and not token_info['expired']:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    if token_info['expired']:
+        # For expired tokens, we could potentially refresh them automatically
+        # But for security, we'll require re-authentication
+        raise HTTPException(status_code=401, detail="Token expired")
+    
+    user_id = token_info['user_id']
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
     
+    # Get user from database
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    
+    if user.get('is_banned', False):
+        raise HTTPException(status_code=403, detail="Account banned")
     
     # Remove MongoDB ObjectId to avoid serialization issues
     user.pop('_id', None)
