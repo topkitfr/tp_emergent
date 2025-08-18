@@ -880,6 +880,7 @@ class TopKitBackendTester:
         # Run all test categories
         self.test_api_health()
         self.test_authentication_system()
+        self.test_friends_endpoint()  # Add friends endpoint test
         self.test_jersey_submission_system()
         self.test_admin_panel_access()
         self.test_database_connectivity()
