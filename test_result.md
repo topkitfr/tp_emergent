@@ -273,10 +273,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix showSecurityModal Runtime Error"
     - "Security & Privacy Menu Access"
-    - "SecuritySettingsModal Functionality"
-    - "Admin Panel Access Without Errors"
+    - "Security & Privacy Dedicated Page Implementation"
+    - "Frontend Authentication System Fix"
   stuck_tasks:
     - "Security & Privacy Menu Access"
     - "SecuritySettingsModal Functionality"
