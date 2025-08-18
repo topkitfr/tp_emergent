@@ -225,6 +225,37 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             style={{ backgroundColor: '#ffffff', color: '#111827' }}
           />
           
+          {/* Password Requirements */}
+          {!isLogin && (
+            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="text-xs text-gray-600 mb-2 font-medium">
+                🔒 Exigences du mot de passe :
+              </div>
+              <div className="grid grid-cols-1 gap-1 text-xs text-gray-600">
+                <div className="flex items-center">
+                  <span className="text-gray-400 mr-2">•</span>
+                  Au moins <strong>8 caractères</strong>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-400 mr-2">•</span>
+                  Au moins <strong>1 majuscule</strong> (A-Z)
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-400 mr-2">•</span>
+                  Au moins <strong>1 minuscule</strong> (a-z)
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-400 mr-2">•</span>
+                  Au moins <strong>1 chiffre</strong> (0-9)
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-400 mr-2">•</span>
+                  Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
+                </div>
+              </div>
+            </div>
+          )}
+          
           <button
             type="submit"
             disabled={loading}
