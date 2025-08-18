@@ -3523,7 +3523,7 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
             )
         else:
             # Log regular submission activity
-            await log_user_activity(current_user["id"], "jersey_submission", jersey.id, {
+            await log_user_activity(user_id, "jersey_submission", jersey.id, {
                 "jersey_name": f"{jersey.team} {jersey.season}",
                 "player": jersey.player,
                 "reference_number": jersey.reference_number,
