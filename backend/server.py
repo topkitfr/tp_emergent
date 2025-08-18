@@ -3879,8 +3879,10 @@ async def create_listing(listing_data: ListingCreate, user_id: str = Depends(get
     return listing
 
 @api_router.get("/collections/my-owned", response_model=List[Dict])
-async def get_my_owned_collection(user_id: str = Depends(get_current_non_admin_user)):
+async def get_my_owned_collection(current_user: dict = Depends(get_current_user)):
     """Get user's owned collection items available for listing"""
+    user_id = current_user["id"]
+    
     # Get user's owned items
     pipeline = [
         {"$match": {"user_id": user_id, "collection_type": "owned"}},
