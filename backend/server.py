@@ -3482,8 +3482,8 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
             images=jersey_data.images or [],
             reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
             reference_number=reference_number,
-            created_by=current_user["id"],
-            submitted_by=current_user["id"],
+            created_by=user_id,
+            submitted_by=user_id,
             status=JerseyStatus.PENDING  # Always start as pending for moderation
         )
         
