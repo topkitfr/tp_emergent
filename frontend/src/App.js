@@ -1781,11 +1781,12 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, setShowSecurity
                       {user.role !== 'admin' && (
                         <button
                           onClick={() => {
-                            setCurrentView('my-collection');
+                            setCurrentView('profile');
+                            setActiveProfileTab('collection'); // Aller directement sur l'onglet collection
                             setShowGeneralMenu(false);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
-                            currentView === 'my-collection' 
+                            currentView === 'profile' && activeProfileTab === 'collection'
                               ? 'bg-gray-700 text-white' 
                               : 'text-gray-300 hover:text-white hover:bg-gray-700'
                           }`}
