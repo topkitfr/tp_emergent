@@ -225,7 +225,7 @@ class JWTRefreshJerseyTester:
             
         try:
             # Test accessing user profile to verify authentication is still valid
-            response = self.make_request('GET', '/auth/profile', token=self.user_token)
+            response = self.make_request('GET', '/profile', token=self.user_token)
             
             if response and response.status_code == 200:
                 data = response.json()
