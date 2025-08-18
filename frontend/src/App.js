@@ -14357,6 +14357,7 @@ const AdminPanel = () => {
           >
             🚀 Beta Requests
           </button>
+          </div>
         </div>
       </div>
 
