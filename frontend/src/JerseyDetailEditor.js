@@ -40,12 +40,42 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
   useEffect(() => {
     if (jersey && isOpen) {
+      // Reset to default values first
+      setDetailData({
+        // Jersey reference info (read-only)
+        team: jersey?.team || '',
+        league: jersey?.league || '',
+        season: jersey?.season || '',
+        jersey_type: jersey?.jersey_type || '',
+        player: jersey?.player || '',
+        
+        // Editable collection details - defaults
+        model_type: 'authentic',
+        condition: 'mint',
+        size: 'm',
+        special_features: [],
+        material_details: '',
+        tags: 'tags_on',
+        packaging: 'no_packaging',
+        customization: 'blank',
+        competition_badges: '',
+        rarity: 'common',
+        purchase_price: '',
+        purchase_date: '',
+        purchase_location: '',
+        certificate_authenticity: false,
+        storage_notes: '',
+        
+        // Auto-calculated
+        estimated_value: 0
+      });
+      
       // Load existing detail data if available
       loadJerseyDetails();
       // Calculate initial estimated value
       calculateEstimatedValue();
     }
-  }, [jersey, isOpen]);
+  }, [jersey?.id, isOpen]); // Changed dependency to jersey.id for better tracking
 
   useEffect(() => {
     // Recalculate estimated value when relevant fields change
