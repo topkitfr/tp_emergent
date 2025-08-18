@@ -15505,7 +15505,10 @@ const AdminPanel = () => {
             ⚙️ Site Settings
           </button>
           <button
-            onClick={() => setActiveTab('beta-requests')}
+            onClick={() => {
+              console.log('🚀 Beta Requests tab clicked, setting activeTab to beta-requests');
+              setActiveTab('beta-requests');
+            }}
             className={`px-4 py-2 rounded-lg transition-colors ${
               activeTab === 'beta-requests'
                 ? 'bg-red-600 text-white'
