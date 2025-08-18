@@ -10,6 +10,19 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Password validation helper
+  const validatePassword = (password) => {
+    return {
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+  };
+  
+  const passwordValidation = !isLogin ? validatePassword(formData.password || '') : {};
 
   // Get API URL from environment
   const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-email.preview.emergentagent.com';
