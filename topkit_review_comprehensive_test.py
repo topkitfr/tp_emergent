@@ -22,7 +22,7 @@ ADMIN_CREDENTIALS = {
 
 USER_CREDENTIALS = {
     "email": "steinmetzlivio@gmail.com", 
-    "password": "123"
+    "password": "SecurePass2024!"
 }
 
 class TopKitReviewTester:
