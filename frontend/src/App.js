@@ -11035,7 +11035,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
           onClose={() => setShowSmartSubmissionModal(false)}
           onSuccess={() => {
             setShowSmartSubmissionModal(false);
-            fetchUserData(); // Refresh data after successful submission
+            fetchCollectionData(); // Refresh data after successful submission
           }}
         />
       )}
@@ -11055,7 +11055,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
               // Add API call to save jersey details here if needed
               setShowJerseyDetailEditor(false);
               setSelectedJerseyForDetails(null);
-              fetchUserData(); // Refresh data after saving details
+              fetchCollectionData(); // Refresh data after saving details
             } catch (error) {
               console.error('Error saving jersey details:', error);
             }
