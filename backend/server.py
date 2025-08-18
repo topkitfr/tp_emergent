@@ -3420,7 +3420,8 @@ async def get_league_jerseys(league: str, limit: int = 20):
 async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(get_current_user), resubmission_id: Optional[str] = None):
     """Create a new jersey submission (pending approval) or resubmit with modifications"""
     try:
-        print(f"🟡 Jersey submission received from user {current_user['id']}")
+        user_id = current_user["id"]  # Extract user ID for easier use
+        print(f"🟡 Jersey submission received from user {user_id}")
         print(f"🟡 Jersey data: {jersey_data.dict()}")
         
         # Validate required fields
