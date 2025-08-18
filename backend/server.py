@@ -135,6 +135,20 @@ class UserRole(str, Enum):
     MODERATOR = "moderator" # Modérateur (peut valider les références)
     ADMIN = "admin"         # Admin principal (peut tout faire)
 
+# Transaction Status for Anti-Fraud System
+class TransactionStatus(str, Enum):
+    PENDING_PAYMENT = "pending_payment"      # En attente de paiement
+    PAYMENT_HELD = "payment_held"            # Paiement bloqué (comme Leboncoin)
+    AWAITING_SHIPMENT = "awaiting_shipment"  # En attente d'expédition
+    SHIPPED = "shipped"                      # Expédié par le vendeur
+    AWAITING_VERIFICATION = "awaiting_verification"  # En attente de vérification authenticité
+    VERIFIED_AUTHENTIC = "verified_authentic"        # Maillot vérifié authentique
+    VERIFIED_FAKE = "verified_fake"                  # Maillot détecté comme faux
+    PAYMENT_RELEASED = "payment_released"           # Paiement libéré au vendeur
+    REFUNDED = "refunded"                           # Remboursé à l'acheteur
+    DISPUTED = "disputed"                           # En litige
+    CANCELLED = "cancelled"                         # Annulé
+
 class PaymentMethod(str, Enum):
     PAYPAL = "paypal"
     BANK_TRANSFER = "bank_transfer"
