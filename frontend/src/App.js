@@ -1348,9 +1348,9 @@ const ShoppingCartPage = ({
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-24">
             <div className="text-6xl mb-8">🛒</div>
-            <h1 className="text-4xl font-bold mb-4">Votre panier est vide</h1>
+            <h1 className="text-4xl font-bold mb-4">Shopping Cart - Coming Soon</h1>
             <p className="text-xl text-gray-400 mb-12">
-              Découvrez des milliers de maillots de football dans notre marketplace
+              Our shopping cart feature is currently in development. Stay tuned for updates!
             </p>
             
             <div className="space-y-4 max-w-md mx-auto">
@@ -1358,7 +1358,7 @@ const ShoppingCartPage = ({
                 onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'marketplace' }))}
                 className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
               >
-                Commencer vos achats
+                Explore Marketplace
               </button>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
