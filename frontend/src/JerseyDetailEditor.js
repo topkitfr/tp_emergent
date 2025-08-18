@@ -118,6 +118,12 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
   };
 
   const handleSave = async () => {
+    // Validation de base avant de sauvegarder
+    if (!jersey || !jersey.id) {
+      setError('Erreur: Informations du maillot manquantes');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -136,8 +142,16 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
       
     } catch (error) {
       console.error('Error saving jersey details:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to save jersey details';
+      let errorMessage = 'Failed to save jersey details';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setError(errorMessage);
+      // Ne pas fermer le modal en cas d'erreur pour que l'utilisateur puisse voir l'erreur
     } finally {
       setLoading(false);
     }
