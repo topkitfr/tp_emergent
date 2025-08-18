@@ -17,9 +17,9 @@ BACKEND_URL = "https://topkit-email.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
-# Test user credentials - try existing user first
-TEST_USER_EMAIL = "test.beta@example.com"
-TEST_USER_PASSWORD = "TestBetaSecure789#"
+# Test user credentials - working credentials
+TEST_USER_EMAIL = "testuser@topkit.fr"
+TEST_USER_PASSWORD = "SecurePass789#"
 
 class AntiFraudPaymentTester:
     def __init__(self):
