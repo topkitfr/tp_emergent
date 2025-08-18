@@ -15850,7 +15850,7 @@ const AdminPanel = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
       
       {/* Edit Jersey Modal */}
       {showEditModal && jerseyToEdit && (
