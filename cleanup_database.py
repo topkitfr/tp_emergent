@@ -29,13 +29,13 @@ PRESERVE_USERS = [
 ]
 
 async def cleanup_database():
-    """Clean up the database while preserving specified user accounts"""
+    """Nettoie complètement la base de données en ne gardant que les comptes spécifiés"""
     
     # Connect to MongoDB
     client = AsyncIOMotorClient(MONGO_URL)
-    db = client[DB_NAME]
+    db = client.get_default_database()
     
-    print("🧹 Starting TopKit Database Cleanup...")
+    print("🧹 Starting TopKit Complete Database Cleanup...")
     print(f"📅 Cleanup started at: {datetime.utcnow()}")
     print(f"🔒 Preserving user accounts: {', '.join(PRESERVE_USERS)}")
     print("-" * 60)
@@ -49,50 +49,103 @@ async def cleanup_database():
         preserved_user_ids = [user['id'] for user in preserved_user_docs]
         print(f"✅ Found {len(preserved_user_ids)} user accounts to preserve")
         
-        # 1. Delete all jerseys
+        # 1. Delete ALL jerseys
         jersey_result = await db.jerseys.delete_many({})
-        print(f"🗑️  Deleted {jersey_result.deleted_count} jerseys")
+        print(f"👕 Deleted {jersey_result.deleted_count} jerseys")
         
-        # 2. Delete all listings
+        # 2. Delete ALL listings
         listing_result = await db.listings.delete_many({})
-        print(f"🗑️  Deleted {listing_result.deleted_count} listings")
+        print(f"🏪 Deleted {listing_result.deleted_count} listings")
         
-        # 3. Delete all collections
+        # 3. Delete ALL collections
         collection_result = await db.collections.delete_many({})
-        print(f"🗑️  Deleted {collection_result.deleted_count} collection entries")
+        print(f"📚 Deleted {collection_result.deleted_count} collection entries")
         
-        # 4. Delete all notifications
+        # 4. Delete ALL notifications
         notification_result = await db.notifications.delete_many({})
-        print(f"🗑️  Deleted {notification_result.deleted_count} notifications")
+        print(f"🔔 Deleted {notification_result.deleted_count} notifications")
         
-        # 5. Delete all user activities
+        # 5. Delete ALL user activities
         activity_result = await db.user_activities.delete_many({})
-        print(f"🗑️  Deleted {activity_result.deleted_count} user activities")
+        print(f"📊 Deleted {activity_result.deleted_count} user activities")
         
-        # 6. Delete all modification suggestions
+        # 6. Delete ALL modification suggestions
         suggestion_result = await db.modification_suggestions.delete_many({})
-        print(f"🗑️  Deleted {suggestion_result.deleted_count} modification suggestions")
+        print(f"💡 Deleted {suggestion_result.deleted_count} modification suggestions")
         
-        # 7. Delete all users except preserved ones
+        # 7. Delete ALL conversations and messages
+        conversations_result = await db.conversations.delete_many({})
+        messages_result = await db.messages.delete_many({})
+        print(f"💬 Deleted {conversations_result.deleted_count} conversations and {messages_result.deleted_count} messages")
+        
+        # 8. Delete ALL friends/relationships
+        friends_result = await db.friends.delete_many({})
+        print(f"👥 Deleted {friends_result.deleted_count} friend relationships")
+        
+        # 9. Delete ALL beta access requests
+        beta_result = await db.beta_access_requests.delete_many({})
+        print(f"🔒 Deleted {beta_result.deleted_count} beta access requests")
+        
+        # 10. Delete ALL transactions/payments
+        transactions_result = await db.transactions.delete_many({})
+        secure_transactions_result = await db.secure_transactions.delete_many({})
+        payment_transactions_result = await db.payment_transactions.delete_many({})
+        print(f"💳 Deleted {transactions_result.deleted_count} transactions, {secure_transactions_result.deleted_count} secure transactions, {payment_transactions_result.deleted_count} payment transactions")
+        
+        # 11. Delete ALL jersey valuations and price history
+        valuations_result = await db.jersey_valuations.delete_many({})
+        price_history_result = await db.price_history.delete_many({})
+        print(f"💰 Deleted {valuations_result.deleted_count} jersey valuations and {price_history_result.deleted_count} price history entries")
+        
+        # 12. Delete ALL suspicious activities
+        suspicious_result = await db.suspicious_activities.delete_many({})
+        print(f"🚨 Deleted {suspicious_result.deleted_count} suspicious activity records")
+        
+        # 13. Delete ALL user profiles (extended profiles)
+        profiles_result = await db.user_profiles.delete_many({})
+        print(f"👤 Deleted {profiles_result.deleted_count} user profiles")
+        
+        # 14. Delete ALL user ratings
+        ratings_result = await db.user_ratings.delete_many({})
+        print(f"⭐ Deleted {ratings_result.deleted_count} user ratings")
+        
+        # 15. Delete ALL users except preserved ones
         user_result = await db.users.delete_many({
             "email": {"$nin": PRESERVE_USERS}
         })
-        print(f"🗑️  Deleted {user_result.deleted_count} user accounts")
+        print(f"👤 Deleted {user_result.deleted_count} user accounts")
         
-        # 8. Reset preserved users' roles (ensure admin role for topkitfr@gmail.com)
+        # 16. Reset preserved users' roles and clean their data
         await db.users.update_one(
             {"email": "topkitfr@gmail.com"},
-            {"$set": {"role": "admin"}}
+            {"$set": {
+                "role": "admin",
+                "failed_login_attempts": 0,
+                "account_locked_until": None,
+                "suspicious_activity_score": 0,
+                "is_banned": False
+            }}
         )
         
         await db.users.update_one(
             {"email": "steinmetzlivio@gmail.com"},
-            {"$set": {"role": "user"}}
+            {"$set": {
+                "role": "user",
+                "failed_login_attempts": 0,
+                "account_locked_until": None,
+                "suspicious_activity_score": 0,
+                "is_banned": False
+            }}
         )
-        print("✅ Updated preserved user roles")
+        print("✅ Updated preserved user roles and cleaned their data")
+        
+        # 17. Reset site mode to private for clean deployment
+        site_config_result = await db.site_config.delete_many({})
+        await db.site_config.insert_one({"mode": "private"})
+        print(f"🔒 Reset site mode to private (cleared {site_config_result.deleted_count} old config entries)")
         
         print("-" * 60)
-        print("✅ Database cleanup completed successfully!")
+        print("✅ Complete database cleanup completed successfully!")
         print(f"📊 Summary:")
         print(f"  • Jerseys deleted: {jersey_result.deleted_count}")
         print(f"  • Listings deleted: {listing_result.deleted_count}")
@@ -100,6 +153,16 @@ async def cleanup_database():
         print(f"  • Notifications deleted: {notification_result.deleted_count}")
         print(f"  • User activities deleted: {activity_result.deleted_count}")
         print(f"  • Modification suggestions deleted: {suggestion_result.deleted_count}")
+        print(f"  • Conversations deleted: {conversations_result.deleted_count}")
+        print(f"  • Messages deleted: {messages_result.deleted_count}")
+        print(f"  • Friend relationships deleted: {friends_result.deleted_count}")
+        print(f"  • Beta access requests deleted: {beta_result.deleted_count}")
+        print(f"  • All transactions deleted: {transactions_result.deleted_count + secure_transactions_result.deleted_count + payment_transactions_result.deleted_count}")
+        print(f"  • Jersey valuations deleted: {valuations_result.deleted_count}")
+        print(f"  • Price history deleted: {price_history_result.deleted_count}")
+        print(f"  • Suspicious activities deleted: {suspicious_result.deleted_count}")
+        print(f"  • User profiles deleted: {profiles_result.deleted_count}")
+        print(f"  • User ratings deleted: {ratings_result.deleted_count}")
         print(f"  • User accounts deleted: {user_result.deleted_count}")
         print(f"  • User accounts preserved: {len(preserved_user_ids)}")
         print(f"📅 Cleanup completed at: {datetime.utcnow()}")
