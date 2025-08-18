@@ -1794,10 +1794,14 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, setShowSecurity
                       )}
                       <button
                         onClick={() => {
-                          setShowSecurityModal(true);
+                          setCurrentView('security');
                           setShowGeneralMenu(false);
                         }}
-                        className="w-full text-left px-3 py-2 rounded-lg transition-colors text-sm text-gray-300 hover:text-white hover:bg-gray-700"
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
+                          currentView === 'security' 
+                            ? 'bg-gray-700 text-white' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        }`}
                       >
                         🔒 Security & Privacy
                       </button>
