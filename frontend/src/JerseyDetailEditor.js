@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { JERSEY_DETAIL_CRITERIA, PRICE_FACTORS, BASE_PRICES } from './JerseyDetailCriteria';
+import tokenManager from './utils/tokenManager';
 
 const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
   const [detailData, setDetailData] = useState({
