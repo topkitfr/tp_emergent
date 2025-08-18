@@ -6585,6 +6585,442 @@ async def verify_jersey_fake(
         logger.error(f"Error verifying jersey as fake: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la vérification")
 
+# =============================================================================
+# 👤 ENDPOINTS ACHETEUR - ACTIONS DANS LA CONVERSATION (STYLE LEBONCOIN)
+# =============================================================================
+
+@api_router.post("/transactions/{transaction_id}/buyer/confirm-receipt")
+async def buyer_confirm_receipt(
+    transaction_id: str,
+    confirmation_data: BuyerAction,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    ✅ L'acheteur confirme avoir reçu le maillot et qu'il est conforme
+    → Déclenche la libération du paiement au vendeur (style Leboncoin)
+    """
+    try:
+        # Récupérer la transaction
+        transaction = await db.secure_transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        # Vérifier que l'utilisateur est bien l'acheteur
+        if user_id != transaction["buyer_id"]:
+            raise HTTPException(status_code=403, detail="Seul l'acheteur peut confirmer la réception")
+        
+        # Vérifier que la transaction est dans le bon état
+        if transaction["status"] not in ["shipped", "awaiting_verification"]:
+            raise HTTPException(status_code=400, detail="La transaction n'est pas dans un état permettant la confirmation")
+        
+        # Récupérer les informations utilisateur
+        buyer = await db.users.find_one({"id": user_id})
+        seller = await db.users.find_one({"id": transaction["seller_id"]})
+        
+        # Mettre à jour le statut de la transaction
+        await db.secure_transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "status": TransactionStatus.VERIFIED_AUTHENTIC,
+                    "verified_at": datetime.utcnow(),
+                    "verified_by_buyer": True,
+                    "buyer_confirmation_message": confirmation_data.message,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Envoyer message système dans la conversation
+        conversation_id = transaction.get("conversation_id")
+        if conversation_id:
+            await send_system_message(conversation_id, "buyer_confirmed", {
+                "buyer_name": buyer["name"] if buyer else "L'acheteur",
+                "seller_name": seller["name"] if seller else "Le vendeur",
+                "amount": transaction["amount"],
+                "confirmation_message": confirmation_data.message
+            }, transaction_id)
+            
+            # Ajouter le message de l'acheteur s'il y en a un
+            if confirmation_data.message:
+                buyer_message = MessageV2(
+                    conversation_id=conversation_id,
+                    sender_id=user_id,
+                    message_type="text",
+                    message=f"✅ **Réception confirmée !**\n\n{confirmation_data.message}",
+                    transaction_id=transaction_id
+                )
+                await db.messages.insert_one(buyer_message.dict())
+        
+        # Libérer le paiement via Stripe (simulation pour le moment)
+        stripe_payment_intent_id = transaction.get("stripe_payment_intent_id")
+        if stripe_payment_intent_id:
+            try:
+                # stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+                # await stripe_checkout.capture_payment(stripe_payment_intent_id)
+                logger.info(f"Payment {stripe_payment_intent_id} would be captured and released to seller")
+            except Exception as e:
+                logger.error(f"Error capturing payment: {e}")
+        
+        # Envoyer message de libération de paiement
+        if conversation_id:
+            await send_system_message(conversation_id, "payment_released", {
+                "amount": transaction["amount"],
+                "seller_name": seller["name"] if seller else "Le vendeur"
+            }, transaction_id)
+        
+        # Créer des notifications
+        await create_notification(
+            transaction["seller_id"],
+            NotificationType.SALE_COMPLETED,
+            f"💰 Paiement libéré pour votre maillot '{transaction['jersey_info']['team']}' !",
+            {"transaction_id": transaction_id, "amount": transaction["amount"]}
+        )
+        
+        # Marquer le listing comme vendu
+        await db.listings.update_one(
+            {"id": transaction["listing_id"]},
+            {"$set": {"status": "sold", "sold_at": datetime.utcnow()}}
+        )
+        
+        return {
+            "message": "✅ Réception confirmée ! Le paiement a été libéré au vendeur.",
+            "transaction_id": transaction_id,
+            "status": "completed",
+            "payment_released": True,
+            "conversation_id": conversation_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error confirming receipt: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la confirmation de réception")
+
+@api_router.post("/transactions/{transaction_id}/buyer/report-issue")
+async def buyer_report_issue(
+    transaction_id: str,
+    issue_data: BuyerAction,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    ⚠️ L'acheteur signale un problème avec le maillot reçu
+    → Déclenche une révision manuelle par l'équipe TopKit
+    """
+    try:
+        # Récupérer la transaction
+        transaction = await db.secure_transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        # Vérifier que l'utilisateur est bien l'acheteur
+        if user_id != transaction["buyer_id"]:
+            raise HTTPException(status_code=403, detail="Seul l'acheteur peut signaler un problème")
+        
+        # Vérifier que la transaction permet de signaler un problème
+        if transaction["status"] not in ["shipped", "awaiting_verification", "delivered"]:
+            raise HTTPException(status_code=400, detail="Impossible de signaler un problème pour cette transaction")
+        
+        # Récupérer les informations utilisateur
+        buyer = await db.users.find_one({"id": user_id})
+        seller = await db.users.find_one({"id": transaction["seller_id"]})
+        
+        # Mettre à jour la transaction avec le problème signalé
+        await db.secure_transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "status": TransactionStatus.DISPUTED,
+                    "dispute_reason": issue_data.message,
+                    "dispute_evidence": issue_data.evidence_photos,
+                    "disputed_at": datetime.utcnow(),
+                    "requires_manual_review": True,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Envoyer message système dans la conversation
+        conversation_id = transaction.get("conversation_id")
+        if conversation_id:
+            await send_system_message(conversation_id, "issue_reported", {
+                "buyer_name": buyer["name"] if buyer else "L'acheteur",
+                "seller_name": seller["name"] if seller else "Le vendeur",
+                "issue_description": issue_data.message
+            }, transaction_id)
+            
+            # Ajouter le message détaillé de l'acheteur
+            if issue_data.message:
+                issue_message = MessageV2(
+                    conversation_id=conversation_id,
+                    sender_id=user_id,
+                    message_type="text",
+                    message=f"⚠️ **Problème signalé**\n\n{issue_data.message}",
+                    transaction_id=transaction_id
+                )
+                await db.messages.insert_one(issue_message.dict())
+        
+        # Notification aux admins pour révision manuelle
+        admin_users = await db.users.find({"role": {"$in": ["admin", "moderator"]}}).to_list(10)
+        for admin in admin_users:
+            await create_notification(
+                admin["id"],
+                NotificationType.SYSTEM_ALERT,
+                f"🚨 Problème signalé sur transaction {transaction_id}",
+                {
+                    "transaction_id": transaction_id,
+                    "buyer_name": buyer["name"] if buyer else "Unknown",
+                    "issue": issue_data.message
+                }
+            )
+        
+        return {
+            "message": "⚠️ Problème signalé. Notre équipe va examiner la situation.",
+            "transaction_id": transaction_id,
+            "status": "disputed",
+            "requires_review": True,
+            "conversation_id": conversation_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reporting issue: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du signalement du problème")
+
+@api_router.post("/transactions/{transaction_id}/seller/mark-shipped")
+async def seller_mark_shipped(
+    transaction_id: str,
+    shipping_data: TransactionAction,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    📦 Le vendeur marque le maillot comme expédié avec les informations de suivi
+    """
+    try:
+        # Récupérer la transaction
+        transaction = await db.secure_transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        # Vérifier que l'utilisateur est bien le vendeur
+        if user_id != transaction["seller_id"]:
+            raise HTTPException(status_code=403, detail="Seul le vendeur peut marquer comme expédié")
+        
+        # Vérifier l'état de la transaction
+        if transaction["status"] != "payment_held":
+            raise HTTPException(status_code=400, detail="La transaction doit être payée pour pouvoir être expédiée")
+        
+        # Récupérer les informations utilisateur
+        seller = await db.users.find_one({"id": user_id})
+        buyer = await db.users.find_one({"id": transaction["buyer_id"]})
+        
+        # Mettre à jour la transaction
+        await db.secure_transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "status": TransactionStatus.SHIPPED,
+                    "tracking_number": shipping_data.tracking_number,
+                    "shipping_carrier": shipping_data.shipping_carrier,
+                    "shipped_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Envoyer message système dans la conversation
+        conversation_id = transaction.get("conversation_id")
+        if conversation_id:
+            await send_system_message(conversation_id, "shipped", {
+                "carrier": shipping_data.shipping_carrier,
+                "tracking_number": shipping_data.tracking_number,
+                "tracking_url": f"https://track.example.com/{shipping_data.tracking_number}",  # URL générée
+                "seller_name": seller["name"] if seller else "Le vendeur",
+                "buyer_name": buyer["name"] if buyer else "L'acheteur"
+            }, transaction_id)
+            
+            # Ajouter le message du vendeur s'il y en a un
+            if shipping_data.notes:
+                seller_message = MessageV2(
+                    conversation_id=conversation_id,
+                    sender_id=user_id,
+                    message_type="text",
+                    message=f"📦 **Maillot expédié !**\n\n{shipping_data.notes}",
+                    transaction_id=transaction_id
+                )
+                await db.messages.insert_one(seller_message.dict())
+        
+        # Notification à l'acheteur
+        await create_notification(
+            transaction["buyer_id"],
+            NotificationType.SHIPMENT_SENT,
+            f"📦 Votre maillot '{transaction['jersey_info']['team']}' a été expédié !",
+            {
+                "transaction_id": transaction_id,
+                "tracking_number": shipping_data.tracking_number,
+                "carrier": shipping_data.shipping_carrier
+            }
+        )
+        
+        return {
+            "message": "📦 Maillot marqué comme expédié !",
+            "transaction_id": transaction_id,
+            "status": "shipped",
+            "tracking_number": shipping_data.tracking_number,
+            "carrier": shipping_data.shipping_carrier,
+            "conversation_id": conversation_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error marking as shipped: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du marquage d'expédition")
+
+@api_router.get("/transactions/{transaction_id}/details")
+async def get_transaction_details(
+    transaction_id: str,
+    current_user: dict = Depends(get_current_user_admin)
+):
+    """
+    📄 Obtenir les détails complets d'une transaction pour vérification
+    """
+    try:
+        transaction = await db.secure_transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        # Récupérer toutes les informations associées
+        buyer = await db.users.find_one({"id": transaction["buyer_id"]})
+        seller = await db.users.find_one({"id": transaction["seller_id"]})
+        listing = await db.listings.find_one({"id": transaction["listing_id"]})
+        jersey = await db.jerseys.find_one({"id": transaction["jersey_info"]["id"]})
+        
+        return {
+            "transaction": transaction,
+            "buyer": {
+                "id": buyer["id"],
+                "name": buyer["name"],
+                "email": buyer["email"],
+                "created_at": buyer.get("created_at"),
+                "suspicious_score": buyer.get("suspicious_activity_score", 0),
+                "total_purchases": await db.secure_transactions.count_documents({"buyer_id": buyer["id"]})
+            },
+            "seller": {
+                "id": seller["id"],
+                "name": seller["name"],
+                "email": seller["email"],
+                "created_at": seller.get("created_at"),
+                "suspicious_score": seller.get("suspicious_activity_score", 0),
+                "total_sales": await db.secure_transactions.count_documents({"seller_id": seller["id"]})
+            },
+            "jersey": jersey,
+            "listing": listing,
+            "timeline": generate_transaction_timeline(transaction),
+            "risk_indicators": {
+                "risk_score": transaction.get("risk_score", 0),
+                "fraud_indicators": transaction.get("fraud_indicators", []),
+                "requires_manual_review": transaction.get("requires_manual_review", False)
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting transaction details: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des détails")
+
+# =============================================================================
+# 💬 CONVERSATION ENDPOINTS WITH TRANSACTION CONTEXT
+# =============================================================================
+
+@api_router.get("/conversations/{conversation_id}/transaction")
+async def get_conversation_transaction(
+    conversation_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Obtenir les détails de la transaction liée à une conversation
+    """
+    try:
+        # Vérifier que l'utilisateur fait partie de la conversation
+        conversation = await db.conversations.find_one({"id": conversation_id})
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        participant_ids = [p["user_id"] for p in conversation["participants"]]
+        if user_id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Récupérer la transaction liée
+        transaction = await db.secure_transactions.find_one({"conversation_id": conversation_id})
+        if not transaction:
+            return {"transaction": None, "has_transaction": False}
+        
+        # Récupérer les informations associées
+        buyer = await db.users.find_one({"id": transaction["buyer_id"]})
+        seller = await db.users.find_one({"id": transaction["seller_id"]})
+        
+        return {
+            "transaction": {
+                **transaction,
+                "buyer_name": buyer["name"] if buyer else "Unknown",
+                "seller_name": seller["name"] if seller else "Unknown"
+            },
+            "has_transaction": True,
+            "timeline": generate_transaction_timeline(transaction),
+            "available_actions": get_transaction_actions_for_user(transaction, user_id)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting conversation transaction: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération de la transaction")
+
+def get_transaction_actions_for_user(transaction: dict, user_id: str) -> List[dict]:
+    """
+    Obtenir les actions disponibles pour un utilisateur dans le contexte d'une transaction
+    """
+    actions = []
+    status = transaction.get("status")
+    
+    # Actions pour le vendeur
+    if user_id == transaction.get("seller_id"):
+        if status == "payment_held":
+            actions.append({
+                "action": "mark_shipped",
+                "label": "Marquer comme expédié",
+                "description": "Indiquer que le maillot a été expédié",
+                "endpoint": f"/api/transactions/{transaction['id']}/seller/mark-shipped",
+                "requires": ["tracking_number", "shipping_carrier"],
+                "type": "primary"
+            })
+    
+    # Actions pour l'acheteur
+    if user_id == transaction.get("buyer_id"):
+        if status in ["shipped", "delivered"]:
+            actions.append({
+                "action": "confirm_receipt",
+                "label": "Confirmer la réception",
+                "description": "Confirmer que le maillot est conforme et débloquer le paiement",
+                "endpoint": f"/api/transactions/{transaction['id']}/buyer/confirm-receipt",
+                "requires": ["message"],
+                "type": "success"
+            })
+            
+            actions.append({
+                "action": "report_issue",
+                "label": "Signaler un problème",
+                "description": "Signaler un problème avec le maillot reçu",
+                "endpoint": f"/api/transactions/{transaction['id']}/buyer/report-issue",
+                "requires": ["message", "evidence_photos"],
+                "type": "warning"
+            })
+    
+    return actions
+
 @api_router.get("/admin/transactions/{transaction_id}/details")
 async def get_transaction_details(
     transaction_id: str,
