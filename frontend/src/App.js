@@ -293,11 +293,11 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
               onClick={() => setShowAuthModal(true)}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-blue-500/25"
             >
-              Accéder à la Bêta Privée
+              Se Connecter à la Bêta
             </button>
             
             <div className="text-gray-400 text-sm">
-              Réservé aux utilisateurs invités • Connexion requise
+              Accès réservé aux utilisateurs approuvés • <span className="text-blue-400">Déjà approuvé ?</span> Connectez-vous ci-dessus
             </div>
           </div>
 
