@@ -9684,14 +9684,26 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                         detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
                       }))}
                       className="text-blue-400 hover:text-blue-300 text-xs"
-                      title="Voir le détail"
+                      title="View Details"
                     >
                       👁️
                     </button>
+                    {collectionType === 'owned' && (
+                      <button
+                        onClick={() => {
+                          setSelectedJerseyForDetails(item.jersey);
+                          setShowJerseyDetailEditor(true);
+                        }}
+                        className="text-green-400 hover:text-green-300 text-xs"
+                        title="Edit Details"
+                      >
+                        ✏️
+                      </button>
+                    )}
                     <button
                       onClick={() => handleRemoveFromCollection(item.jersey.id, collectionType)}
                       className="text-red-400 hover:text-red-300 text-xs"
-                      title="Retirer"
+                      title="Remove"
                     >
                       🗑️
                     </button>
