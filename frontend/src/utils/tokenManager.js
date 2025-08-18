@@ -10,12 +10,12 @@ class TokenManager {
 
   // Get token from localStorage
   getToken() {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('token');
   }
 
   // Save token to localStorage
   saveToken(token) {
-    localStorage.setItem('authToken', token);
+    localStorage.setItem('token', token);
   }
 
   // Remove token from localStorage
