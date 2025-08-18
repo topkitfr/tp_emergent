@@ -271,6 +271,56 @@ class PaymentTransaction(BaseModel):
     sold_at: Optional[datetime] = None
     final_price: Optional[float] = None
 
+# Enhanced Transaction Model for Anti-Fraud System (Leboncoin Style)
+class SecureTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    listing_id: str
+    buyer_id: str
+    seller_id: str
+    amount: float  # Prix du maillot
+    currency: str = "EUR"
+    stripe_payment_intent_id: str  # ID Stripe pour le paiement bloqué
+    stripe_session_id: Optional[str] = None
+    status: TransactionStatus = TransactionStatus.PENDING_PAYMENT
+    
+    # Informations du maillot pour vérification
+    jersey_info: dict = {}  # Nom, équipe, saison, etc.
+    
+    # Tracking de l'expédition
+    tracking_number: Optional[str] = None
+    shipping_carrier: Optional[str] = None
+    shipped_at: Optional[datetime] = None
+    
+    # Vérification d'authenticité
+    verification_notes: Optional[str] = None
+    verified_by_admin_id: Optional[str] = None
+    verified_at: Optional[datetime] = None
+    authenticity_score: Optional[int] = None  # 1-10, 10 = 100% authentique
+    
+    # Dates importantes
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    payment_held_at: Optional[datetime] = None
+    expected_delivery_date: Optional[datetime] = None
+    auto_release_date: Optional[datetime] = None  # Libération auto après X jours
+    
+    # Communications
+    buyer_notifications: List[dict] = []
+    seller_notifications: List[dict] = []
+    admin_notes: List[dict] = []
+    
+    # Protection anti-fraude
+    risk_score: int = 0  # Score de risque calculé
+    fraud_indicators: List[str] = []  # Indicateurs de fraude détectés
+    requires_manual_review: bool = False
+
+class TransactionAction(BaseModel):
+    action_type: str  # "ship", "verify_authentic", "verify_fake", "release", "refund"
+    notes: Optional[str] = None
+    tracking_number: Optional[str] = None
+    shipping_carrier: Optional[str] = None
+    authenticity_score: Optional[int] = None
+    evidence_photos: List[str] = []  # URLs des photos de vérification
+
 class JerseyValuation(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     jersey_signature: str  # Unique identifier based on team+season+player+size+condition
