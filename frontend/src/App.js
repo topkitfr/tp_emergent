@@ -8517,17 +8517,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
-                  {selectedJersey.images?.[0] ? (
-                    <img 
-                      src={selectedJersey.images[0]} 
-                      alt={selectedJersey.team}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      👕
-                    </div>
-                  )}
+  const [jersey, setJersey] = useState(null);
                 </div>
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-white mb-2">
