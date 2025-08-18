@@ -9770,20 +9770,31 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                 </div>
                 
                 {/* Mobile Actions */}
-                <div className="flex items-center space-x-3 mt-3">
+                <div className="flex items-center space-x-2 mt-3">
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('changeView', { 
                       detail: `jersey-detail-${item.jersey?.reference_number || item.jersey?.id}` 
                     }))}
                     className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-blue-700 transition-colors"
                   >
-                    👁️ Voir détail
+                    👁️ View
                   </button>
+                  {collectionType === 'owned' && (
+                    <button
+                      onClick={() => {
+                        setSelectedJerseyForDetails(item.jersey);
+                        setShowJerseyDetailEditor(true);
+                      }}
+                      className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-green-700 transition-colors"
+                    >
+                      ✏️ Details
+                    </button>
+                  )}
                   <button
                     onClick={() => handleRemoveFromCollection(item.jersey.id, collectionType)}
                     className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-xs font-medium hover:bg-red-700 transition-colors"
                   >
-                    🗑️ Retirer
+                    🗑️ Remove
                   </button>
                 </div>
               </div>
