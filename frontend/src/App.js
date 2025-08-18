@@ -8515,15 +8515,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
 
 // Jersey Detail Page Component (moved from marketplace)  
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
-    return (
-      <div className="min-h-screen bg-black">
-        <div className="container mx-auto px-4 py-8">
-          {/* Back button and jersey info */}
-          <div className="mb-8">
-            <button
-              onClick={handleBackToCatalog}
-              className="text-blue-400 hover:text-white mb-4 flex items-center space-x-2"
-            >
+const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
               <span>←</span>
               <span>Retour au catalogue</span>
             </button>
