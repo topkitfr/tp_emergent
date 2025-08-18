@@ -218,16 +218,16 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
 
           {/* Main Content */}
           <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-            La Révolution du
+            The Revolution of
             <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Marketplace Football
+              Football Marketplace
             </span>
           </h2>
 
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-            TopKit transforme l'achat et la vente de maillots de football. 
-            Découvrez une plateforme dédiée aux passionnés, avec un système 
-            de collection révolutionnaire pour les amateurs de maillots vintage et modernes.
+            TopKit transforms buying and selling football jerseys. 
+            Discover a platform dedicated to enthusiasts, with a revolutionary 
+            collection system for vintage and modern jersey lovers.
           </p>
 
           {/* Features */}
