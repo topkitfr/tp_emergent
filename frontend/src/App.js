@@ -12121,6 +12121,7 @@ const AppContent = () => {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [siteMode, setSiteMode] = useState('public'); // Site mode state
 
   // Fetch site mode
