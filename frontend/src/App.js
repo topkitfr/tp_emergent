@@ -572,8 +572,6 @@ const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
   const [siteMode, setSiteMode] = useState('public');
   const [siteSettingsLoading, setSiteSettingsLoading] = useState(false);
-  const [betaRequests, setBetaRequests] = useState([]);
-  const [betaRequestsLoading, setBetaRequestsLoading] = useState(false);
 
   useEffect(() => {
     console.log('AuthProvider mounted, checking for existing token...');
