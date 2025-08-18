@@ -5398,56 +5398,73 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
             </button>
           </div>
 
-      <div className="container mx-auto px-4 md:px-6 py-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Mobile Filters */}
-          {showMobileFilters && (
-            <div className="md:hidden bg-gray-900 rounded-lg border border-gray-700 p-4 mb-6">
-              <h3 className="font-semibold text-white mb-4">Filtres</h3>
-              <div className="space-y-4">
-                {/* League Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Championnat</label>
-                  <select
-                    value={filters.league}
-                    onChange={(e) => setFilters({...filters, league: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Tous les championnats</option>
-                    {getUniqueValues('league').map(league => (
-                      <option key={league} value={league}>{league}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Team Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Équipe</label>
-                  <select
-                    value={filters.team}
-                    onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Toutes les équipes</option>
-                    {getUniqueValues('team').slice(0, 20).map(team => (
-                      <option key={team} value={team}>{team}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Season Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Saison</label>
-                  <select
-                    value={filters.season}
-                    onChange={(e) => setFilters({...filters, season: e.target.value})}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-white focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Toutes les saisons</option>
-                    {getUniqueValues('season').map(season => (
-                      <option key={season} value={season}>{season}</option>
-                    ))}
-                  </select>
+          {/* Filters */}
+          <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 ${showMobileFilters ? 'block' : 'hidden lg:grid'}`}>
+            <select
+              value={filters.league}
+              onChange={(e) => setFilters({...filters, league: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Tous les championnats</option>
+              {getUniqueValues('league').map(league => (
+                <option key={league} value={league}>{league}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filters.team}
+              onChange={(e) => setFilters({...filters, team: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Toutes les équipes</option>
+              {getUniqueValues('team').slice(0, 50).map(team => (
+                <option key={team} value={team}>{team}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filters.season}
+              onChange={(e) => setFilters({...filters, season: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Toutes les saisons</option>
+              {getUniqueValues('season').map(season => (
+                <option key={season} value={season}>{season}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filters.size}
+              onChange={(e) => setFilters({...filters, size: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Toutes les tailles</option>
+              {getUniqueValues('size').map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filters.condition}
+              onChange={(e) => setFilters({...filters, condition: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Tous les états</option>
+              {getUniqueValues('condition').map(condition => (
+                <option key={condition} value={condition}>{condition}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filters.manufacturer}
+              onChange={(e) => setFilters({...filters, manufacturer: e.target.value})}
+              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
+            >
+              <option value="">Tous les fabricants</option>
+              {getUniqueValues('manufacturer').map(manufacturer => (
+                <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+              ))}
+            </select>
                 </div>
                 
                 {/* Size Filter */}
