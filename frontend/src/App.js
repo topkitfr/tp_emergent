@@ -8239,37 +8239,37 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
           <div className="max-w-2xl mx-auto">
             <div className="text-6xl mb-6">🛍️</div>
             <h1 className="text-4xl font-bold text-white mb-4">Marketplace</h1>
-            <h2 className="text-2xl font-semibold text-blue-400 mb-6">Bientôt Disponible</h2>
+            <h2 className="text-2xl font-semibold text-blue-400 mb-6">Coming Soon</h2>
             <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-6 text-left">
-              <h3 className="text-lg font-semibold text-blue-300 mb-4">🚀 Ce qui vous attend :</h3>
+              <h3 className="text-lg font-semibold text-blue-300 mb-4">🚀 What's Coming:</h3>
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-start space-x-3">
                   <span className="text-green-400 mt-1">✓</span>
-                  <span><strong>Marketplace sécurisée</strong> - Achat et vente de maillots authentiques</span>
+                  <span><strong>Secure Marketplace</strong> - Buy and sell authentic jerseys</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <span className="text-green-400 mt-1">✓</span>
-                  <span><strong>Système anti-fraude</strong> - Vérification d'authenticité par nos experts</span>
+                  <span><strong>Anti-fraud System</strong> - Authentication verification by our experts</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <span className="text-green-400 mt-1">✓</span>
-                  <span><strong>Messagerie intégrée</strong> - Communication directe avec les vendeurs</span>
+                  <span><strong>Integrated Messaging</strong> - Direct communication with sellers</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <span className="text-green-400 mt-1">✓</span>
-                  <span><strong>Paiements sécurisés</strong> - Transaction protégée via Stripe</span>
+                  <span><strong>Secure Payments</strong> - Protected transactions via Stripe</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <span className="text-yellow-400 mt-1">⏳</span>
-                  <span><strong>Interface intuitive</strong> - Navigation style Discogs pour les collectionneurs</span>
+                  <span><strong>Intuitive Interface</strong> - Specialized navigation for collectors</span>
                 </li>
               </ul>
             </div>
             
             <div className="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
               <p className="text-gray-400 text-sm">
-                🔔 <strong>Restez informé :</strong> La marketplace sera bientôt ouverte à tous les utilisateurs bêta. 
-                En attendant, continuez à explorer notre catalogue et constituer vos collections !
+                🔔 <strong>Stay Tuned:</strong> The marketplace will soon be open to all beta users. 
+                In the meantime, continue exploring our catalog and building your collections!
               </p>
             </div>
             
