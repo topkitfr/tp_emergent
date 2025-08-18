@@ -12143,6 +12143,271 @@ const MyCollectionPage = ({ ownedItems, onFetch, onCreateListing }) => {
   );
 };
 
+// Security & Privacy Page Component
+const SecurityPrivacyPage = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [securityInfo, setSecurityInfo] = useState({
+    has_2fa: false,
+    password_last_changed: null,
+    login_history: [],
+    security_alerts: true,
+    email_notifications: true
+  });
+
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+
+  useEffect(() => {
+    fetchSecurityInfo();
+  }, []);
+
+  const fetchSecurityInfo = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/api/users/security-info`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSecurityInfo(response.data);
+    } catch (error) {
+      console.error('Failed to fetch security info:', error);
+      setError('Failed to load security information');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSecuritySettings = async (setting, value) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/api/users/security-settings`, {
+        [setting]: value
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setSecurityInfo(prev => ({ ...prev, [setting]: value }));
+      setSuccess('Security settings updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      setError('Failed to update security settings');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Security & Privacy</h1>
+        <p className="text-gray-400">Manage your account security and privacy settings</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-600 text-white px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-600 text-white px-4 py-3 rounded mb-4">
+          {success}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        
+        {/* Two-Factor Authentication Section */}
+        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">Two-Factor Authentication</h3>
+              <p className="text-gray-400 text-sm">
+                Add an extra layer of security to your account with 2FA
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                securityInfo.has_2fa 
+                  ? 'bg-green-800 text-green-200' 
+                  : 'bg-red-800 text-red-200'
+              }`}>
+                {securityInfo.has_2fa ? '🔒 Enabled' : '🔓 Disabled'}
+              </span>
+              <button
+                onClick={() => setShow2FASetup(true)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  securityInfo.has_2fa
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {securityInfo.has_2fa ? 'Disable 2FA' : 'Enable 2FA'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Password Security Section */}
+        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">Password Security</h3>
+              <p className="text-gray-400 text-sm">
+                Keep your account secure with a strong password
+              </p>
+              {securityInfo.password_last_changed && (
+                <p className="text-gray-500 text-xs mt-1">
+                  Last changed: {new Date(securityInfo.password_last_changed).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Change Password
+            </button>
+          </div>
+        </div>
+
+        {/* Security Notifications Section */}
+        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4">Security Notifications</h3>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-white font-medium">Security Alerts</label>
+                <p className="text-gray-400 text-sm">
+                  Get notified about suspicious account activity
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={securityInfo.security_alerts}
+                onChange={(e) => updateSecuritySettings('security_alerts', e.target.checked)}
+                className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-white font-medium">Email Notifications</label>
+                <p className="text-gray-400 text-sm">
+                  Receive email alerts for password changes and login attempts
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={securityInfo.email_notifications}
+                onChange={(e) => updateSecuritySettings('email_notifications', e.target.checked)}
+                className="w-5 h-5 text-blue-600 bg-gray-800 border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Login History Section */}
+        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Login Activity</h3>
+          
+          {loading ? (
+            <div className="text-gray-400">Loading login history...</div>
+          ) : securityInfo.login_history?.length > 0 ? (
+            <div className="space-y-3 max-h-48 overflow-y-auto">
+              {securityInfo.login_history.slice(0, 10).map((login, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                  <div>
+                    <div className="text-white font-medium">
+                      {login.location || 'Unknown location'}
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      {login.ip_address} • {login.user_agent?.split(' ')[0] || 'Unknown browser'}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-gray-300 text-sm">
+                      {new Date(login.timestamp).toLocaleDateString()}
+                    </div>
+                    <div className="text-gray-500 text-xs">
+                      {new Date(login.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-400">No recent login activity</div>
+          )}
+        </div>
+
+        {/* Privacy Settings Section */}
+        <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-4">Privacy Settings</h3>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-white font-medium">Profile Visibility</label>
+                <p className="text-gray-400 text-sm">
+                  Control who can see your profile information
+                </p>
+              </div>
+              <select className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1">
+                <option>Public</option>
+                <option>Friends Only</option>
+                <option>Private</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-white font-medium">Collection Visibility</label>
+                <p className="text-gray-400 text-sm">
+                  Control who can see your jersey collection
+                </p>
+              </div>
+              <select className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1">
+                <option>Public</option>
+                <option>Friends Only</option>
+                <option>Private</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2FA Setup Modal */}
+      {show2FASetup && (
+        <TwoFactorAuthSetup
+          user={user}
+          onClose={() => setShow2FASetup(false)}
+          onSuccess={() => {
+            setShow2FASetup(false);
+            fetchSecurityInfo(); // Refresh security info
+          }}
+        />
+      )}
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            setShowPasswordModal(false);
+            fetchSecurityInfo(); // Refresh security info
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, loading: authLoading, login } = useAuth();
