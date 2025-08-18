@@ -1782,11 +1782,10 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, setShowSecurity
                         <button
                           onClick={() => {
                             setCurrentView('profile');
-                            setActiveProfileTab('collection'); // Aller directement sur l'onglet collection
                             setShowGeneralMenu(false);
                           }}
                           className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
-                            currentView === 'profile' && activeProfileTab === 'collection'
+                            currentView === 'profile'
                               ? 'bg-gray-700 text-white' 
                               : 'text-gray-300 hover:text-white hover:bg-gray-700'
                           }`}
