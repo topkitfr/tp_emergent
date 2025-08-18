@@ -2284,16 +2284,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Critical Authentication System Bug - Form Submission Not Connected to React Handler"
-    - "Notification Dropdown Functionality Testing"
-    - "TopKit Marketplace Page Testing"
-    - "TopKit User Access Control Testing"
-    - "TopKit Admin Panel Interface Testing"
-  stuck_tasks:
-    - "Critical Authentication System Bug - Form Submission Not Connected to React Handler"
-    - "Notification Dropdown Functionality Testing"
-    - "TopKit Marketplace Page Testing"
-    - "TopKit User Access Control Testing"
+    - "Collection Synchronization Fixes Testing - COMPLETED"
+    - "Authentication Consistency Between Collection Endpoints - COMPLETED"
+    - "Jersey Valuation with Null Values Testing - COMPLETED"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
