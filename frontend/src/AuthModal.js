@@ -235,16 +235,42 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         </form>
 
         <p className="text-center text-gray-600 mt-4">
-          {isLogin ? 'Pas de compte ?' : 'Déjà un compte ?'}
-          <button
-            onClick={switchMode}
-            className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
-            type="button"
-            disabled={loading}
-          >
-            {isLogin ? 'Créer un compte' : 'Se connecter'}
-          </button>
+          {isLogin ? (
+            <>
+              Pas encore d'accès beta ?
+              <button
+                onClick={switchMode}
+                className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
+                type="button"
+                disabled={loading}
+              >
+                Demander l'accès
+              </button>
+            </>
+          ) : (
+            <>
+              Déjà approuvé pour la beta ?
+              <button
+                onClick={switchMode}
+                className="text-blue-600 hover:text-blue-700 ml-2 font-medium"
+                type="button"
+                disabled={loading}
+              >
+                Se connecter
+              </button>
+            </>
+          )}
         </p>
+
+        {/* Beta Request Information */}
+        {isLogin && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-700 text-xs text-center">
+              <strong>Nouveau sur TopKit ?</strong> Vous devez d'abord demander et recevoir 
+              l'approbation beta avant de pouvoir créer un compte.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
