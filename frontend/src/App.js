@@ -9312,6 +9312,8 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   const [showSmartSubmissionModal, setShowSmartSubmissionModal] = useState(false);
+  const [showJerseyDetailEditor, setShowJerseyDetailEditor] = useState(false);
+  const [selectedJerseyForDetails, setSelectedJerseyForDetails] = useState(null);
   const [collectionStats, setCollectionStats] = useState({
     totalValue: 0,
     averageValue: 0,
