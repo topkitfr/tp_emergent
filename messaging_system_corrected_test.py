@@ -17,7 +17,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-marketplace-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-kit-hub.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"

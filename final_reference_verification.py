@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-BASE_URL = "https://topkit-marketplace-1.preview.emergentagent.com/api"
+BASE_URL = "https://soccer-kit-hub.preview.emergentagent.com/api"
 
 def authenticate_user():
     """Authenticate as regular user"""
