@@ -124,7 +124,7 @@ class JerseyDetailsBackendTester:
                     self.log_test(
                         "Setup Test Jersey - Check Existing Collection",
                         True,
-                        "No existing jerseys in owned collection, need to add one"
+                        "No existing jerseys in owned collection, need to create and add one"
                     )
             else:
                 self.log_test(
@@ -133,58 +133,90 @@ class JerseyDetailsBackendTester:
                     f"Failed to get owned collection: {response.status_code}"
                 )
                 
-            # Get available jerseys to add to collection
-            response = self.session.get(f"{BACKEND_URL}/jerseys", timeout=10)
+            # Create a test jersey first
+            jersey_data = {
+                "team": "FC Barcelona",
+                "season": "2024-25",
+                "player": "Pedri",
+                "manufacturer": "Nike",
+                "home_away": "home",
+                "league": "La Liga",
+                "description": "Test jersey for details endpoint testing"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/jerseys",
+                json=jersey_data,
+                headers=headers,
+                timeout=10
+            )
+            
             if response.status_code == 200:
-                jerseys = response.json()
-                if jerseys and len(jerseys) > 0:
-                    # Use the first available jersey
-                    jersey = jerseys[0]
-                    jersey_id = jersey['id']
-                    
-                    # Add jersey to owned collection
-                    collection_data = {
-                        "jersey_id": jersey_id,
-                        "collection_type": "owned",
-                        "size": "M",
-                        "condition": "very_good",
-                        "personal_description": "Test jersey for details testing"
-                    }
-                    
-                    response = self.session.post(
-                        f"{BACKEND_URL}/collections",
-                        json=collection_data,
+                jersey_result = response.json()
+                jersey_id = jersey_result.get('jersey_id')
+                self.log_test(
+                    "Setup Test Jersey - Create Jersey",
+                    True,
+                    f"Successfully created test jersey: {jersey_id}"
+                )
+                
+                # If admin, approve the jersey immediately
+                if 'admin' in self.user_token or True:  # Assume admin for now
+                    approve_response = self.session.post(
+                        f"{BACKEND_URL}/admin/jerseys/{jersey_id}/approve",
                         headers=headers,
                         timeout=10
                     )
                     
-                    if response.status_code == 200:
-                        self.test_jersey_id = jersey_id
+                    if approve_response.status_code == 200:
                         self.log_test(
-                            "Setup Test Jersey - Add to Collection",
+                            "Setup Test Jersey - Approve Jersey",
                             True,
-                            f"Successfully added jersey {jersey_id} to owned collection"
+                            f"Successfully approved jersey: {jersey_id}"
                         )
-                        return True
                     else:
                         self.log_test(
-                            "Setup Test Jersey - Add to Collection",
+                            "Setup Test Jersey - Approve Jersey",
                             False,
-                            f"Failed to add jersey to collection: {response.status_code} - {response.text}"
+                            f"Failed to approve jersey: {approve_response.status_code} - {approve_response.text}"
                         )
-                        return False
+                
+                # Add jersey to owned collection
+                collection_data = {
+                    "jersey_id": jersey_id,
+                    "collection_type": "owned",
+                    "size": "M",
+                    "condition": "very_good",
+                    "personal_description": "Test jersey for details testing"
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/collections",
+                    json=collection_data,
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    self.test_jersey_id = jersey_id
+                    self.log_test(
+                        "Setup Test Jersey - Add to Collection",
+                        True,
+                        f"Successfully added jersey {jersey_id} to owned collection"
+                    )
+                    return True
                 else:
                     self.log_test(
-                        "Setup Test Jersey - Get Available Jerseys",
+                        "Setup Test Jersey - Add to Collection",
                         False,
-                        "No jerseys available in the system"
+                        f"Failed to add jersey to collection: {response.status_code} - {response.text}"
                     )
                     return False
             else:
                 self.log_test(
-                    "Setup Test Jersey - Get Available Jerseys",
+                    "Setup Test Jersey - Create Jersey",
                     False,
-                    f"Failed to get jerseys: {response.status_code}"
+                    f"Failed to create jersey: {response.status_code} - {response.text}"
                 )
                 return False
                 
