@@ -5,6 +5,7 @@ import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
 import SecuritySettingsModal from './SecuritySettingsModal';
 import SmartJerseySubmissionForm from './SmartJerseySubmissionForm';
+import JerseyDetailEditor from './JerseyDetailEditor';
 import { useCSVData } from './utils/csvLoader';
 
 // Football data for suggestions
