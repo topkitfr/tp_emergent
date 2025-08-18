@@ -10092,17 +10092,33 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                   <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-4">
                       <span className="text-4xl block mb-4">👕</span>
-                      Votre collection est vide
+                      Your collection is empty
                     </div>
                     <p className="text-gray-500 mb-6">
-                      Commencez à collectionner en explorant nos maillots disponibles.
+                      Start building your collection by exploring available jerseys or submit a new reference to our database.
                     </p>
-                    <button
-                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Explorez les maillots
-                    </button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'jerseys' }))}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center"
+                      >
+                        <span className="mr-2">🔍</span>
+                        Explore Jerseys
+                      </button>
+                      
+                      <button
+                        onClick={() => setShowSmartSubmissionModal(true)}
+                        className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center"
+                      >
+                        <span className="mr-2">➕</span>
+                        Submit New Reference
+                      </button>
+                    </div>
+                    
+                    <div className="mt-4 text-xs text-gray-500">
+                      💡 Tip: Add jerseys from "Explore" to your collection to track their value and details
+                    </div>
                   </div>
                 )}
               </div>
