@@ -19,7 +19,7 @@ ADMIN_PASSWORD = "TopKitSecure789#"
 
 # Test user credentials
 TEST_USER_EMAIL = "test@example.com"
-TEST_USER_PASSWORD = "TestSecure123!"
+TEST_USER_PASSWORD = "TestSecurePass789#"
 
 class AntiFraudPaymentTester:
     def __init__(self):
