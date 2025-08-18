@@ -759,7 +759,23 @@ class MessageCreateV2(BaseModel):
     conversation_id: Optional[str] = None  # If None, create new conversation
     recipient_id: Optional[str] = None  # For new conversations
     message: str
-    message_type: str = "text"  # "text", "image", "file"
+    message_type: str = "text"  # "text", "image", "file", "system", "tracking", "payment_action"
+    
+    # Pour les messages système liés aux transactions
+    transaction_id: Optional[str] = None
+    system_data: Optional[dict] = {}  # Données pour les messages système
+
+# Modèle pour les actions de l'acheteur dans la conversation
+class BuyerAction(BaseModel):
+    action_type: str  # "confirm_receipt", "report_issue", "request_info"
+    message: Optional[str] = None
+    evidence_photos: List[str] = []
+    
+# Modèle pour les messages système de suivi
+class SystemMessage(BaseModel):
+    type: str  # "payment_confirmed", "shipped", "tracking_update", "payment_released", etc.
+    data: dict = {}
+    auto_generated: bool = True
 
 # Security helpers
 def validate_password_strength(password: str) -> tuple[bool, str]:
