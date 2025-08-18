@@ -54,7 +54,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
   const loadJerseyDetails = async () => {
     try {
-      const response = await tokenManager.apiCall(
+      const response = await tokenManager.makeAuthenticatedRequest(
         'get',
         `/api/collections/owned/${jersey.id}/details`
       );
