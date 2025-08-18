@@ -8418,6 +8418,66 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // TEMPORARY: Show "Coming Soon" message
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-20">
+          {/* Coming Soon Section */}
+          <div className="max-w-2xl mx-auto">
+            <div className="text-6xl mb-6">🛍️</div>
+            <h1 className="text-4xl font-bold text-white mb-4">Marketplace</h1>
+            <h2 className="text-2xl font-semibold text-blue-400 mb-6">Bientôt Disponible</h2>
+            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-6 text-left">
+              <h3 className="text-lg font-semibold text-blue-300 mb-4">🚀 Ce qui vous attend :</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-start space-x-3">
+                  <span className="text-green-400 mt-1">✓</span>
+                  <span><strong>Marketplace sécurisée</strong> - Achat et vente de maillots authentiques</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <span className="text-green-400 mt-1">✓</span>
+                  <span><strong>Système anti-fraude</strong> - Vérification d'authenticité par nos experts</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <span className="text-green-400 mt-1">✓</span>
+                  <span><strong>Messagerie intégrée</strong> - Communication directe avec les vendeurs</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <span className="text-green-400 mt-1">✓</span>
+                  <span><strong>Paiements sécurisés</strong> - Transaction protégée via Stripe</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <span className="text-yellow-400 mt-1">⏳</span>
+                  <span><strong>Interface intuitive</strong> - Navigation style Discogs pour les collectionneurs</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
+              <p className="text-gray-400 text-sm">
+                🔔 <strong>Restez informé :</strong> La marketplace sera bientôt ouverte à tous les utilisateurs bêta. 
+                En attendant, continuez à explorer notre catalogue et constituer vos collections !
+              </p>
+            </div>
+            
+            <div className="mt-6">
+              <a href="#browse" className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <span>🔍 Explorez le catalogue</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ORIGINAL CODE (commented out for "Coming Soon" mode)
+  /*
+
   useEffect(() => {
     fetchAvailableJerseys();
   }, []);
