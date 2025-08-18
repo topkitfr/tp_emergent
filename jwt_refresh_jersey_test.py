@@ -260,8 +260,7 @@ class JWTRefreshJerseyTester:
             response = self.make_request('GET', '/admin/jerseys/pending', token=self.admin_token)
             
             if response and response.status_code == 200:
-                data = response.json()
-                pending_jerseys = data.get('jerseys', [])
+                pending_jerseys = response.json()  # Direct list, not wrapped in 'jerseys' key
                 
                 # Check if our test jersey is in the pending list
                 test_jersey_found = False
