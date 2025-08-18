@@ -9310,6 +9310,7 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
   const [salesHistory, setSalesHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [showSmartSubmissionModal, setShowSmartSubmissionModal] = useState(false);
   const [collectionStats, setCollectionStats] = useState({
     totalValue: 0,
     averageValue: 0,
