@@ -8470,9 +8470,23 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
 
   useEffect(() => {
     fetchJerseyDetails();
-                  <p className="text-gray-300 text-lg mb-4">
-                    {selectedJersey.league} • {selectedJersey.season} • {selectedJersey.home_away}
-                  </p>
+  }, [jerseyId, referenceNumber, user]);
+
+  const fetchJerseyDetails = async () => {
+    // Implementation for fetching jersey details
+  };
+
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Component content will be implemented here */}
+      <div className="text-white p-8">
+        <h1>Jersey Detail Page - Under Construction</h1>
+        <p>Jersey ID: {jerseyId}</p>
+        <p>Reference: {referenceNumber}</p>
+      </div>
+    </div>
+  );
+};
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Référence:</span>
