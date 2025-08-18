@@ -10103,12 +10103,12 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
             {activeTab === 'collection' && (
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Ma Collection</h2>
+                  <h2 className="text-2xl font-bold text-white">My Owned Collection</h2>
                   <div className="flex items-center space-x-4 text-sm text-gray-400">
-                    <span>{ownedJerseys.length} maillots</span>
+                    <span>{ownedJerseys.length} jersey{ownedJerseys.length > 1 ? 's' : ''}</span>
                     <span>•</span>
                     <span className="text-green-400 font-semibold">
-                      Valeur estimée: {collectionStats.totalValue}€
+                      Estimated Value: {collectionStats.totalValue}€
                     </span>
                   </div>
                 </div>
@@ -10154,9 +10154,9 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
             {activeTab === 'wishlist' && (
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Ma Wishlist</h2>
+                  <h2 className="text-2xl font-bold text-white">My Wishlist</h2>
                   <div className="text-sm text-gray-400">
-                    {wantedJerseys.length} maillot{wantedJerseys.length > 1 ? 's' : ''}
+                    {wantedJerseys.length} jersey{wantedJerseys.length > 1 ? 's' : ''}
                   </div>
                 </div>
                 
