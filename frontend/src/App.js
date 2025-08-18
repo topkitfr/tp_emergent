@@ -15827,10 +15827,9 @@ const AdminPanel = () => {
                   <h4 className="font-medium text-white">Collecte de Données Analytiques</h4>
                   <p className="text-sm text-gray-400">Collecte des statistiques d'utilisation anonymes</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  Activé
+                </button>
               </div>
               
               <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
@@ -15838,10 +15837,9 @@ const AdminPanel = () => {
                   <h4 className="font-medium text-white">Notifications Email</h4>
                   <p className="text-sm text-gray-400">Envoi d'emails pour les mises à jour importantes</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  Activé
+                </button>
               </div>
             </div>
           </div>
