@@ -20,16 +20,13 @@ def hash_password(password):
 
 def fix_user_account():
     """Fix or create user account"""
-    # Get MongoDB connection
-    mongo_url = os.getenv('MONGO_URL')
-    if not mongo_url:
-        print("❌ MONGO_URL not found in environment variables")
-        return False
+    # Get MongoDB connection - directly use localhost since it's standard in development
+    mongo_url = "mongodb://localhost:27017"
     
     try:
         # Connect to MongoDB
         client = MongoClient(mongo_url)
-        db = client.get_default_database()
+        db = client.test_database  # Use the database name from .env
         
         email = "steinmetzlivio@gmail.com"
         password = "T0p_Mdp_1288*"
