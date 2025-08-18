@@ -14995,6 +14995,15 @@ const AdminPanel = () => {
         }}
       />
     )}
+    
+    {/* Security Settings Modal for Admin */}
+    {showSecurityModal && (
+      <SecuritySettingsModal
+        user={user}
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+      />
+    )}
     </>
   );
 };
