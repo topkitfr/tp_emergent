@@ -8459,55 +8459,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
   );
 };
 
-  useEffect(() => {
-    fetchAvailableJerseys();
-  }, []);
-
-  // Fetch jerseys that have active listings (Discogs style catalog)
-  const fetchAvailableJerseys = async () => {
-    try {
-      setLoading(true);
-      // Get all jerseys that have at least one active listing
-      const response = await axios.get(`${API}/api/marketplace/catalog`);
-      setJerseys(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch marketplace catalog:', error);
-      // Fallback: get all approved jerseys and check which have listings
-      try {
-        const jerseysResponse = await axios.get(`${API}/api/jerseys?status=approved`);
-        const listingsResponse = await axios.get(`${API}/api/listings`);
-        
-        const jerseysWithListings = jerseysResponse.data.filter(jersey => 
-          listingsResponse.data.some(listing => listing.jersey_id === jersey.id)
-        );
-        setJerseys(jerseysWithListings || []);
-      } catch (fallbackError) {
-        console.error('Fallback failed:', fallbackError);
-        setJerseys([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch listings for a specific jersey (Discogs style listings page)
-  const fetchJerseyListings = async (jerseyId) => {
-    try {
-      setListingsLoading(true);
-      const response = await axios.get(`${API}/api/listings?jersey_id=${jerseyId}`);
-      setSelectedJerseyListings(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch jersey listings:', error);
-      setSelectedJerseyListings([]);
-    } finally {
-      setListingsLoading(false);
-    }
-  };
-
-  const handleJerseyClick = async (jersey) => {
-    setSelectedJersey(jersey);
-    await fetchJerseyListings(jersey.id);
-  };
+// Jersey Detail Page Component (moved from marketplace)
 
   const handleBackToCatalog = () => {
     setSelectedJersey(null);
