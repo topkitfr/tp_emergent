@@ -5402,7 +5402,7 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
           </div>
 
           {/* Filters */}
-          <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 ${showMobileFilters ? 'block' : 'hidden lg:grid'}`}>
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${showMobileFilters ? 'block' : 'hidden lg:grid'}`}>
             <select
               value={filters.league}
               onChange={(e) => handleFilterChange('league', e.target.value)}
@@ -5433,28 +5433,6 @@ const BrowseJerseysPage = ({ jerseys, loading, onFilter, onAddToCollection, onJe
               <option value="">Toutes les saisons</option>
               {getUniqueValues('season').map(season => (
                 <option key={season} value={season}>{season}</option>
-              ))}
-            </select>
-            
-            <select
-              value={filters.size}
-              onChange={(e) => handleFilterChange('size', e.target.value)}
-              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-            >
-              <option value="">Toutes les tailles</option>
-              {getUniqueValues('size').map(size => (
-                <option key={size} value={size}>{size}</option>
-              ))}
-            </select>
-            
-            <select
-              value={filters.condition}
-              onChange={(e) => handleFilterChange('condition', e.target.value)}
-              className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-            >
-              <option value="">Tous les états</option>
-              {getUniqueValues('condition').map(condition => (
-                <option key={condition} value={condition}>{condition}</option>
               ))}
             </select>
             
