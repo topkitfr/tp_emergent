@@ -5579,6 +5579,7 @@ const AdvancedSettingsPage = () => {
   // Chargement des données au montage
   useEffect(() => {
     fetchAdvancedProfile();
+    fetchSiteSettings();
   }, []);
 
   const fetchAdvancedProfile = async () => {
