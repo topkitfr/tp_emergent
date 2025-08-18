@@ -307,7 +307,7 @@ class ReviewFocusedTester:
         
         try:
             headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = requests.get(f"{BACKEND_URL}/auth/profile", headers=headers)
+            response = requests.get(f"{BACKEND_URL}/profile", headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
