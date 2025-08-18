@@ -227,117 +227,142 @@ class TopKitReviewTester:
         
         headers = {"Authorization": f"Bearer {self.user_token}"}
         
-        # First, get user's owned collections to find a jersey_id
+        # First, let's create a jersey and add it to collection for testing
         try:
-            response = self.session.get(
-                f"{BACKEND_URL}/collections/my-owned",
+            # Create a jersey first
+            jersey_data = {
+                "team": "Real Madrid CF",
+                "season": "2023-24",
+                "player": "Vinicius Jr",
+                "manufacturer": "Adidas",
+                "home_away": "home",
+                "league": "La Liga",
+                "description": "Official Real Madrid home jersey with Vinicius Jr #20",
+                "images": ["https://example.com/real-vinicius-home.jpg"],
+                "reference_code": "RMA-2324-HOME-VINI"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/jerseys",
                 headers=headers,
+                json=jersey_data,
                 timeout=10
             )
             
             if response.status_code == 200:
-                collections = response.json()
-                if collections:
-                    jersey_id = collections[0].get('jersey_id')
-                    if jersey_id:
-                        # Test GET /api/collections/owned/{jersey_id}/details
-                        try:
-                            response = self.session.get(
-                                f"{BACKEND_URL}/collections/owned/{jersey_id}/details",
-                                headers=headers,
-                                timeout=10
+                jersey = response.json()
+                jersey_id = jersey.get('id')
+                
+                # Add jersey to user's collection
+                collection_data = {
+                    "jersey_id": jersey_id,
+                    "collection_type": "owned",
+                    "size": "M",
+                    "condition": "mint",
+                    "personal_description": "Authentic jersey from official store"
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/collections",
+                    headers=headers,
+                    json=collection_data,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    # Now test jersey details endpoints
+                    # Test GET /api/collections/owned/{jersey_id}/details
+                    try:
+                        response = self.session.get(
+                            f"{BACKEND_URL}/collections/owned/{jersey_id}/details",
+                            headers=headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            details = response.json()
+                            self.log_test(
+                                "Jersey Details - GET owned details",
+                                True,
+                                f"Jersey details retrieved successfully for jersey {jersey_id}"
                             )
                             
-                            if response.status_code == 200:
-                                details = response.json()
-                                self.log_test(
-                                    "Jersey Details - GET owned details",
-                                    True,
-                                    f"Jersey details retrieved successfully for jersey {jersey_id}"
+                            # Test PUT /api/collections/owned/{jersey_id}/details
+                            try:
+                                detail_update = {
+                                    "model_type": "authentic",
+                                    "condition": "mint",
+                                    "size": "m",
+                                    "special_features": ["signed", "match_worn"],
+                                    "material_details": "100% polyester",
+                                    "tags": "tags_on",
+                                    "packaging": "original_packaging",
+                                    "customization": "player_name",
+                                    "rarity": "rare",
+                                    "purchase_price": 89.99,
+                                    "purchase_date": "2024-01-15",
+                                    "purchase_location": "Official Store",
+                                    "certificate_authenticity": True,
+                                    "storage_notes": "Stored in protective sleeve",
+                                    "estimated_value": 120.0
+                                }
+                                
+                                response = self.session.put(
+                                    f"{BACKEND_URL}/collections/owned/{jersey_id}/details",
+                                    headers=headers,
+                                    json=detail_update,
+                                    timeout=10
                                 )
                                 
-                                # Test PUT /api/collections/owned/{jersey_id}/details
-                                try:
-                                    detail_update = {
-                                        "model_type": "authentic",
-                                        "condition": "mint",
-                                        "size": "m",
-                                        "special_features": ["signed", "match_worn"],
-                                        "material_details": "100% polyester",
-                                        "tags": "tags_on",
-                                        "packaging": "original_packaging",
-                                        "customization": "player_name",
-                                        "rarity": "rare",
-                                        "purchase_price": 89.99,
-                                        "purchase_date": "2024-01-15",
-                                        "purchase_location": "Official Store",
-                                        "certificate_authenticity": True,
-                                        "storage_notes": "Stored in protective sleeve",
-                                        "estimated_value": 120.0
-                                    }
-                                    
-                                    response = self.session.put(
-                                        f"{BACKEND_URL}/collections/owned/{jersey_id}/details",
-                                        headers=headers,
-                                        json=detail_update,
-                                        timeout=10
+                                if response.status_code == 200:
+                                    self.log_test(
+                                        "Jersey Details - PUT owned details",
+                                        True,
+                                        f"Jersey details updated successfully for jersey {jersey_id}"
                                     )
-                                    
-                                    if response.status_code == 200:
-                                        self.log_test(
-                                            "Jersey Details - PUT owned details",
-                                            True,
-                                            f"Jersey details updated successfully for jersey {jersey_id}"
-                                        )
-                                    else:
-                                        self.log_test(
-                                            "Jersey Details - PUT owned details",
-                                            False,
-                                            f"Failed with status {response.status_code}: {response.text}"
-                                        )
-                                        
-                                except Exception as e:
+                                else:
                                     self.log_test(
                                         "Jersey Details - PUT owned details",
                                         False,
-                                        error=str(e)
+                                        f"Failed with status {response.status_code}: {response.text}"
                                     )
                                     
-                            else:
+                            except Exception as e:
                                 self.log_test(
-                                    "Jersey Details - GET owned details",
+                                    "Jersey Details - PUT owned details",
                                     False,
-                                    f"Failed with status {response.status_code}: {response.text}"
+                                    error=str(e)
                                 )
                                 
-                        except Exception as e:
+                        else:
                             self.log_test(
                                 "Jersey Details - GET owned details",
                                 False,
-                                error=str(e)
+                                f"Failed with status {response.status_code}: {response.text}"
                             )
-                    else:
+                            
+                    except Exception as e:
                         self.log_test(
-                            "Jersey Details - No jersey_id found",
+                            "Jersey Details - GET owned details",
                             False,
-                            "No jersey_id found in user's collections"
+                            error=str(e)
                         )
                 else:
                     self.log_test(
-                        "Jersey Details - No collections found",
+                        "Jersey Details - Collection add failed",
                         False,
-                        "User has no owned collections to test jersey details"
+                        f"Failed to add jersey to collection: {response.status_code} - {response.text}"
                     )
             else:
                 self.log_test(
-                    "Jersey Details - Collections retrieval failed",
+                    "Jersey Details - Jersey creation failed",
                     False,
-                    f"Failed to get collections with status {response.status_code}"
+                    f"Failed to create jersey: {response.status_code} - {response.text}"
                 )
                 
         except Exception as e:
             self.log_test(
-                "Jersey Details - Collections retrieval error",
+                "Jersey Details - Setup error",
                 False,
                 error=str(e)
             )
