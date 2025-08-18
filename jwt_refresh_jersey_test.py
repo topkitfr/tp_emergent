@@ -72,6 +72,12 @@ class JWTRefreshJerseyTester:
         try:
             response = self.session.request(method, url, **kwargs)
             return response
+        except requests.exceptions.Timeout as e:
+            print(f"Request timeout: {e}")
+            return None
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error: {e}")
+            return None
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
             return None
