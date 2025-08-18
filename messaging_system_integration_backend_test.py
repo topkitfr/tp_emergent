@@ -41,8 +41,8 @@ ADMIN_CREDENTIALS = {
 }
 
 USER_CREDENTIALS = {
-    "email": "steinmetzlivio@gmail.com", 
-    "password": "TopKit123!"
+    "email": "messaging.test@example.com", 
+    "password": "MessagingTestSecure789#"
 }
 
 class MessagingSystemIntegrationTester:
