@@ -2373,22 +2373,18 @@ async def get_current_admin(user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return user_id
 
-async def get_current_moderator_or_admin(user_id: str = Depends(get_current_user)):
+async def get_current_moderator_or_admin(current_user: dict = Depends(get_current_user)):
     """Check if the current user is a moderator or admin"""
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=403, detail="Authentication required")
-    
     # Admin can always access
-    if user["email"] == ADMIN_EMAIL:
-        return user_id
+    if current_user["email"] == ADMIN_EMAIL:
+        return current_user["id"]
     
     # Check if user has moderator role
-    user_role = user.get("role", "user")
+    user_role = current_user.get("role", "user")
     if user_role not in ["moderator", "admin"]:
         raise HTTPException(status_code=403, detail="Moderator or admin access required")
     
-    return user_id
+    return current_user["id"]
 
 async def check_user_is_admin(user_id: str) -> bool:
     """Check if the current user is an admin (for restrictions)"""
