@@ -7848,6 +7848,7 @@ const UserSettingsPanel = ({ user, profileData, onProfileUpdated, onClose }) => 
           }}
         />
       )}
+      </div>
     </div>
   );
 };
