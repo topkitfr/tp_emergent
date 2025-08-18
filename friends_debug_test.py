@@ -76,7 +76,18 @@ def check_users_in_database(admin_token):
         )
         
         if response.status_code == 200:
-            users = response.json()
+            users_data = response.json()
+            
+            # Handle different response formats
+            if isinstance(users_data, list):
+                users = users_data
+            elif isinstance(users_data, dict) and 'users' in users_data:
+                users = users_data['users']
+            else:
+                print(f"❌ Unexpected response format: {type(users_data)}")
+                print(f"Response: {users_data}")
+                return False, False
+            
             print(f"📊 Total users in database: {len(users)}")
             
             jean_found = False
@@ -84,9 +95,16 @@ def check_users_in_database(admin_token):
             
             print("\n👥 All users in database:")
             for user in users:
-                name = user.get('name', 'Unknown')
-                email = user.get('email', 'Unknown')
-                user_id = user.get('id', 'Unknown')
+                if isinstance(user, dict):
+                    name = user.get('name', 'Unknown')
+                    email = user.get('email', 'Unknown')
+                    user_id = user.get('id', 'Unknown')
+                else:
+                    # Handle string or other formats
+                    name = str(user)
+                    email = 'Unknown'
+                    user_id = 'Unknown'
+                
                 print(f"  - {name} ({email}) - ID: {user_id}")
                 
                 if 'jean' in name.lower() and 'dupont' in name.lower():
