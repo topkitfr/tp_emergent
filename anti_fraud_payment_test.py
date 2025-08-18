@@ -230,7 +230,7 @@ class AntiFraudPaymentTester:
         
         # Create a second user for buying (admin can't buy from regular user)
         buyer_email = "buyer@test.com"
-        buyer_password = "BuyerSecure123!"
+        buyer_password = "BuyerSecurePass789#"
         
         # Register buyer
         response, error = self.make_request("POST", "/auth/register", {
