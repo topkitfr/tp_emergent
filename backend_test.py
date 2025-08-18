@@ -616,7 +616,190 @@ class TopKitBackendTester:
                     error=str(e)
                 )
 
-    def test_core_endpoints(self):
+    def test_friends_endpoint(self):
+        """Test friends endpoint to understand data structure and verify test friends exist"""
+        print("👥 TESTING FRIENDS ENDPOINT...")
+        
+        if not self.user_token:
+            self.log_test(
+                "Friends Endpoint - User Authentication Required",
+                False,
+                "Cannot test friends endpoint without user authentication"
+            )
+            return
+
+        headers = {"Authorization": f"Bearer {self.user_token}"}
+
+        # Test GET /api/friends endpoint
+        try:
+            response = self.session.get(
+                f"{BACKEND_URL}/friends",
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                friends_data = response.json()
+                
+                # Analyze the response structure
+                self.log_test(
+                    "Friends Endpoint - API Response",
+                    True,
+                    f"Friends endpoint accessible, response type: {type(friends_data)}"
+                )
+                
+                # Log the full response structure for debugging
+                print(f"    Full Friends Response: {json.dumps(friends_data, indent=2, default=str)}")
+                
+                # Check for expected friends data
+                if isinstance(friends_data, dict):
+                    # Check for different possible response structures
+                    accepted_friends = []
+                    pending_requests = []
+                    sent_requests = []
+                    
+                    # Try to extract friends data based on possible structures
+                    if 'accepted' in friends_data:
+                        accepted_friends = friends_data.get('accepted', [])
+                    elif 'friends' in friends_data:
+                        accepted_friends = friends_data.get('friends', [])
+                    elif isinstance(friends_data.get('data'), list):
+                        # Check if it's a list of friendship objects
+                        all_friendships = friends_data.get('data', [])
+                        accepted_friends = [f for f in all_friendships if f.get('status') == 'accepted']
+                        pending_requests = [f for f in all_friendships if f.get('status') == 'pending' and f.get('addressee_id') == friends_data.get('user_id')]
+                        sent_requests = [f for f in all_friendships if f.get('status') == 'pending' and f.get('requester_id') == friends_data.get('user_id')]
+                    
+                    if 'pending_received' in friends_data:
+                        pending_requests = friends_data.get('pending_received', [])
+                    if 'pending_sent' in friends_data:
+                        sent_requests = friends_data.get('pending_sent', [])
+                    
+                    # Log the counts
+                    self.log_test(
+                        "Friends Endpoint - Data Structure Analysis",
+                        True,
+                        f"Accepted friends: {len(accepted_friends)}, Pending received: {len(pending_requests)}, Pending sent: {len(sent_requests)}"
+                    )
+                    
+                    # Check for expected test friends
+                    jean_dupont_found = False
+                    marie_martin_found = False
+                    
+                    # Search in accepted friends for Jean Dupont
+                    for friend in accepted_friends:
+                        friend_name = friend.get('name', '') or friend.get('friend_name', '')
+                        if 'Jean Dupont' in friend_name or 'jean' in friend_name.lower():
+                            jean_dupont_found = True
+                            self.log_test(
+                                "Friends Endpoint - Jean Dupont (Accepted Friend)",
+                                True,
+                                f"Found accepted friend: {friend_name}"
+                            )
+                            break
+                    
+                    # Search in pending requests for Marie Martin
+                    for request in pending_requests:
+                        requester_name = request.get('name', '') or request.get('requester_name', '')
+                        if 'Marie Martin' in requester_name or 'marie' in requester_name.lower():
+                            marie_martin_found = True
+                            self.log_test(
+                                "Friends Endpoint - Marie Martin (Pending Request)",
+                                True,
+                                f"Found pending request from: {requester_name}"
+                            )
+                            break
+                    
+                    if not jean_dupont_found:
+                        self.log_test(
+                            "Friends Endpoint - Jean Dupont (Accepted Friend)",
+                            False,
+                            "Jean Dupont not found in accepted friends list"
+                        )
+                    
+                    if not marie_martin_found:
+                        self.log_test(
+                            "Friends Endpoint - Marie Martin (Pending Request)",
+                            False,
+                            "Marie Martin not found in pending requests list"
+                        )
+                    
+                    # Summary of findings
+                    if len(accepted_friends) == 0 and len(pending_requests) == 0 and len(sent_requests) == 0:
+                        self.log_test(
+                            "Friends Endpoint - Data Issue Identified",
+                            False,
+                            "All friend counts are zero - this explains why frontend shows 'Mes Amis (0)', 'Demandes reçues (0)', 'Demandes envoyées (0)'"
+                        )
+                    else:
+                        self.log_test(
+                            "Friends Endpoint - Data Available",
+                            True,
+                            f"Friends data exists but may not be properly formatted for frontend consumption"
+                        )
+                
+                elif isinstance(friends_data, list):
+                    self.log_test(
+                        "Friends Endpoint - Response Format",
+                        True,
+                        f"Response is a list with {len(friends_data)} items"
+                    )
+                    
+                    # Analyze list items
+                    for i, item in enumerate(friends_data[:3]):  # Show first 3 items
+                        print(f"    Item {i+1}: {json.dumps(item, indent=2, default=str)}")
+                
+                else:
+                    self.log_test(
+                        "Friends Endpoint - Unexpected Response Format",
+                        False,
+                        f"Unexpected response format: {type(friends_data)}"
+                    )
+                    
+            else:
+                self.log_test(
+                    "Friends Endpoint - API Response",
+                    False,
+                    f"Friends endpoint failed with status {response.status_code}: {response.text}"
+                )
+                
+        except Exception as e:
+            self.log_test(
+                "Friends Endpoint - API Response",
+                False,
+                error=str(e)
+            )
+
+        # Test if friends endpoint exists in backend code
+        try:
+            # Also test if there are any friendship records in the database by checking user profile
+            response = self.session.get(
+                f"{BACKEND_URL}/profile",
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                profile_data = response.json()
+                user_id = profile_data.get('id')
+                self.log_test(
+                    "Friends Endpoint - User Profile Check",
+                    True,
+                    f"User ID: {user_id}, Name: {profile_data.get('name')}"
+                )
+            else:
+                self.log_test(
+                    "Friends Endpoint - User Profile Check",
+                    False,
+                    f"Could not retrieve user profile: {response.status_code}"
+                )
+                
+        except Exception as e:
+            self.log_test(
+                "Friends Endpoint - User Profile Check",
+                False,
+                error=str(e)
+            )
         """Test all core API endpoints for basic functionality"""
         print("🌐 TESTING CORE ENDPOINTS...")
         
