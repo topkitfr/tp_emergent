@@ -5259,9 +5259,11 @@ async def get_friends(user_id: str = Depends(get_current_user)):
 @api_router.post("/conversations")
 async def create_conversation(
     message_data: MessageCreateV2,
-    user_id: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Create a new conversation or add message to existing conversation"""
+    
+    user_id = current_user["id"]  # 🔧 FIX: Extract user_id from user object
     
     if message_data.conversation_id:
         # Add message to existing conversation
