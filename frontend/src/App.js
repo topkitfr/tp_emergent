@@ -11118,7 +11118,6 @@ const CollectionsPage = () => {
   }
 
   return (
-    <>
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-white">My Collections</h1>
