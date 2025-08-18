@@ -4132,8 +4132,10 @@ async def add_to_collection(collection_data: CollectionAdd, current_user: dict =
     return {"message": f"Added to {collection_data.collection_type} collection", "collection_id": collection.id}
 
 @api_router.post("/collections/remove")
-async def remove_from_collection_post(collection_data: CollectionAdd, user_id: str = Depends(get_current_non_admin_user)):
-    """Remove jersey from collection - restricted to non-admin users only"""
+async def remove_from_collection_post(collection_data: CollectionAdd, current_user: dict = Depends(get_current_user)):
+    """Remove jersey from collection"""
+    user_id = current_user["id"]
+    
     result = await db.collections.delete_one({
         "user_id": user_id,
         "jersey_id": collection_data.jersey_id,
