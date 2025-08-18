@@ -2518,6 +2518,168 @@ def get_available_actions(transaction: dict, user_id: str) -> List[dict]:
     
     return actions
 
+# =============================================================================
+# 📨 MESSAGING INTEGRATION WITH TRANSACTIONS (LEBONCOIN STYLE)
+# =============================================================================
+
+async def create_transaction_conversation(transaction: SecureTransaction, buyer: dict, seller: dict):
+    """
+    Créer automatiquement une conversation lors d'un achat (style Leboncoin)
+    """
+    try:
+        # Créer la conversation
+        participants = [
+            ConversationParticipant(user_id=buyer["id"]),
+            ConversationParticipant(user_id=seller["id"])
+        ]
+        
+        conversation = Conversation(participants=participants)
+        await db.conversations.insert_one(conversation.dict())
+        
+        # Message système initial de bienvenue
+        welcome_message = MessageV2(
+            conversation_id=conversation.id,
+            sender_id="system",
+            message_type="system",
+            message=f"""🎉 **Achat confirmé !**
+
+**Maillot :** {transaction.jersey_info['team']} - {transaction.jersey_info.get('player_name', 'Maillot')}
+**Prix :** €{transaction.amount}
+**Statut :** Paiement sécurisé - Fonds bloqués jusqu'à confirmation de réception
+
+---
+
+**👋 {buyer['name']}** vient d'acheter votre maillot **👋 {seller['name']}** !
+
+**Prochaines étapes :**
+1. 📦 **{seller['name']}** : Expédiez le maillot dans les 2 jours
+2. 📱 **{buyer['name']}** : Vous recevrez le numéro de suivi ici
+3. ✅ **{buyer['name']}** : Confirmez la réception pour débloquer le paiement
+
+💬 Utilisez cette conversation pour communiquer pendant la transaction.""",
+            transaction_id=transaction.id,
+            system_data={
+                "type": "transaction_created",
+                "transaction_id": transaction.id,
+                "jersey_info": transaction.jersey_info,
+                "amount": transaction.amount,
+                "buyer_name": buyer["name"],
+                "seller_name": seller["name"]
+            }
+        )
+        
+        await db.messages.insert_one(welcome_message.dict())
+        
+        # Lier la conversation à la transaction
+        await db.secure_transactions.update_one(
+            {"id": transaction.id},
+            {"$set": {"conversation_id": conversation.id}}
+        )
+        
+        return conversation.id
+        
+    except Exception as e:
+        logger.error(f"Error creating transaction conversation: {e}")
+        return None
+
+async def send_system_message(conversation_id: str, message_type: str, data: dict, transaction_id: str = None):
+    """
+    Envoyer un message système dans une conversation
+    """
+    try:
+        buyer_name = data.get('buyer_name', 'L\'acheteur')
+        
+        system_messages = {
+            "payment_confirmed": {
+                "message": f"💳 **Paiement confirmé** - €{data.get('amount', 0)}\n\n🛡️ Vos fonds sont sécurisés et seront libérés après confirmation de réception.",
+                "emoji": "💳"
+            },
+            "shipped": {
+                "message": f"📦 **Maillot expédié !**\n\n**Transporteur :** {data.get('carrier', 'N/A')}\n**Numéro de suivi :** `{data.get('tracking_number', 'N/A')}`\n\n🔗 [Suivre le colis]({data.get('tracking_url', '#')})",
+                "emoji": "📦"
+            },
+            "delivered": {
+                "message": f"🏠 **Colis livré !**\n\n✅ Le colis a été livré. {buyer_name} peut maintenant confirmer la réception pour débloquer le paiement.",
+                "emoji": "🏠"
+            },
+            "payment_released": {
+                "message": f"💰 **Paiement libéré !**\n\n✅ Transaction terminée avec succès. €{data.get('amount', 0)} transférés au vendeur.",
+                "emoji": "💰"
+            },
+            "buyer_confirmed": {
+                "message": f"✅ **Réception confirmée par l'acheteur**\n\n👍 {buyer_name} confirme que le maillot est conforme. Le paiement va être libéré.",
+                "emoji": "✅"
+            },
+            "issue_reported": {
+                "message": f"⚠️ **Problème signalé**\n\n{buyer_name} a signalé un problème. La transaction est en cours de révision par nos équipes.",
+                "emoji": "⚠️"
+            }
+        }
+        
+        message_config = system_messages.get(message_type, {
+            "message": f"ℹ️ Mise à jour de la transaction",
+            "emoji": "ℹ️"
+        })
+        
+        system_message = MessageV2(
+            conversation_id=conversation_id,
+            sender_id="system",
+            message_type="system", 
+            message=message_config["message"],
+            transaction_id=transaction_id,
+            system_data={
+                "type": message_type,
+                **data
+            }
+        )
+        
+        await db.messages.insert_one(system_message.dict())
+        
+        # Envoyer la notification en temps réel si possible
+        # await notify_conversation_participants(conversation_id, system_message)
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error sending system message: {e}")
+        return False
+
+async def update_transaction_status_with_message(transaction_id: str, new_status: str, data: dict = {}):
+    """
+    Mettre à jour le statut d'une transaction et envoyer un message système
+    """
+    try:
+        transaction = await db.secure_transactions.find_one({"id": transaction_id})
+        if not transaction:
+            return False
+        
+        # Mettre à jour le statut
+        await db.secure_transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "status": new_status,
+                    "updated_at": datetime.utcnow(),
+                    **data
+                }
+            }
+        )
+        
+        # Envoyer le message système correspondant
+        conversation_id = transaction.get("conversation_id")
+        if conversation_id:
+            await send_system_message(conversation_id, new_status, {
+                **data,
+                "transaction_id": transaction_id,
+                "amount": transaction.get("amount", 0)
+            }, transaction_id)
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error updating transaction status with message: {e}")
+        return False
+
 async def get_next_jersey_reference():
     """Generate the next sequential jersey reference number (TK-000001, TK-000002, etc.)"""
     # Find the highest existing reference number
