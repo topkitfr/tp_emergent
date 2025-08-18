@@ -15761,6 +15761,91 @@ const AdminPanel = () => {
             </div>
           )}
         </div>
+      ) : activeTab === 'settings' ? (
+        <div>
+          <h2 className="text-xl font-bold text-white mb-6">
+            ⚙️ Site Settings & Privacy Control
+          </h2>
+          
+          {/* Site Mode Control */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Mode du Site</h3>
+                <p className="text-gray-400 text-sm">
+                  Contrôlez qui peut accéder à TopKit. En mode privé, seuls les utilisateurs autorisés peuvent accéder au site.
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  siteMode === 'public' ? 'bg-green-800 text-green-200' : 'bg-red-800 text-red-200'
+                }`}>
+                  {siteMode === 'public' ? '🌍 Public' : '🔒 Privé'}
+                </span>
+                {siteSettingsLoading && <LoadingSpinner size="sm" />}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => updateSiteMode('public')}
+                disabled={siteSettingsLoading || siteMode === 'public'}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  siteMode === 'public'
+                    ? 'border-green-500 bg-green-900/20 text-green-300'
+                    : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-green-500 hover:bg-green-900/10'
+                } disabled:opacity-50`}
+              >
+                <div className="text-2xl mb-2">🌍</div>
+                <h4 className="font-semibold mb-1">Mode Public</h4>
+                <p className="text-sm opacity-80">Accessible à tous les visiteurs</p>
+              </button>
+              
+              <button
+                onClick={() => updateSiteMode('private')}
+                disabled={siteSettingsLoading || siteMode === 'private'}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  siteMode === 'private'
+                    ? 'border-red-500 bg-red-900/20 text-red-300'
+                    : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-red-500 hover:bg-red-900/10'
+                } disabled:opacity-50`}
+              >
+                <div className="text-2xl mb-2">🔒</div>
+                <h4 className="font-semibold mb-1">Mode Privé</h4>
+                <p className="text-sm opacity-80">Accès restreint aux utilisateurs autorisés</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Privacy Controls */}
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Contrôles de Confidentialité</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-white">Collecte de Données Analytiques</h4>
+                  <p className="text-sm text-gray-400">Collecte des statistiques d'utilisation anonymes</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-white">Notifications Email</h4>
+                  <p className="text-sm text-gray-400">Envoi d'emails pour les mises à jour importantes</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Edit Jersey Modal */}
