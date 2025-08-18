@@ -5388,8 +5388,9 @@ async def respond_to_friend_request(
         return {"message": "Friend request declined"}
 
 @api_router.get("/friends")
-async def get_friends(user_id: str = Depends(get_current_user)):
+async def get_friends(current_user: dict = Depends(get_current_user)):
     """Get user's friends list and pending requests"""
+    user_id = current_user["id"]
     
     # Get accepted friends
     friends_pipeline = [
