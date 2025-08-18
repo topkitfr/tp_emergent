@@ -458,12 +458,12 @@ class JWTRefreshJerseyTester:
             
         try:
             # Test with valid token by making a request that uses token verification
-            response = self.make_request('GET', '/auth/profile', token=self.user_token)
+            response = self.make_request('GET', '/profile', token=self.user_token)
             
             if response and response.status_code == 200:
                 # Test with invalid token
                 invalid_token = "invalid.token.here"
-                invalid_response = self.make_request('GET', '/auth/profile', token=invalid_token)
+                invalid_response = self.make_request('GET', '/profile', token=invalid_token)
                 
                 if invalid_response and invalid_response.status_code == 401:
                     self.log_test(
