@@ -184,6 +184,18 @@ backend:
   - task: "Fix showSecurityModal Runtime Error"
 
 frontend:
+  - task: "Fix Jersey Details Editor Frontend Issues"
+    implemented: true
+    working: false
+    file: "JerseyDetailEditor.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        -working: false
+        -agent: "main"
+        -comment: "Updated JerseyDetailEditor to use tokenManager for API calls, improved error handling, added validation before save, and removed duplicate modal instances in App.js to prevent black screen issues. Ready for frontend testing."
+
   - task: "Fix showSecurityModal Runtime Error"
     implemented: true
     working: true
