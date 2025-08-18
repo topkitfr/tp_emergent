@@ -11254,8 +11254,8 @@ const CollectionsPage = () => {
               </div>
               
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${siteMode === 'private' ? 'bg-red-400' : 'bg-green-400'}`}></div>
-                <span className="text-white font-medium capitalize">{siteMode}</span>
+                <div className={`w-3 h-3 rounded-full ${(siteMode || 'public') === 'private' ? 'bg-red-400' : 'bg-green-400'}`}></div>
+                <span className="text-white font-medium capitalize">{siteMode || 'public'}</span>
               </div>
             </div>
             
