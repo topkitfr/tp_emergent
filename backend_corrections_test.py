@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-admin.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-email.preview.emergentagent.com/api"
 
 class BackendCorrectionsTest:
     def __init__(self):

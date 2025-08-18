@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://topkit-admin.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-email.preview.emergentagent.com/api"
 
 class TopKitJerseyButtonsTester:
     def __init__(self):

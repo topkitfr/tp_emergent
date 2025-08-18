@@ -12,7 +12,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [error, setError] = useState('');
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-admin.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-email.preview.emergentagent.com';
 
   const handleAuthFormSubmit = async (e) => {
     e.preventDefault();

@@ -8,7 +8,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://86631c0c-065b-41f3-821a-316b990bb542.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-email.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
