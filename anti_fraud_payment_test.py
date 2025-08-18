@@ -407,7 +407,7 @@ class AntiFraudPaymentTester:
         
         # Create another buyer for fake test
         fake_buyer_email = "fake_buyer@test.com"
-        fake_buyer_password = "FakeBuyerSecure123!"
+        fake_buyer_password = "FakeBuyerSecurePass789#"
         
         # Register and login fake buyer
         self.make_request("POST", "/auth/register", {
