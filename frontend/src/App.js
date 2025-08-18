@@ -8507,29 +8507,7 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
     return filtered;
   };
 
-  // Sort listings for selected jersey
-  const getSortedListings = () => {
-    let sorted = [...selectedJerseyListings];
-    
-    switch (sortBy) {
-      case 'price_low':
-        sorted.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_high':
-        sorted.sort((a, b) => b.price - a.price);
-        break;
-      case 'condition':
-        const conditionOrder = { 'mint': 5, 'excellent': 4, 'very_good': 3, 'good': 2, 'fair': 1 };
-        sorted.sort((a, b) => (conditionOrder[b.jersey?.condition] || 0) - (conditionOrder[a.jersey?.condition] || 0));
-        break;
-      case 'newest':
-      default:
-        sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        break;
-    }
-    
-    return sorted;
-  };
+// Jersey Detail Page Component (moved from marketplace)
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
