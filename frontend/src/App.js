@@ -8487,25 +8487,7 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     </div>
   );
 };
-                    <div>
-                      <span className="text-gray-400">Fabricant:</span>
-                      <span className="text-white ml-2">{selectedJersey.manufacturer}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Annonces:</span>
-                      <span className="text-white ml-2">{selectedJerseyListings.length}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Prix dès:</span>
-                      <span className="text-white ml-2 font-bold">
-                        {selectedJerseyListings.length > 0 ? `${Math.min(...selectedJerseyListings.map(l => l.price))}€` : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           {/* Listings controls */}
           <div className="mb-6">
