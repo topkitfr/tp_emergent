@@ -14261,6 +14261,8 @@ const AdminPanel = () => {
   const [showSmartSubmissionModal, setShowSmartSubmissionModal] = useState(false);
   const [showJerseyDetailEditor, setShowJerseyDetailEditor] = useState(false);
   const [selectedJerseyForDetails, setSelectedJerseyForDetails] = useState(null);
+  const [showJerseyViewModal, setShowJerseyViewModal] = useState(false);
+  const [selectedJerseyForView, setSelectedJerseyForView] = useState(null);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   // Function to refresh user profile data (placeholder for AdminPanel)
