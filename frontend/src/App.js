@@ -8487,11 +8487,6 @@ const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
     </div>
   );
 };
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-400">Référence:</span>
-                      <span className="text-white ml-2 font-mono">{selectedJersey.reference_number}</span>
-                    </div>
                     <div>
                       <span className="text-gray-400">Fabricant:</span>
                       <span className="text-white ml-2">{selectedJersey.manufacturer}</span>
