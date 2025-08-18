@@ -15568,56 +15568,6 @@ const AdminPanel = () => {
             </div>
           )}
         </div>
-      ) : (
-        <div>
-          <h2 className="text-xl font-bold text-white mb-6">
-            📊 System Activities ({activities.length} recent)
-          </h2>
-          
-          <div className="space-y-3">
-            {activities.map((activity) => (
-              <div key={activity.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-sm font-medium text-white">
-                        {activity.user_name || activity.user_email}
-                      </span>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-sm text-gray-400">
-                        {activity.action.replace('_', ' ')}
-                      </span>
-                    </div>
-                    
-                    {activity.details && Object.keys(activity.details).length > 0 && (
-                      <div className="text-xs text-gray-500">
-                        {activity.details.jersey_name && (
-                          <span>Jersey: {activity.details.jersey_name}</span>
-                        )}
-                        {activity.details.new_role && (
-                          <span>New role: {activity.details.new_role}</span>
-                        )}
-                        {activity.details.reason && (
-                          <span>Reason: {activity.details.reason}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <span className="text-xs text-gray-500">
-                    {new Date(activity.created_at).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       ) : activeTab === 'beta-requests' ? (
         <div>
           <div className="flex items-center justify-between mb-6">
