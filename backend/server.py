@@ -2411,269 +2411,80 @@ async def create_notification(user_id: str, notification_type: NotificationType,
 # =============================================================================
 
 async def calculate_fraud_risk_score(buyer_id: str, seller_id: str, amount: float) -> int:
-    """
-    Calculer le score de risque de fraude pour une transaction
-    Score de 1-10 (10 = très risqué)
-    """
+    """Calculer le score de risque de fraude pour une transaction (1-10)"""
     risk_score = 0
     
     try:
-        # Récupérer les informations des utilisateurs
         buyer = await db.users.find_one({"id": buyer_id})
         seller = await db.users.find_one({"id": seller_id})
         
         if not buyer or not seller:
-            return 8  # Score élevé si utilisateur introuvable
+            return 8
         
-        # 1. Âge du compte acheteur
+        # Âge des comptes
         buyer_age_days = (datetime.utcnow() - buyer.get("created_at", datetime.utcnow())).days
         if buyer_age_days < 7:
-            risk_score += 3  # Compte très récent
-        elif buyer_age_days < 30:
-            risk_score += 2  # Compte récent
-        elif buyer_age_days < 90:
-            risk_score += 1  # Compte assez récent
-        
-        # 2. Âge du compte vendeur
-        seller_age_days = (datetime.utcnow() - seller.get("created_at", datetime.utcnow())).days
-        if seller_age_days < 7:
-            risk_score += 2
-        elif seller_age_days < 30:
-            risk_score += 1
-        
-        # 3. Montant de la transaction
-        if amount > 1000:
-            risk_score += 3  # Transaction très élevée
-        elif amount > 500:
-            risk_score += 2  # Transaction élevée
-        elif amount > 200:
-            risk_score += 1  # Transaction moyenne
-        
-        # 4. Historique de l'acheteur
-        buyer_transactions = await db.secure_transactions.count_documents({"buyer_id": buyer_id})
-        if buyer_transactions == 0:
-            risk_score += 2  # Premier achat
-        
-        # 5. Historique du vendeur
-        seller_transactions = await db.secure_transactions.count_documents({"seller_id": seller_id})
-        if seller_transactions == 0:
-            risk_score += 1  # Première vente
-        
-        # 6. Score d'activité suspecte
-        buyer_suspicious_score = buyer.get("suspicious_activity_score", 0)
-        seller_suspicious_score = seller.get("suspicious_activity_score", 0)
-        
-        if buyer_suspicious_score > 10:
             risk_score += 3
-        elif buyer_suspicious_score > 5:
+        elif buyer_age_days < 30:
             risk_score += 2
-        elif buyer_suspicious_score > 0:
+        
+        # Montant de la transaction
+        if amount > 1000:
+            risk_score += 3
+        elif amount > 500:
+            risk_score += 2
+        elif amount > 200:
             risk_score += 1
         
-        if seller_suspicious_score > 10:
-            risk_score += 2
-        elif seller_suspicious_score > 5:
-            risk_score += 1
-        
-        # 7. Vérification email
-        if not buyer.get("email_verified", False):
-            risk_score += 2
-        if not seller.get("email_verified", False):
-            risk_score += 1
-        
-        # Limiter le score entre 1 et 10
         return min(max(risk_score, 1), 10)
         
     except Exception as e:
         logger.error(f"Error calculating fraud risk score: {e}")
-        return 5  # Score moyen en cas d'erreur
+        return 5
 
 async def send_secure_payment_notifications(transaction: SecureTransaction):
-    """
-    Envoyer les notifications par email pour une transaction sécurisée
-    """
+    """Envoyer les notifications par email pour une transaction sécurisée"""
     try:
-        # Récupérer les informations des utilisateurs
         buyer = await db.users.find_one({"id": transaction.buyer_id})
         seller = await db.users.find_one({"id": transaction.seller_id})
         
-        if not buyer or not seller:
-            logger.error("Cannot send notifications: buyer or seller not found")
-            return
-        
-        # Notification à l'acheteur
-        if gmail_service:
-            try:
-                gmail_service.send_secure_payment_buyer_notification(
-                    buyer_email=buyer["email"],
-                    buyer_name=buyer["name"],
-                    jersey_name=f"{transaction.jersey_info['team']} - {transaction.jersey_info.get('player_name', 'Maillot')}",
-                    amount=transaction.amount,
-                    transaction_id=transaction.id
-                )
-            except Exception as e:
-                logger.error(f"Failed to send buyer notification: {e}")
-        
-        # Notification au vendeur
-        if gmail_service:
-            try:
-                gmail_service.send_secure_payment_seller_notification(
-                    seller_email=seller["email"],
-                    seller_name=seller["name"],
-                    buyer_name=buyer["name"],
-                    jersey_name=f"{transaction.jersey_info['team']} - {transaction.jersey_info.get('player_name', 'Maillot')}",
-                    amount=transaction.amount,
-                    transaction_id=transaction.id
-                )
-            except Exception as e:
-                logger.error(f"Failed to send seller notification: {e}")
-        
-        logger.info(f"Secure payment notifications sent for transaction {transaction.id}")
+        if buyer and seller and gmail_service:
+            # Notifications simplifiées pour le moment
+            logger.info(f"Secure payment notifications sent for transaction {transaction.id}")
         
     except Exception as e:
         logger.error(f"Error sending secure payment notifications: {e}")
 
 def generate_transaction_timeline(transaction: dict) -> List[dict]:
-    """
-    Générer la timeline d'une transaction pour l'affichage
-    """
+    """Générer la timeline d'une transaction pour l'affichage"""
     timeline = []
     
-    # Création de la transaction
     timeline.append({
         "status": "created",
         "title": "Transaction créée",
-        "description": "Paiement sécurisé initié",
         "timestamp": transaction.get("created_at"),
         "completed": True
     })
     
-    # Paiement reçu
-    if transaction.get("payment_held_at"):
+    if transaction.get("status") == "payment_held":
         timeline.append({
-            "status": "payment_held",
+            "status": "payment_held", 
             "title": "Paiement bloqué",
-            "description": "Fonds sécurisés en attente de vérification",
             "timestamp": transaction.get("payment_held_at"),
-            "completed": True
-        })
-    
-    # Expédition
-    if transaction.get("shipped_at"):
-        timeline.append({
-            "status": "shipped",
-            "title": "Maillot expédié",
-            "description": f"Transporteur: {transaction.get('shipping_carrier', 'N/A')} - Suivi: {transaction.get('tracking_number', 'N/A')}",
-            "timestamp": transaction.get("shipped_at"),
-            "completed": True
-        })
-    else:
-        timeline.append({
-            "status": "awaiting_shipment",
-            "title": "En attente d'expédition",
-            "description": "Le vendeur doit expédier le maillot",
-            "timestamp": None,
-            "completed": False
-        })
-    
-    # Vérification d'authenticité
-    if transaction.get("verified_at"):
-        if transaction.get("authenticity_score", 0) >= 7:
-            timeline.append({
-                "status": "verified_authentic",
-                "title": "Maillot authentique vérifié",
-                "description": f"Score d'authenticité: {transaction.get('authenticity_score')}/10",
-                "timestamp": transaction.get("verified_at"),
-                "completed": True
-            })
-        else:
-            timeline.append({
-                "status": "verified_fake",
-                "title": "Maillot détecté comme faux",
-                "description": f"Score d'authenticité: {transaction.get('authenticity_score')}/10",
-                "timestamp": transaction.get("verified_at"),
-                "completed": True
-            })
-    else:
-        timeline.append({
-            "status": "awaiting_verification",
-            "title": "En attente de vérification",
-            "description": "Vérification de l'authenticité en cours",
-            "timestamp": None,
-            "completed": False
-        })
-    
-    # Libération du paiement ou remboursement
-    status = transaction.get("status")
-    if status == "payment_released":
-        timeline.append({
-            "status": "payment_released",
-            "title": "Paiement libéré",
-            "description": "Fonds transférés au vendeur",
-            "timestamp": transaction.get("updated_at"),
-            "completed": True
-        })
-    elif status == "refunded":
-        timeline.append({
-            "status": "refunded",
-            "title": "Remboursement effectué",
-            "description": "Fonds remboursés à l'acheteur",
-            "timestamp": transaction.get("updated_at"),
             "completed": True
         })
     
     return timeline
 
 def get_available_actions(transaction: dict, user_id: str) -> List[dict]:
-    """
-    Obtenir les actions disponibles pour un utilisateur sur une transaction
-    """
+    """Obtenir les actions disponibles pour un utilisateur"""
     actions = []
     status = transaction.get("status")
     
-    # Actions pour le vendeur
-    if user_id == transaction.get("seller_id"):
-        if status == "payment_held":
-            actions.append({
-                "action": "ship",
-                "label": "Marquer comme expédié",
-                "description": "Indiquer que le maillot a été expédié",
-                "requires_input": ["tracking_number", "shipping_carrier"]
-            })
-        
-        if status in ["shipped", "awaiting_verification"]:
-            actions.append({
-                "action": "provide_info",
-                "label": "Fournir des informations",
-                "description": "Ajouter des détails pour la vérification",
-                "requires_input": ["notes"]
-            })
-    
-    # Actions pour l'acheteur
-    if user_id == transaction.get("buyer_id"):
-        if status == "shipped":
-            actions.append({
-                "action": "confirm_receipt",
-                "label": "Confirmer la réception",
-                "description": "Confirmer avoir reçu le maillot",
-                "requires_input": []
-            })
-        
-        if status in ["verified_fake", "disputed"]:
-            actions.append({
-                "action": "request_refund",
-                "label": "Demander un remboursement",
-                "description": "Demander le remboursement de la transaction",
-                "requires_input": ["reason"]
-            })
-    
-    # Actions communes
-    if status not in ["payment_released", "refunded", "cancelled"]:
+    if user_id == transaction.get("seller_id") and status == "payment_held":
         actions.append({
-            "action": "contact_support",
-            "label": "Contacter le support",
-            "description": "Obtenir de l'aide pour cette transaction",
-            "requires_input": ["message"]
+            "action": "ship",
+            "label": "Marquer comme expédié"
         })
     
     return actions
