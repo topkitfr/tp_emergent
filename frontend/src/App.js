@@ -12481,6 +12481,7 @@ const CollectionsPage = () => {
         </div>
       ) : activeTab === 'beta-requests' ? (
         <div>
+          {console.log('🎯 RENDERING BETA REQUESTS CONTENT - activeTab:', activeTab)}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white">
               🚀 Demandes d'Accès Bêta
