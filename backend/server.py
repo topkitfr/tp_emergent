@@ -4353,6 +4353,134 @@ async def add_collector_price_estimate(
     return {"message": f"Price estimate of ${estimated_price} added for jersey {jersey_id}"}
 
 
+# Jersey Detail Management Endpoints
+@api_router.get("/collections/owned/{jersey_id}/details")
+async def get_jersey_details(jersey_id: str, user_id: str = Depends(get_current_user)):
+    """Get detailed information for a jersey in user's owned collection"""
+    # Verify user owns this jersey
+    collection_item = await db.collections.find_one({
+        "user_id": user_id,
+        "jersey_id": jersey_id,
+        "collection_type": "owned"
+    })
+    
+    if not collection_item:
+        raise HTTPException(status_code=404, detail="Jersey not found in your collection")
+    
+    # Get detailed data if it exists
+    detail_data = await db.jersey_details.find_one({"user_id": user_id, "jersey_id": jersey_id})
+    
+    if detail_data:
+        detail_data.pop('_id', None)  # Remove MongoDB ID
+        return detail_data
+    else:
+        # Return default values if no details exist
+        return {
+            "jersey_id": jersey_id,
+            "user_id": user_id,
+            "model_type": "authentic",
+            "condition": "mint",
+            "size": "m",
+            "special_features": [],
+            "material_details": "",
+            "tags": "tags_on",
+            "packaging": "no_packaging",
+            "customization": "blank",
+            "competition_badges": "",
+            "rarity": "common",
+            "purchase_price": None,
+            "purchase_date": None,
+            "purchase_location": None,
+            "certificate_authenticity": False,
+            "storage_notes": "",
+            "estimated_value": 0
+        }
+
+@api_router.put("/collections/owned/{jersey_id}/details")
+async def update_jersey_details(jersey_id: str, detail_data: JerseyDetailData, user_id: str = Depends(get_current_user)):
+    """Update detailed information for a jersey in user's owned collection"""
+    # Verify user owns this jersey
+    collection_item = await db.collections.find_one({
+        "user_id": user_id,
+        "jersey_id": jersey_id,
+        "collection_type": "owned"
+    })
+    
+    if not collection_item:
+        raise HTTPException(status_code=404, detail="Jersey not found in your collection")
+    
+    # Prepare detail data for storage
+    detail_doc = detail_data.dict()
+    detail_doc["jersey_id"] = jersey_id
+    detail_doc["user_id"] = user_id
+    detail_doc["updated_at"] = datetime.utcnow()
+    
+    # Upsert the details
+    result = await db.jersey_details.replace_one(
+        {"user_id": user_id, "jersey_id": jersey_id},
+        detail_doc,
+        upsert=True
+    )
+    
+    # Log activity
+    await log_user_activity(user_id, "jersey_details_updated", jersey_id, {
+        "estimated_value": detail_data.estimated_value,
+        "condition": detail_data.condition,
+        "model_type": detail_data.model_type
+    })
+    
+    return {"message": "Jersey details updated successfully", "estimated_value": detail_data.estimated_value}
+
+@api_router.get("/users/security-info")
+async def get_user_security_info(user_id: str = Depends(get_current_user)):
+    """Get user's security information for the security settings modal"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get recent login history (last 10 logins)
+    login_history = await db.login_history.find(
+        {"user_id": user_id}
+    ).sort("timestamp", -1).limit(10).to_list(10)
+    
+    # Remove MongoDB IDs
+    for login in login_history:
+        login.pop('_id', None)
+    
+    return {
+        "has_2fa": user.get("two_factor_enabled", False),
+        "password_last_changed": user.get("password_last_changed"),
+        "login_history": login_history,
+        "security_alerts": user.get("security_alerts", True),
+        "email_notifications": user.get("email_notifications", True)
+    }
+
+@api_router.put("/users/security-settings")
+async def update_security_settings(
+    settings: dict, 
+    user_id: str = Depends(get_current_user)
+):
+    """Update user's security notification settings"""
+    # Validate settings
+    valid_settings = ["security_alerts", "email_notifications"]
+    update_data = {}
+    
+    for key, value in settings.items():
+        if key in valid_settings and isinstance(value, bool):
+            update_data[key] = value
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid settings provided")
+    
+    # Update user settings
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Security settings updated successfully"}
+
+
 @api_router.get("/users/{user_id}/profile")
 async def get_user_public_profile(user_id: str):
     """Get public profile information for a user"""
