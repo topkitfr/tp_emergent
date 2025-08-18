@@ -234,18 +234,18 @@ const PrivateBetaPage = ({ siteMode, onAccessRequest }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
               <div className="text-3xl mb-3">👕</div>
-              <h3 className="text-lg font-semibold mb-2">Marketplace Unique</h3>
-              <p className="text-gray-400 text-sm">Achetez et vendez des maillots authentiques dans un environnement sécurisé</p>
+              <h3 className="text-lg font-semibold mb-2">Unique Marketplace</h3>
+              <p className="text-gray-400 text-sm">Buy and sell authentic jerseys in a secure environment</p>
             </div>
             <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
               <div className="text-3xl mb-3">📊</div>
-              <h3 className="text-lg font-semibold mb-2">Collections Privées</h3>
-              <p className="text-gray-400 text-sm">Gérez vos collections avec un système avancé de wishlist et inventaire</p>
+              <h3 className="text-lg font-semibold mb-2">Private Collections</h3>
+              <p className="text-gray-400 text-sm">Manage your collections with advanced wishlist and inventory system</p>
             </div>
             <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
               <div className="text-3xl mb-3">💳</div>
-              <h3 className="text-lg font-semibold mb-2">Paiements Sécurisés</h3>
-              <p className="text-gray-400 text-sm">Transactions protégées avec Stripe et commission transparente</p>
+              <h3 className="text-lg font-semibold mb-2">Secure Payments</h3>
+              <p className="text-gray-400 text-sm">Protected transactions with Stripe and transparent commission</p>
             </div>
           </div>
 
