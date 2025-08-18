@@ -15023,11 +15023,12 @@ const AdminPanel = () => {
       {showUserSettings && (
         <UserSettingsPanel
           user={user}
-          onClose={() => setShowUserSettings(false)}
-          onUpdate={() => {
+          profileData={profileData}
+          onProfileUpdated={() => {
             // Refresh profile data
             fetchUserProfile();
           }}
+          onClose={() => setShowUserSettings(false)}
         />
       )}
         </div>
