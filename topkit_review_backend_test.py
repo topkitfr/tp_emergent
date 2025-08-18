@@ -13,9 +13,9 @@ from datetime import datetime
 # Configuration
 BASE_URL = "https://jersey-marketplace.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+TEST_USER_PASSWORD = "TopKit123!"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 class TopKitReviewTester:
     def __init__(self):
