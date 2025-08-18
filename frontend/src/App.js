@@ -1889,7 +1889,7 @@ const Header = ({ currentView, setCurrentView, setShowAuthModal, setShowSecurity
                         : 'text-gray-300 hover:text-white hover:bg-gray-800'
                     }`}
                   >
-                    🛍️ Mon Panier {cartCount > 0 && `(${cartCount})`}
+                    🛍️ My Cart {cartCount > 0 && `(${cartCount})`}
                   </button>
                 </nav>
               </div>
