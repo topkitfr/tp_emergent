@@ -131,7 +131,12 @@ def test_user_submissions(token, user_data):
         
         if response.status_code == 200:
             data = response.json()
-            submissions = data.get('jerseys', [])
+            # Handle both possible response formats
+            if isinstance(data, list):
+                submissions = data
+            else:
+                submissions = data.get('jerseys', [])
+            
             print(f"✅ User submissions retrieved successfully!")
             print(f"   Total submissions: {len(submissions)}")
             
