@@ -1572,9 +1572,17 @@ async def login(user_data: UserLogin, request: Request):
             raise HTTPException(status_code=403, detail="Compte suspendu. Contactez l'administration.")
         
         # Check if account is locked
-        if user.get('account_locked_until') and datetime.fromisoformat(user['account_locked_until'].replace('Z', '+00:00')) > datetime.utcnow():
-            await log_suspicious_activity(user['id'], "login_attempt_locked_account", f"Login attempt on locked account: {user_data.email}")
-            raise HTTPException(status_code=423, detail="Compte temporairement verrouillé")
+        if user.get('account_locked_until'):
+            # Handle MongoDB ISODate objects directly (they are already datetime objects)
+            locked_until = user['account_locked_until']
+            # If it's a string (legacy), convert it; if it's already a datetime object, use it directly
+            if isinstance(locked_until, str):
+                locked_until = datetime.fromisoformat(locked_until.replace('Z', '+00:00'))
+            
+            if locked_until > datetime.utcnow():
+                await log_suspicious_activity(user['id'], "login_attempt_locked_account", f"Login attempt on locked account: {user_data.email}")
+                raise HTTPException(status_code=423, detail="Compte temporairement verrouillé")
+        
         
         # Verify password
         if not verify_password(user_data.password, user['password_hash']):
