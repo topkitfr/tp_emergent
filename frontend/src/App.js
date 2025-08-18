@@ -15292,22 +15292,6 @@ const AdminPanel = () => {
         }}
       />
     )}
-    
-    {/* Jersey Detail Editor Modal for Admin */}
-    {showJerseyDetailEditor && selectedJerseyForDetails && (
-      <JerseyDetailEditor
-        jersey={selectedJerseyForDetails}
-        isOpen={showJerseyDetailEditor}
-        onClose={() => {
-          setShowJerseyDetailEditor(false);
-          setSelectedJerseyForDetails(null);
-        }}
-        onSave={() => {
-          // Refresh admin data if needed
-          fetchPendingJerseys();
-        }}
-      />
-    )}
     </>
   );
 };
