@@ -8463,11 +8463,13 @@ const GlobalMarketplacePage = ({ onAddToCart = null }) => {
 const JerseyDetailPage = ({ jerseyId, referenceNumber }) => {
   const { user } = useAuth();
   const [jersey, setJersey] = useState(null);
-                </div>
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
-                    {selectedJersey.player ? `${selectedJersey.team} - ${selectedJersey.player}` : selectedJersey.team}
-                  </h1>
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userCollection, setUserCollection] = useState({ owned: false, wanted: false });
+  const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    fetchJerseyDetails();
                   <p className="text-gray-300 text-lg mb-4">
                     {selectedJersey.league} • {selectedJersey.season} • {selectedJersey.home_away}
                   </p>
