@@ -4163,7 +4163,9 @@ async def remove_from_collection(jersey_id: str, user_id: str = Depends(get_curr
     return {"message": "Removed from collection"}
 
 @api_router.get("/collections/{collection_type}")
-async def get_user_collection(collection_type: str, user_id: str = Depends(get_current_user)):
+async def get_user_collection(collection_type: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    
     pipeline = [
         {"$match": {"user_id": user_id, "collection_type": collection_type}},
         {
