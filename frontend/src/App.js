@@ -12596,6 +12596,8 @@ const AppContent = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [siteMode, setSiteMode] = useState('public'); // Site mode state
+  const [showJerseyViewModal, setShowJerseyViewModal] = useState(false);
+  const [selectedJerseyForView, setSelectedJerseyForView] = useState(null);
 
   // Fetch site mode
   const fetchSiteSettings = async () => {
