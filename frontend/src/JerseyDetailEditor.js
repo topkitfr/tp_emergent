@@ -84,20 +84,24 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
   const loadJerseyDetails = async () => {
     try {
+      console.log('Loading jersey details for jersey ID:', jersey?.id);
       const response = await tokenManager.makeAuthenticatedRequest(
         'get',
         `/api/collections/owned/${jersey.id}/details`
       );
       
       if (response.data) {
+        console.log('Jersey details loaded:', response.data);
         setDetailData(prev => ({
           ...prev,
           ...response.data
         }));
+      } else {
+        console.log('No existing jersey details found');
       }
     } catch (error) {
       // Details don't exist yet, use defaults
-      console.log('No existing details found, using defaults');
+      console.log('No existing details found, using defaults:', error.message);
     }
   };
 
