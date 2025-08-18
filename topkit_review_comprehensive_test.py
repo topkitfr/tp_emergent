@@ -377,7 +377,7 @@ class TopKitReviewTester:
                 timeout=10
             )
             
-            if response.status_code == 201:
+            if response.status_code == 200:
                 jersey_response = response.json()
                 jersey_id = jersey_response.get('id')
                 self.log_test(
