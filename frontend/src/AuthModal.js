@@ -244,26 +244,46 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               <div className="text-xs text-gray-600 mb-2 font-medium">
                 🔒 Exigences du mot de passe :
               </div>
-              <div className="grid grid-cols-1 gap-1 text-xs text-gray-600">
+              <div className="grid grid-cols-1 gap-1 text-xs">
                 <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">•</span>
-                  Au moins <strong>8 caractères</strong>
+                  <span className={`mr-2 ${passwordValidation.minLength ? 'text-green-500' : 'text-gray-400'}`}>
+                    {passwordValidation.minLength ? '✓' : '•'}
+                  </span>
+                  <span className={passwordValidation.minLength ? 'text-green-600' : 'text-gray-600'}>
+                    Au moins <strong>8 caractères</strong>
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">•</span>
-                  Au moins <strong>1 majuscule</strong> (A-Z)
+                  <span className={`mr-2 ${passwordValidation.hasUppercase ? 'text-green-500' : 'text-gray-400'}`}>
+                    {passwordValidation.hasUppercase ? '✓' : '•'}
+                  </span>
+                  <span className={passwordValidation.hasUppercase ? 'text-green-600' : 'text-gray-600'}>
+                    Au moins <strong>1 majuscule</strong> (A-Z)
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">•</span>
-                  Au moins <strong>1 minuscule</strong> (a-z)
+                  <span className={`mr-2 ${passwordValidation.hasLowercase ? 'text-green-500' : 'text-gray-400'}`}>
+                    {passwordValidation.hasLowercase ? '✓' : '•'}
+                  </span>
+                  <span className={passwordValidation.hasLowercase ? 'text-green-600' : 'text-gray-600'}>
+                    Au moins <strong>1 minuscule</strong> (a-z)
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">•</span>
-                  Au moins <strong>1 chiffre</strong> (0-9)
+                  <span className={`mr-2 ${passwordValidation.hasNumber ? 'text-green-500' : 'text-gray-400'}`}>
+                    {passwordValidation.hasNumber ? '✓' : '•'}
+                  </span>
+                  <span className={passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-600'}>
+                    Au moins <strong>1 chiffre</strong> (0-9)
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">•</span>
-                  Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
+                  <span className={`mr-2 ${passwordValidation.hasSpecial ? 'text-green-500' : 'text-gray-400'}`}>
+                    {passwordValidation.hasSpecial ? '✓' : '•'}
+                  </span>
+                  <span className={passwordValidation.hasSpecial ? 'text-green-600' : 'text-gray-600'}>
+                    Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
+                  </span>
                 </div>
               </div>
             </div>
