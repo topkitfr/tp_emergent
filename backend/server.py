@@ -341,6 +341,25 @@ class PriceHistory(BaseModel):
     transaction_date: datetime = Field(default_factory=datetime.utcnow)
     source: str = "marketplace"  # "marketplace", "collector_input", "external"
 
+# Pydantic models
+class JerseyDetailData(BaseModel):
+    model_type: str = Field(default="authentic")
+    condition: str = Field(default="mint")
+    size: str = Field(default="m")
+    special_features: List[str] = Field(default=[])
+    material_details: str = Field(default="")
+    tags: str = Field(default="tags_on")
+    packaging: str = Field(default="no_packaging")
+    customization: str = Field(default="blank")
+    competition_badges: str = Field(default="")
+    rarity: str = Field(default="common")
+    purchase_price: Optional[float] = Field(default=None)
+    purchase_date: Optional[str] = Field(default=None)
+    purchase_location: Optional[str] = Field(default=None)
+    certificate_authenticity: bool = Field(default=False)
+    storage_notes: str = Field(default="")
+    estimated_value: float = Field(default=0)
+
 # Request Models
 class UserRegister(BaseModel):
     email: EmailStr
