@@ -3,6 +3,9 @@ import './App.css';
 import axios from 'axios';
 import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
+import SecuritySettingsModal from './SecuritySettingsModal';
+import SmartJerseySubmissionForm from './SmartJerseySubmissionForm';
+import { useCSVData } from './utils/csvLoader';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
