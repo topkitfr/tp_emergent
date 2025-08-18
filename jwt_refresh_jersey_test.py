@@ -303,8 +303,7 @@ class JWTRefreshJerseyTester:
             
         try:
             # Approve the test jersey
-            approval_data = {"action": "approve"}
-            response = self.make_request('POST', f'/admin/jerseys/{self.test_jersey_id}/moderate', token=self.admin_token, json=approval_data)
+            response = self.make_request('POST', f'/admin/jerseys/{self.test_jersey_id}/approve', token=self.admin_token)
             
             if response and response.status_code == 200:
                 data = response.json()
