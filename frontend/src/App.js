@@ -14951,6 +14951,19 @@ const AdminPanel = () => {
       />
     )}
     </>
+    
+    {/* Smart Jersey Submission Modal for Admin */}
+    {showSmartSubmissionModal && (
+      <SmartJerseySubmissionForm
+        isOpen={showSmartSubmissionModal}
+        onClose={() => setShowSmartSubmissionModal(false)}
+        onSuccess={() => {
+          setShowSmartSubmissionModal(false);
+          // Refresh pending jerseys to show new submission
+          fetchPendingJerseys();
+        }}
+      />
+    )}
   );
 };
 
