@@ -14,8 +14,8 @@ from datetime import datetime
 BACKEND_URL = "https://886eb379-c61c-4ded-a172-57262818cd89.preview.emergentagent.com/api"
 
 # Test credentials from review request
-USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "TopKit123!"
+USER_EMAIL = "steinmetzlivio.fixed@gmail.com"
+USER_PASSWORD = "T0p_Mdp_1288*"
 
 def test_fixed_user_authentication():
     """Test authentication with the fixed user account"""
