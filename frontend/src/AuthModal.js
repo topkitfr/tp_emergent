@@ -171,6 +171,25 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           </div>
         )}
 
+        {/* Beta Access Information */}
+        {!isLogin && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start">
+              <div className="text-amber-400 mr-3 mt-0.5">⚠️</div>
+              <div>
+                <h4 className="text-amber-800 font-semibold text-sm mb-1">
+                  Accès Beta Requis
+                </h4>
+                <p className="text-amber-700 text-xs leading-relaxed">
+                  La création de compte nécessite une <strong>approbation beta préalable</strong>. 
+                  Si vous n'avez pas encore reçu d'email d'approbation, veuillez d'abord 
+                  <span className="font-medium"> demander l'accès beta</span> via le formulaire ci-dessous.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
           {!isLogin && (
             <input
