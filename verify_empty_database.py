@@ -6,7 +6,7 @@ Verify that the TopKit database is completely empty after erasure
 import requests
 import json
 
-BASE_URL = "https://topkit-email.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-marketplace.preview.emergentagent.com/api"
 
 def verify_empty_database():
     """Verify all endpoints return empty results"""

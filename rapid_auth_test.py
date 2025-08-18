@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-email.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-marketplace.preview.emergentagent.com/api"
 
 class RapidAuthTester:
     def __init__(self):
