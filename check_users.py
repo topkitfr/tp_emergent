@@ -33,7 +33,7 @@ async def check_users():
         print("\nTrying to create a test admin account...")
         admin_reg_data = {
             "email": "testadmin@topkit.com",
-            "password": "SecureAdminPass2024!",
+            "password": "StrongP@ssw0rd2024!",
             "name": "Test Admin"
         }
         
