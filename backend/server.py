@@ -2542,16 +2542,34 @@ async def log_user_activity(user_id: str, action: str, target_id: str = None, de
 
 async def create_notification(user_id: str, notification_type: NotificationType, title: str, message: str, related_id: str = None):
     """Create a notification for a user"""
-    notification = Notification(
-        user_id=user_id,
-        type=notification_type,
-        title=title,
-        message=message,
-        related_id=related_id
-    )
-    
-    await db.notifications.insert_one(notification.dict())
-    return notification
+    try:
+        logger.info(f"🔔 Creating notification for user {user_id}: {title}")
+        
+        notification = Notification(
+            user_id=user_id,
+            type=notification_type,
+            title=title,
+            message=message,
+            related_id=related_id
+        )
+        
+        # Convert to dict for MongoDB insertion
+        notification_dict = notification.dict()
+        logger.info(f"📝 Notification data: {notification_dict}")
+        
+        # Insert into database
+        result = await db.notifications.insert_one(notification_dict)
+        logger.info(f"✅ Notification created with MongoDB ID: {result.inserted_id}")
+        
+        return notification
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to create notification for user {user_id}: {str(e)}")
+        logger.error(f"   Title: {title}")
+        logger.error(f"   Message: {message}")
+        logger.error(f"   Type: {notification_type}")
+        # Don't raise the exception to avoid breaking the main flow
+        return None
 
 # =============================================================================
 # 🛡️ SECURE PAYMENT HELPER FUNCTIONS
