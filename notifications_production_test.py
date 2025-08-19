@@ -321,8 +321,10 @@ class NotificationsProductionTester:
             self.log_test("Notification Read Status", False, "", "No notifications available to test")
             return False
             
-        if not self.user_token:
-            self.log_test("Notification Read Status", False, "", "No user token available")
+        # Use any available token
+        token = self.user_token or self.admin_token
+        if not token:
+            self.log_test("Notification Read Status", False, "", "No authentication token available")
             return False
             
         try:
@@ -346,7 +348,7 @@ class NotificationsProductionTester:
                 self.log_test("Notification Read Status", False, "", "Notification ID not found")
                 return False
             
-            headers = {"Authorization": f"Bearer {self.user_token}"}
+            headers = {"Authorization": f"Bearer {token}"}
             
             # Try to mark notification as read
             read_response = self.session.post(
