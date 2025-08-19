@@ -3705,7 +3705,6 @@ async def create_jersey(
             # Log regular submission activity
             await log_user_activity(user_id, "jersey_submission", jersey.id, {
                 "jersey_name": f"{jersey.team} {jersey.season}",
-                "player": jersey.player,
                 "reference_number": jersey.reference_number,
                 "status": jersey.status
             })
