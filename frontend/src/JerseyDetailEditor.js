@@ -47,7 +47,31 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
     back: null
   });
 
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+  // Add suggestions state and constants for smart form
+  const [suggestions, setSuggestions] = useState({});
+
+  // Predefined options
+  const SEASONS = [
+    '25/26', '24/25', '23/24', '22/23', '21/22', '20/21', '19/20', '18/19', '17/18', '16/17'
+  ];
+
+  const JERSEY_TYPES = [
+    { value: 'home', label: 'Domicile' },
+    { value: 'away', label: 'Extérieur' },
+    { value: 'third', label: 'Troisième' },
+    { value: 'goalkeeper', label: 'Gardien' },
+    { value: 'training', label: 'Entraînement' },
+    { value: 'special', label: 'Édition spéciale' }
+  ];
+
+  const MANUFACTURERS = [
+    'Nike', 'Adidas', 'Puma', 'Jordan', 'Umbro', 'Kappa', 'New Balance', 'Under Armour', 'Hummel', 'Autre'
+  ];
+
+  const MODEL_TYPES = [
+    { value: 'authentic', label: 'Authentic' },
+    { value: 'replica', label: 'Replica' }
+  ];
 
   // Check if this is a new submission
   const isNewSubmission = jersey?.isNewSubmission || false;
