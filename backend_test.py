@@ -457,7 +457,7 @@ class TopKitAdminTester:
             if user_response.status_code == 200:
                 login_response = requests.post(f"{BASE_URL}/auth/login", json={
                     "email": "regularuser@example.com",
-                    "password": "RegularUser123!"
+                    "password": "RegularUserPassword!@#"
                 })
                 
                 if login_response.status_code == 200:
