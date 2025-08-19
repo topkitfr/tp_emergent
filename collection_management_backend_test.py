@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
 
 # Test credentials - using admin as test user since regular user is locked
 TEST_USER = {

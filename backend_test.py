@@ -20,7 +20,7 @@ import io
 import os
 
 # Configuration
-BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
 
 # Test credentials from review request
 TEST_USER_EMAIL = "livio.test@topkit.fr"
@@ -772,7 +772,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BASE_URL = "https://kit-editor.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_USER_EMAIL = "livio.test@topkit.fr"
@@ -1445,7 +1445,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BASE_URL = "https://kit-editor.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
@@ -1989,7 +1989,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_USER = {

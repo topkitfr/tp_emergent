@@ -13,7 +13,7 @@ import jwt
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

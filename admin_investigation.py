@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
 
 # Admin credentials (confirmed working)
 ADMIN_EMAIL = "topkitfr@gmail.com"

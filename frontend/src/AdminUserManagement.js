@@ -12,7 +12,7 @@ const AdminUserManagement = ({ isOpen, onClose }) => {
   const [banReason, setBanReason] = useState('');
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://jersey-editor.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://kit-editor.preview.emergentagent.com';
 
   useEffect(() => {
     if (isOpen) {

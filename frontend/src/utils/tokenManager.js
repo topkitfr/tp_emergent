@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get API URL from environment
-const API_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://jersey-editor.preview.emergentagent.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://kit-editor.preview.emergentagent.com';
 
 class TokenManager {
   constructor() {
