@@ -303,10 +303,16 @@ const AppContent = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setNotifications(data);
+        // Ensure notifications is always an array
+        setNotifications(Array.isArray(data) ? data : []);
+      } else {
+        // If response is not ok, set empty array
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
+      // Ensure notifications is always an array even on error
+      setNotifications([]);
     }
   };
 
