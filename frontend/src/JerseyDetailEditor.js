@@ -326,7 +326,8 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Basic Info */}
+            {/* Left Column - Basic Info - Only show for submission and admin-modify */}
+            {(isNewSubmission || isAdminEdit) && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-black border-b border-gray-200 pb-2">
                 📋 Informations de base
