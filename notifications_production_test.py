@@ -391,6 +391,94 @@ class NotificationsProductionTester:
             self.log_test("Notification Read Status", False, "", str(e))
             return False
     
+    def test_admin_moderation_notifications(self):
+        """Test if notifications are created for admin moderation actions"""
+        if not self.admin_token:
+            self.log_test("Admin Moderation Notifications", False, "", "No admin token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            
+            # First, get pending jerseys
+            pending_response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending", headers=headers)
+            if pending_response.status_code != 200:
+                self.log_test("Admin Moderation Notifications", False, f"Failed to get pending jerseys - HTTP {pending_response.status_code}", pending_response.text)
+                return False
+            
+            pending_jerseys = pending_response.json()
+            if not pending_jerseys or len(pending_jerseys) == 0:
+                self.log_test("Admin Moderation Notifications", False, "", "No pending jerseys available for moderation testing")
+                return False
+            
+            # Get the first pending jersey
+            test_jersey = pending_jerseys[0]
+            jersey_id = test_jersey.get('id')
+            submitted_by = test_jersey.get('submitted_by')
+            
+            if not jersey_id or not submitted_by:
+                self.log_test("Admin Moderation Notifications", False, "", "Invalid jersey data for moderation testing")
+                return False
+            
+            # Get initial notification count for the user who submitted the jersey
+            initial_response = self.session.get(f"{BACKEND_URL}/notifications", headers=headers)
+            initial_count = 0
+            if initial_response.status_code == 200:
+                initial_notifications = initial_response.json()
+                initial_count = len(initial_notifications) if isinstance(initial_notifications, list) else 0
+            
+            # Approve the jersey
+            approve_response = self.session.post(
+                f"{BACKEND_URL}/admin/jerseys/{jersey_id}/approve",
+                headers=headers
+            )
+            
+            if approve_response.status_code in [200, 204]:
+                # Wait for notification creation
+                time.sleep(2)
+                
+                # Check for new notifications
+                final_response = self.session.get(f"{BACKEND_URL}/notifications", headers=headers)
+                if final_response.status_code == 200:
+                    final_notifications = final_response.json()
+                    final_count = len(final_notifications) if isinstance(final_notifications, list) else 0
+                    
+                    # Look for approval notifications
+                    approval_notifications = []
+                    if isinstance(final_notifications, list):
+                        for notif in final_notifications:
+                            if 'approved' in notif.get('type', '').lower() or \
+                               'approved' in notif.get('message', '').lower() or \
+                               (jersey_id and jersey_id in str(notif.get('related_id', ''))):
+                                approval_notifications.append(notif)
+                    
+                    self.log_test(
+                        "Admin Moderation Notifications",
+                        True,
+                        f"Jersey {jersey_id} approved - Initial notifications: {initial_count}, Final: {final_count}, Approval-related: {len(approval_notifications)}"
+                    )
+                    return approval_notifications
+                else:
+                    self.log_test(
+                        "Admin Moderation Notifications",
+                        False,
+                        f"Jersey approved but failed to retrieve notifications - HTTP {final_response.status_code}",
+                        final_response.text
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Admin Moderation Notifications",
+                    False,
+                    f"Failed to approve jersey - HTTP {approve_response.status_code}",
+                    approve_response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Moderation Notifications", False, "", str(e))
+            return False
+    
     def test_notification_content_structure(self, notifications):
         """Verify notification content structure and completeness"""
         if not notifications or not isinstance(notifications, list):
