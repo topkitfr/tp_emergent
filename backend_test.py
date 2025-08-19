@@ -342,7 +342,7 @@ class TopKitAdminTester:
                         }
                         
                         mod_response = requests.post(
-                            f"{BASE_URL}/admin/jerseys/{workflow_jersey_id}/suggest-modification",
+                            f"{BASE_URL}/admin/jerseys/{workflow_jersey_id}/suggest-modifications",
                             json=modification_data,
                             headers=headers
                         )
