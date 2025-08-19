@@ -568,6 +568,71 @@ const AppContent = () => {
     return userCollections[type]?.some(item => item.jersey_id === jerseyId);
   };
 
+  // Collection management functions
+  const handleEditCollectionItem = (item) => {
+    console.log('Editing collection item:', item);
+    // Create a jersey object with the collection data for the editor
+    const jerseyWithCollectionData = {
+      ...item.jersey,
+      collection_id: item.id,
+      collection_type: item.collection_type,
+      size: item.size,
+      condition: item.condition
+    };
+    setEditingJersey(jerseyWithCollectionData);
+    setShowJerseyEditor(true);
+  };
+
+  const handleViewCollectionItem = (item) => {
+    console.log('Viewing collection item:', item);
+    // Set selected jersey for detailed view
+    setSelectedJersey({
+      ...item.jersey,
+      collection_details: {
+        collection_id: item.id,
+        collection_type: item.collection_type,
+        size: item.size,
+        condition: item.condition,
+        added_at: item.added_at
+      }
+    });
+  };
+
+  const handleRemoveCollectionItem = async (item, collectionType) => {
+    if (!user) return;
+    
+    const confirmRemove = window.confirm(`Êtes-vous sûr de vouloir supprimer "${item.jersey?.team || 'ce maillot'}" de votre ${collectionType === 'owned' ? 'collection' : 'wishlist'} ?`);
+    if (!confirmRemove) return;
+    
+    try {
+      const response = await fetch(`${API}/api/collections/remove`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          collection_id: item.id
+        })
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        // Reload collections to get updated data
+        await loadUserCollections();
+        alert(`✅ Maillot supprimé de votre ${collectionType === 'owned' ? 'collection' : 'wishlist'} !`);
+      } else {
+        const errorMsg = responseData.detail || `Erreur lors de la suppression`;
+        alert(`❌ ${errorMsg}`);
+        console.error('Remove collection item error:', response.status, responseData);
+      }
+    } catch (error) {
+      console.error('Error removing collection item:', error);
+      alert('❌ Erreur de connexion lors de la suppression');
+    }
+  };
+
   // Get unique leagues and teams for filters
   const availableLeagues = [...new Set(jerseys.map(j => j.league).filter(Boolean))];
   const availableTeams = filters.league 
