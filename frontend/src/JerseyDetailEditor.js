@@ -297,13 +297,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
               {/* Rarity */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.rarity.label}
                 </label>
                 <select
                   value={detailData.rarity}
                   onChange={(e) => handleInputChange('rarity', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.rarity.options.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -312,36 +312,36 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
               </div>
 
               {/* Purchase Information */}
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h4 className="text-md font-semibold text-white mb-3">Purchase Information</h4>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="text-md font-semibold text-black mb-3">Informations d'achat</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Purchase Price (€)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Prix d'achat (€)</label>
                     <input
                       type="number"
                       value={detailData.purchase_price}
                       onChange={(e) => handleInputChange('purchase_price', e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                       placeholder="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Purchase Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date d'achat</label>
                     <input
                       type="date"
                       value={detailData.purchase_date}
                       onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Purchase Location</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Lieu d'achat</label>
                     <input
                       type="text"
                       value={detailData.purchase_location}
                       onChange={(e) => handleInputChange('purchase_location', e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                      placeholder="Store, website, marketplace..."
+                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                      placeholder="Magasin, site web, marketplace..."
                     />
                   </div>
                   <div className="flex items-center">
