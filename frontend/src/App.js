@@ -597,6 +597,7 @@ const AppContent = () => {
         added_at: item.added_at
       }
     });
+    setShowJerseyDetailView(true);
   };
 
   const handleRemoveCollectionItem = async (item, collectionType) => {
