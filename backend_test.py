@@ -253,6 +253,30 @@ class TopKitAdminTester:
             else:
                 self.log_test("GET /admin/users", False, f"Failed with status {response.status_code}", response.text)
 
+            # Create a test user for ban/delete operations if none found
+            if not self.test_user_id:
+                test_user_data = {
+                    "email": "testuser.admin@example.com",
+                    "password": "TestUser123!",
+                    "name": "Test User for Admin Operations"
+                }
+                
+                user_response = requests.post(f"{BASE_URL}/auth/register", json=test_user_data)
+                if user_response.status_code == 200:
+                    # Login to get user ID
+                    login_response = requests.post(f"{BASE_URL}/auth/login", json={
+                        "email": "testuser.admin@example.com",
+                        "password": "TestUser123!"
+                    })
+                    
+                    if login_response.status_code == 200:
+                        self.test_user_id = login_response.json()["user"]["id"]
+                        self.log_test("Test User Creation for Admin Operations", True, f"Created test user: {self.test_user_id}")
+                    else:
+                        self.log_test("Test User Login for Admin Operations", False, f"Login failed: {login_response.status_code}")
+                else:
+                    self.log_test("Test User Creation for Admin Operations", False, f"User creation failed: {user_response.status_code} - {user_response.text}")
+
             # 2. Test user ban functionality if we have a test user
             if self.test_user_id:
                 # Test POST /api/admin/users/{id}/ban
