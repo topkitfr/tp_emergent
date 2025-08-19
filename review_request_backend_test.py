@@ -53,7 +53,7 @@ class ReviewRequestTester:
         timestamp = int(time.time())
         test_user_reg = {
             "email": f"testuser{timestamp}@example.com",
-            "password": "TopKit123!",
+            "password": "SecureTestPass2024!",
             "name": "Test User"
         }
         
