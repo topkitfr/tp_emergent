@@ -2340,13 +2340,13 @@ const AppContent = () => {
             // Refresh data after successful submission or update
             if (editingJersey?.isNewSubmission) {
               // Refresh user submissions
-              loadUserSubmissions();
+              fetchUserSubmissions();
             } else if (editingJersey?.isAdminEdit) {
               // Refresh admin data
               console.log('Admin edit completed');
             } else {
               // Refresh collection data
-              loadUserCollections();
+              fetchUserCollections();
             }
             handleJerseyUpdate();
           }}
