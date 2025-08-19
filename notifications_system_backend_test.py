@@ -561,6 +561,8 @@ class NotificationsSystemTester:
         
     async def get_admin_notifications(self) -> List[Dict]:
         """Helper: Get all admin notifications"""
+        if not self.admin_token:
+            return []
         try:
             headers = {"Authorization": f"Bearer {self.admin_token}"}
             async with self.session.get(f"{BACKEND_URL}/notifications?limit=100", headers=headers) as response:
