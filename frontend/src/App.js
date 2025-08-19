@@ -2043,10 +2043,23 @@ const AppContent = () => {
     const suggestModification = async (jersey) => {
       // Open jersey editor with the jersey data for modification
       console.log('Opening jersey for modification:', jersey);
-      setEditingJersey({
+      
+      // Map old jersey structure to new structure
+      const mappedJersey = {
         ...jersey,
+        // Ensure new structure fields exist
+        model: jersey.model || 'authentic', // Default to authentic if missing
+        sku_code: jersey.sku_code || jersey.reference_code || '', // Map old reference_code to sku_code
+        // Remove old fields that might cause conflicts
+        player: undefined,
+        reference_code: undefined,
+        images: undefined,
+        home_away: undefined,
         isAdminEdit: true // Flag to indicate this is an admin edit
-      });
+      };
+      
+      console.log('Mapped jersey for editor:', mappedJersey);
+      setEditingJersey(mappedJersey);
       setShowJerseyEditor(true);
     };
 
