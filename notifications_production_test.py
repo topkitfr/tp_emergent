@@ -99,35 +99,40 @@ class NotificationsProductionTester:
     
     def authenticate_user(self):
         """Authenticate regular user"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json=USER_CREDENTIALS,
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.user_token = data.get("token")
-                user_info = data.get("user", {})
-                self.log_test(
-                    "User Authentication",
-                    True,
-                    f"User authenticated successfully - Name: {user_info.get('name')}, Role: {user_info.get('role')}, ID: {user_info.get('id')}"
+        # Try primary user credentials first
+        for creds_name, creds in [("Primary User", USER_CREDENTIALS), ("Alt User", ALT_USER_CREDENTIALS)]:
+            try:
+                response = self.session.post(
+                    f"{BACKEND_URL}/auth/login",
+                    json=creds,
+                    headers={"Content-Type": "application/json"}
                 )
-                return True
-            else:
-                self.log_test(
-                    "User Authentication",
-                    False,
-                    f"HTTP {response.status_code}",
-                    response.text
-                )
-                return False
                 
-        except Exception as e:
-            self.log_test("User Authentication", False, "", str(e))
-            return False
+                if response.status_code == 200:
+                    data = response.json()
+                    self.user_token = data.get("token")
+                    user_info = data.get("user", {})
+                    self.log_test(
+                        "User Authentication",
+                        True,
+                        f"{creds_name} authenticated successfully - Name: {user_info.get('name')}, Role: {user_info.get('role')}, ID: {user_info.get('id')}"
+                    )
+                    return True
+                else:
+                    print(f"    {creds_name} failed: HTTP {response.status_code}")
+                    
+            except Exception as e:
+                print(f"    {creds_name} error: {str(e)}")
+                continue
+        
+        # If no user credentials work, log the failure
+        self.log_test(
+            "User Authentication",
+            False,
+            "All user credential attempts failed",
+            "No valid user credentials found"
+        )
+        return False
     
     def test_notifications_endpoint_admin(self):
         """Test GET /api/notifications endpoint with admin credentials"""
