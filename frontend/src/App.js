@@ -1705,12 +1705,9 @@ const AppContent = () => {
                   <div className="text-6xl mb-4">📝</div>
                   <h3 className="text-xl font-semibold mb-2">Aucune soumission</h3>
                   <p className="mb-4">Vous n'avez pas encore soumis de maillot</p>
-                  <button
-                    onClick={() => setShowSubmitModal(true)}
-                    className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Soumettre votre premier maillot
-                  </button>
+                  <p className="text-sm text-gray-500">
+                    Utilisez le bouton "Soumettre un maillot" ci-dessus pour ajouter votre premier maillot
+                  </p>
                 </div>
               )}
             </div>
