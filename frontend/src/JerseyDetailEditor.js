@@ -327,7 +327,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
             </div>
           )}
 
-          <div className={`grid gap-6 ${(isNewSubmission || isAdminEdit) && isCollectionEdit ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+          <div className="grid gap-6 grid-cols-1">
             {/* Left Column - Basic Info - Only show for submission and admin-modify */}
             {(isNewSubmission || isAdminEdit) && (
             <div className="space-y-4">
