@@ -423,19 +423,19 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+          <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded-lg transition-colors font-medium"
             >
-              Cancel
+              Annuler
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+              className="px-6 py-2 bg-black hover:bg-gray-800 disabled:opacity-50 text-white rounded-lg transition-colors font-medium"
             >
-              {loading ? 'Saving...' : 'Save Details'}
+              {loading ? 'Sauvegarde...' : 'Sauvegarder'}
             </button>
           </div>
         </div>
