@@ -333,13 +333,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Security & Privacy Menu Access"
-    - "Security & Privacy Dedicated Page Implementation"
-    - "Frontend Authentication System Fix"
+    - "Production Authentication Testing for Beta Users"
   stuck_tasks:
-    - "Security & Privacy Menu Access"
-    - "SecuritySettingsModal Functionality"
-    - "Admin Panel Access Without Errors"
+    - "Production Authentication Testing for Beta Users"
   test_all: false
   test_priority: "high_first"
 
