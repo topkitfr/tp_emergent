@@ -471,7 +471,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                 <textarea
                   value={detailData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  disabled={!isNewSubmission}
+                  disabled={!(isNewSubmission || isAdminEdit)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black h-24 disabled:bg-gray-100 disabled:text-gray-600"
                   placeholder="Détails supplémentaires sur ce maillot..."
                 />
