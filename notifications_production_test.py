@@ -565,9 +565,19 @@ class NotificationsProductionTester:
         
         print()
         
+        # Step 3.5: Test admin moderation notifications
+        print("📋 STEP 3.5: ADMIN MODERATION NOTIFICATIONS")
+        if admin_auth_success:
+            moderation_notifications = self.test_admin_moderation_notifications()
+        else:
+            self.log_test("Admin Moderation Notifications", False, "", "No admin authentication available")
+            moderation_notifications = None
+        
+        print()
+        
         # Step 4: Test notification read/unread functionality
         print("📋 STEP 4: NOTIFICATION READ STATUS TESTING")
-        test_notifications = user_notifications or admin_notifications
+        test_notifications = user_notifications or admin_notifications or moderation_notifications
         if test_notifications:
             self.test_notification_read_status(test_notifications)
         else:
