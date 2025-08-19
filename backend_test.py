@@ -257,7 +257,7 @@ class TopKitAdminTester:
             if not self.test_user_id:
                 test_user_data = {
                     "email": "testuser.admin@example.com",
-                    "password": "StrongTestPassword123!@#",
+                    "password": "TopKit2025!",
                     "name": "Test User for Admin Operations"
                 }
                 
