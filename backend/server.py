@@ -206,16 +206,16 @@ class User(BaseModel):
 class Jersey(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     team: str
+    league: str  # Required field now
     season: str
-    player: Optional[str] = None
-    size: Optional[JerseySize] = None  # Optional - specified when creating listings
-    condition: Optional[JerseyCondition] = None  # Optional - specified when creating listings
     manufacturer: str
-    home_away: str  # "home", "away", "third"
-    league: str
+    jersey_type: str  # "home", "away", "third", "goalkeeper", "training", "special"
+    sku_code: Optional[str] = None  # Changed from reference_code to sku_code
+    model: str  # Required field: "authentic" or "replica"
     description: str
-    images: List[str] = []
-    reference_code: Optional[str] = None
+    # Photo URLs (will be set after file processing)
+    front_photo_url: Optional[str] = None
+    back_photo_url: Optional[str] = None
     reference_number: str  # Unique reference like TK-000001
     status: JerseyStatus = JerseyStatus.PENDING  # Default to pending for moderation
     created_at: datetime = Field(default_factory=datetime.utcnow)
