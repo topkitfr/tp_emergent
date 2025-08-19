@@ -623,6 +623,16 @@ class NotificationsProductionTester:
         
         print()
         
+        # Step 2.5: Test direct notification creation
+        print("📋 STEP 2.5: DIRECT NOTIFICATION CREATION")
+        if admin_auth_success:
+            direct_notifications = self.test_notification_creation_direct()
+        else:
+            self.log_test("Direct Notification Creation", False, "", "No admin authentication available")
+            direct_notifications = None
+        
+        print()
+        
         # Step 3: Test jersey submission notifications
         print("📋 STEP 3: JERSEY SUBMISSION NOTIFICATIONS")
         if admin_auth_success or user_auth_success:
@@ -645,7 +655,7 @@ class NotificationsProductionTester:
         
         # Step 4: Test notification read/unread functionality
         print("📋 STEP 4: NOTIFICATION READ STATUS TESTING")
-        test_notifications = user_notifications or admin_notifications or moderation_notifications
+        test_notifications = user_notifications or admin_notifications or moderation_notifications or direct_notifications
         if test_notifications:
             self.test_notification_read_status(test_notifications)
         else:
