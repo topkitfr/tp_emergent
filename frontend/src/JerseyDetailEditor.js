@@ -331,21 +331,6 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                 📋 Informations de base
               </h3>
 
-              {/* Team */}
-              <div>
-                <label className="block text-sm font-medium text-black mb-2">
-                  Équipe *
-                </label>
-                <input
-                  type="text"
-                  value={detailData.team}
-                  onChange={(e) => handleInputChange('team', e.target.value)}
-                  disabled={!isNewSubmission}
-                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
-                  placeholder="Ex: Paris Saint-Germain"
-                />
-              </div>
-
               {/* League */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
@@ -357,7 +342,24 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   onChange={(e) => handleInputChange('league', e.target.value)}
                   disabled={!isNewSubmission}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
-                  placeholder="Ex: Ligue 1"
+                  placeholder="Ex: Ligue 1, Premier League, La Liga..."
+                  required
+                />
+              </div>
+
+              {/* Club/National Team */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Club/Équipe nationale *
+                </label>
+                <input
+                  type="text"
+                  value={detailData.team}
+                  onChange={(e) => handleInputChange('team', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: Paris Saint-Germain, France..."
+                  required
                 />
               </div>
 
@@ -366,17 +368,54 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                 <label className="block text-sm font-medium text-black mb-2">
                   Saison *
                 </label>
-                <input
-                  type="text"
+                <select
                   value={detailData.season}
                   onChange={(e) => handleInputChange('season', e.target.value)}
                   disabled={!isNewSubmission}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
-                  placeholder="Ex: 2023-24"
+                  required
+                >
+                  <option value="">Sélectionner une saison...</option>
+                  {SEASONS.map(season => (
+                    <option key={season} value={season}>{season}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Brand/Manufacturer */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Marque/Fabricant
+                </label>
+                <select
+                  value={detailData.manufacturer}
+                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                >
+                  <option value="">Sélectionner une marque...</option>
+                  {MANUFACTURERS.map(manufacturer => (
+                    <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Code SKU (instead of Reference) */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Code SKU
+                </label>
+                <input
+                  type="text"
+                  value={detailData.sku_code}
+                  onChange={(e) => handleInputChange('sku_code', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: DH2987-100, FB7894-411..."
                 />
               </div>
 
-              {/* Jersey Type */}
+              {/* Type */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
                   Type de maillot
@@ -387,52 +426,43 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   disabled={!isNewSubmission}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
                 >
-                  <option value="">Sélectionner...</option>
-                  <option value="home">Domicile</option>
-                  <option value="away">Extérieur</option>
-                  <option value="third">Troisième</option>
-                  <option value="goalkeeper">Gardien</option>
-                  <option value="training">Entraînement</option>
-                  <option value="special">Édition spéciale</option>
+                  <option value="">Sélectionner un type...</option>
+                  {JERSEY_TYPES.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* Player */}
+              {/* Model (New field: Authentic/Replica) */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  Joueur (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={detailData.player}
-                  onChange={(e) => handleInputChange('player', e.target.value)}
-                  disabled={!isNewSubmission}
-                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
-                  placeholder="Ex: Mbappé"
-                />
-              </div>
-
-              {/* Manufacturer */}
-              <div>
-                <label className="block text-sm font-medium text-black mb-2">
-                  Fabricant
+                  Modèle *
                 </label>
                 <select
-                  value={detailData.manufacturer}
-                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  value={detailData.model}
+                  onChange={(e) => handleInputChange('model', e.target.value)}
                   disabled={!isNewSubmission}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  required
                 >
-                  <option value="">Sélectionner...</option>
-                  <option value="nike">Nike</option>
-                  <option value="adidas">Adidas</option>
-                  <option value="puma">Puma</option>
-                  <option value="jordan">Jordan</option>
-                  <option value="umbro">Umbro</option>
-                  <option value="kappa">Kappa</option>
-                  <option value="new_balance">New Balance</option>
-                  <option value="other">Autre</option>
+                  {MODEL_TYPES.map(model => (
+                    <option key={model.value} value={model.value}>{model.label}</option>
+                  ))}
                 </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={detailData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black h-24 disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Détails supplémentaires sur ce maillot..."
+                />
               </div>
 
               {/* Photo Uploads */}
