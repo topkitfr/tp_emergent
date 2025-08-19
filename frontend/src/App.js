@@ -361,13 +361,26 @@ const AppContent = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Collections data received:', data);
-        setUserCollections(data);
+        console.log('Collections raw data received:', data);
+        
+        // Transform the data structure from {collections: [...]} to {owned: [...], wanted: [...]}
+        const collections = data.collections || [];
+        const transformedData = {
+          owned: collections.filter(item => item.collection_type === 'owned'),
+          wanted: collections.filter(item => item.collection_type === 'wanted')
+        };
+        
+        console.log('Collections transformed data:', transformedData);
+        setUserCollections(transformedData);
       } else {
         console.error('Failed to load collections:', response.status, await response.text());
+        // Set empty collections on error
+        setUserCollections({ owned: [], wanted: [] });
       }
     } catch (error) {
       console.error('Error loading user collections:', error);
+      // Set empty collections on error
+      setUserCollections({ owned: [], wanted: [] });
     }
   };
 
