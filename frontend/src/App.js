@@ -391,6 +391,8 @@ const AppContent = () => {
     setCurrentView('home');
     setNotifications([]);
     setFriends([]);
+    setPendingRequests({ received: [], sent: [] });
+    setFriendsStats({ total_friends: 0, pending_received: 0, pending_sent: 0 });
     setUserCollections({ owned: [], wanted: [] });
     setUserSubmissions([]);
   };
