@@ -576,7 +576,7 @@ const AppContent = () => {
             <h3 className="text-white font-semibold">Notifications</h3>
           </div>
           <div className="max-h-96 overflow-y-auto">
-            {notifications.length > 0 ? (
+            {(notifications && Array.isArray(notifications) && notifications.length > 0) ? (
               notifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification.id}
