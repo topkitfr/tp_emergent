@@ -718,7 +718,10 @@ class TopKitJerseySubmissionTester:
 
 if __name__ == "__main__":
     tester = TopKitJerseySubmissionTester()
-    success_rate = tester.run_comprehensive_test()
-    
-    # Exit with appropriate code
-    sys.exit(0 if success_rate >= 75 else 1)
+    try:
+        success_rate = tester.run_comprehensive_test()
+        # Exit with appropriate code
+        sys.exit(0 if success_rate and success_rate >= 75 else 1)
+    except Exception as e:
+        print(f"🚨 Test execution failed: {e}")
+        sys.exit(1)
