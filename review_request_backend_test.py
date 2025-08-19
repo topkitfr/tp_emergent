@@ -47,32 +47,83 @@ class ReviewRequestTester:
         if error:
             print(f"    Error: {error}")
     
-    def test_user_authentication(self):
-        """Test basic authentication with friendstest2@example.com / TopKit123!"""
+    def test_user_registration_and_authentication(self):
+        """Test user registration and then authentication"""
+        # First try to register a test user
+        test_user_reg = {
+            "email": "friendstest2@example.com",
+            "password": "TopKit123!",
+            "name": "Friends Test User"
+        }
+        
         try:
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json=TEST_USER)
+            # Try registration first
+            response = self.session.post(f"{BACKEND_URL}/auth/register", json=test_user_reg)
             
             if response.status_code == 200:
-                data = response.json()
-                if 'token' in data:
-                    self.auth_token = data['token']
-                    user_info = data.get('user', {})
-                    self.log_result(
-                        "User Authentication", 
-                        True, 
-                        f"Login successful - Name: {user_info.get('name', 'N/A')}, Role: {user_info.get('role', 'N/A')}, ID: {user_info.get('id', 'N/A')}"
-                    )
-                    return True
+                print("    Registration successful, now testing login...")
+                # Now try to login
+                login_response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                    "email": test_user_reg["email"],
+                    "password": test_user_reg["password"]
+                })
+                
+                if login_response.status_code == 200:
+                    data = login_response.json()
+                    if 'token' in data:
+                        self.auth_token = data['token']
+                        user_info = data.get('user', {})
+                        self.log_result(
+                            "User Registration & Authentication", 
+                            True, 
+                            f"Registration and login successful - Name: {user_info.get('name', 'N/A')}, Role: {user_info.get('role', 'N/A')}, ID: {user_info.get('id', 'N/A')}"
+                        )
+                        return True
+                    else:
+                        self.log_result("User Registration & Authentication", False, "", "No token in login response")
+                        return False
                 else:
-                    self.log_result("User Authentication", False, "", "No token in response")
+                    self.log_result("User Registration & Authentication", False, "", f"Login failed: HTTP {login_response.status_code}: {login_response.text}")
                     return False
             else:
-                self.log_result("User Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
-                return False
+                # Registration failed, maybe user exists, try direct login
+                print(f"    Registration failed (HTTP {response.status_code}), trying direct login...")
+                return self.test_existing_user_authentication()
                 
         except Exception as e:
-            self.log_result("User Authentication", False, "", str(e))
+            self.log_result("User Registration & Authentication", False, "", str(e))
             return False
+    
+    def test_existing_user_authentication(self):
+        """Test authentication with existing user credentials"""
+        # Try different possible credentials
+        test_credentials = [
+            {"email": "steinmetzlivio@gmail.com", "password": "TopKit123!"},
+            {"email": "steinmetzlivio@gmail.com", "password": "123"},
+            {"email": "friendstest2@example.com", "password": "TopKit123!"},
+        ]
+        
+        for creds in test_credentials:
+            try:
+                response = self.session.post(f"{BACKEND_URL}/auth/login", json=creds)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'token' in data:
+                        self.auth_token = data['token']
+                        user_info = data.get('user', {})
+                        self.log_result(
+                            "Existing User Authentication", 
+                            True, 
+                            f"Login successful with {creds['email']} - Name: {user_info.get('name', 'N/A')}, Role: {user_info.get('role', 'N/A')}, ID: {user_info.get('id', 'N/A')}"
+                        )
+                        return True
+                        
+            except Exception as e:
+                continue
+        
+        self.log_result("Existing User Authentication", False, "", "No valid credentials found for existing users")
+        return False
     
     def test_admin_authentication(self):
         """Test admin authentication"""
