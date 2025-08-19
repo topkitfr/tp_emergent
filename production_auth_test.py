@@ -205,6 +205,13 @@ class ProductionAuthTester:
         self.log(f"Testing {len(TEST_ACCOUNTS)} accounts")
         self.log("-" * 60)
         
+        # First test endpoint connectivity
+        if not self.test_endpoint_connectivity():
+            self.log("🚨 Production endpoint not accessible - aborting tests", "ERROR")
+            return 0
+        
+        self.log("-" * 60)
+        
         for email in TEST_ACCOUNTS:
             self.test_login_authentication(email)
             self.log("-" * 60)
