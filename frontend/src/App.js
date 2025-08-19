@@ -826,15 +826,26 @@ const AppContent = () => {
                       Mon Profil
                     </button>
                     {user.role === 'admin' && (
-                      <button
-                        onClick={() => {
-                          setCurrentView('admin');
-                          setShowMobileMenu(false);
-                        }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:bg-gray-100"
-                      >
-                        Admin Panel
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setCurrentView('admin');
+                            setShowMobileMenu(false);
+                          }}
+                          className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:bg-gray-100"
+                        >
+                          🔧 Admin Panel
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowSecurityModal(true);
+                            setShowMobileMenu(false);
+                          }}
+                          className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-black hover:bg-gray-100"
+                        >
+                          🔒 Settings
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() => {
