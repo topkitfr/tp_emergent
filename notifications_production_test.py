@@ -234,13 +234,15 @@ class NotificationsProductionTester:
     
     def test_jersey_submission_notifications(self):
         """Test if notifications are created for jersey submissions"""
-        if not self.user_token:
-            self.log_test("Jersey Submission Notifications", False, "", "No user token available")
+        # Use admin token if user token is not available
+        token = self.user_token or self.admin_token
+        if not token:
+            self.log_test("Jersey Submission Notifications", False, "", "No authentication token available")
             return False
             
         try:
             # First, get current notification count
-            headers = {"Authorization": f"Bearer {self.user_token}"}
+            headers = {"Authorization": f"Bearer {token}"}
             initial_response = self.session.get(f"{BACKEND_URL}/notifications", headers=headers)
             initial_count = 0
             if initial_response.status_code == 200:
