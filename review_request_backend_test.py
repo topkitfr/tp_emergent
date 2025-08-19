@@ -14,7 +14,7 @@ BACKEND_URL = "https://profile-friends.preview.emergentagent.com/api"
 
 # Test credentials as requested
 TEST_USER = {
-    "email": "friendstest2@example.com",
+    "email": "steinmetzlivio@gmail.com",
     "password": "TopKit123!"
 }
 
