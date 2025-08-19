@@ -325,7 +325,7 @@ class TopKitAdminTester:
             # 1. Create test user
             workflow_user_data = {
                 "email": "workflowtest@example.com",
-                "password": "WorkflowTestPassword!@#",
+                "password": "WorkflowTestPassword123!@#",
                 "name": "Workflow Test User"
             }
             
