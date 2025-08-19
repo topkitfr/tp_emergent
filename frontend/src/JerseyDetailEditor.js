@@ -3,7 +3,7 @@ import axios from 'axios';
 import { JERSEY_DETAIL_CRITERIA, PRICE_FACTORS, BASE_PRICES } from './JerseyDetailCriteria';
 import tokenManager from './utils/tokenManager';
 
-const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }) => {
+const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, mode }) => {
   const [detailData, setDetailData] = useState({
     // Jersey basic info (editable for new submissions, read-only for existing)
     team: '',
