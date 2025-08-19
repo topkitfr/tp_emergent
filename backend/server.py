@@ -3028,7 +3028,6 @@ async def edit_jersey(
     update_data = {
         "team": jersey_data.team,
         "season": jersey_data.season,
-        "player": jersey_data.player,
         "size": jersey_data.size,
         "condition": jersey_data.condition,
         "manufacturer": jersey_data.manufacturer or "",
