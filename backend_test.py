@@ -319,7 +319,9 @@ class AdminJerseyCorrectionTester:
                 
             suggestion_jersey_id = create_response.json().get("id")
             
+            # Include jersey_id in the request body as required by the model
             suggestion_data = {
+                "jersey_id": suggestion_jersey_id,  # Required by ModificationSuggestionCreate model
                 "suggested_changes": "Please verify the manufacturer and update the season format to match our standards",
                 "suggested_modifications": {
                     "manufacturer": "Should be 'Adidas' with capital A",
