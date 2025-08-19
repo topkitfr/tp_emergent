@@ -741,6 +741,26 @@ const AppContent = () => {
                     )}
                   </button>
 
+                  {/* Admin Panel Button (Desktop) */}
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => setCurrentView('admin')}
+                      className="text-gray-500 hover:text-black p-2 transition-colors"
+                      title="Admin Panel"
+                    >
+                      <span className="text-lg">🔧</span>
+                    </button>
+                  )}
+
+                  {/* Settings Button (Desktop) */}
+                  <button
+                    onClick={() => setShowSecurityModal(true)}
+                    className="text-gray-500 hover:text-black p-2 transition-colors"
+                    title="Settings"
+                  >
+                    <span className="text-lg">🔒</span>
+                  </button>
+
                   {/* User Menu */}
                   <div className="relative">
                     <button
