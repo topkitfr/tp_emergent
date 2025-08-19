@@ -517,8 +517,9 @@ class CollectionRemovalDebugger:
         # Step 4: Test different removal parameter formats
         print("🗑️ Testing collection removal with different parameters...")
         self.test_collection_remove_with_collection_id(collections)
+        self.test_collection_remove_post_method(collections)
         self.test_collection_remove_with_jersey_id(collections)
-        self.test_collection_remove_with_both_params(collections)
+        self.test_delete_collections_jersey_id_endpoint(collections)
         print()
         
         # Step 5: Test alternative endpoints
