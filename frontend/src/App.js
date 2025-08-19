@@ -2337,8 +2337,18 @@ const AppContent = () => {
             setEditingJersey(null);
           }}
           onUpdateSuccess={() => {
+            // Refresh data after successful submission or update
+            if (editingJersey?.isNewSubmission) {
+              // Refresh user submissions
+              loadUserSubmissions();
+            } else if (editingJersey?.isAdminEdit) {
+              // Refresh admin data
+              console.log('Admin edit completed');
+            } else {
+              // Refresh collection data
+              loadUserCollections();
+            }
             handleJerseyUpdate();
-            loadUserCollections(); // Reload collections after update
           }}
           jersey={editingJersey}
           user={user}
