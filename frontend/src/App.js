@@ -608,13 +608,14 @@ const AppContent = () => {
     
     try {
       const response = await fetch(`${API}/api/collections/remove`, {
-        method: 'DELETE',
+        method: 'POST', // Changed from DELETE to POST
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({
-          collection_id: item.id
+          jersey_id: item.jersey_id || item.jersey?.id, // Use jersey_id instead of collection_id
+          collection_type: collectionType // Send collection_type as expected by backend
         })
       });
 
