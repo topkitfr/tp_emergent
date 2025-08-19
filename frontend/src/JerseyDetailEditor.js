@@ -402,7 +402,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                 <select
                   value={detailData.manufacturer}
                   onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                  disabled={!isNewSubmission}
+                  disabled={!(isNewSubmission || isAdminEdit)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
                 >
                   <option value="">Sélectionner une marque...</option>
