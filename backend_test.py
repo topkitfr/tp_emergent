@@ -336,6 +336,7 @@ class TopKitAdminTester:
                         
                         # 4. Admin suggests modification
                         modification_data = {
+                            "jersey_id": workflow_jersey_id,
                             "suggested_changes": "Veuillez ajouter des informations sur la taille et l'état du maillot",
                             "suggested_modifications": {
                                 "description": "Maillot domicile Real Madrid 2024-25 - Vinicius Jr - Taille L, état neuf avec étiquettes"
