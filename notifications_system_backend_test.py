@@ -236,10 +236,14 @@ class NotificationsSystemTester:
             self.log_test("Jersey Submission", False, f"Exception: {str(e)}")
             
     async def test_jersey_approval_notifications(self):
-        """Test notification creation during jersey approval"""
+        """Test notification creation during jersey approval - SKIP if no admin access"""
         print("\n✅ JERSEY APPROVAL NOTIFICATION TESTING")
         print("=" * 50)
         
+        if not self.admin_token:
+            self.log_test("Jersey Approval Notification", False, "No admin access available - cannot test approval notifications")
+            return
+            
         if not self.test_jersey_id:
             self.log_test("Jersey Approval Notification", False, "No test jersey available")
             return
@@ -287,9 +291,13 @@ class NotificationsSystemTester:
             self.log_test("Jersey Approval", False, f"Exception: {str(e)}")
             
     async def test_jersey_rejection_notifications(self):
-        """Test notification creation during jersey rejection"""
+        """Test notification creation during jersey rejection - SKIP if no admin access"""
         print("\n❌ JERSEY REJECTION NOTIFICATION TESTING")
         print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("Jersey Rejection Notification", False, "No admin access available - cannot test rejection notifications")
+            return
         
         # Submit another test jersey for rejection
         jersey_data = {
