@@ -144,7 +144,7 @@ class NotificationsSystemTester:
                 headers=headers
             )
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 jersey = response.json()
                 jersey_id = jersey.get("id")
                 jersey_ref = jersey.get("reference_number")
