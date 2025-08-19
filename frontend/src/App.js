@@ -477,9 +477,13 @@ const AppContent = () => {
             <div className="flex-shrink-0">
               <button
                 onClick={() => setCurrentView('home')}
-                className="text-2xl font-bold text-white hover:text-gray-300 transition-colors"
+                className="hover:opacity-80 transition-opacity"
               >
-                TopKit
+                <img 
+                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTIwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8dGV4dCB4PSI2MCIgeT0iMjgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI0ZGRkZGRiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VE9QS0lUPC90ZXh0Pgo8L3N2Zz4K" 
+                  alt="TOPKIT" 
+                  className="h-8 md:h-10"
+                />
               </button>
             </div>
 
