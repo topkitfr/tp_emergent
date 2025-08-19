@@ -3628,6 +3628,7 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
         
         # Handle resubmission logic
+        logger.info(f"🔍 is_resubmission value: {is_resubmission}")
         if is_resubmission:
             # Mark the original jersey as superseded
             await db.jerseys.update_one(
