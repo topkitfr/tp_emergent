@@ -1495,19 +1495,21 @@ const AppContent = () => {
                   </h4>
                   {userCollections.owned?.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {userCollections.owned.map((item) => (
-                        <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      {userCollections.owned.map((item, index) => {
+                        console.log('Rendering owned item', index, ':', item);
+                        return (
+                        <div key={item.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
                               <div className="font-medium text-black">
-                                {item.jersey?.team || 'Équipe inconnue'}
+                                {item.jersey?.team || item.team || 'Équipe inconnue'}
                               </div>
                               <div className="text-sm text-gray-600">
-                                {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                                {(item.jersey?.league || item.league || 'Ligue inconnue')} • {(item.jersey?.season || item.season || 'Saison inconnue')}
                               </div>
-                              {item.jersey?.player && (
+                              {(item.jersey?.player || item.player) && (
                                 <div className="text-sm text-gray-500 mt-1">
-                                  {item.jersey.player}
+                                  {item.jersey?.player || item.player}
                                 </div>
                               )}
                               {/* Collection details if available */}
@@ -1518,6 +1520,10 @@ const AppContent = () => {
                                   {item.condition && `État: ${item.condition}`}
                                 </div>
                               )}
+                              {/* Debug info */}
+                              <div className="text-xs text-red-500 mt-1">
+                                DEBUG: jersey_id={item.jersey_id || item.jersey?.id || 'missing'}, collection_type={item.collection_type || 'missing'}
+                              </div>
                             </div>
                             {/* Action buttons */}
                             <div className="flex flex-col space-y-1 ml-3">
@@ -1549,7 +1555,8 @@ const AppContent = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-600">
