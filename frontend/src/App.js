@@ -2027,29 +2027,14 @@ const AppContent = () => {
       }
     };
 
-    const suggestModification = async (jerseyId) => {
-      const suggestion = prompt('Suggestions de modification:');
-      if (!suggestion) return;
-
-      try {
-        const response = await fetch(`${API}/api/admin/jerseys/${jerseyId}/suggest-modification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.token}`
-          },
-          body: JSON.stringify({ suggestions: suggestion })
-        });
-        if (response.ok) {
-          alert('✅ Suggestions envoyées à l\'utilisateur');
-          loadAdminData();
-        } else {
-          alert('❌ Erreur lors de l\'envoi des suggestions');
-        }
-      } catch (error) {
-        console.error('Error suggesting modification:', error);
-        alert('❌ Erreur de connexion');
-      }
+    const suggestModification = async (jersey) => {
+      // Open jersey editor with the jersey data for modification
+      console.log('Opening jersey for modification:', jersey);
+      setEditingJersey({
+        ...jersey,
+        isAdminEdit: true // Flag to indicate this is an admin edit
+      });
+      setShowJerseyEditor(true);
     };
 
     const deleteJersey = async (jerseyId, jerseyName) => {
