@@ -204,7 +204,8 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
           return;
         }
       }
-        
+      
+      if (isNewSubmission) {
         // Create FormData for photo upload
         const formData = new FormData();
         
