@@ -15,7 +15,7 @@ BACKEND_URL = "https://notif-system-fix.preview.emergentagent.com/api"
 # Test credentials
 TEST_USER = {
     "email": "test.beta.removal@example.com",
-    "password": "TestBeta123!",
+    "password": "TestBetaRemoval2024!",
     "name": "Beta Test User"
 }
 
