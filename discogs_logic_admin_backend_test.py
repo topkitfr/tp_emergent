@@ -88,7 +88,7 @@ class DiscogsLogicAdminTester:
             return False
             
         try:
-            # Test jersey submission with realistic data
+            # Test jersey submission with form data (not JSON)
             jersey_data = {
                 "team": "Paris Saint-Germain",
                 "league": "Ligue 1",
@@ -100,7 +100,8 @@ class DiscogsLogicAdminTester:
             }
             
             headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=headers)
+            # Use form data instead of JSON
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data, headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
