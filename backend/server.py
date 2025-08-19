@@ -5387,9 +5387,11 @@ async def send_friend_request(
 @api_router.post("/friends/respond")
 async def respond_to_friend_request(
     response: FriendRequestResponse,
-    user_id: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Accept or decline a friend request"""
+    user_id = current_user["id"]
+    
     # Find the friend request
     friendship = await db.friendships.find_one({
         "id": response.request_id,
