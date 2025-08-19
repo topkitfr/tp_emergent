@@ -682,7 +682,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Purchase Date */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.purchase_date.label}
+                  {JERSEY_DETAIL_CRITERIA.purchase_date?.label || "Purchase Date"}
                 </label>
                 <input
                   type="date"
