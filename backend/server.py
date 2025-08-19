@@ -4923,7 +4923,6 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
                         "id": "$jersey.id",
                         "team": "$jersey.team",
                         "season": "$jersey.season",
-                        "player": "$jersey.player",
                         "league": "$jersey.league",
                         "manufacturer": "$jersey.manufacturer",
                         "images": "$jersey.images",
