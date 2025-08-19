@@ -418,11 +418,9 @@ class FriendsManagementTester:
                 return False
             
             # Remove the friend (this should send notification)
-            admin_id = initial_response.json()[0].get("user_id") if initial_response.json() else None
-            if not admin_id:
-                # Get admin ID from profile
-                admin_profile = self.session.get(f"{BASE_URL}/profile", headers=admin_headers)
-                admin_id = admin_profile.json()["user"]["id"]
+            # Get admin ID from profile
+            admin_profile = self.session.get(f"{BASE_URL}/profile", headers=admin_headers)
+            admin_id = admin_profile.json()["user"]["id"]
             
             user_headers = self.get_auth_headers("user")
             remove_response = self.session.delete(f"{BASE_URL}/friends/{admin_id}", headers=user_headers)
