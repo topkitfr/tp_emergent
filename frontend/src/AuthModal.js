@@ -186,25 +186,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </div>
           )}
 
-          {/* Beta Access Information */}
-          {!isLogin && (
-            <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg p-4 mb-6">
-              <div className="flex items-start">
-                <div className="text-amber-400 mr-3 mt-0.5">⚠️</div>
-                <div>
-                  <h4 className="text-amber-300 font-semibold text-sm mb-1">
-                    Accès Beta Requis
-                  </h4>
-                  <p className="text-amber-200 text-xs leading-relaxed">
-                    La création de compte nécessite une <strong>approbation beta préalable</strong>. 
-                    Si vous n'avez pas encore reçu d'email d'approbation, veuillez d'abord 
-                    <span className="font-medium"> demander l'accès beta</span> via le formulaire ci-dessous.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
             {!isLogin && (
               <input
@@ -305,19 +286,19 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           <p className="text-center text-gray-400 mt-4">
             {isLogin ? (
               <>
-                Pas encore d'accès beta ?
+                Pas encore de compte ?
                 <button
                   onClick={switchMode}
                   className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
                   type="button"
                   disabled={loading}
                 >
-                  Demander l'accès
+                  S'inscrire
                 </button>
               </>
             ) : (
               <>
-                Déjà approuvé pour la beta ?
+                Déjà un compte ?
                 <button
                   onClick={switchMode}
                   className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
@@ -329,16 +310,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               </>
             )}
           </p>
-
-          {/* Beta Request Information */}
-          {isLogin && (
-            <div className="mt-4 p-3 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-              <p className="text-blue-200 text-xs text-center">
-                <strong>Nouveau sur TopKit ?</strong> Vous devez d'abord demander et recevoir 
-                l'approbation beta avant de pouvoir créer un compte.
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
