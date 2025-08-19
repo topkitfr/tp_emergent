@@ -1974,10 +1974,151 @@ const AppContent = () => {
             setShowJerseyEditor(false);
             setEditingJersey(null);
           }}
-          onUpdateSuccess={handleJerseyUpdate}
+          onUpdateSuccess={() => {
+            handleJerseyUpdate();
+            loadUserCollections(); // Reload collections after update
+          }}
           jersey={editingJersey}
           user={user}
         />
+      )}
+
+      {/* Jersey Detail View Modal */}
+      {showJerseyDetailView && selectedJersey && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-start p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-black">Détails du maillot</h2>
+              <button
+                onClick={() => {
+                  setShowJerseyDetailView(false);
+                  setSelectedJersey(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Jersey Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-black mb-3">Informations générales</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Équipe</label>
+                    <div className="text-black font-medium">{selectedJersey.team || 'Non spécifié'}</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Championnat</label>
+                    <div className="text-black">{selectedJersey.league || 'Non spécifié'}</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Saison</label>
+                    <div className="text-black">{selectedJersey.season || 'Non spécifié'}</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <div className="text-black">{selectedJersey.jersey_type || 'Non spécifié'}</div>
+                  </div>
+
+                  {selectedJersey.player && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Joueur</label>
+                      <div className="text-black">{selectedJersey.player}</div>
+                    </div>
+                  )}
+
+                  {selectedJersey.manufacturer && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fabricant</label>
+                      <div className="text-black">{selectedJersey.manufacturer}</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-black mb-3">Détails de collection</h3>
+                  
+                  {selectedJersey.collection_details?.collection_type && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Type de collection</label>
+                      <div className="text-black capitalize">
+                        {selectedJersey.collection_details.collection_type === 'owned' ? 'Possédé' : 'Recherché'}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedJersey.collection_details?.size && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Taille</label>
+                      <div className="text-black">{selectedJersey.collection_details.size}</div>
+                    </div>
+                  )}
+
+                  {selectedJersey.collection_details?.condition && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">État</label>
+                      <div className="text-black">{selectedJersey.collection_details.condition}</div>
+                    </div>
+                  )}
+
+                  {selectedJersey.collection_details?.added_at && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ajouté le</label>
+                      <div className="text-black">
+                        {new Date(selectedJersey.collection_details.added_at).toLocaleDateString('fr-FR')}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedJersey.reference_number && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Référence</label>
+                      <div className="text-black font-mono">{selectedJersey.reference_number}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                {selectedJersey.collection_details?.collection_type === 'owned' && (
+                  <button
+                    onClick={() => {
+                      setShowJerseyDetailView(false);
+                      handleEditCollectionItem({
+                        id: selectedJersey.collection_details.collection_id,
+                        jersey: selectedJersey,
+                        collection_type: selectedJersey.collection_details.collection_type,
+                        size: selectedJersey.collection_details.size,
+                        condition: selectedJersey.collection_details.condition
+                      });
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Éditer les détails
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setShowJerseyDetailView(false);
+                    setSelectedJersey(null);
+                  }}
+                  className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
