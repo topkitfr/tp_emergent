@@ -207,16 +207,19 @@ agent_communication:
 
 backend:
   - task: "New Jersey Submission Form Structure Implementation"
-    implemented: false
+    implemented: true
     working: false
-    file: "/app/backend/server.py"
-    stuck_count: 0
+    file: "/app/frontend/src/App.js, /app/frontend/src/JerseyDetailEditor.js"
+    stuck_count: 1
     priority: "high"
     needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
         comment: "🚨 CRITICAL BACKEND IMPLEMENTATION GAPS IDENTIFIED! New jersey form structure NOT implemented in backend: ❌ Required fields 'league' and 'model' not enforced (submissions succeed without these fields), ❌ 'sku_code' field missing from backend models, ❌ 'front_photo' and 'back_photo' fields not supported, ❌ Player field still present (removal not implemented). Backend models (JerseyCreate, Jersey) still use old structure. URGENT BACKEND UPDATES REQUIRED."
+      - working: false
+        agent: "testing"
+        comment: "🚨 CRITICAL FRONTEND-BACKEND MISMATCH IDENTIFIED! Jersey submission form COMPLETELY BROKEN due to JavaScript error 'Cannot read properties of undefined (reading 'label')' in JerseyDetailEditor component. ROOT CAUSE: Frontend editingJersey object initialization (App.js lines 1658-1667) still uses OLD STRUCTURE with 'player' field but backend expects NEW STRUCTURE with required 'model' and 'sku_code' fields. When user clicks 'Soumettre un maillot', setEditingJersey creates incomplete object missing required 'model' field, causing form rendering failure. Form modal never displays, users cannot submit jerseys. URGENT FIX: Update frontend jersey object initialization to match new backend structure - add 'model' and 'sku_code' fields, remove 'player' field. Backend has been correctly updated with new structure but frontend initialization not synchronized."
 
   - task: "Discogs Collection Workflow Testing - Complete End-to-End Workflow"
     implemented: true
