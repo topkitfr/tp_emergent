@@ -466,151 +466,269 @@ const AppContent = () => {
     : [...new Set(jerseys.map(j => j.team).filter(Boolean))];
 
   // Header Component
-  const Header = () => (
-    <header className="bg-black shadow-lg border-b border-gray-800 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <button
-              onClick={() => setCurrentView('home')}
-              className="text-2xl font-bold text-white hover:text-gray-300 transition-colors"
-            >
-              TopKit
-            </button>
-          </div>
+  const Header = () => {
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-          {/* Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <button
-              onClick={() => setCurrentView('home')}
-              className={`${currentView === 'home' 
-                ? 'text-blue-400 border-b-2 border-blue-400' 
-                : 'text-gray-300 hover:text-white'
-              } px-3 py-2 text-sm font-medium transition-colors`}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => setCurrentView('explore')}
-              className={`${currentView === 'explore' 
-                ? 'text-blue-400 border-b-2 border-blue-400' 
-                : 'text-gray-300 hover:text-white'
-              } px-3 py-2 text-sm font-medium transition-colors`}
-            >
-              Explorez
-            </button>
-            <button
-              onClick={() => setCurrentView('marketplace')}
-              className={`${currentView === 'marketplace' 
-                ? 'text-blue-400 border-b-2 border-blue-400' 
-                : 'text-gray-300 hover:text-white'
-              } px-3 py-2 text-sm font-medium transition-colors`}
-            >
-              Marketplace
-            </button>
-          </nav>
-
-          {/* Right side */}
-          <div className="flex items-center space-x-4">
-            {/* Search */}
-            <div className="hidden md:block">
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-              />
+    return (
+      <header className="bg-black shadow-lg border-b border-gray-800 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={() => setCurrentView('home')}
+                className="text-2xl font-bold text-white hover:text-gray-300 transition-colors"
+              >
+                TopKit
+              </button>
             </div>
 
-            {user ? (
-              <div className="flex items-center space-x-3">
-                {/* Notifications */}
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="text-gray-300 hover:text-white relative p-2"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5zm-5-17h5l-5 5-5-5h5zm10 10v2a8 8 0 01-16 0V7a8 8 0 0116 0z" />
-                  </svg>
-                  {(notifications && Array.isArray(notifications) && notifications.filter(n => !n.read).length > 0) && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {notifications.filter(n => !n.read).length}
-                    </span>
-                  )}
-                </button>
+            {/* Navigation Desktop */}
+            <nav className="hidden md:flex space-x-8">
+              <button
+                onClick={() => setCurrentView('home')}
+                className={`${currentView === 'home' 
+                  ? 'text-blue-400 border-b-2 border-blue-400' 
+                  : 'text-gray-300 hover:text-white'
+                } px-3 py-2 text-sm font-medium transition-colors`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => setCurrentView('explore')}
+                className={`${currentView === 'explore' 
+                  ? 'text-blue-400 border-b-2 border-blue-400' 
+                  : 'text-gray-300 hover:text-white'
+                } px-3 py-2 text-sm font-medium transition-colors`}
+              >
+                Explorez
+              </button>
+              <button
+                onClick={() => setCurrentView('marketplace')}
+                className={`${currentView === 'marketplace' 
+                  ? 'text-blue-400 border-b-2 border-blue-400' 
+                  : 'text-gray-300 hover:text-white'
+                } px-3 py-2 text-sm font-medium transition-colors`}
+              >
+                Marketplace
+              </button>
+            </nav>
 
-                {/* User Menu */}
-                <div className="relative">
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="text-gray-300 hover:text-white p-2"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {showMobileMenu ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Right side Desktop */}
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Search */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                />
+              </div>
+
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  {/* Notifications */}
                   <button
-                    onClick={() => setCurrentView('profile')}
-                    className="flex items-center text-gray-300 hover:text-white space-x-2"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="text-gray-300 hover:text-white relative p-2"
                   >
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">
-                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5zm-5-17h5l-5 5-5-5h5zm10 10v2a8 8 0 01-16 0V7a8 8 0 0116 0z" />
+                    </svg>
+                    {(notifications && Array.isArray(notifications) && notifications.filter(n => !n.read).length > 0) && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {notifications.filter(n => !n.read).length}
                       </span>
-                    </div>
-                    <span className="hidden md:block">{user.name}</span>
+                    )}
+                  </button>
+
+                  {/* User Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setCurrentView('profile')}
+                      className="flex items-center text-gray-300 hover:text-white space-x-2"
+                    >
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {user.name?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                      <span className="hidden lg:block">{user.name}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-300 hover:text-white text-sm"
+                  >
+                    Déconnexion
                   </button>
                 </div>
-
+              ) : (
                 <button
-                  onClick={handleLogout}
-                  className="text-gray-300 hover:text-white text-sm"
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  Déconnexion
+                  Se connecter
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Se connecter
-              </button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Notifications Dropdown */}
-      {showNotifications && user && (
-        <div className="absolute right-4 top-16 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
-          <div className="p-4 border-b border-gray-700">
-            <h3 className="text-white font-semibold">Notifications</h3>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {(notifications && Array.isArray(notifications) && notifications.length > 0) ? (
-              notifications.slice(0, 10).map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 border-b border-gray-700 last:border-b-0 ${
-                    !notification.read ? 'bg-blue-900/20' : ''
+          {/* Mobile Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden bg-gray-900 border-t border-gray-700">
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                {/* Navigation Links */}
+                <button
+                  onClick={() => {
+                    setCurrentView('home');
+                    setShowMobileMenu(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    currentView === 'home' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
                   }`}
                 >
-                  <div className="text-sm text-white font-medium mb-1">
-                    {notification.title}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {notification.message}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    {new Date(notification.created_at).toLocaleString('fr-FR')}
-                  </div>
+                  🏠 Home
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('explore');
+                    setShowMobileMenu(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    currentView === 'explore' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  🔍 Explorez
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('marketplace');
+                    setShowMobileMenu(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    currentView === 'marketplace' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  🛒 Marketplace
+                </button>
+
+                {/* User section */}
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setCurrentView('profile');
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                    >
+                      👤 Mon Profil
+                    </button>
+                    {user.role === 'admin' && (
+                      <button
+                        onClick={() => {
+                          setCurrentView('admin');
+                          setShowMobileMenu(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-red-300 hover:bg-gray-700"
+                      >
+                        🔧 Admin Panel
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                    >
+                      🚪 Déconnexion
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    🔑 Se connecter
+                  </button>
+                )}
+
+                {/* Mobile Search */}
+                <div className="px-3 py-2">
+                  <input
+                    type="text"
+                    placeholder="Rechercher..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-              ))
-            ) : (
-              <div className="p-4 text-gray-400 text-center">
-                Aucune notification
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      )}
-    </header>
-  );
+
+        {/* Notifications Dropdown */}
+        {showNotifications && user && (
+          <div className="absolute right-4 top-16 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
+            <div className="p-4 border-b border-gray-700">
+              <h3 className="text-white font-semibold">Notifications</h3>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {(notifications && Array.isArray(notifications) && notifications.length > 0) ? (
+                notifications.slice(0, 10).map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-4 border-b border-gray-700 last:border-b-0 ${
+                      !notification.read ? 'bg-blue-900/20' : ''
+                    }`}
+                  >
+                    <div className="text-sm text-white font-medium mb-1">
+                      {notification.title}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {notification.message}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {new Date(notification.created_at).toLocaleString('fr-FR')}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-gray-400 text-center">
+                  Aucune notification
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+    );
+  };
 
   // Home Page Component
   const HomePage = () => (
