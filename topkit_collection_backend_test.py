@@ -215,29 +215,34 @@ class TopKitCollectionTester:
             return False
 
     def test_get_user_collections(self):
-        """Test 4: GET /api/collections - Get user's collection"""
+        """Test 4: GET /api/collections/my-owned and /api/collections/my-wanted - Get user's collection"""
         if not self.user_token:
             self.log_result("Get User Collections", False, "No user token available")
             return False
             
         try:
             headers = {"Authorization": f"Bearer {self.user_token}"}
-            response = self.session.get(f"{BACKEND_URL}/collections", headers=headers)
             
-            if response.status_code == 200:
-                data = response.json()
-                collection_count = len(data) if isinstance(data, list) else 0
+            # Test owned collections
+            owned_response = self.session.get(f"{BACKEND_URL}/collections/my-owned", headers=headers)
+            wanted_response = self.session.get(f"{BACKEND_URL}/collections/my-wanted", headers=headers)
+            
+            if owned_response.status_code == 200 and wanted_response.status_code == 200:
+                owned_data = owned_response.json()
+                wanted_data = wanted_response.json()
+                owned_count = len(owned_data) if isinstance(owned_data, list) else 0
+                wanted_count = len(wanted_data) if isinstance(wanted_data, list) else 0
                 self.log_result(
                     "Get User Collections",
                     True,
-                    f"Collections retrieved successfully - {collection_count} items found"
+                    f"Collections retrieved successfully - {owned_count} owned, {wanted_count} wanted items"
                 )
                 return True
             else:
                 self.log_result(
                     "Get User Collections",
                     False,
-                    f"HTTP {response.status_code}: {response.text}"
+                    f"Owned: HTTP {owned_response.status_code}, Wanted: HTTP {wanted_response.status_code}"
                 )
                 return False
                 
