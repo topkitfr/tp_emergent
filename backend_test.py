@@ -173,15 +173,15 @@ class TopKitAdminTester:
                 }
                 
                 response = requests.post(
-                    f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/suggest-modification", 
+                    f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/suggest-modifications", 
                     json=modification_data, 
                     headers=headers
                 )
                 
                 if response.status_code == 200:
-                    self.log_test("POST /admin/jerseys/{id}/suggest-modification", True, "Modification suggestion created successfully")
+                    self.log_test("POST /admin/jerseys/{id}/suggest-modifications", True, "Modification suggestion created successfully")
                 else:
-                    self.log_test("POST /admin/jerseys/{id}/suggest-modification", False, f"Failed with status {response.status_code}", response.text)
+                    self.log_test("POST /admin/jerseys/{id}/suggest-modifications", False, f"Failed with status {response.status_code}", response.text)
 
                 # Test POST /api/admin/jerseys/{id}/approve
                 response = requests.post(f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/approve", headers=headers)
