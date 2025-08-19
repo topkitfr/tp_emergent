@@ -1090,20 +1090,20 @@ const AppContent = () => {
 
   // Marketplace Component
   const MarketplacePage = () => (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white text-black p-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header with Search and Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-            <h1 className="text-3xl font-bold mb-4 lg:mb-0">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 md:mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold mb-4 lg:mb-0">
               Marketplace
             </h1>
             
             {/* View Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-800 p-1 rounded-lg">
+            <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-black text-white' : 'text-gray-600'}`}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -1111,7 +1111,7 @@ const AppContent = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'list' ? 'bg-black text-white' : 'text-gray-600'}`}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -1121,16 +1121,16 @@ const AppContent = () => {
           </div>
 
           {/* Advanced Filters */}
-          <div className="bg-gray-900 p-6 rounded-2xl mb-6">
+          <div className="bg-gray-50 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Championnat
                 </label>
                 <select
                   value={filters.league}
                   onChange={(e) => handleFilterChange({ league: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">Tous</option>
                   {[...new Set(marketplaceItems.map(item => item.league).filter(Boolean))].map(league => (
@@ -1140,13 +1140,13 @@ const AppContent = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Équipe
                 </label>
                 <select
                   value={filters.team}
                   onChange={(e) => handleFilterChange({ team: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">Toutes</option>
                   {[...new Set(marketplaceItems.map(item => item.team).filter(Boolean))].map(team => (
@@ -1156,7 +1156,7 @@ const AppContent = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prix min
                 </label>
                 <input
@@ -1164,12 +1164,12 @@ const AppContent = () => {
                   placeholder="0€"
                   value={filters.minPrice}
                   onChange={(e) => handleFilterChange({ minPrice: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prix max
                 </label>
                 <input
@@ -1177,7 +1177,7 @@ const AppContent = () => {
                   placeholder="500€"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange({ maxPrice: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
 
@@ -1185,12 +1185,12 @@ const AppContent = () => {
                 <div className="flex space-x-2 pt-7">
                   <button
                     onClick={clearFilters}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
+                    className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-3 rounded-lg transition-colors"
                   >
                     Effacer
                   </button>
                   <div className="flex-1 text-right pt-3">
-                    <span className="text-gray-400 text-sm">
+                    <span className="text-gray-600 text-sm">
                       {filteredMarketplace.length} articles trouvés
                     </span>
                   </div>
@@ -1204,50 +1204,50 @@ const AppContent = () => {
         {filteredMarketplace.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🛒</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-semibold text-black mb-2">
               Aucun article trouvé
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               Essayez de modifier vos critères de recherche
             </p>
             <button
               onClick={clearFilters}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+              className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg transition-colors"
             >
               Voir tous les articles
             </button>
           </div>
         ) : (
           <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             : "space-y-4"
           }>
             {filteredMarketplace.map((item) => (
               <div
                 key={item.id}
                 className={viewMode === 'grid'
-                  ? "bg-gray-900 rounded-2xl overflow-hidden hover:bg-gray-800 transition-colors shadow-lg relative"
-                  : "bg-gray-900 rounded-2xl p-4 hover:bg-gray-800 transition-colors shadow-lg flex items-center space-x-4"
+                  ? "bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow border border-gray-200 relative"
+                  : "bg-white rounded-lg p-4 hover:shadow-md transition-shadow border border-gray-200 flex items-center space-x-4"
                 }
               >
                 {viewMode === 'grid' ? (
                   <>
-                    <div className="aspect-square bg-gray-800 flex items-center justify-center relative">
+                    <div className="aspect-square bg-gray-100 flex items-center justify-center relative">
                       <div className="text-4xl">👕</div>
                       {/* Price overlay */}
-                      <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-lg text-sm font-bold">
+                      <div className="absolute top-2 right-2 bg-black text-white px-2 py-1 rounded-lg text-sm font-bold">
                         dès {item.min_price}€
                       </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-white mb-1 truncate">
+                      <h3 className="font-semibold text-black mb-1 truncate">
                         {item.team}
                       </h3>
-                      <p className="text-sm text-gray-400 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         {item.league}
                       </p>
                       {item.player_name && (
-                        <p className="text-sm text-blue-400 mb-3">
+                        <p className="text-sm text-black mb-3 font-medium">
                           {item.player_name}
                         </p>
                       )}
@@ -1255,25 +1255,25 @@ const AppContent = () => {
                         {item.listing_count} annonce{item.listing_count > 1 ? 's' : ''}
                       </p>
                       
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                      <button className="w-full bg-black hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium transition-colors">
                         Voir les annonces
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <div className="text-2xl">👕</div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1">
+                      <h3 className="font-semibold text-black mb-1">
                         {item.team}
                       </h3>
-                      <p className="text-sm text-gray-400 mb-1">
+                      <p className="text-sm text-gray-600 mb-1">
                         {item.league}
                       </p>
                       {item.player_name && (
-                        <p className="text-sm text-blue-400 mb-1">
+                        <p className="text-sm text-black mb-1 font-medium">
                           {item.player_name}
                         </p>
                       )}
@@ -1282,10 +1282,10 @@ const AppContent = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-green-400 font-bold mb-2">
+                      <div className="text-black font-bold mb-2">
                         dès {item.min_price}€
                       </div>
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+                      <button className="bg-black hover:bg-gray-800 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
                         Voir
                       </button>
                     </div>
