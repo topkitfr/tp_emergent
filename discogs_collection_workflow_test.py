@@ -174,15 +174,9 @@ class DiscogsWorkflowTester:
                 self.log_result("Admin Jersey Approval", False, error="Submitted jersey not found in pending list")
                 return False
             
-            # Approve the jersey
-            approval_data = {
-                "action": "approve",
-                "admin_notes": "Jersey approved - meets quality standards for FC Barcelona 2024-25 collection"
-            }
-            
+            # Approve the jersey using the correct endpoint
             response = self.session.post(
-                f"{BACKEND_URL}/admin/jerseys/{self.submitted_jersey_id}/moderate", 
-                json=approval_data, 
+                f"{BACKEND_URL}/admin/jerseys/{self.submitted_jersey_id}/approve", 
                 headers=headers
             )
             
@@ -193,7 +187,7 @@ class DiscogsWorkflowTester:
                 self.log_result(
                     "Admin Jersey Approval", 
                     True, 
-                    f"Jersey approved successfully - Status: {data.get('status', 'approved')}"
+                    f"Jersey approved successfully - {data.get('message', 'Approved')}"
                 )
                 return True
             else:
