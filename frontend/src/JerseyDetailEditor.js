@@ -73,6 +73,8 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
     { value: 'replica', label: 'Replica' }
   ];
 
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+
   // Check if this is a new submission
   const isNewSubmission = jersey?.isNewSubmission || false;
   const isAdminEdit = jersey?.isAdminEdit || false;
@@ -86,9 +88,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
         league: jersey?.league || '',
         season: jersey?.season || '',
         jersey_type: jersey?.jersey_type || '',
-        player: jersey?.player || '',
         manufacturer: jersey?.manufacturer || '',
-        home_away: jersey?.home_away || 'home',
+        sku_code: jersey?.sku_code || jersey?.reference_code || '', // Handle both names
+        model: jersey?.model || 'authentic',
         description: jersey?.description || '',
         
         // Collection details from existing data or defaults
@@ -115,11 +117,12 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
         estimated_value: 0
       });
       
-      // Clear photo previews
+      // Clear photo previews and suggestions
       setPhotoPreview({
         front: null,
         back: null
       });
+      setSuggestions({});
       
       setError('');
     }
