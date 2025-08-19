@@ -169,7 +169,7 @@ class FriendsManagementTester:
             if admin_profile.status_code != 200:
                 return None
                 
-            admin_id = admin_profile.json()["id"]
+            admin_id = admin_profile.json()["user"]["id"]
             
             # Send friend request
             friend_request_data = {"user_id": admin_id, "message": "Test friend request"}
