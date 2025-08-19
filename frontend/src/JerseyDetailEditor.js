@@ -603,14 +603,14 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                 </label>
                 <div className="grid grid-cols-1 gap-2">
                   {(JERSEY_DETAIL_CRITERIA.special_features?.options || []).map((feature) => (
-                    <label key={feature} className="flex items-center space-x-2">
+                    <label key={feature.value} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        checked={(detailData.special_features || []).includes(feature)}
-                        onChange={() => handleSpecialFeatureToggle(feature)}
+                        checked={(detailData.special_features || []).includes(feature.value)}
+                        onChange={() => handleSpecialFeatureToggle(feature.value)}
                         className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black focus:ring-2"
                       />
-                      <span className="text-sm text-black">{feature}</span>
+                      <span className="text-sm text-black">{feature.label}</span>
                     </label>
                   ))}
                 </div>
