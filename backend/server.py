@@ -1117,7 +1117,7 @@ async def update_jersey_valuation(jersey: Jersey, price: float, transaction_type
     """Update jersey valuation based on new price data"""
     try:
         signature = generate_jersey_signature(
-            jersey.team, jersey.season, jersey.player, jersey.size, jersey.condition
+            jersey.team, jersey.season, jersey.size, jersey.condition
         )
         
         # Add price to history
