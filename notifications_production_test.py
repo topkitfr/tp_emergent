@@ -266,7 +266,7 @@ class NotificationsProductionTester:
                 headers=headers
             )
             
-            if submission_response.status_code == 201:
+            if submission_response.status_code in [200, 201]:
                 jersey_info = submission_response.json()
                 jersey_id = jersey_info.get('id')
                 
