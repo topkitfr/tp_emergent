@@ -257,7 +257,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
           
           const response = await tokenManager.makeAuthenticatedRequest(
             'put',
-            `/api/admin/jerseys/${jersey.id}`,
+            `/api/admin/jerseys/${jersey.id}/edit`,
             detailData
           );
           
