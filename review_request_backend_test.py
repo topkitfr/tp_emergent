@@ -422,6 +422,18 @@ class ReviewRequestTester:
         print("\n6. Testing Backend Health...")
         health_success = self.test_backend_health()
         
+        # Test jersey submission
+        print("\n7. Testing Jersey Submission...")
+        jersey_success = self.test_jersey_submission()
+        
+        # Test user collections
+        print("\n8. Testing User Collections...")
+        collections_success = self.test_user_collections()
+        
+        # Test messaging system
+        print("\n9. Testing Messaging System...")
+        messaging_success = self.test_messaging_system()
+        
         # Calculate results
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result['success'])
