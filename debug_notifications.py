@@ -68,7 +68,7 @@ def test_direct_notification():
     if response.status_code == 200:
         notifications = response.json()
         print(f"Current notifications count: {len(notifications)}")
-        if notifications:
+        if notifications and isinstance(notifications, list):
             print("Recent notifications:")
             for notif in notifications[-3:]:  # Show last 3
                 print(f"  - {notif.get('title', 'No title')} ({notif.get('type', 'No type')})")
