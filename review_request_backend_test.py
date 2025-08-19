@@ -289,26 +289,102 @@ class ReviewRequestTester:
             self.log_result("Explorer Endpoints", False, "", str(e))
             return False
     
-    def test_backend_health(self):
-        """Test overall backend health"""
+    def test_jersey_submission(self):
+        """Test jersey submission functionality"""
+        if not self.auth_token:
+            self.log_result("Jersey Submission", False, "", "No auth token available")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test jersey submission
+        jersey_data = {
+            "team": "FC Barcelona",
+            "season": "2024-25",
+            "player": "Pedri",
+            "manufacturer": "Nike",
+            "home_away": "home",
+            "league": "La Liga",
+            "description": "Test jersey submission for backend verification"
+        }
+        
         try:
-            # Test a simple endpoint to verify backend is responding
-            response = self.session.get(f"{BACKEND_URL}/stats/dynamic")
+            response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
+                jersey_id = data.get('id', 'N/A')
+                reference = data.get('reference_number', 'N/A')
                 self.log_result(
-                    "Backend Health", 
+                    "Jersey Submission", 
                     True, 
-                    f"Backend responding correctly - Stats endpoint operational"
+                    f"Jersey submitted successfully - ID: {jersey_id}, Reference: {reference}, Status: {data.get('status', 'N/A')}"
                 )
                 return True
             else:
-                self.log_result("Backend Health", False, "", f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Jersey Submission", False, "", f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Backend Health", False, "", str(e))
+            self.log_result("Jersey Submission", False, "", str(e))
+            return False
+    
+    def test_user_collections(self):
+        """Test user collections functionality"""
+        if not self.auth_token:
+            self.log_result("User Collections", False, "", "No auth token available")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        try:
+            # Get user's collections
+            response = self.session.get(f"{BACKEND_URL}/collections/my-owned", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                collection_count = len(data) if isinstance(data, list) else 0
+                self.log_result(
+                    "User Collections", 
+                    True, 
+                    f"Collections endpoint accessible - User has {collection_count} owned items"
+                )
+                return True
+            else:
+                self.log_result("User Collections", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("User Collections", False, "", str(e))
+            return False
+    
+    def test_messaging_system(self):
+        """Test messaging system endpoints"""
+        if not self.auth_token:
+            self.log_result("Messaging System", False, "", "No auth token available")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        try:
+            # Test conversations endpoint
+            response = self.session.get(f"{BACKEND_URL}/conversations", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                conversation_count = len(data) if isinstance(data, list) else 0
+                self.log_result(
+                    "Messaging System", 
+                    True, 
+                    f"Messaging system accessible - User has {conversation_count} conversations"
+                )
+                return True
+            else:
+                self.log_result("Messaging System", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Messaging System", False, "", str(e))
             return False
     
     def run_all_tests(self):
