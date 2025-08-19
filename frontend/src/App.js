@@ -1971,7 +1971,11 @@ const AppContent = () => {
           });
           if (usersResponse.ok) {
             const data = await usersResponse.json();
-            setAllUsers(data);
+            // Ensure data is an array
+            setAllUsers(Array.isArray(data) ? data : []);
+          } else {
+            // Set empty array on error
+            setAllUsers([]);
           }
         }
       } catch (error) {
