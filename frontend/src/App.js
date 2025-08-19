@@ -330,6 +330,8 @@ const AppContent = () => {
       if (response.ok) {
         const data = await response.json();
         setFriends(data.friends || []);
+        setPendingRequests(data.pending_requests || { received: [], sent: [] });
+        setFriendsStats(data.stats || { total_friends: 0, pending_received: 0, pending_sent: 0 });
       }
     } catch (error) {
       console.error('Error loading friends:', error);
