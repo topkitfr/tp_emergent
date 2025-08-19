@@ -1645,10 +1645,34 @@ const AppContent = () => {
 
         case 'messages':
           return (
-            <div className="text-center py-12 text-gray-600">
-              <div className="text-6xl mb-4">💬</div>
-              <h3 className="text-xl font-semibold mb-2">Messages</h3>
-              <p>Fonctionnalité de messagerie en développement</p>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏗️</div>
+              <h3 className="text-xl font-semibold text-black mb-2">
+                Bientôt disponible
+              </h3>
+              <p className="text-gray-600 mb-6">
+                La fonctionnalité de messagerie sera bientôt disponible. En attendant, vous pourrez :
+              </p>
+              <div className="bg-white p-6 rounded-lg max-w-md mx-auto border border-gray-200">
+                <ul className="text-left text-gray-700 space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Contacter les vendeurs directement
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Négocier les prix en privé
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Organiser les échanges de maillots
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Recevoir des notifications en temps réel
+                  </li>
+                </ul>
+              </div>
             </div>
           );
 
