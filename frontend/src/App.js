@@ -10276,10 +10276,11 @@ const ProfileCollectionPage = ({ shouldRefresh = false, setShowSubmitModal }) =>
                       Vous n'avez pas encore soumis de maillots à la base de données.
                     </p>
                     <button
-                      onClick={() => window.dispatchEvent(new CustomEvent('changeView', { detail: 'submit' }))}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      onClick={() => setShowSubmitModal(true)}
+                      className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-semibold flex items-center space-x-2 mx-auto"
                     >
-                      Soumettre un maillot
+                      <span>➕</span>
+                      <span>Soumettre un maillot</span>
                     </button>
                   </div>
                 )}
