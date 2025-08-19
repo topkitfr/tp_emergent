@@ -572,16 +572,27 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Size */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.size.label}
+                  {JERSEY_DETAIL_CRITERIA.size?.label || "Size"}
                 </label>
                 <select
                   value={detailData.size}
                   onChange={(e) => handleInputChange('size', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {Object.entries(JERSEY_DETAIL_CRITERIA.size.options).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
+                  {JERSEY_DETAIL_CRITERIA.size?.options ? 
+                    Object.entries(JERSEY_DETAIL_CRITERIA.size.options).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    )) : (
+                      <>
+                        <option value="xs">XS</option>
+                        <option value="s">S</option>
+                        <option value="m">M</option>
+                        <option value="l">L</option>
+                        <option value="xl">XL</option>
+                        <option value="xxl">XXL</option>
+                      </>
+                    )
+                  }
                 </select>
               </div>
 
