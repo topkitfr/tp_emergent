@@ -257,7 +257,7 @@ class TopKitAdminTester:
             if not self.test_user_id:
                 test_user_data = {
                     "email": "testuser.admin@example.com",
-                    "password": "TestUser123!",
+                    "password": "StrongTestPassword!@#",
                     "name": "Test User for Admin Operations"
                 }
                 
@@ -266,7 +266,7 @@ class TopKitAdminTester:
                     # Login to get user ID
                     login_response = requests.post(f"{BASE_URL}/auth/login", json={
                         "email": "testuser.admin@example.com",
-                        "password": "TestUser123!"
+                        "password": "StrongTestPassword!@#"
                     })
                     
                     if login_response.status_code == 200:
