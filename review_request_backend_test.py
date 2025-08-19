@@ -319,8 +319,8 @@ class ReviewRequestTester:
         print()
         
         # Test basic authentication
-        print("1. Testing Basic Authentication...")
-        auth_success = self.test_user_authentication()
+        print("1. Testing User Registration & Authentication...")
+        auth_success = self.test_user_registration_and_authentication()
         
         # Test admin authentication
         print("\n2. Testing Admin Authentication...")
