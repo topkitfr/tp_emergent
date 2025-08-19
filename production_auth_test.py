@@ -23,6 +23,12 @@ TEST_ACCOUNTS = [
 
 PASSWORD = "TopKitBeta2025!"
 
+# Known working accounts for endpoint verification
+KNOWN_ACCOUNTS = [
+    {"email": "topkitfr@gmail.com", "password": "TopKitSecure789#"},
+    {"email": "steinmetzlivio@gmail.com", "password": "TopKit123!"}
+]
+
 class ProductionAuthTester:
     def __init__(self):
         self.results = {}
