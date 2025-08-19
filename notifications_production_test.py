@@ -479,6 +479,74 @@ class NotificationsProductionTester:
             self.log_test("Admin Moderation Notifications", False, "", str(e))
             return False
     
+    def test_notification_creation_direct(self):
+        """Test direct notification creation to verify the system works"""
+        if not self.admin_token:
+            self.log_test("Direct Notification Creation", False, "", "No admin token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            
+            # Try to create a test notification directly
+            notification_data = {
+                "user_id": "f33eab32-2d5c-4f59-9104-83999453a43c",  # Admin user ID
+                "type": "system_announcement",
+                "title": "Test Notification",
+                "message": "This is a test notification to verify the notification system is working",
+                "related_id": None
+            }
+            
+            create_response = self.session.post(
+                f"{BACKEND_URL}/notifications",
+                json=notification_data,
+                headers=headers
+            )
+            
+            if create_response.status_code in [200, 201]:
+                # Wait a moment
+                time.sleep(1)
+                
+                # Check if notification appears
+                get_response = self.session.get(f"{BACKEND_URL}/notifications", headers=headers)
+                if get_response.status_code == 200:
+                    notifications = get_response.json()
+                    notification_count = len(notifications) if isinstance(notifications, list) else 0
+                    
+                    # Look for our test notification
+                    test_notifications = []
+                    if isinstance(notifications, list):
+                        for notif in notifications:
+                            if 'test notification' in notif.get('message', '').lower():
+                                test_notifications.append(notif)
+                    
+                    self.log_test(
+                        "Direct Notification Creation",
+                        True,
+                        f"Notification creation endpoint working - Total notifications: {notification_count}, Test notifications: {len(test_notifications)}"
+                    )
+                    return notifications
+                else:
+                    self.log_test(
+                        "Direct Notification Creation",
+                        False,
+                        f"Notification created but failed to retrieve - HTTP {get_response.status_code}",
+                        get_response.text
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Direct Notification Creation",
+                    False,
+                    f"Failed to create notification - HTTP {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Direct Notification Creation", False, "", str(e))
+            return False
+    
     def test_notification_content_structure(self, notifications):
         """Verify notification content structure and completeness"""
         if not notifications or not isinstance(notifications, list):
