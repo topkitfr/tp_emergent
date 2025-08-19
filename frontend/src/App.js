@@ -185,6 +185,7 @@ const AppContent = () => {
   const [friendsStats, setFriendsStats] = useState({ total_friends: 0, pending_received: 0, pending_sent: 0 });
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showJerseyEditor, setShowJerseyEditor] = useState(false);
+  const [showJerseyDetailView, setShowJerseyDetailView] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [editingJersey, setEditingJersey] = useState(null);
   const [userCollections, setUserCollections] = useState({
