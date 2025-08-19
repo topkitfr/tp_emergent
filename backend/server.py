@@ -1241,7 +1241,7 @@ async def recalculate_jersey_valuation(jersey_signature: str):
 async def get_jersey_valuation(jersey: Jersey) -> Optional[JerseyValuation]:
     """Get valuation for a specific jersey"""
     signature = generate_jersey_signature(
-        jersey.team, jersey.season, jersey.player, jersey.size, jersey.condition
+        jersey.team, jersey.season, jersey.size, jersey.condition
     )
     
     valuation_data = await db.jersey_valuations.find_one({"jersey_signature": signature})
