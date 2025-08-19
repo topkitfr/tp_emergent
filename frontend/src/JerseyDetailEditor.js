@@ -695,13 +695,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Storage Notes */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.storage_notes.label}
+                  {JERSEY_DETAIL_CRITERIA.storage_notes?.label || "Storage Notes"}
                 </label>
                 <textarea
                   value={detailData.storage_notes}
                   onChange={(e) => handleInputChange('storage_notes', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black h-24"
-                  placeholder={JERSEY_DETAIL_CRITERIA.storage_notes.placeholder}
+                  placeholder={JERSEY_DETAIL_CRITERIA.storage_notes?.placeholder || "Notes sur le stockage et l'entretien"}
                 />
               </div>
 
