@@ -245,7 +245,7 @@ class TopKitAdminTester:
                 
                 # Find a test user (not admin) for ban/delete testing
                 for user in users:
-                    if user.get("role") != "admin" and user.get("email") != ADMIN_EMAIL:
+                    if isinstance(user, dict) and user.get("role") != "admin" and user.get("email") != ADMIN_EMAIL:
                         self.test_user_id = user.get("id")
                         break
                         
