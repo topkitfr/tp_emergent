@@ -284,11 +284,11 @@ class CollectionRemovalDebugger:
         except Exception as e:
             self.log_result("DELETE with jersey_id", False, "", str(e))
     
-    def test_collection_remove_with_both_params(self, collections):
-        """Test 4: Test DELETE /api/collections/remove with both collection_id and jersey_id"""
+    def test_delete_collections_jersey_id_endpoint(self, collections):
+        """Test 4b: Test DELETE /api/collections/{jersey_id} endpoint"""
         if not collections:
             self.log_result(
-                "DELETE with both parameters",
+                "DELETE /api/collections/{jersey_id}",
                 False,
                 "No collections available to test removal"
             )
@@ -297,43 +297,39 @@ class CollectionRemovalDebugger:
         try:
             # Use the last collection if available
             test_collection = collections[-1] if collections else collections[0]
-            collection_id = test_collection.get('id')
             jersey_id = test_collection.get('jersey_id')
             
-            if not collection_id or not jersey_id:
+            if not jersey_id:
                 self.log_result(
-                    "DELETE with both parameters",
+                    "DELETE /api/collections/{jersey_id}",
                     False,
-                    f"Missing IDs - collection_id: {collection_id}, jersey_id: {jersey_id}"
+                    f"Missing jersey_id: {jersey_id}"
                 )
                 return
             
-            # Test with both parameters
-            response = self.session.delete(f"{BACKEND_URL}/collections/remove", json={
-                "collection_id": collection_id,
-                "jersey_id": jersey_id
-            })
+            # Test the DELETE /api/collections/{jersey_id} endpoint
+            response = self.session.delete(f"{BACKEND_URL}/collections/{jersey_id}")
             
-            details = f"Tested with collection_id: {collection_id} and jersey_id: {jersey_id}"
+            details = f"Tested DELETE /api/collections/{jersey_id}"
             details += f"\nResponse status: {response.status_code}"
             details += f"\nResponse body: {response.text}"
             
             if response.status_code == 200:
                 self.log_result(
-                    "DELETE with both parameters",
+                    "DELETE /api/collections/{jersey_id}",
                     True,
                     details
                 )
             else:
                 self.log_result(
-                    "DELETE with both parameters",
+                    "DELETE /api/collections/{jersey_id}",
                     False,
                     details,
                     f"HTTP {response.status_code}: {response.text}"
                 )
                 
         except Exception as e:
-            self.log_result("DELETE with both parameters", False, "", str(e))
+            self.log_result("DELETE /api/collections/{jersey_id}", False, "", str(e))
     
     def test_alternative_endpoints(self):
         """Test 5: Check if there are alternative collection removal endpoints"""
