@@ -25,11 +25,11 @@ import sys
 # Configuration - Using production URL from frontend/.env
 BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
 
-# Test credentials from review request
+# Test credentials from review request (updated from test_result.md history)
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+TEST_USER_PASSWORD = "TopKit123!"
 ADMIN_EMAIL = "topkitfr@gmail.com" 
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 class DiscogsLogicBackendTester:
     def __init__(self):
