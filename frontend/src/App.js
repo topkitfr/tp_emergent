@@ -196,7 +196,7 @@ const AppContent = () => {
   // CSV Data
   const { csvData, loading: csvLoading, error: csvError } = useCSVData();
 
-  // Load data on mount and when user changes
+  // Load data on mount and when user changes or view changes
   useEffect(() => {
     loadJerseys();
     loadMarketplace();
@@ -207,6 +207,13 @@ const AppContent = () => {
       loadUserSubmissions();
     }
   }, [user]);
+
+  // Load collections when accessing profile view
+  useEffect(() => {
+    if (user && currentView === 'profile') {
+      loadUserCollections();
+    }
+  }, [user, currentView]);
 
   // Filter jerseys based on search and filters
   useEffect(() => {
