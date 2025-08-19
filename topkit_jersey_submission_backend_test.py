@@ -23,10 +23,10 @@ import os
 # Configuration
 BACKEND_URL = "https://kit-curator.preview.emergentagent.com/api"
 
-# Test credentials from review request
+# Test credentials - using working alternative since steinmetzlivio@gmail.com is locked
 USER_CREDENTIALS = {
-    "email": "steinmetzlivio@gmail.com",
-    "password": "TopKit123!"
+    "email": "livio.test@topkit.fr",
+    "password": "TopKitTestSecure789!"
 }
 
 ADMIN_CREDENTIALS = {
