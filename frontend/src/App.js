@@ -2353,6 +2353,8 @@ const AppContent = () => {
             handleJerseyUpdate();
           }}
           jersey={editingJersey}
+          mode={editingJersey?.isNewSubmission ? 'submission' : 
+                (editingJersey?.isAdminEdit ? 'admin-modify' : 'collection-edit')}
           user={user}
         />
       )}
