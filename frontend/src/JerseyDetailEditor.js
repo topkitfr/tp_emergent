@@ -668,14 +668,14 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Purchase Price */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.purchase_price.label}
+                  {JERSEY_DETAIL_CRITERIA.purchase_price?.label || "Purchase Price"}
                 </label>
                 <input
                   type="number"
                   value={detailData.purchase_price}
                   onChange={(e) => handleInputChange('purchase_price', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                  placeholder={JERSEY_DETAIL_CRITERIA.purchase_price.placeholder}
+                  placeholder={JERSEY_DETAIL_CRITERIA.purchase_price?.placeholder || "Prix d'achat en €"}
                 />
               </div>
 
