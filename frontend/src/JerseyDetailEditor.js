@@ -722,6 +722,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* Action Buttons */}
