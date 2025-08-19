@@ -3552,24 +3552,37 @@ async def get_league_jerseys(league: str, limit: int = 20):
 
 # Jersey endpoints
 @api_router.post("/jerseys", response_model=Jersey)
-async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(get_current_user), resubmission_id: Optional[str] = None):
+async def create_jersey(
+    team: str = Form(...),
+    league: str = Form(...),
+    season: str = Form(...),
+    model: str = Form(...),
+    manufacturer: str = Form(""),
+    jersey_type: str = Form(""),
+    sku_code: str = Form(None),
+    description: str = Form(""),
+    front_photo: UploadFile = File(None),
+    back_photo: UploadFile = File(None),
+    current_user: dict = Depends(get_current_user),
+    resubmission_id: Optional[str] = None
+):
     """Create a new jersey submission (pending approval) or resubmit with modifications"""
     try:
         user_id = current_user["id"]  # Extract user ID for easier use
         print(f"🟡 Jersey submission received from user {user_id}")
-        print(f"🟡 Jersey data: {jersey_data.dict()}")
+        print(f"🟡 Jersey data: team={team}, league={league}, season={season}, model={model}")
         
         # Validate required fields for new form structure
-        if not jersey_data.team or not jersey_data.league or not jersey_data.season or not jersey_data.model:
+        if not team or not league or not season or not model:
             raise HTTPException(status_code=422, detail="Team, league, season, and model are required fields")
         
         # Validate model field
-        if jersey_data.model not in ["authentic", "replica"]:
+        if model not in ["authentic", "replica"]:
             raise HTTPException(status_code=422, detail="Model must be either 'authentic' or 'replica'")
         
         # Jersey type validation (optional)
         valid_jersey_types = ["home", "away", "third", "goalkeeper", "training", "special"]
-        if jersey_data.jersey_type and jersey_data.jersey_type not in valid_jersey_types:
+        if jersey_type and jersey_type not in valid_jersey_types:
             raise HTTPException(status_code=422, detail=f"Invalid jersey type. Must be one of: {', '.join(valid_jersey_types)}")
         
         # Check if this is a resubmission
@@ -3597,14 +3610,14 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
         
         # Create jersey with validated data (matching current Jersey model)
         jersey = Jersey(
-            team=jersey_data.team.strip(),
-            league=jersey_data.league.strip(),
-            season=jersey_data.season.strip(),
-            manufacturer=jersey_data.manufacturer.strip() if jersey_data.manufacturer else "",
-            jersey_type=jersey_data.jersey_type.strip() if jersey_data.jersey_type else "",
-            sku_code=jersey_data.sku_code.strip() if jersey_data.sku_code else None,
-            model=jersey_data.model.strip(),
-            description=jersey_data.description.strip() if jersey_data.description else "",
+            team=team.strip(),
+            league=league.strip(),
+            season=season.strip(),
+            manufacturer=manufacturer.strip() if manufacturer else "",
+            jersey_type=jersey_type.strip() if jersey_type else "",
+            sku_code=sku_code.strip() if sku_code else None,
+            model=model.strip(),
+            description=description.strip() if description else "",
             reference_number=reference_number,
             created_by=user_id,
             submitted_by=user_id,
