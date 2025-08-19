@@ -32,6 +32,12 @@ USER_CREDENTIALS = {
     "password": "TopKit123!"
 }
 
+# Additional test credentials
+ALT_USER_CREDENTIALS = {
+    "email": "test@example.com",
+    "password": "TestPass123!"
+}
+
 class NotificationsProductionTester:
     def __init__(self):
         self.admin_token = None
