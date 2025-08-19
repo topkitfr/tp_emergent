@@ -5563,6 +5563,48 @@ async def get_friends(current_user: dict = Depends(get_current_user)):
         }
     }
 
+@api_router.delete("/friends/{friend_id}")
+async def remove_friend(
+    friend_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove a friend from user's friends list"""
+    user_id = current_user["id"]
+    
+    # Find the friendship (could be in either direction)
+    friendship = await db.friendships.find_one({
+        "$and": [
+            {
+                "$or": [
+                    {"requester_id": user_id, "addressee_id": friend_id},
+                    {"requester_id": friend_id, "addressee_id": user_id}
+                ]
+            },
+            {"status": FriendshipStatus.ACCEPTED}
+        ]
+    })
+    
+    if not friendship:
+        raise HTTPException(status_code=404, detail="Friendship not found")
+    
+    # Delete the friendship
+    await db.friendships.delete_one({"id": friendship["id"]})
+    
+    # Get friend's name for notification
+    friend = await db.users.find_one({"id": friend_id})
+    friend_name = friend.get("name", "Someone") if friend else "Someone"
+    
+    # Notify the removed friend
+    await create_notification(
+        user_id=friend_id,
+        notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+        title="Friendship Ended",
+        message=f"{current_user['name']} has removed you from their friends list.",
+        related_id=friendship["id"]
+    )
+    
+    return {"message": f"Successfully removed {friend_name} from your friends list"}
+
 # Messaging System API Endpoints  
 @api_router.post("/conversations")
 async def create_conversation(
