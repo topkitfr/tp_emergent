@@ -4,7 +4,6 @@ import axios from 'axios';
 import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
 import SecuritySettingsModal from './SecuritySettingsModal';
-import SmartJerseySubmissionForm from './SmartJerseySubmissionForm';
 import JerseyDetailEditor from './JerseyDetailEditor';
 import { useCSVData } from './utils/csvLoader';
 import tokenManager from './utils/tokenManager';
