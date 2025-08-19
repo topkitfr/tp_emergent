@@ -449,7 +449,7 @@ class TopKitAdminTester:
             # Create a regular user for security testing
             regular_user_data = {
                 "email": "regularuser@example.com",
-                "password": "RegularUser123!",
+                "password": "RegularUserPassword!@#",
                 "name": "Regular User"
             }
             
