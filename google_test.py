@@ -5,7 +5,7 @@ Test Google OAuth specifically
 
 import requests
 
-BASE_URL = "https://profile-friends.preview.emergentagent.com/api"
+BASE_URL = "https://kit-curator.preview.emergentagent.com/api"
 
 def test_google_oauth():
     session = requests.Session()

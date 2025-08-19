@@ -25,7 +25,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const passwordValidation = !isLogin ? validatePassword(formData.password || '') : {};
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://profile-friends.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://kit-curator.preview.emergentagent.com';
 
   const handleAuthFormSubmit = async (e) => {
     e.preventDefault();

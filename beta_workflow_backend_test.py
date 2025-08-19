@@ -39,7 +39,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BASE_URL = "https://profile-friends.preview.emergentagent.com/api"
+BASE_URL = "https://kit-curator.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
