@@ -163,8 +163,9 @@ class TopKitAdminTester:
 
             # 3. Test admin moderation actions if we have a jersey
             if self.test_jersey_id:
-                # Test POST /api/admin/jerseys/{id}/suggest-modification
+                # Test POST /api/admin/jerseys/{id}/suggest-modifications
                 modification_data = {
+                    "jersey_id": self.test_jersey_id,
                     "suggested_changes": "Veuillez corriger la saison - il s'agit de la saison 2023-24, pas 2024-25",
                     "suggested_modifications": {
                         "season": "2023-24",
