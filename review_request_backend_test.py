@@ -49,20 +49,23 @@ class ReviewRequestTester:
     
     def test_user_registration_and_authentication(self):
         """Test user registration and then authentication"""
-        # First try to register a test user
+        # Always create a new test account with timestamp to ensure uniqueness
+        timestamp = int(time.time())
         test_user_reg = {
-            "email": "friendstest2@example.com",
+            "email": f"testuser{timestamp}@example.com",
             "password": "TopKit123!",
-            "name": "Friends Test User"
+            "name": "Test User"
         }
         
         try:
-            # Try registration first
+            # Register new test user
+            print(f"    Creating test account: {test_user_reg['email']}")
             response = self.session.post(f"{BACKEND_URL}/auth/register", json=test_user_reg)
             
             if response.status_code == 200:
-                print("    Registration successful, now testing login...")
-                # Now try to login
+                print("    ✅ Registration successful, now testing login...")
+                
+                # Now try to login with the new account
                 login_response = self.session.post(f"{BACKEND_URL}/auth/login", json={
                     "email": test_user_reg["email"],
                     "password": test_user_reg["password"]
@@ -76,19 +79,18 @@ class ReviewRequestTester:
                         self.log_result(
                             "User Registration & Authentication", 
                             True, 
-                            f"Registration and login successful - Name: {user_info.get('name', 'N/A')}, Role: {user_info.get('role', 'N/A')}, ID: {user_info.get('id', 'N/A')}"
+                            f"Account created and login successful - Email: {test_user_reg['email']}, Name: {user_info.get('name', 'N/A')}, Role: {user_info.get('role', 'N/A')}, ID: {user_info.get('id', 'N/A')}"
                         )
                         return True
                     else:
                         self.log_result("User Registration & Authentication", False, "", "No token in login response")
                         return False
                 else:
-                    self.log_result("User Registration & Authentication", False, "", f"Login failed: HTTP {login_response.status_code}: {login_response.text}")
+                    self.log_result("User Registration & Authentication", False, "", f"Login failed after registration: HTTP {login_response.status_code}: {login_response.text}")
                     return False
             else:
-                # Registration failed, maybe user exists, try direct login
-                print(f"    Registration failed (HTTP {response.status_code}), trying direct login...")
-                return self.test_existing_user_authentication()
+                self.log_result("User Registration & Authentication", False, "", f"Registration failed: HTTP {response.status_code}: {response.text}")
+                return False
                 
         except Exception as e:
             self.log_result("User Registration & Authentication", False, "", str(e))
