@@ -81,7 +81,8 @@ class AdminJerseyCorrectionTester:
             return False
             
         try:
-            jersey_data = {
+            # Use form data instead of JSON as the endpoint expects Form parameters
+            form_data = {
                 "team": "Real Madrid",
                 "league": "La Liga",
                 "season": "24/25",
@@ -93,7 +94,7 @@ class AdminJerseyCorrectionTester:
             }
             
             headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=headers)
+            response = requests.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
