@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 
 # Configuration
-BACKEND_URL = "https://9f26dbf2-ce88-4e0c-8bc0-d245b81c53aa.preview.emergentagent.com/api"
+BACKEND_URL = "https://notif-system-fix.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {

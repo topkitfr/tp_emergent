@@ -11,7 +11,7 @@ const TwoFactorAuthSetup = ({ user, onClose, onSuccess }) => {
   const [error, setError] = useState('');
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://kit-beta.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://notif-system-fix.preview.emergentagent.com';
 
   useEffect(() => {
     setupTwoFactor();

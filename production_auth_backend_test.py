@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Production backend URL from frontend/.env
-BACKEND_URL = "https://9f26dbf2-ce88-4e0c-8bc0-d245b81c53aa.preview.emergentagent.com/api"
+BACKEND_URL = "https://notif-system-fix.preview.emergentagent.com/api"
 
 # Test accounts as specified in review request
 TEST_ACCOUNTS = [
