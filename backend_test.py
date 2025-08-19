@@ -203,10 +203,14 @@ class TopKitAdminTester:
                 else:
                     self.log_test("POST /admin/jerseys/{id}/reject", False, f"Failed with status {response.status_code}", response.text)
 
-                # Test DELETE /api/admin/jerseys/{id}
+                # Test DELETE /api/admin/jerseys/{id} - Check if this endpoint exists
+                # Based on the logs, this endpoint might not be implemented
+                # Let's test if it exists first
                 response = requests.delete(f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}", headers=headers)
                 if response.status_code == 200:
                     self.log_test("DELETE /admin/jerseys/{id}", True, "Jersey deleted from explorer successfully")
+                elif response.status_code == 404:
+                    self.log_test("DELETE /admin/jerseys/{id}", False, "Endpoint not implemented - DELETE admin jersey not available")
                 else:
                     self.log_test("DELETE /admin/jerseys/{id}", False, f"Failed with status {response.status_code}", response.text)
 
