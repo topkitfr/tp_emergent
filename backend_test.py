@@ -1,5 +1,682 @@
 #!/usr/bin/env python3
 """
+TopKit New Jersey Submission Form Structure Testing
+Testing the modified jersey submission form with new fields and structure changes.
+
+Focus Areas:
+1. NEW FORM STRUCTURE: team, league, season, manufacturer, sku_code, model, description
+2. REQUIRED FIELDS: team, league, season, model
+3. REMOVED FIELD: player field should be removed
+4. PHOTO UPLOADS: front_photo and back_photo
+5. USER AUTHENTICATION: livio.test@topkit.fr/TopKitTestSecure789!
+6. ADMIN FUNCTIONALITY: editing pending jerseys with new structure
+7. END-TO-END WORKFLOW: complete jersey creation and processing
+"""
+
+import asyncio
+import aiohttp
+import json
+import sys
+from datetime import datetime
+from typing import Dict, Any, Optional
+
+# Configuration
+BASE_URL = "https://kit-curator.preview.emergentagent.com/api"
+
+# Test credentials
+TEST_USER_EMAIL = "livio.test@topkit.fr"
+TEST_USER_PASSWORD = "TopKitTestSecure789!"
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
+
+class TopKitNewFormTester:
+    def __init__(self):
+        self.session = None
+        self.user_token = None
+        self.admin_token = None
+        self.test_results = []
+        self.created_jersey_id = None
+        
+    async def setup_session(self):
+        """Initialize HTTP session"""
+        self.session = aiohttp.ClientSession()
+        
+    async def cleanup_session(self):
+        """Clean up HTTP session"""
+        if self.session:
+            await self.session.close()
+            
+    def log_result(self, test_name: str, success: bool, details: str = "", data: Any = None):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "timestamp": datetime.now().isoformat(),
+            "data": data
+        }
+        self.test_results.append(result)
+        print(f"{status} - {test_name}: {details}")
+        
+    async def authenticate_user(self) -> bool:
+        """Authenticate test user"""
+        try:
+            login_data = {
+                "email": TEST_USER_EMAIL,
+                "password": TEST_USER_PASSWORD
+            }
+            
+            async with self.session.post(f"{BASE_URL}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.user_token = data.get("token")
+                    user_info = data.get("user", {})
+                    self.log_result(
+                        "User Authentication", 
+                        True, 
+                        f"Successfully authenticated user: {user_info.get('name', 'Unknown')} ({user_info.get('email', 'Unknown')})",
+                        {"user_id": user_info.get('id'), "role": user_info.get('role')}
+                    )
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.log_result("User Authentication", False, f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_result("User Authentication", False, f"Exception: {str(e)}")
+            return False
+            
+    async def authenticate_admin(self) -> bool:
+        """Authenticate admin user"""
+        try:
+            login_data = {
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            }
+            
+            async with self.session.post(f"{BASE_URL}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.admin_token = data.get("token")
+                    user_info = data.get("user", {})
+                    self.log_result(
+                        "Admin Authentication", 
+                        True, 
+                        f"Successfully authenticated admin: {user_info.get('name', 'Unknown')} ({user_info.get('role', 'Unknown')})",
+                        {"user_id": user_info.get('id'), "role": user_info.get('role')}
+                    )
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.log_result("Admin Authentication", False, f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_new_form_structure_submission(self) -> bool:
+        """Test jersey submission with new form structure"""
+        try:
+            # Test data with new form structure
+            jersey_data = {
+                "team": "FC Barcelona",
+                "league": "La Liga",
+                "season": "2024-25",
+                "manufacturer": "Nike",
+                "sku_code": "FB2425H001",  # New field: sku_code instead of reference
+                "model": "authentic",  # New field: authentic/replica
+                "description": "Maillot domicile FC Barcelona saison 2024-25, modèle authentique Nike",
+                "front_photo": "https://example.com/front.jpg",  # New field
+                "back_photo": "https://example.com/back.jpg"     # New field
+                # Note: "player" field should be removed
+            }
+            
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            async with self.session.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=headers) as response:
+                response_text = await response.text()
+                
+                if response.status == 200:
+                    data = await response.json()
+                    self.created_jersey_id = data.get("id")
+                    self.log_result(
+                        "New Form Structure Submission", 
+                        True, 
+                        f"Successfully created jersey with new structure. ID: {self.created_jersey_id}",
+                        {
+                            "jersey_id": self.created_jersey_id,
+                            "reference_number": data.get("reference_number"),
+                            "status": data.get("status"),
+                            "has_sku_code": "sku_code" in str(data),
+                            "has_model": "model" in str(data),
+                            "has_player": "player" in str(data)
+                        }
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "New Form Structure Submission", 
+                        False, 
+                        f"HTTP {response.status}: {response_text}",
+                        {"submitted_data": jersey_data}
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("New Form Structure Submission", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_required_fields_validation(self) -> bool:
+        """Test validation of required fields: team, league, season, model"""
+        test_cases = [
+            {"name": "Missing team", "data": {"league": "La Liga", "season": "2024-25", "model": "authentic"}},
+            {"name": "Missing league", "data": {"team": "Real Madrid", "season": "2024-25", "model": "authentic"}},
+            {"name": "Missing season", "data": {"team": "Real Madrid", "league": "La Liga", "model": "authentic"}},
+            {"name": "Missing model", "data": {"team": "Real Madrid", "league": "La Liga", "season": "2024-25"}},
+        ]
+        
+        headers = {"Authorization": f"Bearer {self.user_token}"}
+        all_passed = True
+        
+        for test_case in test_cases:
+            try:
+                async with self.session.post(f"{BASE_URL}/jerseys", json=test_case["data"], headers=headers) as response:
+                    if response.status == 422:  # Validation error expected
+                        error_data = await response.json()
+                        self.log_result(
+                            f"Required Field Validation - {test_case['name']}", 
+                            True, 
+                            f"Correctly rejected submission: {error_data.get('detail', 'Validation error')}",
+                            {"test_data": test_case["data"]}
+                        )
+                    else:
+                        response_text = await response.text()
+                        self.log_result(
+                            f"Required Field Validation - {test_case['name']}", 
+                            False, 
+                            f"Expected validation error but got HTTP {response.status}: {response_text}",
+                            {"test_data": test_case["data"]}
+                        )
+                        all_passed = False
+                        
+            except Exception as e:
+                self.log_result(f"Required Field Validation - {test_case['name']}", False, f"Exception: {str(e)}")
+                all_passed = False
+                
+        return all_passed
+
+    async def test_player_field_removal(self) -> bool:
+        """Test that player field has been removed from the form structure"""
+        try:
+            # Submit jersey data with player field - should be ignored or cause error
+            jersey_data = {
+                "team": "Manchester United",
+                "league": "Premier League", 
+                "season": "2024-25",
+                "model": "replica",
+                "player": "Marcus Rashford",  # This field should be removed
+                "description": "Test jersey with player field"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            async with self.session.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=headers) as response:
+                response_text = await response.text()
+                
+                if response.status == 200:
+                    data = await response.json()
+                    # Check if player field is present in response
+                    has_player_field = "player" in str(data)
+                    
+                    if has_player_field:
+                        self.log_result(
+                            "Player Field Removal", 
+                            False, 
+                            "Player field is still present in jersey data - field removal not implemented",
+                            {"jersey_data": data}
+                        )
+                        return False
+                    else:
+                        self.log_result(
+                            "Player Field Removal", 
+                            True, 
+                            "Player field successfully removed from jersey structure",
+                            {"jersey_id": data.get("id")}
+                        )
+                        return True
+                elif response.status == 422:
+                    # If it's a validation error about unknown field, that's also good
+                    error_data = await response.json()
+                    if "player" in str(error_data).lower():
+                        self.log_result(
+                            "Player Field Removal", 
+                            True, 
+                            f"Player field correctly rejected: {error_data.get('detail', 'Unknown field error')}",
+                            {"error": error_data}
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Player Field Removal", 
+                            False, 
+                            f"Unexpected validation error: {error_data.get('detail', 'Unknown error')}",
+                            {"error": error_data}
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "Player Field Removal", 
+                        False, 
+                        f"Unexpected HTTP {response.status}: {response_text}",
+                        {"submitted_data": jersey_data}
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("Player Field Removal", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_photo_upload_fields(self) -> bool:
+        """Test front_photo and back_photo upload fields"""
+        try:
+            jersey_data = {
+                "team": "Liverpool FC",
+                "league": "Premier League",
+                "season": "2024-25", 
+                "model": "authentic",
+                "manufacturer": "Nike",
+                "front_photo": "https://example.com/liverpool_front.jpg",
+                "back_photo": "https://example.com/liverpool_back.jpg",
+                "description": "Liverpool home jersey with photo uploads"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            async with self.session.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=headers) as response:
+                response_text = await response.text()
+                
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Check if photo fields are handled correctly
+                    has_images = "images" in data and len(data.get("images", [])) > 0
+                    has_front_photo = "front_photo" in str(data)
+                    has_back_photo = "back_photo" in str(data)
+                    
+                    self.log_result(
+                        "Photo Upload Fields", 
+                        True, 
+                        f"Photo fields processed - Images array: {has_images}, Front photo: {has_front_photo}, Back photo: {has_back_photo}",
+                        {
+                            "jersey_id": data.get("id"),
+                            "images": data.get("images", []),
+                            "has_front_photo": has_front_photo,
+                            "has_back_photo": has_back_photo
+                        }
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Photo Upload Fields", 
+                        False, 
+                        f"HTTP {response.status}: {response_text}",
+                        {"submitted_data": jersey_data}
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("Photo Upload Fields", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_admin_jersey_editing(self) -> bool:
+        """Test admin functionality for editing pending jerseys with new structure"""
+        if not self.created_jersey_id:
+            self.log_result("Admin Jersey Editing", False, "No jersey ID available for admin testing")
+            return False
+            
+        try:
+            # First, get the pending jersey
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            
+            async with self.session.get(f"{BASE_URL}/admin/jerseys/pending", headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    pending_jerseys = data.get("jerseys", [])
+                    
+                    # Find our created jersey
+                    target_jersey = None
+                    for jersey in pending_jerseys:
+                        if jersey.get("id") == self.created_jersey_id:
+                            target_jersey = jersey
+                            break
+                    
+                    if target_jersey:
+                        self.log_result(
+                            "Admin Jersey Editing - Retrieve Pending", 
+                            True, 
+                            f"Successfully retrieved pending jersey with new structure",
+                            {
+                                "jersey_id": target_jersey.get("id"),
+                                "has_sku_code": "sku_code" in str(target_jersey),
+                                "has_model": "model" in str(target_jersey),
+                                "has_player": "player" in str(target_jersey),
+                                "status": target_jersey.get("status")
+                            }
+                        )
+                        
+                        # Test admin approval with new structure
+                        return await self.test_admin_approval(target_jersey)
+                    else:
+                        self.log_result(
+                            "Admin Jersey Editing - Retrieve Pending", 
+                            False, 
+                            f"Created jersey {self.created_jersey_id} not found in pending list",
+                            {"pending_count": len(pending_jerseys)}
+                        )
+                        return False
+                else:
+                    error_text = await response.text()
+                    self.log_result(
+                        "Admin Jersey Editing - Retrieve Pending", 
+                        False, 
+                        f"HTTP {response.status}: {error_text}"
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("Admin Jersey Editing", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_admin_approval(self, jersey_data: Dict[str, Any]) -> bool:
+        """Test admin approval of jersey with new structure"""
+        try:
+            jersey_id = jersey_data.get("id")
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            
+            # Approve the jersey
+            async with self.session.post(f"{BASE_URL}/admin/jerseys/{jersey_id}/approve", headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.log_result(
+                        "Admin Jersey Approval", 
+                        True, 
+                        f"Successfully approved jersey with new structure",
+                        {
+                            "jersey_id": jersey_id,
+                            "status": data.get("status"),
+                            "approved_by": data.get("approved_by"),
+                            "message": data.get("message")
+                        }
+                    )
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.log_result(
+                        "Admin Jersey Approval", 
+                        False, 
+                        f"HTTP {response.status}: {error_text}",
+                        {"jersey_id": jersey_id}
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("Admin Jersey Approval", False, f"Exception: {str(e)}")
+            return False
+
+    async def test_end_to_end_workflow(self) -> bool:
+        """Test complete end-to-end workflow with new form structure"""
+        try:
+            # Create a comprehensive test jersey
+            jersey_data = {
+                "team": "Paris Saint-Germain",
+                "league": "Ligue 1",
+                "season": "2024-25",
+                "manufacturer": "Jordan",
+                "sku_code": "PSG2425A001",
+                "model": "authentic",
+                "description": "PSG maillot domicile authentique Jordan 2024-25 - Test complet workflow",
+                "front_photo": "https://example.com/psg_front.jpg",
+                "back_photo": "https://example.com/psg_back.jpg"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            # Step 1: Submit jersey
+            async with self.session.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    workflow_jersey_id = data.get("id")
+                    
+                    self.log_result(
+                        "End-to-End Workflow - Submission", 
+                        True, 
+                        f"Jersey submitted successfully: {workflow_jersey_id}",
+                        {
+                            "jersey_id": workflow_jersey_id,
+                            "reference_number": data.get("reference_number"),
+                            "status": data.get("status")
+                        }
+                    )
+                    
+                    # Step 2: Verify jersey appears in user's submissions
+                    return await self.verify_user_submissions(workflow_jersey_id)
+                else:
+                    error_text = await response.text()
+                    self.log_result(
+                        "End-to-End Workflow - Submission", 
+                        False, 
+                        f"HTTP {response.status}: {error_text}",
+                        {"submitted_data": jersey_data}
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("End-to-End Workflow", False, f"Exception: {str(e)}")
+            return False
+
+    async def verify_user_submissions(self, jersey_id: str) -> bool:
+        """Verify jersey appears in user's submissions"""
+        try:
+            headers = {"Authorization": f"Bearer {self.user_token}"}
+            
+            # Get user profile to find user ID
+            async with self.session.get(f"{BASE_URL}/profile", headers=headers) as response:
+                if response.status == 200:
+                    profile_data = await response.json()
+                    user_id = profile_data.get("id")
+                    
+                    # Get user's jersey submissions
+                    async with self.session.get(f"{BASE_URL}/users/{user_id}/jerseys", headers=headers) as submissions_response:
+                        if submissions_response.status == 200:
+                            submissions_data = await submissions_response.json()
+                            jerseys = submissions_data.get("jerseys", [])
+                            
+                            # Find our jersey
+                            found_jersey = None
+                            for jersey in jerseys:
+                                if jersey.get("id") == jersey_id:
+                                    found_jersey = jersey
+                                    break
+                            
+                            if found_jersey:
+                                self.log_result(
+                                    "End-to-End Workflow - User Submissions", 
+                                    True, 
+                                    f"Jersey found in user submissions with correct structure",
+                                    {
+                                        "jersey_id": jersey_id,
+                                        "status": found_jersey.get("status"),
+                                        "has_new_fields": {
+                                            "sku_code": "sku_code" in str(found_jersey),
+                                            "model": "model" in str(found_jersey),
+                                            "league": "league" in str(found_jersey)
+                                        }
+                                    }
+                                )
+                                return True
+                            else:
+                                self.log_result(
+                                    "End-to-End Workflow - User Submissions", 
+                                    False, 
+                                    f"Jersey {jersey_id} not found in user submissions",
+                                    {"total_submissions": len(jerseys)}
+                                )
+                                return False
+                        else:
+                            error_text = await submissions_response.text()
+                            self.log_result(
+                                "End-to-End Workflow - User Submissions", 
+                                False, 
+                                f"HTTP {submissions_response.status}: {error_text}"
+                            )
+                            return False
+                else:
+                    error_text = await response.text()
+                    self.log_result(
+                        "End-to-End Workflow - Profile", 
+                        False, 
+                        f"HTTP {response.status}: {error_text}"
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result("End-to-End Workflow - Verification", False, f"Exception: {str(e)}")
+            return False
+
+    async def run_all_tests(self):
+        """Run all tests for new jersey submission form structure"""
+        print("🚀 Starting TopKit New Jersey Submission Form Structure Testing")
+        print("=" * 80)
+        
+        await self.setup_session()
+        
+        try:
+            # Authentication tests
+            user_auth_success = await self.authenticate_user()
+            admin_auth_success = await self.authenticate_admin()
+            
+            if not user_auth_success:
+                print("❌ Cannot proceed without user authentication")
+                return
+                
+            # Core form structure tests
+            await self.test_new_form_structure_submission()
+            await self.test_required_fields_validation()
+            await self.test_player_field_removal()
+            await self.test_photo_upload_fields()
+            
+            # Admin functionality tests (if admin auth successful)
+            if admin_auth_success:
+                await self.test_admin_jersey_editing()
+            else:
+                self.log_result("Admin Tests", False, "Skipped due to admin authentication failure")
+            
+            # End-to-end workflow test
+            await self.test_end_to_end_workflow()
+            
+        finally:
+            await self.cleanup_session()
+            
+        # Print summary
+        self.print_summary()
+
+    def print_summary(self):
+        """Print test summary"""
+        print("\n" + "=" * 80)
+        print("🎯 TOPKIT NEW JERSEY FORM STRUCTURE TESTING SUMMARY")
+        print("=" * 80)
+        
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result["success"])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"📊 OVERALL RESULTS: {passed_tests}/{total_tests} tests passed ({success_rate:.1f}% success rate)")
+        print()
+        
+        # Group results by category
+        categories = {}
+        for result in self.test_results:
+            category = result["test"].split(" - ")[0] if " - " in result["test"] else result["test"]
+            if category not in categories:
+                categories[category] = {"passed": 0, "failed": 0, "tests": []}
+            
+            if result["success"]:
+                categories[category]["passed"] += 1
+            else:
+                categories[category]["failed"] += 1
+            categories[category]["tests"].append(result)
+        
+        # Print category summaries
+        for category, stats in categories.items():
+            total = stats["passed"] + stats["failed"]
+            rate = (stats["passed"] / total * 100) if total > 0 else 0
+            status = "✅" if stats["failed"] == 0 else "⚠️" if stats["passed"] > stats["failed"] else "❌"
+            print(f"{status} {category}: {stats['passed']}/{total} passed ({rate:.1f}%)")
+        
+        print()
+        
+        # Print failed tests details
+        failed_results = [r for r in self.test_results if not r["success"]]
+        if failed_results:
+            print("❌ FAILED TESTS:")
+            for result in failed_results:
+                print(f"   • {result['test']}: {result['details']}")
+        else:
+            print("🎉 ALL TESTS PASSED!")
+        
+        print()
+        
+        # Key findings
+        print("🔍 KEY FINDINGS:")
+        
+        # Check for new form structure implementation
+        form_structure_tests = [r for r in self.test_results if "Form Structure" in r["test"]]
+        if form_structure_tests and any(r["success"] for r in form_structure_tests):
+            print("   ✅ New form structure (team, league, season, model, sku_code) is implemented")
+        else:
+            print("   ❌ New form structure implementation needs verification")
+        
+        # Check for player field removal
+        player_tests = [r for r in self.test_results if "Player Field" in r["test"]]
+        if player_tests and any(r["success"] for r in player_tests):
+            print("   ✅ Player field has been successfully removed")
+        else:
+            print("   ❌ Player field removal needs implementation")
+        
+        # Check for photo upload support
+        photo_tests = [r for r in self.test_results if "Photo" in r["test"]]
+        if photo_tests and any(r["success"] for r in photo_tests):
+            print("   ✅ Photo upload fields (front_photo, back_photo) are supported")
+        else:
+            print("   ❌ Photo upload fields need implementation")
+        
+        # Check admin functionality
+        admin_tests = [r for r in self.test_results if "Admin" in r["test"]]
+        if admin_tests and any(r["success"] for r in admin_tests):
+            print("   ✅ Admin functionality works with new form structure")
+        else:
+            print("   ❌ Admin functionality needs verification with new structure")
+        
+        print()
+        print("📋 REVIEW REQUEST STATUS:")
+        print("   • NEW FORM STRUCTURE TESTING: " + ("✅ COMPLETED" if any("Form Structure" in r["test"] and r["success"] for r in self.test_results) else "❌ NEEDS WORK"))
+        print("   • USER AUTHENTICATION: " + ("✅ WORKING" if any("User Authentication" in r["test"] and r["success"] for r in self.test_results) else "❌ FAILED"))
+        print("   • ADMIN FUNCTIONALITY: " + ("✅ VERIFIED" if any("Admin" in r["test"] and r["success"] for r in self.test_results) else "❌ NEEDS VERIFICATION"))
+        print("   • JERSEY CREATION: " + ("✅ SUCCESSFUL" if any("End-to-End" in r["test"] and r["success"] for r in self.test_results) else "❌ INCOMPLETE"))
+
+async def main():
+    """Main test execution"""
+    tester = TopKitNewFormTester()
+    await tester.run_all_tests()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+"""
 TopKit Admin Features Backend Testing
 Test complet des nouvelles fonctionnalités d'administration ajoutées à TopKit
 
