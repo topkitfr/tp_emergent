@@ -349,9 +349,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
                       type="checkbox"
                       checked={detailData.certificate_authenticity}
                       onChange={(e) => handleInputChange('certificate_authenticity', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black"
                     />
-                    <label className="ml-2 text-sm text-gray-300">Certificate of Authenticity</label>
+                    <label className="ml-2 text-sm font-medium text-gray-700">Certificat d'authenticité</label>
                   </div>
                 </div>
               </div>
@@ -362,19 +362,19 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
               
               {/* Special Features */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   {JERSEY_DETAIL_CRITERIA.special_features.label}
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-800 p-3 rounded-lg">
+                <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200">
                   {JERSEY_DETAIL_CRITERIA.special_features.options.map(option => (
                     <div key={option.value} className="flex items-center">
                       <input
                         type="checkbox"
                         checked={(detailData.special_features || []).includes(option.value)}
                         onChange={(e) => handleSpecialFeaturesChange(option.value, e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black"
                       />
-                      <label className="ml-2 text-sm text-gray-300">{option.label}</label>
+                      <label className="ml-2 text-sm text-gray-700">{option.label}</label>
                     </div>
                   ))}
                 </div>
@@ -382,13 +382,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
               {/* Customization */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.customization.label}
                 </label>
                 <select
                   value={detailData.customization}
                   onChange={(e) => handleInputChange('customization', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.customization.options.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -398,25 +398,25 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
               {/* Storage Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.storage_notes.label}
                 </label>
                 <textarea
                   value={detailData.storage_notes}
                   onChange={(e) => handleInputChange('storage_notes', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 h-24"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black h-24"
                   placeholder={JERSEY_DETAIL_CRITERIA.storage_notes.placeholder}
                 />
               </div>
 
               {/* Estimated Value */}
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h4 className="text-md font-semibold text-green-400 mb-2">💰 Estimated Market Value</h4>
-                <div className="text-2xl font-bold text-green-400">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="text-md font-semibold text-green-800 mb-2">💰 Valeur estimée</h4>
+                <div className="text-2xl font-bold text-green-800">
                   €{detailData.estimated_value}
                 </div>
-                <p className="text-xs text-green-300 mt-1">
-                  Based on model type, condition, special features, and rarity
+                <p className="text-xs text-green-600 mt-1">
+                  Basée sur le type, l'état, les caractéristiques et la rareté
                 </p>
               </div>
             </div>
