@@ -580,8 +580,8 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.size?.options ? 
-                    Object.entries(JERSEY_DETAIL_CRITERIA.size.options).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
+                    JERSEY_DETAIL_CRITERIA.size.options.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     )) : (
                       <>
                         <option value="xs">XS</option>
