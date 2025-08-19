@@ -3624,6 +3624,29 @@ async def create_jersey(
             status=JerseyStatus.PENDING  # Always start as pending for moderation
         )
         
+        # Handle photo uploads (if provided)
+        photo_urls = {}
+        if front_photo and front_photo.filename:
+            try:
+                # For now, we'll store the filename - in production, you'd upload to cloud storage
+                photo_urls["front_photo_url"] = f"uploads/jerseys/{jersey.id}/front_{front_photo.filename}"
+                print(f"📸 Front photo received: {front_photo.filename}")
+            except Exception as e:
+                print(f"⚠️ Error handling front photo: {e}")
+        
+        if back_photo and back_photo.filename:
+            try:
+                # For now, we'll store the filename - in production, you'd upload to cloud storage
+                photo_urls["back_photo_url"] = f"uploads/jerseys/{jersey.id}/back_{back_photo.filename}"
+                print(f"📸 Back photo received: {back_photo.filename}")
+            except Exception as e:
+                print(f"⚠️ Error handling back photo: {e}")
+        
+        # Update jersey with photo URLs if any were processed
+        if photo_urls:
+            for key, value in photo_urls.items():
+                setattr(jersey, key, value)
+        
         # Insert into database
         await db.jerseys.insert_one(jersey.dict())
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
