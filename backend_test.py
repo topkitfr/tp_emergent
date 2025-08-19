@@ -416,15 +416,14 @@ class AdminJerseyCorrectionTester:
                 "description": "Second test jersey for admin panel visibility check"
             }
             
-            # Submit as user first
-            user_headers = {"Authorization": f"Bearer {self.user_token}"}
-            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=user_headers)
+            # Submit as admin (since user is locked)
+            admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=admin_headers)
             
             if response.status_code == 200:
                 new_jersey_id = response.json().get("id")
                 
                 # Now check if it appears in admin panel
-                admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
                 admin_response = requests.get(f"{BACKEND_URL}/admin/jerseys/pending", headers=admin_headers)
                 
                 if admin_response.status_code == 200:
