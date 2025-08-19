@@ -10,9 +10,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
     league: '',
     season: '',
     jersey_type: '',
-    player: '',
     manufacturer: '',
-    home_away: 'home',
+    sku_code: '', // Changed from reference to sku_code
+    model: 'authentic', // New field: authentic/replica
     description: '',
     
     // Editable collection details
