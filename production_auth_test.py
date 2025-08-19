@@ -39,6 +39,39 @@ class ProductionAuthTester:
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {level}: {message}")
         
+    def test_endpoint_connectivity(self):
+        """Test if the production endpoint is working with known accounts"""
+        self.log("🔍 Testing production endpoint connectivity with known accounts")
+        
+        for account in KNOWN_ACCOUNTS:
+            email = account["email"]
+            password = account["password"]
+            
+            try:
+                login_data = {
+                    "email": email,
+                    "password": password
+                }
+                
+                response = requests.post(
+                    f"{BACKEND_URL}/auth/login",
+                    json=login_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    self.log(f"✅ Production endpoint working - {email} authenticated successfully")
+                    return True
+                else:
+                    self.log(f"⚠️  Known account {email} failed: HTTP {response.status_code}")
+                    
+            except Exception as e:
+                self.log(f"❌ Error testing known account {email}: {e}", "ERROR")
+        
+        self.log("❌ Production endpoint connectivity test failed", "ERROR")
+        return False
+    
     def test_login_authentication(self, email):
         """Test POST /api/auth/login for specific account"""
         self.log(f"Testing authentication for {email}")
