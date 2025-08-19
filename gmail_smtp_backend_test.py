@@ -21,7 +21,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-beta.preview.emergentagent.com/api"
 
 # Admin credentials for testing
 ADMIN_EMAIL = "topkitfr@gmail.com"

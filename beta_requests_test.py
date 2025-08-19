@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration from frontend/.env
-BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-beta.preview.emergentagent.com/api"
 
 # Admin credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"

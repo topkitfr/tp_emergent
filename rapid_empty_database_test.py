@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://topkit-debug.preview.emergentagent.com/api"
+BASE_URL = "https://kit-beta.preview.emergentagent.com/api"
 
 class RapidEmptyDatabaseTester:
     def __init__(self):

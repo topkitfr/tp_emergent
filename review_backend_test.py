@@ -22,7 +22,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-debug.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-beta.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"

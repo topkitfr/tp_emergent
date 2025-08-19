@@ -5,7 +5,7 @@ Test Google OAuth specifically
 
 import requests
 
-BASE_URL = "https://topkit-debug.preview.emergentagent.com/api"
+BASE_URL = "https://kit-beta.preview.emergentagent.com/api"
 
 def test_google_oauth():
     session = requests.Session()
