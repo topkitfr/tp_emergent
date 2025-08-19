@@ -191,12 +191,19 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
       setLoading(true);
       setError('');
       
-      if (isNewSubmission) {
-        // Validation for new submissions
+      if (isNewSubmission || isAdminEdit) {
+        // Validation for new submissions and admin edits (basic info)
         if (!detailData.team || !detailData.league || !detailData.season || !detailData.model) {
           setError('Veuillez remplir les champs obligatoires: Club/Équipe, Ligue, Saison, et Modèle');
           return;
         }
+      } else if (isCollectionEdit) {
+        // Validation for collection edits (collection details)
+        if (!detailData.model_type || !detailData.condition || !detailData.size) {
+          setError('Veuillez remplir les champs obligatoires: Modèle, État, et Taille');
+          return;
+        }
+      }
         
         // Create FormData for photo upload
         const formData = new FormData();
