@@ -1648,20 +1648,20 @@ const AppContent = () => {
 
   // Admin Panel Component (simplified)
   const AdminPanel = () => (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-red-900 to-black p-8 rounded-2xl mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">🔧 Admin Panel</h1>
-          <p className="text-gray-400">Gestion de la plateforme TopKit</p>
+    <div className="min-h-screen bg-white text-black p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-gray-50 p-6 md:p-8 rounded-lg mb-6 md:mb-8 border border-gray-200">
+          <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">🔧 Admin Panel</h1>
+          <p className="text-gray-600">Gestion de la plateforme TopKit</p>
         </div>
         
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-gray-600">
           <div className="text-6xl mb-4">🚧</div>
           <h3 className="text-xl font-semibold mb-2">Panel d'administration</h3>
           <p className="mb-4">Interface d'administration complète disponible</p>
           <button
             onClick={() => setCurrentView('profile')}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Retour au profil
           </button>
