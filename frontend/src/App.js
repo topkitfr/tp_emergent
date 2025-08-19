@@ -2317,18 +2317,7 @@ const AppContent = () => {
         user={user}
       />
 
-      {/* Smart Jersey Submission Form */}
-      {showSubmitModal && (
-        <SmartJerseySubmissionForm
-          isOpen={showSubmitModal}
-          onClose={() => setShowSubmitModal(false)}
-          onSubmitSuccess={handleJerseySubmit}
-          csvData={csvData}
-          user={user}
-        />
-      )}
-
-      {/* Jersey Detail Editor */}
+      {/* Jersey Detail Editor - Used for both new submissions and editing */}
       {showJerseyEditor && editingJersey && (
         <JerseyDetailEditor
           isOpen={showJerseyEditor}
