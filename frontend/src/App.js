@@ -1906,29 +1906,369 @@ const AppContent = () => {
     );
   };
 
-  // Admin Panel Component (simplified)
-  const AdminPanel = () => (
-    <div className="min-h-screen bg-white text-black p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-gray-50 p-6 md:p-8 rounded-lg mb-6 md:mb-8 border border-gray-200">
-          <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">🔧 Admin Panel</h1>
-          <p className="text-gray-600">Gestion de la plateforme TopKit</p>
-        </div>
-        
-        <div className="text-center py-12 text-gray-600">
-          <div className="text-6xl mb-4">🚧</div>
-          <h3 className="text-xl font-semibold mb-2">Panel d'administration</h3>
-          <p className="mb-4">Interface d'administration complète disponible</p>
-          <button
-            onClick={() => setCurrentView('profile')}
-            className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            Retour au profil
-          </button>
+  // Admin Panel Component avec fonctionnalités complètes
+  const AdminPanel = () => {
+    const [adminActiveTab, setAdminActiveTab] = useState('jerseys');
+    const [pendingJerseys, setPendingJerseys] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);
+    const [allJerseys, setAllJerseys] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Load admin data
+    useEffect(() => {
+      if (user?.role === 'admin') {
+        loadAdminData();
+      }
+    }, [user, adminActiveTab]);
+
+    const loadAdminData = async () => {
+      if (!user) return;
+      setLoading(true);
+
+      try {
+        if (adminActiveTab === 'jerseys') {
+          // Load pending jerseys
+          const pendingResponse = await fetch(`${API}/api/admin/jerseys/pending`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+          });
+          if (pendingResponse.ok) {
+            const data = await pendingResponse.json();
+            setPendingJerseys(data);
+          }
+
+          // Load all approved jerseys
+          const jerseysResponse = await fetch(`${API}/api/jerseys`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+          });
+          if (jerseysResponse.ok) {
+            const data = await jerseysResponse.json();
+            setAllJerseys(data);
+          }
+        } else if (adminActiveTab === 'users') {
+          // Load all users
+          const usersResponse = await fetch(`${API}/api/admin/users`, {
+            headers: { 'Authorization': `Bearer ${user.token}` }
+          });
+          if (usersResponse.ok) {
+            const data = await usersResponse.json();
+            setAllUsers(data);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading admin data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Admin actions for jerseys
+    const approveJersey = async (jerseyId) => {
+      try {
+        const response = await fetch(`${API}/api/admin/jerseys/${jerseyId}/approve`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        if (response.ok) {
+          alert('✅ Maillot approuvé avec succès');
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors de l\'approbation');
+        }
+      } catch (error) {
+        console.error('Error approving jersey:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    const rejectJersey = async (jerseyId) => {
+      const reason = prompt('Raison du rejet (optionnel):');
+      try {
+        const response = await fetch(`${API}/api/admin/jerseys/${jerseyId}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ reason })
+        });
+        if (response.ok) {
+          alert('✅ Maillot rejeté');
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors du rejet');
+        }
+      } catch (error) {
+        console.error('Error rejecting jersey:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    const suggestModification = async (jerseyId) => {
+      const suggestion = prompt('Suggestions de modification:');
+      if (!suggestion) return;
+
+      try {
+        const response = await fetch(`${API}/api/admin/jerseys/${jerseyId}/suggest-modification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ suggestions: suggestion })
+        });
+        if (response.ok) {
+          alert('✅ Suggestions envoyées à l\'utilisateur');
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors de l\'envoi des suggestions');
+        }
+      } catch (error) {
+        console.error('Error suggesting modification:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    const deleteJersey = async (jerseyId, jerseyName) => {
+      const confirm = window.confirm(`Êtes-vous sûr de vouloir supprimer le maillot "${jerseyName}" ? Cette action est irréversible.`);
+      if (!confirm) return;
+
+      try {
+        const response = await fetch(`${API}/api/admin/jerseys/${jerseyId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        if (response.ok) {
+          alert('✅ Maillot supprimé de l\'explorateur');
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Error deleting jersey:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    // Admin actions for users
+    const banUser = async (userId, userName) => {
+      const reason = prompt(`Raison du bannissement de ${userName}:`);
+      if (!reason) return;
+
+      try {
+        const response = await fetch(`${API}/api/admin/users/${userId}/ban`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ reason })
+        });
+        if (response.ok) {
+          alert(`✅ ${userName} a été banni`);
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors du bannissement');
+        }
+      } catch (error) {
+        console.error('Error banning user:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    const deleteUser = async (userId, userName) => {
+      const confirm = window.confirm(`Êtes-vous sûr de vouloir supprimer le compte de ${userName} ? Cette action est irréversible et supprimera toutes ses données.`);
+      if (!confirm) return;
+
+      try {
+        const response = await fetch(`${API}/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        if (response.ok) {
+          alert(`✅ Compte de ${userName} supprimé`);
+          loadAdminData();
+        } else {
+          alert('❌ Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('❌ Erreur de connexion');
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-white text-black p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-gray-50 p-6 md:p-8 rounded-lg mb-6 md:mb-8 border border-gray-200">
+            <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">🔧 Admin Panel</h1>
+            <p className="text-gray-600">Gestion de la plateforme TopKit</p>
+          </div>
+          
+          {/* Admin Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setAdminActiveTab('jerseys')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                adminActiveTab === 'jerseys' ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-300'
+              }`}
+            >
+              Gestion des maillots
+            </button>
+            <button
+              onClick={() => setAdminActiveTab('users')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                adminActiveTab === 'users' ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-300'
+              }`}
+            >
+              Gestion des utilisateurs
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-2xl">⏳</div>
+              <p className="text-gray-600 mt-2">Chargement...</p>
+            </div>
+          ) : (
+            <>
+              {/* Jersey Management */}
+              {adminActiveTab === 'jerseys' && (
+                <div className="space-y-6">
+                  {/* Pending Jerseys */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 className="text-xl font-bold text-black mb-4">
+                      Maillots en attente d'approbation ({pendingJerseys.length})
+                    </h2>
+                    {pendingJerseys.length === 0 ? (
+                      <p className="text-gray-600">Aucun maillot en attente</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingJerseys.map((jersey) => (
+                          <div key={jersey.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-black">{jersey.team}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {jersey.league} • {jersey.season}
+                                  {jersey.player && ` • ${jersey.player}`}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Ref: {jersey.reference} • Soumis le {new Date(jersey.created_at).toLocaleDateString('fr-FR')}
+                                </p>
+                              </div>
+                              <div className="flex space-x-2 mt-3 md:mt-0">
+                                <button
+                                  onClick={() => approveJersey(jersey.id)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  ✓ Approuver
+                                </button>
+                                <button
+                                  onClick={() => suggestModification(jersey.id)}
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  📝 Modifier
+                                </button>
+                                <button
+                                  onClick={() => rejectJersey(jersey.id)}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  ✗ Rejeter
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Approved Jerseys - For deletion */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 className="text-xl font-bold text-black mb-4">
+                      Maillots approuvés dans l'explorateur ({allJerseys.length})
+                    </h2>
+                    {allJerseys.length === 0 ? (
+                      <p className="text-gray-600">Aucun maillot approuvé</p>
+                    ) : (
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {allJerseys.map((jersey) => (
+                          <div key={jersey.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-black">{jersey.team}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {jersey.league} • {jersey.season}
+                                  {jersey.player && ` • ${jersey.player}`}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => deleteJersey(jersey.id, `${jersey.team} ${jersey.season}`)}
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors mt-2 md:mt-0"
+                              >
+                                🗑️ Supprimer
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* User Management */}
+              {adminActiveTab === 'users' && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-xl font-bold text-black mb-4">
+                    Gestion des utilisateurs ({allUsers.length})
+                  </h2>
+                  {allUsers.length === 0 ? (
+                    <p className="text-gray-600">Aucun utilisateur trouvé</p>
+                  ) : (
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {allUsers.map((userItem) => (
+                        <div key={userItem.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-black">{userItem.name}</h3>
+                              <p className="text-sm text-gray-600">{userItem.email}</p>
+                              <p className="text-xs text-gray-500">
+                                Rôle: {userItem.role} • Inscrit le {new Date(userItem.created_at).toLocaleDateString('fr-FR')}
+                              </p>
+                              {userItem.status && userItem.status !== 'active' && (
+                                <p className="text-xs text-red-600 mt-1">Statut: {userItem.status}</p>
+                              )}
+                            </div>
+                            {userItem.role !== 'admin' && (
+                              <div className="flex space-x-2 mt-3 md:mt-0">
+                                <button
+                                  onClick={() => banUser(userItem.id, userItem.name)}
+                                  className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  🚫 Bannir
+                                </button>
+                                <button
+                                  onClick={() => deleteUser(userItem.id, userItem.name)}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                                >
+                                  🗑️ Supprimer
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Main render
   return (
