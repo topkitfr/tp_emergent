@@ -61,7 +61,22 @@ class ProductionAuthTester:
                 self.log(f"✅ Retrieved {len(users)} users from production database")
                 
                 # Check if our requested users exist
-                existing_emails = [user.get('email', '').lower() for user in users]
+                existing_emails = []
+                
+                # Debug: show raw response structure
+                if users:
+                    self.log(f"First user type: {type(users[0])}")
+                    self.log(f"First user content: {users[0]}")
+                
+                # Handle different response formats
+                if isinstance(users, list):
+                    for user in users:
+                        if isinstance(user, dict):
+                            email = user.get('email', '').lower()
+                            existing_emails.append(email)
+                        elif isinstance(user, str):
+                            # If users are just email strings
+                            existing_emails.append(user.lower())
                 
                 for email in TEST_ACCOUNTS:
                     if email.lower() in existing_emails:
@@ -71,11 +86,14 @@ class ProductionAuthTester:
                 
                 # Show all users for debugging
                 self.log("📋 All users in production database:")
-                for user in users:
-                    email = user.get('email', 'N/A')
-                    name = user.get('name', 'N/A')
-                    role = user.get('role', 'N/A')
-                    self.log(f"   - {email} ({name}) - Role: {role}")
+                for i, user in enumerate(users):
+                    if isinstance(user, dict):
+                        email = user.get('email', 'N/A')
+                        name = user.get('name', 'N/A')
+                        role = user.get('role', 'N/A')
+                        self.log(f"   {i+1}. {email} ({name}) - Role: {role}")
+                    else:
+                        self.log(f"   {i+1}. {user}")
                     
             else:
                 self.log(f"❌ Failed to retrieve users: HTTP {response.status_code}")
