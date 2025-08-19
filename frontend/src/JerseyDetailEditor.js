@@ -192,8 +192,8 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
       
       if (isNewSubmission) {
         // Validation for new submissions
-        if (!detailData.team || !detailData.league || !detailData.season) {
-          setError('Veuillez remplir les champs obligatoires: Équipe, Ligue, et Saison');
+        if (!detailData.team || !detailData.league || !detailData.season || !detailData.model) {
+          setError('Veuillez remplir les champs obligatoires: Club/Équipe, Ligue, Saison, et Modèle');
           return;
         }
         
