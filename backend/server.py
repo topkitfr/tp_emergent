@@ -392,16 +392,15 @@ class PasswordChange(BaseModel):
 
 class JerseyCreate(BaseModel):
     team: str
+    league: str  # Now required field
     season: str
-    player: Optional[str] = None
-    size: Optional[str] = None  # Optional - will be specified when creating listings
-    condition: Optional[str] = None  # Optional - will be specified when creating listings
     manufacturer: Optional[str] = ""
-    home_away: Optional[str] = ""
-    league: Optional[str] = ""
+    jersey_type: Optional[str] = ""  # home/away/third/goalkeeper/training/special
+    sku_code: Optional[str] = None  # Changed from reference_code to sku_code
+    model: str  # New required field: authentic/replica
     description: Optional[str] = ""
-    images: List[str] = []
-    reference_code: Optional[str] = None
+    # Photo fields for multipart upload (handled separately)
+    # front_photo and back_photo will be handled as files in the endpoint
 
 class ListingCreate(BaseModel):
     collection_id: str  # Reference to item in user's collection (not jersey_id directly)
