@@ -18,6 +18,13 @@ EXISTING_USER = {
     "password": "TopKit123!"
 }
 
+# Alternative test user (we'll create this one)
+TEST_USER = {
+    "email": "test.collection.user@topkit.fr",
+    "password": "TestCollectionSecure789!",
+    "name": "Test Collection User"
+}
+
 ADMIN_USER = {
     "email": "topkitfr@gmail.com",
     "password": "TopKitSecure789#"
