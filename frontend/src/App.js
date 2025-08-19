@@ -528,7 +528,7 @@ const AppContent = () => {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5zm-5-17h5l-5 5-5-5h5zm10 10v2a8 8 0 01-16 0V7a8 8 0 0116 0z" />
                   </svg>
-                  {notifications.filter(n => !n.read).length > 0 && (
+                  {(notifications && Array.isArray(notifications) && notifications.filter(n => !n.read).length > 0) && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {notifications.filter(n => !n.read).length}
                     </span>
