@@ -1953,7 +1953,9 @@ const AppContent = () => {
           });
           if (pendingResponse.ok) {
             const data = await pendingResponse.json();
-            setPendingJerseys(data);
+            setPendingJerseys(Array.isArray(data) ? data : []);
+          } else {
+            setPendingJerseys([]);
           }
 
           // Load all approved jerseys
@@ -1962,7 +1964,9 @@ const AppContent = () => {
           });
           if (jerseysResponse.ok) {
             const data = await jerseysResponse.json();
-            setAllJerseys(data);
+            setAllJerseys(Array.isArray(data) ? data : []);
+          } else {
+            setAllJerseys([]);
           }
         } else if (adminActiveTab === 'users') {
           // Load all users
