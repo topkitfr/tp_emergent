@@ -342,14 +342,22 @@ const AppContent = () => {
     if (!user) return;
     
     try {
+      console.log('Loading user collections for user:', user.id);
+      
       const response = await fetch(`${API}/api/users/${user.id}/collections`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
       });
+      
+      console.log('Collections API response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Collections data received:', data);
         setUserCollections(data);
+      } else {
+        console.error('Failed to load collections:', response.status, await response.text());
       }
     } catch (error) {
       console.error('Error loading user collections:', error);
