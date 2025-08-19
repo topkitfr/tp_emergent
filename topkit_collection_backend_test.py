@@ -191,14 +191,15 @@ class TopKitCollectionTester:
             
         try:
             headers = {"Authorization": f"Bearer {self.user_token}"}
-            response = self.session.get(f"{BACKEND_URL}/auth/profile", headers=headers)
+            response = self.session.get(f"{BACKEND_URL}/profile", headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
+                user_info = data.get("user", {})
                 self.log_result(
                     "JWT Token Validation",
                     True,
-                    f"Token validation successful - Profile data retrieved: {data.get('name', 'unknown')}"
+                    f"Token validation successful - Profile data retrieved: {user_info.get('name', 'unknown')}"
                 )
                 return True
             else:
