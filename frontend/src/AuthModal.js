@@ -164,15 +164,15 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-black">
             {isLogin ? 'Connexion' : 'Inscription'}
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl transition-colors"
+            className="text-gray-400 hover:text-black text-2xl transition-colors"
           >
             ×
           </button>
@@ -181,7 +181,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         {/* Content */}
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
             </div>
           )}
@@ -193,7 +193,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 placeholder="Nom complet"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 disabled={loading}
               />
             )}
@@ -203,7 +203,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
             />
 
@@ -212,54 +212,54 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Mot de passe"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
             />
         
             {/* Password Requirements */}
             {!isLogin && (
-              <div className="mt-2 p-3 bg-gray-800/50 border border-gray-600 rounded-lg">
-                <div className="text-xs text-gray-300 mb-2 font-medium">
+              <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="text-xs text-gray-700 mb-2 font-medium">
                   🔒 Exigences du mot de passe :
                 </div>
                 <div className="grid grid-cols-1 gap-1 text-xs">
                   <div className="flex items-center">
-                    <span className={`mr-2 ${passwordValidation.minLength ? 'text-green-400' : 'text-gray-500'}`}>
+                    <span className={`mr-2 ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
                       {passwordValidation.minLength ? '✓' : '•'}
                     </span>
-                    <span className={passwordValidation.minLength ? 'text-green-300' : 'text-gray-400'}>
+                    <span className={passwordValidation.minLength ? 'text-green-700' : 'text-gray-600'}>
                       Au moins <strong>8 caractères</strong>
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className={`mr-2 ${passwordValidation.hasUppercase ? 'text-green-400' : 'text-gray-500'}`}>
+                    <span className={`mr-2 ${passwordValidation.hasUppercase ? 'text-green-600' : 'text-gray-400'}`}>
                       {passwordValidation.hasUppercase ? '✓' : '•'}
                     </span>
-                    <span className={passwordValidation.hasUppercase ? 'text-green-300' : 'text-gray-400'}>
+                    <span className={passwordValidation.hasUppercase ? 'text-green-700' : 'text-gray-600'}>
                       Au moins <strong>1 majuscule</strong> (A-Z)
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className={`mr-2 ${passwordValidation.hasLowercase ? 'text-green-400' : 'text-gray-500'}`}>
+                    <span className={`mr-2 ${passwordValidation.hasLowercase ? 'text-green-600' : 'text-gray-400'}`}>
                       {passwordValidation.hasLowercase ? '✓' : '•'}
                     </span>
-                    <span className={passwordValidation.hasLowercase ? 'text-green-300' : 'text-gray-400'}>
+                    <span className={passwordValidation.hasLowercase ? 'text-green-700' : 'text-gray-600'}>
                       Au moins <strong>1 minuscule</strong> (a-z)
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className={`mr-2 ${passwordValidation.hasNumber ? 'text-green-400' : 'text-gray-500'}`}>
+                    <span className={`mr-2 ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
                       {passwordValidation.hasNumber ? '✓' : '•'}
                     </span>
-                    <span className={passwordValidation.hasNumber ? 'text-green-300' : 'text-gray-400'}>
+                    <span className={passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-600'}>
                       Au moins <strong>1 chiffre</strong> (0-9)
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className={`mr-2 ${passwordValidation.hasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
+                    <span className={`mr-2 ${passwordValidation.hasSpecial ? 'text-green-600' : 'text-gray-400'}`}>
                       {passwordValidation.hasSpecial ? '✓' : '•'}
                     </span>
-                    <span className={passwordValidation.hasSpecial ? 'text-green-300' : 'text-gray-400'}>
+                    <span className={passwordValidation.hasSpecial ? 'text-green-700' : 'text-gray-600'}>
                       Au moins <strong>1 caractère spécial</strong> (!@#$%^&*)
                     </span>
                   </div>
@@ -270,7 +270,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105 disabled:transform-none"
+              className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-all"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -283,13 +283,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </button>
           </form>
 
-          <p className="text-center text-gray-400 mt-4">
+          <p className="text-center text-gray-600 mt-4">
             {isLogin ? (
               <>
                 Pas encore de compte ?
                 <button
                   onClick={switchMode}
-                  className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
+                  className="text-black hover:text-gray-700 ml-2 font-medium underline"
                   type="button"
                   disabled={loading}
                 >
@@ -301,7 +301,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 Déjà un compte ?
                 <button
                   onClick={switchMode}
-                  className="text-blue-400 hover:text-blue-300 ml-2 font-medium"
+                  className="text-black hover:text-gray-700 ml-2 font-medium underline"
                   type="button"
                   disabled={loading}
                 >
