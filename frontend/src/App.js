@@ -1428,12 +1428,53 @@ const AppContent = () => {
                   {userCollections.owned?.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {userCollections.owned.map((item) => (
-                        <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <div className="font-medium text-black">
-                            {item.jersey?.team || 'Équipe inconnue'}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                        <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium text-black">
+                                {item.jersey?.team || 'Équipe inconnue'}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                              </div>
+                              {item.jersey?.player && (
+                                <div className="text-sm text-gray-500 mt-1">
+                                  {item.jersey.player}
+                                </div>
+                              )}
+                              {/* Collection details if available */}
+                              {(item.size || item.condition) && (
+                                <div className="text-xs text-gray-500 mt-2">
+                                  {item.size && `Taille: ${item.size}`}
+                                  {item.size && item.condition && ' • '}
+                                  {item.condition && `État: ${item.condition}`}
+                                </div>
+                              )}
+                            </div>
+                            {/* Action buttons */}
+                            <div className="flex flex-col space-y-1 ml-3">
+                              <button
+                                onClick={() => handleEditCollectionItem(item)}
+                                className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Éditer les détails"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleViewCollectionItem(item)}
+                                className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Voir les détails"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCollectionItem(item, 'owned')}
+                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Supprimer de la collection"
+                              >
+                                Suppr
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1456,12 +1497,38 @@ const AppContent = () => {
                   {userCollections.wanted?.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {userCollections.wanted.map((item) => (
-                        <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <div className="font-medium text-black">
-                            {item.jersey?.team || 'Équipe inconnue'}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                        <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium text-black">
+                                {item.jersey?.team || 'Équipe inconnue'}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                              </div>
+                              {item.jersey?.player && (
+                                <div className="text-sm text-gray-500 mt-1">
+                                  {item.jersey.player}
+                                </div>
+                              )}
+                            </div>
+                            {/* Action buttons for wanted items */}
+                            <div className="flex flex-col space-y-1 ml-3">
+                              <button
+                                onClick={() => handleViewCollectionItem(item)}
+                                className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Voir les détails"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCollectionItem(item, 'wanted')}
+                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Supprimer de la wishlist"
+                              >
+                                Suppr
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
