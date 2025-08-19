@@ -2173,7 +2173,7 @@ const AppContent = () => {
                                   ✓ Approuver
                                 </button>
                                 <button
-                                  onClick={() => suggestModification(jersey.id)}
+                                  onClick={() => suggestModification(jersey)}
                                   className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition-colors"
                                 >
                                   📝 Modifier
