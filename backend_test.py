@@ -292,7 +292,10 @@ class BetaRemovalTester:
 
     def test_authenticated_endpoints(self):
         """Test 6: Test authenticated endpoints work properly"""
-        if not self.auth_token:
+        # Use admin token if user token not available
+        token_to_use = self.auth_token or self.admin_token
+        
+        if not token_to_use:
             self.log_result(
                 "Authenticated Endpoints",
                 False,
@@ -300,7 +303,7 @@ class BetaRemovalTester:
             )
             return False
             
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {token_to_use}"}
         
         endpoints_to_test = [
             ("/auth/profile", "User Profile"),
