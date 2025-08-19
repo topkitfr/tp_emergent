@@ -3668,20 +3668,20 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
                 "status": jersey.status
             })
             
-            # Notification for new submission
-            logger.info(f"🔔 About to create notification for user: {user_id}")
-            logger.info(f"📝 Jersey details: {jersey.team} {jersey.season} (Ref: {jersey.reference_number})")
-            
-            notification_result = await create_notification(
-                user_id=user_id,
-                notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
-                title="Jersey Submitted Successfully!",
-                message=f"Thank you! Your jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been submitted and will be reviewed by our moderators.",
-                related_id=jersey.id
-            )
-            
-            logger.info(f"🎯 Notification creation result: {notification_result}")
-            logger.info(f"✅ Notification process completed for user: {user_id}")
+            # Notification for new submission  
+            try:
+                logger.info(f"🔔 About to create notification for user: {user_id}")
+                notification_result = await create_notification(
+                    user_id=user_id,
+                    notification_type="system_announcement",  # Use string instead of enum
+                    title="Jersey Submitted Successfully!",
+                    message=f"Thank you! Your jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been submitted and will be reviewed by our moderators.",
+                    related_id=jersey.id
+                )
+                logger.info(f"✅ Notification created successfully")
+            except Exception as notif_error:
+                logger.error(f"❌ Notification creation failed: {notif_error}")
+                # Don't fail the jersey creation if notification fails
         
         return jersey
         
