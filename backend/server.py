@@ -3559,26 +3559,18 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
         print(f"🟡 Jersey submission received from user {user_id}")
         print(f"🟡 Jersey data: {jersey_data.dict()}")
         
-        # Validate required fields
-        if not jersey_data.team or not jersey_data.season:
-            raise HTTPException(status_code=422, detail="Team and season are required")
+        # Validate required fields for new form structure
+        if not jersey_data.team or not jersey_data.league or not jersey_data.season or not jersey_data.model:
+            raise HTTPException(status_code=422, detail="Team, league, season, and model are required fields")
         
-        # Size and condition are now optional for catalog submissions
-        # They will be specified when creating listings on the marketplace
-        size_enum = None
-        condition_enum = None
+        # Validate model field
+        if jersey_data.model not in ["authentic", "replica"]:
+            raise HTTPException(status_code=422, detail="Model must be either 'authentic' or 'replica'")
         
-        if jersey_data.size:
-            try:
-                size_enum = JerseySize(jersey_data.size.upper())
-            except ValueError:
-                raise HTTPException(status_code=422, detail=f"Invalid size: {jersey_data.size}. Must be one of: XS, S, M, L, XL, XXL")
-        
-        if jersey_data.condition:
-            try:
-                condition_enum = JerseyCondition(jersey_data.condition.lower())
-            except ValueError:
-                raise HTTPException(status_code=422, detail=f"Invalid condition: {jersey_data.condition}. Must be one of: new, near_mint, very_good, good, poor")
+        # Jersey type validation (optional)
+        valid_jersey_types = ["home", "away", "third", "goalkeeper", "training", "special"]
+        if jersey_data.jersey_type and jersey_data.jersey_type not in valid_jersey_types:
+            raise HTTPException(status_code=422, detail=f"Invalid jersey type. Must be one of: {', '.join(valid_jersey_types)}")
         
         # Check if this is a resubmission
         is_resubmission = False
@@ -3603,19 +3595,16 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
             reference_number = await get_next_jersey_reference()
             print(f"🆕 Generated new reference: {reference_number}")
         
-        # Create jersey with validated data
+        # Create jersey with validated data (matching current Jersey model)
         jersey = Jersey(
             team=jersey_data.team.strip(),
+            league=jersey_data.league.strip(),
             season=jersey_data.season.strip(),
-            player=jersey_data.player.strip() if jersey_data.player else None,
-            size=size_enum if size_enum else None,  # Optional for catalog submissions
-            condition=condition_enum if condition_enum else None,  # Optional for catalog submissions
             manufacturer=jersey_data.manufacturer.strip() if jersey_data.manufacturer else "",
-            home_away=jersey_data.home_away.strip() if jersey_data.home_away else "",
-            league=jersey_data.league.strip() if jersey_data.league else "",
+            jersey_type=jersey_data.jersey_type.strip() if jersey_data.jersey_type else "",
+            sku_code=jersey_data.sku_code.strip() if jersey_data.sku_code else None,
+            model=jersey_data.model.strip(),
             description=jersey_data.description.strip() if jersey_data.description else "",
-            images=jersey_data.images or [],
-            reference_code=jersey_data.reference_code.strip() if jersey_data.reference_code else None,
             reference_number=reference_number,
             created_by=user_id,
             submitted_by=user_id,
