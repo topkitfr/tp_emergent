@@ -23,8 +23,8 @@ from typing import Dict, Any, Optional
 # Configuration
 BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
 TEST_USERS = {
-    "user": {"email": "steinmetzlivio@gmail.com", "password": "123"},
-    "admin": {"email": "topkitfr@gmail.com", "password": "adminpass123"}
+    "user": {"email": "friendstest@example.com", "password": "SecurePass789!"},
+    "admin": {"email": "topkitfr@gmail.com", "password": "TopKitSecure789#"}
 }
 
 class FriendsManagementTester:
