@@ -334,7 +334,7 @@ class TopKitAdminTester:
                 # 2. Login as test user
                 login_response = requests.post(f"{BASE_URL}/auth/login", json={
                     "email": "workflowtest@example.com", 
-                    "password": "WorkflowTest123!"
+                    "password": "WorkflowTestPassword!@#"
                 })
                 
                 if login_response.status_code == 200:
