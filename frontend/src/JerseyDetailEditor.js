@@ -199,44 +199,44 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Edit Jersey Details</h2>
+            <h2 className="text-2xl font-bold text-black">Éditer les détails du maillot</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-xl font-bold"
+              className="text-gray-400 hover:text-black text-xl font-bold"
             >
               ×
             </button>
           </div>
 
           {error && (
-            <div className="bg-red-600 text-white px-4 py-3 rounded mb-4">
+            <div className="bg-red-500 text-white px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
 
           {/* Jersey Reference Info (Read-only) */}
-          <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-3">Jersey Reference</h3>
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+            <h3 className="text-lg font-semibold text-black mb-3">Référence du maillot</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <span className="text-gray-400">Team:</span>
-                <span className="text-white ml-2">{detailData.team}</span>
+                <span className="text-gray-600">Équipe:</span>
+                <span className="text-black ml-2 font-medium">{detailData.team}</span>
               </div>
               <div>
-                <span className="text-gray-400">League:</span>
-                <span className="text-white ml-2">{detailData.league}</span>
+                <span className="text-gray-600">Championnat:</span>
+                <span className="text-black ml-2 font-medium">{detailData.league}</span>
               </div>
               <div>
-                <span className="text-gray-400">Season:</span>
-                <span className="text-white ml-2">{detailData.season}</span>
+                <span className="text-gray-600">Saison:</span>
+                <span className="text-black ml-2 font-medium">{detailData.season}</span>
               </div>
               {detailData.player && (
                 <div>
-                  <span className="text-gray-400">Player:</span>
-                  <span className="text-white ml-2">{detailData.player}</span>
+                  <span className="text-gray-600">Joueur:</span>
+                  <span className="text-black ml-2 font-medium">{detailData.player}</span>
                 </div>
               )}
             </div>
