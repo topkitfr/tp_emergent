@@ -254,6 +254,7 @@ class AdminJerseyCorrectionTester:
             return False
             
         try:
+            # Include all fields expected by the edit_jersey function
             modification_data = {
                 "team": "Real Madrid CF",  # Modified team name
                 "league": "La Liga",
@@ -262,7 +263,13 @@ class AdminJerseyCorrectionTester:
                 "manufacturer": "Adidas",
                 "sku_code": "RM-HOME-24-25",  # Modified SKU
                 "model": "authentic",
-                "description": "Test jersey for admin correction functionality - ADMIN MODIFIED"
+                "description": "Test jersey for admin correction functionality - ADMIN MODIFIED",
+                # Additional fields expected by edit_jersey function
+                "condition": "new",
+                "size": "M",
+                "home_away": "home",
+                "images": [],
+                "reference_code": "RM-HOME-24-25"
             }
             
             headers = {"Authorization": f"Bearer {self.admin_token}"}
