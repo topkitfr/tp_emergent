@@ -3673,7 +3673,7 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
                 logger.info(f"🔔 About to create notification for user: {user_id}")
                 notification_result = await create_notification(
                     user_id=user_id,
-                    notification_type="system_announcement",  # Use string instead of enum
+                    notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
                     title="Jersey Submitted Successfully!",
                     message=f"Thank you! Your jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been submitted and will be reviewed by our moderators.",
                     related_id=jersey.id
