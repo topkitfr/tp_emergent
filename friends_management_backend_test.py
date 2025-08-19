@@ -240,11 +240,30 @@ class FriendsManagementTester:
         """Test POST /api/friends/respond with accept=false"""
         try:
             # Create another test friendship for rejection
-            request_id = self.create_test_friendship()
-            if not request_id:
-                return False
-            
+            # First check if there are existing pending requests to avoid duplicate error
             admin_headers = self.get_auth_headers("admin")
+            friends_response = self.session.get(f"{BASE_URL}/friends", headers=admin_headers)
+            
+            if friends_response.status_code == 200:
+                pending_received = friends_response.json().get("pending_requests", {}).get("received", [])
+                if pending_received:
+                    # Use existing pending request
+                    request_id = pending_received[0]["request_id"]
+                    self.log_result(
+                        "Create Test Friendship for Rejection",
+                        True,
+                        f"Using existing pending request (ID: {request_id})"
+                    )
+                else:
+                    # Create new request
+                    request_id = self.create_test_friendship()
+                    if not request_id:
+                        return False
+            else:
+                request_id = self.create_test_friendship()
+                if not request_id:
+                    return False
+            
             response_data = {"request_id": request_id, "accept": False}
             
             response = self.session.post(f"{BASE_URL}/friends/respond", json=response_data, headers=admin_headers)
