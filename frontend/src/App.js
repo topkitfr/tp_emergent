@@ -424,6 +424,8 @@ const AppContent = () => {
     }
 
     try {
+      console.log('Adding to collection:', { jersey_id: jersey.id, collection_type: collectionType });
+      
       const response = await fetch(`${API}/api/collections`, {
         method: 'POST',
         headers: {
@@ -436,11 +438,25 @@ const AppContent = () => {
         })
       });
 
+      const responseData = await response.json();
+      console.log('Collection API response:', responseData);
+
       if (response.ok) {
-        loadUserCollections();
+        // Reload collections to get updated data
+        await loadUserCollections();
+        
+        // Show success message
+        const collectionTypeText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
+        alert(`✅ ${jersey.team} ${jersey.season} ajouté à ${collectionTypeText} avec succès !`);
+      } else {
+        // Handle specific error messages
+        const errorMsg = responseData.detail || `Erreur lors de l'ajout à ${collectionType === 'owned' ? 'la collection' : 'la wishlist'}`;
+        alert(`❌ ${errorMsg}`);
+        console.error('Collection API error:', response.status, responseData);
       }
     } catch (error) {
       console.error('Error toggling collection item:', error);
+      alert('❌ Erreur de connexion lors de l\'ajout à la collection');
     }
   };
 
