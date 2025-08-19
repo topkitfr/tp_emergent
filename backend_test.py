@@ -418,7 +418,7 @@ class AdminJerseyCorrectionTester:
             
         try:
             # Create another test jersey to check admin panel visibility
-            jersey_data = {
+            form_data = {
                 "team": "FC Barcelona",
                 "league": "La Liga", 
                 "season": "24/25",
@@ -431,7 +431,7 @@ class AdminJerseyCorrectionTester:
             
             # Submit as admin (since user is locked)
             admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=admin_headers)
+            response = requests.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=admin_headers)
             
             if response.status_code == 200:
                 new_jersey_id = response.json().get("id")
@@ -441,12 +441,19 @@ class AdminJerseyCorrectionTester:
                 
                 if admin_response.status_code == 200:
                     pending_data = admin_response.json()
-                    pending_jerseys = pending_data.get("jerseys", [])
+                    
+                    # Handle different possible response structures
+                    if isinstance(pending_data, list):
+                        pending_jerseys = pending_data
+                    elif isinstance(pending_data, dict):
+                        pending_jerseys = pending_data.get("jerseys", pending_data.get("pending_jerseys", []))
+                    else:
+                        pending_jerseys = []
                     
                     # Check if new jersey appears in pending list
                     new_jersey_found = False
                     for jersey in pending_jerseys:
-                        if jersey.get("id") == new_jersey_id:
+                        if isinstance(jersey, dict) and jersey.get("id") == new_jersey_id:
                             new_jersey_found = True
                             break
                     
