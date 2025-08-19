@@ -854,20 +854,20 @@ const AppContent = () => {
 
   // Explore Page Component with filters
   const ExplorePage = () => (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white text-black p-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header with Search and Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-            <h1 className="text-3xl font-bold mb-4 lg:mb-0">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 md:mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold mb-4 lg:mb-0">
               Explorez les maillots
             </h1>
             
             {/* View Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-800 p-1 rounded-lg">
+            <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-black text-white' : 'text-gray-600'}`}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -875,7 +875,7 @@ const AppContent = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                className={`p-2 rounded ${viewMode === 'list' ? 'bg-black text-white' : 'text-gray-600'}`}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -885,16 +885,16 @@ const AppContent = () => {
           </div>
 
           {/* Advanced Filters */}
-          <div className="bg-gray-900 p-6 rounded-2xl mb-6">
+          <div className="bg-gray-50 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Championnat
                 </label>
                 <select
                   value={filters.league}
                   onChange={(e) => handleFilterChange({ league: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">Tous les championnats</option>
                   {availableLeagues.map(league => (
@@ -904,13 +904,13 @@ const AppContent = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Équipe
                 </label>
                 <select
                   value={filters.team}
                   onChange={(e) => handleFilterChange({ team: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">Toutes les équipes</option>
                   {availableTeams.map(team => (
@@ -920,13 +920,13 @@ const AppContent = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Saison
                 </label>
                 <select
                   value={filters.season}
                   onChange={(e) => handleFilterChange({ season: e.target.value })}
-                  className="w-full bg-gray-800 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <option value="">Toutes les saisons</option>
                   {SEASONS.map(season => (
@@ -936,15 +936,15 @@ const AppContent = () => {
               </div>
 
               <div className="md:col-span-2 lg:col-span-2">
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 pt-7">
                   <button
                     onClick={clearFilters}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
+                    className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-3 rounded-lg transition-colors"
                   >
                     Effacer filtres
                   </button>
-                  <div className="flex-1 text-right">
-                    <span className="text-gray-400 text-sm">
+                  <div className="flex-1 text-right pt-3">
+                    <span className="text-gray-600 text-sm">
                       {filteredJerseys.length} maillots trouvés
                     </span>
                   </div>
@@ -960,7 +960,7 @@ const AppContent = () => {
               placeholder="Rechercher..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-50 text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
         </div>
@@ -969,46 +969,46 @@ const AppContent = () => {
         {filteredJerseys.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🏟️</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-semibold text-black mb-2">
               Aucun maillot trouvé
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               Essayez de modifier vos critères de recherche
             </p>
             <button
               onClick={clearFilters}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+              className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg transition-colors"
             >
               Voir tous les maillots
             </button>
           </div>
         ) : (
           <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             : "space-y-4"
           }>
             {filteredJerseys.map((jersey) => (
               <div
                 key={jersey.id}
                 className={viewMode === 'grid'
-                  ? "bg-gray-900 rounded-2xl overflow-hidden hover:bg-gray-800 transition-colors shadow-lg"
-                  : "bg-gray-900 rounded-2xl p-4 hover:bg-gray-800 transition-colors shadow-lg flex items-center space-x-4"
+                  ? "bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow border border-gray-200"
+                  : "bg-white rounded-lg p-4 hover:shadow-md transition-shadow border border-gray-200 flex items-center space-x-4"
                 }
               >
                 {viewMode === 'grid' ? (
                   <>
-                    <div className="aspect-square bg-gray-800 flex items-center justify-center">
+                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
                       <div className="text-4xl">👕</div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-white mb-1 truncate">
+                      <h3 className="font-semibold text-black mb-1 truncate">
                         {jersey.team}
                       </h3>
-                      <p className="text-sm text-gray-400 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         {jersey.league} • {jersey.season}
                       </p>
                       {jersey.player_name && (
-                        <p className="text-sm text-blue-400 mb-3">
+                        <p className="text-sm text-black mb-3 font-medium">
                           {jersey.player_name}
                         </p>
                       )}
@@ -1019,8 +1019,8 @@ const AppContent = () => {
                           onClick={() => toggleCollectionItem(jersey, 'owned')}
                           className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
                             isInCollection(jersey.id, 'owned')
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              ? 'bg-black text-white'
+                              : 'bg-gray-100 text-black hover:bg-gray-200'
                           }`}
                         >
                           {isInCollection(jersey.id, 'owned') ? '✓ Possédé' : '+ Own'}
@@ -1029,8 +1029,8 @@ const AppContent = () => {
                           onClick={() => toggleCollectionItem(jersey, 'wanted')}
                           className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
                             isInCollection(jersey.id, 'wanted')
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              ? 'bg-gray-800 text-white'
+                              : 'bg-gray-100 text-black hover:bg-gray-200'
                           }`}
                         >
                           {isInCollection(jersey.id, 'wanted') ? '⭐ Voulu' : '+ Want'}
@@ -1040,18 +1040,18 @@ const AppContent = () => {
                   </>
                 ) : (
                   <>
-                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <div className="text-2xl">👕</div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1">
+                      <h3 className="font-semibold text-black mb-1">
                         {jersey.team}
                       </h3>
-                      <p className="text-sm text-gray-400 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         {jersey.league} • {jersey.season}
                       </p>
                       {jersey.player_name && (
-                        <p className="text-sm text-blue-400">
+                        <p className="text-sm text-black font-medium">
                           {jersey.player_name}
                         </p>
                       )}
@@ -1061,8 +1061,8 @@ const AppContent = () => {
                         onClick={() => toggleCollectionItem(jersey, 'owned')}
                         className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors ${
                           isInCollection(jersey.id, 'owned')
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            ? 'bg-black text-white'
+                            : 'bg-gray-100 text-black hover:bg-gray-200'
                         }`}
                       >
                         {isInCollection(jersey.id, 'owned') ? '✓ Possédé' : '+ Own'}
@@ -1071,8 +1071,8 @@ const AppContent = () => {
                         onClick={() => toggleCollectionItem(jersey, 'wanted')}
                         className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors ${
                           isInCollection(jersey.id, 'wanted')
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            ? 'bg-gray-800 text-white'
+                            : 'bg-gray-100 text-black hover:bg-gray-200'
                         }`}
                       >
                         {isInCollection(jersey.id, 'wanted') ? '⭐ Voulu' : '+ Want'}
