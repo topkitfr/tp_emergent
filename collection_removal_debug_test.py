@@ -184,6 +184,57 @@ class CollectionRemovalDebugger:
         except Exception as e:
             self.log_result("DELETE with collection_id", False, "", str(e))
     
+    def test_collection_remove_post_method(self, collections):
+        """Test 2b: Test POST /api/collections/remove (the actual backend endpoint)"""
+        if not collections:
+            self.log_result(
+                "POST /api/collections/remove",
+                False,
+                "No collections available to test removal"
+            )
+            return
+        
+        try:
+            # Use the first collection for testing
+            test_collection = collections[0]
+            jersey_id = test_collection.get('jersey_id')
+            collection_type = test_collection.get('collection_type')
+            
+            if not jersey_id or not collection_type:
+                self.log_result(
+                    "POST /api/collections/remove",
+                    False,
+                    f"Missing required data - jersey_id: {jersey_id}, collection_type: {collection_type}"
+                )
+                return
+            
+            # Test with the correct format expected by backend
+            response = self.session.post(f"{BACKEND_URL}/collections/remove", json={
+                "jersey_id": jersey_id,
+                "collection_type": collection_type
+            })
+            
+            details = f"Tested POST with jersey_id: {jersey_id}, collection_type: {collection_type}"
+            details += f"\nResponse status: {response.status_code}"
+            details += f"\nResponse body: {response.text}"
+            
+            if response.status_code == 200:
+                self.log_result(
+                    "POST /api/collections/remove",
+                    True,
+                    details
+                )
+            else:
+                self.log_result(
+                    "POST /api/collections/remove",
+                    False,
+                    details,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                
+        except Exception as e:
+            self.log_result("POST /api/collections/remove", False, "", str(e))
+    
     def test_collection_remove_with_jersey_id(self, collections):
         """Test 3: Test DELETE /api/collections/remove with jersey_id parameter"""
         if not collections:
