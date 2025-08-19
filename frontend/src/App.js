@@ -1656,9 +1656,18 @@ const AppContent = () => {
                 <button
                   onClick={() => {
                     console.log('Submit button clicked!');
-                    console.log('Current showSubmitModal state:', showSubmitModal);
-                    setShowSubmitModal(true);
-                    console.log('Modal state should be true now');
+                    // Open jersey editor for new jersey submission
+                    setEditingJersey({
+                      // Empty jersey object for new submission
+                      team: '',
+                      league: '',
+                      season: '',
+                      jersey_type: '',
+                      player: '',
+                      manufacturer: '',
+                      isNewSubmission: true // Flag to indicate this is a new submission
+                    });
+                    setShowJerseyEditor(true);
                   }}
                   className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
