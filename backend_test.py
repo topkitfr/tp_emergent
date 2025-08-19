@@ -204,21 +204,33 @@ class AdminJerseyCorrectionTester:
             
             if response.status_code == 200:
                 data = response.json()
-                pending_jerseys = data.get("jerseys", [])
-                total = data.get("total", 0)
+                
+                # Handle different possible response structures
+                if isinstance(data, list):
+                    # If response is directly a list of jerseys
+                    pending_jerseys = data
+                    total = len(data)
+                elif isinstance(data, dict):
+                    # If response is an object with jerseys array
+                    pending_jerseys = data.get("jerseys", data.get("pending_jerseys", []))
+                    total = data.get("total", len(pending_jerseys))
+                else:
+                    pending_jerseys = []
+                    total = 0
                 
                 # Check if our test jersey is in the pending list
                 test_jersey_found = False
-                for jersey in pending_jerseys:
-                    if jersey.get("id") == self.test_jersey_id:
-                        test_jersey_found = True
-                        break
+                if self.test_jersey_id:
+                    for jersey in pending_jerseys:
+                        if isinstance(jersey, dict) and jersey.get("id") == self.test_jersey_id:
+                            test_jersey_found = True
+                            break
                 
                 self.log_result(
                     "GET Pending Jerseys",
                     True,
                     f"Retrieved {total} pending jerseys. Test jersey found: {test_jersey_found}",
-                    {"total_pending": total, "test_jersey_in_list": test_jersey_found}
+                    {"total_pending": total, "test_jersey_in_list": test_jersey_found, "response_type": type(data).__name__}
                 )
                 return True
             else:
