@@ -736,121 +736,116 @@ const AppContent = () => {
 
   // Home Page Component
   const HomePage = () => (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white text-black">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-black via-gray-900 to-black">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-black/80"></div>
-        <div className="relative max-w-7xl mx-auto px-4 py-24">
+      <div className="relative bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              TopKit
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            {/* Large TOPKIT logo */}
+            <div className="mb-8 md:mb-12">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_notif-system-fix/artifacts/qdnnknkl_topkit_logo.png" 
+                alt="TOPKIT" 
+                className="w-full max-w-md mx-auto h-auto"
+              />
+            </div>
+            
+            <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
               La marketplace premium pour collectionneurs de maillots de foot
             </p>
-            <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-              Découvrez les maillots les plus recherchés, connectez-vous avec des collectionneurs passionnés, 
-              et trouvez la pièce rare qui manque à votre collection.
-            </p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-12">
-              <div className="relative">
+            {/* Search Bar - Mobile First */}
+            <div className="mb-8 md:mb-12">
+              <div className="relative max-w-lg mx-auto">
                 <input
                   type="text"
-                  placeholder="Rechercher un maillot, une équipe, un joueur..."
+                  placeholder="Rechercher un maillot..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full bg-gray-800/50 backdrop-blur-sm text-white px-6 py-4 rounded-2xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                  className="w-full bg-gray-50 text-black px-4 py-3 md:py-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base"
                 />
-                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            {/* Action Buttons - Mobile Stack */}
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 max-w-sm mx-auto mb-12 md:mb-16">
               <button
                 onClick={() => setCurrentView('explore')}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg"
+                className="bg-black hover:bg-gray-800 text-white px-6 py-3 md:py-4 rounded-lg font-medium text-base transition-colors w-full"
               >
-                🔍 Explorez
+                Explorez
               </button>
               <button
                 onClick={() => setCurrentView('marketplace')}
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg"
+                className="bg-gray-200 hover:bg-gray-300 text-black px-6 py-3 md:py-4 rounded-lg font-medium text-base transition-colors w-full"
               >
-                🛒 Marketplace
+                Marketplace
               </button>
-              {user && (
-                <button
-                  onClick={() => setCurrentView('profile')}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg"
-                >
-                  👤 Ma Collection
-                </button>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Featured Leagues Section */}
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12 text-white">
-          Championnat en vedette
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {[
-            { name: 'Premier League', color: 'from-purple-600 to-pink-600', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-            { name: 'La Liga', color: 'from-red-600 to-yellow-600', flag: '🇪🇸' },
-            { name: 'Serie A', color: 'from-green-600 to-red-600', flag: '🇮🇹' },
-            { name: 'Bundesliga', color: 'from-black to-red-600', flag: '🇩🇪' },
-            { name: 'Ligue 1', color: 'from-blue-600 to-red-600', flag: '🇫🇷' },
-            { name: 'Liga Portugal', color: 'from-green-600 to-red-600', flag: '🇵🇹' },
-            { name: 'Eredivisie', color: 'from-orange-600 to-blue-600', flag: '🇳🇱' },
-            { name: 'MLS', color: 'from-blue-600 to-red-600', flag: '🇺🇸' },
-            { name: 'Liga MX', color: 'from-green-600 to-red-600', flag: '🇲🇽' },
-            { name: 'Champions League', color: 'from-blue-800 to-purple-800', flag: '🏆' }
-          ].map((league) => (
-            <button
-              key={league.name}
-              onClick={() => {
-                handleFilterChange({ league: league.name });
-                setCurrentView('explore');
-              }}
-              className={`bg-gradient-to-br ${league.color} p-6 rounded-2xl hover:scale-105 transition-all shadow-lg text-center`}
-            >
-              <div className="text-2xl mb-2">{league.flag}</div>
-              <div className="text-white font-semibold text-sm">{league.name}</div>
-            </button>
-          ))}
+      {/* Stats Section - Mobile Optimized */}
+      <div className="bg-gray-50 py-12 md:py-16">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
+            <div>
+              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">50K+</div>
+              <div className="text-sm md:text-base text-gray-600">Maillots</div>
+            </div>
+            <div>
+              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">15K+</div>
+              <div className="text-sm md:text-base text-gray-600">Collectionneurs</div>
+            </div>
+            <div>
+              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">500+</div>
+              <div className="text-sm md:text-base text-gray-600">Équipes</div>
+            </div>
+            <div>
+              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">98%</div>
+              <div className="text-sm md:text-base text-gray-600">Satisfaction</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Statistics Section */}
-      <div className="bg-gradient-to-r from-gray-900 to-black py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-blue-400 mb-2">50K+</div>
-              <div className="text-gray-400">Maillots référencés</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-purple-400 mb-2">15K+</div>
-              <div className="text-gray-400">Collectionneurs actifs</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-green-400 mb-2">500+</div>
-              <div className="text-gray-400">Équipes couvertes</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-pink-400 mb-2">98%</div>
-              <div className="text-gray-400">Satisfaction clients</div>
-            </div>
+      {/* Leagues Section - Simplified for Mobile */}
+      <div className="py-12 md:py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-8 md:mb-12 text-black">
+            Championnats
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {[
+              { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+              { name: 'La Liga', flag: '🇪🇸' },
+              { name: 'Serie A', flag: '🇮🇹' },
+              { name: 'Bundesliga', flag: '🇩🇪' },
+              { name: 'Ligue 1', flag: '🇫🇷' },
+              { name: 'Liga Portugal', flag: '🇵🇹' },
+              { name: 'Eredivisie', flag: '🇳🇱' },
+              { name: 'MLS', flag: '🇺🇸' },
+              { name: 'Liga MX', flag: '🇲🇽' },
+              { name: 'Champions League', flag: '🏆' }
+            ].map((league) => (
+              <button
+                key={league.name}
+                onClick={() => {
+                  handleFilterChange({ league: league.name });
+                  setCurrentView('explore');
+                }}
+                className="bg-gray-100 hover:bg-gray-200 p-3 md:p-4 rounded-lg transition-colors text-center border border-gray-200"
+              >
+                <div className="text-xl md:text-2xl mb-1 md:mb-2">{league.flag}</div>
+                <div className="text-black font-medium text-xs md:text-sm leading-tight">{league.name}</div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
