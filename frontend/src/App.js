@@ -495,7 +495,6 @@ const AppContent = () => {
   };
 
   const handleJerseySubmit = () => {
-    setShowSubmitModal(false);
     loadUserSubmissions();
   };
 
