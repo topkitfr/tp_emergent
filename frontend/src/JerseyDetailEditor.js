@@ -261,35 +261,105 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
   };
 
   const handleSave = async () => {
-    // Validation de base avant de sauvegarder
-    if (!jersey || !jersey.id) {
-      setError('Erreur: Informations du maillot manquantes');
-      return;
-    }
-
     try {
       setLoading(true);
       setError('');
       
-      console.log('Saving jersey details for jersey ID:', jersey.id, 'Data:', detailData);
-      
-      const response = await tokenManager.makeAuthenticatedRequest(
-        'put',
-        `/api/collections/owned/${jersey.id}/details`,
-        detailData
-      );
-      
-      console.log('Jersey details saved successfully:', response.data);
-      
-      if (onSave) {
-        onSave(detailData);
+      if (isNewSubmission) {
+        // Validation for new submissions
+        if (!detailData.team || !detailData.league || !detailData.season) {
+          setError('Veuillez remplir les champs obligatoires: Équipe, Ligue, et Saison');
+          return;
+        }
+        
+        // Create FormData for photo upload
+        const formData = new FormData();
+        
+        // Add all jersey data
+        Object.keys(detailData).forEach(key => {
+          if (key !== 'front_photo' && key !== 'back_photo' && detailData[key] !== null && detailData[key] !== undefined) {
+            if (Array.isArray(detailData[key])) {
+              formData.append(key, JSON.stringify(detailData[key]));
+            } else {
+              formData.append(key, detailData[key]);
+            }
+          }
+        });
+        
+        // Add photos if they exist
+        if (detailData.front_photo) {
+          formData.append('front_photo', detailData.front_photo);
+        }
+        if (detailData.back_photo) {
+          formData.append('back_photo', detailData.back_photo);
+        }
+        
+        console.log('Submitting new jersey with data:', detailData);
+        
+        // Submit new jersey
+        const response = await tokenManager.makeAuthenticatedRequest(
+          'post',
+          '/api/jerseys',
+          formData,
+          {
+            'Content-Type': 'multipart/form-data'
+          }
+        );
+        
+        console.log('Jersey submitted successfully:', response.data);
+        
+        if (onUpdateSuccess) {
+          onUpdateSuccess();
+        }
+        
+      } else {
+        // Existing logic for updating collection details or admin edits
+        if (isAdminEdit) {
+          // Admin is editing a pending jersey
+          if (!jersey || !jersey.id) {
+            setError('Erreur: Informations du maillot manquantes');
+            return;
+          }
+          
+          const response = await tokenManager.makeAuthenticatedRequest(
+            'put',
+            `/api/admin/jerseys/${jersey.id}`,
+            detailData
+          );
+          
+          console.log('Admin jersey update successful:', response.data);
+          
+        } else {
+          // Regular collection update
+          if (!jersey || !jersey.id) {
+            setError('Erreur: Informations du maillot manquantes');
+            return;
+          }
+          
+          console.log('Saving jersey details for jersey ID:', jersey.id, 'Data:', detailData);
+          
+          const response = await tokenManager.makeAuthenticatedRequest(
+            'put',
+            `/api/collections/owned/${jersey.id}/details`,
+            detailData
+          );
+          
+          console.log('Jersey details saved successfully:', response.data);
+        }
+        
+        if (onSave) {
+          onSave(detailData);
+        }
+        if (onUpdateSuccess) {
+          onUpdateSuccess();
+        }
       }
       
       onClose();
       
     } catch (error) {
-      console.error('Error saving jersey details:', error);
-      let errorMessage = 'Failed to save jersey details';
+      console.error('Error saving jersey:', error);
+      let errorMessage = 'Erreur lors de la sauvegarde';
       
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
@@ -298,7 +368,6 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
       }
       
       setError(errorMessage);
-      // Ne pas fermer le modal en cas d'erreur pour que l'utilisateur puisse voir l'erreur
     } finally {
       setLoading(false);
     }
