@@ -308,7 +308,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-black">
-              {isNewSubmission ? '📝 Soumettre un maillot' : (isAdminEdit ? '✏️ Modifier le maillot' : '✏️ Modifier les détails')}
+              {isNewSubmission ? '📝 Soumettre un maillot' : 
+               (isAdminEdit ? '✏️ Corriger le maillot' : 
+               (isCollectionEdit ? '🔍 Modifier les détails de collection' : '✏️ Modifier les détails'))}
             </h2>
             <button
               onClick={onClose}
