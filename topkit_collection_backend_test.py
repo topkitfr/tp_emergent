@@ -18,11 +18,11 @@ EXISTING_USER = {
     "password": "TopKit123!"
 }
 
-# Alternative test user (we'll create this one)
+# Working test user (created by setup script)
 TEST_USER = {
-    "email": "test.collection.user@topkit.fr",
-    "password": "TestCollectionSecure789!",
-    "name": "Test Collection User"
+    "email": "livio.test@topkit.fr",
+    "password": "TopKitTestSecure789!",
+    "name": "Livio Test User"
 }
 
 ADMIN_USER = {
