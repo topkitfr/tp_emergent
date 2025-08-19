@@ -12,10 +12,10 @@ from datetime import datetime
 # Configuration
 BACKEND_URL = "https://profile-friends.preview.emergentagent.com/api"
 
-# Test credentials
+# Test credentials - using admin since user account is locked
 TEST_USER = {
-    "email": "steinmetzlivio@gmail.com", 
-    "password": "TopKit123!"
+    "email": "topkitfr@gmail.com",
+    "password": "TopKitSecure789#"
 }
 
 ADMIN_USER = {
