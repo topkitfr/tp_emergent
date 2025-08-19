@@ -387,6 +387,28 @@ class ReviewRequestTester:
             self.log_result("Messaging System", False, "", str(e))
             return False
     
+    def test_backend_health(self):
+        """Test overall backend health"""
+        try:
+            # Test a simple endpoint to verify backend is responding
+            response = self.session.get(f"{BACKEND_URL}/stats/dynamic")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result(
+                    "Backend Health", 
+                    True, 
+                    f"Backend responding correctly - Stats endpoint operational"
+                )
+                return True
+            else:
+                self.log_result("Backend Health", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Backend Health", False, "", str(e))
+            return False
+    
     def run_all_tests(self):
         """Run all tests for the review request"""
         print("🎯 TOPKIT REVIEW REQUEST BACKEND TESTING")
