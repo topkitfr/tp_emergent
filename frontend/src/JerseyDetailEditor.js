@@ -6,14 +6,14 @@ import tokenManager from './utils/tokenManager';
 const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }) => {
   const [detailData, setDetailData] = useState({
     // Jersey basic info (editable for new submissions, read-only for existing)
-    team: jersey?.team || '',
-    league: jersey?.league || '',
-    season: jersey?.season || '',
-    jersey_type: jersey?.jersey_type || '',
-    player: jersey?.player || '',
-    manufacturer: jersey?.manufacturer || '',
-    home_away: jersey?.home_away || 'home',
-    description: jersey?.description || '',
+    team: '',
+    league: '',
+    season: '',
+    jersey_type: '',
+    player: '',
+    manufacturer: '',
+    home_away: 'home',
+    description: '',
     
     // Editable collection details
     model_type: 'authentic',
@@ -55,7 +55,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
 
   useEffect(() => {
     if (jersey && isOpen) {
-      // Reset to default values first
+      // Reset to jersey data or defaults
       setDetailData({
         // Jersey basic info
         team: jersey?.team || '',
@@ -156,108 +156,6 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
     } else {
       setError('Veuillez sélectionner une image au format JPEG, PNG ou WebP');
     }
-  };
-        
-        // Editable collection details - defaults
-        model_type: 'authentic',
-        condition: 'mint',
-        size: 'm',
-        special_features: [],
-        material_details: '',
-        tags: 'tags_on',
-        packaging: 'no_packaging',
-        customization: 'blank',
-        competition_badges: '',
-        rarity: 'common',
-        purchase_price: '',
-        purchase_date: '',
-        purchase_location: '',
-        certificate_authenticity: false,
-        storage_notes: '',
-        
-        // Auto-calculated
-        estimated_value: 0
-      });
-      
-      // Load existing detail data if available
-      loadJerseyDetails();
-      // Calculate initial estimated value
-      calculateEstimatedValue();
-    }
-  }, [jersey?.id, isOpen]); // Changed dependency to jersey.id for better tracking
-
-  useEffect(() => {
-    // Recalculate estimated value when relevant fields change
-    calculateEstimatedValue();
-  }, [detailData.model_type, detailData.condition, detailData.special_features, detailData.rarity]);
-
-  const loadJerseyDetails = async () => {
-    try {
-      console.log('Loading jersey details for jersey ID:', jersey?.id);
-      const response = await tokenManager.makeAuthenticatedRequest(
-        'get',
-        `/api/collections/owned/${jersey.id}/details`
-      );
-      
-      if (response.data) {
-        console.log('Jersey details loaded:', response.data);
-        setDetailData(prev => ({
-          ...prev,
-          ...response.data
-        }));
-      } else {
-        console.log('No existing jersey details found');
-      }
-    } catch (error) {
-      // Details don't exist yet, use defaults
-      console.log('No existing details found, using defaults:', error.message);
-    }
-  };
-
-  const calculateEstimatedValue = () => {
-    let basePrice = BASE_PRICES[detailData.league] || 70;
-    
-    // Apply model type factor
-    const modelFactor = PRICE_FACTORS.model_type[detailData.model_type] || 1.0;
-    
-    // Apply condition factor
-    const conditionFactor = PRICE_FACTORS.condition[detailData.condition] || 1.0;
-    
-    // Apply special features factor (additive for multiple features)
-    let featuresFactor = 1.0;
-    if (detailData.special_features?.length > 0) {
-      detailData.special_features.forEach(feature => {
-        const factor = PRICE_FACTORS.special_features[feature] || 1.0;
-        featuresFactor *= factor;
-      });
-    }
-    
-    // Apply rarity factor
-    const rarityFactor = PRICE_FACTORS.rarity[detailData.rarity] || 1.0;
-    
-    // Calculate final estimated value
-    const estimatedValue = Math.round(basePrice * modelFactor * conditionFactor * featuresFactor * rarityFactor);
-    
-    setDetailData(prev => ({
-      ...prev,
-      estimated_value: estimatedValue
-    }));
-  };
-
-  const handleInputChange = (field, value) => {
-    setDetailData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSpecialFeaturesChange = (feature, checked) => {
-    setDetailData(prev => ({
-      ...prev,
-      special_features: checked
-        ? [...(prev.special_features || []), feature]
-        : (prev.special_features || []).filter(f => f !== feature)
-    }));
   };
 
   const handleSave = async () => {
@@ -377,57 +275,198 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
+          {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-black">Éditer les détails du maillot</h2>
+            <h2 className="text-2xl font-bold text-black">
+              {isNewSubmission ? '📝 Soumettre un maillot' : (isAdminEdit ? '✏️ Modifier le maillot' : '✏️ Modifier les détails')}
+            </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-black text-xl font-bold"
+              className="text-gray-500 hover:text-black text-2xl font-bold"
             >
               ×
             </button>
           </div>
 
+          {/* Error Display */}
           {error && (
-            <div className="bg-red-500 text-white px-4 py-3 rounded mb-4">
-              {error}
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+              <strong>Erreur:</strong> {error}
             </div>
           )}
 
-          {/* Jersey Reference Info (Read-only) */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-black mb-3">Référence du maillot</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Équipe:</span>
-                <span className="text-black ml-2 font-medium">{detailData.team}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Championnat:</span>
-                <span className="text-black ml-2 font-medium">{detailData.league}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Saison:</span>
-                <span className="text-black ml-2 font-medium">{detailData.season}</span>
-              </div>
-              {detailData.player && (
-                <div>
-                  <span className="text-gray-600">Joueur:</span>
-                  <span className="text-black ml-2 font-medium">{detailData.player}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Left Column */}
-            <div className="space-y-6">
-              
+            {/* Left Column - Basic Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-black border-b border-gray-200 pb-2">
+                📋 Informations de base
+              </h3>
+
+              {/* Team */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Équipe *
+                </label>
+                <input
+                  type="text"
+                  value={detailData.team}
+                  onChange={(e) => handleInputChange('team', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: Paris Saint-Germain"
+                />
+              </div>
+
+              {/* League */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Ligue/Championnat *
+                </label>
+                <input
+                  type="text"
+                  value={detailData.league}
+                  onChange={(e) => handleInputChange('league', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: Ligue 1"
+                />
+              </div>
+
+              {/* Season */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Saison *
+                </label>
+                <input
+                  type="text"
+                  value={detailData.season}
+                  onChange={(e) => handleInputChange('season', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: 2023-24"
+                />
+              </div>
+
+              {/* Jersey Type */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Type de maillot
+                </label>
+                <select
+                  value={detailData.jersey_type}
+                  onChange={(e) => handleInputChange('jersey_type', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="home">Domicile</option>
+                  <option value="away">Extérieur</option>
+                  <option value="third">Troisième</option>
+                  <option value="goalkeeper">Gardien</option>
+                  <option value="training">Entraînement</option>
+                  <option value="special">Édition spéciale</option>
+                </select>
+              </div>
+
+              {/* Player */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Joueur (optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={detailData.player}
+                  onChange={(e) => handleInputChange('player', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                  placeholder="Ex: Mbappé"
+                />
+              </div>
+
+              {/* Manufacturer */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Fabricant
+                </label>
+                <select
+                  value={detailData.manufacturer}
+                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  disabled={!isNewSubmission}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100 disabled:text-gray-600"
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="nike">Nike</option>
+                  <option value="adidas">Adidas</option>
+                  <option value="puma">Puma</option>
+                  <option value="jordan">Jordan</option>
+                  <option value="umbro">Umbro</option>
+                  <option value="kappa">Kappa</option>
+                  <option value="new_balance">New Balance</option>
+                  <option value="other">Autre</option>
+                </select>
+              </div>
+
+              {/* Photo Uploads */}
+              <div className="space-y-4">
+                <h4 className="text-md font-semibold text-black">📸 Photos du maillot</h4>
+                
+                {/* Front Photo */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">
+                    Photo de face
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => handlePhotoUpload('front', e.target.files[0])}
+                    className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800"
+                  />
+                  {photoPreview.front && (
+                    <div className="mt-2">
+                      <img 
+                        src={photoPreview.front} 
+                        alt="Preview front" 
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Back Photo */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">
+                    Photo de dos
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => handlePhotoUpload('back', e.target.files[0])}
+                    className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800"
+                  />
+                  {photoPreview.back && (
+                    <div className="mt-2">
+                      <img 
+                        src={photoPreview.back} 
+                        alt="Preview back" 
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Detail Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-black border-b border-gray-200 pb-2">
+                🔍 Détails de la collection
+              </h3>
+
               {/* Model Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-black mb-2">
                   {JERSEY_DETAIL_CRITERIA.model_type.label}
                 </label>
                 <select
@@ -435,15 +474,15 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   onChange={(e) => handleInputChange('model_type', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {JERSEY_DETAIL_CRITERIA.model_type.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {Object.entries(JERSEY_DETAIL_CRITERIA.model_type.options).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
               </div>
 
               {/* Condition */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-black mb-2">
                   {JERSEY_DETAIL_CRITERIA.condition.label}
                 </label>
                 <select
@@ -451,15 +490,15 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   onChange={(e) => handleInputChange('condition', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {JERSEY_DETAIL_CRITERIA.condition.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {Object.entries(JERSEY_DETAIL_CRITERIA.condition.options).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
               </div>
 
               {/* Size */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-black mb-2">
                   {JERSEY_DETAIL_CRITERIA.size.label}
                 </label>
                 <select
@@ -467,15 +506,35 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   onChange={(e) => handleInputChange('size', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {JERSEY_DETAIL_CRITERIA.size.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {Object.entries(JERSEY_DETAIL_CRITERIA.size.options).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
               </div>
 
+              {/* Special Features */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  {JERSEY_DETAIL_CRITERIA.special_features.label}
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {JERSEY_DETAIL_CRITERIA.special_features.options.map((feature) => (
+                    <label key={feature} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={(detailData.special_features || []).includes(feature)}
+                        onChange={() => handleSpecialFeatureToggle(feature)}
+                        className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black focus:ring-2"
+                      />
+                      <span className="text-sm text-black">{feature}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Rarity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-black mb-2">
                   {JERSEY_DETAIL_CRITERIA.rarity.label}
                 </label>
                 <select
@@ -483,100 +542,58 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
                   onChange={(e) => handleInputChange('rarity', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {JERSEY_DETAIL_CRITERIA.rarity.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {Object.entries(JERSEY_DETAIL_CRITERIA.rarity.options).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Purchase Information */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="text-md font-semibold text-black mb-3">Informations d'achat</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prix d'achat (€)</label>
-                    <input
-                      type="number"
-                      value={detailData.purchase_price}
-                      onChange={(e) => handleInputChange('purchase_price', e.target.value)}
-                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date d'achat</label>
-                    <input
-                      type="date"
-                      value={detailData.purchase_date}
-                      onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lieu d'achat</label>
-                    <input
-                      type="text"
-                      value={detailData.purchase_location}
-                      onChange={(e) => handleInputChange('purchase_location', e.target.value)}
-                      className="w-full p-2 bg-white text-black border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                      placeholder="Magasin, site web, marketplace..."
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={detailData.certificate_authenticity}
-                      onChange={(e) => handleInputChange('certificate_authenticity', e.target.checked)}
-                      className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black"
-                    />
-                    <label className="ml-2 text-sm font-medium text-gray-700">Certificat d'authenticité</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-6">
-              
-              {/* Special Features */}
+              {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {JERSEY_DETAIL_CRITERIA.special_features.label}
-                </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  {JERSEY_DETAIL_CRITERIA.special_features.options.map(option => (
-                    <div key={option.value} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={(detailData.special_features || []).includes(option.value)}
-                        onChange={(e) => handleSpecialFeaturesChange(option.value, e.target.checked)}
-                        className="w-4 h-4 text-black bg-white border-gray-300 rounded focus:ring-black"
-                      />
-                      <label className="ml-2 text-sm text-gray-700">{option.label}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Customization */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {JERSEY_DETAIL_CRITERIA.customization.label}
+                <label className="block text-sm font-medium text-black mb-2">
+                  {JERSEY_DETAIL_CRITERIA.tags.label}
                 </label>
                 <select
-                  value={detailData.customization}
-                  onChange={(e) => handleInputChange('customization', e.target.value)}
+                  value={detailData.tags}
+                  onChange={(e) => handleInputChange('tags', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {JERSEY_DETAIL_CRITERIA.customization.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {Object.entries(JERSEY_DETAIL_CRITERIA.tags.options).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Purchase Price */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  {JERSEY_DETAIL_CRITERIA.purchase_price.label}
+                </label>
+                <input
+                  type="number"
+                  value={detailData.purchase_price}
+                  onChange={(e) => handleInputChange('purchase_price', e.target.value)}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  placeholder={JERSEY_DETAIL_CRITERIA.purchase_price.placeholder}
+                />
+              </div>
+
+              {/* Purchase Date */}
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  {JERSEY_DETAIL_CRITERIA.purchase_date.label}
+                </label>
+                <input
+                  type="date"
+                  value={detailData.purchase_date}
+                  onChange={(e) => handleInputChange('purchase_date', e.target.value)}
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                />
               </div>
 
               {/* Storage Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-black mb-2">
                   {JERSEY_DETAIL_CRITERIA.storage_notes.label}
                 </label>
                 <textarea
@@ -588,15 +605,17 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               </div>
 
               {/* Estimated Value */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="text-md font-semibold text-green-800 mb-2">💰 Valeur estimée</h4>
-                <div className="text-2xl font-bold text-green-800">
-                  €{detailData.estimated_value}
+              {!isNewSubmission && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="text-md font-semibold text-green-800 mb-2">💰 Valeur estimée</h4>
+                  <div className="text-2xl font-bold text-green-800">
+                    €{detailData.estimated_value}
+                  </div>
+                  <p className="text-xs text-green-600 mt-1">
+                    Basée sur le type, l'état, les caractéristiques et la rareté
+                  </p>
                 </div>
-                <p className="text-xs text-green-600 mt-1">
-                  Basée sur le type, l'état, les caractéristiques et la rareté
-                </p>
-              </div>
+              )}
             </div>
           </div>
 
@@ -613,7 +632,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               disabled={loading}
               className="px-6 py-2 bg-black hover:bg-gray-800 disabled:opacity-50 text-white rounded-lg transition-colors font-medium"
             >
-              {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+              {loading ? 'Sauvegarde...' : (isNewSubmission ? 'Soumettre' : 'Sauvegarder')}
             </button>
           </div>
         </div>
