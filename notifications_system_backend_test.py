@@ -84,55 +84,45 @@ class NotificationsSystemTester:
         print("\n🔐 AUTHENTICATION SETUP")
         print("=" * 50)
         
-        # Try multiple admin password combinations
-        admin_passwords = ["adminpass123", "TopKitSecure789#"]
-        admin_authenticated = False
-        
-        for password in admin_passwords:
-            try:
-                admin_creds = {"email": "topkitfr@gmail.com", "password": password}
-                async with self.session.post(f"{BACKEND_URL}/auth/login", json=admin_creds) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self.admin_token = data.get("token")
-                        self.admin_user_id = data.get("user", {}).get("id")
-                        self.log_test("Admin Authentication", True, f"Admin ID: {self.admin_user_id} (password: {password})")
-                        admin_authenticated = True
-                        break
-                    else:
-                        print(f"    Admin password {password} failed: {response.status}")
-            except Exception as e:
-                print(f"    Admin password {password} exception: {str(e)}")
-                
-        if not admin_authenticated:
-            self.log_test("Admin Authentication", False, "All admin passwords failed")
+        # Authenticate user first
+        try:
+            async with self.session.post(f"{BACKEND_URL}/auth/login", json=USER_CREDENTIALS) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.user_token = data.get("token")
+                    self.user_user_id = data.get("user", {}).get("id")
+                    user_role = data.get("user", {}).get("role")
+                    self.log_test("User Authentication", True, f"User ID: {self.user_user_id}, Role: {user_role}")
+                else:
+                    error_text = await response.text()
+                    self.log_test("User Authentication", False, f"Status: {response.status}, Error: {error_text}")
+                    return False
+        except Exception as e:
+            self.log_test("User Authentication", False, f"Exception: {str(e)}")
             return False
-            
-        # Try multiple user password combinations
-        user_passwords = ["123", "TopKit123!", "T0p_Mdp_1288*"]
-        user_authenticated = False
         
-        for password in user_passwords:
-            try:
-                user_creds = {"email": "steinmetzlivio@gmail.com", "password": password}
-                async with self.session.post(f"{BACKEND_URL}/auth/login", json=user_creds) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        self.user_token = data.get("token")
-                        self.user_user_id = data.get("user", {}).get("id")
-                        self.log_test("User Authentication", True, f"User ID: {self.user_user_id} (password: {password})")
-                        user_authenticated = True
-                        break
-                    else:
-                        print(f"    User password {password} failed: {response.status}")
-            except Exception as e:
-                print(f"    User password {password} exception: {str(e)}")
-                
-        if not user_authenticated:
-            self.log_test("User Authentication", False, "All user passwords failed")
-            return False
+        # Try to authenticate with test admin (may not have admin privileges)
+        try:
+            async with self.session.post(f"{BACKEND_URL}/auth/login", json=TEST_ADMIN_CREDENTIALS) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.admin_token = data.get("token")
+                    self.admin_user_id = data.get("user", {}).get("id")
+                    admin_role = data.get("user", {}).get("role")
+                    self.log_test("Test Admin Authentication", True, f"Admin ID: {self.admin_user_id}, Role: {admin_role}")
+                    
+                    # Note: This may not be a real admin, just a test user
+                    if admin_role != "admin":
+                        self.log_test("Admin Privileges Check", False, f"Test admin has role '{admin_role}', not 'admin'")
+                        self.admin_token = None  # Don't use for admin operations
+                else:
+                    error_text = await response.text()
+                    self.log_test("Test Admin Authentication", False, f"Status: {response.status}, Error: {error_text}")
+        except Exception as e:
+            self.log_test("Test Admin Authentication", False, f"Exception: {str(e)}")
             
-        return self.admin_token and self.user_token
+        # We can proceed with just user authentication for basic notification testing
+        return self.user_token is not None
         
     async def test_notifications_endpoints(self):
         """Test basic notifications API endpoints"""
