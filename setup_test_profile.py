@@ -19,9 +19,9 @@ ADMIN_USER = {
 }
 
 TEST_USER = {
-    "email": "steinmetzlivio@gmail.com",
-    "password": "StrongTopKitPass789!",
-    "name": "Livio Steinmetz"
+    "email": "livio.test@topkit.fr",
+    "password": "TopKitTestSecure789!",
+    "name": "Livio Test User"
 }
 
 class TestProfileSetup:
