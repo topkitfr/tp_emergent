@@ -12,7 +12,7 @@ import time
 import jwt
 
 # Configuration - Using correct backend URL from frontend .env
-BASE_URL = "https://notif-system-fix.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
 
 class AuthenticationTester:
     def __init__(self):

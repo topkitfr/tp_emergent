@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get API URL from environment
-const API_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://notif-system-fix.preview.emergentagent.com';
+const API_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-refresh.preview.emergentagent.com';
 
 class TokenManager {
   constructor() {

@@ -12,7 +12,7 @@ import time
 import jwt
 
 # Configuration
-BASE_URL = "https://notif-system-fix.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "test@topkit.com"
 TEST_USER_PASSWORD = "password123"
 TEST_USER_NAME = "testuser"

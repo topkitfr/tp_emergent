@@ -16,7 +16,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
   });
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://notif-system-fix.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-refresh.preview.emergentagent.com';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

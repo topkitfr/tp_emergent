@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://notif-system-fix.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {

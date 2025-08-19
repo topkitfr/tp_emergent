@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://notif-system-fix.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 REGULAR_USER_EMAIL = "steinmetzlivio@gmail.com"
 REGULAR_USER_PASSWORD = "123"
