@@ -101,6 +101,8 @@ class ProductionAuthTester:
                 
         except Exception as e:
             self.log(f"❌ Error checking user existence: {e}", "ERROR")
+            import traceback
+            self.log(f"   Traceback: {traceback.format_exc()}", "ERROR")
     
     def test_endpoint_connectivity(self):
         """Test if the production endpoint is working with known accounts"""
