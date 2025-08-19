@@ -3014,32 +3014,22 @@ async def edit_jersey(
     if not existing_jersey:
         raise HTTPException(status_code=404, detail="Jersey not found or cannot be edited")
     
-    # Validate condition
-    valid_conditions = ["new", "near_mint", "very_good", "good", "poor"]
-    if jersey_data.condition not in valid_conditions:
-        raise HTTPException(status_code=400, detail=f"Invalid condition: {jersey_data.condition}")
-    
-    # Validate size
-    valid_sizes = ["XS", "S", "M", "L", "XL", "XXL"]
-    if jersey_data.size not in valid_sizes:
-        raise HTTPException(status_code=400, detail=f"Invalid size: {jersey_data.size}")
-    
-    # Update jersey with edited data
+    # Update jersey with edited data using new structure
     update_data = {
         "team": jersey_data.team,
+        "league": jersey_data.league,
         "season": jersey_data.season,
-        "size": jersey_data.size,
-        "condition": jersey_data.condition,
         "manufacturer": jersey_data.manufacturer or "",
-        "home_away": jersey_data.home_away or "home",
-        "league": jersey_data.league or "",
+        "jersey_type": jersey_data.jersey_type or "",  # home/away/third/goalkeeper/training/special
+        "sku_code": jersey_data.sku_code,
+        "model": jersey_data.model,  # authentic/replica
         "description": jersey_data.description or "",
-        "images": jersey_data.images or [],
-        "reference_code": jersey_data.reference_code,
         "status": "pending",  # Reset to pending after edit
         "approved_by": None,
         "approved_at": None,
-        "rejection_reason": None
+        "rejection_reason": None,
+        "updated_at": datetime.utcnow(),
+        "updated_by": moderator_id
     }
     
     result = await db.jerseys.update_one(
@@ -3055,7 +3045,7 @@ async def edit_jersey(
         user_id=existing_jersey["submitted_by"],
         notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
         title="🔧 Jersey Updated by Moderator",
-        message=f"Your jersey '{existing_jersey.get('team', '')} {existing_jersey.get('season', '')}' has been updated by a moderator and is now pending review again.",
+        message=f"Your jersey '{jersey_data.team} {jersey_data.season}' has been updated by a moderator and is now pending review again.",
         related_id=jersey_id
     )
     
