@@ -86,6 +86,7 @@ class CollectionRemovalDebugger:
     def test_get_owned_collections_format(self):
         """Test 1: Check the format of collection data returned by GET /api/collections/owned"""
         try:
+            # The correct endpoint is /api/collections/{collection_type} where collection_type = "owned"
             response = self.session.get(f"{BACKEND_URL}/collections/owned")
             
             if response.status_code == 200:
