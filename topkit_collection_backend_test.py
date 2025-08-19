@@ -429,7 +429,8 @@ class TopKitCollectionTester:
             
             # Test multiple endpoints to verify data consistency
             endpoints_to_test = [
-                ("/collections", "User Collections"),
+                ("/collections/my-owned", "User Owned Collections"),
+                ("/collections/my-wanted", "User Wanted Collections"),
                 ("/jerseys", "Jerseys Database"),
                 ("/marketplace/catalog", "Marketplace Catalog"),
                 ("/notifications", "User Notifications")
