@@ -1733,7 +1733,7 @@ const AppContent = () => {
                     <div className="text-xs md:text-sm text-gray-600">Soumissions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl md:text-2xl font-bold text-black">{friends.length || 0}</div>
+                    <div className="text-xl md:text-2xl font-bold text-black">{friendsStats.total_friends || 0}</div>
                     <div className="text-xs md:text-sm text-gray-600">Amis</div>
                   </div>
                 </div>
