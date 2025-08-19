@@ -3626,6 +3626,26 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
         # Insert into database
         await db.jerseys.insert_one(jersey.dict())
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
+        
+        # FORCE NOTIFICATION CREATION - ALWAYS CREATE NOTIFICATION
+        try:
+            logger.info(f"🔔 FORCE Creating notification for user: {user_id}")
+            notification = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "type": "system_announcement",
+                "title": "Jersey Submitted Successfully!",
+                "message": f"Thank you! Your jersey '{jersey.team} {jersey.season}' ({jersey.reference_number}) has been submitted and will be reviewed by our moderators.",
+                "related_id": jersey.id,
+                "is_read": False,
+                "created_at": datetime.utcnow().isoformat(),
+                "read_at": None
+            }
+            await db.notifications.insert_one(notification)
+            logger.info(f"✅ FORCED notification created: {notification['id']}")
+        except Exception as e:
+            logger.error(f"❌ FORCED notification failed: {e}")
+        
         logger.info(f"📚 Jersey inserted into database, proceeding to notification logic...")
         
         # Handle resubmission logic
