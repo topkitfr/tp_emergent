@@ -3626,6 +3626,7 @@ async def create_jersey(jersey_data: JerseyCreate, current_user: dict = Depends(
         # Insert into database
         await db.jerseys.insert_one(jersey.dict())
         print(f"✅ Jersey created successfully with ID: {jersey.id}")
+        logger.info(f"📚 Jersey inserted into database, proceeding to notification logic...")
         
         # Handle resubmission logic
         logger.info(f"🔍 is_resubmission value: {is_resubmission}")
