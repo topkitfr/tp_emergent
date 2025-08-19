@@ -6,11 +6,11 @@ import sys
 from datetime import datetime
 
 # Production URL from frontend/.env
-BASE_URL = "https://9f26dbf2-ce88-4e0c-8bc0-d245b81c53aa.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-beta.emergent.host/api"
 
 # Test credentials from previous testing
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+TEST_USER_EMAIL = "topkitfr@gmail.com"
+TEST_USER_PASSWORD = "TopKitSecure789#"
 
 class JerseySubmissionNotificationTest:
     def __init__(self):
