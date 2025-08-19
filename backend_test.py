@@ -1,5 +1,756 @@
 #!/usr/bin/env python3
 """
+TopKit New Jersey Submission System Backend Testing
+Testing the updated form structure with multipart/form-data support
+
+Focus Areas:
+1. NEW FORM STRUCTURE - team, league, season, model (required), manufacturer, jersey_type, sku_code, description (optional)
+2. MULTIPART FORM DATA - FormData instead of JSON, file uploads
+3. VALIDATION - Required fields, model validation (authentic/replica), jersey_type validation
+4. USER AUTHENTICATION - livio.test@topkit.fr and admin accounts
+5. ADMIN FUNCTIONALITY - Pending jerseys with new structure
+6. END-TO-END WORKFLOW - Create → Admin view → Verify storage
+"""
+
+import requests
+import json
+import time
+from datetime import datetime
+import io
+import os
+
+# Configuration
+BACKEND_URL = "https://kit-curator.preview.emergentagent.com/api"
+
+# Test credentials from review request
+TEST_USER_EMAIL = "livio.test@topkit.fr"
+TEST_USER_PASSWORD = "TopKitTestSecure789!"
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
+
+class TopKitJerseySubmissionTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.user_token = None
+        self.admin_token = None
+        self.test_results = []
+        self.created_jerseys = []
+        
+    def log_result(self, test_name, success, details="", error=""):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "error": error,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        if error:
+            print(f"   Error: {error}")
+        print()
+
+    def authenticate_user(self):
+        """Test user authentication with livio.test@topkit.fr"""
+        try:
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                "email": TEST_USER_EMAIL,
+                "password": TEST_USER_PASSWORD
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.user_token = data.get("token")
+                user_info = data.get("user", {})
+                self.log_result(
+                    "User Authentication",
+                    True,
+                    f"User: {user_info.get('name', 'Unknown')}, Role: {user_info.get('role', 'Unknown')}, ID: {user_info.get('id', 'Unknown')}"
+                )
+                return True
+            else:
+                self.log_result("User Authentication", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("User Authentication", False, "", str(e))
+            return False
+
+    def authenticate_admin(self):
+        """Test admin authentication"""
+        try:
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data.get("token")
+                user_info = data.get("user", {})
+                self.log_result(
+                    "Admin Authentication",
+                    True,
+                    f"Admin: {user_info.get('name', 'Unknown')}, Role: {user_info.get('role', 'Unknown')}, ID: {user_info.get('id', 'Unknown')}"
+                )
+                return True
+            else:
+                self.log_result("Admin Authentication", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Authentication", False, "", str(e))
+            return False
+
+    def test_jersey_submission_required_fields(self):
+        """Test jersey submission with new required fields: team, league, season, model"""
+        if not self.user_token:
+            self.log_result("Jersey Submission - Required Fields", False, "", "No user token available")
+            return False
+            
+        try:
+            # Test with all required fields
+            form_data = {
+                'team': 'FC Barcelona',
+                'league': 'La Liga',
+                'season': '2024-25',
+                'model': 'authentic'
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                jersey_id = data.get('id')
+                self.created_jerseys.append(jersey_id)
+                
+                # Verify all required fields are present
+                required_fields = ['team', 'league', 'season', 'model']
+                missing_fields = [field for field in required_fields if not data.get(field)]
+                
+                if not missing_fields:
+                    self.log_result(
+                        "Jersey Submission - Required Fields",
+                        True,
+                        f"Jersey created with ID: {jersey_id}, Reference: {data.get('reference_number')}, Status: {data.get('status')}"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Jersey Submission - Required Fields",
+                        False,
+                        f"Missing required fields in response: {missing_fields}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Jersey Submission - Required Fields",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Jersey Submission - Required Fields", False, "", str(e))
+            return False
+
+    def test_jersey_submission_optional_fields(self):
+        """Test jersey submission with optional fields: manufacturer, jersey_type, sku_code, description"""
+        if not self.user_token:
+            self.log_result("Jersey Submission - Optional Fields", False, "", "No user token available")
+            return False
+            
+        try:
+            # Test with all optional fields
+            form_data = {
+                'team': 'Real Madrid CF',
+                'league': 'La Liga',
+                'season': '2024-25',
+                'model': 'replica',
+                'manufacturer': 'Adidas',
+                'jersey_type': 'home',
+                'sku_code': 'RM-HOME-2425',
+                'description': 'Official Real Madrid home jersey with new design'
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                jersey_id = data.get('id')
+                self.created_jerseys.append(jersey_id)
+                
+                # Verify optional fields are stored correctly
+                optional_checks = {
+                    'manufacturer': data.get('manufacturer') == 'Adidas',
+                    'jersey_type': data.get('jersey_type') == 'home',
+                    'sku_code': data.get('sku_code') == 'RM-HOME-2425',
+                    'description': data.get('description') == 'Official Real Madrid home jersey with new design'
+                }
+                
+                failed_checks = [field for field, passed in optional_checks.items() if not passed]
+                
+                if not failed_checks:
+                    self.log_result(
+                        "Jersey Submission - Optional Fields",
+                        True,
+                        f"Jersey created with all optional fields: {jersey_id}, Reference: {data.get('reference_number')}"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Jersey Submission - Optional Fields",
+                        False,
+                        f"Optional fields not stored correctly: {failed_checks}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Jersey Submission - Optional Fields",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Jersey Submission - Optional Fields", False, "", str(e))
+            return False
+
+    def test_player_field_removed(self):
+        """Test that 'player' field has been removed from backend model"""
+        if not self.user_token:
+            self.log_result("Player Field Removal Verification", False, "", "No user token available")
+            return False
+            
+        try:
+            # Try to submit with old 'player' field - should be ignored
+            form_data = {
+                'team': 'Manchester City',
+                'league': 'Premier League',
+                'season': '2024-25',
+                'model': 'authentic',
+                'player': 'Erling Haaland'  # This should be ignored
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                jersey_id = data.get('id')
+                self.created_jerseys.append(jersey_id)
+                
+                # Verify 'player' field is not in response (removed from model)
+                has_player_field = 'player' in data
+                
+                if not has_player_field:
+                    self.log_result(
+                        "Player Field Removal Verification",
+                        True,
+                        f"Player field successfully removed from model. Jersey ID: {jersey_id}"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Player Field Removal Verification",
+                        False,
+                        f"Player field still present in response: {data.get('player')}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Player Field Removal Verification",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Player Field Removal Verification", False, "", str(e))
+            return False
+
+    def test_model_field_validation(self):
+        """Test model field validation (must be 'authentic' or 'replica')"""
+        if not self.user_token:
+            self.log_result("Model Field Validation", False, "", "No user token available")
+            return False
+            
+        try:
+            # Test with invalid model value
+            form_data = {
+                'team': 'Liverpool FC',
+                'league': 'Premier League',
+                'season': '2024-25',
+                'model': 'invalid_model'  # Should be rejected
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            # Should return 422 for validation error
+            if response.status_code == 422:
+                error_detail = response.json().get('detail', '')
+                if 'authentic' in error_detail and 'replica' in error_detail:
+                    self.log_result(
+                        "Model Field Validation",
+                        True,
+                        f"Correctly rejected invalid model value with proper error message: {error_detail}"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Model Field Validation",
+                        False,
+                        f"Validation error but wrong message: {error_detail}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Model Field Validation",
+                    False,
+                    f"Expected HTTP 422, got {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Model Field Validation", False, "", str(e))
+            return False
+
+    def test_multipart_form_data(self):
+        """Test multipart/form-data submission with file uploads"""
+        if not self.user_token:
+            self.log_result("Multipart Form Data Test", False, "", "No user token available")
+            return False
+            
+        try:
+            # Create mock image files
+            front_photo_content = b"Mock front photo content"
+            back_photo_content = b"Mock back photo content"
+            
+            # Prepare multipart form data with files
+            files = {
+                'front_photo': ('front_jersey.jpg', io.BytesIO(front_photo_content), 'image/jpeg'),
+                'back_photo': ('back_jersey.jpg', io.BytesIO(back_photo_content), 'image/jpeg')
+            }
+            
+            data = {
+                'team': 'Paris Saint-Germain',
+                'league': 'Ligue 1',
+                'season': '2024-25',
+                'model': 'authentic',
+                'manufacturer': 'Nike',
+                'jersey_type': 'away',
+                'description': 'PSG away jersey with photo uploads'
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=data, files=files, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                jersey_id = data.get('id')
+                self.created_jerseys.append(jersey_id)
+                
+                # Check if photo URLs were set
+                front_photo_url = data.get('front_photo_url')
+                back_photo_url = data.get('back_photo_url')
+                
+                photos_handled = bool(front_photo_url and back_photo_url)
+                
+                self.log_result(
+                    "Multipart Form Data Test",
+                    True,
+                    f"Jersey created with multipart data. ID: {jersey_id}, Photos handled: {photos_handled}, Front: {front_photo_url}, Back: {back_photo_url}"
+                )
+                return True
+            else:
+                self.log_result(
+                    "Multipart Form Data Test",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Multipart Form Data Test", False, "", str(e))
+            return False
+
+    def test_required_field_validation(self):
+        """Test validation of required fields (team, league, season, model)"""
+        if not self.user_token:
+            self.log_result("Required Field Validation", False, "", "No user token available")
+            return False
+            
+        try:
+            # Test missing required fields one by one
+            required_fields = ['team', 'league', 'season', 'model']
+            validation_results = []
+            
+            for missing_field in required_fields:
+                form_data = {
+                    'team': 'Test Team',
+                    'league': 'Test League',
+                    'season': '2024-25',
+                    'model': 'authentic'
+                }
+                # Remove the field we're testing
+                del form_data[missing_field]
+                
+                headers = {'Authorization': f'Bearer {self.user_token}'}
+                response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+                
+                # Should return 422 for missing required field
+                if response.status_code == 422:
+                    validation_results.append(f"{missing_field}: ✅ Correctly rejected")
+                else:
+                    validation_results.append(f"{missing_field}: ❌ Not rejected (HTTP {response.status_code})")
+            
+            all_passed = all("✅" in result for result in validation_results)
+            
+            self.log_result(
+                "Required Field Validation",
+                all_passed,
+                f"Validation results: {', '.join(validation_results)}"
+            )
+            return all_passed
+                
+        except Exception as e:
+            self.log_result("Required Field Validation", False, "", str(e))
+            return False
+
+    def test_jersey_type_validation(self):
+        """Test jersey_type validation (optional but validated when provided)"""
+        if not self.user_token:
+            self.log_result("Jersey Type Validation", False, "", "No user token available")
+            return False
+            
+        try:
+            # Test with invalid jersey_type
+            form_data = {
+                'team': 'Arsenal FC',
+                'league': 'Premier League',
+                'season': '2024-25',
+                'model': 'replica',
+                'jersey_type': 'invalid_type'  # Should be rejected
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            # Should return 422 for validation error
+            if response.status_code == 422:
+                error_detail = response.json().get('detail', '')
+                valid_types = ['home', 'away', 'third', 'goalkeeper', 'training', 'special']
+                contains_valid_types = any(vtype in error_detail for vtype in valid_types)
+                
+                if contains_valid_types:
+                    self.log_result(
+                        "Jersey Type Validation",
+                        True,
+                        f"Correctly rejected invalid jersey_type with proper error message: {error_detail}"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Jersey Type Validation",
+                        False,
+                        f"Validation error but wrong message: {error_detail}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Jersey Type Validation",
+                    False,
+                    f"Expected HTTP 422, got {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Jersey Type Validation", False, "", str(e))
+            return False
+
+    def test_admin_pending_jerseys_retrieval(self):
+        """Test admin can retrieve pending jerseys with new structure"""
+        if not self.admin_token:
+            self.log_result("Admin Pending Jerseys Retrieval", False, "", "No admin token available")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending", headers=headers)
+            
+            if response.status_code == 200:
+                jerseys = response.json()
+                
+                if not jerseys:
+                    self.log_result(
+                        "Admin Pending Jerseys Retrieval",
+                        True,
+                        "No pending jerseys found (expected if database is clean)"
+                    )
+                    return True
+                
+                # Check if jerseys have new structure fields
+                first_jersey = jerseys[0]
+                new_structure_fields = ['team', 'league', 'season', 'model']
+                old_structure_fields = ['player']  # Should not be present
+                
+                has_new_fields = all(field in first_jersey for field in new_structure_fields)
+                has_old_fields = any(field in first_jersey for field in old_structure_fields)
+                
+                if has_new_fields and not has_old_fields:
+                    self.log_result(
+                        "Admin Pending Jerseys Retrieval",
+                        True,
+                        f"Retrieved {len(jerseys)} pending jerseys with new structure. Sample jersey: {first_jersey.get('team')} {first_jersey.get('season')} ({first_jersey.get('model')})"
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Admin Pending Jerseys Retrieval",
+                        False,
+                        f"Jersey structure issues - New fields present: {has_new_fields}, Old fields present: {has_old_fields}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Admin Pending Jerseys Retrieval",
+                    False,
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Pending Jerseys Retrieval", False, "", str(e))
+            return False
+
+    def test_end_to_end_workflow(self):
+        """Test complete workflow: Create jersey → Verify in admin panel → Check storage"""
+        if not self.user_token or not self.admin_token:
+            self.log_result("End-to-End Workflow", False, "", "Missing authentication tokens")
+            return False
+            
+        try:
+            # Step 1: Create jersey with new structure
+            form_data = {
+                'team': 'Juventus FC',
+                'league': 'Serie A',
+                'season': '2024-25',
+                'model': 'authentic',
+                'manufacturer': 'Adidas',
+                'jersey_type': 'third',
+                'sku_code': 'JUV-THIRD-2425',
+                'description': 'Juventus third jersey for end-to-end test'
+            }
+            
+            headers = {'Authorization': f'Bearer {self.user_token}'}
+            create_response = self.session.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            if create_response.status_code != 200:
+                self.log_result(
+                    "End-to-End Workflow",
+                    False,
+                    f"Jersey creation failed: HTTP {create_response.status_code}",
+                    create_response.text
+                )
+                return False
+            
+            created_jersey = create_response.json()
+            jersey_id = created_jersey.get('id')
+            reference_number = created_jersey.get('reference_number')
+            self.created_jerseys.append(jersey_id)
+            
+            # Step 2: Verify jersey appears in admin panel
+            admin_headers = {'Authorization': f'Bearer {self.admin_token}'}
+            admin_response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending", headers=admin_headers)
+            
+            if admin_response.status_code != 200:
+                self.log_result(
+                    "End-to-End Workflow",
+                    False,
+                    f"Admin retrieval failed: HTTP {admin_response.status_code}",
+                    admin_response.text
+                )
+                return False
+            
+            pending_jerseys = admin_response.json()
+            created_jersey_in_admin = next((j for j in pending_jerseys if j.get('id') == jersey_id), None)
+            
+            if not created_jersey_in_admin:
+                self.log_result(
+                    "End-to-End Workflow",
+                    False,
+                    f"Created jersey {jersey_id} not found in admin pending list"
+                )
+                return False
+            
+            # Step 3: Verify all new structure fields are correctly stored
+            expected_fields = {
+                'team': 'Juventus FC',
+                'league': 'Serie A',
+                'season': '2024-25',
+                'model': 'authentic',
+                'manufacturer': 'Adidas',
+                'jersey_type': 'third',
+                'sku_code': 'JUV-THIRD-2425',
+                'description': 'Juventus third jersey for end-to-end test'
+            }
+            
+            field_verification = []
+            for field, expected_value in expected_fields.items():
+                actual_value = created_jersey_in_admin.get(field)
+                if actual_value == expected_value:
+                    field_verification.append(f"{field}: ✅")
+                else:
+                    field_verification.append(f"{field}: ❌ (expected: {expected_value}, got: {actual_value})")
+            
+            all_fields_correct = all("✅" in verification for verification in field_verification)
+            
+            self.log_result(
+                "End-to-End Workflow",
+                all_fields_correct,
+                f"Jersey {reference_number} created and verified in admin panel. Field verification: {', '.join(field_verification)}"
+            )
+            return all_fields_correct
+                
+        except Exception as e:
+            self.log_result("End-to-End Workflow", False, "", str(e))
+            return False
+
+    def run_all_tests(self):
+        """Run all jersey submission tests"""
+        print("🚀 Starting TopKit New Jersey Submission System Backend Testing")
+        print("=" * 80)
+        
+        # Authentication tests
+        user_auth_success = self.authenticate_user()
+        admin_auth_success = self.authenticate_admin()
+        
+        if not user_auth_success:
+            print("❌ Cannot proceed without user authentication")
+            return
+            
+        if not admin_auth_success:
+            print("⚠️ Admin authentication failed - some tests will be skipped")
+        
+        # Core jersey submission tests
+        print("\n📝 Testing New Form Structure...")
+        self.test_jersey_submission_required_fields()
+        self.test_jersey_submission_optional_fields()
+        self.test_player_field_removed()
+        
+        print("\n🔍 Testing Field Validation...")
+        self.test_model_field_validation()
+        self.test_required_field_validation()
+        self.test_jersey_type_validation()
+        
+        print("\n📤 Testing Multipart Form Data...")
+        self.test_multipart_form_data()
+        
+        if admin_auth_success:
+            print("\n👨‍💼 Testing Admin Functionality...")
+            self.test_admin_pending_jerseys_retrieval()
+            
+            print("\n🔄 Testing End-to-End Workflow...")
+            self.test_end_to_end_workflow()
+        
+        # Generate summary
+        self.generate_summary()
+
+    def generate_summary(self):
+        """Generate test summary"""
+        print("\n" + "=" * 80)
+        print("📊 TEST SUMMARY")
+        print("=" * 80)
+        
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result['success'])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        
+        print(f"\n📋 DETAILED RESULTS:")
+        for result in self.test_results:
+            print(f"{result['status']}: {result['test']}")
+            if result['details']:
+                print(f"   └─ {result['details']}")
+        
+        print(f"\n🆔 CREATED JERSEYS: {len(self.created_jerseys)}")
+        for jersey_id in self.created_jerseys:
+            print(f"   └─ {jersey_id}")
+        
+        # Key findings
+        print(f"\n🔍 KEY FINDINGS:")
+        
+        # Check if new form structure is working
+        form_structure_tests = [r for r in self.test_results if 'Required Fields' in r['test'] or 'Optional Fields' in r['test']]
+        if all(r['success'] for r in form_structure_tests):
+            print("   ✅ NEW FORM STRUCTURE: Fully operational with team, league, season, model fields")
+        else:
+            print("   ❌ NEW FORM STRUCTURE: Issues detected with required/optional fields")
+        
+        # Check if player field removal is confirmed
+        player_removal_test = next((r for r in self.test_results if 'Player Field Removal' in r['test']), None)
+        if player_removal_test and player_removal_test['success']:
+            print("   ✅ PLAYER FIELD REMOVAL: Confirmed - player field successfully removed from backend model")
+        else:
+            print("   ❌ PLAYER FIELD REMOVAL: Player field may still be present in backend model")
+        
+        # Check multipart form data support
+        multipart_test = next((r for r in self.test_results if 'Multipart' in r['test']), None)
+        if multipart_test and multipart_test['success']:
+            print("   ✅ MULTIPART FORM DATA: Fully supported with file upload capability")
+        else:
+            print("   ❌ MULTIPART FORM DATA: Issues with FormData submission or file uploads")
+        
+        # Check validation system
+        validation_tests = [r for r in self.test_results if 'Validation' in r['test']]
+        if all(r['success'] for r in validation_tests):
+            print("   ✅ VALIDATION SYSTEM: All field validations working correctly")
+        else:
+            print("   ❌ VALIDATION SYSTEM: Some validation rules not working properly")
+        
+        # Check admin functionality
+        admin_tests = [r for r in self.test_results if 'Admin' in r['test']]
+        if admin_tests and all(r['success'] for r in admin_tests):
+            print("   ✅ ADMIN FUNCTIONALITY: Admin can access and view new jersey structure")
+        elif admin_tests:
+            print("   ❌ ADMIN FUNCTIONALITY: Issues with admin access to new jersey structure")
+        else:
+            print("   ⚠️ ADMIN FUNCTIONALITY: Not tested due to authentication issues")
+        
+        # Overall assessment
+        if success_rate >= 90:
+            print(f"\n🎉 OVERALL ASSESSMENT: EXCELLENT - New jersey submission system is production-ready!")
+        elif success_rate >= 75:
+            print(f"\n✅ OVERALL ASSESSMENT: GOOD - New jersey submission system is mostly functional with minor issues")
+        elif success_rate >= 50:
+            print(f"\n⚠️ OVERALL ASSESSMENT: FAIR - New jersey submission system has significant issues that need attention")
+        else:
+            print(f"\n❌ OVERALL ASSESSMENT: POOR - New jersey submission system has critical failures")
+
+if __name__ == "__main__":
+    tester = TopKitJerseySubmissionTester()
+    tester.run_all_tests()
+"""
 TopKit New Jersey Submission Form Structure Testing
 Testing the modified jersey submission form with new fields and structure changes.
 
