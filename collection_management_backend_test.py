@@ -99,9 +99,13 @@ class CollectionManagementTester:
             }
             
             response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=admin_headers)
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
-                self.test_jersey_id = data["jersey"]["id"]
+                # Handle different response formats
+                if "jersey" in data:
+                    self.test_jersey_id = data["jersey"]["id"]
+                else:
+                    self.test_jersey_id = data["id"]
                 
                 # Approve the jersey immediately for testing
                 approve_response = self.session.post(
