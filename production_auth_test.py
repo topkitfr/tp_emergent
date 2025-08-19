@@ -39,6 +39,51 @@ class ProductionAuthTester:
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {level}: {message}")
         
+    def check_user_existence(self, admin_token):
+        """Check if the requested users exist in the production database"""
+        self.log("🔍 Checking if requested users exist in production database")
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {admin_token}",
+                "Content-Type": "application/json"
+            }
+            
+            # Try to get user list from admin endpoint
+            response = requests.get(
+                f"{BACKEND_URL}/admin/users",
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                users = response.json()
+                self.log(f"✅ Retrieved {len(users)} users from production database")
+                
+                # Check if our requested users exist
+                existing_emails = [user.get('email', '').lower() for user in users]
+                
+                for email in TEST_ACCOUNTS:
+                    if email.lower() in existing_emails:
+                        self.log(f"✅ User {email} exists in production database")
+                    else:
+                        self.log(f"❌ User {email} NOT found in production database")
+                
+                # Show all users for debugging
+                self.log("📋 All users in production database:")
+                for user in users:
+                    email = user.get('email', 'N/A')
+                    name = user.get('name', 'N/A')
+                    role = user.get('role', 'N/A')
+                    self.log(f"   - {email} ({name}) - Role: {role}")
+                    
+            else:
+                self.log(f"❌ Failed to retrieve users: HTTP {response.status_code}")
+                self.log(f"   Response: {response.text}")
+                
+        except Exception as e:
+            self.log(f"❌ Error checking user existence: {e}", "ERROR")
+    
     def test_endpoint_connectivity(self):
         """Test if the production endpoint is working with known accounts"""
         self.log("🔍 Testing production endpoint connectivity with known accounts")
