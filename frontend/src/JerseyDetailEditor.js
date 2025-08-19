@@ -599,10 +599,10 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Special Features */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.special_features.label}
+                  {JERSEY_DETAIL_CRITERIA.special_features?.label || "Special Features"}
                 </label>
                 <div className="grid grid-cols-1 gap-2">
-                  {JERSEY_DETAIL_CRITERIA.special_features.options.map((feature) => (
+                  {(JERSEY_DETAIL_CRITERIA.special_features?.options || []).map((feature) => (
                     <label key={feature} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
