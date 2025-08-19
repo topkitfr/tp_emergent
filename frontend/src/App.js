@@ -1523,21 +1523,25 @@ const AppContent = () => {
                             <div className="flex flex-col space-y-1 ml-3">
                               <button
                                 onClick={() => handleEditCollectionItem(item)}
-                                className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-center transition-colors touch-manipulation"
                                 title="Éditer les détails"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleViewCollectionItem(item)}
-                                className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors touch-manipulation"
                                 title="Voir les détails"
                               >
                                 View
                               </button>
                               <button
-                                onClick={() => handleRemoveCollectionItem(item, 'owned')}
-                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleRemoveCollectionItem(item, 'owned');
+                                }}
+                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors touch-manipulation"
                                 title="Supprimer de la collection"
                               >
                                 Suppr
