@@ -1,5 +1,526 @@
 #!/usr/bin/env python3
 """
+TopKit Admin Features Backend Testing
+Test complet des nouvelles fonctionnalités d'administration ajoutées à TopKit
+
+Focus Areas:
+- ADMIN AUTHENTICATION: Test de connexion admin (topkitfr@gmail.com/TopKitSecure789#)
+- JERSEY MANAGEMENT APIs: Endpoints d'administration des maillots
+- USER MANAGEMENT APIs: Endpoints d'administration des utilisateurs  
+- WORKFLOW TESTING: Test du workflow complet de modération
+- SECURITY VERIFICATION: Vérification des permissions admin
+"""
+
+import requests
+import json
+import sys
+from datetime import datetime
+
+# Configuration
+BASE_URL = "https://kit-curator.preview.emergentagent.com/api"
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
+
+class TopKitAdminTester:
+    def __init__(self):
+        self.admin_token = None
+        self.admin_user = None
+        self.test_results = []
+        self.test_jersey_id = None
+        self.test_user_id = None
+        
+    def log_test(self, test_name, success, details="", response_data=None):
+        """Log test results"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "timestamp": datetime.now().isoformat(),
+            "response_data": response_data
+        }
+        self.test_results.append(result)
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        if not success and response_data:
+            print(f"   Response: {response_data}")
+        print()
+
+    def test_admin_authentication(self):
+        """Test admin authentication with specified credentials"""
+        print("🔐 TESTING ADMIN AUTHENTICATION")
+        print("=" * 50)
+        
+        try:
+            # Test admin login
+            login_data = {
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            }
+            
+            response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "user" in data:
+                    self.admin_token = data["token"]
+                    self.admin_user = data["user"]
+                    
+                    # Verify admin role
+                    if data["user"].get("role") == "admin":
+                        self.log_test(
+                            "Admin Login Authentication", 
+                            True, 
+                            f"Successfully authenticated admin user: {data['user']['name']} (Role: {data['user']['role']}, ID: {data['user']['id']})"
+                        )
+                        
+                        # Test token validation
+                        headers = {"Authorization": f"Bearer {self.admin_token}"}
+                        profile_response = requests.get(f"{BASE_URL}/auth/profile", headers=headers)
+                        
+                        if profile_response.status_code == 200:
+                            self.log_test("Admin Token Validation", True, "JWT token validation successful")
+                        else:
+                            self.log_test("Admin Token Validation", False, f"Token validation failed: {profile_response.status_code}")
+                            
+                    else:
+                        self.log_test("Admin Role Verification", False, f"User role is '{data['user'].get('role')}', expected 'admin'")
+                else:
+                    self.log_test("Admin Login Authentication", False, "Missing token or user data in response", data)
+            else:
+                self.log_test("Admin Login Authentication", False, f"Login failed with status {response.status_code}", response.text)
+                
+        except Exception as e:
+            self.log_test("Admin Login Authentication", False, f"Exception during login: {str(e)}")
+
+    def test_jersey_management_apis(self):
+        """Test all jersey management admin APIs"""
+        print("👕 TESTING JERSEY MANAGEMENT APIs")
+        print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("Jersey Management APIs", False, "No admin token available - skipping jersey management tests")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            # 1. Test GET /api/admin/jerseys/pending - récupération des maillots en attente
+            response = requests.get(f"{BASE_URL}/admin/jerseys/pending", headers=headers)
+            if response.status_code == 200:
+                pending_jerseys = response.json()
+                self.log_test(
+                    "GET /admin/jerseys/pending", 
+                    True, 
+                    f"Retrieved {len(pending_jerseys)} pending jerseys"
+                )
+                
+                # Store a test jersey ID if available
+                if pending_jerseys and len(pending_jerseys) > 0:
+                    self.test_jersey_id = pending_jerseys[0].get("id")
+                    
+            else:
+                self.log_test("GET /admin/jerseys/pending", False, f"Failed with status {response.status_code}", response.text)
+
+            # 2. Create a test jersey for moderation workflow if none exists
+            if not self.test_jersey_id:
+                # First, create a regular user to submit a jersey
+                user_data = {
+                    "email": "testuser@example.com",
+                    "password": "TestPassword123!",
+                    "name": "Test User"
+                }
+                
+                user_response = requests.post(f"{BASE_URL}/auth/register", json=user_data)
+                if user_response.status_code == 200:
+                    # Login as test user
+                    login_response = requests.post(f"{BASE_URL}/auth/login", json={
+                        "email": "testuser@example.com",
+                        "password": "TestPassword123!"
+                    })
+                    
+                    if login_response.status_code == 200:
+                        user_token = login_response.json()["token"]
+                        user_headers = {"Authorization": f"Bearer {user_token}"}
+                        
+                        # Submit a test jersey
+                        jersey_data = {
+                            "team": "FC Barcelona",
+                            "season": "2024-25",
+                            "player": "Pedri",
+                            "manufacturer": "Nike",
+                            "home_away": "home",
+                            "league": "La Liga",
+                            "description": "Test jersey for admin moderation workflow"
+                        }
+                        
+                        jersey_response = requests.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=user_headers)
+                        if jersey_response.status_code == 200:
+                            self.test_jersey_id = jersey_response.json()["id"]
+                            self.log_test("Test Jersey Creation", True, f"Created test jersey for moderation: {self.test_jersey_id}")
+
+            # 3. Test admin moderation actions if we have a jersey
+            if self.test_jersey_id:
+                # Test POST /api/admin/jerseys/{id}/suggest-modification
+                modification_data = {
+                    "suggested_changes": "Veuillez corriger la saison - il s'agit de la saison 2023-24, pas 2024-25",
+                    "suggested_modifications": {
+                        "season": "2023-24",
+                        "description": "Maillot domicile FC Barcelona saison 2023-24"
+                    }
+                }
+                
+                response = requests.post(
+                    f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/suggest-modification", 
+                    json=modification_data, 
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    self.log_test("POST /admin/jerseys/{id}/suggest-modification", True, "Modification suggestion created successfully")
+                else:
+                    self.log_test("POST /admin/jerseys/{id}/suggest-modification", False, f"Failed with status {response.status_code}", response.text)
+
+                # Test POST /api/admin/jerseys/{id}/approve
+                response = requests.post(f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/approve", headers=headers)
+                if response.status_code == 200:
+                    self.log_test("POST /admin/jerseys/{id}/approve", True, "Jersey approved successfully")
+                else:
+                    self.log_test("POST /admin/jerseys/{id}/approve", False, f"Failed with status {response.status_code}", response.text)
+
+                # Test POST /api/admin/jerseys/{id}/reject
+                reject_data = {"reason": "Informations insuffisantes - veuillez fournir plus de détails sur l'authenticité"}
+                response = requests.post(
+                    f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}/reject", 
+                    json=reject_data, 
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    self.log_test("POST /admin/jerseys/{id}/reject", True, "Jersey rejected successfully with reason")
+                else:
+                    self.log_test("POST /admin/jerseys/{id}/reject", False, f"Failed with status {response.status_code}", response.text)
+
+                # Test DELETE /api/admin/jerseys/{id}
+                response = requests.delete(f"{BASE_URL}/admin/jerseys/{self.test_jersey_id}", headers=headers)
+                if response.status_code == 200:
+                    self.log_test("DELETE /admin/jerseys/{id}", True, "Jersey deleted from explorer successfully")
+                else:
+                    self.log_test("DELETE /admin/jerseys/{id}", False, f"Failed with status {response.status_code}", response.text)
+
+            # 4. Test GET /api/jerseys - liste des maillots approuvés
+            response = requests.get(f"{BASE_URL}/jerseys")
+            if response.status_code == 200:
+                approved_jerseys = response.json()
+                self.log_test("GET /jerseys (approved list)", True, f"Retrieved {len(approved_jerseys)} approved jerseys")
+            else:
+                self.log_test("GET /jerseys (approved list)", False, f"Failed with status {response.status_code}", response.text)
+
+        except Exception as e:
+            self.log_test("Jersey Management APIs", False, f"Exception during jersey management testing: {str(e)}")
+
+    def test_user_management_apis(self):
+        """Test user management admin APIs"""
+        print("👥 TESTING USER MANAGEMENT APIs")
+        print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("User Management APIs", False, "No admin token available - skipping user management tests")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            # 1. Test GET /api/admin/users - liste de tous les utilisateurs
+            response = requests.get(f"{BASE_URL}/admin/users", headers=headers)
+            if response.status_code == 200:
+                users = response.json()
+                self.log_test("GET /admin/users", True, f"Retrieved {len(users)} users")
+                
+                # Find a test user (not admin) for ban/delete testing
+                for user in users:
+                    if user.get("role") != "admin" and user.get("email") != ADMIN_EMAIL:
+                        self.test_user_id = user.get("id")
+                        break
+                        
+            else:
+                self.log_test("GET /admin/users", False, f"Failed with status {response.status_code}", response.text)
+
+            # 2. Test user ban functionality if we have a test user
+            if self.test_user_id:
+                # Test POST /api/admin/users/{id}/ban
+                ban_data = {
+                    "reason": "Test de bannissement - comportement inapproprié dans les commentaires",
+                    "permanent": False,
+                    "ban_duration_days": 7
+                }
+                
+                response = requests.post(
+                    f"{BASE_URL}/admin/users/{self.test_user_id}/ban", 
+                    json=ban_data, 
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    self.log_test("POST /admin/users/{id}/ban", True, "User banned successfully with reason")
+                else:
+                    self.log_test("POST /admin/users/{id}/ban", False, f"Failed with status {response.status_code}", response.text)
+
+                # Test DELETE /api/admin/users/{id} - suppression complète d'utilisateurs
+                response = requests.delete(f"{BASE_URL}/admin/users/{self.test_user_id}", headers=headers)
+                if response.status_code == 200:
+                    self.log_test("DELETE /admin/users/{id}", True, "User deleted completely from system")
+                else:
+                    self.log_test("DELETE /admin/users/{id}", False, f"Failed with status {response.status_code}", response.text)
+            else:
+                self.log_test("User Ban/Delete Testing", False, "No suitable test user found for ban/delete operations")
+
+        except Exception as e:
+            self.log_test("User Management APIs", False, f"Exception during user management testing: {str(e)}")
+
+    def test_workflow_complete(self):
+        """Test complete moderation workflow"""
+        print("🔄 TESTING COMPLETE MODERATION WORKFLOW")
+        print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("Complete Workflow", False, "No admin token available - skipping workflow tests")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            # Create a complete workflow test
+            # 1. Create test user
+            workflow_user_data = {
+                "email": "workflowtest@example.com",
+                "password": "WorkflowTest123!",
+                "name": "Workflow Test User"
+            }
+            
+            user_response = requests.post(f"{BASE_URL}/auth/register", json=workflow_user_data)
+            if user_response.status_code == 200:
+                # 2. Login as test user
+                login_response = requests.post(f"{BASE_URL}/auth/login", json={
+                    "email": "workflowtest@example.com", 
+                    "password": "WorkflowTest123!"
+                })
+                
+                if login_response.status_code == 200:
+                    user_token = login_response.json()["token"]
+                    user_headers = {"Authorization": f"Bearer {user_token}"}
+                    workflow_user_id = login_response.json()["user"]["id"]
+                    
+                    # 3. Submit jersey for moderation
+                    jersey_data = {
+                        "team": "Real Madrid CF",
+                        "season": "2024-25",
+                        "player": "Vinicius Jr",
+                        "manufacturer": "Adidas",
+                        "home_away": "home",
+                        "league": "La Liga",
+                        "description": "Maillot domicile Real Madrid 2024-25 - Vinicius Jr"
+                    }
+                    
+                    jersey_response = requests.post(f"{BASE_URL}/jerseys", json=jersey_data, headers=user_headers)
+                    if jersey_response.status_code == 200:
+                        workflow_jersey_id = jersey_response.json()["id"]
+                        self.log_test("Workflow Step 1: Jersey Submission", True, f"Jersey submitted successfully: {workflow_jersey_id}")
+                        
+                        # 4. Admin suggests modification
+                        modification_data = {
+                            "suggested_changes": "Veuillez ajouter des informations sur la taille et l'état du maillot",
+                            "suggested_modifications": {
+                                "description": "Maillot domicile Real Madrid 2024-25 - Vinicius Jr - Taille L, état neuf avec étiquettes"
+                            }
+                        }
+                        
+                        mod_response = requests.post(
+                            f"{BASE_URL}/admin/jerseys/{workflow_jersey_id}/suggest-modification",
+                            json=modification_data,
+                            headers=headers
+                        )
+                        
+                        if mod_response.status_code == 200:
+                            self.log_test("Workflow Step 2: Admin Modification Suggestion", True, "Modification suggested successfully")
+                            
+                            # 5. Check user notifications
+                            notif_response = requests.get(f"{BASE_URL}/notifications", headers=user_headers)
+                            if notif_response.status_code == 200:
+                                notifications = notif_response.json()
+                                modification_notifs = [n for n in notifications if n.get("type") == "jersey_needs_modification"]
+                                if modification_notifs:
+                                    self.log_test("Workflow Step 3: User Notification Check", True, f"User received {len(modification_notifs)} modification notifications")
+                                else:
+                                    self.log_test("Workflow Step 3: User Notification Check", False, "No modification notifications found for user")
+                            
+                            # 6. Admin approves jersey
+                            approve_response = requests.post(f"{BASE_URL}/admin/jerseys/{workflow_jersey_id}/approve", headers=headers)
+                            if approve_response.status_code == 200:
+                                self.log_test("Workflow Step 4: Admin Approval", True, "Jersey approved successfully")
+                                
+                                # 7. Check approval notification
+                                notif_response = requests.get(f"{BASE_URL}/notifications", headers=user_headers)
+                                if notif_response.status_code == 200:
+                                    notifications = notif_response.json()
+                                    approval_notifs = [n for n in notifications if n.get("type") == "jersey_approved"]
+                                    if approval_notifs:
+                                        self.log_test("Workflow Step 5: Approval Notification", True, f"User received {len(approval_notifs)} approval notifications")
+                                    else:
+                                        self.log_test("Workflow Step 5: Approval Notification", False, "No approval notifications found for user")
+                                
+                                # 8. Verify jersey appears in approved list
+                                approved_response = requests.get(f"{BASE_URL}/jerseys")
+                                if approved_response.status_code == 200:
+                                    approved_jerseys = approved_response.json()
+                                    workflow_jersey_found = any(j.get("id") == workflow_jersey_id for j in approved_jerseys)
+                                    if workflow_jersey_found:
+                                        self.log_test("Workflow Step 6: Jersey in Approved List", True, "Approved jersey appears in public list")
+                                    else:
+                                        self.log_test("Workflow Step 6: Jersey in Approved List", False, "Approved jersey not found in public list")
+                                
+                            else:
+                                self.log_test("Workflow Step 4: Admin Approval", False, f"Approval failed: {approve_response.status_code}")
+                        else:
+                            self.log_test("Workflow Step 2: Admin Modification Suggestion", False, f"Modification suggestion failed: {mod_response.status_code}")
+                    else:
+                        self.log_test("Workflow Step 1: Jersey Submission", False, f"Jersey submission failed: {jersey_response.status_code}")
+                else:
+                    self.log_test("Workflow User Login", False, f"User login failed: {login_response.status_code}")
+            else:
+                self.log_test("Workflow User Creation", False, f"User creation failed: {user_response.status_code}")
+
+        except Exception as e:
+            self.log_test("Complete Workflow", False, f"Exception during workflow testing: {str(e)}")
+
+    def test_security_verification(self):
+        """Test security - verify admin-only access"""
+        print("🔒 TESTING SECURITY VERIFICATION")
+        print("=" * 50)
+        
+        try:
+            # Test admin endpoints without authentication
+            admin_endpoints = [
+                "/admin/jerseys/pending",
+                "/admin/users",
+                "/admin/traffic-stats"
+            ]
+            
+            for endpoint in admin_endpoints:
+                response = requests.get(f"{BASE_URL}{endpoint}")
+                if response.status_code == 401 or response.status_code == 403:
+                    self.log_test(f"Security Check: {endpoint} (no auth)", True, f"Correctly rejected with status {response.status_code}")
+                else:
+                    self.log_test(f"Security Check: {endpoint} (no auth)", False, f"Should reject but returned {response.status_code}")
+
+            # Test with regular user token (if available)
+            # Create a regular user for security testing
+            regular_user_data = {
+                "email": "regularuser@example.com",
+                "password": "RegularUser123!",
+                "name": "Regular User"
+            }
+            
+            user_response = requests.post(f"{BASE_URL}/auth/register", json=regular_user_data)
+            if user_response.status_code == 200:
+                login_response = requests.post(f"{BASE_URL}/auth/login", json={
+                    "email": "regularuser@example.com",
+                    "password": "RegularUser123!"
+                })
+                
+                if login_response.status_code == 200:
+                    regular_token = login_response.json()["token"]
+                    regular_headers = {"Authorization": f"Bearer {regular_token}"}
+                    
+                    for endpoint in admin_endpoints:
+                        response = requests.get(f"{BASE_URL}{endpoint}", headers=regular_headers)
+                        if response.status_code == 403:
+                            self.log_test(f"Security Check: {endpoint} (regular user)", True, "Correctly rejected regular user access")
+                        else:
+                            self.log_test(f"Security Check: {endpoint} (regular user)", False, f"Should reject regular user but returned {response.status_code}")
+
+        except Exception as e:
+            self.log_test("Security Verification", False, f"Exception during security testing: {str(e)}")
+
+    def run_all_tests(self):
+        """Run all admin functionality tests"""
+        print("🚀 STARTING TOPKIT ADMIN FEATURES COMPREHENSIVE TESTING")
+        print("=" * 70)
+        print(f"Testing against: {BASE_URL}")
+        print(f"Admin credentials: {ADMIN_EMAIL}")
+        print("=" * 70)
+        print()
+        
+        # Run all test suites
+        self.test_admin_authentication()
+        self.test_jersey_management_apis()
+        self.test_user_management_apis()
+        self.test_workflow_complete()
+        self.test_security_verification()
+        
+        # Generate summary
+        self.generate_summary()
+
+    def generate_summary(self):
+        """Generate comprehensive test summary"""
+        print("📊 TEST SUMMARY")
+        print("=" * 50)
+        
+        total_tests = len(self.test_results)
+        passed_tests = len([r for r in self.test_results if r["success"]])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        print()
+        
+        # Group results by category
+        categories = {
+            "Authentication": [r for r in self.test_results if "Authentication" in r["test"] or "Login" in r["test"]],
+            "Jersey Management": [r for r in self.test_results if "jersey" in r["test"].lower() or "GET /admin/jerseys" in r["test"] or "POST /admin/jerseys" in r["test"] or "DELETE /admin/jerseys" in r["test"]],
+            "User Management": [r for r in self.test_results if "user" in r["test"].lower() and "admin" in r["test"].lower()],
+            "Workflow": [r for r in self.test_results if "Workflow" in r["test"]],
+            "Security": [r for r in self.test_results if "Security" in r["test"]]
+        }
+        
+        for category, tests in categories.items():
+            if tests:
+                category_passed = len([t for t in tests if t["success"]])
+                category_total = len(tests)
+                category_rate = (category_passed / category_total * 100) if category_total > 0 else 0
+                print(f"{category}: {category_passed}/{category_total} ({category_rate:.1f}%)")
+        
+        print()
+        print("FAILED TESTS:")
+        failed_results = [r for r in self.test_results if not r["success"]]
+        if failed_results:
+            for result in failed_results:
+                print(f"❌ {result['test']}: {result['details']}")
+        else:
+            print("✅ All tests passed!")
+        
+        print()
+        print("🎯 ADMIN FEATURES TESTING COMPLETE")
+        
+        # Determine overall status
+        if success_rate >= 90:
+            print("🎉 EXCELLENT - Admin features are production-ready!")
+        elif success_rate >= 75:
+            print("✅ GOOD - Admin features are mostly functional with minor issues")
+        elif success_rate >= 50:
+            print("⚠️ MODERATE - Admin features have significant issues requiring attention")
+        else:
+            print("🚨 CRITICAL - Admin features have major failures requiring immediate fixes")
+
+if __name__ == "__main__":
+    tester = TopKitAdminTester()
+    tester.run_all_tests()
+"""
 TopKit Beta System Removal Testing
 Testing the removal of beta system and transition to public mode
 """
