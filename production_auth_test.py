@@ -58,25 +58,31 @@ class ProductionAuthTester:
             
             if response.status_code == 200:
                 users = response.json()
-                self.log(f"✅ Retrieved {len(users)} users from production database")
+                self.log(f"✅ Retrieved users from production database")
+                self.log(f"Raw response: {users}")
+                self.log(f"Response type: {type(users)}")
                 
                 # Check if our requested users exist
                 existing_emails = []
                 
-                # Debug: show raw response structure
-                if users:
-                    self.log(f"First user type: {type(users[0])}")
-                    self.log(f"First user content: {users[0]}")
-                
                 # Handle different response formats
-                if isinstance(users, list):
+                if isinstance(users, dict):
+                    # If it's a dict, iterate through values
+                    for key, user in users.items():
+                        if isinstance(user, dict):
+                            email = user.get('email', '').lower()
+                            existing_emails.append(email)
+                        elif isinstance(user, str):
+                            existing_emails.append(user.lower())
+                elif isinstance(users, list):
                     for user in users:
                         if isinstance(user, dict):
                             email = user.get('email', '').lower()
                             existing_emails.append(email)
                         elif isinstance(user, str):
-                            # If users are just email strings
                             existing_emails.append(user.lower())
+                
+                self.log(f"Found emails: {existing_emails}")
                 
                 for email in TEST_ACCOUNTS:
                     if email.lower() in existing_emails:
@@ -86,14 +92,24 @@ class ProductionAuthTester:
                 
                 # Show all users for debugging
                 self.log("📋 All users in production database:")
-                for i, user in enumerate(users):
-                    if isinstance(user, dict):
-                        email = user.get('email', 'N/A')
-                        name = user.get('name', 'N/A')
-                        role = user.get('role', 'N/A')
-                        self.log(f"   {i+1}. {email} ({name}) - Role: {role}")
-                    else:
-                        self.log(f"   {i+1}. {user}")
+                if isinstance(users, dict):
+                    for key, user in users.items():
+                        if isinstance(user, dict):
+                            email = user.get('email', 'N/A')
+                            name = user.get('name', 'N/A')
+                            role = user.get('role', 'N/A')
+                            self.log(f"   {key}. {email} ({name}) - Role: {role}")
+                        else:
+                            self.log(f"   {key}. {user}")
+                elif isinstance(users, list):
+                    for i, user in enumerate(users):
+                        if isinstance(user, dict):
+                            email = user.get('email', 'N/A')
+                            name = user.get('name', 'N/A')
+                            role = user.get('role', 'N/A')
+                            self.log(f"   {i+1}. {email} ({name}) - Role: {role}")
+                        else:
+                            self.log(f"   {i+1}. {user}")
                     
             else:
                 self.log(f"❌ Failed to retrieve users: HTTP {response.status_code}")
