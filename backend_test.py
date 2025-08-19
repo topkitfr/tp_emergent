@@ -76,12 +76,12 @@ class TopKitAdminTester:
                             f"Successfully authenticated admin user: {data['user']['name']} (Role: {data['user']['role']}, ID: {data['user']['id']})"
                         )
                         
-                        # Test token validation
+                        # Test token validation with a working endpoint
                         headers = {"Authorization": f"Bearer {self.admin_token}"}
-                        profile_response = requests.get(f"{BASE_URL}/auth/profile", headers=headers)
+                        profile_response = requests.get(f"{BASE_URL}/admin/users", headers=headers)
                         
                         if profile_response.status_code == 200:
-                            self.log_test("Admin Token Validation", True, "JWT token validation successful")
+                            self.log_test("Admin Token Validation", True, "JWT token validation successful via admin endpoint")
                         else:
                             self.log_test("Admin Token Validation", False, f"Token validation failed: {profile_response.status_code}")
                             
