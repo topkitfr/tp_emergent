@@ -10,7 +10,7 @@ BASE_URL = "https://9f26dbf2-ce88-4e0c-8bc0-d245b81c53aa.preview.emergentagent.c
 
 # Test credentials from previous testing
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "TopKit123!"
+TEST_USER_PASSWORD = "123"
 
 class JerseySubmissionNotificationTest:
     def __init__(self):
