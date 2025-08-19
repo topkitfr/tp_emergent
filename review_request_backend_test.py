@@ -447,7 +447,9 @@ class ReviewRequestTester:
         critical_tests = {
             "Authentication": auth_success,
             "Basic API Endpoints": jerseys_success and marketplace_success,
-            "Backend Health": health_success
+            "Backend Health": health_success,
+            "Jersey Submission": jersey_success,
+            "User Features": collections_success and messaging_success
         }
         
         print("\nCritical Areas Status:")
