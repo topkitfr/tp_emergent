@@ -205,12 +205,26 @@ class NotificationsProductionTester:
             response = self.session.get(f"{BACKEND_URL}/notifications", headers=headers)
             
             if response.status_code == 200:
-                notifications = response.json()
+                response_data = response.json()
+                
+                # Handle both direct list and wrapped response formats
+                if isinstance(response_data, dict) and "notifications" in response_data:
+                    notifications = response_data["notifications"]
+                    unread_count = response_data.get("unread_count", 0)
+                    total_count = response_data.get("total", 0)
+                elif isinstance(response_data, list):
+                    notifications = response_data
+                    unread_count = sum(1 for n in notifications if not n.get('is_read', True))
+                    total_count = len(notifications)
+                else:
+                    notifications = []
+                    unread_count = 0
+                    total_count = 0
+                
                 notification_count = len(notifications) if isinstance(notifications, list) else 0
                 
                 # Analyze notification content
                 notification_types = {}
-                unread_count = 0
                 jersey_related = 0
                 
                 if isinstance(notifications, list):
@@ -218,16 +232,13 @@ class NotificationsProductionTester:
                         notif_type = notif.get('type', 'unknown')
                         notification_types[notif_type] = notification_types.get(notif_type, 0) + 1
                         
-                        if not notif.get('is_read', True):
-                            unread_count += 1
-                            
                         if 'jersey' in notif.get('type', '').lower() or 'jersey' in notif.get('message', '').lower():
                             jersey_related += 1
                 
                 self.log_test(
                     "User Notifications Endpoint",
                     True,
-                    f"Retrieved {notification_count} notifications - Types: {notification_types}, Unread: {unread_count}, Jersey-related: {jersey_related}"
+                    f"Retrieved {notification_count} notifications - Types: {notification_types}, Unread: {unread_count}, Jersey-related: {jersey_related}, Total: {total_count}"
                 )
                 return notifications
             else:
