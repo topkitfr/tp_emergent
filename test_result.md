@@ -2390,10 +2390,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Collection Synchronization Fixes Testing - COMPLETED"
-    - "Authentication Consistency Between Collection Endpoints - COMPLETED"
-    - "Jersey Valuation with Null Values Testing - COMPLETED"
-  stuck_tasks: []
+    - "New Jersey Submission Form Structure Implementation"
+  stuck_tasks:
+    - "New Jersey Submission Form Structure Implementation"
   test_all: false
   test_priority: "high_first"
 
