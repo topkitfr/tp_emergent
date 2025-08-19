@@ -1569,37 +1569,123 @@ const AppContent = () => {
           return (
             <div>
               <h3 className="text-xl font-semibold mb-6 text-black">Mes Amis</h3>
+              
+              {/* Pending Friend Requests Received */}
+              {pendingRequests.received && pendingRequests.received.length > 0 && (
+                <div className="mb-8">
+                  <h4 className="text-lg font-semibold mb-4 text-black">Demandes reçues ({pendingRequests.received.length})</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pendingRequests.received.map((request) => (
+                      <div key={request.request_id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              {request.name?.charAt(0).toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-black">{request.name}</div>
+                            <div className="text-sm text-gray-600">{request.email}</div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => respondToFriendRequest(request.request_id, true)}
+                            className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                          >
+                            Accepter
+                          </button>
+                          <button
+                            onClick={() => respondToFriendRequest(request.request_id, false)}
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-black py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                          >
+                            Refuser
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Friends */}
               {friends.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {friends.map((friend) => (
-                    <div key={friend.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium">
-                            {friend.name?.charAt(0).toUpperCase() || 'U'}
-                          </span>
+                <div>
+                  <h4 className="text-lg font-semibold mb-4 text-black">Mes amis ({friends.length})</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {friends.map((friend) => (
+                      <div key={friend.friend_id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              {friend.name?.charAt(0).toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-black">{friend.name}</div>
+                            <div className="text-sm text-gray-600">{friend.email}</div>
+                            {friend.friends_since && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Amis depuis {new Date(friend.friends_since).toLocaleDateString('fr-FR')}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-black">{friend.name}</div>
-                          <div className="text-sm text-gray-600">{friend.email}</div>
+                        <div className="mt-3 pt-3 border-t border-gray-200 flex space-x-2">
+                          <button className="flex-1 bg-black hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                            Message
+                          </button>
+                          <button
+                            onClick={() => removeFriend(friend.friend_id, friend.name)}
+                            className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg text-sm font-medium transition-colors"
+                          >
+                            Supprimer
+                          </button>
                         </div>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <button className="w-full bg-black hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                          Envoyer un message
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-600">
-                  <div className="text-6xl mb-4">👥</div>
-                  <h3 className="text-xl font-semibold mb-2">Aucun ami</h3>
-                  <p className="mb-4">Commencez à vous connecter avec d'autres collectionneurs</p>
-                  <button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                    Rechercher des amis
-                  </button>
+                pendingRequests.received.length === 0 && (
+                  <div className="text-center py-12 text-gray-600">
+                    <div className="text-6xl mb-4">👥</div>
+                    <h3 className="text-xl font-semibold mb-2">Aucun ami</h3>
+                    <p className="mb-4">Commencez à vous connecter avec d'autres collectionneurs</p>
+                    <button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                      Rechercher des amis
+                    </button>
+                  </div>
+                )
+              )}
+
+              {/* Pending Friend Requests Sent */}
+              {pendingRequests.sent && pendingRequests.sent.length > 0 && (
+                <div className="mt-8">
+                  <h4 className="text-lg font-semibold mb-4 text-black">Demandes envoyées ({pendingRequests.sent.length})</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pendingRequests.sent.map((request) => (
+                      <div key={request.request_id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              {request.name?.charAt(0).toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-black">{request.name}</div>
+                            <div className="text-sm text-gray-600">{request.email}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              En attente depuis {new Date(request.requested_at).toLocaleDateString('fr-FR')}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="text-sm text-gray-500 text-center">Demande en attente...</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
