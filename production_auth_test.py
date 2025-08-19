@@ -66,21 +66,18 @@ class ProductionAuthTester:
                 existing_emails = []
                 
                 # Handle different response formats
-                if isinstance(users, dict):
-                    # If it's a dict, iterate through values
-                    for key, user in users.items():
+                if isinstance(users, dict) and 'users' in users:
+                    # Extract users from nested structure
+                    user_list = users['users']
+                    for user in user_list:
                         if isinstance(user, dict):
                             email = user.get('email', '').lower()
                             existing_emails.append(email)
-                        elif isinstance(user, str):
-                            existing_emails.append(user.lower())
                 elif isinstance(users, list):
                     for user in users:
                         if isinstance(user, dict):
                             email = user.get('email', '').lower()
                             existing_emails.append(email)
-                        elif isinstance(user, str):
-                            existing_emails.append(user.lower())
                 
                 self.log(f"Found emails: {existing_emails}")
                 
@@ -92,24 +89,14 @@ class ProductionAuthTester:
                 
                 # Show all users for debugging
                 self.log("📋 All users in production database:")
-                if isinstance(users, dict):
-                    for key, user in users.items():
-                        if isinstance(user, dict):
-                            email = user.get('email', 'N/A')
-                            name = user.get('name', 'N/A')
-                            role = user.get('role', 'N/A')
-                            self.log(f"   {key}. {email} ({name}) - Role: {role}")
-                        else:
-                            self.log(f"   {key}. {user}")
-                elif isinstance(users, list):
-                    for i, user in enumerate(users):
-                        if isinstance(user, dict):
-                            email = user.get('email', 'N/A')
-                            name = user.get('name', 'N/A')
-                            role = user.get('role', 'N/A')
-                            self.log(f"   {i+1}. {email} ({name}) - Role: {role}")
-                        else:
-                            self.log(f"   {i+1}. {user}")
+                if isinstance(users, dict) and 'users' in users:
+                    user_list = users['users']
+                    for i, user in enumerate(user_list):
+                        email = user.get('email', 'N/A')
+                        name = user.get('name', 'N/A')
+                        role = user.get('role', 'N/A')
+                        beta_access = user.get('beta_access', False)
+                        self.log(f"   {i+1}. {email} ({name}) - Role: {role}, Beta Access: {beta_access}")
                     
             else:
                 self.log(f"❌ Failed to retrieve users: HTTP {response.status_code}")
