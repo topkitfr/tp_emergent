@@ -43,7 +43,7 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
   });
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://kit-curator.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://jersey-editor.preview.emergentagent.com';
 
   useEffect(() => {
     fetchUserSettings();

@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Production backend URL
-BACKEND_URL = "https://kit-curator.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-editor.preview.emergentagent.com/api"
 
 # Test account (using the main requested account)
 TEST_ACCOUNT = {
