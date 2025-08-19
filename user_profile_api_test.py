@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://topkit-refresh.preview.emergentagent.com/api"
+BASE_URL = "https://profile-friends.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 
