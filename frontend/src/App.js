@@ -470,7 +470,7 @@ const AppContent = () => {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     return (
-      <header className="bg-black shadow-lg border-b border-gray-800 sticky top-0 z-40">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -480,7 +480,7 @@ const AppContent = () => {
                 className="hover:opacity-80 transition-opacity"
               >
                 <img 
-                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTIwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8dGV4dCB4PSI2MCIgeT0iMjgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI0ZGRkZGRiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VE9QS0lUPC90ZXh0Pgo8L3N2Zz4K" 
+                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTIwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8dGV4dCB4PSI2MCIgeT0iMjgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzAwMDAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VE9QS0lUPC90ZXh0Pgo8L3N2Zz4K" 
                   alt="TOPKIT" 
                   className="h-8 md:h-10"
                 />
@@ -492,8 +492,8 @@ const AppContent = () => {
               <button
                 onClick={() => setCurrentView('home')}
                 className={`${currentView === 'home' 
-                  ? 'text-blue-400 border-b-2 border-blue-400' 
-                  : 'text-gray-300 hover:text-white'
+                  ? 'text-black border-b-2 border-black' 
+                  : 'text-gray-500 hover:text-black'
                 } px-3 py-2 text-sm font-medium transition-colors`}
               >
                 Home
@@ -501,8 +501,8 @@ const AppContent = () => {
               <button
                 onClick={() => setCurrentView('explore')}
                 className={`${currentView === 'explore' 
-                  ? 'text-blue-400 border-b-2 border-blue-400' 
-                  : 'text-gray-300 hover:text-white'
+                  ? 'text-black border-b-2 border-black' 
+                  : 'text-gray-500 hover:text-black'
                 } px-3 py-2 text-sm font-medium transition-colors`}
               >
                 Explorez
@@ -510,8 +510,8 @@ const AppContent = () => {
               <button
                 onClick={() => setCurrentView('marketplace')}
                 className={`${currentView === 'marketplace' 
-                  ? 'text-blue-400 border-b-2 border-blue-400' 
-                  : 'text-gray-300 hover:text-white'
+                  ? 'text-black border-b-2 border-black' 
+                  : 'text-gray-500 hover:text-black'
                 } px-3 py-2 text-sm font-medium transition-colors`}
               >
                 Marketplace
@@ -522,7 +522,7 @@ const AppContent = () => {
             <div className="md:hidden">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="text-gray-300 hover:text-white p-2"
+                className="text-gray-500 hover:text-black p-2"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {showMobileMenu ? (
@@ -543,7 +543,7 @@ const AppContent = () => {
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                  className="bg-gray-50 text-black px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent w-64"
                 />
               </div>
 
@@ -552,13 +552,13 @@ const AppContent = () => {
                   {/* Notifications */}
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className="text-gray-300 hover:text-white relative p-2"
+                    className="text-gray-500 hover:text-black relative p-2"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5-5-5h5zm-5-17h5l-5 5-5-5h5zm10 10v2a8 8 0 01-16 0V7a8 8 0 0116 0z" />
                     </svg>
                     {(notifications && Array.isArray(notifications) && notifications.filter(n => !n.read).length > 0) && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {notifications.filter(n => !n.read).length}
                       </span>
                     )}
@@ -568,9 +568,9 @@ const AppContent = () => {
                   <div className="relative">
                     <button
                       onClick={() => setCurrentView('profile')}
-                      className="flex items-center text-gray-300 hover:text-white space-x-2"
+                      className="flex items-center text-gray-500 hover:text-black space-x-2"
                     >
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium text-white">
                           {user.name?.charAt(0).toUpperCase() || 'U'}
                         </span>
@@ -581,7 +581,7 @@ const AppContent = () => {
 
                   <button
                     onClick={handleLogout}
-                    className="text-gray-300 hover:text-white text-sm"
+                    className="text-gray-500 hover:text-black text-sm"
                   >
                     Déconnexion
                   </button>
@@ -589,7 +589,7 @@ const AppContent = () => {
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   Se connecter
                 </button>
@@ -599,7 +599,7 @@ const AppContent = () => {
 
           {/* Mobile Menu */}
           {showMobileMenu && (
-            <div className="md:hidden bg-gray-900 border-t border-gray-700">
+            <div className="md:hidden bg-gray-50 border-t border-gray-200">
               <div className="px-2 pt-2 pb-3 space-y-1">
                 {/* Navigation Links */}
                 <button
@@ -608,10 +608,10 @@ const AppContent = () => {
                     setShowMobileMenu(false);
                   }}
                   className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    currentView === 'home' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                    currentView === 'home' ? 'text-black bg-gray-200' : 'text-gray-500 hover:text-black hover:bg-gray-100'
                   }`}
                 >
-                  🏠 Home
+                  Home
                 </button>
                 <button
                   onClick={() => {
@@ -619,10 +619,10 @@ const AppContent = () => {
                     setShowMobileMenu(false);
                   }}
                   className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    currentView === 'explore' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                    currentView === 'explore' ? 'text-black bg-gray-200' : 'text-gray-500 hover:text-black hover:bg-gray-100'
                   }`}
                 >
-                  🔍 Explorez
+                  Explorez
                 </button>
                 <button
                   onClick={() => {
@@ -630,10 +630,10 @@ const AppContent = () => {
                     setShowMobileMenu(false);
                   }}
                   className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    currentView === 'marketplace' ? 'text-blue-400 bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                    currentView === 'marketplace' ? 'text-black bg-gray-200' : 'text-gray-500 hover:text-black hover:bg-gray-100'
                   }`}
                 >
-                  🛒 Marketplace
+                  Marketplace
                 </button>
 
                 {/* User section */}
@@ -644,9 +644,9 @@ const AppContent = () => {
                         setCurrentView('profile');
                         setShowMobileMenu(false);
                       }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-black hover:bg-gray-100"
                     >
-                      👤 Mon Profil
+                      Mon Profil
                     </button>
                     {user.role === 'admin' && (
                       <button
@@ -654,9 +654,9 @@ const AppContent = () => {
                           setCurrentView('admin');
                           setShowMobileMenu(false);
                         }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-red-300 hover:bg-gray-700"
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:bg-gray-100"
                       >
-                        🔧 Admin Panel
+                        Admin Panel
                       </button>
                     )}
                     <button
@@ -664,9 +664,9 @@ const AppContent = () => {
                         handleLogout();
                         setShowMobileMenu(false);
                       }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-black hover:bg-gray-100"
                     >
-                      🚪 Déconnexion
+                      Déconnexion
                     </button>
                   </>
                 ) : (
@@ -675,9 +675,9 @@ const AppContent = () => {
                       setShowAuthModal(true);
                       setShowMobileMenu(false);
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-black text-white hover:bg-gray-800"
                   >
-                    🔑 Se connecter
+                    Se connecter
                   </button>
                 )}
 
@@ -688,7 +688,7 @@ const AppContent = () => {
                     placeholder="Rechercher..."
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-white text-black px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
               </div>
@@ -698,23 +698,23 @@ const AppContent = () => {
 
         {/* Notifications Dropdown */}
         {showNotifications && user && (
-          <div className="absolute right-4 top-16 w-80 bg-gray-900 rounded-lg shadow-xl border border-gray-700 z-50">
-            <div className="p-4 border-b border-gray-700">
-              <h3 className="text-white font-semibold">Notifications</h3>
+          <div className="absolute right-4 top-16 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-black font-semibold">Notifications</h3>
             </div>
             <div className="max-h-96 overflow-y-auto">
               {(notifications && Array.isArray(notifications) && notifications.length > 0) ? (
                 notifications.slice(0, 10).map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-gray-700 last:border-b-0 ${
-                      !notification.read ? 'bg-blue-900/20' : ''
+                    className={`p-4 border-b border-gray-200 last:border-b-0 ${
+                      !notification.read ? 'bg-gray-50' : ''
                     }`}
                   >
-                    <div className="text-sm text-white font-medium mb-1">
+                    <div className="text-sm text-black font-medium mb-1">
                       {notification.title}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-600">
                       {notification.message}
                     </div>
                     <div className="text-xs text-gray-500 mt-2">
