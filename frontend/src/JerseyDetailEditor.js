@@ -516,8 +516,10 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Right Column - Detail Info */}
+            {/* Right Column - Detail Info - Only show for collection-edit */}
+            {isCollectionEdit && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-black border-b border-gray-200 pb-2">
                 🔍 Détails de la collection
