@@ -1654,15 +1654,17 @@ const AppContent = () => {
                 <button
                   onClick={() => {
                     console.log('Submit button clicked!');
-                    // Open jersey editor for new jersey submission
+                    // Open jersey editor for new jersey submission with NEW structure
                     setEditingJersey({
-                      // Empty jersey object for new submission
+                      // New structure to match updated backend
                       team: '',
                       league: '',
                       season: '',
                       jersey_type: '',
-                      player: '',
                       manufacturer: '',
+                      sku_code: '', // Changed from reference_code
+                      model: 'authentic', // New required field
+                      description: '',
                       isNewSubmission: true // Flag to indicate this is a new submission
                     });
                     setShowJerseyEditor(true);
