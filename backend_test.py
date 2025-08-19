@@ -298,6 +298,27 @@ class AdminJerseyCorrectionTester:
             return False
             
         try:
+            # Create a new jersey for suggestion testing since the previous one was approved
+            form_data = {
+                "team": "Manchester United",
+                "league": "Premier League",
+                "season": "24/25",
+                "jersey_type": "home",
+                "manufacturer": "TeamViewer",
+                "sku_code": "TEST-MU-24",
+                "model": "authentic",
+                "description": "Test jersey for suggestion functionality"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            create_response = requests.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
+            
+            if create_response.status_code != 200:
+                self.log_result("Suggest Modifications", False, f"Failed to create test jersey: {create_response.text}")
+                return False
+                
+            suggestion_jersey_id = create_response.json().get("id")
+            
             suggestion_data = {
                 "suggested_changes": "Please verify the manufacturer and update the season format to match our standards",
                 "suggested_modifications": {
@@ -307,8 +328,7 @@ class AdminJerseyCorrectionTester:
                 }
             }
             
-            headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = requests.post(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/suggest-modifications", 
+            response = requests.post(f"{BACKEND_URL}/admin/jerseys/{suggestion_jersey_id}/suggest-modifications", 
                                    json=suggestion_data, headers=headers)
             
             if response.status_code == 200:
