@@ -44,7 +44,7 @@ async def check_users():
                     print(f"✅ Test admin account created: {data.get('user', {}).get('email')}")
                     
                     # Try to login with new admin account
-                    admin_creds = {"email": "testadmin@topkit.com", "password": "SecureAdminPass2024!"}
+                    admin_creds = {"email": "testadmin@topkit.com", "password": "StrongP@ssw0rd2024!"}
                     async with session.post(f"{BACKEND_URL}/auth/login", json=admin_creds) as response:
                         if response.status == 200:
                             data = await response.json()
