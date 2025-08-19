@@ -76,8 +76,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
   const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
 
   // Check if this is a new submission
-  const isNewSubmission = jersey?.isNewSubmission || false;
-  const isAdminEdit = jersey?.isAdminEdit || false;
+  const isNewSubmission = jersey?.isNewSubmission || mode === 'submission' || false;
+  const isAdminEdit = jersey?.isAdminEdit || mode === 'admin-modify' || false;
+  const isCollectionEdit = mode === 'collection-edit' || (!isNewSubmission && !isAdminEdit);
 
   useEffect(() => {
     if (jersey && isOpen) {
