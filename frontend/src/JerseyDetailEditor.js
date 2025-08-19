@@ -524,16 +524,23 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Model Type */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.model_type.label}
+                  {JERSEY_DETAIL_CRITERIA.model_type?.label || "Model Type"}
                 </label>
                 <select
                   value={detailData.model_type}
                   onChange={(e) => handleInputChange('model_type', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {Object.entries(JERSEY_DETAIL_CRITERIA.model_type.options).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
+                  {JERSEY_DETAIL_CRITERIA.model_type?.options ? 
+                    Object.entries(JERSEY_DETAIL_CRITERIA.model_type.options).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    )) : (
+                      <>
+                        <option value="authentic">Authentic</option>
+                        <option value="replica">Replica</option>
+                      </>
+                    )
+                  }
                 </select>
               </div>
 
