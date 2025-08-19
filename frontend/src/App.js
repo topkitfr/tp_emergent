@@ -455,7 +455,8 @@ const AppContent = () => {
         
         // Show success message
         const collectionTypeText = collectionType === 'owned' ? 'votre collection' : 'votre wishlist';
-        alert(`✅ ${jersey.team} ${jersey.season} ajouté à ${collectionTypeText} avec succès !`);
+        const jerseyName = `${jersey.team || 'Maillot'} ${jersey.season || ''}`.trim();
+        alert(`✅ ${jerseyName} ajouté à ${collectionTypeText} avec succès !`);
       } else {
         // Handle specific error messages
         const errorMsg = responseData.detail || `Erreur lors de l'ajout à ${collectionType === 'owned' ? 'la collection' : 'la wishlist'}`;
