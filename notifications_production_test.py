@@ -469,10 +469,11 @@ class NotificationsProductionTester:
         
         # Step 3: Test jersey submission notifications
         print("📋 STEP 3: JERSEY SUBMISSION NOTIFICATIONS")
-        if user_auth_success:
+        if admin_auth_success or user_auth_success:
             jersey_notifications = self.test_jersey_submission_notifications()
         else:
-            self.log_test("Jersey Submission Notifications", False, "", "No user authentication available")
+            self.log_test("Jersey Submission Notifications", False, "", "No authentication available")
+            jersey_notifications = None
         
         print()
         
