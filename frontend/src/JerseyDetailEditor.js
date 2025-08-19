@@ -619,16 +619,25 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess }
               {/* Rarity */}
               <div>
                 <label className="block text-sm font-medium text-black mb-2">
-                  {JERSEY_DETAIL_CRITERIA.rarity.label}
+                  {JERSEY_DETAIL_CRITERIA.rarity?.label || "Rarity"}
                 </label>
                 <select
                   value={detailData.rarity}
                   onChange={(e) => handleInputChange('rarity', e.target.value)}
                   className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  {Object.entries(JERSEY_DETAIL_CRITERIA.rarity.options).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
+                  {JERSEY_DETAIL_CRITERIA.rarity?.options ? 
+                    Object.entries(JERSEY_DETAIL_CRITERIA.rarity.options).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    )) : (
+                      <>
+                        <option value="common">Common</option>
+                        <option value="uncommon">Uncommon</option>
+                        <option value="rare">Rare</option>
+                        <option value="very_rare">Very Rare</option>
+                      </>
+                    )
+                  }
                 </select>
               </div>
 
