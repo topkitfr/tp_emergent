@@ -1308,29 +1308,29 @@ const AppContent = () => {
         case 'collection':
           return (
             <div>
-              <h3 className="text-xl font-semibold mb-6 text-white">Ma Collection</h3>
+              <h3 className="text-xl font-semibold mb-6 text-black">Ma Collection</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Owned Jerseys */}
-                <div className="bg-gray-900 rounded-2xl p-6">
-                  <h4 className="text-lg font-semibold text-green-400 mb-4 flex items-center">
+                <div className="bg-white rounded-lg p-6 border border-gray-200">
+                  <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
                     <span className="mr-2">✓</span>
                     Maillots possédés ({userCollections.owned?.length || 0})
                   </h4>
                   {userCollections.owned?.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {userCollections.owned.map((item) => (
-                        <div key={item.id} className="bg-gray-800 p-3 rounded-lg">
-                          <div className="font-medium text-white">
+                        <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                          <div className="font-medium text-black">
                             {item.jersey?.team || 'Équipe inconnue'}
                           </div>
-                          <div className="text-sm text-gray-400">
+                          <div className="text-sm text-gray-600">
                             {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-gray-600">
                       <div className="text-4xl mb-2">👕</div>
                       <p>Votre collection est vide</p>
                       <p className="text-sm">Explorez des maillots et ajoutez-les à votre collection</p>
@@ -1339,26 +1339,26 @@ const AppContent = () => {
                 </div>
 
                 {/* Wanted Jerseys */}
-                <div className="bg-gray-900 rounded-2xl p-6">
-                  <h4 className="text-lg font-semibold text-blue-400 mb-4 flex items-center">
+                <div className="bg-white rounded-lg p-6 border border-gray-200">
+                  <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
                     <span className="mr-2">⭐</span>
                     Wishlist ({userCollections.wanted?.length || 0})
                   </h4>
                   {userCollections.wanted?.length > 0 ? (
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {userCollections.wanted.map((item) => (
-                        <div key={item.id} className="bg-gray-800 p-3 rounded-lg">
-                          <div className="font-medium text-white">
+                        <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                          <div className="font-medium text-black">
                             {item.jersey?.team || 'Équipe inconnue'}
                           </div>
-                          <div className="text-sm text-gray-400">
+                          <div className="text-sm text-gray-600">
                             {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-gray-600">
                       <div className="text-4xl mb-2">⭐</div>
                       <p>Votre wishlist est vide</p>
                       <p className="text-sm">Ajoutez des maillots que vous recherchez</p>
@@ -1373,7 +1373,7 @@ const AppContent = () => {
           return (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-white">Mes Soumissions</h3>
+                <h3 className="text-xl font-semibold text-black">Mes Soumissions</h3>
                 <button
                   onClick={() => {
                     console.log('Submit button clicked!');
@@ -1381,7 +1381,7 @@ const AppContent = () => {
                     setShowSubmitModal(true);
                     console.log('Modal state should be true now');
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   Soumettre un maillot
                 </button>
@@ -1390,16 +1390,16 @@ const AppContent = () => {
               {/* Statistics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {[
-                  { label: 'Total', value: userSubmissions.length, color: 'blue' },
-                  { label: 'En attente', value: userSubmissions.filter(s => s.status === 'pending').length, color: 'yellow' },
-                  { label: 'Approuvés', value: userSubmissions.filter(s => s.status === 'approved').length, color: 'green' },
-                  { label: 'Refusés', value: userSubmissions.filter(s => s.status === 'rejected').length, color: 'red' }
+                  { label: 'Total', value: userSubmissions.length, color: 'black' },
+                  { label: 'En attente', value: userSubmissions.filter(s => s.status === 'pending').length, color: 'gray' },
+                  { label: 'Approuvés', value: userSubmissions.filter(s => s.status === 'approved').length, color: 'black' },
+                  { label: 'Refusés', value: userSubmissions.filter(s => s.status === 'rejected').length, color: 'gray' }
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-gray-900 p-4 rounded-lg text-center">
-                    <div className={`text-2xl font-bold text-${stat.color}-400 mb-1`}>
+                  <div key={stat.label} className="bg-white p-4 rounded-lg text-center border border-gray-200">
+                    <div className={`text-2xl font-bold text-black mb-1`}>
                       {stat.value}
                     </div>
-                    <div className="text-sm text-gray-400">{stat.label}</div>
+                    <div className="text-sm text-gray-600">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -1408,13 +1408,13 @@ const AppContent = () => {
               {userSubmissions.length > 0 ? (
                 <div className="space-y-4">
                   {userSubmissions.map((submission) => (
-                    <div key={submission.id} className="bg-gray-900 p-6 rounded-2xl">
+                    <div key={submission.id} className="bg-white p-6 rounded-lg border border-gray-200">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h4 className="text-lg font-semibold text-white">
+                          <h4 className="text-lg font-semibold text-black">
                             {submission.team} - {submission.player_name || 'Joueur non spécifié'}
                           </h4>
-                          <p className="text-gray-400">
+                          <p className="text-gray-600">
                             {submission.league} • {submission.season}
                           </p>
                           <p className="text-sm text-gray-500">
@@ -1423,9 +1423,9 @@ const AppContent = () => {
                         </div>
                         <div className="flex items-center space-x-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            submission.status === 'approved' ? 'bg-green-900 text-green-300' :
-                            submission.status === 'pending' ? 'bg-yellow-900 text-yellow-300' :
-                            'bg-red-900 text-red-300'
+                            submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            submission.status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
                           }`}>
                             {submission.status === 'approved' ? 'Approuvé' :
                              submission.status === 'pending' ? 'En attente' : 'Refusé'}
@@ -1433,7 +1433,7 @@ const AppContent = () => {
                           {(submission.status === 'rejected' || (submission.status === 'needs_modification')) && (
                             <button
                               onClick={() => openJerseyEditor(submission)}
-                              className="text-blue-400 hover:text-blue-300 text-sm"
+                              className="text-black hover:text-gray-700 text-sm underline"
                             >
                               Modifier
                             </button>
@@ -1443,8 +1443,8 @@ const AppContent = () => {
                       
                       {/* Admin feedback */}
                       {submission.admin_feedback && (
-                        <div className="bg-gray-800 p-3 rounded-lg">
-                          <div className="text-sm text-gray-300">
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                          <div className="text-sm text-gray-700">
                             <strong>Retour admin:</strong> {submission.admin_feedback}
                           </div>
                         </div>
@@ -1453,13 +1453,13 @@ const AppContent = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-400">
+                <div className="text-center py-12 text-gray-600">
                   <div className="text-6xl mb-4">📝</div>
                   <h3 className="text-xl font-semibold mb-2">Aucune soumission</h3>
                   <p className="mb-4">Vous n'avez pas encore soumis de maillot</p>
                   <button
                     onClick={() => setShowSubmitModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     Soumettre votre premier maillot
                   </button>
@@ -1472,28 +1472,28 @@ const AppContent = () => {
           return (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🏗️</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-black mb-2">
                 Bientôt disponible
               </h3>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-600 mb-6">
                 La fonctionnalité de vente sera bientôt disponible. En attendant, vous pourrez :
               </p>
-              <div className="bg-gray-900 p-6 rounded-2xl max-w-md mx-auto">
-                <ul className="text-left text-gray-300 space-y-3">
+              <div className="bg-white p-6 rounded-lg max-w-md mx-auto border border-gray-200">
+                <ul className="text-left text-gray-700 space-y-3">
                   <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-black mr-2">✓</span>
                     Créer vos annonces de vente
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-black mr-2">✓</span>
                     Fixer vos prix et conditions
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-black mr-2">✓</span>
                     Recevoir des messages d'acheteurs
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-black mr-2">✓</span>
                     Suivre vos ventes en temps réel
                   </li>
                 </ul>
@@ -1504,24 +1504,24 @@ const AppContent = () => {
         case 'friends':
           return (
             <div>
-              <h3 className="text-xl font-semibold mb-6 text-white">Mes Amis</h3>
+              <h3 className="text-xl font-semibold mb-6 text-black">Mes Amis</h3>
               {friends.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {friends.map((friend) => (
-                    <div key={friend.id} className="bg-gray-900 p-4 rounded-2xl">
+                    <div key={friend.id} className="bg-white p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
                           <span className="text-white font-medium">
                             {friend.name?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-white">{friend.name}</div>
-                          <div className="text-sm text-gray-400">{friend.email}</div>
+                          <div className="font-semibold text-black">{friend.name}</div>
+                          <div className="text-sm text-gray-600">{friend.email}</div>
                         </div>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-700">
-                        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <button className="w-full bg-black hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium transition-colors">
                           Envoyer un message
                         </button>
                       </div>
@@ -1529,11 +1529,11 @@ const AppContent = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-400">
+                <div className="text-center py-12 text-gray-600">
                   <div className="text-6xl mb-4">👥</div>
                   <h3 className="text-xl font-semibold mb-2">Aucun ami</h3>
                   <p className="mb-4">Commencez à vous connecter avec d'autres collectionneurs</p>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                  <button className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                     Rechercher des amis
                   </button>
                 </div>
@@ -1543,7 +1543,7 @@ const AppContent = () => {
 
         case 'messages':
           return (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-gray-600">
               <div className="text-6xl mb-4">💬</div>
               <h3 className="text-xl font-semibold mb-2">Messages</h3>
               <p>Fonctionnalité de messagerie en développement</p>
@@ -1556,35 +1556,35 @@ const AppContent = () => {
     };
 
     return (
-      <div className="min-h-screen bg-black text-white p-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-white text-black p-4">
+        <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
-          <div className="bg-gradient-to-r from-gray-900 to-black p-8 rounded-2xl mb-8">
+          <div className="bg-gray-50 p-6 md:p-8 rounded-lg mb-6 md:mb-8 border border-gray-200">
             <div className="flex items-center space-x-6">
-              <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">
+              <div className="w-16 md:w-20 h-16 md:h-20 bg-black rounded-full flex items-center justify-center">
+                <span className="text-xl md:text-2xl font-bold text-white">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">{user?.name || 'Utilisateur'}</h1>
-                <p className="text-gray-400">{user?.email}</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">{user?.name || 'Utilisateur'}</h1>
+                <p className="text-gray-600">{user?.email}</p>
                 <div className="flex items-center space-x-6 mt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-400">{userCollections.owned?.length || 0}</div>
-                    <div className="text-sm text-gray-400">Possédés</div>
+                    <div className="text-xl md:text-2xl font-bold text-black">{userCollections.owned?.length || 0}</div>
+                    <div className="text-xs md:text-sm text-gray-600">Possédés</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-400">{userCollections.wanted?.length || 0}</div>
-                    <div className="text-sm text-gray-400">Recherchés</div>
+                    <div className="text-xl md:text-2xl font-bold text-black">{userCollections.wanted?.length || 0}</div>
+                    <div className="text-xs md:text-sm text-gray-600">Recherchés</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">{userSubmissions.length || 0}</div>
-                    <div className="text-sm text-gray-400">Soumissions</div>
+                    <div className="text-xl md:text-2xl font-bold text-black">{userSubmissions.length || 0}</div>
+                    <div className="text-xs md:text-sm text-gray-600">Soumissions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-400">{friends.length || 0}</div>
-                    <div className="text-sm text-gray-400">Amis</div>
+                    <div className="text-xl md:text-2xl font-bold text-black">{friends.length || 0}</div>
+                    <div className="text-xs md:text-sm text-gray-600">Amis</div>
                   </div>
                 </div>
               </div>
@@ -1594,14 +1594,14 @@ const AppContent = () => {
                 <div className="ml-auto">
                   <button
                     onClick={() => setCurrentView('admin')}
-                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2"
+                    className="bg-black hover:bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all flex items-center space-x-2"
                   >
                     <span>🔧</span>
                     <span>Admin Panel</span>
                   </button>
                   <button
                     onClick={() => setShowSecurityModal(true)}
-                    className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 mt-2"
+                    className="bg-gray-200 hover:bg-gray-300 text-black px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 mt-2"
                   >
                     <span>🔒</span>
                     <span>Settings</span>
@@ -1612,7 +1612,7 @@ const AppContent = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="bg-gray-900 rounded-2xl p-2 mb-8">
+          <div className="bg-gray-50 rounded-lg p-2 mb-6 md:mb-8 border border-gray-200">
             <nav className="flex space-x-2 overflow-x-auto">
               {[
                 { key: 'collection', label: 'Ma Collection', icon: '👕' },
@@ -1624,21 +1624,21 @@ const AppContent = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                  className={`flex items-center space-x-2 px-3 md:px-4 py-2 md:py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.key
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      ? 'bg-black text-white'
+                      : 'text-gray-600 hover:text-black hover:bg-gray-100'
                   }`}
                 >
                   <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className="text-sm md:text-base">{tab.label}</span>
                 </button>
               ))}
             </nav>
           </div>
 
           {/* Tab Content */}
-          <div className="bg-gray-900/50 rounded-2xl p-8">
+          <div className="bg-gray-50 rounded-lg p-6 md:p-8 border border-gray-200">
             {renderTabContent()}
           </div>
         </div>
