@@ -30,7 +30,7 @@ BACKEND_URL = "https://9f26dbf2-ce88-4e0c-8bc0-d245b81c53aa.preview.emergentagen
 # Test credentials
 ADMIN_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "password": "adminpass123"
 }
 
 USER_CREDENTIALS = {
