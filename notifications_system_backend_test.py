@@ -35,7 +35,13 @@ ADMIN_CREDENTIALS = {
 
 USER_CREDENTIALS = {
     "email": "steinmetzlivio@gmail.com", 
-    "password": "TopKit123!"
+    "password": "T0p_Mdp_1288*"
+}
+
+# Test admin credentials (may not work)
+TEST_ADMIN_CREDENTIALS = {
+    "email": "testadmin@topkit.com",
+    "password": "StrongP@ssw0rd2024!"
 }
 
 class NotificationsSystemTester:
