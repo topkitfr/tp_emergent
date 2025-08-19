@@ -107,6 +107,14 @@ class ProductionAuthTester:
                 
                 if response.status_code == 200:
                     self.log(f"✅ Production endpoint working - {email} authenticated successfully")
+                    
+                    # Get admin token for user existence check
+                    if email == "topkitfr@gmail.com":
+                        data = response.json()
+                        admin_token = data.get('token')
+                        if admin_token:
+                            self.check_user_existence(admin_token)
+                    
                     return True
                 else:
                     self.log(f"⚠️  Known account {email} failed: HTTP {response.status_code}")
