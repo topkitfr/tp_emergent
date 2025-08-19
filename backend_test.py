@@ -248,7 +248,7 @@ class AdminJerseyCorrectionTester:
             return False
 
     def test_put_jersey_modification(self):
-        """Test 6: PUT /api/admin/jerseys/{jersey_id} - Test jersey modification"""
+        """Test 6: PUT /api/admin/jerseys/{jersey_id}/edit - Test jersey modification"""
         if not self.admin_token or not self.test_jersey_id:
             self.log_result("PUT Jersey Modification", False, "Missing admin token or jersey ID")
             return False
@@ -266,7 +266,7 @@ class AdminJerseyCorrectionTester:
             }
             
             headers = {"Authorization": f"Bearer {self.admin_token}"}
-            response = requests.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}", 
+            response = requests.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", 
                                   json=modification_data, headers=headers)
             
             if response.status_code == 200:
