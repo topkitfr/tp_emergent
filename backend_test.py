@@ -512,16 +512,16 @@ class AdminJerseyCorrectionTester:
         print(f"Test started at: {datetime.now().isoformat()}")
         print()
         
-        # Test sequence - reorder to authenticate admin first
+        # Test sequence - reorder to test modifications before approval
         tests = [
             self.authenticate_user,  # Try user auth but continue if fails
             self.authenticate_admin,  # Admin auth is critical
             self.submit_test_jersey,  # Use admin token if user fails
             self.verify_pending_status,
             self.test_get_pending_jerseys,
-            self.test_put_jersey_modification,
+            self.test_put_jersey_modification,  # Test modification before approval
             self.test_suggest_modifications,
-            self.test_approve_jersey,
+            self.test_approve_jersey,  # Approve after testing modifications
             self.verify_approval_status,
             self.test_admin_panel_visibility
         ]
