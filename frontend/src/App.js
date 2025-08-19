@@ -1851,23 +1851,10 @@ const AppContent = () => {
                 </div>
               </div>
               
-              {/* Admin Panel Access */}
+              {/* No Admin Panel button here - moved to hamburger menu */}
               {user?.role === 'admin' && (
                 <div className="ml-auto">
-                  <button
-                    onClick={() => setCurrentView('admin')}
-                    className="bg-black hover:bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all flex items-center space-x-2"
-                  >
-                    <span>🔧</span>
-                    <span>Admin Panel</span>
-                  </button>
-                  <button
-                    onClick={() => setShowSecurityModal(true)}
-                    className="bg-gray-200 hover:bg-gray-300 text-black px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 mt-2"
-                  >
-                    <span>🔒</span>
-                    <span>Settings</span>
-                  </button>
+                  {/* Settings button removed - moved to hamburger menu */}
                 </div>
               )}
             </div>
