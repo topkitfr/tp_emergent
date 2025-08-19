@@ -249,13 +249,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
               
               {/* Model Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.model_type.label}
                 </label>
                 <select
                   value={detailData.model_type}
                   onChange={(e) => handleInputChange('model_type', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.model_type.options.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -265,13 +265,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
               {/* Condition */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.condition.label}
                 </label>
                 <select
                   value={detailData.condition}
                   onChange={(e) => handleInputChange('condition', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.condition.options.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -281,13 +281,13 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave }) => {
 
               {/* Size */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {JERSEY_DETAIL_CRITERIA.size.label}
                 </label>
                 <select
                   value={detailData.size}
                   onChange={(e) => handleInputChange('size', e.target.value)}
-                  className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
                   {JERSEY_DETAIL_CRITERIA.size.options.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
