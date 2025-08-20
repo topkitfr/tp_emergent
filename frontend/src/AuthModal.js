@@ -3,13 +3,20 @@ import axios from 'axios';
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetToken, setResetToken] = useState('');
   const [formData, setFormData] = useState({ 
     email: '', 
     password: '', 
-    name: '' 
+    name: '',
+    resetEmail: '',
+    newPassword: '',
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Password validation helper
   const validatePassword = (password) => {
