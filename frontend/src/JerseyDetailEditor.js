@@ -255,10 +255,37 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
             return;
           }
           
+          // Create FormData for admin jersey edit with photos
+          const formData = new FormData();
+          
+          // Add all jersey data (same logic as new submission)
+          Object.keys(detailData).forEach(key => {
+            if (key !== 'front_photo' && key !== 'back_photo' && detailData[key] !== null && detailData[key] !== undefined) {
+              if (Array.isArray(detailData[key])) {
+                formData.append(key, JSON.stringify(detailData[key]));
+              } else {
+                formData.append(key, detailData[key]);
+              }
+            }
+          });
+          
+          // Add photos if they exist
+          if (detailData.front_photo) {
+            formData.append('front_photo', detailData.front_photo);
+          }
+          if (detailData.back_photo) {
+            formData.append('back_photo', detailData.back_photo);
+          }
+          
+          console.log('Admin editing jersey with FormData:', detailData);
+          
           const response = await tokenManager.makeAuthenticatedRequest(
             'put',
             `/api/admin/jerseys/${jersey.id}/edit`,
-            detailData
+            formData,
+            {
+              'Content-Type': 'multipart/form-data'
+            }
           );
           
           console.log('Admin jersey update successful:', response.data);
