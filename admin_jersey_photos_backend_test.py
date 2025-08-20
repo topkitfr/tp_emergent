@@ -285,7 +285,12 @@ def run_comprehensive_test():
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Étape 1: Authentification utilisateur
+    # Étape 1: Enregistrer un nouvel utilisateur si nécessaire
+    register_success = register_user()
+    if not register_success:
+        print_error("User registration failed, trying with existing credentials")
+    
+    # Étape 2: Authentification utilisateur
     user_token = authenticate_user(USER_CREDENTIALS, "User")
     if not user_token:
         print_error("Cannot proceed without user authentication")
