@@ -1405,7 +1405,11 @@ const AppContent = () => {
               {jerseys.length === 0 ? 'Aucun maillot disponible' : 'Aucun résultat trouvé'}
             </div>
           ) : (
-            <div className={`p-4 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}`}>
+            <div className={`p-4 ${
+              viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 
+              viewMode === 'thumbnail' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3' :
+              'space-y-4'
+            }`}>
               {currentItems.map((jersey) => {
                 // Debug log pour vérifier les données du maillot
                 if (jersey.images && jersey.images.length > 0 || jersey.front_photo_url) {
