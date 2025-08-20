@@ -6,6 +6,10 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Profile picture states
+  const [profilePictureLoading, setProfilePictureLoading] = useState(false);
+  const [profilePictureError, setProfilePictureError] = useState('');
   const [profileData, setProfileData] = useState({
     // Basic profile
     name: user?.name || '',
