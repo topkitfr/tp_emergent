@@ -1117,15 +1117,18 @@ const AppContent = () => {
                     >
                       Settings
                     </button>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setShowMobileMenu(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-black hover:bg-gray-100"
-                    >
-                      Déconnexion
-                    </button>
+                    {/* Séparateur avant déconnexion */}
+                    <div className="pt-2 mt-2 border-t border-gray-200">
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setShowMobileMenu(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                      >
+                        Déconnexion
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <button
