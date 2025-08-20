@@ -3902,7 +3902,7 @@ async def get_approved_jerseys(
     season: Optional[str] = None,
     league: Optional[str] = None,
     skip: int = 0,
-    limit: int = 20
+    limit: int = 100
 ):
     """Get approved jerseys available for creating listings"""
     # Build query for approved jerseys only
