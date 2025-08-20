@@ -296,7 +296,7 @@ def run_comprehensive_test():
         print_error("Cannot proceed without user authentication")
         return False
     
-    # Étape 2: Authentification admin
+    # Étape 3: Authentification admin
     admin_token = authenticate_user(ADMIN_CREDENTIALS, "Admin")
     if not admin_token:
         print_error("Cannot proceed without admin authentication")
