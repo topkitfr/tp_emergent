@@ -91,7 +91,7 @@ class RealPSGJerseySubmitter:
                 'league': 'Ligue 1',
                 'season': '2024/25',
                 'manufacturer': 'Nike',
-                'jersey_type': 'domicile',  # home
+                'jersey_type': 'home',  # Correction: utiliser 'home' au lieu de 'domicile'
                 'sku_code': 'PSG-DOM-2425-REP',
                 'model': 'replica',
                 'description': 'Maillot domicile PSG saison 2024/25 - Nike - Replica avec col rond et bande centrale rouge/bleue sur fond bleu marine'
