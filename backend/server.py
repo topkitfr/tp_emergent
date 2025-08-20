@@ -3092,7 +3092,7 @@ async def edit_jersey(
         print(f"📸 Admin back photo saved: {file_path}")
     
     # Update jersey with edited data using new structure
-    update_data = {
+    update_data.update({
         "team": team.strip(),
         "league": league.strip(),
         "season": season.strip(),
@@ -3108,7 +3108,7 @@ async def edit_jersey(
         "updated_at": datetime.utcnow(),
         "updated_by": moderator_id,
         "images": updated_images
-    }
+    })
     
     result = await db.jerseys.update_one(
         {"id": jersey_id},
