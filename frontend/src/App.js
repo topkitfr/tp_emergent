@@ -1305,32 +1305,44 @@ const AppContent = () => {
                 ) : (
                   <>
                     <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      {/* Essayer d'afficher l'image d'abord depuis le champ images */}
-                      {jersey.images && jersey.images.length > 0 ? (
-                        <img 
-                          src={jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`}
-                          alt={`${jersey.team} ${jersey.season}`}
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => {
-                            // Si l'image ne se charge pas, afficher l'emoji
-                            const parent = e.target.parentNode;
-                            parent.innerHTML = '<div class="text-2xl">👕</div>';
-                          }}
-                        />
-                      ) : jersey.front_photo_url ? (
-                        <img 
-                          src={jersey.front_photo_url.startsWith('uploads/') ? `/${jersey.front_photo_url}` : `/images/${jersey.front_photo_url}`}
-                          alt={`${jersey.team} ${jersey.season}`}
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => {
-                            // Si l'image ne se charge pas, afficher l'emoji
-                            const parent = e.target.parentNode;
-                            parent.innerHTML = '<div class="text-2xl">👕</div>';
-                          }}
-                        />
-                      ) : (
-                        <div className="text-2xl">👕</div>
-                      )}
+                      {/* Solution robuste multi-formats pour affichage d'images */}
+                      {(() => {
+                        // Déterminer quelle image afficher
+                        let imageUrl = null;
+                        let imageSource = null;
+                        
+                        // Priorité 1: Format images array
+                        if (jersey.images && jersey.images.length > 0) {
+                          const img = jersey.images[0];
+                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          imageSource = "images_array";
+                        }
+                        // Priorité 2: Format front_photo_url
+                        else if (jersey.front_photo_url) {
+                          const img = jersey.front_photo_url;
+                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          imageSource = "front_photo_url";
+                        }
+                        
+                        // Afficher l'image si disponible
+                        return imageUrl ? (
+                          <img 
+                            src={imageUrl}
+                            alt={`${jersey.team} ${jersey.season}`}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              console.log(`❌ List Image failed: ${jersey.team} - ${imageUrl}`);
+                              // Fallback vers emoji si l'image ne charge pas
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : (
+                          <div className="text-2xl">👕</div>
+                        );
+                      })()}
+                      {/* Fallback emoji (initialement caché si image disponible) */}
+                      <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-black mb-1">
