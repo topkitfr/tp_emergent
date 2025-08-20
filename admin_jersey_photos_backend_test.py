@@ -74,6 +74,36 @@ def print_info(message):
     """Affiche un message d'information"""
     print(f"ℹ️  {message}")
 
+def register_user():
+    """Enregistre un nouvel utilisateur pour les tests"""
+    print_test_header("USER REGISTRATION")
+    
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/auth/register",
+            json=USER_REGISTRATION,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        print_info(f"POST /api/auth/register - Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print_success("User registration successful")
+            print_info(f"Message: {data.get('message', 'No message')}")
+            return True
+        elif response.status_code == 400 and "existe déjà" in response.text:
+            print_info("User already exists - proceeding with login")
+            return True
+        else:
+            print_error(f"User registration failed: {response.status_code}")
+            print_error(f"Response: {response.text}")
+            return False
+            
+    except Exception as e:
+        print_error(f"Registration error: {str(e)}")
+        return False
+
 def authenticate_user(credentials, user_type="User"):
     """Authentifie un utilisateur et retourne le token JWT"""
     print_test_header(f"AUTHENTICATION - {user_type}")
