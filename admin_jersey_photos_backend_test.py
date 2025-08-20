@@ -34,7 +34,7 @@ USER_CREDENTIALS = {
 
 ADMIN_CREDENTIALS = {
     "email": "topkitfr@gmail.com", 
-    "password": "TopKitSecure789#"
+    "password": "adminpass123"
 }
 
 # Données du maillot de test avec photos simulées
