@@ -1204,14 +1204,16 @@ const AppContent = () => {
                 {viewMode === 'grid' ? (
                   <>
                     <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                      {/* Essayer d'afficher l'image d'abord depuis le champ images */}
                       {jersey.images && jersey.images.length > 0 ? (
                         <img 
                           src={jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`}
                           alt={`${jersey.team} ${jersey.season}`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
+                            // Si l'image ne se charge pas, afficher l'emoji
+                            const parent = e.target.parentNode;
+                            parent.innerHTML = '<div class="text-4xl">👕</div>';
                           }}
                         />
                       ) : jersey.front_photo_url ? (
@@ -1220,12 +1222,14 @@ const AppContent = () => {
                           alt={`${jersey.team} ${jersey.season}`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
+                            // Si l'image ne se charge pas, afficher l'emoji
+                            const parent = e.target.parentNode;
+                            parent.innerHTML = '<div class="text-4xl">👕</div>';
                           }}
                         />
-                      ) : null}
-                      <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: jersey.images?.length > 0 || jersey.front_photo_url ? 'none' : 'flex'}}>👕</div>
+                      ) : (
+                        <div className="text-4xl">👕</div>
+                      )}
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-black mb-1 truncate">
