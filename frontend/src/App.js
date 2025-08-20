@@ -2433,7 +2433,7 @@ const AppContent = () => {
         <ProfilePage user={user} API={API} />
       )}
       {currentView === 'collection' && (
-        <CollectionPage />
+        <CollectionPage API={API} />
       )}
       {currentView === 'profile' && <ProfilePage />}
       {currentView === 'admin' && <AdminPanel />}
