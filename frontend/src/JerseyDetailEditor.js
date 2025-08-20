@@ -336,6 +336,14 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
             formData.append('back_photo', detailData.back_photo);
           }
           
+          // Ajouter les informations de suppression des photos
+          if (photosToRemove.front) {
+            formData.append('remove_front_photo', 'true');
+          }
+          if (photosToRemove.back) {
+            formData.append('remove_back_photo', 'true');
+          }
+          
           console.log('Admin editing jersey with FormData:', detailData);
           
           const response = await tokenManager.makeAuthenticatedRequest(
