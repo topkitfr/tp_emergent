@@ -235,6 +235,83 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
     </div>
   );
 
+  const renderSubmissionsTab = () => (
+    <div className="bg-white rounded-lg p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-semibold mb-4">Mes Soumissions</h3>
+        <button
+          onClick={() => {
+            if (handleJerseySubmit) {
+              handleJerseySubmit();
+            }
+          }}
+          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          Soumettre un maillot
+        </button>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: 'Total', value: userSubmissions?.length || 0, color: 'black' },
+          { label: 'En attente', value: userSubmissions?.filter(s => s.status === 'pending').length || 0, color: 'gray' },
+          { label: 'Approuvés', value: userSubmissions?.filter(s => s.status === 'approved').length || 0, color: 'green' },
+          { label: 'Refusés', value: userSubmissions?.filter(s => s.status === 'rejected').length || 0, color: 'red' }
+        ].map((stat) => (
+          <div key={stat.label} className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
+            <div className="text-2xl font-bold text-black mb-1">
+              {stat.value}
+            </div>
+            <div className="text-sm text-gray-600">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Submissions List */}
+      {userSubmissions && userSubmissions.length > 0 ? (
+        <div className="space-y-4">
+          {userSubmissions.map((submission) => (
+            <div key={submission.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-medium text-black mb-1">
+                    {submission.team} - {submission.season}
+                  </div>
+                  <div className="text-sm text-gray-600 mb-1">
+                    {submission.league}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Référence: {submission.reference_code}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                    submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {submission.status === 'approved' ? 'Approuvé' :
+                     submission.status === 'rejected' ? 'Refusé' : 'En attente'}
+                  </span>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(submission.created_at).toLocaleDateString('fr-FR')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          <div className="text-4xl mb-2">📝</div>
+          <p>Aucune soumission pour le moment</p>
+          <p className="text-sm">Soumettez votre premier maillot pour commencer</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="max-w-6xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Mon Profil</h1>
