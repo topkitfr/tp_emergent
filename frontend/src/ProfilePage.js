@@ -169,7 +169,7 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
           <div className="p-8 text-center text-gray-500">Chargement...</div>
         ) : currentItems.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            {wishlist.length === 0 ? 'Votre wishlist est vide' : 'Aucun résultat trouvé'}
+            {(!userCollections.wanted || userCollections.wanted.length === 0) ? 'Votre wishlist est vide' : 'Aucun résultat trouvé'}
           </div>
         ) : (
           <>
