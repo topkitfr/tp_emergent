@@ -2363,6 +2363,154 @@ async def update_profile_settings(
         logger.error(f"Update profile settings error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour des paramètres")
 
+@api_router.post("/users/profile/picture")
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload user profile picture"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400, 
+                detail="Type de fichier non autorisé. Utilisez JPG, PNG ou WebP."
+            )
+        
+        # Validate file size (max 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB in bytes
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="Le fichier est trop volumineux. Taille maximale : 5MB."
+            )
+        
+        # Reset file position
+        await file.seek(0)
+        
+        # Create profile pictures directory if it doesn't exist
+        profile_dir = Path("uploads/profile_pictures")
+        profile_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1].lower()
+        if file_extension not in ['jpg', 'jpeg', 'png', 'webp']:
+            file_extension = 'jpg'
+        
+        timestamp = int(time.time())
+        filename = f"profile_{user_id}_{timestamp}.{file_extension}"
+        file_path = profile_dir / filename
+        
+        # Save file
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        # Update user profile with picture URL
+        profile_picture_url = f"uploads/profile_pictures/{filename}"
+        
+        # Get or create user profile
+        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        if not user_profile:
+            from backend.server import UserProfile  # Import the UserProfile model
+            user_profile = UserProfile(user_id=user_id).dict()
+            await db.user_profiles.insert_one(user_profile)
+        
+        # Delete old profile picture if exists
+        old_picture = user_profile.get('profile_picture_url')
+        if old_picture and old_picture.startswith('uploads/profile_pictures/'):
+            old_file_path = Path(old_picture)
+            if old_file_path.exists():
+                try:
+                    old_file_path.unlink()
+                except Exception as e:
+                    logger.warning(f"Failed to delete old profile picture: {e}")
+        
+        # Update profile with new picture URL
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "profile_picture_url": profile_picture_url,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        # Log activity
+        await log_user_activity(user_id, "profile_picture_uploaded", None, {
+            "filename": filename,
+            "file_size": len(file_content)
+        })
+        
+        return {
+            "message": "Photo de profil mise à jour avec succès",
+            "profile_picture_url": profile_picture_url
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Profile picture upload error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
+
+@api_router.delete("/users/profile/picture")
+async def delete_profile_picture(current_user: dict = Depends(get_current_user)):
+    """Delete user profile picture"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user profile
+        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        if not user_profile or not user_profile.get('profile_picture_url'):
+            raise HTTPException(status_code=404, detail="Aucune photo de profil trouvée")
+        
+        # Delete file from disk
+        profile_picture_url = user_profile['profile_picture_url']
+        if profile_picture_url.startswith('uploads/profile_pictures/'):
+            file_path = Path(profile_picture_url)
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except Exception as e:
+                    logger.warning(f"Failed to delete profile picture file: {e}")
+        
+        # Remove from database
+        await db.user_profiles.update_one(
+            {"user_id": user_id},
+            {"$unset": {"profile_picture_url": ""},
+             "$set": {"updated_at": datetime.utcnow()}}
+        )
+        
+        # Log activity
+        await log_user_activity(user_id, "profile_picture_deleted", None, {
+            "deleted_file": profile_picture_url
+        })
+        
+        return {"message": "Photo de profil supprimée avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Profile picture delete error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la suppression de l'image")
+
+@api_router.get("/users/profile/picture/{user_id}")
+async def get_profile_picture(user_id: str):
+    """Get user profile picture URL (public endpoint)"""
+    try:
+        # Get user profile
+        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        
+        if not user_profile or not user_profile.get('profile_picture_url'):
+            return {"profile_picture_url": None}
+        
+        return {"profile_picture_url": user_profile['profile_picture_url']}
+        
+    except Exception as e:
+        logger.error(f"Get profile picture error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération de l'image")
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
     """Request password reset email"""
