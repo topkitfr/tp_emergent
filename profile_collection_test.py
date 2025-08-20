@@ -459,6 +459,11 @@ class TopKitBackendTester:
         admin_auth_success = self.authenticate_admin()
         user_auth_success = self.authenticate_user()
         
+        # If user authentication failed, try creating a test user
+        if not user_auth_success:
+            print("Attempting to create test user...")
+            user_auth_success = self.create_test_user()
+        
         if not user_auth_success:
             print("❌ CRITICAL: User authentication failed - cannot proceed with profile/collection tests")
             return
