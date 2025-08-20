@@ -204,9 +204,45 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
         }));
       };
       reader.readAsDataURL(file);
+      
+      // Reset removal flag if uploading new photo
+      setPhotosToRemove(prev => ({
+        ...prev,
+        [type]: false
+      }));
     } else {
       setError('Veuillez sélectionner une image au format JPEG, PNG ou WebP');
     }
+  };
+
+  const handleRemoveExistingPhoto = (type) => {
+    // Marquer la photo pour suppression
+    setPhotosToRemove(prev => ({
+      ...prev,
+      [type]: true
+    }));
+    
+    // Nettoyer toute nouvelle photo uploadée
+    setDetailData(prev => ({
+      ...prev,
+      [`${type}_photo`]: null
+    }));
+    setPhotoPreview(prev => ({
+      ...prev,
+      [type]: null
+    }));
+  };
+
+  const handleRemoveNewPhoto = (type) => {
+    // Supprimer la nouvelle photo uploadée
+    setDetailData(prev => ({
+      ...prev,
+      [`${type}_photo`]: null
+    }));
+    setPhotoPreview(prev => ({
+      ...prev,
+      [type]: null
+    }));
   };
 
   const handleSave = async () => {
