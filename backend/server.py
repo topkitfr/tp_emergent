@@ -3665,17 +3665,41 @@ async def create_jersey(
         photo_urls = {}
         if front_photo and front_photo.filename:
             try:
-                # For now, we'll store the filename - in production, you'd upload to cloud storage
-                photo_urls["front_photo_url"] = f"uploads/jerseys/{jersey.id}/front_{front_photo.filename}"
-                print(f"📸 Front photo received: {front_photo.filename}")
+                # Create directory if it doesn't exist
+                upload_dir = f"../frontend/public/uploads/jerseys/{jersey.id}"
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Save the actual file
+                front_filename = f"front_{front_photo.filename}"
+                file_path = os.path.join(upload_dir, front_filename)
+                
+                # Read and save the file content
+                front_content = await front_photo.read()
+                with open(file_path, "wb") as f:
+                    f.write(front_content)
+                
+                photo_urls["front_photo_url"] = f"uploads/jerseys/{jersey.id}/{front_filename}"
+                print(f"📸 Front photo saved: {file_path}")
             except Exception as e:
                 print(f"⚠️ Error handling front photo: {e}")
         
         if back_photo and back_photo.filename:
             try:
-                # For now, we'll store the filename - in production, you'd upload to cloud storage
-                photo_urls["back_photo_url"] = f"uploads/jerseys/{jersey.id}/back_{back_photo.filename}"
-                print(f"📸 Back photo received: {back_photo.filename}")
+                # Create directory if it doesn't exist
+                upload_dir = f"../frontend/public/uploads/jerseys/{jersey.id}"
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Save the actual file
+                back_filename = f"back_{back_photo.filename}"
+                file_path = os.path.join(upload_dir, back_filename)
+                
+                # Read and save the file content
+                back_content = await back_photo.read()
+                with open(file_path, "wb") as f:
+                    f.write(back_content)
+                
+                photo_urls["back_photo_url"] = f"uploads/jerseys/{jersey.id}/{back_filename}"
+                print(f"📸 Back photo saved: {file_path}")
             except Exception as e:
                 print(f"⚠️ Error handling back photo: {e}")
         
