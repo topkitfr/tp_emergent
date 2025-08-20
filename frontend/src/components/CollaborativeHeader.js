@@ -18,7 +18,7 @@ const CollaborativeHeader = ({
 
   const navigationItems = [
     { id: 'home', label: 'Accueil', icon: '🏠' },
-    { id: 'explore', label: 'Explorer', icon: '🔍' },
+    { id: 'explore', label: 'Explorez', icon: '🔍' },
     { id: 'teams', label: 'Équipes', icon: '⚽' },
     { id: 'brands', label: 'Marques', icon: '👕' },
     { id: 'players', label: 'Joueurs', icon: '👤' },
@@ -27,8 +27,8 @@ const CollaborativeHeader = ({
   ];
 
   return (
-    <header className="bg-white shadow-lg border-b-2 border-blue-600 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+      <div className="max-w-full px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
           
           {/* Logo */}
@@ -37,42 +37,42 @@ const CollaborativeHeader = ({
               onClick={() => onViewChange('home')}
               className="hover:opacity-80 transition-opacity"
             >
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-blue-600">TopKit</span>
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                  COLLABORATIVE
-                </span>
+              <div className="flex items-center">
+                <img 
+                  src="https://customer-assets.emergentagent.com/job_kit-explorer/artifacts/uumlohms_topkit_logo.png" 
+                  alt="TopKit Logo" 
+                  className="h-5 w-auto"
+                />
               </div>
             </button>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex space-x-1">
+          {/* Desktop Navigation - WhenToCop Style */}
+          <nav className="hidden lg:flex space-x-8">
             {navigationItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`text-sm font-medium transition-colors ${
                   currentView === item.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-black font-semibold'
+                    : 'text-gray-600 hover:text-black'
                 }`}
               >
-                <span className="mr-1">{item.icon}</span>
                 {item.label}
               </button>
             ))}
           </nav>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
+          {/* Search Bar - WhenToCop Style */}
+          <div className="flex-1 max-w-xs mx-8">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Rechercher équipes, marques, joueurs..."
+                placeholder="Rechercher..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full bg-gray-50 border-0 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white placeholder-gray-500"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,15 +89,13 @@ const CollaborativeHeader = ({
             {user && (
               <button
                 onClick={() => onViewChange('contributions')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   currentView === 'contributions'
-                    ? 'bg-green-600 text-white'
-                    : 'text-gray-600 hover:text-green-600 hover:bg-green-50'
+                    ? 'bg-black text-white'
+                    : 'text-gray-700 hover:text-black hover:bg-gray-100'
                 }`}
-                title="Mes Contributions"
               >
-                <span className="mr-1">📝</span>
-                <span className="hidden md:inline">Contribuer</span>
+                Contribuer
               </button>
             )}
 
@@ -106,9 +104,9 @@ const CollaborativeHeader = ({
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-black transition-colors"
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
                       {user.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
@@ -119,18 +117,27 @@ const CollaborativeHeader = ({
                   </svg>
                 </button>
 
-                {/* User Dropdown */}
+                {/* User Dropdown - WhenToCop Style */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
                     <button
                       onClick={() => {
                         onViewChange('profile');
                         setShowUserMenu(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <span className="mr-2">👤</span>
                       Mon Profil
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        onViewChange('contributions');
+                        setShowUserMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Mes Contributions
                     </button>
                     
                     {user.role === 'admin' && (
@@ -139,22 +146,20 @@ const CollaborativeHeader = ({
                           onViewChange('admin');
                           setShowUserMenu(false);
                         }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <span className="mr-2">⚙️</span>
                         Administration
                       </button>
                     )}
                     
-                    <hr className="my-2 border-gray-200" />
+                    <hr className="my-2 border-gray-100" />
                     <button
                       onClick={() => {
                         onLogout();
                         setShowUserMenu(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      className="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                     >
-                      <span className="mr-2">🚪</span>
                       Déconnexion
                     </button>
                   </div>
@@ -163,7 +168,7 @@ const CollaborativeHeader = ({
             ) : (
               <button
                 onClick={onLogin}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
               >
                 Se connecter
               </button>
@@ -172,7 +177,7 @@ const CollaborativeHeader = ({
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2 text-gray-600 hover:text-blue-600"
+              className="lg:hidden p-2 text-gray-600 hover:text-black"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -181,10 +186,10 @@ const CollaborativeHeader = ({
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - WhenToCop Style */}
         {showMobileMenu && (
-          <div className="lg:hidden bg-gray-50 border-t border-gray-200 py-4">
-            <div className="space-y-2">
+          <div className="lg:hidden bg-white border-t border-gray-100 py-4">
+            <div className="space-y-1">
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
@@ -192,16 +197,48 @@ const CollaborativeHeader = ({
                     onViewChange(item.id);
                     setShowMobileMenu(false);
                   }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`block w-full text-left px-4 py-3 text-sm font-medium transition-all ${
                     currentView === item.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                      ? 'text-black bg-gray-50 font-semibold'
+                      : 'text-gray-600 hover:text-black hover:bg-gray-50'
                   }`}
                 >
-                  <span className="mr-2">{item.icon}</span>
                   {item.label}
                 </button>
               ))}
+              
+              {user && (
+                <>
+                  <hr className="my-3 border-gray-100" />
+                  <button
+                    onClick={() => {
+                      onViewChange('contributions');
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50"
+                  >
+                    Contribuer
+                  </button>
+                  <button
+                    onClick={() => {
+                      onViewChange('profile');
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50"
+                  >
+                    Mon Profil
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setShowMobileMenu(false);
+                    }}
+                    className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Déconnexion
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
