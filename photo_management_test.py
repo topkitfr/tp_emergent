@@ -54,7 +54,7 @@ class TopKitPhotoManagementTester:
     def create_test_jersey_with_photos(self):
         """Create a test jersey with existing photos for testing"""
         try:
-            # First create a jersey
+            # First create a jersey using form data
             jersey_data = {
                 "team": "Real Madrid CF",
                 "league": "La Liga",
@@ -65,27 +65,39 @@ class TopKitPhotoManagementTester:
                 "description": "Test jersey for photo management testing"
             }
             
-            response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data)
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
             
             if response.status_code == 200:
                 jersey = response.json()
                 self.test_jersey_id = jersey.get('id')
                 
-                # Simulate existing photos by updating the jersey with photo URLs
-                # In a real scenario, these would be uploaded files
+                # Now update the jersey with existing photos using form data
+                # Simulate existing photos by updating the jersey
                 update_data = {
-                    "front_photo_url": f"jersey_{self.test_jersey_id}_front_existing.jpg",
-                    "back_photo_url": f"jersey_{self.test_jersey_id}_back_existing.jpg"
+                    "team": "Real Madrid CF",
+                    "league": "La Liga", 
+                    "season": "2024-25",
+                    "model": "authentic",
+                    "manufacturer": "Adidas",
+                    "jersey_type": "home",
+                    "description": "Test jersey for photo management testing"
+                }
+                
+                # Add mock photo files to simulate existing photos
+                files = {
+                    'front_photo': ('front_existing.jpg', b'fake_image_data', 'image/jpeg'),
+                    'back_photo': ('back_existing.jpg', b'fake_image_data', 'image/jpeg')
                 }
                 
                 # Update jersey with existing photos (simulate existing state)
-                update_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=update_data)
+                update_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", 
+                                                 data=update_data, files=files)
                 
                 if update_response.status_code == 200:
                     self.log_result("Test Jersey Creation with Photos", True, f"Jersey created with ID: {self.test_jersey_id}")
                     return True
                 else:
-                    self.log_result("Test Jersey Creation with Photos", False, f"Failed to add photos: HTTP {update_response.status_code}")
+                    self.log_result("Test Jersey Creation with Photos", False, f"Failed to add photos: HTTP {update_response.status_code}: {update_response.text}")
                     return False
             else:
                 self.log_result("Test Jersey Creation with Photos", False, f"HTTP {response.status_code}: {response.text}")
