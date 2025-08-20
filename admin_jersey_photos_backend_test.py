@@ -314,7 +314,7 @@ def run_comprehensive_test():
         print_error("Cannot analyze images - no pending jerseys retrieved")
         return False
     
-    # Étape 5: Analyser la structure des images
+    # Étape 6: Analyser la structure des images
     images_found = analyze_jersey_images_structure(pending_jerseys)
     
     # Résumé final
