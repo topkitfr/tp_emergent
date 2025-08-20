@@ -366,6 +366,11 @@ class TopKitBackendTester:
         jersey2_id = self.create_test_jersey_format2()
         jersey3_id = self.create_test_jersey_with_photos()
         
+        # Step 2.5: Add photo data to jerseys (simulation)
+        print("\n📷 ADDING PHOTO DATA TO TEST JERSEYS...")
+        jersey_ids = [jersey1_id, jersey2_id, jersey3_id]
+        self.add_photo_data_to_jerseys(jersey_ids)
+        
         # Step 3: Verify jerseys appear in admin pending list
         print("\n🔍 VERIFYING ADMIN PENDING JERSEYS LIST...")
         self.verify_admin_pending_jerseys()
