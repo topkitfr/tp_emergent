@@ -156,7 +156,7 @@ class TopKitBackendTester:
             
             response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
             
-            if response.status_code == 201:
+            if response.status_code == 200:
                 jersey = response.json()
                 jersey_id = jersey.get('id')
                 
