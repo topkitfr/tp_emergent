@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-BASE_URL = "https://kit-editor.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-manager.preview.emergentagent.com/api"
 
 def authenticate_user():
     """Authenticate as regular user"""

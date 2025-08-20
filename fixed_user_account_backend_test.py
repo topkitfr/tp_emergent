@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://kit-editor.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_EMAIL = "steinmetzlivio.fixed@gmail.com"
