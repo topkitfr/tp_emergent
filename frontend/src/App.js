@@ -1741,12 +1741,12 @@ const AppContent = () => {
                           // Priorité 1: Format images array
                           if (jersey.images && jersey.images.length > 0) {
                             const img = jersey.images[0];
-                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageUrl = img.startsWith('uploads/') ? `${API}/${img}` : `${API}/images/${img}`;
                           }
                           // Priorité 2: Format front_photo_url
                           else if (jersey.front_photo_url) {
                             const img = jersey.front_photo_url;
-                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageUrl = img.startsWith('uploads/') ? `${API}/${img}` : `${API}/images/${img}`;
                           }
                           
                           return imageUrl ? (
