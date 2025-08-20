@@ -5,6 +5,9 @@ import AuthModal from './AuthModal';
 import TwoFactorAuthSetup from './TwoFactorAuthSetup';
 import SecuritySettingsModal from './SecuritySettingsModal';
 import JerseyDetailEditor from './JerseyDetailEditor';
+import PaginationControls from './PaginationControls';
+import JerseyDetailModal from './JerseyDetailModal';
+import ProfilePage from './ProfilePage';
 import { useCSVData } from './utils/csvLoader';
 import tokenManager from './utils/tokenManager';
 
