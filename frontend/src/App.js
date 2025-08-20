@@ -1303,10 +1303,10 @@ const AppContent = () => {
                     
                     if (jersey.images && jersey.images.length > 0) {
                       const img = jersey.images[0];
-                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                      imageUrl = img.startsWith('uploads/') ? `${API}/${img}` : `${API}/images/${img}`;
                     } else if (jersey.front_photo_url) {
                       const img = jersey.front_photo_url;
-                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                      imageUrl = img.startsWith('uploads/') ? `${API}/${img}` : `${API}/images/${img}`;
                     }
                     
                     return imageUrl ? (
