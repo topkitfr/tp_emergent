@@ -2558,7 +2558,6 @@ const AppContent = () => {
       {currentView === 'collection' && (
         <CollectionPage API={API} />
       )}
-      {currentView === 'profile' && <ProfilePage />}
       {currentView === 'admin' && <AdminPanel />}
 
       {/* Auth Modal */}
