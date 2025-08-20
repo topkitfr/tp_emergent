@@ -26,10 +26,10 @@ from datetime import datetime
 # Configuration
 BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
 
-# Données de test
+# Données de test - trying different credentials based on test_result.md
 USER_CREDENTIALS = {
     "email": "steinmetzlivio@gmail.com",
-    "password": "TopKit123!"
+    "password": "123"
 }
 
 ADMIN_CREDENTIALS = {
