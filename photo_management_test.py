@@ -189,26 +189,33 @@ class TopKitPhotoManagementTester:
             if response.status_code == 200:
                 result = response.json()
                 
-                if 'jersey' in result and 'photos_uploaded' in result:
-                    jersey = result['jersey']
+                if 'message' in result and 'photos_uploaded' in result:
                     photos_uploaded = result['photos_uploaded']
                     
-                    # Check that new front photo was uploaded and back photo was removed
-                    front_uploaded = jersey.get('front_photo_url') is not None and jersey.get('front_photo_url') != ""
-                    back_removed = jersey.get('back_photo_url') is None or jersey.get('back_photo_url') == ""
-                    
-                    # Verify new front photo has proper filename format
-                    front_url = jersey.get('front_photo_url', '')
-                    proper_filename = f"jersey_{self.test_jersey_id}_front_" in front_url
-                    
-                    if front_uploaded and back_removed and photos_uploaded == 1 and proper_filename:
-                        self.log_result("Photo Replacement", True, f"New front photo uploaded ({front_url}), back photo removed, photos_uploaded=1")
-                        return True
+                    # Get the updated jersey to check photo state
+                    jersey_response = self.session.get(f"{BACKEND_URL}/jerseys/{self.test_jersey_id}")
+                    if jersey_response.status_code == 200:
+                        jersey = jersey_response.json()
+                        images = jersey.get('images', [])
+                        
+                        # Check that new front photo was uploaded and back photo was removed
+                        front_images = [img for img in images if 'front' in img]
+                        back_images = [img for img in images if 'back' in img]
+                        
+                        # Verify new front photo has proper filename format
+                        front_proper = len(front_images) > 0 and f"jersey_{self.test_jersey_id}_front_" in front_images[0]
+                        
+                        if len(front_images) > 0 and len(back_images) == 0 and photos_uploaded == 1 and front_proper:
+                            self.log_result("Photo Replacement", True, f"New front photo uploaded ({front_images[0]}), back photo removed, photos_uploaded=1")
+                            return True
+                        else:
+                            self.log_result("Photo Replacement", False, f"Unexpected state: front_images={front_images}, back_images={back_images}, uploaded={photos_uploaded}")
+                            return False
                     else:
-                        self.log_result("Photo Replacement", False, f"Unexpected state: front={front_url}, back={jersey.get('back_photo_url')}, uploaded={photos_uploaded}")
+                        self.log_result("Photo Replacement", False, f"Failed to get updated jersey: HTTP {jersey_response.status_code}")
                         return False
                 else:
-                    self.log_result("Photo Replacement", False, "Missing required response fields")
+                    self.log_result("Photo Replacement", False, f"Missing required response fields: {result}")
                     return False
             else:
                 self.log_result("Photo Replacement", False, f"HTTP {response.status_code}: {response.text}")
