@@ -158,7 +158,7 @@ class TopKitBackendTester:
                 "description": "Maillot de test avec photos réalistes - Haaland #9 - Edition spéciale Champions League"
             }
             
-            response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data)
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
             
             if response.status_code == 201:
                 jersey = response.json()
