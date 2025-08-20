@@ -661,7 +661,7 @@ const AppContent = () => {
                 className="hover:opacity-80 transition-opacity"
               >
                 <img 
-                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTIwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8dGV4dCB4PSI2MCIgeT0iMjgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzAwMDAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VE9QS0lUPC90ZXh0Pgo8L3N2Zz4K" 
+                  src="https://customer-assets.emergentagent.com/job_kit-explorer/artifacts/uumlohms_topkit_logo.png" 
                   alt="TOPKIT" 
                   className="h-8 md:h-10"
                 />
