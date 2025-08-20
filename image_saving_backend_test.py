@@ -15,8 +15,8 @@ import io
 
 # Configuration
 BACKEND_URL = "https://ba1f7c9d-08ba-457a-aac6-9b62a210f10b.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "TopKit123!"
+TEST_USER_EMAIL = "topkitfr@gmail.com"
+TEST_USER_PASSWORD = "TopKitSecure789#"
 
 class TopKitImageSavingTester:
     def __init__(self):
