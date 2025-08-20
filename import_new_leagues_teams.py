@@ -416,7 +416,7 @@ class NewTopKitImporter:
                     ) as alt_response:
                         if alt_response.status == 200:
                             alt_data = await alt_response.json()
-                            self.token = alt_data.get("access_token")
+                            self.token = alt_data.get("token") or alt_data.get("access_token")
                             print("✅ Authentification réussie (endpoint alternatif)")
                             return True
                         else:
