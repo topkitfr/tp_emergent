@@ -1624,7 +1624,7 @@ const AppContent = () => {
 
     return (
       <div className="max-w-7xl mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">Explorez les maillots</h1>
+        <h1 className="text-2xl font-bold mb-6 text-black">Explorez les maillots</h1>
         
         {/* Filtres */}
         <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
