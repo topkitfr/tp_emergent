@@ -92,16 +92,12 @@ class TopKitBackendTester:
             
             response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
             
-            if response.status_code == 201:
+            if response.status_code == 200:
                 jersey = response.json()
                 jersey_id = jersey.get('id')
                 
-                # Now update the jersey directly in database with images array format
-                # Since we can't directly access MongoDB, we'll simulate this by creating another jersey
-                # with the photo URLs set manually
-                
                 self.log_test("Create Test Jersey Format 1 (Images Array)", True,
-                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}")
+                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}, Ref: {jersey.get('reference_number')}")
                 return jersey_id
             else:
                 self.log_test("Create Test Jersey Format 1 (Images Array)", False,
