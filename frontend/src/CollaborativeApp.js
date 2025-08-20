@@ -71,13 +71,13 @@ const CollaborativeApp = () => {
   const loadCollaborativeData = async () => {
     setLoading(true);
     try {
-      // Load basic data for all entities
+      // Load basic data for all entities (removing limits to get all data)
       const [teamsRes, brandsRes, playersRes, competitionsRes, masterJerseysRes] = await Promise.all([
-        fetch(`${API}/api/teams?limit=50`),
-        fetch(`${API}/api/brands?limit=50`),
-        fetch(`${API}/api/players?limit=50`),
-        fetch(`${API}/api/competitions?limit=50`),
-        fetch(`${API}/api/master-jerseys?limit=50`)
+        fetch(`${API}/api/teams`),
+        fetch(`${API}/api/brands`),
+        fetch(`${API}/api/players`),
+        fetch(`${API}/api/competitions`),
+        fetch(`${API}/api/master-jerseys`)
       ]);
 
       if (teamsRes.ok) setTeams(await teamsRes.json());
