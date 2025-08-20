@@ -35,7 +35,7 @@ const CollectionPage = ({ API }) => {
   const loadCollection = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/collections/my-owned`, {
+      const response = await fetch(`${API}/api/collections/my-owned`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
