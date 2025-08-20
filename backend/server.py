@@ -8682,7 +8682,7 @@ async def get_competitions(
     search: Optional[str] = None,
     country: Optional[str] = None,
     competition_type: Optional[str] = None,
-    limit: int = 100
+    limit: int = 1000
 ):
     """Get competitions with optional filters"""
     query = {}
