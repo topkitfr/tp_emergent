@@ -3014,6 +3014,8 @@ async def edit_jersey(
     description: str = Form(""),
     front_photo: UploadFile = File(None),
     back_photo: UploadFile = File(None),
+    remove_front_photo: str = Form(None),  # Ajouté pour suppression
+    remove_back_photo: str = Form(None),   # Ajouté pour suppression
     moderator_id: str = Depends(get_current_moderator_or_admin)
 ):
     """Edit a pending or needs_modification jersey"""
