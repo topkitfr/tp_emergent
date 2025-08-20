@@ -1850,13 +1850,13 @@ const AppContent = () => {
                       </div>
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => handleAddToCollection(jersey.id, 'owned')}
+                          onClick={() => toggleCollectionItem(jersey, 'owned')}
                           className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200"
                         >
                           Own
                         </button>
                         <button 
-                          onClick={() => handleAddToCollection(jersey.id, 'wanted')}
+                          onClick={() => toggleCollectionItem(jersey, 'wanted')}
                           className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200"
                         >
                           Want
