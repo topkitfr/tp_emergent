@@ -2481,8 +2481,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Jersey Photos for Explorer Display Verification"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
