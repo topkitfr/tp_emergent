@@ -78,18 +78,9 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
         console.log('Add to collection:', jersey);
         break;
       case 'removeFromWishlist':
-        try {
-          const response = await fetch(`${API}/api/wishlist/${jersey.id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-          if (response.ok) {
-            loadWishlist(); // Reload wishlist
-          }
-        } catch (error) {
-          console.error('Error removing from wishlist:', error);
+        // Use the passed function
+        if (handleRemoveCollectionItem) {
+          await handleRemoveCollectionItem(jersey, 'wanted');
         }
         break;
     }
