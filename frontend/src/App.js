@@ -430,9 +430,19 @@ const AppContent = () => {
     setUserSubmissions([]);
   };
 
-  // UI handlers
+  // UI handlers - Improved search
   const handleSearch = (term) => {
     setSearchTerm(term);
+    
+    // Si on tape quelque chose et qu'on appuie sur Entrée ou après un délai, rediriger vers exploration
+    if (term.trim().length > 2 && currentView !== 'explore') {
+      // Petit délai pour éviter de rediriger à chaque caractère tapé
+      setTimeout(() => {
+        if (searchTerm === term && term.trim().length > 2) {
+          setCurrentView('explore');
+        }
+      }, 800); // 800ms de délai
+    }
   };
 
   const handleFilterChange = (newFilters) => {
