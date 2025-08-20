@@ -159,10 +159,14 @@ class TopKitDataValidator:
             import motor.motor_asyncio
             import os
             
-            # Connexion MongoDB
-            mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/topkit_db')
+            # Connexion MongoDB avec les bonnes valeurs d'environnement
+            mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+            db_name = os.environ.get('DB_NAME', 'topkit')
+            
             client = motor.motor_asyncio.AsyncIOMotorClient(mongo_url)
-            db = client.topkit_db
+            db = client[db_name]
+            
+            print(f"🔗 Connexion MongoDB: {mongo_url}/{db_name}")
             
             # Mise à jour en masse des équipes
             teams_result = await db.teams.update_many(
@@ -229,6 +233,8 @@ class TopKitDataValidator:
             
         except Exception as e:
             print(f"❌ Erreur validation en masse: {str(e)}")
+            import traceback
+            print(f"📋 Traceback: {traceback.format_exc()}")
             self.stats['errors'].append(f"Erreur validation database: {str(e)}")
             return False
 
