@@ -1474,7 +1474,7 @@ const AppContent = () => {
                       </div>
                     </>
                   ) : viewMode === 'thumbnail' ? (
-                    <>
+                    <div className="aspect-square bg-white rounded-lg overflow-hidden border border-gray-200 relative">
                       <div className="aspect-square bg-gray-100 flex items-center justify-center">
                         {(() => {
                           let imageUrl = null;
@@ -1493,22 +1493,24 @@ const AppContent = () => {
                               src={imageUrl}
                               alt={`${jersey.team} ${jersey.season}`}
                               className="w-full h-full object-cover"
+                              style={{aspectRatio: '1'}}
                               onError={(e) => {
                                 e.target.style.display = 'none';
                                 e.target.nextSibling.style.display = 'flex';
                               }}
                             />
                           ) : (
-                            <div className="text-2xl">👕</div>
+                            <div className="text-3xl">👕</div>
                           );
                         })()}
-                        <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                        <div className="text-3xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
                       </div>
-                      <div className="p-2 text-center">
-                        <h3 className="text-xs font-semibold text-black truncate">{jersey.team}</h3>
-                        <p className="text-xs text-gray-500 truncate">{jersey.season}</p>
+                      {/* Overlay texte en bas */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2">
+                        <h3 className="text-xs font-semibold truncate leading-tight">{jersey.team}</h3>
+                        <p className="text-xs opacity-80 truncate leading-tight">{jersey.season}</p>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <>
                       <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-lg flex-shrink-0">
