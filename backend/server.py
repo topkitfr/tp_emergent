@@ -8547,6 +8547,74 @@ async def get_team(team_id: str):
         total_collectors=0
     )
 
+@api_router.put("/teams/{team_id}", response_model=TeamResponse)
+async def update_team(
+    team_id: str,
+    team_update: TeamCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update team details"""
+    # Vérifier que l'équipe existe
+    existing_team = await db.teams.find_one({"id": team_id})
+    if not existing_team:
+        raise HTTPException(status_code=404, detail="Équipe non trouvée")
+    
+    # Vérifier les doublons (sauf pour l'équipe actuelle)
+    if team_update.name != existing_team.get('name'):
+        duplicate_check = await db.teams.find_one({
+            "$and": [
+                {"id": {"$ne": team_id}},
+                {
+                    "$or": [
+                        {"name": {"$regex": f"^{team_update.name}$", "$options": "i"}},
+                        {"short_name": {"$regex": f"^{team_update.short_name}$", "$options": "i"}} if team_update.short_name else {"id": None}
+                    ]
+                }
+            ]
+        })
+        
+        if duplicate_check:
+            raise HTTPException(status_code=400, detail="Une équipe avec ce nom existe déjà")
+    
+    # Préparer les données de mise à jour
+    from datetime import datetime
+    update_data = team_update.dict()
+    update_data.update({
+        "last_modified_at": datetime.utcnow(),
+        "last_modified_by": current_user["id"],
+        "modification_count": existing_team.get("modification_count", 0) + 1
+    })
+    
+    # Mettre à jour dans la base
+    result = await db.teams.update_one(
+        {"id": team_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Échec de mise à jour")
+    
+    # Récupérer l'équipe mise à jour
+    updated_team = await db.teams.find_one({"id": team_id})
+    updated_team.pop('_id', None)
+    
+    # Enrichir avec données
+    jerseys_count = await db.master_jerseys.count_documents({"team_id": team_id})
+    
+    league_info = None
+    if updated_team.get("league_id"):
+        league = await db.competitions.find_one({"id": updated_team["league_id"]})
+        if league:
+            league.pop('_id', None)
+            league_info = {"id": league["id"], "name": league["name"]}
+    
+    return TeamResponse(
+        **updated_team,
+        league_info=league_info,
+        master_jerseys_count=jerseys_count,
+        total_collectors=0
+    )
+
 # ================================
 # BRANDS API
 # ================================
