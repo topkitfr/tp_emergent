@@ -124,6 +124,16 @@ class MasterJerseyTester:
     def create_brand(self, name, country):
         """Create a brand for testing"""
         try:
+            # First check if brand already exists
+            response = self.session.get(f"{BACKEND_URL}/brands")
+            if response.status_code == 200:
+                brands = response.json()
+                for brand in brands:
+                    if brand.get("name") == name:
+                        self.log_test(f"Create Brand: {name}", True, f"Using existing brand - ID: {brand.get('id')}, Ref: {brand.get('topkit_reference')}")
+                        return brand
+            
+            # Create new brand if not exists
             brand_data = {
                 "name": name,
                 "official_name": f"{name} Inc.",
@@ -135,8 +145,19 @@ class MasterJerseyTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.log_test(f"Create Brand: {name}", True, f"ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
+                self.log_test(f"Create Brand: {name}", True, f"Created new brand - ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
                 return data
+            elif response.status_code == 400 and "existe déjà" in response.text:
+                # Try to find existing brand
+                response = self.session.get(f"{BACKEND_URL}/brands")
+                if response.status_code == 200:
+                    brands = response.json()
+                    for brand in brands:
+                        if name.lower() in brand.get("name", "").lower():
+                            self.log_test(f"Create Brand: {name}", True, f"Found existing brand - ID: {brand.get('id')}, Ref: {brand.get('topkit_reference')}")
+                            return brand
+                self.log_test(f"Create Brand: {name}", False, f"Brand exists but couldn't retrieve: {response.text}")
+                return None
             else:
                 self.log_test(f"Create Brand: {name}", False, f"HTTP {response.status_code}: {response.text}")
                 return None
