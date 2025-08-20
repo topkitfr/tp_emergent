@@ -3047,19 +3047,49 @@ async def edit_jersey(
         else:
             updated_images.append(image)  # Garder l'image existante
     
+    # Initialize update_data early so it can be used in photo processing
+    update_data = {}
+    
     # Ajouter les nouvelles photos uploadées
     if front_photo and front_photo.filename:
-        # Save front photo (using same logic as jersey submission)
+        # Create directory if it doesn't exist
+        upload_dir = f"../frontend/public/uploads/jerseys/{jersey_id}"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Save the actual file
+        front_filename = f"front_{int(time.time())}.{front_photo.filename.split('.')[-1]}"
+        file_path = os.path.join(upload_dir, front_filename)
+        
+        # Read and save the file content
         front_content = await front_photo.read()
-        front_filename = f"jersey_{jersey_id}_front_{int(time.time())}.{front_photo.filename.split('.')[-1]}"
-        # For now, store the filename (in production, this would be uploaded to cloud storage)
-        updated_images.append(front_filename)
+        with open(file_path, "wb") as f:
+            f.write(front_content)
+        
+        # Add to images array (legacy format)
+        updated_images.append(f"jersey_{jersey_id}_front_{int(time.time())}.{front_photo.filename.split('.')[-1]}")
+        # Also update the individual URL field (new format)
+        update_data["front_photo_url"] = f"uploads/jerseys/{jersey_id}/{front_filename}"
+        print(f"📸 Admin front photo saved: {file_path}")
     
     if back_photo and back_photo.filename:
-        # Save back photo
+        # Create directory if it doesn't exist
+        upload_dir = f"../frontend/public/uploads/jerseys/{jersey_id}"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Save the actual file
+        back_filename = f"back_{int(time.time())}.{back_photo.filename.split('.')[-1]}"
+        file_path = os.path.join(upload_dir, back_filename)
+        
+        # Read and save the file content
         back_content = await back_photo.read()
-        back_filename = f"jersey_{jersey_id}_back_{int(time.time())}.{back_photo.filename.split('.')[-1]}"
-        updated_images.append(back_filename)
+        with open(file_path, "wb") as f:
+            f.write(back_content)
+        
+        # Add to images array (legacy format)
+        updated_images.append(f"jersey_{jersey_id}_back_{int(time.time())}.{back_photo.filename.split('.')[-1]}")
+        # Also update the individual URL field (new format) 
+        update_data["back_photo_url"] = f"uploads/jerseys/{jersey_id}/{back_filename}"
+        print(f"📸 Admin back photo saved: {file_path}")
     
     # Update jersey with edited data using new structure
     update_data = {
