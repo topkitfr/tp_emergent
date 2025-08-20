@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-BASE_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-wiki.preview.emergentagent.com/api"
 
 def authenticate_user():
     """Authenticate as regular user"""

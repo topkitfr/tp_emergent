@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Using correct backend URL from frontend .env
-BASE_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-wiki.preview.emergentagent.com/api"
 
 class AuthDebugTester:
     def __init__(self):

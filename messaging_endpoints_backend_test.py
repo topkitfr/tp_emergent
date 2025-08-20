@@ -27,7 +27,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-wiki.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {
