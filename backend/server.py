@@ -39,6 +39,16 @@ import base64
 from email_service import gmail_service
 from email_manager import email_manager
 
+# Import collaborative models
+from collaborative_models import (
+    Team, Brand, Player, Competition, MasterJersey, JerseyRelease,
+    Contribution, Vote, DuplicateDetection, EntityHistory,
+    TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate,
+    MasterJerseyCreate, JerseyReleaseCreate, ContributionCreate,
+    TeamResponse, MasterJerseyResponse,
+    ContributionStatus, VerificationLevel, EntityType
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
