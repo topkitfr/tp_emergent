@@ -34,6 +34,17 @@ USER_CREDENTIALS = {
     "password": "123"
 }
 
+# Alternative credentials to try
+ALT_ADMIN_CREDENTIALS = {
+    "email": "topkitfr@gmail.com",
+    "password": "TopKitSecure789#"
+}
+
+ALT_USER_CREDENTIALS = {
+    "email": "steinmetzlivio@gmail.com",
+    "password": "TopKit123!"
+}
+
 class TopKitBackendTester:
     def __init__(self):
         self.admin_token = None
