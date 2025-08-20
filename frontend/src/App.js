@@ -1849,10 +1849,16 @@ const AppContent = () => {
                         {jersey.player && <p className="text-sm text-blue-600">{jersey.player}</p>}
                       </div>
                       <div className="flex gap-2">
-                        <button className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200">
+                        <button 
+                          onClick={() => handleAddToCollection(jersey.id, 'owned')}
+                          className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200"
+                        >
                           Own
                         </button>
-                        <button className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200">
+                        <button 
+                          onClick={() => handleAddToCollection(jersey.id, 'wanted')}
+                          className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200"
+                        >
                           Want
                         </button>
                       </div>
