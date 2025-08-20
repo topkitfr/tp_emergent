@@ -1222,6 +1222,11 @@ const AppContent = () => {
                   placeholder="Rechercher un maillot..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchTerm.trim().length > 0) {
+                      setCurrentView('explore');
+                    }
+                  }}
                   className="w-full bg-white text-black px-6 py-4 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-black text-lg"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4">
