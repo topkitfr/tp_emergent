@@ -1268,7 +1268,28 @@ const AppContent = () => {
                 ) : (
                   <>
                     <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <div className="text-2xl">👕</div>
+                      {jersey.images && jersey.images.length > 0 ? (
+                        <img 
+                          src={jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`}
+                          alt={`${jersey.team} ${jersey.season}`}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : jersey.front_photo_url ? (
+                        <img 
+                          src={jersey.front_photo_url.startsWith('uploads/') ? `/${jersey.front_photo_url}` : `/images/${jersey.front_photo_url}`}
+                          alt={`${jersey.team} ${jersey.season}`}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="text-2xl" style={{display: jersey.images?.length > 0 || jersey.front_photo_url ? 'none' : 'block'}}>👕</div>
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-black mb-1">
