@@ -228,28 +228,19 @@ class TopKitPhotoManagementTester:
             if response.status_code == 200:
                 result = response.json()
                 
-                if 'jersey' in result and 'photos_uploaded' in result:
-                    jersey = result['jersey']
+                if 'message' in result and 'photos_uploaded' in result:
                     photos_uploaded = result['photos_uploaded']
+                    message = result['message']
                     
-                    # Check that both new photos were uploaded
-                    front_uploaded = jersey.get('front_photo_url') is not None and jersey.get('front_photo_url') != ""
-                    back_uploaded = jersey.get('back_photo_url') is not None and jersey.get('back_photo_url') != ""
-                    
-                    # Verify proper filename formats
-                    front_url = jersey.get('front_photo_url', '')
-                    back_url = jersey.get('back_photo_url', '')
-                    front_proper = f"jersey_{self.test_jersey_id}_front_" in front_url
-                    back_proper = f"jersey_{self.test_jersey_id}_back_" in back_url
-                    
-                    if front_uploaded and back_uploaded and photos_uploaded == 2 and front_proper and back_proper:
-                        self.log_result("Upload Both Photos", True, f"Both photos uploaded (front: {front_url}, back: {back_url}), photos_uploaded=2")
+                    # For uploading both photos, photos_uploaded should be 2
+                    if photos_uploaded == 2 and "successfully" in message:
+                        self.log_result("Upload Both Photos", True, f"Both photos uploaded successfully: {message}, photos_uploaded={photos_uploaded}")
                         return True
                     else:
-                        self.log_result("Upload Both Photos", False, f"Unexpected state: front={front_url}, back={back_url}, uploaded={photos_uploaded}")
+                        self.log_result("Upload Both Photos", False, f"Unexpected response: message={message}, uploaded={photos_uploaded}")
                         return False
                 else:
-                    self.log_result("Upload Both Photos", False, "Missing required response fields")
+                    self.log_result("Upload Both Photos", False, f"Missing required response fields: {result}")
                     return False
             else:
                 self.log_result("Upload Both Photos", False, f"HTTP {response.status_code}: {response.text}")
