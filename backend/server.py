@@ -80,6 +80,9 @@ ACCOUNT_CREATION_WINDOW = 3600  # 1 hour in seconds
 # Email verification tokens storage (in production, use Redis or database)
 email_verification_tokens = {}
 
+# Password reset tokens storage (in production, use Redis or database)
+password_reset_tokens = {}
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'topkit-secret-key-2024')
 
 # Logger setup
