@@ -8,7 +8,7 @@ import json
 import uuid
 from datetime import datetime
 
-BASE_URL = "https://kit-explorer.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-hub-2.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
 
