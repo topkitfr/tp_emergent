@@ -109,18 +109,18 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les prochaines sorties Section */}
+      {/* Les dernières contributions Section */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Les prochaines sorties maillots 👀
+              Les dernières contributions à la base 🔥
             </h2>
             <button
               onClick={() => onViewChange('teams')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Voir les équipes
+              Voir les contributions
             </button>
           </div>
           
@@ -146,10 +146,9 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   </div>
                   <div className="flex-2">
                     <h3 className="font-semibold text-gray-900 mb-1">{team.name}</h3>
-                    <p className="text-sm text-gray-500 mb-2">Nouveau maillot 2025</p>
+                    <p className="text-sm text-gray-500 mb-2">Nouvelle équipe documentée</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      À partir de<br />
-                      150€
+                      <span className="text-green-600">+5 maillots référencés</span>
                     </p>
                   </div>
                 </div>
