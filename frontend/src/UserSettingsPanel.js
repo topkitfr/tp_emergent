@@ -248,6 +248,62 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold">Informations du profil</h3>
                 
+                {/* Profile Picture Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Photo de profil</label>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
+                        {profileData.profile_picture_url ? (
+                          <img 
+                            src={`${API}/${profileData.profile_picture_url}`}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : (
+                          <div className="text-2xl text-gray-400">👤</div>
+                        )}
+                        <div className="text-2xl text-gray-400" style={{display: profileData.profile_picture_url ? 'none' : 'flex'}}>👤</div>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <input
+                          type="file"
+                          id="profile-picture-upload-settings"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={handleProfilePictureUpload}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('profile-picture-upload-settings').click()}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          {profileData.profile_picture_url ? 'Changer la photo' : 'Ajouter une photo'}
+                        </button>
+                        {profileData.profile_picture_url && (
+                          <button
+                            type="button"
+                            onClick={handleDeleteProfilePicture}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          >
+                            Supprimer
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {profilePictureLoading && (
+                      <div className="mt-2 text-sm text-gray-500">Téléchargement en cours...</div>
+                    )}
+                    {profilePictureError && (
+                      <div className="mt-2 text-sm text-red-600">{profilePictureError}</div>
+                    )}
+                  </div>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
