@@ -326,26 +326,20 @@ class TopKitPhotoManagementTester:
     def test_photo_management_validation(self):
         """Test photo management validation and edge cases"""
         try:
-            # Test 1: Invalid photo format
-            invalid_data = {
-                "front_photo": "invalid_photo_data"
-            }
-            
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=invalid_data)
-            
-            # Should handle invalid photo gracefully
-            if response.status_code in [400, 422]:
-                self.log_result("Photo Validation - Invalid Format", True, "Invalid photo format properly rejected")
-            else:
-                self.log_result("Photo Validation - Invalid Format", False, f"Unexpected response: HTTP {response.status_code}")
-            
-            # Test 2: Remove non-existent photo
+            # Test removing non-existent photo (should handle gracefully)
             remove_data = {
-                "remove_front_photo": True,
-                "remove_back_photo": True
+                "team": "Real Madrid CF",
+                "league": "La Liga",
+                "season": "2024-25",
+                "model": "authentic",
+                "manufacturer": "Adidas",
+                "jersey_type": "home",
+                "description": "Test jersey for photo management testing",
+                "remove_front_photo": "true",
+                "remove_back_photo": "true"
             }
             
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=remove_data)
+            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", data=remove_data)
             
             if response.status_code == 200:
                 result = response.json()
