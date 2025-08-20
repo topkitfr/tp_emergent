@@ -1680,62 +1680,7 @@ const AppContent = () => {
       switch (activeTab) {
         case 'collection':
           return (
-            <div>
-              <div className="bg-white rounded-lg p-6 border border-gray-200">
-                <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
-                  <span className="mr-2">✓</span>
-                  Maillots possédés ({userCollections.owned?.length || 0})
-                </h4>
-                {userCollections.owned?.length > 0 ? (
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {userCollections.owned.map((item) => (
-                      <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="font-medium text-black">
-                              {item.jersey?.team || 'Équipe inconnue'}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
-                            </div>
-                            {item.jersey?.player && (
-                              <div className="text-sm text-gray-500 mt-1">
-                                {item.jersey.player}
-                              </div>
-                            )}
-                            <div className="text-sm text-gray-500 mt-1">
-                              Taille: {item.size} • État: {item.condition}
-                            </div>
-                          </div>
-                          <div className="flex flex-col space-y-1 ml-3">
-                            <button
-                              onClick={() => handleViewCollectionItem(item)}
-                              className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
-                              title="Voir les détails"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleRemoveCollectionItem(item, 'owned')}
-                              className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
-                              title="Supprimer de ma collection"
-                            >
-                              Suppr
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-600">
-                    <div className="text-4xl mb-2">👕</div>
-                    <p>Votre collection est vide</p>
-                    <p className="text-sm">Ajoutez vos premiers maillots à votre collection</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CollectionTabContent />
           );
 
         case 'wishlist':
