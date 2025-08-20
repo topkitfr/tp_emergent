@@ -8,7 +8,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 // Check if we want to use the collaborative version
 const useCollaborativeVersion = window.location.search.includes('collaborative') || 
                                localStorage.getItem('use_collaborative') === 'true' ||
-                               true; // Default to collaborative for now
+                               false; // Temporarily disable collaborative for testing
 
 if (useCollaborativeVersion) {
   console.log('🚀 Starting TopKit Collaborative App');
