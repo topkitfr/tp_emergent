@@ -1,5 +1,373 @@
 #!/usr/bin/env python3
 """
+TopKit Password Reset Functionality Backend Testing
+Testing the "forgot password" functionality that was just implemented.
+
+Focus Areas:
+1. POST /api/auth/forgot-password - with email steinmetzlivio@gmail.com
+2. POST /api/auth/reset-password - needs valid token
+3. Test validation and error handling
+4. Ensure security (doesn't reveal if email exists)
+"""
+
+import requests
+import json
+import time
+import sys
+from datetime import datetime
+
+# Configuration
+BACKEND_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+TEST_EMAIL = "steinmetzlivio@gmail.com"
+TEST_PASSWORD = "T0p_Mdp_1288*"
+INVALID_EMAIL = "nonexistent@example.com"
+
+class PasswordResetTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.test_results = []
+        self.total_tests = 0
+        self.passed_tests = 0
+        
+    def log_test(self, test_name, success, details=""):
+        """Log test results"""
+        self.total_tests += 1
+        if success:
+            self.passed_tests += 1
+            status = "✅ PASS"
+        else:
+            status = "❌ FAIL"
+        
+        result = f"{status}: {test_name}"
+        if details:
+            result += f" - {details}"
+        
+        print(result)
+        self.test_results.append({
+            'test': test_name,
+            'success': success,
+            'details': details,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    def test_forgot_password_valid_email(self):
+        """Test forgot password with valid email"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                json={"email": TEST_EMAIL},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_message = "Si cette adresse email existe dans notre système, vous recevrez un lien de réinitialisation."
+                
+                if data.get("message") == expected_message:
+                    self.log_test("Forgot Password - Valid Email", True, 
+                                f"HTTP {response.status_code}, correct security message")
+                    return True
+                else:
+                    self.log_test("Forgot Password - Valid Email", False, 
+                                f"HTTP {response.status_code}, unexpected message: {data.get('message')}")
+                    return False
+            else:
+                self.log_test("Forgot Password - Valid Email", False, 
+                            f"HTTP {response.status_code}, expected 200")
+                return False
+                
+        except Exception as e:
+            self.log_test("Forgot Password - Valid Email", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_forgot_password_invalid_email(self):
+        """Test forgot password with invalid email - should return same message for security"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                json={"email": INVALID_EMAIL},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_message = "Si cette adresse email existe dans notre système, vous recevrez un lien de réinitialisation."
+                
+                if data.get("message") == expected_message:
+                    self.log_test("Forgot Password - Invalid Email Security", True, 
+                                f"HTTP {response.status_code}, same message as valid email (secure)")
+                    return True
+                else:
+                    self.log_test("Forgot Password - Invalid Email Security", False, 
+                                f"HTTP {response.status_code}, different message reveals email existence")
+                    return False
+            else:
+                self.log_test("Forgot Password - Invalid Email Security", False, 
+                            f"HTTP {response.status_code}, expected 200")
+                return False
+                
+        except Exception as e:
+            self.log_test("Forgot Password - Invalid Email Security", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_forgot_password_malformed_email(self):
+        """Test forgot password with malformed email"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                json={"email": "not-an-email"},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            # Should return validation error
+            if response.status_code == 422:
+                self.log_test("Forgot Password - Malformed Email Validation", True, 
+                            f"HTTP {response.status_code}, proper validation error")
+                return True
+            else:
+                self.log_test("Forgot Password - Malformed Email Validation", False, 
+                            f"HTTP {response.status_code}, expected 422 validation error")
+                return False
+                
+        except Exception as e:
+            self.log_test("Forgot Password - Malformed Email Validation", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_forgot_password_missing_email(self):
+        """Test forgot password with missing email field"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/forgot-password",
+                json={},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            # Should return validation error
+            if response.status_code == 422:
+                self.log_test("Forgot Password - Missing Email Field", True, 
+                            f"HTTP {response.status_code}, proper validation error")
+                return True
+            else:
+                self.log_test("Forgot Password - Missing Email Field", False, 
+                            f"HTTP {response.status_code}, expected 422 validation error")
+                return False
+                
+        except Exception as e:
+            self.log_test("Forgot Password - Missing Email Field", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_reset_password_invalid_token(self):
+        """Test reset password with invalid token"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                json={
+                    "token": "invalid_token_12345",
+                    "new_password": TEST_PASSWORD
+                },
+                headers={"Content-Type": "application/json"}
+            )
+            
+            # Should return error for invalid token
+            if response.status_code == 400:
+                data = response.json()
+                if "Token invalide" in data.get("detail", ""):
+                    self.log_test("Reset Password - Invalid Token", True, 
+                                f"HTTP {response.status_code}, proper token validation")
+                    return True
+                else:
+                    self.log_test("Reset Password - Invalid Token", False, 
+                                f"HTTP {response.status_code}, unexpected error message: {data.get('detail')}")
+                    return False
+            else:
+                self.log_test("Reset Password - Invalid Token", False, 
+                            f"HTTP {response.status_code}, expected 400")
+                return False
+                
+        except Exception as e:
+            self.log_test("Reset Password - Invalid Token", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_reset_password_weak_password(self):
+        """Test reset password with weak password"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                json={
+                    "token": "dummy_token",  # Will fail on token validation first
+                    "new_password": "123"  # Weak password
+                },
+                headers={"Content-Type": "application/json"}
+            )
+            
+            # Should return password validation error
+            if response.status_code == 400:
+                data = response.json()
+                detail = data.get("detail", "")
+                if "mot de passe" in detail.lower() and ("caractères" in detail or "majuscule" in detail or "chiffre" in detail):
+                    self.log_test("Reset Password - Weak Password Validation", True, 
+                                f"HTTP {response.status_code}, proper password validation")
+                    return True
+                else:
+                    self.log_test("Reset Password - Weak Password Validation", False, 
+                                f"HTTP {response.status_code}, unexpected error: {detail}")
+                    return False
+            else:
+                self.log_test("Reset Password - Weak Password Validation", False, 
+                            f"HTTP {response.status_code}, expected 400")
+                return False
+                
+        except Exception as e:
+            self.log_test("Reset Password - Weak Password Validation", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_reset_password_missing_fields(self):
+        """Test reset password with missing required fields"""
+        try:
+            # Test missing token
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                json={"new_password": TEST_PASSWORD},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 422:
+                self.log_test("Reset Password - Missing Token Field", True, 
+                            f"HTTP {response.status_code}, proper validation error")
+            else:
+                self.log_test("Reset Password - Missing Token Field", False, 
+                            f"HTTP {response.status_code}, expected 422")
+                return False
+            
+            # Test missing password
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                json={"token": "dummy_token"},
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 422:
+                self.log_test("Reset Password - Missing Password Field", True, 
+                            f"HTTP {response.status_code}, proper validation error")
+                return True
+            else:
+                self.log_test("Reset Password - Missing Password Field", False, 
+                            f"HTTP {response.status_code}, expected 422")
+                return False
+                
+        except Exception as e:
+            self.log_test("Reset Password - Missing Fields", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_authentication_with_new_password(self):
+        """Test if user can authenticate with the new password (if reset was successful)"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json={
+                    "email": TEST_EMAIL,
+                    "password": TEST_PASSWORD
+                },
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data:
+                    self.log_test("Authentication - New Password", True, 
+                                f"HTTP {response.status_code}, login successful with new password")
+                    return True
+                else:
+                    self.log_test("Authentication - New Password", False, 
+                                f"HTTP {response.status_code}, no token in response")
+                    return False
+            else:
+                self.log_test("Authentication - New Password", False, 
+                            f"HTTP {response.status_code}, login failed")
+                return False
+                
+        except Exception as e:
+            self.log_test("Authentication - New Password", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_backend_connectivity(self):
+        """Test basic backend connectivity"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/jerseys")
+            if response.status_code in [200, 401, 403]:  # Any valid HTTP response
+                self.log_test("Backend Connectivity", True, f"HTTP {response.status_code}")
+                return True
+            else:
+                self.log_test("Backend Connectivity", False, f"HTTP {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("Backend Connectivity", False, f"Exception: {str(e)}")
+            return False
+    
+    def run_all_tests(self):
+        """Run all password reset tests"""
+        print("🔐 TOPKIT PASSWORD RESET FUNCTIONALITY TESTING")
+        print("=" * 60)
+        print(f"Backend URL: {BACKEND_URL}")
+        print(f"Test Email: {TEST_EMAIL}")
+        print(f"Test Time: {datetime.now().isoformat()}")
+        print("=" * 60)
+        
+        # Test backend connectivity first
+        if not self.test_backend_connectivity():
+            print("❌ Backend connectivity failed. Stopping tests.")
+            return
+        
+        # Run password reset tests
+        print("\n📧 FORGOT PASSWORD ENDPOINT TESTS:")
+        self.test_forgot_password_valid_email()
+        self.test_forgot_password_invalid_email()
+        self.test_forgot_password_malformed_email()
+        self.test_forgot_password_missing_email()
+        
+        print("\n🔑 RESET PASSWORD ENDPOINT TESTS:")
+        self.test_reset_password_invalid_token()
+        self.test_reset_password_weak_password()
+        self.test_reset_password_missing_fields()
+        
+        print("\n🔐 AUTHENTICATION TESTS:")
+        self.test_authentication_with_new_password()
+        
+        # Print summary
+        print("\n" + "=" * 60)
+        print("📊 TEST SUMMARY")
+        print("=" * 60)
+        
+        success_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
+        
+        print(f"Total Tests: {self.total_tests}")
+        print(f"Passed: {self.passed_tests}")
+        print(f"Failed: {self.total_tests - self.passed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        
+        if success_rate >= 90:
+            print("🎉 EXCELLENT - Password reset functionality working excellently!")
+        elif success_rate >= 75:
+            print("✅ GOOD - Password reset functionality mostly working with minor issues")
+        elif success_rate >= 50:
+            print("⚠️ PARTIAL - Password reset functionality partially working")
+        else:
+            print("❌ CRITICAL - Password reset functionality has major issues")
+        
+        print("\n🔍 DETAILED FINDINGS:")
+        for result in self.test_results:
+            status = "✅" if result['success'] else "❌"
+            print(f"{status} {result['test']}: {result['details']}")
+        
+        return success_rate
+
+if __name__ == "__main__":
+    tester = PasswordResetTester()
+    success_rate = tester.run_all_tests()
+    
+    # Exit with appropriate code
+    sys.exit(0 if success_rate >= 75 else 1)
+"""
 TopKit Backend Test - Jersey Photo Management for Admin Testing
 =============================================================
 
