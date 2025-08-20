@@ -978,6 +978,11 @@ const AppContent = () => {
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchTerm.trim().length > 0) {
+                      setCurrentView('explore');
+                    }
+                  }}
                   className="bg-gray-50 text-black px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent w-64"
                 />
               </div>
