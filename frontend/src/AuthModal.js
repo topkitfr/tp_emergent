@@ -157,14 +157,122 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   };
 
   const resetForm = () => {
-    setFormData({ email: '', password: '', name: '' });
+    setFormData({ 
+      email: '', 
+      password: '', 
+      name: '',
+      resetEmail: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
     setError('');
+    setSuccessMessage('');
     setLoading(false);
   };
 
   const switchMode = () => {
     setIsLogin(!isLogin);
+    setShowForgotPassword(false);
+    setShowResetForm(false);
     resetForm();
+  };
+
+  // Handle forgot password request
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.resetEmail) {
+      setError('Veuillez saisir votre adresse email');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const response = await axios.post(`${API}/api/auth/forgot-password`, {
+        email: formData.resetEmail
+      }, {
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      setSuccessMessage(response.data.message || 'Un email de réinitialisation a été envoyé si cette adresse existe dans notre système.');
+      setFormData({ ...formData, resetEmail: '' });
+      
+    } catch (error) {
+      let errorMessage = 'Erreur lors de la demande de réinitialisation';
+      
+      if (error.response && error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.request) {
+        errorMessage = 'Erreur réseau. Vérifiez votre connexion.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle password reset with token
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.newPassword || !formData.confirmPassword) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (formData.newPassword.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const response = await axios.post(`${API}/api/auth/reset-password`, {
+        token: resetToken,
+        new_password: formData.newPassword
+      }, {
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      setSuccessMessage(response.data.message || 'Mot de passe réinitialisé avec succès !');
+      
+      // Reset form and go back to login after successful reset
+      setTimeout(() => {
+        setShowResetForm(false);
+        setShowForgotPassword(false);
+        setIsLogin(true);
+        resetForm();
+      }, 2000);
+      
+    } catch (error) {
+      let errorMessage = 'Erreur lors de la réinitialisation';
+      
+      if (error.response && error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
