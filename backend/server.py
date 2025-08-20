@@ -3033,20 +3033,33 @@ async def edit_jersey(
     if model not in ["authentic", "replica"]:
         raise HTTPException(status_code=422, detail="Model must be either 'authentic' or 'replica'")
     
-    # Handle photo uploads
-    photos = []
+    # Handle photo uploads and removals
+    existing_images = existing_jersey.get("images", [])
+    updated_images = []
+    
+    # Gérer les suppressions des photos existantes
+    for image in existing_images:
+        # Garder les images qui ne sont pas marquées pour suppression
+        if 'front' in image and remove_front_photo == 'true':
+            continue  # Supprimer la photo de face
+        elif 'back' in image and remove_back_photo == 'true':
+            continue  # Supprimer la photo de dos
+        else:
+            updated_images.append(image)  # Garder l'image existante
+    
+    # Ajouter les nouvelles photos uploadées
     if front_photo and front_photo.filename:
         # Save front photo (using same logic as jersey submission)
         front_content = await front_photo.read()
         front_filename = f"jersey_{jersey_id}_front_{int(time.time())}.{front_photo.filename.split('.')[-1]}"
         # For now, store the filename (in production, this would be uploaded to cloud storage)
-        photos.append(front_filename)
+        updated_images.append(front_filename)
     
     if back_photo and back_photo.filename:
         # Save back photo
         back_content = await back_photo.read()
         back_filename = f"jersey_{jersey_id}_back_{int(time.time())}.{back_photo.filename.split('.')[-1]}"
-        photos.append(back_filename)
+        updated_images.append(back_filename)
     
     # Update jersey with edited data using new structure
     update_data = {
@@ -3063,12 +3076,9 @@ async def edit_jersey(
         "approved_at": None,
         "rejection_reason": None,
         "updated_at": datetime.utcnow(),
-        "updated_by": moderator_id
+        "updated_by": moderator_id,
+        "images": updated_images
     }
-    
-    # Add photos to update if any were uploaded
-    if photos:
-        update_data["images"] = photos
     
     result = await db.jerseys.update_one(
         {"id": jersey_id},
@@ -3092,10 +3102,10 @@ async def edit_jersey(
         "jersey_name": f"{team} {season}",
         "original_team": existing_jersey.get("team"),
         "original_season": existing_jersey.get("season"),
-        "photos_updated": len(photos) > 0
+        "photos_updated": len(updated_images) > 0
     })
     
-    return {"message": "Jersey updated successfully", "photos_uploaded": len(photos)}
+    return {"message": "Jersey updated successfully", "photos_uploaded": len(updated_images)}
 
 # User management endpoints (Admin only)
 @api_router.get("/admin/users")
