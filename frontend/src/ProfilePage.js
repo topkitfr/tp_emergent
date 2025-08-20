@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import PaginationControls from './PaginationControls';
 import JerseyDetailModal from './JerseyDetailModal';
 
-const ProfilePage = ({ user, API }) => {
+const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRemoveCollectionItem, handleViewCollectionItem }) => {
   const [activeTab, setActiveTab] = useState('info');
-  const [wishlist, setWishlist] = useState([]);
   const [filteredWishlist, setFilteredWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
   
