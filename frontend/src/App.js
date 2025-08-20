@@ -2374,7 +2374,12 @@ const AppContent = () => {
       <Header />
       
       {currentView === 'home' && <HomePage />}
-      {currentView === 'explore' && <ExplorePage />}
+      {currentView === 'explore' && (
+        <>
+          {console.log('Rendering ExplorePage, currentView:', currentView)}
+          <ExplorePage />
+        </>
+      )}
       {currentView === 'marketplace' && <MarketplacePage />}
       {currentView === 'profile' && <ProfilePage />}
       {currentView === 'admin' && <AdminPanel />}
