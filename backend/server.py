@@ -41,12 +41,12 @@ from email_manager import email_manager
 
 # Import collaborative models
 from collaborative_models import (
-    Team, Brand, Player, Competition, MasterJersey, JerseyRelease,
-    Contribution, Vote, DuplicateDetection, EntityHistory,
-    TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate,
-    MasterJerseyCreate, JerseyReleaseCreate, ContributionCreate,
+    Team, Brand, Player, Competition, MasterJersey, JerseyRelease, Contribution,
+    TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate, MasterJerseyCreate,
+    JerseyReleaseCreate, ContributionCreate,
     TeamResponse, MasterJerseyResponse,
-    ContributionStatus, VerificationLevel, EntityType
+    Vote, ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
+    ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel
 )
 
 ROOT_DIR = Path(__file__).parent
