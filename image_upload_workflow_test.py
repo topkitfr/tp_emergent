@@ -35,8 +35,8 @@ from PIL import Image
 
 # Configuration
 BACKEND_URL = "https://ba1f7c9d-08ba-457a-aac6-9b62a210f10b.preview.emergentagent.com/api"
-USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "TopKit123!"
+USER_EMAIL = "testuser.images@gmail.com"
+USER_PASSWORD = "SecureTestPass789!"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
