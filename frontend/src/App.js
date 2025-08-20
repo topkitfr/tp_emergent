@@ -2383,6 +2383,21 @@ const AppContent = () => {
           loadUserCollections={loadUserCollections}
           handleRemoveCollectionItem={handleRemoveCollectionItem}
           handleViewCollectionItem={handleViewCollectionItem}
+          userSubmissions={userSubmissions}
+          handleJerseySubmit={() => {
+            setEditingJersey({
+              team: '',
+              league: '',
+              season: '',
+              jersey_type: '',
+              manufacturer: '',
+              sku_code: '',
+              model: 'authentic',
+              description: '',
+              isNewSubmission: true
+            });
+            setShowJerseyEditor(true);
+          }}
         />
       )}
       {currentView === 'collection' && (
