@@ -1141,17 +1141,6 @@ const AppContent = () => {
                     Se connecter
                   </button>
                 )}
-
-                {/* Mobile Search */}
-                <div className="px-3 py-2">
-                  <input
-                    type="text"
-                    placeholder="Rechercher..."
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full bg-white text-black px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </div>
               </div>
             </div>
           )}
