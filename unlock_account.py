@@ -44,7 +44,7 @@ async def unlock_account():
     
     # Update the user - unlock account and update password
     update_data = {
-        "password": hashed_password,
+        "password_hash": hashed_password,  # Correct field name
         "account_locked_until": None,  # Unlock the account
         "is_banned": False,           # Ensure not banned
         "failed_login_attempts": 0,   # Reset failed attempts
