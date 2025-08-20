@@ -663,7 +663,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                   {existingPhotos.back && !photosToRemove.back && !photoPreview.back && (
                     <div className="mb-3 relative inline-block">
                       <img 
-                        src={`/images/${existingPhotos.back}`}
+                        src={existingPhotos.back.startsWith('uploads/') ? `/${existingPhotos.back}` : `/images/${existingPhotos.back}`}
                         alt="Photo de dos existante" 
                         className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                       />
