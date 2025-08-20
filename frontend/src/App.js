@@ -1093,7 +1093,7 @@ const AppContent = () => {
                         currentView === 'profile' ? 'text-black bg-gray-200' : 'text-gray-500 hover:text-black hover:bg-gray-100'
                       }`}
                     >
-                      👤 Mon Profil
+                      Mon Profil
                     </button>
                     {user.role === 'admin' && (
                       <>
