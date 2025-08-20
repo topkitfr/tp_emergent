@@ -8851,8 +8851,8 @@ async def create_master_jersey(
         team_info=team_info,
         brand_info=brand_info,
         competition_info=None,
-        total_releases=0,
-        total_collectors=0
+        releases_count=0,  # Updated to match model field
+        collectors_count=0  # Updated to match model field
     )
 
 # ================================
