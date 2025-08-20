@@ -8393,6 +8393,874 @@ async def send_newsletter(
         logger.error(f"Error sending newsletter: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de la newsletter")
 
+# ================================
+# COLLABORATIVE DATABASE API ENDPOINTS
+# ================================
+
+# Fonction utilitaire pour générer des références uniques
+async def generate_reference(entity_type: str) -> str:
+    """Generate unique reference for entities"""
+    prefixes = {
+        "team": "TK-TEAM-",
+        "brand": "TK-BRAND-", 
+        "player": "TK-PLAYER-",
+        "competition": "TK-COMP-",
+        "master_jersey": "TK-MASTER-",
+        "jersey_release": "TK-RELEASE-"
+    }
+    
+    prefix = prefixes.get(entity_type, "TK-ENTITY-")
+    
+    # Trouver le prochain numéro
+    collection_name = f"{entity_type}s"
+    last_entity = await db[collection_name].find_one(
+        {"topkit_reference": {"$regex": f"^{prefix}"}},
+        sort=[("topkit_reference", -1)]
+    )
+    
+    if last_entity:
+        last_num = int(last_entity["topkit_reference"].split("-")[-1])
+        new_num = last_num + 1
+    else:
+        new_num = 1
+        
+    return f"{prefix}{new_num:06d}"
+
+# ================================
+# TEAMS API
+# ================================
+
+@api_router.get("/teams", response_model=List[TeamResponse])
+async def get_teams(
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    league_id: Optional[str] = None,
+    verified_only: bool = False,
+    limit: int = 100
+):
+    """Get teams with optional filters"""
+    query = {}
+    
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"short_name": {"$regex": search, "$options": "i"}},
+            {"common_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+    
+    if country:
+        query["country"] = country
+        
+    if league_id:
+        query["league_id"] = league_id
+        
+    if verified_only:
+        query["verified_level"] = {"$ne": "unverified"}
+    
+    teams = await db.teams.find(query).limit(limit).to_list(length=None)
+    
+    # Enrichir avec données supplémentaires
+    enriched_teams = []
+    for team in teams:
+        team.pop('_id', None)
+        
+        # Compter les master jerseys
+        jerseys_count = await db.master_jerseys.count_documents({"team_id": team["id"]})
+        
+        # Info ligue si disponible
+        league_info = None
+        if team.get("league_id"):
+            league = await db.competitions.find_one({"id": team["league_id"]})
+            if league:
+                league.pop('_id', None)
+                league_info = {"id": league["id"], "name": league["name"]}
+        
+        enriched_team = TeamResponse(
+            **team,
+            league_info=league_info,
+            master_jerseys_count=jerseys_count,
+            total_collectors=0  # TODO: calculer depuis collections
+        )
+        enriched_teams.append(enriched_team)
+    
+    return enriched_teams
+
+@api_router.post("/teams", response_model=TeamResponse)
+async def create_team(
+    team_data: TeamCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new team"""
+    # Vérifier doublons
+    existing = await db.teams.find_one({
+        "$or": [
+            {"name": {"$regex": f"^{team_data.name}$", "$options": "i"}},
+            {"short_name": {"$regex": f"^{team_data.short_name}$", "$options": "i"}} if team_data.short_name else {"id": None}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Une équipe avec ce nom existe déjà")
+    
+    # Créer Team
+    team = Team(
+        **team_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("team")
+    )
+    
+    await db.teams.insert_one(team.dict())
+    
+    # Log activity
+    await log_user_activity(
+        current_user["id"], 
+        "team_created", 
+        team.id,
+        {"team_name": team.name, "reference": team.topkit_reference}
+    )
+    
+    return TeamResponse(**team.dict(), league_info=None, master_jerseys_count=0, total_collectors=0)
+
+@api_router.get("/teams/{team_id}", response_model=TeamResponse)
+async def get_team(team_id: str):
+    """Get team details"""
+    team = await db.teams.find_one({"id": team_id})
+    if not team:
+        raise HTTPException(status_code=404, detail="Équipe non trouvée")
+    
+    team.pop('_id', None)
+    
+    # Enrichir avec données
+    jerseys_count = await db.master_jerseys.count_documents({"team_id": team_id})
+    
+    league_info = None
+    if team.get("league_id"):
+        league = await db.competitions.find_one({"id": team["league_id"]})
+        if league:
+            league.pop('_id', None)
+            league_info = {"id": league["id"], "name": league["name"]}
+    
+    return TeamResponse(
+        **team,
+        league_info=league_info,
+        master_jerseys_count=jerseys_count,
+        total_collectors=0
+    )
+
+# ================================
+# BRANDS API
+# ================================
+
+@api_router.get("/brands")
+async def get_brands(
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    limit: int = 100
+):
+    """Get brands with optional filters"""
+    query = {}
+    
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"official_name": {"$regex": search, "$options": "i"}},
+            {"common_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+    
+    if country:
+        query["country"] = country
+    
+    brands = await db.brands.find(query).limit(limit).to_list(length=None)
+    
+    for brand in brands:
+        brand.pop('_id', None)
+    
+    return brands
+
+@api_router.post("/brands")
+async def create_brand(
+    brand_data: BrandCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new brand"""
+    # Vérifier doublons
+    existing = await db.brands.find_one({
+        "name": {"$regex": f"^{brand_data.name}$", "$options": "i"}
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Une marque avec ce nom existe déjà")
+    
+    brand = Brand(
+        **brand_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("brand")
+    )
+    
+    await db.brands.insert_one(brand.dict())
+    
+    await log_user_activity(
+        current_user["id"],
+        "brand_created", 
+        brand.id,
+        {"brand_name": brand.name, "reference": brand.topkit_reference}
+    )
+    
+    return brand.dict()
+
+# ================================
+# PLAYERS API  
+# ================================
+
+@api_router.get("/players")
+async def get_players(
+    search: Optional[str] = None,
+    nationality: Optional[str] = None,
+    position: Optional[str] = None,
+    limit: int = 100
+):
+    """Get players with optional filters"""
+    query = {}
+    
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+            {"common_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+    
+    if nationality:
+        query["nationality"] = nationality
+        
+    if position:
+        query["position"] = position
+    
+    players = await db.players.find(query).limit(limit).to_list(length=None)
+    
+    for player in players:
+        player.pop('_id', None)
+    
+    return players
+
+@api_router.post("/players")
+async def create_player(
+    player_data: PlayerCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new player"""
+    # Vérifier doublons
+    existing = await db.players.find_one({
+        "name": {"$regex": f"^{player_data.name}$", "$options": "i"}
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Un joueur avec ce nom existe déjà")
+    
+    player = Player(
+        **player_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("player")
+    )
+    
+    await db.players.insert_one(player.dict())
+    
+    await log_user_activity(
+        current_user["id"],
+        "player_created",
+        player.id,
+        {"player_name": player.name, "reference": player.topkit_reference}
+    )
+    
+    return player.dict()
+
+# ================================
+# COMPETITIONS API
+# ================================
+
+@api_router.get("/competitions")
+async def get_competitions(
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    competition_type: Optional[str] = None,
+    limit: int = 100
+):
+    """Get competitions with optional filters"""
+    query = {}
+    
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"official_name": {"$regex": search, "$options": "i"}},
+            {"common_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+    
+    if country:
+        query["country"] = country
+        
+    if competition_type:
+        query["competition_type"] = competition_type
+    
+    competitions = await db.competitions.find(query).limit(limit).to_list(length=None)
+    
+    for competition in competitions:
+        competition.pop('_id', None)
+    
+    return competitions
+
+@api_router.post("/competitions")
+async def create_competition(
+    competition_data: CompetitionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new competition"""
+    competition = Competition(
+        **competition_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("competition")
+    )
+    
+    await db.competitions.insert_one(competition.dict())
+    
+    await log_user_activity(
+        current_user["id"],
+        "competition_created",
+        competition.id,
+        {"competition_name": competition.name, "reference": competition.topkit_reference}
+    )
+    
+    return competition.dict()
+
+# ================================
+# MASTER JERSEYS API
+# ================================
+
+@api_router.get("/master-jerseys", response_model=List[MasterJerseyResponse])
+async def get_master_jerseys(
+    team_id: Optional[str] = None,
+    brand_id: Optional[str] = None,
+    season: Optional[str] = None,
+    jersey_type: Optional[str] = None,
+    competition_id: Optional[str] = None,
+    verified_only: bool = False,
+    limit: int = 100
+):
+    """Get master jerseys with optional filters"""
+    query = {}
+    
+    if team_id:
+        query["team_id"] = team_id
+    if brand_id:
+        query["brand_id"] = brand_id
+    if season:
+        query["season"] = season
+    if jersey_type:
+        query["jersey_type"] = jersey_type
+    if competition_id:
+        query["competition_id"] = competition_id
+        
+    if verified_only:
+        query["verified_level"] = {"$ne": "unverified"}
+    
+    master_jerseys = await db.master_jerseys.find(query).limit(limit).to_list(length=None)
+    
+    # Enrichir avec données liées
+    enriched_jerseys = []
+    for jersey in master_jerseys:
+        jersey.pop('_id', None)
+        
+        # Récupérer infos team, brand, competition
+        team = await db.teams.find_one({"id": jersey["team_id"]})
+        brand = await db.brands.find_one({"id": jersey["brand_id"]})
+        competition = None
+        if jersey.get("competition_id"):
+            competition = await db.competitions.find_one({"id": jersey["competition_id"]})
+        
+        # Compter releases
+        releases_count = await db.jersey_releases.count_documents({"master_jersey_id": jersey["id"]})
+        
+        team_info = {"id": team["id"], "name": team["name"], "short_name": team.get("short_name")} if team else {}
+        brand_info = {"id": brand["id"], "name": brand["name"]} if brand else {}
+        competition_info = {"id": competition["id"], "name": competition["name"]} if competition else None
+        
+        enriched_jersey = MasterJerseyResponse(
+            **jersey,
+            team_info=team_info,
+            brand_info=brand_info,
+            competition_info=competition_info,
+            total_releases=releases_count,
+            total_collectors=0  # TODO: calculer
+        )
+        enriched_jerseys.append(enriched_jersey)
+    
+    return enriched_jerseys
+
+@api_router.post("/master-jerseys", response_model=MasterJerseyResponse)
+async def create_master_jersey(
+    jersey_data: MasterJerseyCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new master jersey"""
+    # Vérifier que team et brand existent
+    team = await db.teams.find_one({"id": jersey_data.team_id})
+    brand = await db.brands.find_one({"id": jersey_data.brand_id})
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Équipe non trouvée")
+    if not brand:
+        raise HTTPException(status_code=404, detail="Marque non trouvée")
+    
+    # Vérifier doublons
+    existing = await db.master_jerseys.find_one({
+        "team_id": jersey_data.team_id,
+        "season": jersey_data.season,
+        "jersey_type": jersey_data.jersey_type
+    })
+    
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Un Master Jersey {jersey_data.jersey_type} existe déjà pour {team['name']} saison {jersey_data.season}"
+        )
+    
+    master_jersey = MasterJersey(
+        **jersey_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("master_jersey")
+    )
+    
+    await db.master_jerseys.insert_one(master_jersey.dict())
+    
+    await log_user_activity(
+        current_user["id"],
+        "master_jersey_created",
+        master_jersey.id,
+        {
+            "team_name": team["name"],
+            "season": master_jersey.season,
+            "jersey_type": master_jersey.jersey_type,
+            "reference": master_jersey.topkit_reference
+        }
+    )
+    
+    # Préparer réponse enrichie
+    team_info = {"id": team["id"], "name": team["name"], "short_name": team.get("short_name")}
+    brand_info = {"id": brand["id"], "name": brand["name"]}
+    
+    return MasterJerseyResponse(
+        **master_jersey.dict(),
+        team_info=team_info,
+        brand_info=brand_info,
+        competition_info=None,
+        total_releases=0,
+        total_collectors=0
+    )
+
+# ================================
+# JERSEY RELEASES API  
+# ================================
+
+@api_router.get("/jersey-releases")
+async def get_jersey_releases(
+    master_jersey_id: Optional[str] = None,
+    release_type: Optional[str] = None,
+    player_id: Optional[str] = None,
+    limit: int = 100
+):
+    """Get jersey releases with optional filters"""
+    query = {}
+    
+    if master_jersey_id:
+        query["master_jersey_id"] = master_jersey_id
+    if release_type:
+        query["release_type"] = release_type
+    if player_id:
+        query["player_id"] = player_id
+    
+    releases = await db.jersey_releases.find(query).limit(limit).to_list(length=None)
+    
+    # Enrichir avec master jersey info
+    for release in releases:
+        release.pop('_id', None)
+        
+        # Récupérer master jersey
+        master_jersey = await db.master_jerseys.find_one({"id": release["master_jersey_id"]})
+        if master_jersey:
+            master_jersey.pop('_id', None)
+            release["master_jersey_info"] = master_jersey
+    
+    return releases
+
+@api_router.post("/jersey-releases")
+async def create_jersey_release(
+    release_data: JerseyReleaseCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new jersey release"""
+    # Vérifier que master jersey existe
+    master_jersey = await db.master_jerseys.find_one({"id": release_data.master_jersey_id})
+    if not master_jersey:
+        raise HTTPException(status_code=404, detail="Master Jersey non trouvé")
+    
+    release = JerseyRelease(
+        **release_data.dict(),
+        created_by=current_user["id"],
+        topkit_reference=await generate_reference("jersey_release")
+    )
+    
+    await db.jersey_releases.insert_one(release.dict())
+    
+    # Mettre à jour le compteur sur le master jersey
+    await db.master_jerseys.update_one(
+        {"id": release_data.master_jersey_id},
+        {"$inc": {"total_releases": 1}}
+    )
+    
+    await log_user_activity(
+        current_user["id"],
+        "jersey_release_created",
+        release.id,
+        {
+            "master_jersey_id": release_data.master_jersey_id,
+            "release_type": release.release_type,
+            "reference": release.topkit_reference
+        }
+    )
+    
+    return release.dict()
+
+# ================================
+# CONTRIBUTIONS & COLLABORATION
+# ================================
+
+@api_router.post("/contributions")
+async def create_contribution(
+    contribution_data: ContributionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create new contribution/modification proposal"""
+    contribution = Contribution(
+        **contribution_data.dict(),
+        contributor_id=current_user["id"]
+    )
+    
+    await db.contributions.insert_one(contribution.dict())
+    
+    await log_user_activity(
+        current_user["id"],
+        "contribution_created",
+        contribution.id,
+        {
+            "entity_type": contribution.entity_type,
+            "contribution_type": contribution.contribution_type
+        }
+    )
+    
+    return contribution.dict()
+
+@api_router.get("/contributions")
+async def get_contributions(
+    entity_type: Optional[EntityType] = None,
+    status: Optional[ContributionStatus] = None,
+    contributor_id: Optional[str] = None,
+    limit: int = 50
+):
+    """Get contributions with optional filters"""
+    query = {}
+    
+    if entity_type:
+        query["entity_type"] = entity_type
+    if status:
+        query["status"] = status
+    if contributor_id:
+        query["contributor_id"] = contributor_id
+    
+    contributions = await db.contributions.find(query).limit(limit).sort("created_at", -1).to_list(length=None)
+    
+    for contrib in contributions:
+        contrib.pop('_id', None)
+    
+    return contributions
+
+@api_router.post("/contributions/{contribution_id}/vote")
+async def vote_on_contribution(
+    contribution_id: str,
+    vote_type: str,  # "upvote" or "downvote"
+    reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Vote on a contribution"""
+    if vote_type not in ["upvote", "downvote"]:
+        raise HTTPException(status_code=400, detail="Type de vote invalide")
+    
+    # Vérifier que contribution existe
+    contribution = await db.contributions.find_one({"id": contribution_id})
+    if not contribution:
+        raise HTTPException(status_code=404, detail="Contribution non trouvée")
+    
+    # Vérifier si l'utilisateur a déjà voté
+    existing_vote = await db.votes.find_one({
+        "contribution_id": contribution_id,
+        "user_id": current_user["id"]
+    })
+    
+    if existing_vote:
+        # Mettre à jour le vote existant
+        old_vote_type = existing_vote["vote_type"]
+        await db.votes.update_one(
+            {"id": existing_vote["id"]},
+            {"$set": {"vote_type": vote_type, "reason": reason}}
+        )
+        
+        # Mettre à jour les compteurs
+        if old_vote_type != vote_type:
+            if old_vote_type == "upvote":
+                await db.contributions.update_one(
+                    {"id": contribution_id},
+                    {"$inc": {"upvotes": -1, "downvotes": 1 if vote_type == "downvote" else 0}}
+                )
+            else:
+                await db.contributions.update_one(
+                    {"id": contribution_id},
+                    {"$inc": {"downvotes": -1, "upvotes": 1 if vote_type == "upvote" else 0}}
+                )
+    else:
+        # Nouveau vote
+        vote = Vote(
+            contribution_id=contribution_id,
+            user_id=current_user["id"],
+            vote_type=vote_type,
+            reason=reason
+        )
+        
+        await db.votes.insert_one(vote.dict())
+        
+        # Mettre à jour les compteurs
+        update_fields = {"total_votes": 1}
+        if vote_type == "upvote":
+            update_fields["upvotes"] = 1
+        else:
+            update_fields["downvotes"] = 1
+            
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {"$inc": update_fields}
+        )
+    
+    return {"message": "Vote enregistré avec succès"}
+
+# ================================
+# MIGRATION FROM OLD JERSEY SYSTEM
+# ================================
+
+@api_router.post("/migrate/jerseys-to-collaborative")
+async def migrate_jerseys_to_collaborative(
+    current_user: dict = Depends(get_current_user_admin)
+):
+    """Migrate existing Jersey data to collaborative system"""
+    
+    # Récupérer tous les jerseys existants
+    old_jerseys = await db.jerseys.find({"status": "approved"}).to_list(length=None)
+    
+    migration_stats = {
+        "teams_created": 0,
+        "brands_created": 0,
+        "master_jerseys_created": 0,
+        "jersey_releases_created": 0,
+        "errors": []
+    }
+    
+    team_map = {}  # nom -> id
+    brand_map = {}  # nom -> id
+    
+    for old_jersey in old_jerseys:
+        try:
+            old_jersey.pop('_id', None)
+            
+            # 1. Créer ou récupérer Team
+            team_id = None
+            team_name = old_jersey.get("team", "").strip()
+            if team_name:
+                if team_name not in team_map:
+                    # Vérifier si team existe déjà
+                    existing_team = await db.teams.find_one({"name": {"$regex": f"^{team_name}$", "$options": "i"}})
+                    if existing_team:
+                        team_id = existing_team["id"]
+                        team_map[team_name] = team_id
+                    else:
+                        # Créer nouvelle team
+                        new_team = Team(
+                            name=team_name,
+                            country="Unknown",  # À corriger manuellement
+                            created_by=current_user["id"],
+                            topkit_reference=await generate_reference("team")
+                        )
+                        await db.teams.insert_one(new_team.dict())
+                        team_id = new_team.id
+                        team_map[team_name] = team_id
+                        migration_stats["teams_created"] += 1
+                else:
+                    team_id = team_map[team_name]
+            
+            # 2. Créer ou récupérer Brand
+            brand_id = None
+            brand_name = old_jersey.get("manufacturer", "").strip()
+            if brand_name:
+                if brand_name not in brand_map:
+                    existing_brand = await db.brands.find_one({"name": {"$regex": f"^{brand_name}$", "$options": "i"}})
+                    if existing_brand:
+                        brand_id = existing_brand["id"]
+                        brand_map[brand_name] = brand_id
+                    else:
+                        new_brand = Brand(
+                            name=brand_name,
+                            created_by=current_user["id"],
+                            topkit_reference=await generate_reference("brand")
+                        )
+                        await db.brands.insert_one(new_brand.dict())
+                        brand_id = new_brand.id
+                        brand_map[brand_name] = brand_id
+                        migration_stats["brands_created"] += 1
+                else:
+                    brand_id = brand_map[brand_name]
+            
+            if not team_id or not brand_id:
+                migration_stats["errors"].append(f"Données manquantes pour jersey {old_jersey['id']}")
+                continue
+            
+            # 3. Créer Master Jersey
+            master_jersey_signature = f"{team_id}_{old_jersey.get('season', '')}_{old_jersey.get('jersey_type', 'home')}"
+            
+            # Vérifier si master jersey existe déjà
+            existing_master = await db.master_jerseys.find_one({
+                "team_id": team_id,
+                "season": old_jersey.get("season", ""),
+                "jersey_type": old_jersey.get("jersey_type", "home")
+            })
+            
+            if not existing_master:
+                master_jersey = MasterJersey(
+                    team_id=team_id,
+                    brand_id=brand_id,
+                    season=old_jersey.get("season", ""),
+                    jersey_type=old_jersey.get("jersey_type", "home"),
+                    primary_color="Unknown",  # À remplir manuellement
+                    created_by=current_user["id"],
+                    topkit_reference=await generate_reference("master_jersey")
+                )
+                await db.master_jerseys.insert_one(master_jersey.dict())
+                master_jersey_id = master_jersey.id
+                migration_stats["master_jerseys_created"] += 1
+            else:
+                master_jersey_id = existing_master["id"]
+            
+            # 4. Créer Jersey Release
+            jersey_release = JerseyRelease(
+                master_jersey_id=master_jersey_id,
+                release_type=old_jersey.get("model", "replica"),
+                sku_code=old_jersey.get("sku_code"),
+                product_images=[
+                    old_jersey.get("front_photo_url", ""),
+                    old_jersey.get("back_photo_url", "")
+                ],
+                created_by=current_user["id"],
+                topkit_reference=await generate_reference("jersey_release")
+            )
+            await db.jersey_releases.insert_one(jersey_release.dict())
+            migration_stats["jersey_releases_created"] += 1
+            
+            # 5. Marquer ancien jersey comme migré
+            await db.jerseys.update_one(
+                {"id": old_jersey["id"]},
+                {"$set": {"migrated_to_collaborative": True, "jersey_release_id": jersey_release.id}}
+            )
+            
+        except Exception as e:
+            migration_stats["errors"].append(f"Erreur pour jersey {old_jersey.get('id', 'unknown')}: {str(e)}")
+    
+    return {
+        "message": "Migration terminée",
+        "stats": migration_stats
+    }
+
+# ================================
+# SEARCH API COLLABORATIVE
+# ================================
+
+@api_router.get("/search/collaborative")
+async def search_collaborative(
+    q: str,
+    entity_types: Optional[List[str]] = None,
+    limit: int = 50
+):
+    """Search across all collaborative entities"""
+    if not q or len(q.strip()) < 2:
+        return {"results": []}
+    
+    search_query = q.strip()
+    results = {"teams": [], "brands": [], "players": [], "competitions": [], "master_jerseys": []}
+    
+    # Search dans toutes les entités si pas de type spécifique
+    if not entity_types:
+        entity_types = ["teams", "brands", "players", "competitions", "master_jerseys"]
+    
+    # Search Teams
+    if "teams" in entity_types:
+        teams = await db.teams.find({
+            "$or": [
+                {"name": {"$regex": search_query, "$options": "i"}},
+                {"short_name": {"$regex": search_query, "$options": "i"}},
+                {"common_names": {"$elemMatch": {"$regex": search_query, "$options": "i"}}}
+            ]
+        }).limit(limit//len(entity_types) + 1).to_list(length=None)
+        
+        for team in teams:
+            team.pop('_id', None)
+        results["teams"] = teams
+    
+    # Search Brands
+    if "brands" in entity_types:
+        brands = await db.brands.find({
+            "$or": [
+                {"name": {"$regex": search_query, "$options": "i"}},
+                {"official_name": {"$regex": search_query, "$options": "i"}},
+                {"common_names": {"$elemMatch": {"$regex": search_query, "$options": "i"}}}
+            ]
+        }).limit(limit//len(entity_types) + 1).to_list(length=None)
+        
+        for brand in brands:
+            brand.pop('_id', None)
+        results["brands"] = brands
+    
+    # Search Players
+    if "players" in entity_types:
+        players = await db.players.find({
+            "$or": [
+                {"name": {"$regex": search_query, "$options": "i"}},
+                {"full_name": {"$regex": search_query, "$options": "i"}},
+                {"common_names": {"$elemMatch": {"$regex": search_query, "$options": "i"}}}
+            ]
+        }).limit(limit//len(entity_types) + 1).to_list(length=None)
+        
+        for player in players:
+            player.pop('_id', None)
+        results["players"] = players
+    
+    # Search Competitions
+    if "competitions" in entity_types:
+        competitions = await db.competitions.find({
+            "$or": [
+                {"name": {"$regex": search_query, "$options": "i"}},
+                {"official_name": {"$regex": search_query, "$options": "i"}},
+                {"common_names": {"$elemMatch": {"$regex": search_query, "$options": "i"}}}
+            ]
+        }).limit(limit//len(entity_types) + 1).to_list(length=None)
+        
+        for comp in competitions:
+            comp.pop('_id', None)
+        results["competitions"] = competitions
+    
+    return results
+
 # Include the router in the main app
 app.include_router(api_router)
 
