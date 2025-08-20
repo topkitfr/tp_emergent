@@ -2433,14 +2433,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Jersey Photo Management System"
+    - "Jersey Photos for Explorer Display Verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
-  critical_issues:
-    - "Jersey submission form completely broken - JavaScript error prevents form display"
-    - "Frontend-backend structure mismatch - editingJersey object missing required 'model' field"
-    - "Admin edit button functionality untested due to authentication failure"
 
 agent_communication:
   - agent: "main"
