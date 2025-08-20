@@ -282,6 +282,8 @@ const AppContent = () => {
       const response = await fetch(`${API}/api/jerseys/approved`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Jerseys loaded from API:', data);
+        console.log('First jersey with photos check:', data.find(j => j.images && j.images.length > 0 || j.front_photo_url));
         setJerseys(data);
       }
     } catch (error) {
