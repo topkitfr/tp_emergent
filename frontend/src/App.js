@@ -1271,12 +1271,12 @@ const AppContent = () => {
       <div className="py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-black">Meilleures ventes</h2>
+            <h2 className="text-3xl font-bold text-black">Maillots populaires</h2>
             <button 
               onClick={() => setCurrentView('explore')}
               className="text-black hover:underline font-medium"
             >
-              Voir tous les maillots
+              Découvrir tous les maillots
             </button>
           </div>
 
