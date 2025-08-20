@@ -2798,7 +2798,7 @@ const AppContent = () => {
 
   // Main render
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
       {currentView === 'home' && <HomePage />}
