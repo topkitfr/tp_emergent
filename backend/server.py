@@ -8436,7 +8436,7 @@ async def get_teams(
     country: Optional[str] = None,
     league_id: Optional[str] = None,
     verified_only: bool = False,
-    limit: int = 100
+    limit: int = 1000
 ):
     """Get teams with optional filters"""
     query = {}
