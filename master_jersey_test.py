@@ -169,6 +169,16 @@ class MasterJerseyTester:
     def create_competition(self, name, comp_type, country):
         """Create a competition for testing"""
         try:
+            # First check if competition already exists
+            response = self.session.get(f"{BACKEND_URL}/competitions")
+            if response.status_code == 200:
+                competitions = response.json()
+                for comp in competitions:
+                    if comp.get("name") == name:
+                        self.log_test(f"Create Competition: {name}", True, f"Using existing competition - ID: {comp.get('id')}, Ref: {comp.get('topkit_reference')}")
+                        return comp
+            
+            # Create new competition if not exists
             competition_data = {
                 "name": name,
                 "official_name": f"{name} Official Championship",
@@ -181,8 +191,19 @@ class MasterJerseyTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.log_test(f"Create Competition: {name}", True, f"ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
+                self.log_test(f"Create Competition: {name}", True, f"Created new competition - ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
                 return data
+            elif response.status_code == 400 and "existe déjà" in response.text:
+                # Try to find existing competition
+                response = self.session.get(f"{BACKEND_URL}/competitions")
+                if response.status_code == 200:
+                    competitions = response.json()
+                    for comp in competitions:
+                        if name.lower() in comp.get("name", "").lower():
+                            self.log_test(f"Create Competition: {name}", True, f"Found existing competition - ID: {comp.get('id')}, Ref: {comp.get('topkit_reference')}")
+                            return comp
+                self.log_test(f"Create Competition: {name}", False, f"Competition exists but couldn't retrieve: {response.text}")
+                return None
             else:
                 self.log_test(f"Create Competition: {name}", False, f"HTTP {response.status_code}: {response.text}")
                 return None
