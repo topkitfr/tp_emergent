@@ -270,10 +270,10 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
           </div>
           
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Sois le premier informé des dernières sorties et plans exclusifs
+            Sois le premier informé des dernières documentations et estimations exclusives
           </h2>
           <p className="text-lg opacity-90 mb-8">
-            Rejoins notre newsletter pour recevoir des récaps de sorties, des bons plans et des infos exclusives autour du maillot.
+            Rejoins notre newsletter pour recevoir les nouveaux maillots documentés, les estimations de valeurs et les infos exclusives de la communauté TopKit.
           </p>
           
           <div className="flex flex-col sm:flex-row max-w-md mx-auto gap-4">
