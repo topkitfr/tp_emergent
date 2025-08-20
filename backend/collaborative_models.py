@@ -1,0 +1,472 @@
+"""
+Modèles collaboratifs pour TopKit - Base de données type Discogs
+Nouvelles entités pour la vision collaborative
+"""
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+import uuid
+from enum import Enum
+
+class ContributionStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved" 
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+class VerificationLevel(str, Enum):
+    UNVERIFIED = "unverified"
+    COMMUNITY_VERIFIED = "community_verified"
+    EXPERT_VERIFIED = "expert_verified"
+    OFFICIAL = "official"
+
+class EntityType(str, Enum):
+    TEAM = "team"
+    BRAND = "brand" 
+    PLAYER = "player"
+    COMPETITION = "competition"
+    MASTER_JERSEY = "master_jersey"
+    JERSEY_RELEASE = "jersey_release"
+
+# ================================
+# ENTITÉS PRINCIPALES COLLABORATIVES
+# ================================
+
+class Team(BaseModel):
+    """Entité Team/Club avec informations détaillées"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # "Paris Saint-Germain"
+    short_name: Optional[str] = None  # "PSG"
+    common_names: List[str] = []  # ["PSG", "Paris SG", "Paris Saint-Germain"]
+    
+    # Informations club
+    founded_year: Optional[int] = None
+    country: str  # France
+    city: Optional[str] = None  # Paris
+    league_id: Optional[str] = None  # Référence vers Competition
+    
+    # Média
+    logo_url: Optional[str] = None
+    colors: List[str] = []  # ["navy", "red", "white"]
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str  # User ID
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    # Historique modifications
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    # Références et identifiants externes
+    external_ids: Dict[str, str] = {}  # {"fifa": "123", "transfermarkt": "456"}
+    topkit_reference: str  # TK-TEAM-000001
+
+class Brand(BaseModel):
+    """Entité Brand/Manufacturer (Nike, Adidas, etc.)"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # "Nike"
+    official_name: Optional[str] = None  # "Nike Inc."
+    common_names: List[str] = []  # ["Nike", "Nike Football"]
+    
+    # Informations marque
+    country: Optional[str] = None
+    founded_year: Optional[int] = None
+    website: Optional[str] = None
+    
+    # Logo et identité visuelle
+    logo_url: Optional[str] = None
+    brand_colors: List[str] = []
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    topkit_reference: str  # TK-BRAND-000001
+
+class Player(BaseModel):
+    """Entité Player avec historique des maillots portés"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # "Kylian Mbappé"
+    full_name: Optional[str] = None
+    common_names: List[str] = []  # ["Mbappé", "Kylian Mbappé", "K. Mbappé"]
+    
+    # Informations joueur
+    birth_date: Optional[datetime] = None
+    nationality: Optional[str] = None
+    position: Optional[str] = None
+    jersey_number_history: List[Dict[str, Any]] = []  # [{"team_id": "...", "number": 7, "season": "2023-24"}]
+    
+    # Photo
+    photo_url: Optional[str] = None
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    # Références externes
+    external_ids: Dict[str, str] = {}
+    topkit_reference: str  # TK-PLAYER-000001
+
+class Competition(BaseModel):
+    """Entité Competition/Event (Championnats, coupes, événements)"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # "Ligue 1"
+    official_name: Optional[str] = None  # "Ligue 1 Uber Eats"
+    common_names: List[str] = []
+    
+    # Type et informations
+    competition_type: str  # "domestic_league", "cup", "international", "friendly"
+    country: Optional[str] = None
+    level: Optional[int] = None  # 1 pour première division
+    
+    # Dates et récurrence
+    start_year: Optional[int] = None
+    is_recurring: bool = True  # False pour événements uniques
+    current_season: Optional[str] = None
+    
+    # Logo et couleurs
+    logo_url: Optional[str] = None
+    primary_color: Optional[str] = None
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    topkit_reference: str  # TK-COMP-000001
+
+# ================================
+# CONCEPT MASTER JERSEY vs RELEASE
+# ================================
+
+class MasterJersey(BaseModel):
+    """Master Jersey - Design unique (ex: PSG 2022-23 'Jordan')"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Relations vers entités
+    team_id: str  # Référence vers Team
+    brand_id: str  # Référence vers Brand
+    competition_id: Optional[str] = None  # Référence vers Competition
+    
+    # Informations design
+    season: str  # "2022-23"
+    jersey_type: str  # "home", "away", "third", "goalkeeper", "training", "special"
+    design_name: Optional[str] = None  # "Jordan Collection"
+    
+    # Caractéristiques visuelles
+    primary_color: str
+    secondary_colors: List[str] = []
+    pattern_description: Optional[str] = None
+    special_features: List[str] = []
+    
+    # Technologies et matériaux
+    fabric_technology: Optional[str] = None
+    fabric_composition: Optional[str] = None
+    
+    # Sponsors et badges
+    main_sponsor: Optional[str] = None
+    sleeve_sponsors: List[str] = []
+    competition_badges: List[str] = []
+    
+    # Images de référence (photos officielles)
+    reference_images: List[str] = []
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    topkit_reference: str  # TK-MASTER-000001
+    
+    # Statistiques
+    total_releases: int = 0  # Nombre de JerseyRelease liés
+    total_collectors: int = 0  # Nombre d'utilisateurs possédant ce design
+
+class JerseyRelease(BaseModel):
+    """Jersey Release - Version physique spécifique d'un MasterJersey"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Référence vers le Master Jersey
+    master_jersey_id: str
+    
+    # Informations version spécifique
+    release_type: str  # "player_version", "fan_version", "authentic", "replica"
+    size_range: List[str] = []  # ["XS", "S", "M", "L", "XL", "XXL"]
+    
+    # Personnalisation
+    player_name: Optional[str] = None
+    player_number: Optional[int] = None
+    player_id: Optional[str] = None  # Référence vers Player
+    
+    # Informations commerciales
+    retail_price: Optional[float] = None
+    release_date: Optional[datetime] = None
+    discontinuation_date: Optional[datetime] = None
+    production_quantity: Optional[int] = None
+    
+    # Codes et références
+    sku_code: Optional[str] = None
+    manufacturer_code: Optional[str] = None
+    barcode: Optional[str] = None
+    
+    # Différences par rapport au Master Jersey
+    variant_notes: Optional[str] = None
+    differences_from_master: List[str] = []
+    
+    # Images spécifiques à cette version
+    product_images: List[str] = []
+    
+    # Métadonnées collaboratives
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    
+    modification_count: int = 0
+    last_modified_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    
+    topkit_reference: str  # TK-RELEASE-000001
+
+# ================================
+# SYSTÈME COLLABORATIF
+# ================================
+
+class Contribution(BaseModel):
+    """Contribution/modification proposée par un utilisateur"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Informations contribution
+    contributor_id: str
+    entity_type: EntityType
+    entity_id: str
+    
+    # Type de contribution
+    contribution_type: str  # "create", "update", "merge", "delete"
+    
+    # Données proposées
+    proposed_changes: Dict[str, Any] = {}
+    previous_data: Dict[str, Any] = {}
+    
+    # Justification et preuves
+    description: str
+    evidence_urls: List[str] = []  # Photos, sources, liens
+    source_links: List[str] = []
+    
+    # Statut et modération
+    status: ContributionStatus = ContributionStatus.PENDING
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    
+    # Votes communautaires
+    upvotes: int = 0
+    downvotes: int = 0
+    total_votes: int = 0
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Vote(BaseModel):
+    """Vote d'un utilisateur sur une contribution"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    contribution_id: str
+    user_id: str
+    vote_type: str  # "upvote", "downvote"
+    reason: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class DuplicateDetection(BaseModel):
+    """Détection automatique de doublons"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    entity_type: EntityType
+    primary_entity_id: str
+    potential_duplicate_id: str
+    
+    # Score de similarité (0-100)
+    similarity_score: int
+    
+    # Champs similaires détectés
+    matching_fields: List[str] = []
+    similar_data: Dict[str, Any] = {}
+    
+    # Statut
+    status: str = "detected"  # "detected", "confirmed", "rejected", "merged"
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class EntityHistory(BaseModel):
+    """Historique des modifications d'une entité"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    entity_type: EntityType
+    entity_id: str
+    
+    # Modification
+    action: str  # "create", "update", "merge", "delete"
+    changed_fields: List[str] = []
+    old_values: Dict[str, Any] = {}
+    new_values: Dict[str, Any] = {}
+    
+    # Qui et quand
+    modified_by: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Lien vers contribution si applicable
+    contribution_id: Optional[str] = None
+
+# ================================
+# MODÈLES DE REQUÊTES API
+# ================================
+
+class TeamCreate(BaseModel):
+    name: str
+    short_name: Optional[str] = None
+    common_names: List[str] = []
+    country: str
+    city: Optional[str] = None
+    founded_year: Optional[int] = None
+    league_id: Optional[str] = None
+    colors: List[str] = []
+    
+class BrandCreate(BaseModel):
+    name: str
+    official_name: Optional[str] = None
+    common_names: List[str] = []
+    country: Optional[str] = None
+    founded_year: Optional[int] = None
+    website: Optional[str] = None
+
+class PlayerCreate(BaseModel):
+    name: str
+    full_name: Optional[str] = None
+    common_names: List[str] = []
+    birth_date: Optional[datetime] = None
+    nationality: Optional[str] = None
+    position: Optional[str] = None
+
+class CompetitionCreate(BaseModel):
+    name: str
+    official_name: Optional[str] = None
+    common_names: List[str] = []
+    competition_type: str
+    country: Optional[str] = None
+    level: Optional[int] = None
+
+class MasterJerseyCreate(BaseModel):
+    team_id: str
+    brand_id: str
+    season: str
+    jersey_type: str
+    design_name: Optional[str] = None
+    primary_color: str
+    secondary_colors: List[str] = []
+    pattern_description: Optional[str] = None
+    main_sponsor: Optional[str] = None
+    competition_id: Optional[str] = None
+
+class JerseyReleaseCreate(BaseModel):
+    master_jersey_id: str
+    release_type: str
+    size_range: List[str] = []
+    player_name: Optional[str] = None
+    player_number: Optional[int] = None
+    player_id: Optional[str] = None
+    retail_price: Optional[float] = None
+    sku_code: Optional[str] = None
+
+class ContributionCreate(BaseModel):
+    entity_type: EntityType
+    entity_id: Optional[str] = None  # None pour création
+    contribution_type: str
+    proposed_changes: Dict[str, Any]
+    description: str
+    evidence_urls: List[str] = []
+    source_links: List[str] = []
+
+# ================================
+# MODÈLES DE RÉPONSE
+# ================================
+
+class TeamResponse(BaseModel):
+    """Réponse API enrichie pour Team"""
+    # Données Team
+    id: str
+    name: str
+    short_name: Optional[str]
+    common_names: List[str]
+    country: str
+    city: Optional[str]
+    founded_year: Optional[int]
+    colors: List[str]
+    logo_url: Optional[str]
+    topkit_reference: str
+    verified_level: VerificationLevel
+    
+    # Données enrichies
+    league_info: Optional[Dict[str, Any]] = None  # Info Competition
+    master_jerseys_count: int = 0
+    total_collectors: int = 0
+    
+    # Métadonnées
+    created_at: datetime
+    modification_count: int
+
+class MasterJerseyResponse(BaseModel):
+    """Réponse API enrichie pour MasterJersey"""
+    # Données MasterJersey
+    id: str
+    season: str
+    jersey_type: str
+    design_name: Optional[str]
+    primary_color: str
+    secondary_colors: List[str]
+    main_sponsor: Optional[str]
+    reference_images: List[str]
+    topkit_reference: str
+    verified_level: VerificationLevel
+    
+    # Données enrichies
+    team_info: Dict[str, Any]  # Données Team
+    brand_info: Dict[str, Any]  # Données Brand
+    competition_info: Optional[Dict[str, Any]] = None
+    
+    # Statistiques
+    total_releases: int
+    total_collectors: int
+    estimated_value_range: Optional[Dict[str, float]] = None
+    
+    # Métadonnées
+    created_at: datetime
+    modification_count: int
