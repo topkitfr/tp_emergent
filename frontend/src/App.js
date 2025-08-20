@@ -1770,6 +1770,376 @@ const AppContent = () => {
     </div>
   );
 
+  // Profile Page Component
+  const ProfilePage = () => {
+    const [activeTab, setActiveTab] = useState('collection');
+
+    const renderTabContent = () => {
+      switch (activeTab) {
+        case 'collection':
+          return (
+            <div>
+              <h3 className="text-xl font-semibold mb-6 text-black">Ma Collection</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Owned Jerseys */}
+                <div className="bg-white rounded-lg p-6 border border-gray-200">
+                  <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
+                    <span className="mr-2">✓</span>
+                    Maillots possédés ({userCollections.owned?.length || 0})
+                  </h4>
+                  {userCollections.owned?.length > 0 ? (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {userCollections.owned.map((item) => (
+                        <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium text-black">
+                                {item.jersey?.team || 'Équipe inconnue'}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                              </div>
+                              {item.jersey?.player && (
+                                <div className="text-sm text-gray-500 mt-1">
+                                  {item.jersey.player}
+                                </div>
+                              )}
+                              <div className="text-sm text-gray-500 mt-1">
+                                Taille: {item.size} • État: {item.condition}
+                              </div>
+                            </div>
+                            <div className="flex flex-col space-y-1 ml-3">
+                              <button
+                                onClick={() => handleViewCollectionItem(item)}
+                                className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Voir les détails"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCollectionItem(item, 'owned')}
+                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
+                                title="Supprimer de ma collection"
+                              >
+                                Suppr
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-600">
+                      <div className="text-4xl mb-2">👕</div>
+                      <p>Votre collection est vide</p>
+                      <p className="text-sm">Ajoutez vos premiers maillots à votre collection</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+
+        case 'wishlist':
+          return (
+            <div>
+              <h3 className="text-xl font-semibold mb-6 text-black">Ma Wishlist</h3>
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
+                  <span className="mr-2">⭐</span>
+                  Maillots recherchés ({userCollections.wanted?.length || 0})
+                </h4>
+                {userCollections.wanted?.length > 0 ? (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {userCollections.wanted.map((item) => (
+                      <div key={item.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="font-medium text-black">
+                              {item.jersey?.team || 'Équipe inconnue'}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                            </div>
+                            {item.jersey?.player && (
+                              <div className="text-sm text-gray-500 mt-1">
+                                {item.jersey.player}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col space-y-1 ml-3">
+                            <button
+                              onClick={() => handleViewCollectionItem(item)}
+                              className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-center transition-colors"
+                              title="Voir les détails"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleRemoveCollectionItem(item, 'wanted')}
+                              className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-center transition-colors"
+                              title="Supprimer de la wishlist"
+                            >
+                              Suppr
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-600">
+                    <div className="text-4xl mb-2">⭐</div>
+                    <p>Votre wishlist est vide</p>
+                    <p className="text-sm">Ajoutez des maillots que vous recherchez</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+
+        case 'submissions':
+          return (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-black">Mes Soumissions</h3>
+                <button
+                  onClick={() => {
+                    setEditingJersey({
+                      team: '',
+                      league: '',
+                      season: '',
+                      jersey_type: '',
+                      manufacturer: '',
+                      sku_code: '',
+                      model: 'authentic',
+                      description: '',
+                      isNewSubmission: true
+                    });
+                    setShowJerseyEditor(true);
+                  }}
+                  className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Soumettre un maillot
+                </button>
+              </div>
+
+              {/* Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {[
+                  { label: 'Total', value: userSubmissions?.length || 0, color: 'black' },
+                  { label: 'En attente', value: userSubmissions?.filter(s => s.status === 'pending').length || 0, color: 'gray' },
+                  { label: 'Approuvés', value: userSubmissions?.filter(s => s.status === 'approved').length || 0, color: 'green' },
+                  { label: 'Refusés', value: userSubmissions?.filter(s => s.status === 'rejected').length || 0, color: 'red' }
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-white p-4 rounded-lg text-center border border-gray-200">
+                    <div className="text-2xl font-bold text-black mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-gray-600">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Submissions List */}
+              {userSubmissions && userSubmissions.length > 0 ? (
+                <div className="space-y-4">
+                  {userSubmissions.map((submission) => (
+                    <div key={submission.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="font-medium text-black mb-1">
+                            {submission.team} - {submission.season}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-1">
+                            {submission.league}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Référence: {submission.reference_code}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {submission.status === 'approved' ? 'Approuvé' :
+                             submission.status === 'rejected' ? 'Refusé' : 'En attente'}
+                          </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(submission.created_at).toLocaleDateString('fr-FR')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-2">📝</div>
+                  <p>Aucune soumission pour le moment</p>
+                  <p className="text-sm">Soumettez votre premier maillot pour commencer</p>
+                </div>
+              )}
+            </div>
+          );
+
+        case 'listings':
+          return (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏗️</div>
+              <h3 className="text-xl font-semibold text-black mb-2">
+                Bientôt disponible
+              </h3>
+              <p className="text-gray-600 mb-6">
+                La fonctionnalité de vente sera bientôt disponible. En attendant, vous pourrez :
+              </p>
+              <div className="bg-white p-6 rounded-lg max-w-md mx-auto border border-gray-200">
+                <ul className="text-left text-gray-700 space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Créer vos annonces de vente
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Fixer vos prix et conditions
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Recevoir des messages d'acheteurs
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Gérer vos transactions
+                  </li>
+                </ul>
+              </div>
+            </div>
+          );
+
+        case 'friends':
+          return (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏗️</div>
+              <h3 className="text-xl font-semibold text-black mb-2">
+                Bientôt disponible
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Le système d'amis sera bientôt disponible. Vous pourrez :
+              </p>
+              <div className="bg-white p-6 rounded-lg max-w-md mx-auto border border-gray-200">
+                <ul className="text-left text-gray-700 space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Ajouter des amis collectionneurs
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Échanger des maillots entre amis
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Suivre leurs dernières acquisitions
+                  </li>
+                </ul>
+              </div>
+            </div>
+          );
+
+        case 'messages':
+          return (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏗️</div>
+              <h3 className="text-xl font-semibold text-black mb-2">
+                Bientôt disponible
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Le système de messagerie sera bientôt disponible. Vous pourrez :
+              </p>
+              <div className="bg-white p-6 rounded-lg max-w-md mx-auto border border-gray-200">
+                <ul className="text-left text-gray-700 space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Échanger avec d'autres collectionneurs
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Négocier des prix et échanges
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-black mr-2">✓</span>
+                    Recevoir des notifications en temps réel
+                  </li>
+                </ul>
+              </div>
+            </div>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-white text-black p-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Profile Header */}
+          <div className="bg-gray-50 p-6 md:p-8 rounded-lg mb-6 md:mb-8 border border-gray-200">
+            <div className="flex items-center space-x-6">
+              <div className="w-16 md:w-20 h-16 md:h-20 bg-black rounded-full flex items-center justify-center">
+                <span className="text-xl md:text-2xl font-bold text-white">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-black">{user?.name || 'Utilisateur'}</h1>
+                <p className="text-base md:text-lg text-gray-600">
+                  Membre depuis {user?.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                  }) : 'récemment'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="mb-6 md:mb-8">
+            <nav className="flex flex-wrap gap-2 md:gap-4">
+              {[
+                { id: 'collection', label: 'Ma Collection', icon: '👕' },
+                { id: 'wishlist', label: 'Wishlist', icon: '⭐' },
+                { id: 'submissions', label: 'Mes Soumissions', icon: '📝' },
+                { id: 'listings', label: 'Mes Annonces', icon: '🏪' },
+                { id: 'friends', label: 'Mes Amis', icon: '👥' },
+                { id: 'messages', label: 'Messagerie', icon: '💬' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-4 md:px-6 py-2 md:py-3 rounded-lg border transition-colors text-sm md:text-base ${
+                    activeTab === tab.id
+                      ? 'bg-black text-white'
+                      : 'text-gray-600 hover:text-black hover:bg-gray-100'
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span className="text-sm md:text-base">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="bg-gray-50 rounded-lg p-6 md:p-8 border border-gray-200">
+            {renderTabContent()}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Admin Panel Component avec fonctionnalités complètes
   const AdminPanel = () => {
     const [adminActiveTab, setAdminActiveTab] = useState('jerseys');
