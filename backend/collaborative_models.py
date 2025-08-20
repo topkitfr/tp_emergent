@@ -470,3 +470,169 @@ class MasterJerseyResponse(BaseModel):
     # Métadonnées
     created_at: datetime
     modification_count: int
+
+# ================================
+# SYSTÈME DE CONTRIBUTION COLLABORATIF
+# ================================
+
+class ContributionAction(str, Enum):
+    CREATE = "create"
+    UPDATE = "update"
+    MERGE = "merge"
+    DELETE = "delete"
+
+class ContributionStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+    AUTO_APPROVED = "auto_approved"
+
+class VoteType(str, Enum):
+    UPVOTE = "upvote"
+    DOWNVOTE = "downvote"
+
+class ContributionVote(BaseModel):
+    """Vote sur une contribution"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    contribution_id: str
+    voter_id: str
+    vote_type: VoteType  # upvote, downvote
+    comment: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Contribution(BaseModel):
+    """Contribution/Suggestion de modification collaborative"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Référence de l'entité modifiée
+    entity_type: EntityType  # team, brand, player, competition, master_jersey
+    entity_id: str  # ID de l'entité concernée
+    entity_reference: str  # TK-TEAM-000001 pour affichage
+    
+    # Type d'action
+    action_type: ContributionAction
+    
+    # Données proposées (diff avec existantes)
+    current_data: Dict[str, Any] = {}  # Données actuelles
+    proposed_data: Dict[str, Any] = {} # Données proposées
+    changed_fields: List[str] = []     # Champs modifiés
+    
+    # Métadonnées contribution
+    title: str  # "Ajout du logo officiel FC Barcelona"
+    description: Optional[str] = None  # Justification détaillée
+    source_urls: List[str] = []  # URLs de sources pour validation
+    
+    # Contributeur
+    contributor_id: str
+    contributor_level: Optional[str] = None  # Rookie, Expert, etc.
+    
+    # Statut et validation
+    status: ContributionStatus = ContributionStatus.PENDING
+    
+    # Système de votes
+    upvotes: int = 0
+    downvotes: int = 0
+    vote_score: int = 0  # upvotes - downvotes
+    voters: List[str] = []  # Liste des user IDs qui ont voté
+    
+    # Modération
+    moderator_id: Optional[str] = None
+    moderator_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    
+    # Automatisation
+    auto_approved: bool = False
+    requires_expert_review: bool = False
+    
+    # Métadonnées
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None  # 7 jours par défaut
+    
+    # Référence unique
+    topkit_reference: str  # TK-CONTRIB-000001
+
+class ContributorStats(BaseModel):
+    """Statistiques d'un contributeur"""
+    user_id: str
+    username: str
+    
+    # Statistiques contributions
+    total_contributions: int = 0
+    accepted_contributions: int = 0
+    rejected_contributions: int = 0
+    pending_contributions: int = 0
+    
+    # Statistiques votes
+    total_votes: int = 0
+    quality_votes: int = 0  # Votes alignés avec décision finale
+    vote_accuracy: float = 0.0  # % de votes "justes"
+    
+    # Points et niveau
+    reputation_points: int = 0
+    contributor_level: str = "Rookie"  # Rookie, Contributor, Expert, Legend
+    
+    # Spécialisations (badges)
+    badges: List[str] = []  # ["logo_hunter", "french_expert", etc.]
+    specializations: List[str] = []  # ["teams", "competitions", "brands"]
+    
+    # Activité
+    first_contribution: Optional[datetime] = None
+    last_contribution: Optional[datetime] = None
+    contributions_this_month: int = 0
+    
+    # Classement
+    global_rank: Optional[int] = None
+    monthly_rank: Optional[int] = None
+
+# ================================
+# MODÈLES DE RÉPONSE POUR CONTRIBUTIONS
+# ================================
+
+class ContributionResponse(BaseModel):
+    """Réponse API pour une contribution"""
+    id: str
+    entity_type: str
+    entity_reference: str
+    action_type: str
+    title: str
+    description: Optional[str]
+    
+    # Contributeur
+    contributor: Dict[str, str]  # {id, username, level}
+    
+    # Changements proposés (simplifié pour affichage)
+    changes_summary: List[Dict[str, Any]]  # [{"field": "logo_url", "from": null, "to": "url"}]
+    
+    # Votes
+    vote_score: int
+    upvotes: int
+    downvotes: int
+    user_vote: Optional[str] = None  # upvote/downvote si user a voté
+    
+    # Statut
+    status: str
+    created_at: datetime
+    expires_at: Optional[datetime]
+    
+    # Référence
+    topkit_reference: str
+
+class ContributionCreateRequest(BaseModel):
+    """Requête pour créer une contribution"""
+    entity_type: EntityType
+    entity_id: str
+    action_type: ContributionAction = ContributionAction.UPDATE
+    
+    # Données proposées
+    proposed_data: Dict[str, Any]
+    
+    # Métadonnées
+    title: str
+    description: Optional[str] = None
+    source_urls: List[str] = []
+
+class VoteRequest(BaseModel):
+    """Requête pour voter sur une contribution"""
+    vote_type: VoteType
+    comment: Optional[str] = None
