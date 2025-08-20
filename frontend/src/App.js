@@ -1104,7 +1104,7 @@ const AppContent = () => {
                           }}
                           className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:bg-gray-100"
                         >
-                          🔧 Admin Panel
+                          Admin Panel
                         </button>
                       </>
                     )}
