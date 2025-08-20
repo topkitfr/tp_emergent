@@ -204,11 +204,11 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les derniers hot drops */}
+      {/* Les dernières documentations */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-            Les derniers hot drops 🔥
+            Les dernières documentations 📋
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -225,9 +225,8 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
                     {jersey.team_info?.name || 'Équipe inconnue'} {jersey.season}
                   </h3>
-                  <p className="text-sm font-semibold text-gray-900">
-                    À partir de<br />
-                    <span className="text-lg">{120 + (index * 10)}€</span>
+                  <p className="text-sm text-green-600">
+                    <span className="text-lg font-bold">Documenté ✓</span>
                   </p>
                 </div>
               </div>
