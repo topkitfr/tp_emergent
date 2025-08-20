@@ -947,15 +947,6 @@ const AppContent = () => {
       <div className="relative bg-white">
         <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
           <div className="text-center">
-            {/* Large TOPKIT logo */}
-            <div className="mb-8 md:mb-12">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_notif-system-fix/artifacts/qdnnknkl_topkit_logo.png" 
-                alt="TOPKIT" 
-                className="w-full max-w-md mx-auto h-auto"
-              />
-            </div>
-            
             <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
               La marketplace premium pour collectionneurs de maillots de foot
             </p>
