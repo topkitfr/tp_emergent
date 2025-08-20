@@ -1252,16 +1252,18 @@ const AppContent = () => {
         </div>
       </div>
 
-      {/* Brand Carousel */}
+      {/* Sports Disciplines */}
       <div className="bg-white py-8 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Disciplines disponibles</h3>
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            {['Nike', 'Adidas', 'Puma', 'Umbro', 'Kappa', 'New Balance'].map((brand) => (
-              <div key={brand} className="text-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-                {brand}
+            {['⚽ Football', '🏀 Basketball', '🏈 Rugby', '🏐 Volleyball', '🎾 Tennis', '🏒 Hockey'].map((sport) => (
+              <div key={sport} className="text-lg font-medium text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                {sport}
               </div>
             ))}
           </div>
+          <p className="text-sm text-gray-500 mt-4">Plus de disciplines bientôt disponibles</p>
         </div>
       </div>
 
