@@ -1672,6 +1672,239 @@ const AppContent = () => {
     </div>
   );
 
+  // Collection Tab Component with views and pagination
+  const CollectionTabContent = () => {
+    const [collectionViewMode, setCollectionViewMode] = useState('grid');
+    const [collectionCurrentPage, setCollectionCurrentPage] = useState(1);
+    const [collectionItemsPerPage, setCollectionItemsPerPage] = useState(25);
+
+    const ownedJerseys = userCollections.owned || [];
+    const totalItems = ownedJerseys.length;
+    const totalPages = Math.ceil(totalItems / collectionItemsPerPage);
+    const startIndex = (collectionCurrentPage - 1) * collectionItemsPerPage;
+    const currentItems = ownedJerseys.slice(startIndex, startIndex + collectionItemsPerPage);
+
+    return (
+      <div>
+        {/* Header with view controls */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-xl font-semibold text-black mb-1">Ma Collection</h3>
+            <div className="text-sm text-gray-600">
+              {totalItems} maillot{totalItems !== 1 ? 's' : ''} possédé{totalItems !== 1 ? 's' : ''}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCollectionViewMode('grid')}
+              className={`px-3 py-2 rounded ${collectionViewMode === 'grid' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
+            >
+              Grille
+            </button>
+            <button
+              onClick={() => setCollectionViewMode('list')}
+              className={`px-3 py-2 rounded ${collectionViewMode === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
+            >
+              Liste
+            </button>
+            <button
+              onClick={() => setCollectionViewMode('thumbnail')}
+              className={`px-3 py-2 rounded ${collectionViewMode === 'thumbnail' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
+            >
+              Vignette
+            </button>
+          </div>
+        </div>
+
+        {/* Collection content */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          {currentItems.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              {ownedJerseys.length === 0 ? (
+                <>
+                  <div className="text-4xl mb-2">👕</div>
+                  <p>Votre collection est vide</p>
+                  <p className="text-sm">Ajoutez vos premiers maillots à votre collection</p>
+                </>
+              ) : (
+                'Aucun résultat sur cette page'
+              )}
+            </div>
+          ) : (
+            <div className={`p-4 ${
+              collectionViewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 
+              collectionViewMode === 'thumbnail' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3' :
+              'space-y-4'
+            }`}>
+              {currentItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleViewCollectionItem(item)}
+                  className={`cursor-pointer transition-shadow hover:shadow-md ${
+                    collectionViewMode === 'grid'
+                      ? "bg-gray-50 rounded-lg overflow-hidden border border-gray-200"
+                      : collectionViewMode === 'thumbnail' 
+                      ? "bg-gray-50 rounded-lg overflow-hidden border border-gray-200"
+                      : "bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center space-x-4"
+                  }`}
+                >
+                  {collectionViewMode === 'grid' ? (
+                    <>
+                      <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                        {(() => {
+                          let imageUrl = null;
+                          const jersey = item.jersey;
+                          
+                          if (jersey?.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          else if (jersey?.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey?.team || 'Maillot'} ${jersey?.season || ''}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-4xl">👕</div>
+                          );
+                        })()}
+                        <div className="text-4xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-black mb-2">{item.jersey?.team || 'Équipe inconnue'}</h3>
+                        <p className="text-sm text-gray-600 mb-1">{item.jersey?.league || 'Ligue inconnue'}</p>
+                        <p className="text-sm text-gray-500 mb-2">{item.jersey?.season || 'Saison inconnue'}</p>
+                        {item.jersey?.player && <p className="text-sm text-blue-600 mb-2">{item.jersey.player}</p>}
+                        <div className="text-xs text-gray-500">
+                          Taille: {item.size} • État: {item.condition}
+                        </div>
+                      </div>
+                    </>
+                  ) : collectionViewMode === 'thumbnail' ? (
+                    <>
+                      <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                        {(() => {
+                          let imageUrl = null;
+                          const jersey = item.jersey;
+                          
+                          if (jersey?.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          else if (jersey?.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey?.team || 'Maillot'} ${jersey?.season || ''}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-2xl">👕</div>
+                          );
+                        })()}
+                        <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="p-2 text-center">
+                        <h3 className="text-xs font-semibold text-black truncate">{item.jersey?.team || 'Équipe'}</h3>
+                        <p className="text-xs text-gray-500 truncate">{item.size}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-lg flex-shrink-0">
+                        {(() => {
+                          let imageUrl = null;
+                          const jersey = item.jersey;
+                          
+                          if (jersey?.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          else if (jersey?.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey?.team || 'Maillot'} ${jersey?.season || ''}`}
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-2xl">👕</div>
+                          );
+                        })()}
+                        <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-black mb-1">{item.jersey?.team || 'Équipe inconnue'}</h3>
+                        <p className="text-sm text-gray-600 mb-1">
+                          {item.jersey?.league || 'Ligue inconnue'} • {item.jersey?.season || 'Saison inconnue'}
+                        </p>
+                        {item.jersey?.player && <p className="text-sm text-blue-600 mb-1">{item.jersey.player}</p>}
+                        <div className="text-xs text-gray-500">
+                          Taille: {item.size} • État: {item.condition}
+                        </div>
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveCollectionItem(item, 'owned');
+                          }}
+                          className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+                          title="Supprimer de ma collection"
+                        >
+                          Suppr
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalItems > collectionItemsPerPage && (
+            <div className="border-t border-gray-200">
+              <PaginationControls
+                currentPage={collectionCurrentPage}
+                totalItems={totalItems}
+                itemsPerPage={collectionItemsPerPage}
+                onPageChange={setCollectionCurrentPage}
+                onItemsPerPageChange={setCollectionItemsPerPage}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Profile Page Component
   const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('collection');
