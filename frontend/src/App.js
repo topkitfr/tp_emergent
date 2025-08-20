@@ -1246,6 +1246,15 @@ const AppContent = () => {
     const applyFilters = () => {
       let filtered = [...jerseys];
       
+      if (searchTerm) {
+        filtered = filtered.filter(jersey => 
+          jersey.team?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          jersey.league?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          jersey.season?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          jersey.player?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
       if (filters.league) {
         filtered = filtered.filter(jersey => 
           jersey.league?.toLowerCase().includes(filters.league.toLowerCase())
