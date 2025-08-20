@@ -397,7 +397,7 @@ class NewTopKitImporter:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    self.token = data.get("access_token")
+                    self.token = data.get("token") or data.get("access_token")
                     print("✅ Authentification réussie")
                     return True
                 else:
