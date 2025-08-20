@@ -318,6 +318,9 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
         
         console.log('Jersey submitted successfully:', response.data);
         
+        // Show success message
+        alert('✅ Maillot soumis avec succès ! Il sera examiné par nos modérateurs.');
+        
         if (onUpdateSuccess) {
           onUpdateSuccess();
         }
