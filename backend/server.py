@@ -8798,6 +8798,61 @@ async def create_competition(
     
     return competition.dict()
 
+@api_router.put("/competitions/{competition_id}")
+async def update_competition(
+    competition_id: str,
+    competition_update: CompetitionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update competition details"""
+    # Vérifier que la compétition existe
+    existing_competition = await db.competitions.find_one({"id": competition_id})
+    if not existing_competition:
+        raise HTTPException(status_code=404, detail="Compétition non trouvée")
+    
+    # Vérifier les doublons (sauf pour la compétition actuelle)
+    if competition_update.name != existing_competition.get('name'):
+        duplicate_check = await db.competitions.find_one({
+            "$and": [
+                {"id": {"$ne": competition_id}},
+                {"name": {"$regex": f"^{competition_update.name}$", "$options": "i"}}
+            ]
+        })
+        
+        if duplicate_check:
+            raise HTTPException(status_code=400, detail="Une compétition avec ce nom existe déjà")
+    
+    # Préparer les données de mise à jour
+    from datetime import datetime
+    update_data = competition_update.dict()
+    update_data.update({
+        "last_modified_at": datetime.utcnow(),
+        "last_modified_by": current_user["id"],
+        "modification_count": existing_competition.get("modification_count", 0) + 1
+    })
+    
+    # Mettre à jour dans la base
+    result = await db.competitions.update_one(
+        {"id": competition_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Échec de mise à jour")
+    
+    # Récupérer la compétition mise à jour
+    updated_competition = await db.competitions.find_one({"id": competition_id})
+    updated_competition.pop('_id', None)
+    
+    await log_user_activity(
+        current_user["id"],
+        "competition_updated",
+        competition_id,
+        {"competition_name": updated_competition["name"], "reference": updated_competition["topkit_reference"]}
+    )
+    
+    return updated_competition
+
 # ================================
 # MASTER JERSEYS API
 # ================================
