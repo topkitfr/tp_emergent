@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-hub-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
 
 # Test accounts
 ADMIN_EMAIL = "topkitfr@gmail.com"
