@@ -117,8 +117,42 @@ class TopKitBackendTester:
             except Exception as e:
                 print(f"    {creds_name} user credentials exception: {str(e)}")
         
-        self.log_test("User Authentication", False, "All user credential attempts failed")
-        return False
+    def create_test_user(self):
+        """Create a test user if authentication fails"""
+        try:
+            test_user_data = {
+                "email": "profile.test.user@topkit.com",
+                "password": "ProfileTestSecure789!",
+                "name": "Profile Test User"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/auth/register", json=test_user_data)
+            
+            if response.status_code == 200:
+                # Try to login with the new user
+                login_response = requests.post(f"{BACKEND_URL}/auth/login", json={
+                    "email": test_user_data["email"],
+                    "password": test_user_data["password"]
+                })
+                
+                if login_response.status_code == 200:
+                    data = login_response.json()
+                    self.user_token = data.get('token')
+                    self.user_user_data = data.get('user', {})
+                    
+                    self.log_test(
+                        "Test User Creation",
+                        True,
+                        f"Test user created and authenticated - Name: {self.user_user_data.get('name')}, ID: {self.user_user_data.get('id')}"
+                    )
+                    return True
+                    
+            self.log_test("Test User Creation", False, f"Failed to create test user: {response.status_code}")
+            return False
+            
+        except Exception as e:
+            self.log_test("Test User Creation", False, f"Exception: {str(e)}")
+            return False
     
     def test_user_profile_endpoint(self):
         """Test user profile endpoint structure for 3 tabs"""
