@@ -2433,9 +2433,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "New Jersey Submission Form Structure Implementation"
-  stuck_tasks:
-    - "New Jersey Submission Form Structure Implementation"
+    - "Admin Jersey Photo Management System"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
   critical_issues:
