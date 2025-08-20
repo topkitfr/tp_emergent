@@ -72,7 +72,7 @@ async def unlock_account():
     print(f"   - Account locked until: {updated_user.get('account_locked_until', 'None')}")
     print(f"   - Failed login attempts: {updated_user.get('failed_login_attempts', 0)}")
     
-    await client.close()
+    client.close()
 
 if __name__ == "__main__":
     asyncio.run(unlock_account())
