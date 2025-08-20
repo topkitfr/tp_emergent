@@ -263,6 +263,16 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
             >
               ❤️ Ma Wishlist
             </button>
+            <button
+              onClick={() => setActiveTab('submissions')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'submissions'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              📋 Mes Soumissions
+            </button>
           </nav>
         </div>
       </div>
@@ -270,6 +280,7 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
       {/* Contenu des onglets */}
       {activeTab === 'info' && renderInfoTab()}
       {activeTab === 'wishlist' && renderWishlistTab()}
+      {activeTab === 'submissions' && renderSubmissionsTab()}
 
       {/* Modal détails */}
       <JerseyDetailModal
