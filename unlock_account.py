@@ -4,11 +4,13 @@ Script to unlock steinmetzlivio@gmail.com account and update password
 """
 import os
 import asyncio
+import bcrypt
 from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 async def unlock_account():
     """Unlock the account steinmetzlivio@gmail.com and update password"""
@@ -38,7 +40,7 @@ async def unlock_account():
     print(f"   - Failed login attempts: {user.get('failed_login_attempts', 0)}")
     
     # Hash the new password
-    hashed_password = pwd_context.hash(new_password)
+    hashed_password = hash_password(new_password)
     
     # Update the user - unlock account and update password
     update_data = {
