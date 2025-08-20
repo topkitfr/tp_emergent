@@ -180,14 +180,16 @@ const CollaborativeApp = () => {
         {renderCurrentView()}
       </main>
 
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      )}
+          {/* Auth Modal */}
+          {showAuthModal && (
+            <div className="fixed inset-0 z-50">
+              <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onLoginSuccess={handleLoginSuccess}
+              />
+            </div>
+          )}
 
       {/* Loading Overlay */}
       {loading && (
