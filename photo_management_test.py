@@ -366,10 +366,14 @@ class TopKitPhotoManagementTester:
             
             # Try to edit photos without admin token
             update_data = {
-                "remove_front_photo": True
+                "team": "Real Madrid CF",
+                "league": "La Liga", 
+                "season": "2024-25",
+                "model": "authentic",
+                "remove_front_photo": "true"
             }
             
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=update_data)
+            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", data=update_data)
             
             # Restore admin token
             self.session.headers.update({'Authorization': f'Bearer {original_token}'})
