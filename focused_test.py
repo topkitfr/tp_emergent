@@ -6,7 +6,7 @@ Focused test for failing endpoints
 import requests
 import json
 
-BASE_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BASE_URL = "https://soccer-collection.preview.emergentagent.com/api"
 
 def test_failing_endpoints():
     session = requests.Session()

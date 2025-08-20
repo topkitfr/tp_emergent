@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BASE_URL = "https://soccer-collection.preview.emergentagent.com/api"
 
 class BackendCorrectionsTest:
     def __init__(self):

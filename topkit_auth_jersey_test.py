@@ -12,7 +12,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BASE_URL = "https://soccer-collection.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 

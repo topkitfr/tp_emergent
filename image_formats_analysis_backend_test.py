@@ -27,7 +27,7 @@ from collections import defaultdict
 import re
 
 # Configuration
-BACKEND_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
 
 class ImageFormatAnalyzer:
     def __init__(self):

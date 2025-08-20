@@ -17,7 +17,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
 TEST_EMAIL = "steinmetzlivio@gmail.com"
 TEST_PASSWORD = "T0p_Mdp_1288*"
 INVALID_EMAIL = "nonexistent@example.com"
@@ -395,7 +395,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://kit-explorer-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
