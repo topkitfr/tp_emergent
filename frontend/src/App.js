@@ -1219,13 +1219,26 @@ const AppContent = () => {
                 {viewMode === 'grid' ? (
                   <>
                     <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                      {/* Debug: Affichage des informations de l'image */}
+                      {(jersey.images && jersey.images.length > 0 || jersey.front_photo_url) && 
+                        console.log('Trying to display image for:', jersey.team, {
+                          images: jersey.images,
+                          front_photo_url: jersey.front_photo_url,
+                          constructed_url: jersey.images && jersey.images.length > 0 
+                            ? (jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`)
+                            : (jersey.front_photo_url?.startsWith('uploads/') ? `/${jersey.front_photo_url}` : `/images/${jersey.front_photo_url}`)
+                        })
+                      }
+                      
                       {/* Essayer d'afficher l'image d'abord depuis le champ images */}
                       {jersey.images && jersey.images.length > 0 ? (
                         <img 
                           src={jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`}
                           alt={`${jersey.team} ${jersey.season}`}
                           className="w-full h-full object-cover"
+                          onLoad={() => console.log('Image loaded successfully for:', jersey.team)}
                           onError={(e) => {
+                            console.log('Image failed to load for:', jersey.team, 'URL:', e.target.src);
                             // Si l'image ne se charge pas, afficher l'emoji
                             const parent = e.target.parentNode;
                             parent.innerHTML = '<div class="text-4xl">👕</div>';
@@ -1236,7 +1249,9 @@ const AppContent = () => {
                           src={jersey.front_photo_url.startsWith('uploads/') ? `/${jersey.front_photo_url}` : `/images/${jersey.front_photo_url}`}
                           alt={`${jersey.team} ${jersey.season}`}
                           className="w-full h-full object-cover"
+                          onLoad={() => console.log('Image loaded successfully for:', jersey.team)}
                           onError={(e) => {
+                            console.log('Image failed to load for:', jersey.team, 'URL:', e.target.src);
                             // Si l'image ne se charge pas, afficher l'emoji
                             const parent = e.target.parentNode;
                             parent.innerHTML = '<div class="text-4xl">👕</div>';
