@@ -2428,6 +2428,12 @@ const AppContent = () => {
         </>
       )}
       {currentView === 'marketplace' && <MarketplacePage />}
+      {currentView === 'profile' && (
+        <ProfilePage user={user} API={API} />
+      )}
+      {currentView === 'collection' && (
+        <CollectionPage />
+      )}
       {currentView === 'profile' && <ProfilePage />}
       {currentView === 'admin' && <AdminPanel />}
 
