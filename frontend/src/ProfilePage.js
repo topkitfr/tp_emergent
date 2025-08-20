@@ -23,14 +23,16 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'wishlist') {
-      loadWishlist();
+    if (activeTab === 'wishlist' && userCollections.wanted) {
+      applyFilters();
     }
-  }, [activeTab]);
+  }, [activeTab, userCollections.wanted]);
 
   useEffect(() => {
-    applyFilters();
-  }, [wishlist, filters]);
+    if (userCollections.wanted) {
+      applyFilters();
+    }
+  }, [userCollections.wanted, filters]);
 
   const loadWishlist = async () => {
     setLoading(true);
