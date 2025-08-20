@@ -1195,7 +1195,17 @@ const AppContent = () => {
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             : "space-y-4"
           }>
-            {filteredJerseys.map((jersey) => (
+            {filteredJerseys.map((jersey) => {
+              // Debug log pour vérifier les données du maillot
+              if (jersey.images && jersey.images.length > 0 || jersey.front_photo_url) {
+                console.log('Jersey with photos:', jersey.team, {
+                  images: jersey.images,
+                  front_photo_url: jersey.front_photo_url,
+                  back_photo_url: jersey.back_photo_url
+                });
+              }
+              
+              return (
               <div
                 key={jersey.id}
                 className={viewMode === 'grid'
