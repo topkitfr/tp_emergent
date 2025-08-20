@@ -8231,6 +8231,9 @@ async def send_newsletter(
 # Include the router in the main app
 app.include_router(api_router)
 
+# Mount static files for uploads
+app.mount("/uploads", StaticFiles(directory="../frontend/public/uploads"), name="uploads")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
