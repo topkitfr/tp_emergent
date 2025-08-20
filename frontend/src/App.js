@@ -676,7 +676,10 @@ const AppContent = () => {
                 Home
               </button>
               <button
-                onClick={() => setCurrentView('explore')}
+                onClick={() => {
+                  console.log('Clicking Explorez button, setting currentView to explore');
+                  setCurrentView('explore');
+                }}
                 className={`${currentView === 'explore' 
                   ? 'text-black border-b-2 border-black' 
                   : 'text-gray-500 hover:text-black'
