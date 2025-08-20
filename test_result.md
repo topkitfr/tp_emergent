@@ -2505,7 +2505,11 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "TopKit Critical Bug Fixes Testing - Authentication Issues"
+    - "TopKit Jersey Photo Display Fix"
+    - "TopKit Own/Want Button Functionality"
+    - "TopKit Jersey Submission Confirmation Messages"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
