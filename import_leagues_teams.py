@@ -415,7 +415,27 @@ class TopKitImporter:
                 else:
                     error_data = await response.text()
                     print(f"❌ Échec authentification: {response.status} - {error_data}")
-                    return False
+                    
+                    # Essayer avec l'endpoint alternatif
+                    print("🔄 Tentative avec endpoint alternatif...")
+                    async with self.session.post(
+                        f"{API_BASE_URL}/login",
+                        data={
+                            "username": ADMIN_EMAIL,
+                            "password": ADMIN_PASSWORD
+                        },
+                        headers={"Content-Type": "application/x-www-form-urlencoded"}
+                    ) as alt_response:
+                        if alt_response.status == 200:
+                            alt_data = await alt_response.json()
+                            self.token = alt_data.get("access_token")
+                            print("✅ Authentification réussie (endpoint alternatif)")
+                            return True
+                        else:
+                            alt_error = await alt_response.text()
+                            print(f"❌ Échec authentification alternatif: {alt_response.status} - {alt_error}")
+                            return False
+                            
         except Exception as e:
             print(f"❌ Erreur authentification: {str(e)}")
             return False
