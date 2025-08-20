@@ -65,7 +65,7 @@ class TopKitCollaborativeAPITester:
             ("GET /api/competitions", "competitions"),
             ("GET /api/master-jerseys", "master-jerseys"),
             ("GET /api/jersey-releases", "jersey-releases"),
-            ("GET /api/search/collaborative", "search/collaborative")
+            ("GET /api/search/collaborative?q=test", "search/collaborative?q=test")
         ]
         
         for endpoint_name, endpoint_path in endpoints:
