@@ -3619,7 +3619,7 @@ async def get_league_jerseys(league: str, limit: int = 20):
     return jerseys
 
 # Jersey endpoints
-@api_router.post("/jerseys", response_model=Jersey)
+@api_router.post("/jerseys")
 async def create_jersey(
     team: str = Form(...),
     league: str = Form(...),
