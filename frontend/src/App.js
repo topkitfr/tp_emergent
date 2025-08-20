@@ -1330,7 +1330,7 @@ const AppContent = () => {
       {/* Hot Drops Section */}
       <div className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-black mb-8">Les derniers hot drops 🔥</h2>
+          <h2 className="text-3xl font-bold text-black mb-8">Maillots récemment ajoutés ⚡</h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
             {jerseys.slice(6, 12).map((jersey) => (
