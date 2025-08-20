@@ -1200,11 +1200,11 @@ const AppContent = () => {
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-20">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-black mb-6">
-              Maillots & streetwear au meilleur prix
+              Estimez votre collection de maillots
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Trouvez les maillots de football les plus tendance avec TopKit, 
-              la marketplace incontournable pour acheter au meilleur prix !
+              TopKit vous aide à estimer la valeur de votre collection de maillots de football. 
+              Bientôt une marketplace et d'autres disciplines sportives !
             </p>
             
             {/* Search Bar */}
