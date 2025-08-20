@@ -580,21 +580,60 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                   <label className="block text-sm font-medium text-black mb-2">
                     Photo de face
                   </label>
+                  
+                  {/* Photo existante */}
+                  {existingPhotos.front && !photosToRemove.front && !photoPreview.front && (
+                    <div className="mb-3 relative inline-block">
+                      <img 
+                        src={`/images/${existingPhotos.front}`}
+                        alt="Photo de face existante" 
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingPhoto('front')}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
+                        title="Supprimer cette photo"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1">Photo actuelle</p>
+                    </div>
+                  )}
+                  
+                  {/* Nouvelle photo uploadée */}
+                  {photoPreview.front && (
+                    <div className="mb-3 relative inline-block">
+                      <img 
+                        src={photoPreview.front} 
+                        alt="Nouvelle photo de face" 
+                        className="w-32 h-32 object-cover rounded-lg border border-green-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewPhoto('front')}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
+                        title="Supprimer cette photo"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-green-600 mt-1">Nouvelle photo</p>
+                    </div>
+                  )}
+                  
+                  {/* Message si photo supprimée */}
+                  {photosToRemove.front && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">📷 Photo de face sera supprimée lors de la sauvegarde</p>
+                    </div>
+                  )}
+                  
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => handlePhotoUpload('front', e.target.files[0])}
                     className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800"
                   />
-                  {photoPreview.front && (
-                    <div className="mt-2">
-                      <img 
-                        src={photoPreview.front} 
-                        alt="Preview front" 
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {/* Back Photo */}
@@ -602,21 +641,60 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                   <label className="block text-sm font-medium text-black mb-2">
                     Photo de dos
                   </label>
+                  
+                  {/* Photo existante */}
+                  {existingPhotos.back && !photosToRemove.back && !photoPreview.back && (
+                    <div className="mb-3 relative inline-block">
+                      <img 
+                        src={`/images/${existingPhotos.back}`}
+                        alt="Photo de dos existante" 
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingPhoto('back')}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
+                        title="Supprimer cette photo"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1">Photo actuelle</p>
+                    </div>
+                  )}
+                  
+                  {/* Nouvelle photo uploadée */}
+                  {photoPreview.back && (
+                    <div className="mb-3 relative inline-block">
+                      <img 
+                        src={photoPreview.back} 
+                        alt="Nouvelle photo de dos" 
+                        className="w-32 h-32 object-cover rounded-lg border border-green-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewPhoto('back')}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
+                        title="Supprimer cette photo"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-green-600 mt-1">Nouvelle photo</p>
+                    </div>
+                  )}
+                  
+                  {/* Message si photo supprimée */}
+                  {photosToRemove.back && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">📷 Photo de dos sera supprimée lors de la sauvegarde</p>
+                    </div>
+                  )}
+                  
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => handlePhotoUpload('back', e.target.files[0])}
                     className="w-full p-3 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800"
                   />
-                  {photoPreview.back && (
-                    <div className="mt-2">
-                      <img 
-                        src={photoPreview.back} 
-                        alt="Preview back" 
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
