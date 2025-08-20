@@ -3834,7 +3834,7 @@ async def get_jerseys(
     condition: Optional[JerseyCondition] = None,
     league: Optional[str] = None,
     skip: int = 0,
-    limit: int = 20
+    limit: int = 100
 ):
     query = {}
     # Only show approved jerseys (Discogs-like system)
