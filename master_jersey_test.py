@@ -208,15 +208,32 @@ class MasterJerseyTester:
     def create_master_jersey(self, team_id, brand_id, competition_id=None):
         """Create a master jersey linking team + brand + competition"""
         try:
+            # First check if master jersey already exists
+            response = self.session.get(f"{BACKEND_URL}/master-jerseys", params={
+                "team_id": team_id,
+                "season": "2024-25",
+                "jersey_type": "home"
+            })
+            
+            if response.status_code == 200:
+                jerseys = response.json()
+                for jersey in jerseys:
+                    if (jersey.get("team_id") == team_id and 
+                        jersey.get("season") == "2024-25" and 
+                        jersey.get("jersey_type") == "home"):
+                        self.log_test("Create Master Jersey", True, f"Using existing master jersey - ID: {jersey.get('id')}, Ref: {jersey.get('topkit_reference')}")
+                        return jersey
+            
+            # Create new master jersey if not exists
             jersey_data = {
                 "team_id": team_id,
                 "brand_id": brand_id,
                 "season": "2024-25",
-                "jersey_type": "home",
-                "design_name": "Classic Home Kit",
-                "primary_color": "blue",
-                "secondary_colors": ["red", "white"],
-                "pattern_description": "Classic stripes with modern cut",
+                "jersey_type": "away",  # Use away to avoid conflict
+                "design_name": "Classic Away Kit",
+                "primary_color": "white",
+                "secondary_colors": ["blue", "red"],
+                "pattern_description": "Classic away design with modern cut",
                 "main_sponsor": "Qatar Airways"
             }
             
@@ -227,7 +244,7 @@ class MasterJerseyTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.log_test("Create Master Jersey", True, f"ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
+                self.log_test("Create Master Jersey", True, f"Created new master jersey - ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
                 return data
             else:
                 self.log_test("Create Master Jersey", False, f"HTTP {response.status_code}: {response.text}")
