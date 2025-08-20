@@ -8787,8 +8787,8 @@ async def get_master_jerseys(
             team_info=team_info,
             brand_info=brand_info,
             competition_info=competition_info,
-            total_releases=releases_count,
-            total_collectors=0  # TODO: calculer
+            releases_count=releases_count,  # Updated to match model field
+            collectors_count=0  # Updated to match model field
         )
         enriched_jerseys.append(enriched_jersey)
     
