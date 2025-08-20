@@ -308,7 +308,104 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </div>
           )}
 
-          <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
+          {successMessage && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              {successMessage}
+            </div>
+          )}
+
+          {/* Forgot Password Form */}
+          {showForgotPassword ? (
+            <form onSubmit={handleForgotPassword} noValidate className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Saisissez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+              </p>
+              
+              <input
+                type="email"
+                placeholder="Adresse email"
+                value={formData.resetEmail}
+                onChange={(e) => setFormData({ ...formData, resetEmail: e.target.value })}
+                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                disabled={loading}
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Envoi en cours...
+                  </span>
+                ) : (
+                  'Envoyer le lien de réinitialisation'
+                )}
+              </button>
+
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    resetForm();
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  type="button"
+                  disabled={loading}
+                >
+                  Retour à la connexion
+                </button>
+              </div>
+            </form>
+          ) : showResetForm ? (
+            /* Reset Password Form */
+            <form onSubmit={handleResetPassword} noValidate className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Saisissez votre nouveau mot de passe.
+              </p>
+              
+              <input
+                type="password"
+                placeholder="Nouveau mot de passe"
+                value={formData.newPassword}
+                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                disabled={loading}
+              />
+
+              <input
+                type="password"
+                placeholder="Confirmer le nouveau mot de passe"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                disabled={loading}
+              />
+
+              <div className="text-xs text-gray-600">
+                Le mot de passe doit contenir au moins 8 caractères, incluant une majuscule, une minuscule, un chiffre et un caractère spécial.
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Réinitialisation...
+                  </span>
+                ) : (
+                  'Réinitialiser le mot de passe'
+                )}
+              </button>
+            </form>
+          ) : (
+            /* Regular Login/Register Form */
+            <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
             {!isLogin && (
               <input
                 type="text"
