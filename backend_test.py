@@ -161,7 +161,7 @@ class TopKitBackendTester:
                 jersey_id = jersey.get('id')
                 
                 self.log_test("Create Test Jersey with Realistic Photos", True,
-                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}")
+                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}, Ref: {jersey.get('reference_number')}")
                 return jersey_id
             else:
                 self.log_test("Create Test Jersey with Realistic Photos", False,
