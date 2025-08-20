@@ -302,7 +302,7 @@ def run_comprehensive_test():
         print_error("Cannot proceed without admin authentication")
         return False
     
-    # Étape 3: Soumettre un maillot avec photos
+    # Étape 4: Soumettre un maillot avec photos
     jersey_id = submit_jersey_with_photos(user_token)
     if not jersey_id:
         print_error("Cannot proceed without jersey submission")
