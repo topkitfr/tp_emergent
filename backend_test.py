@@ -327,7 +327,7 @@ class TopKitCollaborativeAPITester:
         # Authenticate first
         if not self.authenticate_admin():
             print("❌ Cannot proceed without authentication")
-            return
+            return 0
         
         # Run all tests
         self.test_basic_api_connectivity()
