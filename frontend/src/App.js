@@ -1066,332 +1066,343 @@ const AppContent = () => {
     </div>
   );
 
-  // Explore Page Component with filters
-  const ExplorePage = () => (
-    <div className="min-h-screen bg-white text-black p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Search and Filters */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 md:mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold mb-4 lg:mb-0">
-              Explorez les maillots
-            </h1>
-            
-            {/* View Toggle */}
-            <div className="flex items-center space-x-2 bg-gray-100 p-1 rounded-lg">
+  // Explore Page Component with Pagination and Modal
+  const ExplorePage = () => {
+    const [viewMode, setViewMode] = useState('grid');
+    const [filters, setFilters] = useState({
+      league: '',
+      team: '',
+      season: ''
+    });
+    const [filteredJerseys, setFilteredJerseys] = useState([]);
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(25);
+    
+    // Modal state
+    const [selectedJersey, setSelectedJersey] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+      applyFilters();
+    }, [jerseys, filters]);
+
+    const applyFilters = () => {
+      let filtered = [...jerseys];
+      
+      if (filters.league) {
+        filtered = filtered.filter(jersey => 
+          jersey.league?.toLowerCase().includes(filters.league.toLowerCase())
+        );
+      }
+      
+      if (filters.team) {
+        filtered = filtered.filter(jersey => 
+          jersey.team?.toLowerCase().includes(filters.team.toLowerCase())
+        );
+      }
+      
+      if (filters.season) {
+        filtered = filtered.filter(jersey => 
+          jersey.season?.includes(filters.season)
+        );
+      }
+      
+      setFilteredJerseys(filtered);
+      setCurrentPage(1);
+    };
+
+    const handleFilterChange = (filterType, value) => {
+      setFilters(prev => ({
+        ...prev,
+        [filterType]: value
+      }));
+    };
+
+    const handleJerseyAction = async (action, jersey) => {
+      switch (action) {
+        case 'addToWishlist':
+          try {
+            const response = await fetch(`${API}/api/wishlist`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              },
+              body: JSON.stringify({ jersey_id: jersey.id })
+            });
+            if (response.ok) {
+              // Success notification could be added here
+              console.log('Added to wishlist');
+            }
+          } catch (error) {
+            console.error('Error adding to wishlist:', error);
+          }
+          break;
+        case 'addToCollection':
+          // Open collection editor modal or navigate to collection page
+          console.log('Add to collection:', jersey);
+          break;
+      }
+      setShowModal(false);
+    };
+
+    const openJerseyModal = (jersey) => {
+      setSelectedJersey(jersey);
+      setShowModal(true);
+    };
+
+    // Pagination calculations
+    const totalItems = filteredJerseys.length;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = filteredJerseys.slice(startIndex, endIndex);
+
+    return (
+      <div className="max-w-7xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">Explorez les maillots</h1>
+        
+        {/* Filtres */}
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Championnat</label>
+              <input
+                type="text"
+                value={filters.league}
+                onChange={(e) => handleFilterChange('league', e.target.value)}
+                placeholder="Ex: Ligue 1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Équipe</label>
+              <input
+                type="text"
+                value={filters.team}
+                onChange={(e) => handleFilterChange('team', e.target.value)}
+                placeholder="Ex: PSG"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Saison</label>
+              <input
+                type="text"
+                value={filters.season}
+                onChange={(e) => handleFilterChange('season', e.target.value)}
+                placeholder="Ex: 2024/25"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-end">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-black text-white' : 'text-gray-600'}`}
+                onClick={() => setFilters({ league: '', team: '', season: '' })}
+                className="px-4 py-2 text-gray-600 hover:text-black transition-colors"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-black text-white' : 'text-gray-600'}`}
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
+                Réinitialiser
               </button>
             </div>
-          </div>
-
-          {/* Advanced Filters */}
-          <div className="bg-gray-50 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Championnat
-                </label>
-                <select
-                  value={filters.league}
-                  onChange={(e) => handleFilterChange({ league: e.target.value })}
-                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option value="">Tous les championnats</option>
-                  {availableLeagues.map(league => (
-                    <option key={league} value={league}>{league}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Équipe
-                </label>
-                <select
-                  value={filters.team}
-                  onChange={(e) => handleFilterChange({ team: e.target.value })}
-                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option value="">Toutes les équipes</option>
-                  {availableTeams.map(team => (
-                    <option key={team} value={team}>{team}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Saison
-                </label>
-                <select
-                  value={filters.season}
-                  onChange={(e) => handleFilterChange({ season: e.target.value })}
-                  className="w-full bg-white text-black p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option value="">Toutes les saisons</option>
-                  {SEASONS.map(season => (
-                    <option key={season} value={season}>{season}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="md:col-span-2 lg:col-span-2">
-                <div className="flex space-x-2 pt-7">
-                  <button
-                    onClick={clearFilters}
-                    className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-3 rounded-lg transition-colors"
-                  >
-                    Effacer filtres
-                  </button>
-                  <div className="flex-1 text-right pt-3">
-                    <span className="text-gray-600 text-sm">
-                      {filteredJerseys.length} maillots trouvés
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Search */}
-          <div className="md:hidden mb-6">
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full bg-gray-50 text-black px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
-            />
           </div>
         </div>
 
-        {/* Results */}
-        {filteredJerseys.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏟️</div>
-            <h3 className="text-xl font-semibold text-black mb-2">
-              Aucun maillot trouvé
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Essayez de modifier vos critères de recherche
-            </p>
+        {/* Controls */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-gray-600">
+            {totalItems} maillot{totalItems !== 1 ? 's' : ''} trouvé{totalItems !== 1 ? 's' : ''}
+          </div>
+          <div className="flex gap-2">
             <button
-              onClick={clearFilters}
-              className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg transition-colors"
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-2 rounded ${viewMode === 'grid' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
             >
-              Voir tous les maillots
+              Grille
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded ${viewMode === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
+            >
+              Liste
             </button>
           </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-            : "space-y-4"
-          }>
-            {filteredJerseys.map((jersey) => {
-              // Debug log pour vérifier les données du maillot
-              if (jersey.images && jersey.images.length > 0 || jersey.front_photo_url) {
-                console.log('Jersey with photos:', jersey.team, {
-                  images: jersey.images,
-                  front_photo_url: jersey.front_photo_url,
-                  back_photo_url: jersey.back_photo_url
-                });
-              }
-              
-              return (
-              <div
-                key={jersey.id}
-                className={viewMode === 'grid'
-                  ? "bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow border border-gray-200"
-                  : "bg-white rounded-lg p-4 hover:shadow-md transition-shadow border border-gray-200 flex items-center space-x-4"
+        </div>
+
+        {/* Liste des maillots */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {currentItems.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              {jerseys.length === 0 ? 'Aucun maillot disponible' : 'Aucun résultat trouvé'}
+            </div>
+          ) : (
+            <div className={`p-4 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}`}>
+              {currentItems.map((jersey) => {
+                // Debug log pour vérifier les données du maillot
+                if (jersey.images && jersey.images.length > 0 || jersey.front_photo_url) {
+                  console.log('Jersey with photos:', jersey.team, {
+                    images: jersey.images,
+                    front_photo_url: jersey.front_photo_url,
+                    back_photo_url: jersey.back_photo_url
+                  });
                 }
-              >
-                {viewMode === 'grid' ? (
-                  <>
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      {/* Solution robuste multi-formats pour affichage d'images */}
-                      {(() => {
-                        // Déterminer quelle image afficher
-                        let imageUrl = null;
-                        let imageSource = null;
-                        
-                        // Priorité 1: Format images array
-                        if (jersey.images && jersey.images.length > 0) {
-                          const img = jersey.images[0];
-                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                          imageSource = "images_array";
-                        }
-                        // Priorité 2: Format front_photo_url
-                        else if (jersey.front_photo_url) {
-                          const img = jersey.front_photo_url;
-                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                          imageSource = "front_photo_url";
-                        }
-                        
-                        // Debug log
-                        if (imageUrl) {
-                          console.log(`📸 ${jersey.team}: ${imageSource} -> ${imageUrl}`);
-                        }
-                        
-                        // Afficher l'image si disponible
-                        return imageUrl ? (
-                          <img 
-                            src={imageUrl}
-                            alt={`${jersey.team} ${jersey.season}`}
-                            className="w-full h-full object-cover"
-                            onLoad={() => console.log(`✅ Image loaded: ${jersey.team}`)}
-                            onError={(e) => {
-                              console.log(`❌ Image failed: ${jersey.team} - ${imageUrl}`);
-                              // Fallback vers emoji si l'image ne charge pas
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-4xl">👕</div>
-                        );
-                      })()}
-                      {/* Fallback emoji (initialement caché si image disponible) */}
-                      <div className="text-4xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-black mb-1 truncate">
-                        {jersey.team}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {jersey.league} • {jersey.season}
-                      </p>
-                      {jersey.player_name && (
-                        <p className="text-sm text-black mb-3 font-medium">
-                          {jersey.player_name}
-                        </p>
-                      )}
-                      
-                      {/* Collection buttons */}
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => toggleCollectionItem(jersey, 'owned')}
-                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
-                            isInCollection(jersey.id, 'owned')
-                              ? 'bg-black text-white'
-                              : 'bg-gray-100 text-black hover:bg-gray-200'
-                          }`}
-                        >
-                          {isInCollection(jersey.id, 'owned') ? '✓ Possédé' : '+ Own'}
+                
+                return (
+                <div
+                  key={jersey.id}
+                  onClick={() => openJerseyModal(jersey)}
+                  className={`cursor-pointer transition-shadow hover:shadow-md ${
+                    viewMode === 'grid'
+                      ? "bg-white rounded-lg overflow-hidden border border-gray-200"
+                      : "bg-white rounded-lg p-4 border border-gray-200 flex items-center space-x-4"
+                  }`}
+                >
+                  {viewMode === 'grid' ? (
+                    <>
+                      <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                        {/* Solution robuste multi-formats pour affichage d'images */}
+                        {(() => {
+                          // Déterminer quelle image afficher
+                          let imageUrl = null;
+                          let imageSource = null;
+                          
+                          // Priorité 1: Format images array
+                          if (jersey.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageSource = "images_array";
+                          }
+                          // Priorité 2: Format front_photo_url
+                          else if (jersey.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageSource = "front_photo_url";
+                          }
+                          
+                          // Debug log
+                          if (imageUrl) {
+                            console.log(`📸 ${jersey.team}: ${imageSource} -> ${imageUrl}`);
+                          }
+                          
+                          // Afficher l'image si disponible
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey.team} ${jersey.season}`}
+                              className="w-full h-full object-cover"
+                              onLoad={() => console.log(`✅ Image loaded: ${jersey.team}`)}
+                              onError={(e) => {
+                                console.log(`❌ Image failed: ${jersey.team} - ${imageUrl}`);
+                                // Fallback vers emoji si l'image ne charge pas
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-4xl">👕</div>
+                          );
+                        })()}
+                        {/* Fallback emoji (initialement caché si image disponible) */}
+                        <div className="text-4xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-black mb-1">{jersey.team}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{jersey.league} • {jersey.season}</p>
+                        <div className="flex gap-2 mt-2">
+                          <button className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">
+                            Own
+                          </button>
+                          <button className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">
+                            Want
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {/* Solution robuste multi-formats pour affichage d'images */}
+                        {(() => {
+                          // Déterminer quelle image afficher
+                          let imageUrl = null;
+                          let imageSource = null;
+                          
+                          // Priorité 1: Format images array
+                          if (jersey.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageSource = "images_array";
+                          }
+                          // Priorité 2: Format front_photo_url
+                          else if (jersey.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                            imageSource = "front_photo_url";
+                          }
+                          
+                          // Afficher l'image si disponible
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey.team} ${jersey.season}`}
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                console.log(`❌ List Image failed: ${jersey.team} - ${imageUrl}`);
+                                // Fallback vers emoji si l'image ne charge pas
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-2xl">👕</div>
+                          );
+                        })()}
+                        {/* Fallback emoji (initialement caché si image disponible) */}
+                        <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-black mb-1">{jersey.team}</h3>
+                        <p className="text-sm text-gray-600">{jersey.league} • {jersey.season}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200">
+                          Own
                         </button>
-                        <button
-                          onClick={() => toggleCollectionItem(jersey, 'wanted')}
-                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
-                            isInCollection(jersey.id, 'wanted')
-                              ? 'bg-gray-800 text-white'
-                              : 'bg-gray-100 text-black hover:bg-gray-200'
-                          }`}
-                        >
-                          {isInCollection(jersey.id, 'wanted') ? '⭐ Voulu' : '+ Want'}
+                        <button className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200">
+                          Want
                         </button>
                       </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      {/* Solution robuste multi-formats pour affichage d'images */}
-                      {(() => {
-                        // Déterminer quelle image afficher
-                        let imageUrl = null;
-                        let imageSource = null;
-                        
-                        // Priorité 1: Format images array
-                        if (jersey.images && jersey.images.length > 0) {
-                          const img = jersey.images[0];
-                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                          imageSource = "images_array";
-                        }
-                        // Priorité 2: Format front_photo_url
-                        else if (jersey.front_photo_url) {
-                          const img = jersey.front_photo_url;
-                          imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                          imageSource = "front_photo_url";
-                        }
-                        
-                        // Afficher l'image si disponible
-                        return imageUrl ? (
-                          <img 
-                            src={imageUrl}
-                            alt={`${jersey.team} ${jersey.season}`}
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => {
-                              console.log(`❌ List Image failed: ${jersey.team} - ${imageUrl}`);
-                              // Fallback vers emoji si l'image ne charge pas
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-2xl">👕</div>
-                        );
-                      })()}
-                      {/* Fallback emoji (initialement caché si image disponible) */}
-                      <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-black mb-1">
-                        {jersey.team}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {jersey.league} • {jersey.season}
-                      </p>
-                      {jersey.player_name && (
-                        <p className="text-sm text-black font-medium">
-                          {jersey.player_name}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => toggleCollectionItem(jersey, 'owned')}
-                        className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors ${
-                          isInCollection(jersey.id, 'owned')
-                            ? 'bg-black text-white'
-                            : 'bg-gray-100 text-black hover:bg-gray-200'
-                        }`}
-                      >
-                        {isInCollection(jersey.id, 'owned') ? '✓ Possédé' : '+ Own'}
-                      </button>
-                      <button
-                        onClick={() => toggleCollectionItem(jersey, 'wanted')}
-                        className={`py-2 px-4 rounded-lg text-xs font-medium transition-colors ${
-                          isInCollection(jersey.id, 'wanted')
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-black hover:bg-gray-200'
-                        }`}
-                      >
-                        {isInCollection(jersey.id, 'wanted') ? '⭐ Voulu' : '+ Want'}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-              );
-            })}
-          </div>
-        )}
+                    </>
+                  )}
+                </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalItems > itemsPerPage && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+              itemName="maillots"
+            />
+          )}
+        </div>
+
+        {/* Modal détails */}
+        <JerseyDetailModal
+          jersey={selectedJersey}
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          context="explorer"
+          onAction={handleJerseyAction}
+        />
       </div>
-    </div>
-  );
+    );
+  };
 
   // Marketplace Component
   const MarketplacePage = () => (
