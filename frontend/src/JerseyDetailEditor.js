@@ -130,10 +130,21 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
         estimated_value: 0
       });
       
-      // Clear photo previews and suggestions
+      // Charger les photos existantes si elles existent
+      const jerseyImages = jersey?.images || [];
+      setExistingPhotos({
+        front: jerseyImages.find(img => img.includes('front')) || null,
+        back: jerseyImages.find(img => img.includes('back')) || null
+      });
+      
+      // Reset photo previews, suggestions et photos à supprimer
       setPhotoPreview({
         front: null,
         back: null
+      });
+      setPhotosToRemove({
+        front: false,
+        back: false
       });
       setSuggestions({});
       
