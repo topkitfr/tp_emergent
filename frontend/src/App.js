@@ -2060,10 +2060,11 @@ const AppContent = () => {
             <nav className="flex flex-wrap gap-2 md:gap-4">
               {[
                 { id: 'collection', label: 'Ma Collection', icon: '👕' },
+                { id: 'wishlist', label: 'Wishlist', icon: '⭐' },
                 { id: 'submissions', label: 'Mes Soumissions', icon: '📝' },
-                { id: 'listings', label: 'Mes Listings', icon: '🔥' },
+                { id: 'listings', label: 'Mes Annonces', icon: '🏪' },
                 { id: 'friends', label: 'Mes Amis', icon: '👥' },
-                { id: 'messages', label: 'Messages', icon: '💬' }
+                { id: 'messages', label: 'Messagerie', icon: '💬' }
               ].map((tab) => (
                 <button
                   key={tab.id}
