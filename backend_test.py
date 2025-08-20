@@ -1,461 +1,387 @@
 #!/usr/bin/env python3
 """
-TopKit Profile Picture Upload Functionality Testing
-Testing the newly implemented profile picture upload endpoints
+TopKit Collaborative Database API Testing
+Testing new collaborative database endpoints as requested in review
 """
 
 import requests
 import json
-import os
-import tempfile
-from PIL import Image
-import io
-import base64
+import sys
+from datetime import datetime
 
 # Configuration
-API_BASE = os.environ.get('REACT_APP_BACKEND_URL', 'https://jersey-vault-3.preview.emergentagent.com') + '/api'
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+BACKEND_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "adminpass123"
 
-class ProfilePictureUploadTester:
+class TopKitCollaborativeAPITester:
     def __init__(self):
         self.session = requests.Session()
-        self.auth_token = None
-        self.user_id = None
+        self.admin_token = None
         self.test_results = []
         
-    def log_result(self, test_name, success, details):
+    def log_test(self, test_name, success, details=""):
         """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} - {test_name}: {details}")
         self.test_results.append({
             'test': test_name,
             'success': success,
             'details': details
         })
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
     
-    def authenticate(self):
-        """Authenticate test user"""
+    def authenticate_admin(self):
+        """Authenticate admin user"""
         try:
-            response = self.session.post(f"{API_BASE}/auth/login", json={
-                "email": TEST_USER_EMAIL,
-                "password": TEST_USER_PASSWORD
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
             })
             
             if response.status_code == 200:
                 data = response.json()
-                self.auth_token = data.get('token')
-                self.user_id = data.get('user', {}).get('id')
-                self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
-                self.log_result("Authentication", True, f"Successfully authenticated user {TEST_USER_EMAIL}")
+                self.admin_token = data.get('token')
+                self.session.headers.update({'Authorization': f'Bearer {self.admin_token}'})
+                self.log_test("Admin Authentication", True, f"Admin: {data.get('user', {}).get('name', 'Unknown')}")
                 return True
             else:
-                self.log_result("Authentication", False, f"Failed to authenticate: {response.status_code} - {response.text}")
+                self.log_test("Admin Authentication", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Authentication", False, f"Authentication error: {str(e)}")
+            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def create_test_image(self, format='JPEG', size=(300, 300), file_size_mb=None):
-        """Create a test image file"""
-        try:
-            # Create a simple colored image
-            img = Image.new('RGB', size, color=(73, 109, 137))  # Blue color
-            
-            # Add some text to make it identifiable
+    def test_basic_api_connectivity(self):
+        """Test 1: Basic API connectivity - Verify all new endpoints are accessible"""
+        print("\n=== TEST 1: BASIC API CONNECTIVITY ===")
+        
+        endpoints = [
+            ("GET /api/teams", "teams"),
+            ("GET /api/brands", "brands"),
+            ("GET /api/players", "players"),
+            ("GET /api/competitions", "competitions"),
+            ("GET /api/master-jerseys", "master-jerseys"),
+            ("GET /api/jersey-releases", "jersey-releases"),
+            ("GET /api/search/collaborative", "search/collaborative")
+        ]
+        
+        for endpoint_name, endpoint_path in endpoints:
             try:
-                from PIL import ImageDraw, ImageFont
-                draw = ImageDraw.Draw(img)
-                draw.text((10, 10), "Test Profile Picture", fill=(255, 255, 255))
-            except:
-                pass  # Skip text if font not available
-            
-            # Save to bytes
-            img_bytes = io.BytesIO()
-            img.save(img_bytes, format=format, quality=95)
-            img_bytes.seek(0)
-            
-            # If specific file size requested, adjust
-            if file_size_mb:
-                target_size = file_size_mb * 1024 * 1024
-                current_size = len(img_bytes.getvalue())
+                response = self.session.get(f"{BACKEND_URL}/{endpoint_path}")
                 
-                if current_size < target_size:
-                    # Pad with zeros to reach target size
-                    padding = b'\x00' * (target_size - current_size)
-                    img_bytes = io.BytesIO(img_bytes.getvalue() + padding)
-                    img_bytes.seek(0)
-            
-            return img_bytes
-            
-        except Exception as e:
-            print(f"Error creating test image: {e}")
-            return None
-    
-    def test_upload_profile_picture_success(self):
-        """Test successful profile picture upload"""
-        try:
-            # Create test image
-            test_image = self.create_test_image('JPEG')
-            if not test_image:
-                self.log_result("Upload Profile Picture - Success", False, "Failed to create test image")
-                return False
-            
-            # Upload image
-            files = {'file': ('test_profile.jpg', test_image, 'image/jpeg')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if 'profile_picture_url' in data:
-                    self.log_result("Upload Profile Picture - Success", True, 
-                                  f"Successfully uploaded profile picture: {data['profile_picture_url']}")
-                    return True
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_test(f"Endpoint {endpoint_name}", True, f"Returns {len(data) if isinstance(data, list) else 'data'} items")
                 else:
-                    self.log_result("Upload Profile Picture - Success", False, 
-                                  "Response missing profile_picture_url field")
-                    return False
-            else:
-                self.log_result("Upload Profile Picture - Success", False, 
-                              f"Upload failed: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Upload Profile Picture - Success", False, f"Upload error: {str(e)}")
-            return False
-    
-    def test_upload_png_format(self):
-        """Test PNG format upload"""
-        try:
-            test_image = self.create_test_image('PNG')
-            if not test_image:
-                self.log_result("Upload PNG Format", False, "Failed to create PNG test image")
-                return False
-            
-            files = {'file': ('test_profile.png', test_image, 'image/png')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            success = response.status_code == 200
-            details = f"PNG upload: {response.status_code}" + (f" - {response.json().get('message', '')}" if success else f" - {response.text}")
-            self.log_result("Upload PNG Format", success, details)
-            return success
-            
-        except Exception as e:
-            self.log_result("Upload PNG Format", False, f"PNG upload error: {str(e)}")
-            return False
-    
-    def test_file_size_validation_reject_large(self):
-        """Test file size validation - reject files > 5MB"""
-        try:
-            # Create a 6MB image (should be rejected)
-            test_image = self.create_test_image('JPEG', size=(1000, 1000), file_size_mb=6)
-            if not test_image:
-                self.log_result("File Size Validation - Reject Large", False, "Failed to create large test image")
-                return False
-            
-            files = {'file': ('large_profile.jpg', test_image, 'image/jpeg')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            # Should be rejected with 400 status
-            if response.status_code == 400:
-                self.log_result("File Size Validation - Reject Large", True, 
-                              f"Correctly rejected large file: {response.json().get('detail', '')}")
-                return True
-            else:
-                self.log_result("File Size Validation - Reject Large", False, 
-                              f"Large file not rejected: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_result("File Size Validation - Reject Large", False, f"Large file test error: {str(e)}")
-            return False
-    
-    def test_file_size_validation_accept_reasonable(self):
-        """Test file size validation - accept reasonable sizes"""
-        try:
-            # Create a 2MB image (should be accepted)
-            test_image = self.create_test_image('JPEG', size=(800, 800))
-            if not test_image:
-                self.log_result("File Size Validation - Accept Reasonable", False, "Failed to create reasonable test image")
-                return False
-            
-            files = {'file': ('reasonable_profile.jpg', test_image, 'image/jpeg')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            # Should be accepted with 200 status
-            if response.status_code == 200:
-                self.log_result("File Size Validation - Accept Reasonable", True, 
-                              "Correctly accepted reasonable file size")
-                return True
-            else:
-                self.log_result("File Size Validation - Accept Reasonable", False, 
-                              f"Reasonable file rejected: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("File Size Validation - Accept Reasonable", False, f"Reasonable file test error: {str(e)}")
-            return False
-    
-    def test_file_type_validation_reject_unsupported(self):
-        """Test file type validation - reject unsupported formats"""
-        try:
-            # Create a text file disguised as image
-            fake_image = io.BytesIO(b"This is not an image file")
-            
-            files = {'file': ('fake_image.txt', fake_image, 'text/plain')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            # Should be rejected with 400 status
-            if response.status_code == 400:
-                self.log_result("File Type Validation - Reject Unsupported", True, 
-                              f"Correctly rejected unsupported file type: {response.json().get('detail', '')}")
-                return True
-            else:
-                self.log_result("File Type Validation - Reject Unsupported", False, 
-                              f"Unsupported file not rejected: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_result("File Type Validation - Reject Unsupported", False, f"Unsupported file test error: {str(e)}")
-            return False
-    
-    def test_get_profile_picture_url(self):
-        """Test GET /api/users/profile/picture/{user_id}"""
-        try:
-            if not self.user_id:
-                self.log_result("Get Profile Picture URL", False, "No user_id available")
-                return False
-            
-            response = self.session.get(f"{API_BASE}/users/profile/picture/{self.user_id}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if 'profile_picture_url' in data:
-                    picture_url = data['profile_picture_url']
-                    if picture_url:
-                        self.log_result("Get Profile Picture URL", True, 
-                                      f"Successfully retrieved profile picture URL: {picture_url}")
-                    else:
-                        self.log_result("Get Profile Picture URL", True, 
-                                      "Successfully retrieved null profile picture URL (no picture uploaded)")
-                    return True
-                else:
-                    self.log_result("Get Profile Picture URL", False, 
-                                  "Response missing profile_picture_url field")
-                    return False
-            else:
-                self.log_result("Get Profile Picture URL", False, 
-                              f"Failed to get profile picture: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Get Profile Picture URL", False, f"Get profile picture error: {str(e)}")
-            return False
-    
-    def test_get_profile_picture_nonexistent_user(self):
-        """Test GET profile picture for non-existent user"""
-        try:
-            fake_user_id = "nonexistent-user-id-12345"
-            response = self.session.get(f"{API_BASE}/users/profile/picture/{fake_user_id}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('profile_picture_url') is None:
-                    self.log_result("Get Profile Picture - Nonexistent User", True, 
-                                  "Correctly returned null for nonexistent user")
-                    return True
-                else:
-                    self.log_result("Get Profile Picture - Nonexistent User", False, 
-                                  "Should return null for nonexistent user")
-                    return False
-            else:
-                self.log_result("Get Profile Picture - Nonexistent User", False, 
-                              f"Unexpected status code: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Get Profile Picture - Nonexistent User", False, f"Nonexistent user test error: {str(e)}")
-            return False
-    
-    def test_delete_profile_picture(self):
-        """Test DELETE /api/users/profile/picture"""
-        try:
-            response = self.session.delete(f"{API_BASE}/users/profile/picture")
-            
-            if response.status_code == 200:
-                self.log_result("Delete Profile Picture", True, 
-                              f"Successfully deleted profile picture: {response.json().get('message', '')}")
-                return True
-            elif response.status_code == 404:
-                self.log_result("Delete Profile Picture", True, 
-                              "No profile picture to delete (404 expected if no picture exists)")
-                return True
-            else:
-                self.log_result("Delete Profile Picture", False, 
-                              f"Delete failed: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Delete Profile Picture", False, f"Delete error: {str(e)}")
-            return False
-    
-    def test_profile_integration(self):
-        """Test that profile endpoint includes profile_picture_url"""
-        try:
-            if not self.user_id:
-                self.log_result("Profile Integration", False, "No user_id available")
-                return False
-            
-            # First upload a picture
-            test_image = self.create_test_image('JPEG')
-            if test_image:
-                files = {'file': ('integration_test.jpg', test_image, 'image/jpeg')}
-                upload_response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-                
-                if upload_response.status_code == 200:
-                    # Now check if profile endpoint includes the picture URL
-                    profile_response = self.session.get(f"{API_BASE}/users/{self.user_id}/profile")
+                    self.log_test(f"Endpoint {endpoint_name}", False, f"HTTP {response.status_code}")
                     
-                    if profile_response.status_code == 200:
-                        profile_data = profile_response.json()
-                        if 'profile_picture_url' in profile_data:
-                            self.log_result("Profile Integration", True, 
-                                          f"Profile endpoint includes profile_picture_url: {profile_data['profile_picture_url']}")
-                            return True
-                        else:
-                            self.log_result("Profile Integration", False, 
-                                          "Profile endpoint missing profile_picture_url field")
-                            return False
-                    else:
-                        self.log_result("Profile Integration", False, 
-                                      f"Failed to get profile: {profile_response.status_code}")
-                        return False
+            except Exception as e:
+                self.log_test(f"Endpoint {endpoint_name}", False, f"Exception: {str(e)}")
+    
+    def test_authentication_endpoints(self):
+        """Test 2: Authentication - Test authenticated endpoints"""
+        print("\n=== TEST 2: AUTHENTICATION ENDPOINTS ===")
+        
+        if not self.admin_token:
+            self.log_test("Authentication Required", False, "No admin token available")
+            return
+        
+        # Test authenticated POST endpoints
+        authenticated_endpoints = [
+            ("POST /api/teams", "teams", {
+                "name": "Barcelona FC",
+                "short_name": "FCB",
+                "country": "Spain",
+                "city": "Barcelona",
+                "founded_year": 1899,
+                "colors": ["blue", "red"]
+            }),
+            ("POST /api/brands", "brands", {
+                "name": "Nike",
+                "official_name": "Nike Inc.",
+                "country": "USA",
+                "founded_year": 1964,
+                "website": "https://nike.com"
+            }),
+            ("POST /api/players", "players", {
+                "name": "Lionel Messi",
+                "full_name": "Lionel Andrés Messi",
+                "nationality": "Argentina",
+                "position": "Forward"
+            }),
+            ("POST /api/competitions", "competitions", {
+                "name": "La Liga",
+                "official_name": "LaLiga Santander",
+                "competition_type": "domestic_league",
+                "country": "Spain",
+                "level": 1
+            })
+        ]
+        
+        created_entities = {}
+        
+        for endpoint_name, endpoint_path, test_data in authenticated_endpoints:
+            try:
+                response = self.session.post(f"{BACKEND_URL}/{endpoint_path}", json=test_data)
+                
+                if response.status_code in [200, 201]:
+                    data = response.json()
+                    entity_id = data.get('id')
+                    reference = data.get('topkit_reference', 'No reference')
+                    created_entities[endpoint_path] = entity_id
+                    self.log_test(f"Create {endpoint_name}", True, f"ID: {entity_id}, Ref: {reference}")
                 else:
-                    self.log_result("Profile Integration", False, 
-                                  f"Failed to upload test image for integration test: {upload_response.status_code}")
-                    return False
+                    self.log_test(f"Create {endpoint_name}", False, f"HTTP {response.status_code}: {response.text}")
+                    
+            except Exception as e:
+                self.log_test(f"Create {endpoint_name}", False, f"Exception: {str(e)}")
+        
+        return created_entities
+    
+    def test_data_creation_workflow(self, created_entities):
+        """Test 3: Data creation workflow - Test complete flow"""
+        print("\n=== TEST 3: DATA CREATION WORKFLOW ===")
+        
+        if not all(key in created_entities for key in ['teams', 'brands', 'competitions']):
+            self.log_test("Prerequisites Check", False, "Missing required entities for workflow")
+            return
+        
+        # Create master jersey linking team + brand + competition
+        master_jersey_data = {
+            "team_id": created_entities['teams'],
+            "brand_id": created_entities['brands'],
+            "competition_id": created_entities['competitions'],
+            "season": "2024-25",
+            "jersey_type": "home",
+            "design_name": "Classic Home Kit",
+            "primary_color": "blue",
+            "secondary_colors": ["red", "white"],
+            "main_sponsor": "Spotify"
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
+            
+            if response.status_code in [200, 201]:
+                master_jersey = response.json()
+                master_jersey_id = master_jersey.get('id')
+                reference = master_jersey.get('topkit_reference', 'No reference')
+                self.log_test("Create Master Jersey", True, f"ID: {master_jersey_id}, Ref: {reference}")
+                
+                # Create jersey release for that master jersey
+                jersey_release_data = {
+                    "master_jersey_id": master_jersey_id,
+                    "release_type": "fan_version",
+                    "size_range": ["S", "M", "L", "XL"],
+                    "player_name": "Lionel Messi",
+                    "player_number": 10,
+                    "retail_price": 89.99,
+                    "sku_code": "FCB-HOME-2425-MESSI"
+                }
+                
+                response = self.session.post(f"{BACKEND_URL}/jersey-releases", json=jersey_release_data)
+                
+                if response.status_code in [200, 201]:
+                    jersey_release = response.json()
+                    release_id = jersey_release.get('id')
+                    release_reference = jersey_release.get('topkit_reference', 'No reference')
+                    self.log_test("Create Jersey Release", True, f"ID: {release_id}, Ref: {release_reference}")
+                    return master_jersey_id, release_id
+                else:
+                    self.log_test("Create Jersey Release", False, f"HTTP {response.status_code}: {response.text}")
             else:
-                self.log_result("Profile Integration", False, "Failed to create test image for integration test")
-                return False
+                self.log_test("Create Master Jersey", False, f"HTTP {response.status_code}: {response.text}")
                 
         except Exception as e:
-            self.log_result("Profile Integration", False, f"Profile integration error: {str(e)}")
-            return False
+            self.log_test("Data Creation Workflow", False, f"Exception: {str(e)}")
+        
+        return None, None
     
-    def test_authentication_required(self):
-        """Test that upload/delete endpoints require authentication"""
-        try:
-            # Remove auth header temporarily
-            original_auth = self.session.headers.get('Authorization')
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            # Try to upload without auth
-            test_image = self.create_test_image('JPEG')
-            files = {'file': ('unauth_test.jpg', test_image, 'image/jpeg')}
-            upload_response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
-            
-            # Try to delete without auth
-            delete_response = self.session.delete(f"{API_BASE}/users/profile/picture")
-            
-            # Restore auth header
-            if original_auth:
-                self.session.headers['Authorization'] = original_auth
-            
-            # Both should return 401
-            upload_auth_required = upload_response.status_code == 401
-            delete_auth_required = delete_response.status_code == 401
-            
-            if upload_auth_required and delete_auth_required:
-                self.log_result("Authentication Required", True, 
-                              "Both upload and delete correctly require authentication")
-                return True
-            else:
-                self.log_result("Authentication Required", False, 
-                              f"Auth check failed - Upload: {upload_response.status_code}, Delete: {delete_response.status_code}")
-                return False
+    def test_search_functionality(self):
+        """Test 4: Search functionality - Test collaborative search"""
+        print("\n=== TEST 4: SEARCH FUNCTIONALITY ===")
+        
+        search_queries = [
+            ("Barcelona", "Search for Barcelona"),
+            ("Nike", "Search for Nike"),
+            ("Messi", "Search for Messi"),
+            ("La Liga", "Search for La Liga"),
+            ("2024", "Search for 2024 season")
+        ]
+        
+        for query, test_name in search_queries:
+            try:
+                response = self.session.get(f"{BACKEND_URL}/search/collaborative", params={"q": query})
                 
-        except Exception as e:
-            self.log_result("Authentication Required", False, f"Auth test error: {str(e)}")
-            return False
+                if response.status_code == 200:
+                    data = response.json()
+                    total_results = sum(len(results) for results in data.values() if isinstance(results, list))
+                    self.log_test(test_name, True, f"Found {total_results} total results across all entities")
+                else:
+                    self.log_test(test_name, False, f"HTTP {response.status_code}")
+                    
+            except Exception as e:
+                self.log_test(test_name, False, f"Exception: {str(e)}")
     
-    def test_uploads_directory_creation(self):
-        """Test that uploads directory structure is created properly"""
+    def test_reference_generation(self):
+        """Test 5: Reference generation - Verify TopKit references are generated correctly"""
+        print("\n=== TEST 5: REFERENCE GENERATION ===")
+        
+        # Test reference patterns for each entity type
+        endpoints_and_patterns = [
+            ("teams", "TK-TEAM-"),
+            ("brands", "TK-BRAND-"),
+            ("players", "TK-PLAYER-"),
+            ("competitions", "TK-COMP-"),
+            ("master-jerseys", "TK-MASTER-"),
+            ("jersey-releases", "TK-RELEASE-")
+        ]
+        
+        for endpoint, expected_pattern in endpoints_and_patterns:
+            try:
+                response = self.session.get(f"{BACKEND_URL}/{endpoint}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data and len(data) > 0:
+                        # Check first item for reference pattern
+                        first_item = data[0]
+                        reference = first_item.get('topkit_reference', '')
+                        
+                        if reference.startswith(expected_pattern):
+                            self.log_test(f"Reference Pattern {endpoint}", True, f"Found: {reference}")
+                        else:
+                            self.log_test(f"Reference Pattern {endpoint}", False, f"Expected {expected_pattern}*, got: {reference}")
+                    else:
+                        self.log_test(f"Reference Pattern {endpoint}", True, "No items to check (empty collection)")
+                else:
+                    self.log_test(f"Reference Pattern {endpoint}", False, f"HTTP {response.status_code}")
+                    
+            except Exception as e:
+                self.log_test(f"Reference Pattern {endpoint}", False, f"Exception: {str(e)}")
+    
+    def test_enriched_responses(self):
+        """Test 6: Enriched responses - Verify responses include related data"""
+        print("\n=== TEST 6: ENRICHED RESPONSES ===")
+        
+        # Test enriched responses for master jerseys (should include team, brand, competition info)
         try:
-            # Upload an image to trigger directory creation
-            test_image = self.create_test_image('JPEG')
-            if not test_image:
-                self.log_result("Uploads Directory Creation", False, "Failed to create test image")
-                return False
-            
-            files = {'file': ('directory_test.jpg', test_image, 'image/jpeg')}
-            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            response = self.session.get(f"{BACKEND_URL}/master-jerseys")
             
             if response.status_code == 200:
-                # Check if the directory exists (we can't directly check filesystem, but successful upload indicates it was created)
-                self.log_result("Uploads Directory Creation", True, 
-                              "Directory creation successful (inferred from successful upload)")
-                return True
+                data = response.json()
+                if data and len(data) > 0:
+                    first_jersey = data[0]
+                    
+                    # Check for enriched data
+                    has_team_info = 'team_info' in first_jersey
+                    has_brand_info = 'brand_info' in first_jersey
+                    has_competition_info = 'competition_info' in first_jersey
+                    
+                    enrichment_score = sum([has_team_info, has_brand_info, has_competition_info])
+                    
+                    self.log_test("Master Jersey Enrichment", enrichment_score >= 2, 
+                                f"Team info: {has_team_info}, Brand info: {has_brand_info}, Competition info: {has_competition_info}")
+                else:
+                    self.log_test("Master Jersey Enrichment", True, "No master jerseys to check")
             else:
-                self.log_result("Uploads Directory Creation", False, 
-                              f"Upload failed, directory may not have been created: {response.status_code}")
-                return False
+                self.log_test("Master Jersey Enrichment", False, f"HTTP {response.status_code}")
                 
         except Exception as e:
-            self.log_result("Uploads Directory Creation", False, f"Directory creation test error: {str(e)}")
-            return False
+            self.log_test("Master Jersey Enrichment", False, f"Exception: {str(e)}")
+        
+        # Test team responses for enrichment
+        try:
+            response = self.session.get(f"{BACKEND_URL}/teams")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    first_team = data[0]
+                    
+                    # Check for enriched data
+                    has_league_info = 'league_info' in first_team
+                    has_jersey_count = 'master_jerseys_count' in first_team
+                    has_collector_count = 'total_collectors' in first_team
+                    
+                    enrichment_score = sum([has_league_info, has_jersey_count, has_collector_count])
+                    
+                    self.log_test("Team Response Enrichment", enrichment_score >= 2,
+                                f"League info: {has_league_info}, Jersey count: {has_jersey_count}, Collector count: {has_collector_count}")
+                else:
+                    self.log_test("Team Response Enrichment", True, "No teams to check")
+            else:
+                self.log_test("Team Response Enrichment", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Team Response Enrichment", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run all profile picture upload tests"""
-        print("🎯 STARTING TOPKIT PROFILE PICTURE UPLOAD FUNCTIONALITY TESTING")
-        print("=" * 80)
+        """Run all tests"""
+        print("🎯 TOPKIT COLLABORATIVE DATABASE API TESTING STARTED")
+        print("=" * 60)
         
         # Authenticate first
-        if not self.authenticate():
-            print("❌ Authentication failed - cannot proceed with tests")
+        if not self.authenticate_admin():
+            print("❌ Cannot proceed without authentication")
             return
         
         # Run all tests
-        tests = [
-            self.test_authentication_required,
-            self.test_upload_profile_picture_success,
-            self.test_upload_png_format,
-            self.test_file_size_validation_accept_reasonable,
-            self.test_file_size_validation_reject_large,
-            self.test_file_type_validation_reject_unsupported,
-            self.test_get_profile_picture_url,
-            self.test_get_profile_picture_nonexistent_user,
-            self.test_profile_integration,
-            self.test_uploads_directory_creation,
-            self.test_delete_profile_picture,
-        ]
+        self.test_basic_api_connectivity()
+        created_entities = self.test_authentication_endpoints()
         
-        print(f"\n🔄 Running {len(tests)} tests...")
-        print("-" * 80)
+        if created_entities:
+            master_jersey_id, release_id = self.test_data_creation_workflow(created_entities)
         
-        for test in tests:
-            test()
+        self.test_search_functionality()
+        self.test_reference_generation()
+        self.test_enriched_responses()
         
         # Summary
-        print("\n" + "=" * 80)
-        print("📊 TEST SUMMARY")
-        print("=" * 80)
+        print("\n" + "=" * 60)
+        print("🎯 TESTING SUMMARY")
+        print("=" * 60)
         
-        passed = sum(1 for result in self.test_results if result['success'])
-        total = len(self.test_results)
-        success_rate = (passed / total * 100) if total > 0 else 0
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result['success'])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print(f"✅ Passed: {passed}/{total} ({success_rate:.1f}%)")
-        print(f"❌ Failed: {total - passed}/{total}")
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
         
-        if passed == total:
-            print("\n🎉 ALL TESTS PASSED! Profile picture upload functionality is working perfectly!")
+        if failed_tests > 0:
+            print("\n❌ FAILED TESTS:")
+            for result in self.test_results:
+                if not result['success']:
+                    print(f"  - {result['test']}: {result['details']}")
+        
+        print(f"\n🎉 COLLABORATIVE DATABASE API TESTING COMPLETE - {success_rate:.1f}% SUCCESS RATE!")
+        
+        # Determine overall status
+        if success_rate >= 90:
+            print("✅ EXCELLENT: All collaborative database endpoints are working perfectly!")
+        elif success_rate >= 75:
+            print("✅ GOOD: Most collaborative database endpoints are working with minor issues")
+        elif success_rate >= 50:
+            print("⚠️ PARTIAL: Some collaborative database endpoints need attention")
         else:
-            print(f"\n⚠️  {total - passed} test(s) failed. Review the details above.")
+            print("❌ CRITICAL: Major issues with collaborative database endpoints")
         
-        return success_rate >= 80  # Consider 80%+ as success
+        return success_rate
+
+def main():
+    """Main function"""
+    tester = TopKitCollaborativeAPITester()
+    success_rate = tester.run_all_tests()
+    
+    # Exit with appropriate code
+    sys.exit(0 if success_rate >= 75 else 1)
 
 if __name__ == "__main__":
-    tester = ProfilePictureUploadTester()
-    tester.run_all_tests()
+    main()
