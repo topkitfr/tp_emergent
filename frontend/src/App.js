@@ -663,7 +663,7 @@ const AppContent = () => {
                 <img 
                   src="https://customer-assets.emergentagent.com/job_kit-explorer/artifacts/uumlohms_topkit_logo.png" 
                   alt="TOPKIT" 
-                  className="h-8 md:h-10"
+                  className="h-4 md:h-5"
                 />
               </button>
             </div>
