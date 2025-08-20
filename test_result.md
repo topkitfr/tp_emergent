@@ -2629,12 +2629,17 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Profile Picture Upload Functionality Testing"
-    - "TopKit Critical Bug Fixes Testing - Authentication Issues"
-    - "TopKit Jersey Photo Display Fix"
-    - "TopKit Own/Want Button Functionality"
-    - "TopKit Jersey Submission Confirmation Messages"
-  stuck_tasks: []
+    - "Collaborative Database API - Teams Endpoint"
+    - "Collaborative Database API - Brands Endpoint"
+    - "Collaborative Database API - Players Endpoint"
+    - "Collaborative Database API - Competitions Endpoint"
+    - "Collaborative Database API - Master Jerseys Endpoint"
+    - "Collaborative Database API - Jersey Releases Endpoint"
+    - "Collaborative Database API - Search Functionality"
+    - "Collaborative Database API - Authentication System"
+    - "Collaborative Database API - Reference Generation"
+  stuck_tasks:
+    - "Collaborative Database API - Master Jerseys Endpoint"
   test_all: false
   test_priority: "high_first"
 
