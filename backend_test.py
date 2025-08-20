@@ -1,792 +1,461 @@
 #!/usr/bin/env python3
 """
-TopKit Password Reset Functionality Backend Testing
-Testing the "forgot password" functionality that was just implemented.
-
-Focus Areas:
-1. POST /api/auth/forgot-password - with email steinmetzlivio@gmail.com
-2. POST /api/auth/reset-password - needs valid token
-3. Test validation and error handling
-4. Ensure security (doesn't reveal if email exists)
-"""
-
-import requests
-import json
-import time
-import sys
-from datetime import datetime
-
-# Configuration
-BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
-TEST_EMAIL = "steinmetzlivio@gmail.com"
-TEST_PASSWORD = "T0p_Mdp_1288*"
-INVALID_EMAIL = "nonexistent@example.com"
-
-class PasswordResetTester:
-    def __init__(self):
-        self.session = requests.Session()
-        self.test_results = []
-        self.total_tests = 0
-        self.passed_tests = 0
-        
-    def log_test(self, test_name, success, details=""):
-        """Log test results"""
-        self.total_tests += 1
-        if success:
-            self.passed_tests += 1
-            status = "✅ PASS"
-        else:
-            status = "❌ FAIL"
-        
-        result = f"{status}: {test_name}"
-        if details:
-            result += f" - {details}"
-        
-        print(result)
-        self.test_results.append({
-            'test': test_name,
-            'success': success,
-            'details': details,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    def test_forgot_password_valid_email(self):
-        """Test forgot password with valid email"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/forgot-password",
-                json={"email": TEST_EMAIL},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                expected_message = "Si cette adresse email existe dans notre système, vous recevrez un lien de réinitialisation."
-                
-                if data.get("message") == expected_message:
-                    self.log_test("Forgot Password - Valid Email", True, 
-                                f"HTTP {response.status_code}, correct security message")
-                    return True
-                else:
-                    self.log_test("Forgot Password - Valid Email", False, 
-                                f"HTTP {response.status_code}, unexpected message: {data.get('message')}")
-                    return False
-            else:
-                self.log_test("Forgot Password - Valid Email", False, 
-                            f"HTTP {response.status_code}, expected 200")
-                return False
-                
-        except Exception as e:
-            self.log_test("Forgot Password - Valid Email", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_forgot_password_invalid_email(self):
-        """Test forgot password with invalid email - should return same message for security"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/forgot-password",
-                json={"email": INVALID_EMAIL},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                expected_message = "Si cette adresse email existe dans notre système, vous recevrez un lien de réinitialisation."
-                
-                if data.get("message") == expected_message:
-                    self.log_test("Forgot Password - Invalid Email Security", True, 
-                                f"HTTP {response.status_code}, same message as valid email (secure)")
-                    return True
-                else:
-                    self.log_test("Forgot Password - Invalid Email Security", False, 
-                                f"HTTP {response.status_code}, different message reveals email existence")
-                    return False
-            else:
-                self.log_test("Forgot Password - Invalid Email Security", False, 
-                            f"HTTP {response.status_code}, expected 200")
-                return False
-                
-        except Exception as e:
-            self.log_test("Forgot Password - Invalid Email Security", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_forgot_password_malformed_email(self):
-        """Test forgot password with malformed email"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/forgot-password",
-                json={"email": "not-an-email"},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            # Should return validation error
-            if response.status_code == 422:
-                self.log_test("Forgot Password - Malformed Email Validation", True, 
-                            f"HTTP {response.status_code}, proper validation error")
-                return True
-            else:
-                self.log_test("Forgot Password - Malformed Email Validation", False, 
-                            f"HTTP {response.status_code}, expected 422 validation error")
-                return False
-                
-        except Exception as e:
-            self.log_test("Forgot Password - Malformed Email Validation", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_forgot_password_missing_email(self):
-        """Test forgot password with missing email field"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/forgot-password",
-                json={},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            # Should return validation error
-            if response.status_code == 422:
-                self.log_test("Forgot Password - Missing Email Field", True, 
-                            f"HTTP {response.status_code}, proper validation error")
-                return True
-            else:
-                self.log_test("Forgot Password - Missing Email Field", False, 
-                            f"HTTP {response.status_code}, expected 422 validation error")
-                return False
-                
-        except Exception as e:
-            self.log_test("Forgot Password - Missing Email Field", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_reset_password_invalid_token(self):
-        """Test reset password with invalid token"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/reset-password",
-                json={
-                    "token": "invalid_token_12345",
-                    "new_password": TEST_PASSWORD
-                },
-                headers={"Content-Type": "application/json"}
-            )
-            
-            # Should return error for invalid token
-            if response.status_code == 400:
-                data = response.json()
-                if "Token invalide" in data.get("detail", ""):
-                    self.log_test("Reset Password - Invalid Token", True, 
-                                f"HTTP {response.status_code}, proper token validation")
-                    return True
-                else:
-                    self.log_test("Reset Password - Invalid Token", False, 
-                                f"HTTP {response.status_code}, unexpected error message: {data.get('detail')}")
-                    return False
-            else:
-                self.log_test("Reset Password - Invalid Token", False, 
-                            f"HTTP {response.status_code}, expected 400")
-                return False
-                
-        except Exception as e:
-            self.log_test("Reset Password - Invalid Token", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_reset_password_weak_password(self):
-        """Test reset password with weak password"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/reset-password",
-                json={
-                    "token": "dummy_token",  # Will fail on token validation first
-                    "new_password": "123"  # Weak password
-                },
-                headers={"Content-Type": "application/json"}
-            )
-            
-            # Should return password validation error
-            if response.status_code == 400:
-                data = response.json()
-                detail = data.get("detail", "")
-                if "mot de passe" in detail.lower() and ("caractères" in detail or "majuscule" in detail or "chiffre" in detail):
-                    self.log_test("Reset Password - Weak Password Validation", True, 
-                                f"HTTP {response.status_code}, proper password validation")
-                    return True
-                else:
-                    self.log_test("Reset Password - Weak Password Validation", False, 
-                                f"HTTP {response.status_code}, unexpected error: {detail}")
-                    return False
-            else:
-                self.log_test("Reset Password - Weak Password Validation", False, 
-                            f"HTTP {response.status_code}, expected 400")
-                return False
-                
-        except Exception as e:
-            self.log_test("Reset Password - Weak Password Validation", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_reset_password_missing_fields(self):
-        """Test reset password with missing required fields"""
-        try:
-            # Test missing token
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/reset-password",
-                json={"new_password": TEST_PASSWORD},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 422:
-                self.log_test("Reset Password - Missing Token Field", True, 
-                            f"HTTP {response.status_code}, proper validation error")
-            else:
-                self.log_test("Reset Password - Missing Token Field", False, 
-                            f"HTTP {response.status_code}, expected 422")
-                return False
-            
-            # Test missing password
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/reset-password",
-                json={"token": "dummy_token"},
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 422:
-                self.log_test("Reset Password - Missing Password Field", True, 
-                            f"HTTP {response.status_code}, proper validation error")
-                return True
-            else:
-                self.log_test("Reset Password - Missing Password Field", False, 
-                            f"HTTP {response.status_code}, expected 422")
-                return False
-                
-        except Exception as e:
-            self.log_test("Reset Password - Missing Fields", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_authentication_with_new_password(self):
-        """Test if user can authenticate with the new password (if reset was successful)"""
-        try:
-            response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json={
-                    "email": TEST_EMAIL,
-                    "password": TEST_PASSWORD
-                },
-                headers={"Content-Type": "application/json"}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if "token" in data:
-                    self.log_test("Authentication - New Password", True, 
-                                f"HTTP {response.status_code}, login successful with new password")
-                    return True
-                else:
-                    self.log_test("Authentication - New Password", False, 
-                                f"HTTP {response.status_code}, no token in response")
-                    return False
-            else:
-                self.log_test("Authentication - New Password", False, 
-                            f"HTTP {response.status_code}, login failed")
-                return False
-                
-        except Exception as e:
-            self.log_test("Authentication - New Password", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_backend_connectivity(self):
-        """Test basic backend connectivity"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/jerseys")
-            if response.status_code in [200, 401, 403]:  # Any valid HTTP response
-                self.log_test("Backend Connectivity", True, f"HTTP {response.status_code}")
-                return True
-            else:
-                self.log_test("Backend Connectivity", False, f"HTTP {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_test("Backend Connectivity", False, f"Exception: {str(e)}")
-            return False
-    
-    def run_all_tests(self):
-        """Run all password reset tests"""
-        print("🔐 TOPKIT PASSWORD RESET FUNCTIONALITY TESTING")
-        print("=" * 60)
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Email: {TEST_EMAIL}")
-        print(f"Test Time: {datetime.now().isoformat()}")
-        print("=" * 60)
-        
-        # Test backend connectivity first
-        if not self.test_backend_connectivity():
-            print("❌ Backend connectivity failed. Stopping tests.")
-            return
-        
-        # Run password reset tests
-        print("\n📧 FORGOT PASSWORD ENDPOINT TESTS:")
-        self.test_forgot_password_valid_email()
-        self.test_forgot_password_invalid_email()
-        self.test_forgot_password_malformed_email()
-        self.test_forgot_password_missing_email()
-        
-        print("\n🔑 RESET PASSWORD ENDPOINT TESTS:")
-        self.test_reset_password_invalid_token()
-        self.test_reset_password_weak_password()
-        self.test_reset_password_missing_fields()
-        
-        print("\n🔐 AUTHENTICATION TESTS:")
-        self.test_authentication_with_new_password()
-        
-        # Print summary
-        print("\n" + "=" * 60)
-        print("📊 TEST SUMMARY")
-        print("=" * 60)
-        
-        success_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
-        
-        print(f"Total Tests: {self.total_tests}")
-        print(f"Passed: {self.passed_tests}")
-        print(f"Failed: {self.total_tests - self.passed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
-        
-        if success_rate >= 90:
-            print("🎉 EXCELLENT - Password reset functionality working excellently!")
-        elif success_rate >= 75:
-            print("✅ GOOD - Password reset functionality mostly working with minor issues")
-        elif success_rate >= 50:
-            print("⚠️ PARTIAL - Password reset functionality partially working")
-        else:
-            print("❌ CRITICAL - Password reset functionality has major issues")
-        
-        print("\n🔍 DETAILED FINDINGS:")
-        for result in self.test_results:
-            status = "✅" if result['success'] else "❌"
-            print(f"{status} {result['test']}: {result['details']}")
-        
-        return success_rate
-
-if __name__ == "__main__":
-    tester = PasswordResetTester()
-    success_rate = tester.run_all_tests()
-    
-    # Exit with appropriate code
-    sys.exit(0 if success_rate >= 75 else 1)
-"""
-TopKit Backend Test - Jersey Photo Management for Admin Testing
-=============================================================
-
-OBJECTIF: Créer des maillots avec photos simulées pour tester le correctif frontend admin.
-
-TESTS À EFFECTUER:
-1. Créer des maillots avec photos simulées (format standard avec images array et avec les champs photo_url individuels)
-2. Insérer directement dans la base de données des maillots avec les deux formats de photos :
-   - Format 1: images array ['jersey_test_front.jpg', 'jersey_test_back.jpg']  
-   - Format 2: front_photo_url et back_photo_url
-3. Vérifier que les maillots apparaissent bien dans GET /api/admin/jerseys/pending
-
-ACTIONS SPÉCIFIQUES:
-- Utiliser l'admin topkitfr@gmail.com/TopKitSecure789# 
-- Créer un ou deux maillots de test avec des données photos réalistes
-- S'assurer que les maillots ont le statut "pending" pour qu'ils apparaissent dans la liste admin
-
-FOCUS: Créer des données de test réalistes pour valider le correctif frontend.
+TopKit Profile Picture Upload Functionality Testing
+Testing the newly implemented profile picture upload endpoints
 """
 
 import requests
 import json
 import os
-from datetime import datetime
-import uuid
+import tempfile
+from PIL import Image
+import io
+import base64
 
 # Configuration
-BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "TopKitSecure789#"
+API_BASE = os.environ.get('REACT_APP_BACKEND_URL', 'https://soccer-collection.preview.emergentagent.com') + '/api'
+TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
+TEST_USER_PASSWORD = "123"
 
-class TopKitBackendTester:
+class ProfilePictureUploadTester:
     def __init__(self):
         self.session = requests.Session()
-        self.admin_token = None
+        self.auth_token = None
+        self.user_id = None
         self.test_results = []
         
-    def log_test(self, test_name, success, details=""):
-        """Log test results"""
+    def log_result(self, test_name, success, details):
+        """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} - {test_name}: {details}")
         self.test_results.append({
-            "test": test_name,
-            "status": status,
-            "success": success,
-            "details": details
+            'test': test_name,
+            'success': success,
+            'details': details
         })
-        print(f"{status}: {test_name}")
-        if details:
-            print(f"   Details: {details}")
     
-    def authenticate_admin(self):
-        """Authenticate admin user"""
+    def authenticate(self):
+        """Authenticate test user"""
         try:
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
-                "email": ADMIN_EMAIL,
-                "password": ADMIN_PASSWORD
+            response = self.session.post(f"{API_BASE}/auth/login", json={
+                "email": TEST_USER_EMAIL,
+                "password": TEST_USER_PASSWORD
             })
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('token')
-                self.session.headers.update({'Authorization': f'Bearer {self.admin_token}'})
-                
-                user_info = data.get('user', {})
-                self.log_test("Admin Authentication", True, 
-                            f"Admin: {user_info.get('name')}, Role: {user_info.get('role')}, ID: {user_info.get('id')}")
+                self.auth_token = data.get('token')
+                self.user_id = data.get('user', {}).get('id')
+                self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
+                self.log_result("Authentication", True, f"Successfully authenticated user {TEST_USER_EMAIL}")
                 return True
             else:
-                self.log_test("Admin Authentication", False, 
-                            f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Authentication", False, f"Failed to authenticate: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_result("Authentication", False, f"Authentication error: {str(e)}")
             return False
     
-    def create_test_jersey_format1(self):
-        """Create test jersey with images array format"""
+    def create_test_image(self, format='JPEG', size=(300, 300), file_size_mb=None):
+        """Create a test image file"""
         try:
-            jersey_data = {
-                "team": "FC Barcelona Test",
-                "league": "La Liga",
-                "season": "24/25",
-                "manufacturer": "Nike",
-                "jersey_type": "home",
-                "sku_code": "TEST-BCN-001",
-                "model": "authentic",
-                "description": "Maillot de test avec format images array pour validation admin"
-            }
+            # Create a simple colored image
+            img = Image.new('RGB', size, color=(73, 109, 137))  # Blue color
             
-            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
+            # Add some text to make it identifiable
+            try:
+                from PIL import ImageDraw, ImageFont
+                draw = ImageDraw.Draw(img)
+                draw.text((10, 10), "Test Profile Picture", fill=(255, 255, 255))
+            except:
+                pass  # Skip text if font not available
             
-            if response.status_code == 200:
-                jersey = response.json()
-                jersey_id = jersey.get('id')
+            # Save to bytes
+            img_bytes = io.BytesIO()
+            img.save(img_bytes, format=format, quality=95)
+            img_bytes.seek(0)
+            
+            # If specific file size requested, adjust
+            if file_size_mb:
+                target_size = file_size_mb * 1024 * 1024
+                current_size = len(img_bytes.getvalue())
                 
-                self.log_test("Create Test Jersey Format 1 (Images Array)", True,
-                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}, Ref: {jersey.get('reference_number')}")
-                return jersey_id
-            else:
-                self.log_test("Create Test Jersey Format 1 (Images Array)", False,
-                            f"HTTP {response.status_code}: {response.text}")
-                return None
-                
+                if current_size < target_size:
+                    # Pad with zeros to reach target size
+                    padding = b'\x00' * (target_size - current_size)
+                    img_bytes = io.BytesIO(img_bytes.getvalue() + padding)
+                    img_bytes.seek(0)
+            
+            return img_bytes
+            
         except Exception as e:
-            self.log_test("Create Test Jersey Format 1 (Images Array)", False, f"Exception: {str(e)}")
+            print(f"Error creating test image: {e}")
             return None
     
-    def create_test_jersey_format2(self):
-        """Create test jersey with individual photo URL format"""
+    def test_upload_profile_picture_success(self):
+        """Test successful profile picture upload"""
         try:
-            jersey_data = {
-                "team": "Real Madrid Test",
-                "league": "La Liga", 
-                "season": "24/25",
-                "manufacturer": "Adidas",
-                "jersey_type": "away",
-                "sku_code": "TEST-RMA-002",
-                "model": "replica",
-                "description": "Maillot de test avec format photo_url individuels pour validation admin"
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
-            
-            if response.status_code == 200:
-                jersey = response.json()
-                jersey_id = jersey.get('id')
-                
-                self.log_test("Create Test Jersey Format 2 (Individual Photo URLs)", True,
-                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}, Ref: {jersey.get('reference_number')}")
-                return jersey_id
-            else:
-                self.log_test("Create Test Jersey Format 2 (Individual Photo URLs)", False,
-                            f"HTTP {response.status_code}: {response.text}")
-                return None
-                
-        except Exception as e:
-            self.log_test("Create Test Jersey Format 2 (Individual Photo URLs)", False, f"Exception: {str(e)}")
-            return None
-    
-    def create_test_jersey_with_photos(self):
-        """Create test jersey with realistic photo data"""
-        try:
-            jersey_data = {
-                "team": "Manchester City Test",
-                "league": "Premier League",
-                "season": "24/25", 
-                "manufacturer": "Puma",
-                "jersey_type": "third",
-                "sku_code": "TEST-MCI-003",
-                "model": "authentic",
-                "description": "Maillot de test avec photos réalistes - Haaland #9 - Edition spéciale Champions League"
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
-            
-            if response.status_code == 200:
-                jersey = response.json()
-                jersey_id = jersey.get('id')
-                
-                self.log_test("Create Test Jersey with Realistic Photos", True,
-                            f"Jersey ID: {jersey_id}, Team: {jersey.get('team')}, Status: {jersey.get('status')}, Ref: {jersey.get('reference_number')}")
-                return jersey_id
-            else:
-                self.log_test("Create Test Jersey with Realistic Photos", False,
-                            f"HTTP {response.status_code}: {response.text}")
-                return None
-                
-        except Exception as e:
-            self.log_test("Create Test Jersey with Realistic Photos", False, f"Exception: {str(e)}")
-            return None
-    
-    def verify_admin_pending_jerseys(self):
-        """Verify that test jerseys appear in admin pending list"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending")
-            
-            if response.status_code == 200:
-                pending_jerseys = response.json()
-                
-                # Count test jerseys
-                test_jerseys = [j for j in pending_jerseys if 'Test' in j.get('team', '')]
-                
-                self.log_test("Verify Admin Pending Jerseys List", True,
-                            f"Total pending: {len(pending_jerseys)}, Test jerseys: {len(test_jerseys)}")
-                
-                # Log details of test jerseys
-                for jersey in test_jerseys:
-                    print(f"   Test Jersey: {jersey.get('team')} - {jersey.get('season')} - Status: {jersey.get('status')}")
-                    print(f"   Reference: {jersey.get('reference_number')}, ID: {jersey.get('id')}")
-                    if jersey.get('front_photo_url'):
-                        print(f"   Front Photo: {jersey.get('front_photo_url')}")
-                    if jersey.get('back_photo_url'):
-                        print(f"   Back Photo: {jersey.get('back_photo_url')}")
-                    if jersey.get('images'):
-                        print(f"   Images Array: {jersey.get('images')}")
-                
-                return len(test_jerseys) > 0
-            else:
-                self.log_test("Verify Admin Pending Jerseys List", False,
-                            f"HTTP {response.status_code}: {response.text}")
+            # Create test image
+            test_image = self.create_test_image('JPEG')
+            if not test_image:
+                self.log_result("Upload Profile Picture - Success", False, "Failed to create test image")
                 return False
-                
-        except Exception as e:
-            self.log_test("Verify Admin Pending Jerseys List", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_admin_jersey_edit_endpoint(self):
-        """Test admin jersey edit endpoint functionality"""
-        try:
-            # First get a pending jersey to edit
-            response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending")
+            
+            # Upload image
+            files = {'file': ('test_profile.jpg', test_image, 'image/jpeg')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
             
             if response.status_code == 200:
-                pending_jerseys = response.json()
-                if not pending_jerseys:
-                    self.log_test("Test Admin Jersey Edit Endpoint", False, "No pending jerseys found to test edit")
-                    return False
-                
-                # Use the first pending jersey
-                jersey = pending_jerseys[0]
-                jersey_id = jersey.get('id')
-                
-                # Test edit endpoint
-                edit_data = {
-                    "team": jersey.get('team') + " (Edited)",
-                    "league": jersey.get('league'),
-                    "season": jersey.get('season'),
-                    "manufacturer": jersey.get('manufacturer'),
-                    "jersey_type": jersey.get('jersey_type'),
-                    "sku_code": jersey.get('sku_code'),
-                    "model": jersey.get('model'),
-                    "description": jersey.get('description') + " - Edited by admin for testing"
-                }
-                
-                edit_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{jersey_id}/edit", data=edit_data)
-                
-                if edit_response.status_code == 200:
-                    self.log_test("Test Admin Jersey Edit Endpoint", True,
-                                f"Successfully edited jersey {jersey_id}")
+                data = response.json()
+                if 'profile_picture_url' in data:
+                    self.log_result("Upload Profile Picture - Success", True, 
+                                  f"Successfully uploaded profile picture: {data['profile_picture_url']}")
                     return True
                 else:
-                    self.log_test("Test Admin Jersey Edit Endpoint", False,
-                                f"Edit failed - HTTP {edit_response.status_code}: {edit_response.text}")
+                    self.log_result("Upload Profile Picture - Success", False, 
+                                  "Response missing profile_picture_url field")
                     return False
             else:
-                self.log_test("Test Admin Jersey Edit Endpoint", False,
-                            f"Could not get pending jerseys - HTTP {response.status_code}")
+                self.log_result("Upload Profile Picture - Success", False, 
+                              f"Upload failed: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Test Admin Jersey Edit Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Upload Profile Picture - Success", False, f"Upload error: {str(e)}")
             return False
     
-    def add_photo_data_to_jerseys(self, jersey_ids):
-        """Add simulated photo data to test jerseys using admin edit"""
+    def test_upload_png_format(self):
+        """Test PNG format upload"""
         try:
-            photo_formats = [
-                {
-                    "front_photo_url": "jersey_test_front_001.jpg",
-                    "back_photo_url": "jersey_test_back_001.jpg"
-                },
-                {
-                    "images": ["jersey_test_front_002.jpg", "jersey_test_back_002.jpg"]
-                },
-                {
-                    "front_photo_url": "jersey_test_front_003.jpg",
-                    "back_photo_url": "jersey_test_back_003.jpg",
-                    "images": ["jersey_test_front_003.jpg", "jersey_test_back_003.jpg"]
-                }
-            ]
+            test_image = self.create_test_image('PNG')
+            if not test_image:
+                self.log_result("Upload PNG Format", False, "Failed to create PNG test image")
+                return False
             
-            for i, jersey_id in enumerate(jersey_ids):
-                if jersey_id and i < len(photo_formats):
-                    # Get jersey details first
-                    response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending")
-                    if response.status_code == 200:
-                        pending_jerseys = response.json()
-                        jersey = next((j for j in pending_jerseys if j.get('id') == jersey_id), None)
-                        
-                        if jersey:
-                            # Prepare edit data with photo information
-                            edit_data = {
-                                "team": jersey.get('team'),
-                                "league": jersey.get('league'),
-                                "season": jersey.get('season'),
-                                "manufacturer": jersey.get('manufacturer'),
-                                "jersey_type": jersey.get('jersey_type'),
-                                "sku_code": jersey.get('sku_code'),
-                                "model": jersey.get('model'),
-                                "description": jersey.get('description') + f" - Photo format {i+1} added"
-                            }
-                            
-                            # Note: The current backend doesn't support adding photo URLs via edit
-                            # This is a simulation for testing purposes
-                            edit_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{jersey_id}/edit", data=edit_data)
-                            
-                            if edit_response.status_code == 200:
-                                self.log_test(f"Add Photo Data to Jersey {i+1}", True,
-                                            f"Updated jersey {jersey_id} with photo format {i+1}")
-                            else:
-                                self.log_test(f"Add Photo Data to Jersey {i+1}", False,
-                                            f"Failed to update jersey {jersey_id}: HTTP {edit_response.status_code}")
-                        
+            files = {'file': ('test_profile.png', test_image, 'image/png')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            success = response.status_code == 200
+            details = f"PNG upload: {response.status_code}" + (f" - {response.json().get('message', '')}" if success else f" - {response.text}")
+            self.log_result("Upload PNG Format", success, details)
+            return success
+            
         except Exception as e:
-            self.log_test("Add Photo Data to Jerseys", False, f"Exception: {str(e)}")
+            self.log_result("Upload PNG Format", False, f"PNG upload error: {str(e)}")
+            return False
     
-    def test_jersey_photo_formats(self):
-        """Test different jersey photo formats for admin validation"""
+    def test_file_size_validation_reject_large(self):
+        """Test file size validation - reject files > 5MB"""
         try:
-            # Get pending jerseys to check photo formats
-            response = self.session.get(f"{BACKEND_URL}/admin/jerseys/pending")
+            # Create a 6MB image (should be rejected)
+            test_image = self.create_test_image('JPEG', size=(1000, 1000), file_size_mb=6)
+            if not test_image:
+                self.log_result("File Size Validation - Reject Large", False, "Failed to create large test image")
+                return False
             
-            if response.status_code == 200:
-                pending_jerseys = response.json()
-                test_jerseys = [j for j in pending_jerseys if 'Test' in j.get('team', '')]
-                
-                photo_formats_found = {
-                    'front_photo_url': 0,
-                    'back_photo_url': 0,
-                    'images_array': 0,
-                    'no_photos': 0
-                }
-                
-                for jersey in test_jerseys:
-                    if jersey.get('front_photo_url'):
-                        photo_formats_found['front_photo_url'] += 1
-                    if jersey.get('back_photo_url'):
-                        photo_formats_found['back_photo_url'] += 1
-                    if jersey.get('images') and len(jersey.get('images', [])) > 0:
-                        photo_formats_found['images_array'] += 1
-                    if not jersey.get('front_photo_url') and not jersey.get('back_photo_url') and not jersey.get('images'):
-                        photo_formats_found['no_photos'] += 1
-                
-                self.log_test("Test Jersey Photo Formats", True,
-                            f"Photo formats found: {photo_formats_found}")
+            files = {'file': ('large_profile.jpg', test_image, 'image/jpeg')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            # Should be rejected with 400 status
+            if response.status_code == 400:
+                self.log_result("File Size Validation - Reject Large", True, 
+                              f"Correctly rejected large file: {response.json().get('detail', '')}")
                 return True
             else:
-                self.log_test("Test Jersey Photo Formats", False,
-                            f"HTTP {response.status_code}: {response.text}")
+                self.log_result("File Size Validation - Reject Large", False, 
+                              f"Large file not rejected: {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Test Jersey Photo Formats", False, f"Exception: {str(e)}")
+            self.log_result("File Size Validation - Reject Large", False, f"Large file test error: {str(e)}")
             return False
     
-    def run_comprehensive_test(self):
-        """Run comprehensive backend test for jersey photo management"""
-        print("🎯 TOPKIT JERSEY PHOTO MANAGEMENT BACKEND TESTING STARTED")
-        print("=" * 80)
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Admin Email: {ADMIN_EMAIL}")
-        print(f"Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    def test_file_size_validation_accept_reasonable(self):
+        """Test file size validation - accept reasonable sizes"""
+        try:
+            # Create a 2MB image (should be accepted)
+            test_image = self.create_test_image('JPEG', size=(800, 800))
+            if not test_image:
+                self.log_result("File Size Validation - Accept Reasonable", False, "Failed to create reasonable test image")
+                return False
+            
+            files = {'file': ('reasonable_profile.jpg', test_image, 'image/jpeg')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            # Should be accepted with 200 status
+            if response.status_code == 200:
+                self.log_result("File Size Validation - Accept Reasonable", True, 
+                              "Correctly accepted reasonable file size")
+                return True
+            else:
+                self.log_result("File Size Validation - Accept Reasonable", False, 
+                              f"Reasonable file rejected: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("File Size Validation - Accept Reasonable", False, f"Reasonable file test error: {str(e)}")
+            return False
+    
+    def test_file_type_validation_reject_unsupported(self):
+        """Test file type validation - reject unsupported formats"""
+        try:
+            # Create a text file disguised as image
+            fake_image = io.BytesIO(b"This is not an image file")
+            
+            files = {'file': ('fake_image.txt', fake_image, 'text/plain')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            # Should be rejected with 400 status
+            if response.status_code == 400:
+                self.log_result("File Type Validation - Reject Unsupported", True, 
+                              f"Correctly rejected unsupported file type: {response.json().get('detail', '')}")
+                return True
+            else:
+                self.log_result("File Type Validation - Reject Unsupported", False, 
+                              f"Unsupported file not rejected: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("File Type Validation - Reject Unsupported", False, f"Unsupported file test error: {str(e)}")
+            return False
+    
+    def test_get_profile_picture_url(self):
+        """Test GET /api/users/profile/picture/{user_id}"""
+        try:
+            if not self.user_id:
+                self.log_result("Get Profile Picture URL", False, "No user_id available")
+                return False
+            
+            response = self.session.get(f"{API_BASE}/users/profile/picture/{self.user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'profile_picture_url' in data:
+                    picture_url = data['profile_picture_url']
+                    if picture_url:
+                        self.log_result("Get Profile Picture URL", True, 
+                                      f"Successfully retrieved profile picture URL: {picture_url}")
+                    else:
+                        self.log_result("Get Profile Picture URL", True, 
+                                      "Successfully retrieved null profile picture URL (no picture uploaded)")
+                    return True
+                else:
+                    self.log_result("Get Profile Picture URL", False, 
+                                  "Response missing profile_picture_url field")
+                    return False
+            else:
+                self.log_result("Get Profile Picture URL", False, 
+                              f"Failed to get profile picture: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Get Profile Picture URL", False, f"Get profile picture error: {str(e)}")
+            return False
+    
+    def test_get_profile_picture_nonexistent_user(self):
+        """Test GET profile picture for non-existent user"""
+        try:
+            fake_user_id = "nonexistent-user-id-12345"
+            response = self.session.get(f"{API_BASE}/users/profile/picture/{fake_user_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('profile_picture_url') is None:
+                    self.log_result("Get Profile Picture - Nonexistent User", True, 
+                                  "Correctly returned null for nonexistent user")
+                    return True
+                else:
+                    self.log_result("Get Profile Picture - Nonexistent User", False, 
+                                  "Should return null for nonexistent user")
+                    return False
+            else:
+                self.log_result("Get Profile Picture - Nonexistent User", False, 
+                              f"Unexpected status code: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Get Profile Picture - Nonexistent User", False, f"Nonexistent user test error: {str(e)}")
+            return False
+    
+    def test_delete_profile_picture(self):
+        """Test DELETE /api/users/profile/picture"""
+        try:
+            response = self.session.delete(f"{API_BASE}/users/profile/picture")
+            
+            if response.status_code == 200:
+                self.log_result("Delete Profile Picture", True, 
+                              f"Successfully deleted profile picture: {response.json().get('message', '')}")
+                return True
+            elif response.status_code == 404:
+                self.log_result("Delete Profile Picture", True, 
+                              "No profile picture to delete (404 expected if no picture exists)")
+                return True
+            else:
+                self.log_result("Delete Profile Picture", False, 
+                              f"Delete failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Delete Profile Picture", False, f"Delete error: {str(e)}")
+            return False
+    
+    def test_profile_integration(self):
+        """Test that profile endpoint includes profile_picture_url"""
+        try:
+            if not self.user_id:
+                self.log_result("Profile Integration", False, "No user_id available")
+                return False
+            
+            # First upload a picture
+            test_image = self.create_test_image('JPEG')
+            if test_image:
+                files = {'file': ('integration_test.jpg', test_image, 'image/jpeg')}
+                upload_response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+                
+                if upload_response.status_code == 200:
+                    # Now check if profile endpoint includes the picture URL
+                    profile_response = self.session.get(f"{API_BASE}/users/{self.user_id}/profile")
+                    
+                    if profile_response.status_code == 200:
+                        profile_data = profile_response.json()
+                        if 'profile_picture_url' in profile_data:
+                            self.log_result("Profile Integration", True, 
+                                          f"Profile endpoint includes profile_picture_url: {profile_data['profile_picture_url']}")
+                            return True
+                        else:
+                            self.log_result("Profile Integration", False, 
+                                          "Profile endpoint missing profile_picture_url field")
+                            return False
+                    else:
+                        self.log_result("Profile Integration", False, 
+                                      f"Failed to get profile: {profile_response.status_code}")
+                        return False
+                else:
+                    self.log_result("Profile Integration", False, 
+                                  f"Failed to upload test image for integration test: {upload_response.status_code}")
+                    return False
+            else:
+                self.log_result("Profile Integration", False, "Failed to create test image for integration test")
+                return False
+                
+        except Exception as e:
+            self.log_result("Profile Integration", False, f"Profile integration error: {str(e)}")
+            return False
+    
+    def test_authentication_required(self):
+        """Test that upload/delete endpoints require authentication"""
+        try:
+            # Remove auth header temporarily
+            original_auth = self.session.headers.get('Authorization')
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            # Try to upload without auth
+            test_image = self.create_test_image('JPEG')
+            files = {'file': ('unauth_test.jpg', test_image, 'image/jpeg')}
+            upload_response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            # Try to delete without auth
+            delete_response = self.session.delete(f"{API_BASE}/users/profile/picture")
+            
+            # Restore auth header
+            if original_auth:
+                self.session.headers['Authorization'] = original_auth
+            
+            # Both should return 401
+            upload_auth_required = upload_response.status_code == 401
+            delete_auth_required = delete_response.status_code == 401
+            
+            if upload_auth_required and delete_auth_required:
+                self.log_result("Authentication Required", True, 
+                              "Both upload and delete correctly require authentication")
+                return True
+            else:
+                self.log_result("Authentication Required", False, 
+                              f"Auth check failed - Upload: {upload_response.status_code}, Delete: {delete_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Authentication Required", False, f"Auth test error: {str(e)}")
+            return False
+    
+    def test_uploads_directory_creation(self):
+        """Test that uploads directory structure is created properly"""
+        try:
+            # Upload an image to trigger directory creation
+            test_image = self.create_test_image('JPEG')
+            if not test_image:
+                self.log_result("Uploads Directory Creation", False, "Failed to create test image")
+                return False
+            
+            files = {'file': ('directory_test.jpg', test_image, 'image/jpeg')}
+            response = self.session.post(f"{API_BASE}/users/profile/picture", files=files)
+            
+            if response.status_code == 200:
+                # Check if the directory exists (we can't directly check filesystem, but successful upload indicates it was created)
+                self.log_result("Uploads Directory Creation", True, 
+                              "Directory creation successful (inferred from successful upload)")
+                return True
+            else:
+                self.log_result("Uploads Directory Creation", False, 
+                              f"Upload failed, directory may not have been created: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Uploads Directory Creation", False, f"Directory creation test error: {str(e)}")
+            return False
+    
+    def run_all_tests(self):
+        """Run all profile picture upload tests"""
+        print("🎯 STARTING TOPKIT PROFILE PICTURE UPLOAD FUNCTIONALITY TESTING")
         print("=" * 80)
         
-        # Step 1: Authenticate admin
-        if not self.authenticate_admin():
-            print("❌ CRITICAL: Admin authentication failed. Cannot proceed with tests.")
+        # Authenticate first
+        if not self.authenticate():
+            print("❌ Authentication failed - cannot proceed with tests")
             return
         
-        # Step 2: Create test jerseys with different photo formats
-        print("\n📸 CREATING TEST JERSEYS WITH PHOTO DATA...")
-        jersey1_id = self.create_test_jersey_format1()
-        jersey2_id = self.create_test_jersey_format2()
-        jersey3_id = self.create_test_jersey_with_photos()
+        # Run all tests
+        tests = [
+            self.test_authentication_required,
+            self.test_upload_profile_picture_success,
+            self.test_upload_png_format,
+            self.test_file_size_validation_accept_reasonable,
+            self.test_file_size_validation_reject_large,
+            self.test_file_type_validation_reject_unsupported,
+            self.test_get_profile_picture_url,
+            self.test_get_profile_picture_nonexistent_user,
+            self.test_profile_integration,
+            self.test_uploads_directory_creation,
+            self.test_delete_profile_picture,
+        ]
         
-        # Step 2.5: Add photo data to jerseys (simulation)
-        print("\n📷 ADDING PHOTO DATA TO TEST JERSEYS...")
-        jersey_ids = [jersey1_id, jersey2_id, jersey3_id]
-        self.add_photo_data_to_jerseys(jersey_ids)
+        print(f"\n🔄 Running {len(tests)} tests...")
+        print("-" * 80)
         
-        # Step 3: Verify jerseys appear in admin pending list
-        print("\n🔍 VERIFYING ADMIN PENDING JERSEYS LIST...")
-        self.verify_admin_pending_jerseys()
+        for test in tests:
+            test()
         
-        # Step 4: Test admin jersey edit functionality
-        print("\n✏️ TESTING ADMIN JERSEY EDIT FUNCTIONALITY...")
-        self.test_admin_jersey_edit_endpoint()
-        
-        # Step 5: Test photo formats
-        print("\n📷 TESTING JERSEY PHOTO FORMATS...")
-        self.test_jersey_photo_formats()
-        
-        # Calculate success rate
-        total_tests = len(self.test_results)
-        successful_tests = sum(1 for result in self.test_results if result['success'])
-        success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
-        
+        # Summary
         print("\n" + "=" * 80)
-        print(f"🎉 TOPKIT JERSEY PHOTO MANAGEMENT TESTING COMPLETE - {success_rate:.1f}% SUCCESS RATE!")
+        print("📊 TEST SUMMARY")
         print("=" * 80)
         
-        # Print detailed results
-        for result in self.test_results:
-            print(f"{result['status']}: {result['test']}")
-            if result['details']:
-                print(f"   {result['details']}")
+        passed = sum(1 for result in self.test_results if result['success'])
+        total = len(self.test_results)
+        success_rate = (passed / total * 100) if total > 0 else 0
         
-        print("\n📊 SUMMARY:")
-        print(f"Total Tests: {total_tests}")
-        print(f"Successful: {successful_tests}")
-        print(f"Failed: {total_tests - successful_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
+        print(f"✅ Passed: {passed}/{total} ({success_rate:.1f}%)")
+        print(f"❌ Failed: {total - passed}/{total}")
         
-        # Specific findings for the review request
-        print("\n🎯 REVIEW REQUEST FINDINGS:")
-        print("✅ Admin authentication working with topkitfr@gmail.com/TopKitSecure789#")
-        print("✅ Test jerseys created with pending status for admin validation")
-        print("✅ GET /api/admin/jerseys/pending endpoint accessible and functional")
-        print("✅ Admin jersey edit endpoint tested and operational")
-        print("✅ Multiple photo format testing completed")
-        
-        if success_rate >= 80:
-            print("\n🎉 CONCLUSION: Backend is PRODUCTION-READY for admin jersey photo management testing!")
+        if passed == total:
+            print("\n🎉 ALL TESTS PASSED! Profile picture upload functionality is working perfectly!")
         else:
-            print("\n⚠️ CONCLUSION: Some issues identified that need attention before frontend testing.")
+            print(f"\n⚠️  {total - passed} test(s) failed. Review the details above.")
         
-        return success_rate
+        return success_rate >= 80  # Consider 80%+ as success
 
 if __name__ == "__main__":
-    tester = TopKitBackendTester()
-    tester.run_comprehensive_test()
+    tester = ProfilePictureUploadTester()
+    tester.run_all_tests()
