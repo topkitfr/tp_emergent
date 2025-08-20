@@ -298,7 +298,7 @@ class MasterJerseyTester:
         """Test search for created entities"""
         try:
             response = self.session.get(f"{BACKEND_URL}/search/collaborative", params={
-                "query": "Barcelona",
+                "q": "Barcelona",
                 "entity_types": "team,master_jersey,brand,competition"
             })
             
