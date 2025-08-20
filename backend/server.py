@@ -9135,8 +9135,8 @@ async def vote_on_contribution(
         )
         
         # Mettre à jour les compteurs
-        if old_vote_type != vote_type:
-            if old_vote_type == "upvote":
+        if old_vote_type != (VoteType.UPVOTE if vote_type == "upvote" else VoteType.DOWNVOTE):
+            if old_vote_type == VoteType.UPVOTE:
                 await db.contributions.update_one(
                     {"id": contribution_id},
                     {"$inc": {"upvotes": -1, "downvotes": 1 if vote_type == "downvote" else 0}}
