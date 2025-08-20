@@ -1441,9 +1441,7 @@ const AppContent = () => {
             <div>
               <h4 className="font-semibold text-black mb-4">Suivez-nous</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-black">Instagram</a></li>
-                <li><a href="#" className="hover:text-black">Twitter</a></li>
-                <li><a href="#" className="hover:text-black">TikTok</a></li>
+                <li><a href="https://www.instagram.com/topkit_fr" target="_blank" rel="noopener noreferrer" className="hover:text-black">Instagram</a></li>
               </ul>
             </div>
           </div>
