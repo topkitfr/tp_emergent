@@ -79,7 +79,9 @@ class DetailedProfileTester:
             
         try:
             headers = {"Authorization": f"Bearer {self.user_token}"}
-            jersey_data = {
+            
+            # Use form data instead of JSON
+            form_data = {
                 "team": "Real Madrid CF",
                 "league": "La Liga",
                 "season": "2024-25",
@@ -90,7 +92,7 @@ class DetailedProfileTester:
                 "description": "Real Madrid home jersey 2024-25 season - Vinicius Jr #7"
             }
             
-            response = requests.post(f"{BACKEND_URL}/jerseys", json=jersey_data, headers=headers)
+            response = requests.post(f"{BACKEND_URL}/jerseys", data=form_data, headers=headers)
             
             if response.status_code == 200:
                 jersey_response = response.json()
@@ -99,7 +101,7 @@ class DetailedProfileTester:
                 self.log_test(
                     "Test Jersey Creation",
                     True,
-                    f"Jersey created successfully - ID: {self.created_jersey_id}, Team: {jersey_data['team']}"
+                    f"Jersey created successfully - ID: {self.created_jersey_id}, Team: {form_data['team']}"
                 )
                 return True
             else:
