@@ -2521,6 +2521,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "TopKit Profile Picture Upload Functionality Testing"
     - "TopKit Critical Bug Fixes Testing - Authentication Issues"
     - "TopKit Jersey Photo Display Fix"
     - "TopKit Own/Want Button Functionality"
