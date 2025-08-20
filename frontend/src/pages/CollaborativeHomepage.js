@@ -297,14 +297,14 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
       <div className="py-8 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Achète tes maillots au meilleur prix
+            Estimez votre collection de maillots avec TopKit
           </h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Avec TopKit, trouve des maillots de football pour toutes les équipes au meilleur prix ! 
-            Compare les prix des marques comme Nike, Adidas, Puma, et Umbro pour dénicher la meilleure offre. 
-            TopKit, c'est aussi une base de données collaborative complète pour ne rater aucun maillot. 
-            Reçois des alertes en temps réel pour être parmi les premiers à connaître les nouvelles sorties, 
-            et reste au courant des dernières news maillots et football pour ne rien manquer des tendances.
+            Avec TopKit, découvrez la valeur réelle de votre collection de maillots de football grâce à notre base de données collaborative ! 
+            Explorez les estimations de milliers de maillots référencés par la communauté, des classiques vintage aux dernières sorties. 
+            TopKit, c'est la base de données collaborative la plus complète au monde sur le football avec des expertises pointues sur chaque maillot. 
+            Documentez vos propres maillots, contribuez aux estimations et rejoignez une communauté passionnée qui préserve l'histoire du football à travers ses maillots. 
+            Restez informé des nouvelles documentations et des estimations mises à jour par notre communauté d'experts.
           </p>
         </div>
       </div>
