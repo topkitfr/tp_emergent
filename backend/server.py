@@ -2417,7 +2417,6 @@ async def upload_profile_picture(
         # Get or create user profile
         user_profile = await db.user_profiles.find_one({"user_id": user_id})
         if not user_profile:
-            from backend.server import UserProfile  # Import the UserProfile model
             user_profile = UserProfile(user_id=user_id).dict()
             await db.user_profiles.insert_one(user_profile)
         
