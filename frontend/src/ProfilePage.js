@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PaginationControls from './PaginationControls';
 import JerseyDetailModal from './JerseyDetailModal';
 
-const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRemoveCollectionItem, handleViewCollectionItem }) => {
+const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRemoveCollectionItem, handleViewCollectionItem, userSubmissions, handleJerseySubmit }) => {
   const [activeTab, setActiveTab] = useState('info');
   const [filteredWishlist, setFilteredWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
