@@ -46,6 +46,18 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
     front: null,
     back: null
   });
+  
+  // État pour gérer les photos existantes
+  const [existingPhotos, setExistingPhotos] = useState({
+    front: null,
+    back: null
+  });
+  
+  // État pour marquer les photos à supprimer
+  const [photosToRemove, setPhotosToRemove] = useState({
+    front: false,
+    back: false
+  });
 
   // Add suggestions state and constants for smart form
   const [suggestions, setSuggestions] = useState({});
