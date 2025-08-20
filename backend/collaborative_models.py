@@ -463,8 +463,8 @@ class MasterJerseyResponse(BaseModel):
     competition_info: Optional[Dict[str, Any]] = None
     
     # Statistiques
-    total_releases: int
-    total_collectors: int
+    releases_count: int = 0  # Renamed from total_releases to avoid conflict
+    collectors_count: int = 0  # Renamed from total_collectors to avoid conflict
     estimated_value_range: Optional[Dict[str, float]] = None
     
     # Métadonnées
