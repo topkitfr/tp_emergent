@@ -45,7 +45,7 @@ from collaborative_models import (
     TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate, MasterJerseyCreate,
     JerseyReleaseCreate, ContributionCreate,
     TeamResponse, MasterJerseyResponse,
-    Vote, ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
+    ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
     ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel
 )
 
