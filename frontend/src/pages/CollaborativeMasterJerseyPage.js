@@ -1,0 +1,820 @@
+import React, { useState, useEffect } from 'react';
+
+const CollaborativeMasterJerseyPage = ({ 
+  user, 
+  API, 
+  masterJerseys, 
+  teams, 
+  brands, 
+  competitions, 
+  onDataUpdate 
+}) => {
+  const [filteredJerseys, setFilteredJerseys] = useState([]);
+  const [filters, setFilters] = useState({
+    search: '',
+    team_id: '',
+    brand_id: '',
+    season: '',
+    jersey_type: '',
+    verified_only: false
+  });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedJersey, setSelectedJersey] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Get unique values for filters
+  const seasons = [...new Set(masterJerseys.map(jersey => jersey.season).filter(Boolean))];
+  const jerseyTypes = [...new Set(masterJerseys.map(jersey => jersey.jersey_type).filter(Boolean))];
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...masterJerseys];
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(jersey =>
+        jersey.team_info?.name?.toLowerCase().includes(searchLower) ||
+        jersey.brand_info?.name?.toLowerCase().includes(searchLower) ||
+        jersey.season?.toLowerCase().includes(searchLower) ||
+        jersey.design_name?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (filters.team_id) {
+      filtered = filtered.filter(jersey => jersey.team_info?.id === filters.team_id);
+    }
+
+    if (filters.brand_id) {
+      filtered = filtered.filter(jersey => jersey.brand_info?.id === filters.brand_id);
+    }
+
+    if (filters.season) {
+      filtered = filtered.filter(jersey => jersey.season === filters.season);
+    }
+
+    if (filters.jersey_type) {
+      filtered = filtered.filter(jersey => jersey.jersey_type === filters.jersey_type);
+    }
+
+    if (filters.verified_only) {
+      filtered = filtered.filter(jersey => jersey.verified_level !== 'unverified');
+    }
+
+    setFilteredJerseys(filtered);
+  }, [masterJerseys, filters]);
+
+  // Create new master jersey
+  const handleCreateMasterJersey = async (jerseyData) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API}/api/master-jerseys`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(jerseyData)
+      });
+
+      if (response.ok) {
+        const newJersey = await response.json();
+        alert(`✅ Maillot "${newJersey.team_info?.name} ${newJersey.season}" créé avec succès ! (${newJersey.topkit_reference})`);
+        setShowCreateModal(false);
+        onDataUpdate(); // Refresh data
+      } else {
+        const error = await response.json();
+        alert(`❌ Erreur: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error('Error creating master jersey:', error);
+      alert('❌ Erreur lors de la création du maillot');
+    }
+    setLoading(false);
+  };
+
+  const getJerseyTypeLabel = (type) => {
+    const labels = {
+      'home': 'Domicile',
+      'away': 'Extérieur',
+      'third': 'Troisième',
+      'goalkeeper': 'Gardien',
+      'training': 'Entraînement',
+      'special': 'Spécial'
+    };
+    return labels[type] || type;
+  };
+
+  const getJerseyTypeIcon = (type) => {
+    const icons = {
+      'home': '🏠',
+      'away': '✈️',
+      'third': '3️⃣',
+      'goalkeeper': '🥅',
+      'training': '🏃',
+      'special': '⭐'
+    };
+    return icons[type] || '👕';
+  };
+
+  const MasterJerseyCard = ({ jersey }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => setSelectedJersey(jersey)}
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        <span className="text-4xl">👕</span>
+        {jersey.verified_level !== 'unverified' && (
+          <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+            ✓
+          </div>
+        )}
+        <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+          {getJerseyTypeIcon(jersey.jersey_type)} {getJerseyTypeLabel(jersey.jersey_type)}
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <h3 className="font-bold text-sm text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2">
+          {jersey.team_info?.name || 'Équipe inconnue'}
+        </h3>
+        
+        <div className="space-y-1 text-xs text-gray-600 mb-3">
+          <div className="flex items-center">
+            <span className="mr-1">📅</span>
+            <span>{jersey.season}</span>
+          </div>
+          
+          <div className="flex items-center">
+            <span className="mr-1">👕</span>
+            <span>{jersey.brand_info?.name || 'Marque inconnue'}</span>
+          </div>
+          
+          {jersey.design_name && (
+            <div className="flex items-center">
+              <span className="mr-1">🎨</span>
+              <span className="truncate">{jersey.design_name}</span>
+            </div>
+          )}
+          
+          {jersey.primary_color && (
+            <div className="flex items-center">
+              <div 
+                className="w-3 h-3 rounded-full border border-gray-300 mr-1"
+                style={{ backgroundColor: jersey.primary_color }}
+              ></div>
+              <span className="capitalize">{jersey.primary_color}</span>
+            </div>
+          )}
+          
+          {jersey.main_sponsor && (
+            <div className="flex items-center">
+              <span className="mr-1">🏢</span>
+              <span className="truncate">{jersey.main_sponsor}</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-blue-600 font-mono">{jersey.topkit_reference}</span>
+          <div className="flex items-center space-x-2 text-gray-500">
+            <span>{jersey.releases_count || 0} versions</span>
+            <span>•</span>
+            <span>{jersey.collectors_count || 0} collectionneurs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const CreateMasterJerseyModal = () => {
+    const [formData, setFormData] = useState({
+      team_id: '',
+      brand_id: '',
+      season: '',
+      jersey_type: 'home',
+      design_name: '',
+      primary_color: '',
+      secondary_colors: [],
+      main_sponsor: '',
+      competition_id: '',
+      pattern_description: '',
+      special_features: []
+    });
+
+    const [newColor, setNewColor] = useState('');
+    const [newFeature, setNewFeature] = useState('');
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!formData.team_id || !formData.brand_id || !formData.season || !formData.primary_color) {
+        alert('L\'équipe, la marque, la saison et la couleur principale sont obligatoires');
+        return;
+      }
+      handleCreateMasterJersey(formData);
+    };
+
+    const addColor = () => {
+      if (newColor && !formData.secondary_colors.includes(newColor)) {
+        setFormData({
+          ...formData,
+          secondary_colors: [...formData.secondary_colors, newColor]
+        });
+        setNewColor('');
+      }
+    };
+
+    const removeColor = (colorToRemove) => {
+      setFormData({
+        ...formData,
+        secondary_colors: formData.secondary_colors.filter(color => color !== colorToRemove)
+      });
+    };
+
+    const addFeature = () => {
+      if (newFeature && !formData.special_features.includes(newFeature)) {
+        setFormData({
+          ...formData,
+          special_features: [...formData.special_features, newFeature]
+        });
+        setNewFeature('');
+      }
+    };
+
+    const removeFeature = (featureToRemove) => {
+      setFormData({
+        ...formData,
+        special_features: formData.special_features.filter(feature => feature !== featureToRemove)
+      });
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+          <h3 className="text-lg font-bold mb-4">Créer un nouveau Master Jersey</h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Équipe *
+                </label>
+                <select
+                  value={formData.team_id}
+                  onChange={(e) => setFormData({...formData, team_id: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Sélectionner une équipe</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Marque *
+                </label>
+                <select
+                  value={formData.brand_id}
+                  onChange={(e) => setFormData({...formData, brand_id: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Sélectionner une marque</option>
+                  {brands.map(brand => (
+                    <option key={brand.id} value={brand.id}>{brand.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Saison *
+                </label>
+                <input
+                  type="text"
+                  value={formData.season}
+                  onChange={(e) => setFormData({...formData, season: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ex: 2024-25"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type de maillot
+                </label>
+                <select
+                  value={formData.jersey_type}
+                  onChange={(e) => setFormData({...formData, jersey_type: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="home">Domicile</option>
+                  <option value="away">Extérieur</option>
+                  <option value="third">Troisième</option>
+                  <option value="goalkeeper">Gardien</option>
+                  <option value="training">Entraînement</option>
+                  <option value="special">Spécial</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Compétition
+                </label>
+                <select
+                  value={formData.competition_id}
+                  onChange={(e) => setFormData({...formData, competition_id: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Aucune compétition spécifique</option>
+                  {competitions.map(comp => (
+                    <option key={comp.id} value={comp.id}>{comp.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nom du design
+              </label>
+              <input
+                type="text"
+                value={formData.design_name}
+                onChange={(e) => setFormData({...formData, design_name: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: Jordan Collection, Heritage Edition"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Couleur principale *
+                </label>
+                <input
+                  type="text"
+                  value={formData.primary_color}
+                  onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ex: blue, red, white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sponsor principal
+                </label>
+                <input
+                  type="text"
+                  value={formData.main_sponsor}
+                  onChange={(e) => setFormData({...formData, main_sponsor: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ex: Emirates, Qatar Airways"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Couleurs secondaires
+              </label>
+              <div className="flex space-x-2 mb-2">
+                <input
+                  type="text"
+                  value={newColor}
+                  onChange={(e) => setNewColor(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ex: white, gold"
+                />
+                <button
+                  type="button"
+                  onClick={addColor}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  +
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.secondary_colors.map((color, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
+                  >
+                    {color}
+                    <button
+                      type="button"
+                      onClick={() => removeColor(color)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description du motif
+              </label>
+              <textarea
+                value={formData.pattern_description}
+                onChange={(e) => setFormData({...formData, pattern_description: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows="3"
+                placeholder="Description des motifs, rayures, design particulier..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Caractéristiques spéciales
+              </label>
+              <div className="flex space-x-2 mb-2">
+                <input
+                  type="text"
+                  value={newFeature}
+                  onChange={(e) => setNewFeature(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ex: col V, manches longues, logo spécial"
+                />
+                <button
+                  type="button"
+                  onClick={addFeature}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  +
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.special_features.map((feature, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
+                  >
+                    {feature}
+                    <button
+                      type="button"
+                      onClick={() => removeFeature(feature)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Création...' : 'Créer le Master Jersey'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Master Jerseys</h1>
+          <p className="text-gray-600">
+            Base de données collaborative des designs uniques de maillots de football
+          </p>
+        </div>
+        
+        {user && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center"
+          >
+            <span className="mr-2">➕</span>
+            Ajouter un Master Jersey
+          </button>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <h3 className="font-semibold mb-4">Filtres</h3>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recherche
+            </label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
+              placeholder="Équipe, marque, saison..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Équipe
+            </label>
+            <select
+              value={filters.team_id}
+              onChange={(e) => setFilters({...filters, team_id: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Toutes les équipes</option>
+              {teams.map(team => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Marque
+            </label>
+            <select
+              value={filters.brand_id}
+              onChange={(e) => setFilters({...filters, brand_id: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Toutes les marques</option>
+              {brands.map(brand => (
+                <option key={brand.id} value={brand.id}>{brand.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Saison
+            </label>
+            <select
+              value={filters.season}
+              onChange={(e) => setFilters({...filters, season: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Toutes les saisons</option>
+              {seasons.map(season => (
+                <option key={season} value={season}>{season}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type
+            </label>
+            <select
+              value={filters.jersey_type}
+              onChange={(e) => setFilters({...filters, jersey_type: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Tous les types</option>
+              {jerseyTypes.map(type => (
+                <option key={type} value={type}>{getJerseyTypeLabel(type)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={filters.verified_only}
+                onChange={(e) => setFilters({...filters, verified_only: e.target.checked})}
+                className="mr-2"
+              />
+              <span className="text-sm text-gray-700">Vérifiés uniquement</span>
+            </label>
+            
+            <button
+              onClick={() => setFilters({ search: '', team_id: '', brand_id: '', season: '', jersey_type: '', verified_only: false })}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium text-left"
+            >
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-blue-600">{filteredJerseys.length}</div>
+          <div className="text-sm text-blue-700">Master Jerseys trouvés</div>
+        </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-green-600">
+            {filteredJerseys.filter(j => j.verified_level !== 'unverified').length}
+          </div>
+          <div className="text-sm text-green-700">Maillots vérifiés</div>
+        </div>
+        
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-purple-600">{seasons.length}</div>
+          <div className="text-sm text-purple-700">Saisons représentées</div>
+        </div>
+        
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-orange-600">
+            {filteredJerseys.reduce((total, jersey) => total + (jersey.releases_count || 0), 0)}
+          </div>
+          <div className="text-sm text-orange-700">Versions totales</div>
+        </div>
+      </div>
+
+      {/* Master Jerseys Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {filteredJerseys.map(jersey => (
+          <MasterJerseyCard key={jersey.id} jersey={jersey} />
+        ))}
+      </div>
+
+      {filteredJerseys.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">👕</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun Master Jersey trouvé</h3>
+          <p className="text-gray-600 mb-4">
+            Essayez de modifier vos filtres ou contribuez en ajoutant un nouveau design de maillot
+          </p>
+          {user && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+            >
+              Ajouter le premier Master Jersey
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Create Master Jersey Modal */}
+      {showCreateModal && <CreateMasterJerseyModal />}
+
+      {/* Jersey Detail Modal */}
+      {selectedJersey && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {selectedJersey.team_info?.name || 'Équipe inconnue'} {selectedJersey.season}
+                </h2>
+                <p className="text-gray-600">
+                  {getJerseyTypeLabel(selectedJersey.jersey_type)} - {selectedJersey.brand_info?.name}
+                </p>
+                <p className="text-blue-600 font-mono text-sm">{selectedJersey.topkit_reference}</p>
+              </div>
+              <button
+                onClick={() => setSelectedJersey(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Image Preview */}
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-8xl">👕</span>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Informations générales</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Équipe:</span>
+                      <span className="ml-2 font-medium">{selectedJersey.team_info?.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Marque:</span>
+                      <span className="ml-2">{selectedJersey.brand_info?.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Saison:</span>
+                      <span className="ml-2">{selectedJersey.season}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Type:</span>
+                      <span className="ml-2">{getJerseyTypeLabel(selectedJersey.jersey_type)}</span>
+                    </div>
+                    {selectedJersey.design_name && (
+                      <div>
+                        <span className="text-gray-600">Design:</span>
+                        <span className="ml-2">{selectedJersey.design_name}</span>
+                      </div>
+                    )}
+                    {selectedJersey.main_sponsor && (
+                      <div>
+                        <span className="text-gray-600">Sponsor:</span>
+                        <span className="ml-2">{selectedJersey.main_sponsor}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Colors */}
+                <div>
+                  <h3 className="font-semibold mb-2">Couleurs</h3>
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className="w-6 h-6 rounded-full border border-gray-300"
+                      style={{ backgroundColor: selectedJersey.primary_color }}
+                      title={selectedJersey.primary_color}
+                    ></div>
+                    <span className="text-sm capitalize">{selectedJersey.primary_color}</span>
+                    {selectedJersey.secondary_colors && selectedJersey.secondary_colors.map((color, index) => (
+                      <div key={index} className="flex items-center space-x-1">
+                        <div
+                          className="w-4 h-4 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        ></div>
+                        <span className="text-xs capitalize text-gray-600">{color}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pattern Description */}
+                {selectedJersey.pattern_description && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Description du motif</h3>
+                    <p className="text-sm text-gray-600">{selectedJersey.pattern_description}</p>
+                  </div>
+                )}
+
+                {/* Special Features */}
+                {selectedJersey.special_features && selectedJersey.special_features.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Caractéristiques spéciales</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedJersey.special_features.map((feature, index) => (
+                        <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div>
+                  <h3 className="font-semibold mb-2">Statistiques</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Versions:</span>
+                      <span className="ml-2 font-medium">{selectedJersey.releases_count || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Collectionneurs:</span>
+                      <span className="ml-2 font-medium">{selectedJersey.collectors_count || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-gray-600">Statut:</span>
+                  <span className={`ml-2 ${selectedJersey.verified_level !== 'unverified' ? 'text-green-600' : 'text-orange-600'}`}>
+                    {selectedJersey.verified_level !== 'unverified' ? '✓ Vérifié' : 'En attente de vérification'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default CollaborativeMasterJerseyPage;
