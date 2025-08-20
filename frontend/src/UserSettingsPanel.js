@@ -66,7 +66,8 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
         ...prev,
         ...response.data,
         name: user.name,
-        email: user.email
+        email: user.email,
+        profile_picture_url: response.data.profile_picture_url || null
       }));
       
     } catch (error) {
