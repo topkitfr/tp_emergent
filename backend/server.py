@@ -8386,7 +8386,13 @@ async def send_newsletter(
 app.include_router(api_router)
 
 # Mount static files for uploads
-app.mount("/uploads", StaticFiles(directory="../frontend/public/uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Create uploads directory if it doesn't exist
+from pathlib import Path
+uploads_dir = Path("uploads")
+uploads_dir.mkdir(exist_ok=True)
+(uploads_dir / "profile_pictures").mkdir(exist_ok=True)
 
 app.add_middleware(
     CORSMiddleware,
