@@ -11,8 +11,8 @@ import io
 
 # Configuration
 API_BASE = "http://localhost:8001/api"
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "123"
+TEST_USER_EMAIL = "testuser@example.com"
+TEST_USER_PASSWORD = "SecurePass789!"
 
 class SimpleProfilePictureUploadTester:
     def __init__(self):
