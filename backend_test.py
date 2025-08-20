@@ -126,7 +126,7 @@ class TopKitBackendTester:
                 "description": "Maillot de test avec format photo_url individuels pour validation admin"
             }
             
-            response = self.session.post(f"{BACKEND_URL}/jerseys", json=jersey_data)
+            response = self.session.post(f"{BACKEND_URL}/jerseys", data=jersey_data)
             
             if response.status_code == 201:
                 jersey = response.json()
