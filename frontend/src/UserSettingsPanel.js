@@ -109,6 +109,83 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
     }));
   };
 
+  // Profile picture handlers
+  const handleProfilePictureUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setProfilePictureLoading(true);
+    setProfilePictureError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/profile/picture`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess('Photo de profil mise à jour avec succès !');
+        setProfileData(prev => ({
+          ...prev,
+          profile_picture_url: data.profile_picture_url
+        }));
+        if (onUpdate) onUpdate();
+      } else {
+        const errorData = await response.json();
+        setProfilePictureError(errorData.detail || 'Erreur lors du téléchargement');
+      }
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      setProfilePictureError('Erreur lors du téléchargement de la photo');
+    } finally {
+      setProfilePictureLoading(false);
+    }
+  };
+
+  const handleDeleteProfilePicture = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
+      return;
+    }
+
+    setProfilePictureLoading(true);
+    setProfilePictureError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/api/users/profile/picture`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setSuccess('Photo de profil supprimée avec succès !');
+        setProfileData(prev => ({
+          ...prev,
+          profile_picture_url: null
+        }));
+        if (onUpdate) onUpdate();
+      } else {
+        const errorData = await response.json();
+        setProfilePictureError(errorData.detail || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      console.error('Profile picture delete error:', error);
+      setProfilePictureError('Erreur lors de la suppression de la photo');
+    } finally {
+      setProfilePictureLoading(false);
+    }
+  };
+
   const tabs = [
     { id: 'profile', label: '👤 Profil', icon: '👤' },
     { id: 'address', label: '📍 Adresse', icon: '📍' },
