@@ -500,6 +500,11 @@ const AppContent = () => {
     setShowJerseyEditor(true);
   };
 
+  const openJerseyModal = (jersey) => {
+    setSelectedJersey(jersey);
+    setShowJerseyDetailView(true);
+  };
+
   const handleJerseySubmit = () => {
     loadUserSubmissions();
   };
