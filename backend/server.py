@@ -9155,7 +9155,7 @@ async def vote_on_contribution(
             comment=reason
         )
         
-        await db.votes.insert_one(vote.dict())
+        await db.contribution_votes.insert_one(vote.dict())
         
         # Mettre à jour les compteurs
         update_fields = {"total_votes": 1}
