@@ -1769,6 +1769,7 @@ const AppContent = () => {
                               src={imageUrl}
                               alt={`${jersey.team} ${jersey.season}`}
                               className="w-full h-full object-cover rounded-lg"
+                              style={{aspectRatio: '1'}}
                               onError={(e) => {
                                 e.target.style.display = 'none';
                                 e.target.nextSibling.style.display = 'flex';
