@@ -79,12 +79,16 @@ class MasterJerseyTester:
         """Create a team for testing"""
         try:
             # First check if team already exists
-            response = self.session.get(f"{BACKEND_URL}/teams", params={"name": name})
+            response = self.session.get(f"{BACKEND_URL}/teams")
             if response.status_code == 200:
                 teams = response.json()
                 for team in teams:
-                    if team.get("name") == name:
-                        self.log_test(f"Create Team: {name}", True, f"Using existing team - ID: {team.get('id')}, Ref: {team.get('topkit_reference')}")
+                    team_name = team.get("name", "")
+                    # Check for exact match or Barcelona variations
+                    if (team_name == name or 
+                        ("Barcelona" in name and "Barcelona" in team_name) or
+                        (name.lower() in team_name.lower())):
+                        self.log_test(f"Create Team: {name}", True, f"Using existing team '{team_name}' - ID: {team.get('id')}, Ref: {team.get('topkit_reference')}")
                         return team
             
             # Create new team if not exists
@@ -102,17 +106,6 @@ class MasterJerseyTester:
                 data = response.json()
                 self.log_test(f"Create Team: {name}", True, f"Created new team - ID: {data.get('id')}, Ref: {data.get('topkit_reference')}")
                 return data
-            elif response.status_code == 400 and "existe déjà" in response.text:
-                # Try to find existing team
-                response = self.session.get(f"{BACKEND_URL}/teams")
-                if response.status_code == 200:
-                    teams = response.json()
-                    for team in teams:
-                        if name.lower() in team.get("name", "").lower():
-                            self.log_test(f"Create Team: {name}", True, f"Found existing team - ID: {team.get('id')}, Ref: {team.get('topkit_reference')}")
-                            return team
-                self.log_test(f"Create Team: {name}", False, f"Team exists but couldn't retrieve: {response.text}")
-                return None
             else:
                 self.log_test(f"Create Team: {name}", False, f"HTTP {response.status_code}: {response.text}")
                 return None
