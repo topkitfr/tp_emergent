@@ -110,12 +110,19 @@ class TopKitPhotoManagementTester:
     def test_photo_removal_only(self):
         """Test Scenario 1: Remove existing front photo only (remove_front_photo=true)"""
         try:
-            # Test removing front photo only
+            # Test removing front photo only using form data
             update_data = {
-                "remove_front_photo": True
+                "team": "Real Madrid CF",
+                "league": "La Liga",
+                "season": "2024-25", 
+                "model": "authentic",
+                "manufacturer": "Adidas",
+                "jersey_type": "home",
+                "description": "Test jersey for photo management testing",
+                "remove_front_photo": "true"
             }
             
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=update_data)
+            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", data=update_data)
             
             if response.status_code == 200:
                 result = response.json()
