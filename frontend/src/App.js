@@ -1349,7 +1349,8 @@ const AppContent = () => {
                   </>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
