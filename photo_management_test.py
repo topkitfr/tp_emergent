@@ -213,25 +213,28 @@ class TopKitPhotoManagementTester:
     def test_upload_both_photos_remove_existing(self):
         """Test Scenario 3: Upload both new front and back photos while removing all existing photos"""
         try:
-            # First, add some existing photos back for this test
-            setup_data = {
-                "front_photo_url": f"jersey_{self.test_jersey_id}_front_old.jpg",
-                "back_photo_url": f"jersey_{self.test_jersey_id}_back_old.jpg"
-            }
-            self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=setup_data)
-            
-            # Mock photo data for both photos
-            mock_front_photo = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
-            mock_back_photo = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8B"
+            # Create simple test image data
+            test_image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
             
             update_data = {
-                "remove_front_photo": True,
-                "remove_back_photo": True,
-                "front_photo": mock_front_photo,
-                "back_photo": mock_back_photo
+                "team": "Real Madrid CF",
+                "league": "La Liga",
+                "season": "2024-25",
+                "model": "authentic",
+                "manufacturer": "Adidas", 
+                "jersey_type": "home",
+                "description": "Test jersey for photo management testing",
+                "remove_front_photo": "true",
+                "remove_back_photo": "true"
             }
             
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=update_data)
+            files = {
+                'front_photo': ('new_front.jpg', test_image_data, 'image/jpeg'),
+                'back_photo': ('new_back.jpg', test_image_data, 'image/jpeg')
+            }
+            
+            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", 
+                                      data=update_data, files=files)
             
             if response.status_code == 200:
                 result = response.json()
