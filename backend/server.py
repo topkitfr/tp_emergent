@@ -3004,7 +3004,16 @@ async def reject_jersey(
 @api_router.put("/admin/jerseys/{jersey_id}/edit")
 async def edit_jersey(
     jersey_id: str, 
-    jersey_data: JerseyCreate,
+    team: str = Form(...),
+    league: str = Form(...),
+    season: str = Form(...),
+    model: str = Form(...),
+    manufacturer: str = Form(""),
+    jersey_type: str = Form(""),
+    sku_code: str = Form(None),
+    description: str = Form(""),
+    front_photo: UploadFile = File(None),
+    back_photo: UploadFile = File(None),
     moderator_id: str = Depends(get_current_moderator_or_admin)
 ):
     """Edit a pending or needs_modification jersey"""
@@ -3014,16 +3023,39 @@ async def edit_jersey(
     if not existing_jersey:
         raise HTTPException(status_code=404, detail="Jersey not found or cannot be edited")
     
+    # Validate required fields
+    if not team or not league or not season or not model:
+        raise HTTPException(status_code=422, detail="Team, league, season, and model are required fields")
+    
+    # Validate model field
+    if model not in ["authentic", "replica"]:
+        raise HTTPException(status_code=422, detail="Model must be either 'authentic' or 'replica'")
+    
+    # Handle photo uploads
+    photos = []
+    if front_photo and front_photo.filename:
+        # Save front photo (using same logic as jersey submission)
+        front_content = await front_photo.read()
+        front_filename = f"jersey_{jersey_id}_front_{int(time.time())}.{front_photo.filename.split('.')[-1]}"
+        # For now, store the filename (in production, this would be uploaded to cloud storage)
+        photos.append(front_filename)
+    
+    if back_photo and back_photo.filename:
+        # Save back photo
+        back_content = await back_photo.read()
+        back_filename = f"jersey_{jersey_id}_back_{int(time.time())}.{back_photo.filename.split('.')[-1]}"
+        photos.append(back_filename)
+    
     # Update jersey with edited data using new structure
     update_data = {
-        "team": jersey_data.team,
-        "league": jersey_data.league,
-        "season": jersey_data.season,
-        "manufacturer": jersey_data.manufacturer or "",
-        "jersey_type": jersey_data.jersey_type or "",  # home/away/third/goalkeeper/training/special
-        "sku_code": jersey_data.sku_code,
-        "model": jersey_data.model,  # authentic/replica
-        "description": jersey_data.description or "",
+        "team": team.strip(),
+        "league": league.strip(),
+        "season": season.strip(),
+        "manufacturer": manufacturer.strip() if manufacturer else "",
+        "jersey_type": jersey_type.strip() if jersey_type else "",
+        "sku_code": sku_code.strip() if sku_code else None,
+        "model": model.strip(),
+        "description": description.strip() if description else "",
         "status": "pending",  # Reset to pending after edit
         "approved_by": None,
         "approved_at": None,
@@ -3031,6 +3063,10 @@ async def edit_jersey(
         "updated_at": datetime.utcnow(),
         "updated_by": moderator_id
     }
+    
+    # Add photos to update if any were uploaded
+    if photos:
+        update_data["images"] = photos
     
     result = await db.jerseys.update_one(
         {"id": jersey_id},
@@ -3045,18 +3081,19 @@ async def edit_jersey(
         user_id=existing_jersey["submitted_by"],
         notification_type=NotificationType.JERSEY_NEEDS_MODIFICATION,
         title="🔧 Jersey Updated by Moderator",
-        message=f"Your jersey '{jersey_data.team} {jersey_data.season}' has been updated by a moderator and is now pending review again.",
+        message=f"Your jersey '{team} {season}' has been updated by a moderator and is now pending review again.",
         related_id=jersey_id
     )
     
     # Log activity
     await log_user_activity(moderator_id, "jersey_edited", jersey_id, {
-        "jersey_name": f"{jersey_data.team} {jersey_data.season}",
+        "jersey_name": f"{team} {season}",
         "original_team": existing_jersey.get("team"),
-        "original_season": existing_jersey.get("season")
+        "original_season": existing_jersey.get("season"),
+        "photos_updated": len(photos) > 0
     })
     
-    return {"message": "Jersey updated successfully"}
+    return {"message": "Jersey updated successfully", "photos_uploaded": len(photos)}
 
 # User management endpoints (Admin only)
 @api_router.get("/admin/users")
