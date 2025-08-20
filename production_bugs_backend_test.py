@@ -32,8 +32,8 @@ import uuid
 import time
 
 # Configuration
-BACKEND_URL = "https://topkit-wiki.preview.emergentagent.com/api"
-STATIC_URL = "https://topkit-wiki.preview.emergentagent.com/uploads"
+BACKEND_URL = "https://jersey-collab.preview.emergentagent.com/api"
+STATIC_URL = "https://jersey-collab.preview.emergentagent.com/uploads"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "testuser1d7bbc68@example.com"

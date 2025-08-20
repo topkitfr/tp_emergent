@@ -1,54 +1,65 @@
 <analysis>
-The AI engineer successfully transformed the TopKit application from a general marketplace MVP to a specialized collaborative football jersey database. Initially, the engineer resolved critical bugs like image display and implemented core features such as Forgot Password and profile picture upload. Following a user-initiated complete redesign, the focus shifted entirely to building a collaborative database. This involved creating new backend models and API endpoints for entities like Teams, Brands, Jerseys, Players, and Competitions. Concurrently, the frontend was overhauled with a new set of Collaborative components and pages, then restyled to match the  aesthetic. The application's core narrative was also refined to emphasize jersey collection estimation and database completeness, moving away from a marketplace focus. The most recent major task completed was the successful bulk import of extensive league and team data into the new collaborative database structure.
+The AI engineer successfully evolved TopKit from a marketplace MVP to a specialized, collaborative football jersey database. Initial work involved critical bug fixes and core feature implementation. Following a complete redesign request, the focus shifted to building a robust collaborative database, which included creating new backend models and API endpoints for entities like Teams, Brands, Jerseys, Players, and Competitions. The frontend was entirely refactored with new Collaborative components and styled to match , emphasizing jersey collection estimation over a marketplace.
+
+Key achievements in the analyzed trajectory include the successful bulk import of league and team data, resolution of data visibility issues caused by API limits and unverified status, and the implementation of a duplicate cleanup mechanism. The engineer also addressed the user's inability to modify references by creating missing backend PUT endpoints. Most recently, the AI engineer began implementing a Discogs-like collaborative contribution system, adding new backend models and API endpoints for contributions and votes, and starting on the corresponding frontend pages and modals.
 </analysis>
 
 <product_requirements>
-TopKit is envisioned as the most comprehensive collaborative database for football jerseys, functioning like a specialized wiki where users contribute and the community validates information.
-The application's core purpose is to enable users to estimate the value of their jersey collections and contribute to a global, verified database.
-Key entities include: Team/Club, Brand/Manufacturer, Jersey (Release), Master Jersey (grouping design versions), Player, and Competition/Event.
-User contributions must adhere to strict rules, requiring mandatory visual proof (photos from all angles, tags, labels). A moderation system with community voting, moderators, and admins ensures data accuracy.
-Each entity requires a unique identifier and standardized links between them. Technical details, version history, and handling of multi-variant jerseys are essential.
-The platform aims to prevent duplicates through advanced search and detection algorithms, with a merging capability. A public API for data access and CSV/JSON export are required.
-UI/UX mandates a new design theme, consistent branding (logo, background), optimized image views (square thumbnails, object-cover), a refined hamburger menu (no icons, red logout), and enhanced search. A Marketplace page should display Coming Soon. Social media links are limited to Instagram.
+TopKit aims to be the definitive collaborative database for football jerseys, enabling users to estimate collection values and contribute to a global, community-validated dataset. Core entities are Team, Brand, Jersey (Release), Master Jersey, Player, and Competition. User contributions require visual proof and a moderation system with community voting and admin oversight to ensure accuracy and prevent duplicates. Each entity needs unique identifiers, standardized links, technical details, and version history. The platform requires a public API and data export options (CSV/JSON). UI/UX mandates a new design theme ( aesthetic), consistent branding (logo, background), optimized image display, a refined navigation menu, enhanced search, a Marketplace page displaying Coming Soon, and limited social media links (Instagram only). The user explicitly requested all imported references be validated and visible, and a Discogs-like system for user-driven modifications, including modification history, user contributions, voting, and contributor rankings.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-Stack Development**: React (Frontend), FastAPI (Backend), MongoDB (Database).
--   **Collaborative Database Design**: Structured data models (Team, Brand, Jersey, Player, Competition), unique identifiers, inter-entity linking, data validation, moderation.
--   **API Design**: RESTful endpoints, bulk data operations.
--   **UI/UX Refactoring**: Component-based architecture, styling (Tailwind CSS implied), responsive design, narrative integration.
--   **Data Import**: Scripted data ingestion into MongoDB via API.
--   **Linting**: ESLint for JavaScript code quality.
+-   **Collaborative Database Design**: Structured data models (Team, Brand, Jersey, Player, Competition, Contribution), unique identifiers, inter-entity linking, data validation, moderation workflows.
+-   **API Design**: RESTful endpoints, bulk data operations, update (PUT) operations.
+-   **UI/UX Refactoring**: Component-based architecture, Tailwind CSS (implied), responsive design, narrative integration.
+-   **Data Management**: Scripted data ingestion, duplicate detection, data status update (verified_level).
 </key_technical_concepts>
 
 <code_architecture>
-The application employs a React frontend, a FastAPI backend, and MongoDB for data persistence, following a component-based and API-driven architecture.
+The application utilizes a React frontend, a FastAPI backend, and MongoDB as its database, structured into distinct frontend and backend directories.
 
 
 
 -   ****:
-    -   **Summary**: The central FastAPI application managing API endpoints and MongoDB interactions.
-    -   **Changes Made**: Heavily modified to incorporate new API endpoints for the collaborative database entities (, , , , , , ). Bulk import endpoints (, ) were added for efficient data seeding. It now integrates models from  and uses unique ID prefixes for entities.
+    -   **Summary**: The main FastAPI application, handling all API routes and database interactions.
+    -   **Changes Made**: Extensively modified to include new API endpoints for collaborative entities (, , , , , , ), including bulk import (, ). API limits were increased to 1000 for various GET endpoints. Crucially,  endpoints for updating  and  (e.g., ) were added to enable modifications. New endpoints for  (POST for submission, PUT for voting/approval) are currently being added.
 
 -   ****:
-    -   **Summary**: A newly created file dedicated to defining Pydantic models for the collaborative database entities (Team, Brand, JerseyRelease, MasterJersey, Player, Competition, Contribution).
-    -   **Changes Made**: This file was created from scratch to modularize and clearly define the data structures for the new collaborative database, enabling schema validation and clear API contracts.
+    -   **Summary**: Defines Pydantic models for all collaborative database entities, ensuring data structure and validation.
+    -   **Changes Made**: Created from scratch to define , , , , , , , and . The  field was added to models (defaulting to ) and later adjusted for  status.
 
 -   ****:
-    -   **Summary**: The primary entry point for the React frontend application.
-    -   **Changes Made**: Updated to render  as the main component, effectively switching the entire frontend to the new collaborative architecture.
+    -   **Summary**: The primary entry point for the React frontend.
+    -   **Changes Made**: Updated to render  as the main component, signifying the shift to the collaborative interface.
 
 -   ****:
-    -   **Summary**: The main React component for the redesigned collaborative application, handling overall layout and routing for the new interface.
-    -   **Changes Made**: This file was created as part of the start from zero refactor, serving as the root for all new collaborative components and pages, encapsulating the new application logic and routing.
+    -   **Summary**: The root React component for the redesigned application, managing global state, data loading, and routing for the collaborative UI.
+    -   **Changes Made**: Created as part of the refactor. API calls to backend endpoints were initially limited (e.g., ), which was later removed to allow full data fetching. It's currently being updated to integrate the new  and .
 
 -   ** (new directory with multiple files)**:
-    -   **Summary**: Contains dedicated React components for various sections of the collaborative application, such as , , , , , , , and .
-    -   **Changes Made**: These files were created to implement the new, distinct UI for each collaborative entity and feature, replacing or significantly altering the structure of the previous frontend.  and  were further updated to align with the WhenToCop style and new narrative.
+    -   **Summary**: Contains dedicated React components for each collaborative section (e.g., , , etc.).
+    -   **Changes Made**: These were created to implement the new UI.  and  were styled to . A new  was recently created for the contribution system.
 
 -   ****:
-    -   **Summary**: A Python script designed to programmatically import league and team data into the backend database.
-    -   **Changes Made**: This script was created to parse CSV-like data provided by the user and make authenticated POST requests to the newly implemented bulk API endpoints (, ) to populate the database with initial collaborative data.
+    -   **Summary**: A React component for a modal interface allowing users to submit modifications/contributions.
+    -   **Changes Made**: Newly created as part of the Discogs-like collaborative system.
+
+-   ****:
+    -   **Summary**: A Python script to import new league and team data provided by the user.
+    -   **Changes Made**: Created to parse CSV-like data and make authenticated POST requests to backend bulk API endpoints. It was modified to correctly handle the API token key name ( instead of ).
+
+-   ****:
+    -   **Summary**: A Python script to update the  of imported data in the MongoDB database.
+    -   **Changes Made**: Created to set imported teams, competitions, brands, and players to  status directly via MongoDB queries, bypassing initial issues with missing PUT API endpoints.
+
+-   ****:
+    -   **Summary**: A Python script designed to identify and remove duplicate entries (e.g., teams) based on similar names and country, preserving the most detailed version.
+    -   **Changes Made**: Newly created to address the user's report of duplicate data after bulk imports. It includes logic to handle specific non-duplicate cases (e.g., Manchester United vs. City) and to restore mistakenly deleted entries.
+
+-   ****:
+    -   **Summary**: A markdown file providing instructions on how to modify references within the application.
+    -   **Changes Made**: Newly created to explain methods for data modification to the user (API direct, proposed admin interface, bulk script).
 </code_architecture>
 
 <pending_tasks>
@@ -59,15 +70,19 @@ The application employs a React frontend, a FastAPI backend, and MongoDB for dat
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer completed a significant overhaul of the TopKit application, transforming it into a collaborative football jersey database. This involved a multi-phase refactoring.
+Immediately prior to this summary, the AI engineer was implementing a Discogs-like collaborative contribution system as requested by the user. The goal is to allow all users to propose corrections and additions to references, with an audit trail and community voting.
 
-On the backend, a new  file was created to define comprehensive data models for , , , , , , and . The main  was then extensively updated to integrate these new models and expose dedicated CRUD API endpoints for each collaborative entity, including bulk import capabilities for teams and competitions.
+The work completed so far on this feature includes:
+1.  **Backend Model Creation**: New Pydantic models for  and  were defined in . The  model includes fields for , , , , , , , and timestamps.
+2.  **Backend API Endpoints**: The AI engineer started adding new FastAPI endpoints to  to support contributions. This includes  for users to submit new modification proposals and  to allow community members to vote on pending contributions. The endpoints are being added to the end of the  file.
+3.  **Frontend Page Creation**: A new React page component, , was created to serve as the main interface for users to submit contributions.
+4.  **Frontend Modal Component**: A reusable React modal component, , was created. This modal will likely be used to present the form for submitting proposed changes when a user clicks a Suggest a modification button on an entity's page.
+5.  **Frontend Integration**: The AI engineer is in the process of integrating these new frontend components into the main application structure, specifically by updating  to route to the new  and potentially render the .
 
-Concurrently, the frontend underwent a start from zero refactor. A new  became the primary entry point, and a  directory was populated with specific pages for each collaborative entity (e.g., , ). The UI/UX was then redesigned to adopt the style and ergonomics of , specifically modifying  and . The narrative of the entire application was revised across multiple frontend files to emphasize jersey collection estimation and most complete collaborative database, deprioritizing buying/selling.
-
-Finally, the most recent work involved importing a large dataset of leagues and teams. A new script, , was developed to parse the provided data and use the newly created backend bulk API endpoints to populate the database, which was successfully executed. The application is now a fully functional collaborative jersey database with an updated UI and narrative, and a substantial initial dataset.
+The implementation is currently focused on laying down the foundational backend and frontend components for the collaborative contribution workflow.
 </current_work>
 
 <optional_next_step>
-The next step is to ask the user which pending task they would like to prioritize for further development.
+Integrate  and  into  and existing entity pages to enable basic contribution submission.
 </optional_next_step>
+
