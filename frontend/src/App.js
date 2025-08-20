@@ -1495,15 +1495,37 @@ const AppContent = () => {
     const applyFilters = () => {
       let filtered = [...jerseys];
       
+      // Recherche intelligente dans tous les champs pertinents
       if (searchTerm) {
-        filtered = filtered.filter(jersey => 
-          jersey.team?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          jersey.league?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          jersey.season?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          jersey.player?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const searchLower = searchTerm.toLowerCase();
+        filtered = filtered.filter(jersey => {
+          // Recherche dans les champs principaux
+          const teamMatch = jersey.team?.toLowerCase().includes(searchLower);
+          const leagueMatch = jersey.league?.toLowerCase().includes(searchLower);
+          const seasonMatch = jersey.season?.toLowerCase().includes(searchLower);
+          const playerMatch = jersey.player?.toLowerCase().includes(searchLower);
+          
+          // Recherche dans les champs techniques (soumission)
+          const manufacturerMatch = jersey.manufacturer?.toLowerCase().includes(searchLower);
+          const jerseyTypeMatch = jersey.jersey_type?.toLowerCase().includes(searchLower);
+          const modelMatch = jersey.model?.toLowerCase().includes(searchLower);
+          const descriptionMatch = jersey.description?.toLowerCase().includes(searchLower);
+          const skuMatch = jersey.sku_code?.toLowerCase().includes(searchLower);
+          const referenceMatch = jersey.reference_code?.toLowerCase().includes(searchLower);
+          
+          // Recherche dans les variantes d'équipes populaires
+          const teamVariants = getTeamVariants(jersey.team?.toLowerCase() || '');
+          const teamVariantMatch = teamVariants.some(variant => 
+            variant.includes(searchLower) || searchLower.includes(variant)
+          );
+          
+          return teamMatch || leagueMatch || seasonMatch || playerMatch || 
+                 manufacturerMatch || jerseyTypeMatch || modelMatch || 
+                 descriptionMatch || skuMatch || referenceMatch || teamVariantMatch;
+        });
       }
       
+      // Filtres spécifiques
       if (filters.league) {
         filtered = filtered.filter(jersey => 
           jersey.league?.toLowerCase().includes(filters.league.toLowerCase())
@@ -1524,6 +1546,34 @@ const AppContent = () => {
       
       setFilteredJerseys(filtered);
       setCurrentPage(1);
+    };
+
+    // Helper function pour les variantes d'équipes
+    const getTeamVariants = (teamName) => {
+      const variants = {
+        'psg': ['paris saint germain', 'paris st germain', 'paris sg'],
+        'paris saint germain': ['psg', 'paris sg', 'paris st germain'],
+        'real madrid': ['real', 'madrid', 'rm'],
+        'fc barcelona': ['barcelona', 'barca', 'fcb', 'fc barcelone'],
+        'manchester united': ['man united', 'man utd', 'united', 'mu'],
+        'manchester city': ['man city', 'city', 'mcfc'],
+        'liverpool': ['lfc', 'liverpool fc'],
+        'bayern munich': ['bayern', 'fcb munich', 'fc bayern'],
+        'juventus': ['juve', 'juventus fc'],
+        'ac milan': ['milan', 'ac milano'],
+        'inter milan': ['inter', 'inter milano', 'internazionale'],
+        'arsenal': ['arsenal fc', 'gunners'],
+        'chelsea': ['chelsea fc', 'blues'],
+        'tottenham': ['spurs', 'tottenham hotspur'],
+        'olympique de marseille': ['om', 'marseille', 'olympique marseille'],
+        'olympique lyonnais': ['ol', 'lyon', 'olympique lyon'],
+        'as monaco': ['monaco', 'asm'],
+        'atletico madrid': ['atletico', 'atleti'],
+        'borussia dortmund': ['dortmund', 'bvb'],
+        'ajax': ['ajax amsterdam', 'afc ajax']
+      };
+      
+      return variants[teamName] || [teamName];
     };
 
     const handleFilterChange = (filterType, value) => {
