@@ -1993,7 +1993,7 @@ const AppContent = () => {
           return (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🏗️</div>
-              <h3 className="text-xl font-semibent text-black mb-2">
+              <h3 className="text-xl font-semibold text-black mb-2">
                 Bientôt disponible
               </h3>
               <p className="text-gray-600 mb-6">
