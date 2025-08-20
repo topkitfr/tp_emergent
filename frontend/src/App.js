@@ -1383,11 +1383,11 @@ const AppContent = () => {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="text-4xl mb-4">🔥</div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            Sois le premier informé des dernières sorties et plans exclusifs
+            Restez informé des nouveautés TopKit
           </h2>
           <p className="text-gray-300 mb-8">
-            Rejoins notre newsletter pour recevoir des récap de sorties, des bons plans 
-            et des infos exclusives autour du maillot de foot.
+            Rejoignez notre communauté pour recevoir les dernières mises à jour sur les fonctionnalités,
+            la marketplace et les nouvelles disciplines sportives !
           </p>
           
           <div className="max-w-md mx-auto flex">
