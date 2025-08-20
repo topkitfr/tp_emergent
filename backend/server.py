@@ -3818,7 +3818,10 @@ async def create_jersey(
                 logger.error(f"❌ Notification creation failed: {notif_error}")
                 # Don't fail the jersey creation if notification fails
         
-        return jersey
+        # Return jersey with success message
+        jersey_dict = jersey.dict()
+        jersey_dict["message"] = "Maillot soumis avec succès ! Il sera examiné par nos modérateurs."
+        return jersey_dict
         
     except HTTPException:
         raise
