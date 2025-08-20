@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 
 # Configuration
-BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {

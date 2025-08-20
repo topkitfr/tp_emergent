@@ -13,7 +13,7 @@ import io
 import base64
 
 # Configuration
-API_BASE = os.environ.get('REACT_APP_BACKEND_URL', 'https://soccer-collection.preview.emergentagent.com') + '/api'
+API_BASE = os.environ.get('REACT_APP_BACKEND_URL', 'https://jersey-vault-3.preview.emergentagent.com') + '/api'
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 

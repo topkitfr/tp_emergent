@@ -18,7 +18,7 @@ from datetime import datetime
 import sys
 
 # Configuration - Using production URL from frontend/.env
-BACKEND_URL = "https://soccer-collection.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
 
 # Admin credentials (working)
 ADMIN_EMAIL = "topkitfr@gmail.com" 
