@@ -26,16 +26,16 @@ from datetime import datetime
 # Configuration
 BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
 
-# Données de test - creating new test user
+# Données de test - creating new test user with strong password
 USER_CREDENTIALS = {
     "email": "testuser.photos@example.com",
-    "password": "TestPhotos123!"
+    "password": "SecurePhotoTest2024!"
 }
 
 # Registration data for new user
 USER_REGISTRATION = {
     "email": "testuser.photos@example.com",
-    "password": "TestPhotos123!",
+    "password": "SecurePhotoTest2024!",
     "name": "Test Photos User"
 }
 
