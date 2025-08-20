@@ -12,7 +12,7 @@ from datetime import datetime
 # Configuration
 BACKEND_URL = "https://jersey-vault-3.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 class TopKitCollaborativeAPITester:
     def __init__(self):
