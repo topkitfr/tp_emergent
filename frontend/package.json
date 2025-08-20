@@ -30,7 +30,9 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.28.3",
     "@babel/eslint-parser": "^7.28.0",
+    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@craco/craco": "^7.1.0",
     "@eslint/js": "9.23.0",
