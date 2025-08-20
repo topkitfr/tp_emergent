@@ -9121,9 +9121,9 @@ async def vote_on_contribution(
         raise HTTPException(status_code=404, detail="Contribution non trouvée")
     
     # Vérifier si l'utilisateur a déjà voté
-    existing_vote = await db.votes.find_one({
+    existing_vote = await db.contribution_votes.find_one({
         "contribution_id": contribution_id,
-        "user_id": current_user["id"]
+        "voter_id": current_user["id"]
     })
     
     if existing_vote:
