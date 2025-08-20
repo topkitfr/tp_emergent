@@ -8393,9 +8393,9 @@ async def send_newsletter(
         logger.error(f"Error sending newsletter: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de la newsletter")
 
-# ================================
-# COLLABORATIVE DATABASE API ENDPOINTS
-# ================================
+# Mount static files to serve uploaded images
+app.mount("/images", StaticFiles(directory=ROOT_DIR / "uploads" / "jerseys"), name="images")
+app.mount("/uploads", StaticFiles(directory=ROOT_DIR / "uploads"), name="uploads")
 
 # Fonction utilitaire pour générer des références uniques
 async def generate_reference(entity_type: str) -> str:
