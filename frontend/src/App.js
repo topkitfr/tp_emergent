@@ -1389,6 +1389,12 @@ const AppContent = () => {
             >
               Liste
             </button>
+            <button
+              onClick={() => setViewMode('thumbnail')}
+              className={`px-3 py-2 rounded ${viewMode === 'thumbnail' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}
+            >
+              Vignette
+            </button>
           </div>
         </div>
 
