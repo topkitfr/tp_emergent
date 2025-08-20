@@ -308,7 +308,7 @@ def run_comprehensive_test():
         print_error("Cannot proceed without jersey submission")
         # Continuer quand même pour tester avec les maillots existants
     
-    # Étape 4: Récupérer les maillots en attente via admin
+    # Étape 5: Récupérer les maillots en attente via admin
     pending_jerseys = get_pending_jerseys_admin(admin_token)
     if not pending_jerseys:
         print_error("Cannot analyze images - no pending jerseys retrieved")
