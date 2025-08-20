@@ -568,6 +568,8 @@ class UserRating(BaseModel):
 class UserProfile(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
+    # Profile picture
+    profile_picture_url: Optional[str] = None
     # Informations personnelles étendues
     display_name: Optional[str] = None
     bio: Optional[str] = None
