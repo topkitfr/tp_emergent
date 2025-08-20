@@ -9385,6 +9385,491 @@ async def search_collaborative(
     return results
 
 # Include the router in the main app
+# ====================================================
+# SYSTÈME DE CONTRIBUTION COLLABORATIF (Phase 1)
+# ====================================================
+
+async def generate_contribution_reference(entity_type: str) -> str:
+    """Génère une référence unique pour une contribution"""
+    # Compter les contributions existantes pour ce type
+    count = await db.contributions.count_documents({"entity_type": entity_type})
+    next_number = count + 1
+    return f"TK-CONTRIB-{next_number:06d}"
+
+async def get_entity_current_data(entity_type: EntityType, entity_id: str) -> Dict[str, Any]:
+    """Récupère les données actuelles d'une entité"""
+    collection_map = {
+        EntityType.TEAM: "teams",
+        EntityType.BRAND: "brands", 
+        EntityType.PLAYER: "players",
+        EntityType.COMPETITION: "competitions",
+        EntityType.MASTER_JERSEY: "master_jerseys"
+    }
+    
+    collection_name = collection_map.get(entity_type)
+    if not collection_name:
+        return {}
+    
+    entity = await db[collection_name].find_one({"id": entity_id})
+    if entity:
+        entity.pop('_id', None)
+        return entity
+    return {}
+
+async def calculate_changes_summary(current_data: Dict, proposed_data: Dict) -> List[Dict[str, Any]]:
+    """Calcule le résumé des changements proposés"""
+    changes = []
+    
+    # Comparer chaque champ proposé
+    for field, new_value in proposed_data.items():
+        current_value = current_data.get(field)
+        
+        if current_value != new_value:
+            changes.append({
+                "field": field,
+                "from": current_value,
+                "to": new_value,
+                "type": "update" if current_value is not None else "add"
+            })
+    
+    return changes
+
+async def auto_approve_contribution(contribution: Contribution) -> bool:
+    """Détermine si une contribution peut être auto-approuvée"""
+    # Règles d'auto-approbation simples pour la Phase 1
+    auto_approve_conditions = [
+        # Ajout de logo quand il n'y en a pas
+        contribution.vote_score >= 3,
+        
+        # Contributeur de confiance (futur : niveau Expert+)
+        # contribution.contributor_level in ["expert", "legend"],
+        
+        # Changements mineurs sans controverse
+        len(contribution.changed_fields) <= 2 and "name" not in contribution.changed_fields
+    ]
+    
+    return any(auto_approve_conditions)
+
+@api_router.post("/contributions", response_model=ContributionResponse)
+async def create_contribution(
+    contribution_request: ContributionCreateRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Créer une nouvelle contribution collaborative"""
+    
+    # Vérifier que l'entité existe
+    current_data = await get_entity_current_data(contribution_request.entity_type, contribution_request.entity_id)
+    if not current_data:
+        raise HTTPException(status_code=404, detail="Entité non trouvée")
+    
+    # Calculer les changements
+    changes_summary = await calculate_changes_summary(current_data, contribution_request.proposed_data)
+    if not changes_summary:
+        raise HTTPException(status_code=400, detail="Aucun changement détecté")
+    
+    # Vérifier les doublons (même contributeur, même entité, en attente)
+    existing_contribution = await db.contributions.find_one({
+        "entity_type": contribution_request.entity_type,
+        "entity_id": contribution_request.entity_id,
+        "contributor_id": current_user["id"],
+        "status": ContributionStatus.PENDING
+    })
+    
+    if existing_contribution:
+        raise HTTPException(status_code=400, detail="Vous avez déjà une contribution en attente pour cette entité")
+    
+    # Créer la contribution
+    from datetime import timedelta
+    contribution = Contribution(
+        entity_type=contribution_request.entity_type,
+        entity_id=contribution_request.entity_id,
+        entity_reference=current_data.get("topkit_reference", "N/A"),
+        action_type=contribution_request.action_type,
+        current_data=current_data,
+        proposed_data=contribution_request.proposed_data,
+        changed_fields=[change["field"] for change in changes_summary],
+        title=contribution_request.title,
+        description=contribution_request.description,
+        source_urls=contribution_request.source_urls,
+        contributor_id=current_user["id"],
+        contributor_level="Rookie",  # Par défaut pour maintenant
+        expires_at=datetime.utcnow() + timedelta(days=7),
+        topkit_reference=await generate_contribution_reference(contribution_request.entity_type)
+    )
+    
+    # Insérer dans la base
+    await db.contributions.insert_one(contribution.dict())
+    
+    # Log d'activité
+    await log_user_activity(
+        current_user["id"],
+        "contribution_created", 
+        contribution.id,
+        {
+            "entity_type": contribution.entity_type,
+            "entity_reference": contribution.entity_reference,
+            "title": contribution.title,
+            "topkit_reference": contribution.topkit_reference
+        }
+    )
+    
+    # Préparer la réponse
+    response = ContributionResponse(
+        id=contribution.id,
+        entity_type=contribution.entity_type,
+        entity_reference=contribution.entity_reference,
+        action_type=contribution.action_type,
+        title=contribution.title,
+        description=contribution.description,
+        contributor={
+            "id": current_user["id"],
+            "username": current_user["name"],
+            "level": contribution.contributor_level
+        },
+        changes_summary=changes_summary,
+        vote_score=contribution.vote_score,
+        upvotes=contribution.upvotes,
+        downvotes=contribution.downvotes,
+        status=contribution.status,
+        created_at=contribution.created_at,
+        expires_at=contribution.expires_at,
+        topkit_reference=contribution.topkit_reference
+    )
+    
+    return response
+
+@api_router.get("/contributions", response_model=List[ContributionResponse])
+async def get_contributions(
+    status: Optional[ContributionStatus] = None,
+    entity_type: Optional[EntityType] = None,
+    contributor_id: Optional[str] = None,
+    limit: int = 50,
+    current_user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """Récupérer les contributions avec filtres"""
+    
+    # Construire la requête
+    query = {}
+    if status:
+        query["status"] = status
+    if entity_type:
+        query["entity_type"] = entity_type
+    if contributor_id:
+        query["contributor_id"] = contributor_id
+    
+    # Récupérer les contributions
+    contributions = await db.contributions.find(query).sort("created_at", -1).limit(limit).to_list(length=None)
+    
+    # Enrichir avec les données des contributeurs et les votes
+    responses = []
+    for contrib in contributions:
+        contrib.pop('_id', None)
+        
+        # Récupérer le contributeur
+        contributor = await db.users.find_one({"id": contrib["contributor_id"]})
+        contributor_info = {
+            "id": contrib["contributor_id"],
+            "username": contributor["name"] if contributor else "Utilisateur supprimé",
+            "level": contrib.get("contributor_level", "Rookie")
+        }
+        
+        # Vérifier le vote de l'utilisateur actuel
+        user_vote = None
+        if current_user:
+            user_vote_data = await db.contribution_votes.find_one({
+                "contribution_id": contrib["id"],
+                "voter_id": current_user["id"]
+            })
+            if user_vote_data:
+                user_vote = user_vote_data["vote_type"]
+        
+        # Calculer le résumé des changements
+        changes_summary = await calculate_changes_summary(
+            contrib.get("current_data", {}), 
+            contrib.get("proposed_data", {})
+        )
+        
+        response = ContributionResponse(
+            id=contrib["id"],
+            entity_type=contrib["entity_type"],
+            entity_reference=contrib["entity_reference"],
+            action_type=contrib["action_type"],
+            title=contrib["title"],
+            description=contrib.get("description"),
+            contributor=contributor_info,
+            changes_summary=changes_summary,
+            vote_score=contrib.get("vote_score", 0),
+            upvotes=contrib.get("upvotes", 0),
+            downvotes=contrib.get("downvotes", 0),
+            user_vote=user_vote,
+            status=contrib["status"],
+            created_at=contrib["created_at"],
+            expires_at=contrib.get("expires_at"),
+            topkit_reference=contrib["topkit_reference"]
+        )
+        responses.append(response)
+    
+    return responses
+
+@api_router.post("/contributions/{contribution_id}/vote")
+async def vote_on_contribution(
+    contribution_id: str,
+    vote_request: VoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Voter sur une contribution"""
+    
+    # Vérifier que la contribution existe
+    contribution = await db.contributions.find_one({"id": contribution_id})
+    if not contribution:
+        raise HTTPException(status_code=404, detail="Contribution non trouvée")
+    
+    # Vérifier que la contribution est en attente
+    if contribution["status"] != ContributionStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Cette contribution ne peut plus être votée")
+    
+    # Vérifier que l'utilisateur ne vote pas sur sa propre contribution
+    if contribution["contributor_id"] == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas voter sur votre propre contribution")
+    
+    # Vérifier si l'utilisateur a déjà voté
+    existing_vote = await db.contribution_votes.find_one({
+        "contribution_id": contribution_id,
+        "voter_id": current_user["id"]
+    })
+    
+    if existing_vote:
+        # Mettre à jour le vote existant si différent
+        if existing_vote["vote_type"] != vote_request.vote_type:
+            old_vote_type = existing_vote["vote_type"]
+            await db.contribution_votes.update_one(
+                {"id": existing_vote["id"]},
+                {"$set": {
+                    "vote_type": vote_request.vote_type,
+                    "comment": vote_request.comment
+                }}
+            )
+            
+            # Mettre à jour les compteurs
+            vote_changes = {}
+            if old_vote_type == VoteType.UPVOTE and vote_request.vote_type == VoteType.DOWNVOTE:
+                vote_changes = {"upvotes": -1, "downvotes": 1, "vote_score": -2}
+            elif old_vote_type == VoteType.DOWNVOTE and vote_request.vote_type == VoteType.UPVOTE:
+                vote_changes = {"upvotes": 1, "downvotes": -1, "vote_score": 2}
+            
+            await db.contributions.update_one(
+                {"id": contribution_id},
+                {"$inc": vote_changes}
+            )
+        
+        return {"message": "Vote mis à jour"}
+    
+    else:
+        # Nouveau vote
+        vote = ContributionVote(
+            contribution_id=contribution_id,
+            voter_id=current_user["id"],
+            vote_type=vote_request.vote_type,
+            comment=vote_request.comment
+        )
+        
+        await db.contribution_votes.insert_one(vote.dict())
+        
+        # Mettre à jour les compteurs et la liste des votants
+        vote_changes = {}
+        if vote_request.vote_type == VoteType.UPVOTE:
+            vote_changes = {"upvotes": 1, "vote_score": 1}
+        else:
+            vote_changes = {"downvotes": 1, "vote_score": -1}
+        
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {
+                "$inc": vote_changes,
+                "$addToSet": {"voters": current_user["id"]}
+            }
+        )
+    
+    # Vérifier si la contribution peut être auto-approuvée
+    updated_contribution = await db.contributions.find_one({"id": contribution_id})
+    
+    # Auto-approbation si score >= 3
+    if updated_contribution["vote_score"] >= 3 and updated_contribution["status"] == ContributionStatus.PENDING:
+        await approve_contribution_auto(contribution_id, "Approuvé automatiquement (score ≥ 3)")
+    
+    # Auto-rejet si score <= -2  
+    elif updated_contribution["vote_score"] <= -2 and updated_contribution["status"] == ContributionStatus.PENDING:
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {"$set": {
+                "status": ContributionStatus.REJECTED,
+                "reviewed_at": datetime.utcnow(),
+                "moderator_notes": "Rejeté automatiquement (score ≤ -2)"
+            }}
+        )
+    
+    return {"message": "Vote enregistré", "contribution_score": updated_contribution["vote_score"]}
+
+async def approve_contribution_auto(contribution_id: str, reason: str = "Approuvé automatiquement"):
+    """Approuver automatiquement une contribution et appliquer les changements"""
+    
+    contribution = await db.contributions.find_one({"id": contribution_id})
+    if not contribution:
+        return False
+    
+    try:
+        # Appliquer les changements à l'entité
+        entity_type = contribution["entity_type"]
+        entity_id = contribution["entity_id"]
+        proposed_data = contribution["proposed_data"]
+        
+        # Déterminer la collection MongoDB
+        collection_map = {
+            "team": "teams",
+            "brand": "brands",
+            "player": "players", 
+            "competition": "competitions",
+            "master_jersey": "master_jerseys"
+        }
+        
+        collection_name = collection_map.get(entity_type)
+        if collection_name:
+            # Mettre à jour l'entité avec les données proposées
+            await db[collection_name].update_one(
+                {"id": entity_id},
+                {
+                    "$set": {
+                        **proposed_data,
+                        "last_modified_at": datetime.utcnow(),
+                        "last_modified_by": contribution["contributor_id"],
+                        "modification_count": contribution["current_data"].get("modification_count", 0) + 1
+                    }
+                }
+            )
+        
+        # Marquer la contribution comme approuvée
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {"$set": {
+                "status": ContributionStatus.AUTO_APPROVED,
+                "auto_approved": True,
+                "reviewed_at": datetime.utcnow(),
+                "moderator_notes": reason
+            }}
+        )
+        
+        # Notifier le contributeur
+        await create_notification(
+            user_id=contribution["contributor_id"],
+            notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
+            title="✅ Contribution approuvée !",
+            message=f"Votre contribution '{contribution['title']}' a été approuvée et appliquée avec succès !",
+            related_id=contribution_id
+        )
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'approbation auto de la contribution {contribution_id}: {str(e)}")
+        return False
+
+@api_router.get("/contributions/{contribution_id}")
+async def get_contribution_detail(
+    contribution_id: str,
+    current_user: Optional[dict] = Depends(get_current_user_optional)
+):
+    """Récupérer les détails d'une contribution"""
+    
+    contribution = await db.contributions.find_one({"id": contribution_id})
+    if not contribution:
+        raise HTTPException(status_code=404, detail="Contribution non trouvée")
+    
+    contribution.pop('_id', None)
+    
+    # Récupérer le contributeur
+    contributor = await db.users.find_one({"id": contribution["contributor_id"]})
+    
+    # Récupérer les votes
+    votes = await db.contribution_votes.find({"contribution_id": contribution_id}).to_list(length=None)
+    
+    # Vote de l'utilisateur actuel
+    user_vote = None
+    if current_user:
+        for vote in votes:
+            if vote["voter_id"] == current_user["id"]:
+                user_vote = vote["vote_type"]
+                break
+    
+    # Calculer le résumé des changements
+    changes_summary = await calculate_changes_summary(
+        contribution.get("current_data", {}),
+        contribution.get("proposed_data", {})
+    )
+    
+    return {
+        "contribution": contribution,
+        "contributor": {
+            "id": contribution["contributor_id"],
+            "name": contributor["name"] if contributor else "Utilisateur supprimé",
+            "level": contribution.get("contributor_level", "Rookie")
+        },
+        "changes_summary": changes_summary,
+        "user_vote": user_vote,
+        "votes": [{"voter_id": v["voter_id"], "vote_type": v["vote_type"], "comment": v.get("comment")} for v in votes]
+    }
+
+# Endpoint pour les stats de contribution (futur)
+@api_router.get("/stats/contributors")
+async def get_contributors_stats(limit: int = 20):
+    """Récupérer le classement des contributeurs (Phase 3)"""
+    
+    # Pour maintenant, retourner une structure de base
+    # En Phase 3, cela sera enrichi avec les vrais calculs de réputation
+    
+    contributors = await db.users.aggregate([
+        {
+            "$lookup": {
+                "from": "contributions",
+                "localField": "id",
+                "foreignField": "contributor_id", 
+                "as": "contributions"
+            }
+        },
+        {
+            "$addFields": {
+                "total_contributions": {"$size": "$contributions"},
+                "accepted_contributions": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$contributions",
+                            "cond": {"$in": ["$$this.status", ["approved", "auto_approved"]]}
+                        }
+                    }
+                }
+            }
+        },
+        {"$match": {"total_contributions": {"$gt": 0}}},
+        {"$sort": {"accepted_contributions": -1, "total_contributions": -1}},
+        {"$limit": limit}
+    ]).to_list(length=None)
+    
+    return {
+        "contributors": [
+            {
+                "user_id": contrib["id"],
+                "username": contrib["name"],
+                "total_contributions": contrib["total_contributions"],
+                "accepted_contributions": contrib["accepted_contributions"],
+                "reputation_points": contrib.get("accepted_contributions", 0) * 10,  # Simple calcul pour maintenant
+                "level": "Expert" if contrib.get("accepted_contributions", 0) > 10 else "Contributor" if contrib.get("accepted_contributions", 0) > 3 else "Rookie",
+                "rank": i + 1
+            } for i, contrib in enumerate(contributors)
+        ],
+        "total_contributors": len(contributors)
+    }
+
+# ====================================================
+
 app.include_router(api_router)
 
 # Mount static files for uploads
