@@ -242,7 +242,7 @@ class ProductionBugsTester:
             
             # Test 3: Remove from collection
             try:
-                remove_data = {"jersey_id": jersey_id}
+                remove_data = {"jersey_id": jersey_id, "collection_type": "wanted"}
                 response = self.session.post(f"{BACKEND_URL}/collections/remove", json=remove_data, headers=headers)
                 
                 if response.status_code == 200:
