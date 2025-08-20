@@ -156,15 +156,27 @@ class TopKitPhotoManagementTester:
     def test_photo_replacement(self):
         """Test Scenario 2: Upload new front photo while removing existing back photo"""
         try:
-            # Simulate file upload with base64 data (mock photo)
-            mock_photo_data = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+            # Create a simple test image file
+            import io
+            test_image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
             
             update_data = {
-                "remove_back_photo": True,
-                "front_photo": mock_photo_data
+                "team": "Real Madrid CF",
+                "league": "La Liga",
+                "season": "2024-25",
+                "model": "authentic", 
+                "manufacturer": "Adidas",
+                "jersey_type": "home",
+                "description": "Test jersey for photo management testing",
+                "remove_back_photo": "true"
             }
             
-            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", json=update_data)
+            files = {
+                'front_photo': ('new_front.jpg', test_image_data, 'image/jpeg')
+            }
+            
+            response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{self.test_jersey_id}/edit", 
+                                      data=update_data, files=files)
             
             if response.status_code == 200:
                 result = response.json()
