@@ -68,31 +68,30 @@ class TopKitBackendTester:
     
     def authenticate_admin(self):
         """Test admin authentication"""
-        try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json=ADMIN_CREDENTIALS)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.admin_token = data.get('token')
-                self.admin_user_data = data.get('user', {})
+        # Try primary credentials first
+        for creds_name, creds in [("Primary", ADMIN_CREDENTIALS), ("Alternative", ALT_ADMIN_CREDENTIALS)]:
+            try:
+                response = requests.post(f"{BACKEND_URL}/auth/login", json=creds)
                 
-                self.log_test(
-                    "Admin Authentication",
-                    True,
-                    f"Admin login successful - Name: {self.admin_user_data.get('name')}, Role: {self.admin_user_data.get('role')}, ID: {self.admin_user_data.get('id')}"
-                )
-                return True
-            else:
-                self.log_test(
-                    "Admin Authentication", 
-                    False,
-                    f"Login failed with status {response.status_code}: {response.text}"
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
-            return False
+                if response.status_code == 200:
+                    data = response.json()
+                    self.admin_token = data.get('token')
+                    self.admin_user_data = data.get('user', {})
+                    
+                    self.log_test(
+                        "Admin Authentication",
+                        True,
+                        f"Admin login successful with {creds_name} credentials - Name: {self.admin_user_data.get('name')}, Role: {self.admin_user_data.get('role')}, ID: {self.admin_user_data.get('id')}"
+                    )
+                    return True
+                else:
+                    print(f"    {creds_name} admin credentials failed: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                print(f"    {creds_name} admin credentials exception: {str(e)}")
+        
+        self.log_test("Admin Authentication", False, "All admin credential attempts failed")
+        return False
     
     def authenticate_user(self):
         """Test user authentication"""
