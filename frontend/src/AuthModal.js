@@ -283,10 +283,17 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-black">
-            {isLogin ? 'Connexion' : 'Inscription'}
+            {showForgotPassword ? 'Mot de passe oublié' : 
+             showResetForm ? 'Nouveau mot de passe' :
+             isLogin ? 'Connexion' : 'Inscription'}
           </h2>
           <button 
-            onClick={onClose}
+            onClick={() => {
+              setShowForgotPassword(false);
+              setShowResetForm(false);
+              resetForm();
+              onClose();
+            }}
             className="text-gray-400 hover:text-black text-2xl transition-colors"
           >
             ×
