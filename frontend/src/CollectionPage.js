@@ -102,7 +102,7 @@ const CollectionPage = ({ API }) => {
         break;
       case 'remove':
         try {
-          const response = await fetch(`${API_URL}/api/collections/${jersey.id}`, {
+          const response = await fetch(`${API}/api/collections/${jersey.id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
