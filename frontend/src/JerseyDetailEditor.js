@@ -131,10 +131,27 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
       });
       
       // Charger les photos existantes si elles existent
-      const jerseyImages = jersey?.images || [];
+      // Gérer les deux formats : array "images" et champs individuels "front_photo_url"/"back_photo_url"
+      let frontPhoto = null;
+      let backPhoto = null;
+      
+      // Format 1: Champ "images" (array)
+      if (jersey?.images && Array.isArray(jersey.images)) {
+        frontPhoto = jersey.images.find(img => img.includes('front')) || null;
+        backPhoto = jersey.images.find(img => img.includes('back')) || null;
+      }
+      
+      // Format 2: Champs individuels (priorité si disponibles)
+      if (jersey?.front_photo_url) {
+        frontPhoto = jersey.front_photo_url;
+      }
+      if (jersey?.back_photo_url) {
+        backPhoto = jersey.back_photo_url;
+      }
+      
       setExistingPhotos({
-        front: jerseyImages.find(img => img.includes('front')) || null,
-        back: jerseyImages.find(img => img.includes('back')) || null
+        front: frontPhoto,
+        back: backPhoto
       });
       
       // Reset photo previews, suggestions et photos à supprimer
