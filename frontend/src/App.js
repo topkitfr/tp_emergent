@@ -940,112 +940,269 @@ const AppContent = () => {
     );
   };
 
-  // Home Page Component
+  // Home Page Component - WhenToCop Style
   const HomePage = () => (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 py-12 md:py-20">
           <div className="text-center">
-            <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
-              La marketplace premium pour collectionneurs de maillots de foot
+            <h1 className="text-4xl md:text-6xl font-bold text-black mb-6">
+              Maillots & streetwear au meilleur prix
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Trouvez les maillots de football les plus tendance avec TopKit, 
+              la marketplace incontournable pour acheter au meilleur prix !
             </p>
             
-            {/* Search Bar - Mobile First */}
-            <div className="mb-8 md:mb-12">
-              <div className="relative max-w-lg mx-auto">
+            {/* Search Bar */}
+            <div className="max-w-md mx-auto mb-8">
+              <div className="relative">
                 <input
                   type="text"
                   placeholder="Rechercher un maillot..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full bg-gray-50 text-black px-4 py-3 md:py-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base"
+                  className="w-full bg-white text-black px-6 py-4 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-black text-lg"
                 />
-                <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                </button>
+                </div>
               </div>
             </div>
 
-            {/* Action Buttons - Mobile Stack */}
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 max-w-sm mx-auto mb-12 md:mb-16">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
               <button
                 onClick={() => setCurrentView('explore')}
-                className="bg-black hover:bg-gray-800 text-white px-6 py-3 md:py-4 rounded-lg font-medium text-base transition-colors w-full"
+                className="bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors"
               >
                 Explorez
               </button>
               <button
                 onClick={() => setCurrentView('marketplace')}
-                className="bg-gray-200 hover:bg-gray-300 text-black px-6 py-3 md:py-4 rounded-lg font-medium text-base transition-colors w-full"
+                className="bg-white hover:bg-gray-50 text-black border-2 border-black px-8 py-4 rounded-lg text-lg font-medium transition-colors"
               >
                 Marketplace
               </button>
+              {user && (
+                <button
+                  onClick={() => setCurrentView('collection')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors"
+                >
+                  Ma Collection
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Section - Mobile Optimized */}
-      <div className="bg-gray-50 py-12 md:py-16">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">50K+</div>
-              <div className="text-sm md:text-base text-gray-600">Maillots</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">15K+</div>
-              <div className="text-sm md:text-base text-gray-600">Collectionneurs</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">500+</div>
-              <div className="text-sm md:text-base text-gray-600">Équipes</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-black mb-1 md:mb-2">98%</div>
-              <div className="text-sm md:text-base text-gray-600">Satisfaction</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Leagues Section - Simplified for Mobile */}
-      <div className="py-12 md:py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-8 md:mb-12 text-black">
-            Championnats
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-            {[
-              { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-              { name: 'La Liga', flag: '🇪🇸' },
-              { name: 'Serie A', flag: '🇮🇹' },
-              { name: 'Bundesliga', flag: '🇩🇪' },
-              { name: 'Ligue 1', flag: '🇫🇷' },
-              { name: 'Liga Portugal', flag: '🇵🇹' },
-              { name: 'Eredivisie', flag: '🇳🇱' },
-              { name: 'MLS', flag: '🇺🇸' },
-              { name: 'Liga MX', flag: '🇲🇽' },
-              { name: 'Champions League', flag: '🏆' }
-            ].map((league) => (
-              <button
-                key={league.name}
-                onClick={() => {
-                  handleFilterChange({ league: league.name });
-                  setCurrentView('explore');
-                }}
-                className="bg-gray-100 hover:bg-gray-200 p-3 md:p-4 rounded-lg transition-colors text-center border border-gray-200"
-              >
-                <div className="text-xl md:text-2xl mb-1 md:mb-2">{league.flag}</div>
-                <div className="text-black font-medium text-xs md:text-sm leading-tight">{league.name}</div>
-              </button>
+      {/* Brand Carousel */}
+      <div className="bg-white py-8 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+            {['Nike', 'Adidas', 'Puma', 'Umbro', 'Kappa', 'New Balance'].map((brand) => (
+              <div key={brand} className="text-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                {brand}
+              </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Meilleures ventes Section */}
+      <div className="py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold text-black">Meilleures ventes</h2>
+            <button 
+              onClick={() => setCurrentView('explore')}
+              className="text-black hover:underline font-medium"
+            >
+              Voir tous les maillots
+            </button>
+          </div>
+
+          {/* Jersey Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+            {jerseys.slice(0, 6).map((jersey) => (
+              <div key={jersey.id} className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 cursor-pointer"
+                   onClick={() => openJerseyModal(jersey)}>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center relative">
+                  {(() => {
+                    let imageUrl = null;
+                    
+                    if (jersey.images && jersey.images.length > 0) {
+                      const img = jersey.images[0];
+                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                    } else if (jersey.front_photo_url) {
+                      const img = jersey.front_photo_url;
+                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                    }
+                    
+                    return imageUrl ? (
+                      <img 
+                        src={imageUrl}
+                        alt={jersey.team}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : (
+                      <div className="text-4xl">👕</div>
+                    );
+                  })()}
+                  <div className="w-full h-full flex items-center justify-center text-4xl" style={{display: 'none'}}>👕</div>
+                </div>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-black mb-1 truncate">{jersey.team}</h3>
+                  <p className="text-xs text-gray-600">{jersey.league}</p>
+                  <div className="mt-2">
+                    <span className="text-sm font-bold text-black">À partir de</span>
+                    <div className="text-lg font-bold text-black">89€</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Hot Drops Section */}
+      <div className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-black mb-8">Les derniers hot drops 🔥</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+            {jerseys.slice(6, 12).map((jersey) => (
+              <div key={jersey.id} className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-gray-200 cursor-pointer"
+                   onClick={() => openJerseyModal(jersey)}>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center relative">
+                  {(() => {
+                    let imageUrl = null;
+                    
+                    if (jersey.images && jersey.images.length > 0) {
+                      const img = jersey.images[0];
+                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                    } else if (jersey.front_photo_url) {
+                      const img = jersey.front_photo_url;
+                      imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                    }
+                    
+                    return imageUrl ? (
+                      <img 
+                        src={imageUrl}
+                        alt={jersey.team}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : (
+                      <div className="text-4xl">👕</div>
+                    );
+                  })()}
+                  <div className="w-full h-full flex items-center justify-center text-4xl" style={{display: 'none'}}>👕</div>
+                </div>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-black mb-1 truncate">{jersey.team}</h3>
+                  <p className="text-xs text-gray-600">{jersey.league}</p>
+                  <div className="mt-2">
+                    <span className="text-sm font-bold text-black">À partir de</span>
+                    <div className="text-lg font-bold text-black">127€</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Newsletter Section */}
+      <div className="py-16 bg-black">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="text-4xl mb-4">🔥</div>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Sois le premier informé des dernières sorties et plans exclusifs
+          </h2>
+          <p className="text-gray-300 mb-8">
+            Rejoins notre newsletter pour recevoir des récap de sorties, des bons plans 
+            et des infos exclusives autour du maillot de foot.
+          </p>
+          
+          <div className="max-w-md mx-auto flex">
+            <input
+              type="email"
+              placeholder="Adresse e-mail"
+              className="flex-1 px-4 py-3 rounded-l-lg border-none focus:outline-none"
+            />
+            <button className="bg-white text-black px-6 py-3 rounded-r-lg font-medium hover:bg-gray-100 transition-colors">
+              S'abonner
+            </button>
+          </div>
+          
+          <p className="text-xs text-gray-400 mt-4">
+            En cliquant sur "S'abonner", tu acceptes les conditions générales de TopKit
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-white py-12 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <img 
+                src="https://customer-assets.emergentagent.com/job_kit-explorer/artifacts/uumlohms_topkit_logo.png" 
+                alt="TOPKIT" 
+                className="h-8 mb-4"
+              />
+              <p className="text-gray-600 text-sm">
+                La marketplace premium pour collectionneurs de maillots de foot
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-black mb-4">Explorer</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><button onClick={() => setCurrentView('explore')} className="hover:text-black">Tous les maillots</button></li>
+                <li><button onClick={() => setCurrentView('marketplace')} className="hover:text-black">Marketplace</button></li>
+                <li><button onClick={() => setCurrentView('collection')} className="hover:text-black">Ma Collection</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-black mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-black">Centre d'aide</a></li>
+                <li><a href="#" className="hover:text-black">Contact</a></li>
+                <li><a href="#" className="hover:text-black">CGV</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-black mb-4">Suivez-nous</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-black">Instagram</a></li>
+                <li><a href="#" className="hover:text-black">Twitter</a></li>
+                <li><a href="#" className="hover:text-black">TikTok</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-500">
+              © 2025 TopKit. Tous droits réservés.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 
