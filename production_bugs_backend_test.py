@@ -36,8 +36,8 @@ BACKEND_URL = "https://jersey-hub-2.preview.emergentagent.com/api"
 STATIC_URL = "https://jersey-hub-2.preview.emergentagent.com/uploads"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
-USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "123"
+USER_EMAIL = "testuser1d7bbc68@example.com"
+USER_PASSWORD = "SecurePass@2024!"
 
 class ProductionBugsTester:
     def __init__(self):
