@@ -501,14 +501,16 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               )}
             </button>
           </form>
+          )}
 
-          {/* Forgot Password Link - Only show in login mode */}
-          {isLogin && (
+          {/* Forgot Password Link - Only show in login mode and not in forgot password mode */}
+          {isLogin && !showForgotPassword && !showResetForm && (
             <div className="text-center mt-3">
               <button
                 onClick={() => {
-                  // We'll implement the forgot password functionality
                   setShowForgotPassword(true);
+                  setError('');
+                  setSuccessMessage('');
                 }}
                 className="text-sm text-blue-600 hover:text-blue-800 underline"
                 type="button"
@@ -519,7 +521,9 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </div>
           )}
 
-          <p className="text-center text-gray-600 mt-4">
+          {/* Switch between login/register - Only show in regular mode */}
+          {!showForgotPassword && !showResetForm && (
+            <p className="text-center text-gray-600 mt-4">
             {isLogin ? (
               <>
                 Pas encore de compte ?
