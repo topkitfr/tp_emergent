@@ -2638,8 +2638,7 @@ test_plan:
     - "Collaborative Database API - Search Functionality"
     - "Collaborative Database API - Authentication System"
     - "Collaborative Database API - Reference Generation"
-  stuck_tasks:
-    - "Collaborative Database API - Master Jerseys Endpoint"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
