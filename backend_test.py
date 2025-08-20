@@ -239,7 +239,7 @@ class TopKitBackendTester:
                     "description": jersey.get('description') + " - Edited by admin for testing"
                 }
                 
-                edit_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{jersey_id}/edit", json=edit_data)
+                edit_response = self.session.put(f"{BACKEND_URL}/admin/jerseys/{jersey_id}/edit", data=edit_data)
                 
                 if edit_response.status_code == 200:
                     self.log_test("Test Admin Jersey Edit Endpoint", True,
