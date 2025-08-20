@@ -605,7 +605,7 @@ const JerseyDetailEditor = ({ jersey, isOpen, onClose, onSave, onUpdateSuccess, 
                   {existingPhotos.front && !photosToRemove.front && !photoPreview.front && (
                     <div className="mb-3 relative inline-block">
                       <img 
-                        src={existingPhotos.front.startsWith('uploads/') ? `/${existingPhotos.front}` : `/images/${existingPhotos.front}`}
+                        src={existingPhotos.front.startsWith('uploads/') ? `${API}/${existingPhotos.front}` : `${API}/images/${existingPhotos.front}`}
                         alt="Photo de face existante" 
                         className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                       />
