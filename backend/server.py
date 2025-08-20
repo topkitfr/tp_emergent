@@ -9148,11 +9148,11 @@ async def vote_on_contribution(
                 )
     else:
         # Nouveau vote
-        vote = Vote(
+        vote = ContributionVote(
             contribution_id=contribution_id,
-            user_id=current_user["id"],
-            vote_type=vote_type,
-            reason=reason
+            voter_id=current_user["id"],
+            vote_type=VoteType.UPVOTE if vote_type == "upvote" else VoteType.DOWNVOTE,
+            comment=reason
         )
         
         await db.votes.insert_one(vote.dict())
