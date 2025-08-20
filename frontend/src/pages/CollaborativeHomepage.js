@@ -17,32 +17,32 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
   return (
     <div className="min-h-screen bg-white">
       
-      {/* Hero Section - WhenToCop Style */}
+      {/* Hero Section - TopKit Narrative */}
       <div className="bg-white py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Maillots & streetwear<br />
-            <span className="text-gray-600">au meilleur prix</span>
+            Estimez votre collection<br />
+            <span className="text-gray-600">de maillots de football</span>
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Trouvez les maillots de football les plus tendance avec TopKit, 
-            le comparateur incontournable pour acheter au meilleur prix !
+            Découvrez la valeur de vos maillots avec TopKit, 
+            la base de données collaborative la plus complète du monde sur le football
           </p>
           
-          {/* CTA Buttons - WhenToCop Style */}
+          {/* CTA Buttons - TopKit Focus */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={() => onViewChange('explore')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-full font-semibold transition-all text-lg"
             >
-              Explorez
+              Explorer la base
             </button>
             <button
               onClick={() => onViewChange('teams')}
               className="border border-gray-300 hover:border-gray-900 text-gray-900 hover:bg-gray-50 px-8 py-3 rounded-full font-semibold transition-all text-lg"
             >
-              Équipes
+              Documenter
             </button>
           </div>
         </div>
