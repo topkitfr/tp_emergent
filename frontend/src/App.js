@@ -1317,7 +1317,7 @@ const AppContent = () => {
                   <h3 className="font-semibold text-sm text-black mb-1 truncate">{jersey.team}</h3>
                   <p className="text-xs text-gray-600">{jersey.league}</p>
                   <div className="mt-2">
-                    <span className="text-sm font-bold text-black">À partir de</span>
+                    <span className="text-sm font-bold text-black">Valeur estimée</span>
                     <div className="text-lg font-bold text-black">89€</div>
                   </div>
                 </div>
