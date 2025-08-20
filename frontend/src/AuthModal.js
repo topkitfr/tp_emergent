@@ -524,32 +524,33 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           {/* Switch between login/register - Only show in regular mode */}
           {!showForgotPassword && !showResetForm && (
             <p className="text-center text-gray-600 mt-4">
-            {isLogin ? (
-              <>
-                Pas encore de compte ?
-                <button
-                  onClick={switchMode}
-                  className="text-black hover:text-gray-700 ml-2 font-medium underline"
-                  type="button"
-                  disabled={loading}
-                >
-                  S'inscrire
-                </button>
-              </>
-            ) : (
-              <>
-                Déjà un compte ?
-                <button
-                  onClick={switchMode}
-                  className="text-black hover:text-gray-700 ml-2 font-medium underline"
-                  type="button"
-                  disabled={loading}
-                >
-                  Se connecter
-                </button>
-              </>
-            )}
-          </p>
+              {isLogin ? (
+                <>
+                  Pas encore de compte ?
+                  <button
+                    onClick={switchMode}
+                    className="text-black hover:text-gray-700 ml-2 font-medium underline"
+                    type="button"
+                    disabled={loading}
+                  >
+                    S'inscrire
+                  </button>
+                </>
+              ) : (
+                <>
+                  Déjà un compte ?
+                  <button
+                    onClick={switchMode}
+                    className="text-black hover:text-gray-700 ml-2 font-medium underline"
+                    type="button"
+                    disabled={loading}
+                  >
+                    Se connecter
+                  </button>
+                </>
+              )}
+            </p>
+          )}
         </div>
       </div>
     </div>
