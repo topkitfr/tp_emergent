@@ -95,31 +95,30 @@ class TopKitBackendTester:
     
     def authenticate_user(self):
         """Test user authentication"""
-        try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json=USER_CREDENTIALS)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.user_token = data.get('token')
-                self.user_user_data = data.get('user', {})
+        # Try primary credentials first
+        for creds_name, creds in [("Primary", USER_CREDENTIALS), ("Alternative", ALT_USER_CREDENTIALS)]:
+            try:
+                response = requests.post(f"{BACKEND_URL}/auth/login", json=creds)
                 
-                self.log_test(
-                    "User Authentication",
-                    True,
-                    f"User login successful - Name: {self.user_user_data.get('name')}, Role: {self.user_user_data.get('role')}, ID: {self.user_user_data.get('id')}"
-                )
-                return True
-            else:
-                self.log_test(
-                    "User Authentication",
-                    False, 
-                    f"Login failed with status {response.status_code}: {response.text}"
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("User Authentication", False, f"Exception: {str(e)}")
-            return False
+                if response.status_code == 200:
+                    data = response.json()
+                    self.user_token = data.get('token')
+                    self.user_user_data = data.get('user', {})
+                    
+                    self.log_test(
+                        "User Authentication",
+                        True,
+                        f"User login successful with {creds_name} credentials - Name: {self.user_user_data.get('name')}, Role: {self.user_user_data.get('role')}, ID: {self.user_user_data.get('id')}"
+                    )
+                    return True
+                else:
+                    print(f"    {creds_name} user credentials failed: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                print(f"    {creds_name} user credentials exception: {str(e)}")
+        
+        self.log_test("User Authentication", False, "All user credential attempts failed")
+        return False
     
     def test_user_profile_endpoint(self):
         """Test user profile endpoint structure for 3 tabs"""
