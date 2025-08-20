@@ -2,6 +2,11 @@ module.exports = {
   "parser": "@babel/eslint-parser",
   "parserOptions": {
     "requireConfigFile": false,
+    "sourceType": "module",
+    "ecmaVersion": 2020,
+    "ecmaFeatures": {
+      "jsx": true
+    },
     "babelOptions": {
       "presets": ["@babel/preset-react"]
     }
@@ -11,7 +16,9 @@ module.exports = {
     "es6": true,
     "node": true
   },
+  "extends": ["eslint:recommended"],
   "rules": {
-    // Disable all rules to just fix parsing issues
+    "no-unused-vars": "warn",
+    "no-console": "off"
   }
 };
