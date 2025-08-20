@@ -165,6 +165,16 @@ const useAuth = () => {
 // Main App Content Component
 const AppContent = () => {
   const { user, login, logout } = useAuth();
+  
+  // Check if we're on password reset page
+  const isPasswordResetPage = window.location.pathname === '/reset-password' || 
+                             window.location.search.includes('token=');
+  
+  // If on password reset page, render that component
+  if (isPasswordResetPage) {
+    return <PasswordResetPage />;
+  }
+  
   const [currentView, setCurrentView] = useState('home');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
