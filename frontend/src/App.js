@@ -1416,7 +1416,7 @@ const AppContent = () => {
                 className="h-8 mb-4"
               />
               <p className="text-gray-600 text-sm">
-                La marketplace premium pour collectionneurs de maillots de foot
+                L'outil d'estimation de collections pour passionnés de maillots sportifs
               </p>
             </div>
             
