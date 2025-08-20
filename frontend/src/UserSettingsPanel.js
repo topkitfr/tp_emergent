@@ -14,6 +14,7 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
     // Basic profile
     name: user?.name || '',
     email: user?.email || '',
+    profile_picture_url: null,
     
     // Address settings
     address: {
