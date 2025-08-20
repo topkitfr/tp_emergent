@@ -1204,7 +1204,28 @@ const AppContent = () => {
                 {viewMode === 'grid' ? (
                   <>
                     <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      <div className="text-4xl">👕</div>
+                      {jersey.images && jersey.images.length > 0 ? (
+                        <img 
+                          src={jersey.images[0].startsWith('uploads/') ? `/${jersey.images[0]}` : `/images/${jersey.images[0]}`}
+                          alt={`${jersey.team} ${jersey.season}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : jersey.front_photo_url ? (
+                        <img 
+                          src={jersey.front_photo_url.startsWith('uploads/') ? `/${jersey.front_photo_url}` : `/images/${jersey.front_photo_url}`}
+                          alt={`${jersey.team} ${jersey.season}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: jersey.images?.length > 0 || jersey.front_photo_url ? 'none' : 'flex'}}>👕</div>
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-black mb-1 truncate">
