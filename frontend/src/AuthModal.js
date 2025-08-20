@@ -283,6 +283,23 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </button>
           </form>
 
+          {/* Forgot Password Link - Only show in login mode */}
+          {isLogin && (
+            <div className="text-center mt-3">
+              <button
+                onClick={() => {
+                  // We'll implement the forgot password functionality
+                  setShowForgotPassword(true);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                type="button"
+                disabled={loading}
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
+
           <p className="text-center text-gray-600 mt-4">
             {isLogin ? (
               <>
