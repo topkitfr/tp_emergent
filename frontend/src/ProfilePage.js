@@ -34,26 +34,13 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
     }
   }, [userCollections.wanted, filters]);
 
-  const loadWishlist = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API}/api/wishlist`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setWishlist(data);
-      }
-    } catch (error) {
-      console.error('Error loading wishlist:', error);
-    }
-    setLoading(false);
-  };
-
   const applyFilters = () => {
-    let filtered = [...wishlist];
+    if (!userCollections.wanted) {
+      setFilteredWishlist([]);
+      return;
+    }
+    
+    let filtered = [...userCollections.wanted];
     
     if (filters.league) {
       filtered = filtered.filter(item => 
