@@ -18,7 +18,7 @@ from datetime import datetime
 import sys
 
 # Configuration - Using production URL from frontend/.env
-BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-explorer.preview.emergentagent.com/api"
 
 # Admin credentials (working)
 ADMIN_EMAIL = "topkitfr@gmail.com" 

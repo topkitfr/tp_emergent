@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://jersey-manager.preview.emergentagent.com/api"
+BASE_URL = "https://kit-explorer.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {

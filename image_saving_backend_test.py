@@ -14,7 +14,7 @@ from PIL import Image
 import io
 
 # Configuration
-BACKEND_URL = "https://ba1f7c9d-08ba-457a-aac6-9b62a210f10b.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-explorer.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "topkitfr@gmail.com"
 TEST_USER_PASSWORD = "TopKitSecure789#"
 

@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-explorer.preview.emergentagent.com/api"
 
 class DiscogsSystemTester:
     def __init__(self):

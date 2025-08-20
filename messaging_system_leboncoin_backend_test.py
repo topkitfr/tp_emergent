@@ -25,7 +25,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-manager.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-explorer.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -245,7 +245,7 @@ class MessagingSystemTester:
                                    headers=headers,
                                    json={
                                        "listing_id": self.listing_id,
-                                       "origin_url": "https://jersey-manager.preview.emergentagent.com"
+                                       "origin_url": "https://kit-explorer.preview.emergentagent.com"
                                    })
             
             if response.status_code == 200:

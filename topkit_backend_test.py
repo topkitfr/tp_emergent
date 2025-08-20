@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://jersey-manager.preview.emergentagent.com/api"
+BASE_URL = "https://kit-explorer.preview.emergentagent.com/api"
 
 class TopKitPriorityTester:
     def __init__(self):
