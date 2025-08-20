@@ -7,6 +7,10 @@ const ProfilePage = ({ user, API, userCollections, loadUserCollections, handleRe
   const [filteredWishlist, setFilteredWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
   
+  // Profile picture states
+  const [profilePictureLoading, setProfilePictureLoading] = useState(false);
+  const [profilePictureError, setProfilePictureError] = useState('');
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
