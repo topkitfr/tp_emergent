@@ -158,24 +158,23 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les promos du moment */}
+      {/* Maillots rares et recherchés */}
       <div className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Les promos du moment</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Maillots rares et recherchés</h2>
             <button
               onClick={() => onViewChange('master-jerseys')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Voir plus de promos
+              Voir plus de maillots rares
             </button>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {recentMasterJerseys.slice(0, 6).map((jersey, index) => {
-              const discountPercent = [46, 30, 50, 35, 50, 48][index % 6];
-              const originalPrice = 150 + (index * 20);
-              const discountPrice = Math.round(originalPrice * (1 - discountPercent / 100));
+              const rareValues = [450, 680, 1200, 350, 890, 750];
+              const rareValue = rareValues[index % 6];
               
               return (
                 <div
@@ -183,8 +182,8 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100 relative"
                   onClick={() => onViewChange('master-jerseys')}
                 >
-                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                    -{discountPercent}%
+                  <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
+                    RARE
                   </div>
                   <div className="aspect-square bg-gray-100 flex items-center justify-center">
                     <span className="text-4xl">👕</span>
@@ -194,8 +193,8 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       {jersey.team_info?.name || 'Équipe inconnue'}
                     </h3>
                     <div className="flex items-baseline space-x-2">
-                      <span className="text-lg font-bold text-gray-900">{discountPrice}€</span>
-                      <span className="text-sm text-gray-500 line-through">{originalPrice}€</span>
+                      <span className="text-lg font-bold text-gray-900">{rareValue}€</span>
+                      <span className="text-xs text-orange-600">Estimation</span>
                     </div>
                   </div>
                 </div>
