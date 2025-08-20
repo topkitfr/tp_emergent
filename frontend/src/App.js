@@ -1427,6 +1427,8 @@ const AppContent = () => {
                   className={`cursor-pointer transition-shadow hover:shadow-md ${
                     viewMode === 'grid'
                       ? "bg-white rounded-lg overflow-hidden border border-gray-200"
+                      : viewMode === 'thumbnail' 
+                      ? "bg-white rounded-lg overflow-hidden border border-gray-200"
                       : "bg-white rounded-lg p-4 border border-gray-200 flex items-center space-x-4"
                   }`}
                 >
@@ -1435,38 +1437,25 @@ const AppContent = () => {
                       <div className="aspect-square bg-gray-100 flex items-center justify-center">
                         {/* Solution robuste multi-formats pour affichage d'images */}
                         {(() => {
-                          // Déterminer quelle image afficher
                           let imageUrl = null;
-                          let imageSource = null;
                           
                           // Priorité 1: Format images array
                           if (jersey.images && jersey.images.length > 0) {
                             const img = jersey.images[0];
                             imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                            imageSource = "images_array";
                           }
                           // Priorité 2: Format front_photo_url
                           else if (jersey.front_photo_url) {
                             const img = jersey.front_photo_url;
                             imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                            imageSource = "front_photo_url";
                           }
                           
-                          // Debug log
-                          if (imageUrl) {
-                            console.log(`📸 ${jersey.team}: ${imageSource} -> ${imageUrl}`);
-                          }
-                          
-                          // Afficher l'image si disponible
                           return imageUrl ? (
                             <img 
                               src={imageUrl}
                               alt={`${jersey.team} ${jersey.season}`}
                               className="w-full h-full object-cover"
-                              onLoad={() => console.log(`✅ Image loaded: ${jersey.team}`)}
                               onError={(e) => {
-                                console.log(`❌ Image failed: ${jersey.team} - ${imageUrl}`);
-                                // Fallback vers emoji si l'image ne charge pas
                                 e.target.style.display = 'none';
                                 e.target.nextSibling.style.display = 'flex';
                               }}
@@ -1475,53 +1464,36 @@ const AppContent = () => {
                             <div className="text-4xl">👕</div>
                           );
                         })()}
-                        {/* Fallback emoji (initialement caché si image disponible) */}
                         <div className="text-4xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
                       </div>
                       <div className="p-4">
-                        <h3 className="font-semibold text-black mb-1">{jersey.team}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{jersey.league} • {jersey.season}</p>
-                        <div className="flex gap-2 mt-2">
-                          <button className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">
-                            Own
-                          </button>
-                          <button className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">
-                            Want
-                          </button>
-                        </div>
+                        <h3 className="font-semibold text-black mb-2">{jersey.team}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{jersey.league}</p>
+                        <p className="text-sm text-gray-500">{jersey.season}</p>
+                        {jersey.player && <p className="text-sm text-blue-600 mt-1">{jersey.player}</p>}
                       </div>
                     </>
-                  ) : (
+                  ) : viewMode === 'thumbnail' ? (
                     <>
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {/* Solution robuste multi-formats pour affichage d'images */}
+                      <div className="aspect-square bg-gray-100 flex items-center justify-center">
                         {(() => {
-                          // Déterminer quelle image afficher
                           let imageUrl = null;
-                          let imageSource = null;
                           
-                          // Priorité 1: Format images array
                           if (jersey.images && jersey.images.length > 0) {
                             const img = jersey.images[0];
                             imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                            imageSource = "images_array";
                           }
-                          // Priorité 2: Format front_photo_url
                           else if (jersey.front_photo_url) {
                             const img = jersey.front_photo_url;
                             imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
-                            imageSource = "front_photo_url";
                           }
                           
-                          // Afficher l'image si disponible
                           return imageUrl ? (
                             <img 
                               src={imageUrl}
                               alt={`${jersey.team} ${jersey.season}`}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-full object-cover"
                               onError={(e) => {
-                                console.log(`❌ List Image failed: ${jersey.team} - ${imageUrl}`);
-                                // Fallback vers emoji si l'image ne charge pas
                                 e.target.style.display = 'none';
                                 e.target.nextSibling.style.display = 'flex';
                               }}
@@ -1530,12 +1502,48 @@ const AppContent = () => {
                             <div className="text-2xl">👕</div>
                           );
                         })()}
-                        {/* Fallback emoji (initialement caché si image disponible) */}
+                        <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
+                      </div>
+                      <div className="p-2 text-center">
+                        <h3 className="text-xs font-semibold text-black truncate">{jersey.team}</h3>
+                        <p className="text-xs text-gray-500 truncate">{jersey.season}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-lg flex-shrink-0">
+                        {(() => {
+                          let imageUrl = null;
+                          
+                          if (jersey.images && jersey.images.length > 0) {
+                            const img = jersey.images[0];
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          else if (jersey.front_photo_url) {
+                            const img = jersey.front_photo_url;
+                            imageUrl = img.startsWith('uploads/') ? `/${img}` : `/images/${img}`;
+                          }
+                          
+                          return imageUrl ? (
+                            <img 
+                              src={imageUrl}
+                              alt={`${jersey.team} ${jersey.season}`}
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-2xl">👕</div>
+                          );
+                        })()}
                         <div className="text-2xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-black mb-1">{jersey.team}</h3>
                         <p className="text-sm text-gray-600">{jersey.league} • {jersey.season}</p>
+                        {jersey.player && <p className="text-sm text-blue-600">{jersey.player}</p>}
                       </div>
                       <div className="flex gap-2">
                         <button className="text-xs bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200">
