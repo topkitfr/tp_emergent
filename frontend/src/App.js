@@ -2430,7 +2430,14 @@ const AppContent = () => {
       )}
       {currentView === 'marketplace' && <MarketplacePage />}
       {currentView === 'profile' && (
-        <ProfilePage user={user} API={API} />
+        <ProfilePage 
+          user={user} 
+          API={API}
+          userCollections={userCollections}
+          loadUserCollections={loadUserCollections}
+          handleRemoveCollectionItem={handleRemoveCollectionItem}
+          handleViewCollectionItem={handleViewCollectionItem}
+        />
       )}
       {currentView === 'collection' && (
         <CollectionPage API={API} />
