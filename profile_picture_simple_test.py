@@ -10,7 +10,7 @@ import os
 import io
 
 # Configuration
-API_BASE = os.environ.get('REACT_APP_BACKEND_URL', 'https://soccer-collection.preview.emergentagent.com') + '/api'
+API_BASE = "http://localhost:8001/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 
