@@ -848,6 +848,17 @@ const AppContent = () => {
                 {/* User section */}
                 {user ? (
                   <>
+                    <button
+                      onClick={() => {
+                        setCurrentView('profile');
+                        setShowMobileMenu(false);
+                      }}
+                      className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                        currentView === 'profile' ? 'text-black bg-gray-200' : 'text-gray-500 hover:text-black hover:bg-gray-100'
+                      }`}
+                    >
+                      👤 Mon Profil
+                    </button>
                     {user.role === 'admin' && (
                       <>
                         <button
