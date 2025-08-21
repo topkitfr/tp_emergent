@@ -42,6 +42,7 @@ from email_manager import email_manager
 # Import collaborative models
 from collaborative_models import (
     Team, Brand, Player, Competition, MasterJersey, JerseyRelease, Contribution,
+    UserJerseyCollection, JerseyReleaseValuation,
     TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate, MasterJerseyCreate,
     JerseyReleaseCreate,
     TeamResponse, MasterJerseyResponse,
