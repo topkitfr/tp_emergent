@@ -3,9 +3,10 @@ import './App.css';
 import CollaborativeHeader from './components/CollaborativeHeader';
 import CollaborativeHomepage from './pages/CollaborativeHomepage';
 import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
-import CataloguePage from './pages/CataloguePage'; // Nouvelle page unifiée
-import CollectionsPage from './pages/CollectionsPage'; // Nouvelle page collections
-import ContributePage from './pages/ContributePage'; // Nouvelle page contribution
+import CataloguePage from './pages/CataloguePage';
+import VestiairePage from './pages/VestiairePage'; // Nouvelle page Vestiaire
+import CollectionsPage from './pages/CollectionsPage';
+import ContributePage from './pages/ContributePage';
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
 import CollaborativeBrandsPage from './pages/CollaborativeBrandsPage';
 import CollaborativePlayersPage from './pages/CollaborativePlayersPage';
