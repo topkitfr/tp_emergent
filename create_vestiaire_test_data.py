@@ -11,7 +11,7 @@ import uuid
 
 API_BASE = "https://football-db.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 async def create_test_data():
     """Create test data for Vestiaire system"""
