@@ -5392,7 +5392,6 @@ async def add_to_collection(
             raise HTTPException(status_code=400, detail="Jersey Release already in collection")
         
         # Create collection item
-        from .collaborative_models import UserJerseyCollection
         collection_item = UserJerseyCollection(
             user_id=user_id,
             jersey_release_id=collection_data["jersey_release_id"],
