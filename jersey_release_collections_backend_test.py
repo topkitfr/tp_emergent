@@ -31,9 +31,9 @@ import uuid
 # Configuration
 BASE_URL = "https://jersey-database.preview.emergentagent.com/api"
 
-# Test credentials - trying admin account since user account is locked
+# Test credentials - using working admin account
 TEST_USER_EMAIL = "topkitfr@gmail.com"
-TEST_USER_PASSWORD = "adminpass123"
+TEST_USER_PASSWORD = "TopKitSecure789#"
 
 class JerseyReleaseCollectionTester:
     def __init__(self):
