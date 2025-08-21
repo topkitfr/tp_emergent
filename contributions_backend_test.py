@@ -14,8 +14,8 @@ API_BASE = "https://jersey-collab.preview.emergentagent.com/api"
 
 # Données de test pour l'authentification
 TEST_USER = {
-    "email": "steinmetzlivio@gmail.com",
-    "password": "123"
+    "email": "topkitfr@gmail.com",
+    "password": "adminpass123"
 }
 
 def authenticate_user():
