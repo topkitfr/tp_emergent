@@ -243,7 +243,7 @@ class TopKitContributionsImagesTester:
             for test_case in test_cases:
                 contribution_data = {
                     "entity_type": "team",
-                    "entity_id": f"test-entity-{test_case['name'].replace(' ', '-').lower()}",
+                    "entity_id": "ca51d848-e2a3-469c-82b5-8952ce6ec87f",  # Manchester United
                     "proposed_data": {
                         "name": f"Test Team {test_case['name']}",
                         "city": "Test City"
