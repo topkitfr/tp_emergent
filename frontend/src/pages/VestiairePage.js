@@ -218,6 +218,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       </div>
     )
   );
+
+  const addToCollection = async (release) => {
     if (!user) {
       alert('Connectez-vous pour ajouter à votre collection');
       return;
