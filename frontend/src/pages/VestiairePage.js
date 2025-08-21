@@ -326,15 +326,23 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <button 
-          onClick={() => addToCollection(release)}
-          className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors"
-        >
-          + Collection
-        </button>
-        <button className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded">
-          Détails
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <button 
+            onClick={() => addToCollection(release, 'owned')}
+            className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors"
+          >
+            💎 Possédé
+          </button>
+          <button 
+            onClick={() => addToCollection(release, 'wanted')}
+            className="flex-1 bg-red-100 text-red-700 py-2 px-3 rounded text-sm hover:bg-red-200 transition-colors"
+          >
+            ❤️ Recherché
+          </button>
+        </div>
+        <button className="w-full px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded">
+          📋 Voir détails
         </button>
       </div>
     </div>
