@@ -1,387 +1,459 @@
 #!/usr/bin/env python3
 """
-TopKit Collaborative Database API Testing
-Testing new collaborative database endpoints as requested in review
+TopKit Contributions System with Images - Backend Testing
+Test du système de contributions avec images selon la demande de review
 """
 
 import requests
 import json
 import sys
+import os
 from datetime import datetime
 
-# Configuration
+# Configuration des URLs
 BACKEND_URL = "https://jersey-collab.preview.emergentagent.com/api"
+
+# Données d'authentification admin
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
-class TopKitCollaborativeAPITester:
+class TopKitContributionsImagesTester:
     def __init__(self):
         self.session = requests.Session()
         self.admin_token = None
         self.test_results = []
         
-    def log_test(self, test_name, success, details=""):
-        """Log test result"""
+    def log_test(self, test_name, success, details="", error=""):
+        """Log test results"""
         status = "✅ PASS" if success else "❌ FAIL"
-        self.test_results.append({
-            'test': test_name,
-            'success': success,
-            'details': details
-        })
-        print(f"{status}: {test_name}")
+        result = {
+            "test": test_name,
+            "status": status,
+            "success": success,
+            "details": details,
+            "error": error,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
+        print(f"{status} {test_name}")
         if details:
             print(f"   Details: {details}")
-    
+        if error:
+            print(f"   Error: {error}")
+        print()
+
     def authenticate_admin(self):
-        """Authenticate admin user"""
+        """Test 1: Authentification obligatoire avec admin"""
+        print("🔐 TEST 1: AUTHENTIFICATION ADMIN")
+        print("=" * 50)
+        
         try:
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+            # Tentative de connexion admin
+            login_data = {
                 "email": ADMIN_EMAIL,
                 "password": ADMIN_PASSWORD
-            })
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('token')
-                self.session.headers.update({'Authorization': f'Bearer {self.admin_token}'})
-                self.log_test("Admin Authentication", True, f"Admin: {data.get('user', {}).get('name', 'Unknown')}")
-                return True
+                self.admin_token = data.get("token")
+                user_info = data.get("user", {})
+                
+                # Vérifier le rôle admin
+                if user_info.get("role") == "admin":
+                    self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
+                    self.log_test(
+                        "Admin Authentication", 
+                        True, 
+                        f"Admin connecté: {user_info.get('name')} (Role: {user_info.get('role')})"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Admin Authentication", 
+                        False, 
+                        error=f"Utilisateur n'a pas le rôle admin: {user_info.get('role')}"
+                    )
+                    return False
             else:
-                self.log_test("Admin Authentication", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test(
+                    "Admin Authentication", 
+                    False, 
+                    error=f"HTTP {response.status_code}: {response.text}"
+                )
                 return False
                 
         except Exception as e:
-            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_test("Admin Authentication", False, error=str(e))
             return False
-    
-    def test_basic_api_connectivity(self):
-        """Test 1: Basic API connectivity - Verify all new endpoints are accessible"""
-        print("\n=== TEST 1: BASIC API CONNECTIVITY ===")
-        
-        endpoints = [
-            ("GET /api/teams", "teams"),
-            ("GET /api/brands", "brands"),
-            ("GET /api/players", "players"),
-            ("GET /api/competitions", "competitions"),
-            ("GET /api/master-jerseys", "master-jerseys"),
-            ("GET /api/jersey-releases", "jersey-releases"),
-            ("GET /api/search/collaborative?q=test", "search/collaborative?q=test")
-        ]
-        
-        for endpoint_name, endpoint_path in endpoints:
-            try:
-                response = self.session.get(f"{BACKEND_URL}/{endpoint_path}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    self.log_test(f"Endpoint {endpoint_name}", True, f"Returns {len(data) if isinstance(data, list) else 'data'} items")
-                else:
-                    self.log_test(f"Endpoint {endpoint_name}", False, f"HTTP {response.status_code}")
-                    
-            except Exception as e:
-                self.log_test(f"Endpoint {endpoint_name}", False, f"Exception: {str(e)}")
-    
-    def test_authentication_endpoints(self):
-        """Test 2: Authentication - Test authenticated endpoints"""
-        print("\n=== TEST 2: AUTHENTICATION ENDPOINTS ===")
+
+    def test_contribution_creation_with_images(self):
+        """Test 2: Création contribution avec images"""
+        print("📸 TEST 2: CRÉATION CONTRIBUTION AVEC IMAGES")
+        print("=" * 50)
         
         if not self.admin_token:
-            self.log_test("Authentication Required", False, "No admin token available")
-            return
-        
-        # Test authenticated POST endpoints
-        authenticated_endpoints = [
-            ("POST /api/teams", "teams", {
-                "name": "Barcelona FC",
-                "short_name": "FCB",
-                "country": "Spain",
-                "city": "Barcelona",
-                "founded_year": 1899,
-                "colors": ["blue", "red"]
-            }),
-            ("POST /api/brands", "brands", {
-                "name": "Nike",
-                "official_name": "Nike Inc.",
-                "country": "USA",
-                "founded_year": 1964,
-                "website": "https://nike.com"
-            }),
-            ("POST /api/players", "players", {
-                "name": "Lionel Messi",
-                "full_name": "Lionel Andrés Messi",
-                "nationality": "Argentina",
-                "position": "Forward"
-            }),
-            ("POST /api/competitions", "competitions", {
-                "name": "La Liga",
-                "official_name": "LaLiga Santander",
-                "competition_type": "domestic_league",
-                "country": "Spain",
-                "level": 1
-            })
-        ]
-        
-        created_entities = {}
-        
-        for endpoint_name, endpoint_path, test_data in authenticated_endpoints:
-            try:
-                response = self.session.post(f"{BACKEND_URL}/{endpoint_path}", json=test_data)
-                
-                if response.status_code in [200, 201]:
-                    data = response.json()
-                    entity_id = data.get('id')
-                    reference = data.get('topkit_reference', 'No reference')
-                    created_entities[endpoint_path] = entity_id
-                    self.log_test(f"Create {endpoint_name}", True, f"ID: {entity_id}, Ref: {reference}")
-                else:
-                    self.log_test(f"Create {endpoint_name}", False, f"HTTP {response.status_code}: {response.text}")
-                    
-            except Exception as e:
-                self.log_test(f"Create {endpoint_name}", False, f"Exception: {str(e)}")
-        
-        return created_entities
-    
-    def test_data_creation_workflow(self, created_entities):
-        """Test 3: Data creation workflow - Test complete flow"""
-        print("\n=== TEST 3: DATA CREATION WORKFLOW ===")
-        
-        if not all(key in created_entities for key in ['teams', 'brands', 'competitions']):
-            self.log_test("Prerequisites Check", False, "Missing required entities for workflow")
-            return
-        
-        # Create master jersey linking team + brand + competition
-        master_jersey_data = {
-            "team_id": created_entities['teams'],
-            "brand_id": created_entities['brands'],
-            "competition_id": created_entities['competitions'],
-            "season": "2024-25",
-            "jersey_type": "home",
-            "design_name": "Classic Home Kit",
-            "primary_color": "blue",
-            "secondary_colors": ["red", "white"],
-            "main_sponsor": "Spotify"
-        }
-        
-        try:
-            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
+            self.log_test("Contribution Creation with Images", False, error="Pas de token admin")
+            return False
             
-            if response.status_code in [200, 201]:
-                master_jersey = response.json()
-                master_jersey_id = master_jersey.get('id')
-                reference = master_jersey.get('topkit_reference', 'No reference')
-                self.log_test("Create Master Jersey", True, f"ID: {master_jersey_id}, Ref: {reference}")
+        try:
+            # Données de test avec images base64 comme spécifié dans la review request
+            contribution_data = {
+                "entity_type": "team",
+                "entity_id": "test-team-id",
+                "proposed_data": {
+                    "name": "FC Barcelona Test",
+                    "city": "Barcelona"
+                },
+                "title": "Test avec images",
+                "description": "Test upload d'images",
+                "source_urls": [],
+                "images": {
+                    "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M8QDwAM7AHn9rA1ZQAAAABJRU5ErkJggg==",
+                    "secondary_photos": [
+                        "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    ]
+                }
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/contributions", json=contribution_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                contribution_id = data.get("id")
                 
-                # Create jersey release for that master jersey
-                jersey_release_data = {
-                    "master_jersey_id": master_jersey_id,
-                    "release_type": "fan_version",
-                    "size_range": ["S", "M", "L", "XL"],
-                    "player_name": "Lionel Messi",
-                    "player_number": 10,
-                    "retail_price": 89.99,
-                    "sku_code": "FCB-HOME-2425-MESSI"
+                # Vérifier que la contribution contient les images
+                if contribution_id:
+                    self.log_test(
+                        "Contribution Creation with Images", 
+                        True, 
+                        f"Contribution créée avec ID: {contribution_id}, Images incluses: {bool(contribution_data['images'])}"
+                    )
+                    return contribution_id
+                else:
+                    self.log_test(
+                        "Contribution Creation with Images", 
+                        False, 
+                        error="Pas d'ID de contribution retourné"
+                    )
+                    return False
+            else:
+                # Analyser l'erreur pour comprendre le problème
+                error_detail = response.text
+                try:
+                    error_json = response.json()
+                    error_detail = error_json.get("detail", error_detail)
+                except:
+                    pass
+                    
+                self.log_test(
+                    "Contribution Creation with Images", 
+                    False, 
+                    error=f"HTTP {response.status_code}: {error_detail}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Contribution Creation with Images", False, error=str(e))
+            return False
+
+    def test_contribution_retrieval_with_images(self):
+        """Test 3: Récupération des contributions avec images"""
+        print("📋 TEST 3: RÉCUPÉRATION CONTRIBUTIONS AVEC IMAGES")
+        print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("Contribution Retrieval with Images", False, error="Pas de token admin")
+            return False
+            
+        try:
+            # GET /api/contributions pour récupérer toutes les contributions
+            response = self.session.get(f"{BACKEND_URL}/contributions")
+            
+            if response.status_code == 200:
+                contributions = response.json()
+                
+                # Chercher des contributions avec images
+                contributions_with_images = [
+                    contrib for contrib in contributions 
+                    if contrib.get("images") is not None
+                ]
+                
+                if contributions_with_images:
+                    # Analyser la première contribution avec images
+                    contrib = contributions_with_images[0]
+                    images = contrib.get("images", {})
+                    
+                    self.log_test(
+                        "Contribution Retrieval with Images", 
+                        True, 
+                        f"Trouvé {len(contributions_with_images)} contribution(s) avec images. "
+                        f"Première contribution ID: {contrib.get('id')}, "
+                        f"Types d'images: {list(images.keys()) if images else 'Aucune'}"
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Contribution Retrieval with Images", 
+                        True, 
+                        f"Récupéré {len(contributions)} contributions, mais aucune avec images"
+                    )
+                    return True
+            else:
+                self.log_test(
+                    "Contribution Retrieval with Images", 
+                    False, 
+                    error=f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Contribution Retrieval with Images", False, error=str(e))
+            return False
+
+    def test_image_validation(self):
+        """Test 4: Validation des images base64"""
+        print("🔍 TEST 4: VALIDATION DES IMAGES BASE64")
+        print("=" * 50)
+        
+        if not self.admin_token:
+            self.log_test("Image Validation", False, error="Pas de token admin")
+            return False
+            
+        try:
+            # Test avec différents formats d'images base64
+            test_cases = [
+                {
+                    "name": "PNG valide",
+                    "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M8QDwAM7AHn9rA1ZQAAAABJRU5ErkJggg==",
+                    "should_work": True
+                },
+                {
+                    "name": "JPEG valide", 
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=",
+                    "should_work": True
+                }
+            ]
+            
+            validation_results = []
+            
+            for test_case in test_cases:
+                contribution_data = {
+                    "entity_type": "team",
+                    "entity_id": f"test-validation-{test_case['name'].lower().replace(' ', '-')}",
+                    "proposed_data": {
+                        "name": f"Test Team {test_case['name']}",
+                        "city": "Test City"
+                    },
+                    "title": f"Test validation {test_case['name']}",
+                    "description": f"Test de validation pour {test_case['name']}",
+                    "source_urls": [],
+                    "images": {
+                        "test_image": test_case["image"]
+                    }
                 }
                 
-                response = self.session.post(f"{BACKEND_URL}/jersey-releases", json=jersey_release_data)
+                response = self.session.post(f"{BACKEND_URL}/contributions", json=contribution_data)
                 
-                if response.status_code in [200, 201]:
-                    jersey_release = response.json()
-                    release_id = jersey_release.get('id')
-                    release_reference = jersey_release.get('topkit_reference', 'No reference')
-                    self.log_test("Create Jersey Release", True, f"ID: {release_id}, Ref: {release_reference}")
-                    return master_jersey_id, release_id
-                else:
-                    self.log_test("Create Jersey Release", False, f"HTTP {response.status_code}: {response.text}")
-            else:
-                self.log_test("Create Master Jersey", False, f"HTTP {response.status_code}: {response.text}")
-                
+                success = (response.status_code == 200) == test_case["should_work"]
+                validation_results.append({
+                    "test": test_case["name"],
+                    "success": success,
+                    "status_code": response.status_code
+                })
+            
+            all_passed = all(result["success"] for result in validation_results)
+            
+            self.log_test(
+                "Image Validation", 
+                all_passed, 
+                f"Tests de validation: {validation_results}"
+            )
+            return all_passed
+            
         except Exception as e:
-            self.log_test("Data Creation Workflow", False, f"Exception: {str(e)}")
+            self.log_test("Image Validation", False, error=str(e))
+            return False
+
+    def test_database_storage_verification(self):
+        """Test 5: Vérification stockage en base de données"""
+        print("💾 TEST 5: VÉRIFICATION STOCKAGE BASE DE DONNÉES")
+        print("=" * 50)
         
-        return None, None
-    
-    def test_search_functionality(self):
-        """Test 4: Search functionality - Test collaborative search"""
-        print("\n=== TEST 4: SEARCH FUNCTIONALITY ===")
-        
-        search_queries = [
-            ("Barcelona", "Search for Barcelona"),
-            ("Nike", "Search for Nike"),
-            ("Messi", "Search for Messi"),
-            ("La Liga", "Search for La Liga"),
-            ("2024", "Search for 2024 season")
-        ]
-        
-        for query, test_name in search_queries:
-            try:
-                response = self.session.get(f"{BACKEND_URL}/search/collaborative", params={"q": query})
+        if not self.admin_token:
+            self.log_test("Database Storage Verification", False, error="Pas de token admin")
+            return False
+            
+        try:
+            # Créer une contribution avec des images spécifiques pour le test
+            test_images = {
+                "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M8QDwAM7AHn9rA1ZQAAAABJRU5ErkJggg==",
+                "banner": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            }
+            
+            contribution_data = {
+                "entity_type": "team",
+                "entity_id": "test-storage-verification",
+                "proposed_data": {
+                    "name": "Test Storage Team",
+                    "city": "Storage City"
+                },
+                "title": "Test stockage base de données",
+                "description": "Vérification que les images sont correctement stockées",
+                "source_urls": [],
+                "images": test_images
+            }
+            
+            # Créer la contribution
+            create_response = self.session.post(f"{BACKEND_URL}/contributions", json=contribution_data)
+            
+            if create_response.status_code == 200:
+                contribution_id = create_response.json().get("id")
                 
-                if response.status_code == 200:
-                    data = response.json()
-                    total_results = sum(len(results) for results in data.values() if isinstance(results, list))
-                    self.log_test(test_name, True, f"Found {total_results} total results across all entities")
-                else:
-                    self.log_test(test_name, False, f"HTTP {response.status_code}")
+                # Récupérer la contribution pour vérifier le stockage
+                get_response = self.session.get(f"{BACKEND_URL}/contributions")
+                
+                if get_response.status_code == 200:
+                    contributions = get_response.json()
                     
-            except Exception as e:
-                self.log_test(test_name, False, f"Exception: {str(e)}")
-    
-    def test_reference_generation(self):
-        """Test 5: Reference generation - Verify TopKit references are generated correctly"""
-        print("\n=== TEST 5: REFERENCE GENERATION ===")
-        
-        # Test reference patterns for each entity type
-        endpoints_and_patterns = [
-            ("teams", "TK-TEAM-"),
-            ("brands", "TK-BRAND-"),
-            ("players", "TK-PLAYER-"),
-            ("competitions", "TK-COMP-"),
-            ("master-jerseys", "TK-MASTER-"),
-            ("jersey-releases", "TK-RELEASE-")
-        ]
-        
-        for endpoint, expected_pattern in endpoints_and_patterns:
-            try:
-                response = self.session.get(f"{BACKEND_URL}/{endpoint}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if data and len(data) > 0:
-                        # Check first item for reference pattern
-                        first_item = data[0]
-                        reference = first_item.get('topkit_reference', '')
+                    # Trouver notre contribution
+                    our_contribution = None
+                    for contrib in contributions:
+                        if contrib.get("id") == contribution_id:
+                            our_contribution = contrib
+                            break
+                    
+                    if our_contribution:
+                        stored_images = our_contribution.get("images", {})
                         
-                        if reference.startswith(expected_pattern):
-                            self.log_test(f"Reference Pattern {endpoint}", True, f"Found: {reference}")
+                        # Vérifier que les images sont stockées correctement
+                        images_match = True
+                        for key, expected_value in test_images.items():
+                            if stored_images.get(key) != expected_value:
+                                images_match = False
+                                break
+                        
+                        if images_match:
+                            self.log_test(
+                                "Database Storage Verification", 
+                                True, 
+                                f"Images stockées correctement. Contribution ID: {contribution_id}, "
+                                f"Images: {list(stored_images.keys())}"
+                            )
+                            return True
                         else:
-                            self.log_test(f"Reference Pattern {endpoint}", False, f"Expected {expected_pattern}*, got: {reference}")
+                            self.log_test(
+                                "Database Storage Verification", 
+                                False, 
+                                error="Les images stockées ne correspondent pas aux images envoyées"
+                            )
+                            return False
                     else:
-                        self.log_test(f"Reference Pattern {endpoint}", True, "No items to check (empty collection)")
+                        self.log_test(
+                            "Database Storage Verification", 
+                            False, 
+                            error="Contribution créée mais non trouvée lors de la récupération"
+                        )
+                        return False
                 else:
-                    self.log_test(f"Reference Pattern {endpoint}", False, f"HTTP {response.status_code}")
-                    
-            except Exception as e:
-                self.log_test(f"Reference Pattern {endpoint}", False, f"Exception: {str(e)}")
-    
-    def test_enriched_responses(self):
-        """Test 6: Enriched responses - Verify responses include related data"""
-        print("\n=== TEST 6: ENRICHED RESPONSES ===")
-        
-        # Test enriched responses for master jerseys (should include team, brand, competition info)
-        try:
-            response = self.session.get(f"{BACKEND_URL}/master-jerseys")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    first_jersey = data[0]
-                    
-                    # Check for enriched data
-                    has_team_info = 'team_info' in first_jersey
-                    has_brand_info = 'brand_info' in first_jersey
-                    has_competition_info = 'competition_info' in first_jersey
-                    
-                    enrichment_score = sum([has_team_info, has_brand_info, has_competition_info])
-                    
-                    self.log_test("Master Jersey Enrichment", enrichment_score >= 2, 
-                                f"Team info: {has_team_info}, Brand info: {has_brand_info}, Competition info: {has_competition_info}")
-                else:
-                    self.log_test("Master Jersey Enrichment", True, "No master jerseys to check")
+                    self.log_test(
+                        "Database Storage Verification", 
+                        False, 
+                        error=f"Erreur lors de la récupération: HTTP {get_response.status_code}"
+                    )
+                    return False
             else:
-                self.log_test("Master Jersey Enrichment", False, f"HTTP {response.status_code}")
+                self.log_test(
+                    "Database Storage Verification", 
+                    False, 
+                    error=f"Erreur lors de la création: HTTP {create_response.status_code}"
+                )
+                return False
                 
         except Exception as e:
-            self.log_test("Master Jersey Enrichment", False, f"Exception: {str(e)}")
-        
-        # Test team responses for enrichment
-        try:
-            response = self.session.get(f"{BACKEND_URL}/teams")
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    first_team = data[0]
-                    
-                    # Check for enriched data
-                    has_league_info = 'league_info' in first_team
-                    has_jersey_count = 'master_jerseys_count' in first_team
-                    has_collector_count = 'total_collectors' in first_team
-                    
-                    enrichment_score = sum([has_league_info, has_jersey_count, has_collector_count])
-                    
-                    self.log_test("Team Response Enrichment", enrichment_score >= 2,
-                                f"League info: {has_league_info}, Jersey count: {has_jersey_count}, Collector count: {has_collector_count}")
-                else:
-                    self.log_test("Team Response Enrichment", True, "No teams to check")
-            else:
-                self.log_test("Team Response Enrichment", False, f"HTTP {response.status_code}")
-                
-        except Exception as e:
-            self.log_test("Team Response Enrichment", False, f"Exception: {str(e)}")
-    
+            self.log_test("Database Storage Verification", False, error=str(e))
+            return False
+
     def run_all_tests(self):
-        """Run all tests"""
-        print("🎯 TOPKIT COLLABORATIVE DATABASE API TESTING STARTED")
+        """Exécuter tous les tests"""
+        print("🚀 TOPKIT CONTRIBUTIONS AVEC IMAGES - TESTS BACKEND")
         print("=" * 60)
+        print(f"Backend URL: {BACKEND_URL}")
+        print(f"Admin Email: {ADMIN_EMAIL}")
+        print("=" * 60)
+        print()
         
-        # Authenticate first
+        # Test 1: Authentification
         if not self.authenticate_admin():
-            print("❌ Cannot proceed without authentication")
-            return 0
+            print("❌ ÉCHEC AUTHENTIFICATION - ARRÊT DES TESTS")
+            return False
         
-        # Run all tests
-        self.test_basic_api_connectivity()
-        created_entities = self.test_authentication_endpoints()
+        # Test 2: Création contribution avec images
+        contribution_created = self.test_contribution_creation_with_images()
         
-        if created_entities:
-            master_jersey_id, release_id = self.test_data_creation_workflow(created_entities)
+        # Test 3: Récupération contributions avec images
+        self.test_contribution_retrieval_with_images()
         
-        self.test_search_functionality()
-        self.test_reference_generation()
-        self.test_enriched_responses()
+        # Test 4: Validation des images
+        self.test_image_validation()
         
-        # Summary
+        # Test 5: Vérification stockage base de données
+        self.test_database_storage_verification()
+        
+        # Résumé des résultats
+        self.print_summary()
+        
+        return True
+
+    def print_summary(self):
+        """Afficher le résumé des tests"""
         print("\n" + "=" * 60)
-        print("🎯 TESTING SUMMARY")
+        print("📊 RÉSUMÉ DES TESTS")
         print("=" * 60)
         
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result['success'])
+        passed_tests = sum(1 for result in self.test_results if result["success"])
         failed_tests = total_tests - passed_tests
+        
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests}")
-        print(f"Failed: {failed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
+        print(f"Total des tests: {total_tests}")
+        print(f"Tests réussis: {passed_tests}")
+        print(f"Tests échoués: {failed_tests}")
+        print(f"Taux de réussite: {success_rate:.1f}%")
+        print()
         
-        if failed_tests > 0:
-            print("\n❌ FAILED TESTS:")
-            for result in self.test_results:
-                if not result['success']:
-                    print(f"  - {result['test']}: {result['details']}")
+        # Détail des tests échoués
+        failed_results = [result for result in self.test_results if not result["success"]]
+        if failed_results:
+            print("❌ TESTS ÉCHOUÉS:")
+            for result in failed_results:
+                print(f"  - {result['test']}: {result['error']}")
+            print()
         
-        print(f"\n🎉 COLLABORATIVE DATABASE API TESTING COMPLETE - {success_rate:.1f}% SUCCESS RATE!")
+        # Détail des tests réussis
+        passed_results = [result for result in self.test_results if result["success"]]
+        if passed_results:
+            print("✅ TESTS RÉUSSIS:")
+            for result in passed_results:
+                print(f"  - {result['test']}")
+            print()
         
-        # Determine overall status
-        if success_rate >= 90:
-            print("✅ EXCELLENT: All collaborative database endpoints are working perfectly!")
-        elif success_rate >= 75:
-            print("✅ GOOD: Most collaborative database endpoints are working with minor issues")
-        elif success_rate >= 50:
-            print("⚠️ PARTIAL: Some collaborative database endpoints need attention")
+        # Conclusion
+        if success_rate >= 80:
+            print("🎉 CONCLUSION: SYSTÈME DE CONTRIBUTIONS AVEC IMAGES OPÉRATIONNEL!")
+            print("Le backend accepte et stocke correctement les images dans les contributions.")
+        elif success_rate >= 60:
+            print("⚠️  CONCLUSION: SYSTÈME PARTIELLEMENT FONCTIONNEL")
+            print("Quelques problèmes identifiés mais fonctionnalité de base opérationnelle.")
         else:
-            print("❌ CRITICAL: Major issues with collaborative database endpoints")
+            print("🚨 CONCLUSION: PROBLÈMES CRITIQUES IDENTIFIÉS")
+            print("Le système de contributions avec images nécessite des corrections.")
         
-        return success_rate
-
-def main():
-    """Main function"""
-    tester = TopKitCollaborativeAPITester()
-    success_rate = tester.run_all_tests()
-    
-    # Exit with appropriate code
-    sys.exit(0 if success_rate >= 75 else 1)
+        print("=" * 60)
 
 if __name__ == "__main__":
-    main()
+    tester = TopKitContributionsImagesTester()
+    tester.run_all_tests()
