@@ -406,15 +406,6 @@ class JerseyReleaseCreate(BaseModel):
     retail_price: Optional[float] = None
     sku_code: Optional[str] = None
 
-class ContributionCreate(BaseModel):
-    entity_type: EntityType
-    entity_id: Optional[str] = None  # None pour création
-    contribution_type: str
-    proposed_changes: Dict[str, Any]
-    description: str
-    evidence_urls: List[str] = []
-    source_links: List[str] = []
-
 # ================================
 # MODÈLES DE RÉPONSE
 # ================================
