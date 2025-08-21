@@ -513,6 +513,7 @@ class Contribution(BaseModel):
     title: str  # "Ajout du logo officiel FC Barcelona"
     description: Optional[str] = None  # Justification détaillée
     source_urls: List[str] = []  # URLs de sources pour validation
+    images: Optional[Dict[str, Any]] = None  # Images proposées (logo, primary_photo, secondary_photos)
     
     # Contributeur
     contributor_id: str
