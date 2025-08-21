@@ -12,9 +12,7 @@ import CollaborativePlayersPage from './pages/CollaborativePlayersPage';
 import CollaborativeCompetitionsPage from './pages/CollaborativeCompetitionsPage';
 import CollaborativeMasterJerseyPage from './pages/CollaborativeMasterJerseyPage';
 import CollaborativeContributionsPage from './pages/CollaborativeContributionsPage';
-import CollaborativeContributePage from './pages/CollaborativeContributePage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
-import ContributionModal from './ContributionModal';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
