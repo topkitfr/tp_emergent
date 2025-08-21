@@ -47,6 +47,18 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       setDescription('');
       setSourceUrls(['']);
       setChanges([]);
+      
+      // Réinitialiser les images
+      setImageFiles({
+        logo: null,
+        primary_photo: null,
+        secondary_photos: []
+      });
+      setImagePreviews({
+        logo: '',
+        primary_photo: '',
+        secondary_photos: []
+      });
     }
   }, [isOpen, entity]);
 
