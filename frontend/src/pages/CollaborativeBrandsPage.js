@@ -542,6 +542,26 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
         </div>
       )}
 
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => {
+            setShowContributionModal(false);
+            setSelectedBrandForContribution(null);
+          }}
+          entity={selectedBrandForContribution}
+          entityType="brand"
+          onContributionCreated={(newContribution) => {
+            console.log('Contribution créée:', newContribution);
+            // Optionnel: rafraîchir les données
+            if (onDataUpdate) {
+              onDataUpdate();
+            }
+          }}
+        />
+      )}
+
     </div>
   );
 };
