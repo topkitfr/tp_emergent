@@ -243,7 +243,7 @@ class TopKitContributionsImagesTester:
             for test_case in test_cases:
                 contribution_data = {
                     "entity_type": "team",
-                    "entity_id": f"test-validation-{test_case['name'].lower().replace(' ', '-')}",
+                    "entity_id": "891c5061-49d1-4908-a81b-ca78531f2b47",
                     "proposed_data": {
                         "name": f"Test Team {test_case['name']}",
                         "city": "Test City"
