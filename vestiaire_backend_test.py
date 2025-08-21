@@ -22,7 +22,7 @@ API_BASE = "https://football-db.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 class VestiaireBackendTester:
     def __init__(self):
