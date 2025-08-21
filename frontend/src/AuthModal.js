@@ -36,24 +36,43 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   const handleAuthFormSubmit = async (e) => {
     e.preventDefault();
-    
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
+    
+    // Get actual DOM values to handle autofill issues
+    const emailInput = e.target.querySelector('input[type="email"]');
+    const passwordInput = e.target.querySelector('input[type="password"]');
+    const nameInput = e.target.querySelector('input[placeholder="Nom complet"]');
+    
+    const actualEmail = emailInput?.value || formData.email;
+    const actualPassword = passwordInput?.value || formData.password;
+    const actualName = nameInput?.value || formData.name;
+    
     console.log('📧 Form data:', { 
-      email: formData.email, 
-      password: formData.password ? '***HIDDEN***' : 'EMPTY', 
-      name: formData.name 
+      email: actualEmail, 
+      password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
+      name: actualName 
     });
     console.log('🔄 isLogin mode:', isLogin);
     console.log('🌐 API URL:', API);
     
-    // Validation
-    if (!formData.email || !formData.password) {
+    // Update formData with actual values if they differ
+    if (actualEmail !== formData.email || actualPassword !== formData.password || actualName !== formData.name) {
+      setFormData({
+        ...formData,
+        email: actualEmail,
+        password: actualPassword,
+        name: actualName
+      });
+    }
+    
+    // Validation using actual values
+    if (!actualEmail || !actualPassword) {
       console.error('❌ Missing required fields');
       setError('Veuillez remplir tous les champs requis');
       return;
     }
 
-    if (!isLogin && !formData.name) {
+    if (!isLogin && !actualName) {
       console.error('❌ Missing name for registration');
       setError('Le nom est requis pour l\'inscription');
       return;
@@ -68,15 +87,15 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       
       console.log('🔄 Making request to:', fullUrl);
       console.log('📤 Request payload:', {
-        email: formData.email,
+        email: actualEmail,
         password: '[HIDDEN]',
-        ...(formData.name && { name: formData.name })
+        ...(actualName && { name: actualName })
       });
       
       const response = await axios.post(fullUrl, {
-        email: formData.email,
-        password: formData.password,
-        ...(formData.name && { name: formData.name })
+        email: actualEmail,
+        password: actualPassword,
+        ...(actualName && { name: actualName })
       }, {
         timeout: 15000,
         headers: {
