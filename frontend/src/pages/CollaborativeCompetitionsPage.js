@@ -556,12 +556,27 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
                 )}
                 <p className="text-blue-600 font-mono text-sm">{selectedCompetition.topkit_reference}</p>
               </div>
-              <button
-                onClick={() => setSelectedCompetition(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="text-2xl">×</span>
-              </button>
+              <div className="flex gap-2">
+                {user && (
+                  <button
+                    onClick={() => {
+                      setSelectedCompetitionForContribution(selectedCompetition);
+                      setShowContributionModal(true);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    ✏️ Améliorer cette fiche
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedCompetition(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
