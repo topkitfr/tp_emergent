@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ContributionModal from '../ContributionModal';
 
 const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }) => {
   const [filteredCompetitions, setFilteredCompetitions] = useState([]);
