@@ -284,7 +284,7 @@ const CollaborativeMasterJerseyPage = ({
                   required
                 >
                   <option value="">Sélectionner une marque</option>
-                  {brands.map(brand => (
+                  {(brands || []).map(brand => (
                     <option key={brand.id} value={brand.id}>{brand.name}</option>
                   ))}
                 </select>
