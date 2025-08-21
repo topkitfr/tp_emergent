@@ -270,13 +270,34 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         proposedData[change.field] = change.to;
       });
       
+      // Traitement des images
+      const images = {};
+      
+      // Logo principal
+      if (imageFiles.logo) {
+        images.logo = await convertFileToBase64(imageFiles.logo);
+      }
+      
+      // Photo principale
+      if (imageFiles.primary_photo) {
+        images.primary_photo = await convertFileToBase64(imageFiles.primary_photo);
+      }
+      
+      // Photos secondaires
+      if (imageFiles.secondary_photos.length > 0) {
+        images.secondary_photos = await Promise.all(
+          imageFiles.secondary_photos.map(file => convertFileToBase64(file))
+        );
+      }
+
       const contributionData = {
         entity_type: entityType,
         entity_id: entity.id,
         proposed_data: proposedData,
         title: title.trim(),
         description: description.trim() || null,
-        source_urls: sourceUrls.filter(url => url.trim())
+        source_urls: sourceUrls.filter(url => url.trim()),
+        images: Object.keys(images).length > 0 ? images : null
       };
       
       const response = await fetch(`${API}/api/contributions`, {
