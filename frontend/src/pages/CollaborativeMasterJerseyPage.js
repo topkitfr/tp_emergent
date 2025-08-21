@@ -28,7 +28,7 @@ const CollaborativeMasterJerseyPage = ({
 
   // Apply filters
   useEffect(() => {
-    let filtered = [...masterJerseys];
+    let filtered = [...(masterJerseys || [])];
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
