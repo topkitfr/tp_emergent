@@ -563,7 +563,7 @@ const CollaborativeMasterJerseyPage = ({
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Toutes les marques</option>
-              {brands.map(brand => (
+              {(brands || []).map(brand => (
                 <option key={brand.id} value={brand.id}>{brand.name}</option>
               ))}
             </select>
