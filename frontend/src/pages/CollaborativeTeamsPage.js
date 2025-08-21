@@ -11,6 +11,8 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedTeamForContribution, setSelectedTeamForContribution] = useState(null);
   
   // Get unique countries for filter
   const countries = [...new Set(teams.map(team => team.country).filter(Boolean))];
