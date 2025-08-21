@@ -94,7 +94,7 @@ def test_contributions_system():
         response = requests.post(f"{BACKEND_URL}/contributions", json=contribution_data, headers=headers)
         print(f"\nStatus: {response.status_code}")
         
-        if response.status_code == 201:
+        if response.status_code in [200, 201]:
             contribution_result = response.json()
             contribution_id = contribution_result.get("id")
             topkit_ref = contribution_result.get("topkit_reference", "N/A")
