@@ -259,6 +259,37 @@ class JerseyRelease(BaseModel):
     
     topkit_reference: str  # TK-RELEASE-000001
 
+class JerseyReleaseValuation(BaseModel):
+    """Évaluation d'un Jersey Release"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    jersey_release_id: str
+    
+    # Prix et estimations
+    retail_price: Optional[float] = None
+    current_market_value: Optional[float] = None
+    estimated_min: Optional[float] = None
+    estimated_max: Optional[float] = None
+    
+    # Facteurs d'évaluation
+    rarity_score: int = 5  # 1-10
+    condition_multiplier: float = 1.0
+    player_popularity_bonus: float = 1.0
+    
+    # Métadonnées
+    last_evaluated_at: datetime = Field(default_factory=datetime.utcnow)
+    evaluation_confidence: float = 0.7
+
+class UserJerseyCollection(BaseModel):
+    """Maillot dans la collection utilisateur"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    jersey_release_id: str
+    size: str
+    condition: str  # "mint", "excellent", "good", "fair", "poor"
+    purchase_price: Optional[float] = None
+    estimated_value: Optional[float] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 # ================================
 # SYSTÈME COLLABORATIF
 # ================================
