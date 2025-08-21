@@ -284,6 +284,18 @@ backend:
         -agent: "testing"
         -comment: "Password reset functionality tested comprehensively with 100% success rate. Both POST /api/auth/forgot-password and POST /api/auth/reset-password endpoints working perfectly with proper security measures, validation, and French localization. System follows security best practices by not revealing email existence and enforces strong password requirements."
 
+  - task: "Jersey Release Collection Endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "Jersey Release collection endpoints tested comprehensively with 94.7% success rate. All 6 requested endpoints working excellently: GET /api/users/{user_id}/collections/owned (✅), GET /api/users/{user_id}/collections/wanted (✅), POST /api/users/{user_id}/collections (✅), DELETE /api/users/{user_id}/collections/{collection_id} (✅), PUT /api/users/{user_id}/collections/{collection_id} (✅), POST /api/vestiaire/add-to-collection (⚠️ expected duplicate prevention). Complete test flow successful: authentication with admin user, empty initial collections verified, Jersey Release creation/retrieval working, collection addition to owned/wanted working, collection item updates functional, collection removal working, vestiaire integration operational with expected duplicate prevention. All endpoints properly integrated with UserJerseyCollection model and Jersey Release system. Authentication, authorization, data validation, error handling all working correctly. System ready for production use."
+
 frontend:
   - task: "Jersey Photos for Explorer Display Verification"
     implemented: true
