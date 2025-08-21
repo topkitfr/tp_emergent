@@ -65,8 +65,8 @@ const CollaborativeHeader = ({
           </nav>
 
           {/* Search Bar - WhenToCop Style */}
-          <div className="flex-1 max-w-xs mx-8">
-            <div className="relative">
+          <div className="hidden md:flex flex-1 max-w-xs mx-4 lg:mx-8">
+            <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Rechercher..."
