@@ -26,3 +26,28 @@ code {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
+
+/* FIX CRITIQUE - Visibility des formulaires */
+input[type="text"],
+input[type="email"], 
+input[type="password"],
+input[type="number"],
+input[type="url"],
+textarea,
+select {
+    color: rgb(17, 24, 39) !important; /* text-gray-900 */
+    background-color: rgb(255, 255, 255) !important; /* bg-white */
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgb(107, 114, 128) !important; /* text-gray-500 */
+}
+
+/* Focus states for better visibility */
+input:focus,
+textarea:focus,
+select:focus {
+    color: rgb(17, 24, 39) !important; /* text-gray-900 */
+    outline: 2px solid rgb(59, 130, 246) !important; /* border-blue-500 */
+}
