@@ -229,7 +229,7 @@ const CollaborativeHeader = ({
                   <hr className="my-3 border-gray-100" />
                   <button
                     onClick={() => {
-                      onViewChange('contributions');
+                      onViewChange('contribute');
                       setShowMobileMenu(false);
                     }}
                     className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50"
