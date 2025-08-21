@@ -12,6 +12,8 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedCompetitionForContribution, setSelectedCompetitionForContribution] = useState(null);
   
   // Get unique values for filters
   const countries = [...new Set(competitions.map(comp => comp.country).filter(Boolean))];
