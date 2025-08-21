@@ -26,14 +26,14 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
     
     setLoading(true);
     try {
-      // Load owned jerseys
+      // Load owned Jersey Releases
       const ownedResponse = await fetch(`${API}/api/users/${user.id}/collections/owned`, {
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
-      // Load wanted jerseys  
+      // Load wanted Jersey Releases  
       const wantedResponse = await fetch(`${API}/api/users/${user.id}/collections/wanted`, {
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 
       if (ownedResponse.ok && wantedResponse.ok) {
@@ -43,10 +43,10 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
         setCollections({
           owned: owned || [],
           wanted: wanted || [],
-          listings: [] // TODO: Load user listings
+          listings: [] // TODO: Load user listings from marketplace
         });
 
-        // Calculate stats
+        // Calculate stats from Jersey Release valuations
         const totalValue = owned.reduce((sum, item) => sum + (item.estimated_value || 0), 0);
         setStats({
           totalValue,
