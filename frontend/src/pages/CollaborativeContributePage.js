@@ -17,7 +17,7 @@ const CollaborativeContributePage = ({ teams, brands, competitions, players, mas
   const loadContributions = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const queryParams = filter !== 'all' ? `?status=${filter}` : '';
       
       const response = await fetch(`${API}/api/contributions${queryParams}`, {
