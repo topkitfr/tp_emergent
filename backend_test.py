@@ -100,9 +100,10 @@ class TopKitContributionsImagesTester:
             
         try:
             # Données de test avec images base64 comme spécifié dans la review request
+            # Utiliser FC Barcelona comme entité existante
             contribution_data = {
                 "entity_type": "team",
-                "entity_id": "test-team-id",
+                "entity_id": "891c5061-49d1-4908-a81b-ca78531f2b47",
                 "proposed_data": {
                     "name": "FC Barcelona Test",
                     "city": "Barcelona"
