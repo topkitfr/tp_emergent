@@ -8,6 +8,18 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
   const [sourceUrls, setSourceUrls] = useState(['']);
   const [loading, setLoading] = useState(false);
   const [changes, setChanges] = useState([]);
+  
+  // États pour la gestion des images
+  const [imageFiles, setImageFiles] = useState({
+    logo: null,
+    primary_photo: null,
+    secondary_photos: []
+  });
+  const [imagePreviews, setImagePreviews] = useState({
+    logo: '',
+    primary_photo: '',
+    secondary_photos: []
+  });
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
