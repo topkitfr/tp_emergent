@@ -83,19 +83,20 @@ const CollaborativeHeader = ({
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 lg:space-x-4">
             
             {/* Contributions Button */}
             {user && (
               <button
                 onClick={() => onViewChange('contributions')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`hidden md:block px-3 lg:px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   currentView === 'contributions'
                     ? 'bg-black text-white'
                     : 'text-gray-700 hover:text-black hover:bg-gray-100'
                 }`}
               >
-                Contribuer
+                <span className="hidden lg:inline">Contribuer</span>
+                <span className="lg:hidden">Contrib.</span>
               </button>
             )}
 
@@ -104,14 +105,14 @@ const CollaborativeHeader = ({
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-black transition-colors"
+                  className="flex items-center space-x-1 lg:space-x-2 text-gray-700 hover:text-black transition-colors"
                 >
                   <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
                       {user.name?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
-                  <span className="hidden lg:block font-medium">{user.name}</span>
+                  <span className="hidden xl:block font-medium">{user.name}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
