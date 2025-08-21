@@ -403,6 +403,112 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                 ))}
               </div>
               
+              {/* Section Upload d'Images */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  📸 Images à ajouter/modifier
+                  <span className="text-xs text-gray-500 font-normal">(optionnel, max 5MB par image)</span>
+                </h4>
+                
+                <div className="space-y-4">
+                  {/* Logo/Image principale */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {entityType === 'team' ? 'Logo de l\'équipe' : 
+                       entityType === 'competition' ? 'Logo de la compétition' :
+                       entityType === 'brand' ? 'Logo de la marque' :
+                       entityType === 'player' ? 'Photo du joueur' : 'Image principale'}
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload('logo', e.target.files[0])}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {imagePreviews.logo && (
+                        <div className="relative">
+                          <img src={imagePreviews.logo} alt="Aperçu logo" className="w-16 h-16 object-cover rounded-lg border" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageFiles(prev => ({ ...prev, logo: null }));
+                              setImagePreviews(prev => ({ ...prev, logo: '' }));
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Photo principale (pour maillots) */}
+                  {(entityType === 'master-jersey' || entityType === 'jersey') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Photo principale du maillot
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload('primary_photo', e.target.files[0])}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                        />
+                        {imagePreviews.primary_photo && (
+                          <div className="relative">
+                            <img src={imagePreviews.primary_photo} alt="Aperçu photo principale" className="w-16 h-16 object-cover rounded-lg border" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImageFiles(prev => ({ ...prev, primary_photo: null }));
+                                setImagePreviews(prev => ({ ...prev, primary_photo: '' }));
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Photos secondaires */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Photos supplémentaires
+                      <span className="text-xs text-gray-500 font-normal ml-2">(détails, autres angles...)</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleMultipleImagesUpload(e.target.files)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    />
+                    {imagePreviews.secondary_photos.length > 0 && (
+                      <div className="flex gap-2 mt-3 flex-wrap">
+                        {imagePreviews.secondary_photos.map((preview, index) => (
+                          <div key={index} className="relative">
+                            <img src={preview} alt={`Aperçu ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
+                            <button
+                              type="button"
+                              onClick={() => removeSecondaryImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
               {/* Prévisualisation des changements */}
               {changes.length > 0 && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
