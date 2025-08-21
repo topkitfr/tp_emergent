@@ -43,7 +43,7 @@ from email_manager import email_manager
 from collaborative_models import (
     Team, Brand, Player, Competition, MasterJersey, JerseyRelease, Contribution,
     TeamCreate, BrandCreate, PlayerCreate, CompetitionCreate, MasterJerseyCreate,
-    JerseyReleaseCreate, ContributionCreate,
+    JerseyReleaseCreate,
     TeamResponse, MasterJerseyResponse,
     ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
     ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel
