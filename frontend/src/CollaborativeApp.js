@@ -138,6 +138,16 @@ const CollaborativeApp = () => {
       case 'home':
         return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
       
+      case 'catalogue':
+        return <CataloguePage {...commonProps} />;
+      
+      case 'collections':
+        return <CollectionsPage {...commonProps} />;
+      
+      case 'contribute':
+        return <ContributePage {...commonProps} />;
+      
+      // Legacy routes (keep for direct access)
       case 'explore':
         return <CollaborativeExplorePage {...commonProps} />;
       
@@ -161,15 +171,6 @@ const CollaborativeApp = () => {
       
       case 'profile':
         return <CollaborativeProfilePage {...commonProps} />;
-      
-      case 'contribute':
-        return (
-          <CollaborativeContributePage 
-            {...commonProps} 
-            currentUser={user}
-            onDataUpdate={loadCollaborativeData}
-          />
-        );
       
       default:
         return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
