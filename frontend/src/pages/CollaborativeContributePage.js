@@ -49,7 +49,7 @@ const CollaborativeContributePage = ({ teams, brands, competitions, players, mas
 
   const vote = async (contributionId, voteType) => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API}/api/contributions/${contributionId}/vote`, {
         method: 'POST',
         headers: {
