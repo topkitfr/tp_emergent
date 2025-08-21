@@ -2,17 +2,39 @@ import React, { useState, useEffect } from 'react';
 
 const VestiairePage = ({ user, API, onDataUpdate }) => {
   const [jerseyReleases, setJerseyReleases] = useState([]);
+  const [masterJerseys, setMasterJerseys] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     team_id: '',
     season: '',
     player_name: ''
   });
+  const [newRelease, setNewRelease] = useState({
+    master_jersey_id: '',
+    player_name: '',
+    player_number: '',
+    release_type: 'player_version',
+    retail_price: '',
+    size_range: [],
+    sku_code: ''
+  });
 
   useEffect(() => {
     loadVestiaire();
+    loadMasterJerseys();
   }, [filters]);
+
+  const loadMasterJerseys = async () => {
+    try {
+      const response = await fetch(`${API}/api/master-jerseys`);
+      const data = await response.json();
+      setMasterJerseys(data || []);
+    } catch (error) {
+      console.error('Error loading master jerseys:', error);
+    }
+  };
 
   const loadVestiaire = async () => {
     setLoading(true);
