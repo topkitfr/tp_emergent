@@ -267,7 +267,7 @@ const CollaborativeMasterJerseyPage = ({
                   required
                 >
                   <option value="">Sélectionner une équipe</option>
-                  {teams.map(team => (
+                  {(teams || []).map(team => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
