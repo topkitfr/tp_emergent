@@ -2677,17 +2677,9 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Collaborative Database API - Teams Endpoint"
-    - "Collaborative Database API - Brands Endpoint"
-    - "Collaborative Database API - Players Endpoint"
-    - "Collaborative Database API - Competitions Endpoint"
-    - "Collaborative Database API - Master Jerseys Endpoint"
-    - "Collaborative Database API - Jersey Releases Endpoint"
+  current_focus: []
+  stuck_tasks:
     - "Collaborative Database API - Search Functionality"
-    - "Collaborative Database API - Authentication System"
-    - "Collaborative Database API - Reference Generation"
-  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
