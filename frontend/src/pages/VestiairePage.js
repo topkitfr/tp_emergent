@@ -440,6 +440,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           </div>
         )}
       </div>
+
+      {/* Create Release Modal */}
+      <CreateReleaseModal />
     </div>
   );
 };
