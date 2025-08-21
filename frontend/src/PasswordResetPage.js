@@ -11,7 +11,7 @@ const PasswordResetPage = () => {
   const [tokenValid, setTokenValid] = useState(null);
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://football-db.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://jersey-database.preview.emergentagent.com';
 
   useEffect(() => {
     // Get token from URL parameters

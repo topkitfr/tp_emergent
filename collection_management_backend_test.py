@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-database.preview.emergentagent.com/api"
 
 # Test credentials - using admin as test user since regular user is locked
 TEST_USER = {
