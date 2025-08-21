@@ -544,10 +544,15 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
             setShowContributionModal(false);
             setSelectedTeamForContribution(null);
           }}
-          team={selectedTeamForContribution}
-          user={user}
-          API={API}
-          onDataUpdate={onDataUpdate}
+          entity={selectedTeamForContribution}
+          entityType="team"
+          onContributionCreated={(newContribution) => {
+            console.log('Contribution créée:', newContribution);
+            // Optionnel: rafraîchir les données
+            if (onDataUpdate) {
+              onDataUpdate();
+            }
+          }}
         />
       )}
 
