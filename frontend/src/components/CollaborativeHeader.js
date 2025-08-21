@@ -18,12 +18,9 @@ const CollaborativeHeader = ({
 
   const navigationItems = [
     { id: 'home', label: 'Accueil', icon: '🏠' },
-    { id: 'explore', label: 'Explorez', icon: '🔍' },
-    { id: 'teams', label: 'Équipes', icon: '⚽' },
-    { id: 'brands', label: 'Marques', icon: '👕' },
-    { id: 'players', label: 'Joueurs', icon: '👤' },
-    { id: 'competitions', label: 'Compétitions', icon: '🏆' },
-    { id: 'master-jerseys', label: 'Maillots', icon: '📋' }
+    { id: 'catalogue', label: 'Catalogue', icon: '📚' },
+    { id: 'collections', label: 'Collections', icon: '💎' },
+    { id: 'contribute', label: 'Contribuer', icon: '✏️' }
   ];
 
   return (
