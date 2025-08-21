@@ -536,6 +536,21 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         </div>
       )}
 
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => {
+            setShowContributionModal(false);
+            setSelectedTeamForContribution(null);
+          }}
+          team={selectedTeamForContribution}
+          user={user}
+          API={API}
+          onDataUpdate={onDataUpdate}
+        />
+      )}
+
     </div>
   );
 };
