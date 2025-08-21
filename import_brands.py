@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent / 'backend'))
 from collaborative_models import Brand
 
 # Charger les variables d'environnement
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = Path(__file__).parent / 'backend'
 load_dotenv(ROOT_DIR / '.env')
 
 # Configuration MongoDB
