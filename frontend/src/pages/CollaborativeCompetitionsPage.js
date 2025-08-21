@@ -651,6 +651,26 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
         </div>
       )}
 
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => {
+            setShowContributionModal(false);
+            setSelectedCompetitionForContribution(null);
+          }}
+          entity={selectedCompetitionForContribution}
+          entityType="competition"
+          onContributionCreated={(newContribution) => {
+            console.log('Contribution créée:', newContribution);
+            // Optionnel: rafraîchir les données
+            if (onDataUpdate) {
+              onDataUpdate();
+            }
+          }}
+        />
+      )}
+
     </div>
   );
 };
