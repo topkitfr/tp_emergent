@@ -60,9 +60,24 @@ def test_contributions_system():
         print("\n2️⃣ POST /api/contributions - CRÉER UNE CONTRIBUTION")
         print("-" * 50)
         
+        # First get a real team ID
+        teams_response = requests.get(f"{BACKEND_URL}/teams", headers=headers)
+        if teams_response.status_code == 200:
+            teams = teams_response.json()
+            if teams:
+                team_id = teams[0]["id"]  # Use first team
+                team_name = teams[0]["name"]
+                print(f"Using team: {team_name} (ID: {team_id})")
+            else:
+                print("❌ Aucune équipe trouvée")
+                return False
+        else:
+            print(f"❌ Impossible de récupérer les équipes: {teams_response.status_code}")
+            return False
+        
         contribution_data = {
             "entity_type": "team",
-            "entity_id": "test-team-id",
+            "entity_id": team_id,
             "action_type": "update",
             "proposed_data": {
                 "name": "FC Barcelona Updated",
