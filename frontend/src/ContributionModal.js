@@ -306,7 +306,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       
       // Préparer les données proposées
       const proposedData = {};
