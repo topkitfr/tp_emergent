@@ -3,15 +3,18 @@ import './App.css';
 import CollaborativeHeader from './components/CollaborativeHeader';
 import CollaborativeHomepage from './pages/CollaborativeHomepage';
 import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
+import CataloguePage from './pages/CataloguePage'; // Nouvelle page unifiée
+import CollectionsPage from './pages/CollectionsPage'; // Nouvelle page collections
+import ContributePage from './pages/ContributePage'; // Nouvelle page contribution
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
 import CollaborativeBrandsPage from './pages/CollaborativeBrandsPage';
 import CollaborativePlayersPage from './pages/CollaborativePlayersPage';
 import CollaborativeCompetitionsPage from './pages/CollaborativeCompetitionsPage';
 import CollaborativeMasterJerseyPage from './pages/CollaborativeMasterJerseyPage';
 import CollaborativeContributionsPage from './pages/CollaborativeContributionsPage';
-import CollaborativeContributePage from './pages/CollaborativeContributePage'; // Nouvelle page
+import CollaborativeContributePage from './pages/CollaborativeContributePage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
-import ContributionModal from './ContributionModal'; // Nouveau modal
+import ContributionModal from './ContributionModal';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
