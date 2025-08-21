@@ -296,7 +296,7 @@ class TopKitContributionsImagesTester:
             
             contribution_data = {
                 "entity_type": "team",
-                "entity_id": "test-storage-verification",
+                "entity_id": "891c5061-49d1-4908-a81b-ca78531f2b47",
                 "proposed_data": {
                     "name": "Test Storage Team",
                     "city": "Storage City"
