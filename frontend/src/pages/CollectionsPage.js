@@ -423,10 +423,13 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
                     <div className="text-6xl mb-4">❤️</div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Votre wishlist est vide</h3>
                     <p className="text-gray-600 mb-6">
-                      Parcourez le catalogue pour ajouter des maillots à votre wishlist
+                      Parcourez le Vestiaire pour ajouter des maillots à votre wishlist
                     </p>
-                    <button className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors">
-                      Explorer le catalogue
+                    <button 
+                      onClick={() => window.location.href = '#vestiaire'}
+                      className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Explorer le Vestiaire
                     </button>
                   </div>
                 )}
