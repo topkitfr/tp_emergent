@@ -63,10 +63,11 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
   }, [isOpen, entity]);
 
   useEffect(() => {
-    // Calculer les changements en temps réel
+    // Calculer les changements en temps réel (incluant images)
     if (Object.keys(originalData).length > 0) {
       const detectedChanges = [];
       
+      // Vérifier les changements dans les champs de texte
       Object.keys(formData).forEach(field => {
         const originalValue = originalData[field];
         const newValue = formData[field];
@@ -84,6 +85,34 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
           });
         }
       });
+      
+      // Vérifier les changements dans les images
+      if (imageFiles.logo) {
+        detectedChanges.push({
+          field: 'logo',
+          from: 'Image actuelle',
+          to: 'Nouvelle image',
+          type: 'update'
+        });
+      }
+      
+      if (imageFiles.primary_photo) {
+        detectedChanges.push({
+          field: 'primary_photo',
+          from: 'Photo actuelle',
+          to: 'Nouvelle photo',
+          type: 'update'
+        });
+      }
+      
+      if (imageFiles.secondary_photos.length > 0) {
+        detectedChanges.push({
+          field: 'secondary_photos',
+          from: 'Photos actuelles',
+          to: `${imageFiles.secondary_photos.length} nouvelle(s) photo(s)`,
+          type: 'add'
+        });
+      }
       
       setChanges(detectedChanges);
       
