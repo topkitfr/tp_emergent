@@ -105,8 +105,8 @@ class TopKitContributionsImagesTester:
                 "entity_type": "team",
                 "entity_id": "212221c8-0182-4e81-a915-33a41909a635",
                 "proposed_data": {
-                    "name": "AC Milan Actualisation",
-                    "city": "Milano"
+                    "name": "Paris Saint-Germain Actualisation",
+                    "city": "Paris"
                 },
                 "title": "Test après correction bouton",
                 "description": "Test complet après fix du bouton de soumission",
