@@ -191,6 +191,24 @@ const CollaborativeHeader = ({
         {/* Mobile Menu - WhenToCop Style */}
         {showMobileMenu && (
           <div className="lg:hidden bg-white border-t border-gray-100 py-4">
+            {/* Mobile Search Bar */}
+            <div className="px-4 pb-4 md:hidden">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full bg-gray-50 border-0 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white placeholder-gray-500"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-1">
               {navigationItems.map((item) => (
                 <button
