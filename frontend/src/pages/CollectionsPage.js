@@ -121,6 +121,9 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
             {jerseyCollection.condition && (
               <p>État: {jerseyCollection.condition}</p>
             )}
+            {jerseyCollection.jersey_release.topkit_reference && (
+              <p className="text-xs text-gray-400">Réf: {jerseyCollection.jersey_release.topkit_reference}</p>
+            )}
           </div>
         )}
 
@@ -134,14 +137,28 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
                   {jerseyCollection.estimated_value ? `${jerseyCollection.estimated_value}€` : 'Non évaluée'}
                 </span>
               </div>
+              {jerseyCollection.purchase_price && (
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-sm text-gray-500">Prix d'achat:</span>
+                  <span className="text-sm text-gray-700">
+                    {jerseyCollection.purchase_price}€
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Actions */}
             <div className="pt-3 flex gap-2">
-              <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => updateEstimation(jerseyCollection.id)}
+                className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors"
+              >
                 Actualiser estimation
               </button>
-              <button className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm">
+              <button 
+                onClick={() => editCollectionItem(jerseyCollection)}
+                className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
                 ⚙️
               </button>
             </div>
@@ -149,9 +166,18 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
         )}
 
         {type === 'wanted' && (
-          <div className="pt-3">
-            <button className="w-full bg-red-100 text-red-700 py-2 px-3 rounded text-sm hover:bg-red-200 transition-colors">
-              ❤️ Dans ma wishlist
+          <div className="pt-3 flex gap-2">
+            <button 
+              onClick={() => removeFromCollection(jerseyCollection.id)}
+              className="flex-1 bg-red-100 text-red-700 py-2 px-3 rounded text-sm hover:bg-red-200 transition-colors"
+            >
+              ❤️ Retirer de la wishlist
+            </button>
+            <button 
+              onClick={() => addToOwned(jerseyCollection)}
+              className="px-3 py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded text-sm"
+            >
+              ➕ Possédé
             </button>
           </div>
         )}
