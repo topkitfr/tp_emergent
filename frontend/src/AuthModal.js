@@ -422,6 +422,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onBlur={(e) => setFormData({ ...formData, email: e.target.value })} // Handle autofill
+              autoComplete="email"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
             />
@@ -431,6 +433,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Mot de passe"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onBlur={(e) => setFormData({ ...formData, password: e.target.value })} // Handle autofill
+              autoComplete="current-password"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
             />
