@@ -105,11 +105,11 @@ class TopKitContributionsImagesTester:
                 "entity_type": "team",
                 "entity_id": "67fdd572-78bd-4207-b3a1-0503970b482b",
                 "proposed_data": {
-                    "name": "FC Barcelona Test",
-                    "city": "Barcelona"
+                    "name": "AC Milan Actualisation",
+                    "city": "Milano"
                 },
-                "title": "Test avec images",
-                "description": "Test upload d'images",
+                "title": "Test après correction bouton",
+                "description": "Test complet après fix du bouton de soumission",
                 "source_urls": [],
                 "images": {
                     "logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M8QDwAM7AHn9rA1ZQAAAABJRU5ErkJggg==",
