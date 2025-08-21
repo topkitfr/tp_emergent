@@ -9455,22 +9455,28 @@ async def create_contribution(
     
     # Créer la contribution
     from datetime import timedelta
-    contribution = Contribution(
-        entity_type=contribution_request.entity_type,
-        entity_id=contribution_request.entity_id,
-        entity_reference=current_data.get("topkit_reference", "N/A"),
-        action_type=contribution_request.action_type,
-        current_data=current_data,
-        proposed_data=contribution_request.proposed_data,
-        changed_fields=[change["field"] for change in changes_summary],
-        title=contribution_request.title,
-        description=contribution_request.description,
-        source_urls=contribution_request.source_urls,
-        contributor_id=current_user["id"],
-        contributor_level="Rookie",  # Par défaut pour maintenant
-        expires_at=datetime.utcnow() + timedelta(days=7),
-        topkit_reference=await generate_contribution_reference(contribution_request.entity_type)
-    )
+    contribution_data = {
+        "entity_type": contribution_request.entity_type,
+        "entity_id": contribution_request.entity_id,
+        "entity_reference": current_data.get("topkit_reference", "N/A"),
+        "action_type": contribution_request.action_type,
+        "current_data": current_data,
+        "proposed_data": contribution_request.proposed_data,
+        "changed_fields": [change["field"] for change in changes_summary],
+        "title": contribution_request.title,
+        "description": contribution_request.description,
+        "source_urls": contribution_request.source_urls,
+        "contributor_id": current_user["id"],
+        "contributor_level": "Rookie",  # Par défaut pour maintenant
+        "expires_at": datetime.utcnow() + timedelta(days=7),
+        "topkit_reference": await generate_contribution_reference(contribution_request.entity_type)
+    }
+    
+    # Ajouter les images si présentes
+    if contribution_request.images:
+        contribution_data["images"] = contribution_request.images
+    
+    contribution = Contribution(**contribution_data)
     
     # Insérer dans la base
     await db.contributions.insert_one(contribution.dict())
