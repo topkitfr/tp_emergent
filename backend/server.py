@@ -5209,6 +5209,311 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
         logger.error(f"Error fetching user collections: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# ================================
+# JERSEY RELEASE COLLECTIONS API
+# ================================
+
+@api_router.get("/users/{user_id}/collections/owned")
+async def get_user_owned_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user's owned Jersey Release collections"""
+    try:
+        # Verify access - users can only see their own collections unless profile is public
+        if current_user["id"] != user_id:
+            user = await db.users.find_one({"id": user_id})
+            if not user or user.get("profile_privacy", "public") == "private":
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get owned Jersey Release collections with enriched data
+        pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "owned"}},
+            {
+                "$lookup": {
+                    "from": "jersey_releases",
+                    "localField": "jersey_release_id",
+                    "foreignField": "id",
+                    "as": "jersey_release"
+                }
+            },
+            {"$unwind": {"path": "$jersey_release", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "jersey_release.master_jersey_id",
+                    "foreignField": "id",
+                    "as": "master_jersey"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "jersey_release_id": 1,
+                    "size": 1,
+                    "condition": 1,
+                    "purchase_price": 1,
+                    "estimated_value": 1,
+                    "created_at": 1,
+                    "jersey_release": {
+                        "id": "$jersey_release.id",
+                        "player_name": "$jersey_release.player_name",
+                        "player_number": "$jersey_release.player_number",
+                        "release_type": "$jersey_release.release_type",
+                        "retail_price": "$jersey_release.retail_price",
+                        "product_images": "$jersey_release.product_images",
+                        "topkit_reference": "$jersey_release.topkit_reference"
+                    },
+                    "master_jersey": {
+                        "id": "$master_jersey.id",
+                        "team_info": "$master_jersey.team_info",
+                        "season": "$master_jersey.season",
+                        "jersey_type": "$master_jersey.jersey_type",
+                        "brand_info": "$master_jersey.brand_info",
+                        "competition_info": "$master_jersey.competition_info",
+                        "topkit_reference": "$master_jersey.topkit_reference"
+                    }
+                }
+            }
+        ]
+        
+        collections = await db.user_jersey_collections.aggregate(pipeline).to_list(1000)
+        return collections
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching owned collections: {str(e)}")
+
+@api_router.get("/users/{user_id}/collections/wanted")
+async def get_user_wanted_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user's wanted Jersey Release collections"""
+    try:
+        # Verify access
+        if current_user["id"] != user_id:
+            user = await db.users.find_one({"id": user_id})
+            if not user or user.get("profile_privacy", "public") == "private":
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get wanted Jersey Release collections with enriched data
+        pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "wanted"}},
+            {
+                "$lookup": {
+                    "from": "jersey_releases",
+                    "localField": "jersey_release_id",
+                    "foreignField": "id",
+                    "as": "jersey_release"
+                }
+            },
+            {"$unwind": {"path": "$jersey_release", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "jersey_release.master_jersey_id",
+                    "foreignField": "id",
+                    "as": "master_jersey"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "jersey_release_id": 1,
+                    "created_at": 1,
+                    "jersey_release": {
+                        "id": "$jersey_release.id",
+                        "player_name": "$jersey_release.player_name",
+                        "player_number": "$jersey_release.player_number",
+                        "release_type": "$jersey_release.release_type",
+                        "retail_price": "$jersey_release.retail_price",
+                        "product_images": "$jersey_release.product_images",
+                        "topkit_reference": "$jersey_release.topkit_reference"
+                    },
+                    "master_jersey": {
+                        "id": "$master_jersey.id",
+                        "team_info": "$master_jersey.team_info",
+                        "season": "$master_jersey.season",
+                        "jersey_type": "$master_jersey.jersey_type",
+                        "brand_info": "$master_jersey.brand_info",
+                        "competition_info": "$master_jersey.competition_info",
+                        "topkit_reference": "$master_jersey.topkit_reference"
+                    }
+                }
+            }
+        ]
+        
+        collections = await db.user_jersey_collections.aggregate(pipeline).to_list(1000)
+        return collections
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching wanted collections: {str(e)}")
+
+@api_router.post("/users/{user_id}/collections")
+async def add_to_collection(
+    user_id: str,
+    collection_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a Jersey Release to user's collection"""
+    try:
+        # Verify user can only modify their own collection
+        if current_user["id"] != user_id:
+            raise HTTPException(status_code=403, detail="Can only modify your own collection")
+        
+        # Validate required fields
+        required_fields = ["jersey_release_id", "collection_type"]
+        for field in required_fields:
+            if field not in collection_data:
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+        
+        # Validate collection_type
+        if collection_data["collection_type"] not in ["owned", "wanted"]:
+            raise HTTPException(status_code=400, detail="collection_type must be 'owned' or 'wanted'")
+        
+        # Check if Jersey Release exists
+        jersey_release = await db.jersey_releases.find_one({"id": collection_data["jersey_release_id"]})
+        if not jersey_release:
+            raise HTTPException(status_code=404, detail="Jersey Release not found")
+        
+        # Check if already in collection
+        existing = await db.user_jersey_collections.find_one({
+            "user_id": user_id,
+            "jersey_release_id": collection_data["jersey_release_id"],
+            "collection_type": collection_data["collection_type"]
+        })
+        
+        if existing:
+            raise HTTPException(status_code=400, detail="Jersey Release already in collection")
+        
+        # Create collection item
+        from .collaborative_models import UserJerseyCollection
+        collection_item = UserJerseyCollection(
+            user_id=user_id,
+            jersey_release_id=collection_data["jersey_release_id"],
+            size=collection_data.get("size", ""),
+            condition=collection_data.get("condition", "mint"),
+            purchase_price=collection_data.get("purchase_price"),
+            estimated_value=collection_data.get("estimated_value")
+        )
+        
+        # Add collection_type field
+        collection_dict = collection_item.dict()
+        collection_dict["collection_type"] = collection_data["collection_type"]
+        
+        await db.user_jersey_collections.insert_one(collection_dict)
+        
+        # Log activity
+        await log_user_activity(
+            user_id,
+            f"jersey_release_added_to_{collection_data['collection_type']}",
+            collection_data["jersey_release_id"],
+            {
+                "release_reference": jersey_release.get("topkit_reference"),
+                "collection_type": collection_data["collection_type"]
+            }
+        )
+        
+        return {"message": "Jersey Release added to collection successfully", "collection_id": collection_item.id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding to collection: {str(e)}")
+
+@api_router.delete("/users/{user_id}/collections/{collection_id}")
+async def remove_from_collection(
+    user_id: str,
+    collection_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove a Jersey Release from user's collection"""
+    try:
+        # Verify user can only modify their own collection
+        if current_user["id"] != user_id:
+            raise HTTPException(status_code=403, detail="Can only modify your own collection")
+        
+        # Find and remove collection item
+        collection_item = await db.user_jersey_collections.find_one({"id": collection_id, "user_id": user_id})
+        if not collection_item:
+            raise HTTPException(status_code=404, detail="Collection item not found")
+        
+        await db.user_jersey_collections.delete_one({"id": collection_id, "user_id": user_id})
+        
+        # Log activity
+        await log_user_activity(
+            user_id,
+            "jersey_release_removed_from_collection",
+            collection_item["jersey_release_id"],
+            {
+                "collection_type": collection_item.get("collection_type", "unknown")
+            }
+        )
+        
+        return {"message": "Jersey Release removed from collection successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing from collection: {str(e)}")
+
+@api_router.put("/users/{user_id}/collections/{collection_id}")
+async def update_collection_item(
+    user_id: str,
+    collection_id: str,
+    update_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update details of a Jersey Release in user's collection"""
+    try:
+        # Verify user can only modify their own collection
+        if current_user["id"] != user_id:
+            raise HTTPException(status_code=403, detail="Can only modify your own collection")
+        
+        # Find collection item
+        collection_item = await db.user_jersey_collections.find_one({"id": collection_id, "user_id": user_id})
+        if not collection_item:
+            raise HTTPException(status_code=404, detail="Collection item not found")
+        
+        # Allowed update fields
+        allowed_fields = ["size", "condition", "purchase_price", "estimated_value"]
+        update_dict = {}
+        
+        for field in allowed_fields:
+            if field in update_data:
+                update_dict[field] = update_data[field]
+        
+        if not update_dict:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+        # Update collection item
+        await db.user_jersey_collections.update_one(
+            {"id": collection_id, "user_id": user_id},
+            {"$set": update_dict}
+        )
+        
+        # Log activity
+        await log_user_activity(
+            user_id,
+            "jersey_release_collection_updated",
+            collection_item["jersey_release_id"],
+            {
+                "updated_fields": list(update_dict.keys()),
+                "collection_type": collection_item.get("collection_type", "unknown")
+            }
+        )
+        
+        return {"message": "Collection item updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating collection item: {str(e)}")
+
 # Nouveaux endpoints pour profil utilisateur avancé
 
 @api_router.get("/profile/advanced")
