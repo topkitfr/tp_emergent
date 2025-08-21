@@ -85,9 +85,9 @@ const CollaborativeHeader = ({
             {/* Contributions Button */}
             {user && (
               <button
-                onClick={() => onViewChange('contributions')}
+                onClick={() => onViewChange('contribute')}
                 className={`hidden md:block px-3 lg:px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  currentView === 'contributions'
+                  currentView === 'contribute'
                     ? 'bg-black text-white'
                     : 'text-gray-700 hover:text-black hover:bg-gray-100'
                 }`}
