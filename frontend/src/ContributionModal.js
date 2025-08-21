@@ -360,6 +360,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         onClose();
       } else {
         const error = await response.json();
+        console.error('Server error:', error);
         alert(`Erreur: ${error.detail || 'Une erreur est survenue'}`);
       }
     } catch (error) {
