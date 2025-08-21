@@ -453,6 +453,12 @@ def main():
         contribution_data = {
             "entity_type": "team",
             "entity_id": "team-fc-barcelona",
+            "contribution_type": "update",
+            "proposed_changes": {
+                "name": "FC Barcelona",
+                "city": "Barcelona", 
+                "country": "Spain"
+            },
             "proposed_data": {
                 "name": "FC Barcelona",
                 "city": "Barcelona", 
