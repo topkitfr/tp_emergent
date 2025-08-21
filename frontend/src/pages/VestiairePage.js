@@ -405,7 +405,19 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {loading ? (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Versions disponibles ({jerseyReleases.length})
+            </h2>
+            {user && (
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                + Ajouter une version
+              </button>
+            )}
+          </div>
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Chargement du vestiaire...</p>
