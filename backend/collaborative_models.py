@@ -622,6 +622,7 @@ class ContributionCreateRequest(BaseModel):
     title: str
     description: Optional[str] = None
     source_urls: List[str] = []
+    images: Optional[Dict[str, Any]] = None  # Nouvelles images proposées
 
 class VoteRequest(BaseModel):
     """Requête pour voter sur une contribution"""
