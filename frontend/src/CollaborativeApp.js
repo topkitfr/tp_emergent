@@ -159,6 +159,15 @@ const CollaborativeApp = () => {
       case 'profile':
         return <CollaborativeProfilePage {...commonProps} />;
       
+      case 'contribute':
+        return (
+          <CollaborativeContributePage 
+            {...commonProps} 
+            currentUser={user}
+            onDataUpdate={loadCollaborativeData}
+          />
+        );
+      
       default:
         return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
     }
