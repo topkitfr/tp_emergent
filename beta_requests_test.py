@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration from frontend/.env
-BACKEND_URL = "https://jersey-contrib.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-db.preview.emergentagent.com/api"
 
 # Admin credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"

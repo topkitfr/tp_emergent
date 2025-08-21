@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://jersey-contrib.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-db.preview.emergentagent.com/api"
 
 # Admin credentials (confirmed working)
 ADMIN_EMAIL = "topkitfr@gmail.com"

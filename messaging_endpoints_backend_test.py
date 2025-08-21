@@ -27,7 +27,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://jersey-contrib.preview.emergentagent.com/api"
+BASE_URL = "https://football-db.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {
