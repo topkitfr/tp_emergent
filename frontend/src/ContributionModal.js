@@ -88,6 +88,93 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
     }
   }, [formData, originalData, entity, title]);
 
+  // Fonctions de gestion des images
+  const handleImageUpload = (imageType, file) => {
+    if (!file) return;
+    
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner un fichier image valide');
+      return;
+    }
+    
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La taille de l\'image ne doit pas dépasser 5MB');
+      return;
+    }
+    
+    // Mettre à jour les fichiers
+    setImageFiles(prev => ({
+      ...prev,
+      [imageType]: file
+    }));
+    
+    // Créer l'aperçu
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreviews(prev => ({
+        ...prev,
+        [imageType]: e.target.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleMultipleImagesUpload = (files) => {
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        alert(`${file.name} n'est pas un fichier image valide`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} dépasse la taille maximale de 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setImageFiles(prev => ({
+      ...prev,
+      secondary_photos: [...prev.secondary_photos, ...validFiles]
+    }));
+
+    // Créer les aperçus
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => ({
+          ...prev,
+          secondary_photos: [...prev.secondary_photos, e.target.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeSecondaryImage = (index) => {
+    setImageFiles(prev => ({
+      ...prev,
+      secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+    }));
+    setImagePreviews(prev => ({
+      ...prev,
+      secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const getFieldDisplayName = (field) => {
     const fieldNames = {
       name: 'du nom',
