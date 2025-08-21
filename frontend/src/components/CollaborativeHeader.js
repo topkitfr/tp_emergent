@@ -19,6 +19,7 @@ const CollaborativeHeader = ({
   const navigationItems = [
     { id: 'home', label: 'Accueil', icon: '🏠' },
     { id: 'catalogue', label: 'Catalogue', icon: '📚' },
+    { id: 'vestiaire', label: 'Vestiaire', icon: '👕' },
     { id: 'collections', label: 'Collections', icon: '💎' },
     { id: 'contribute', label: 'Contribuer', icon: '✏️' }
   ];
