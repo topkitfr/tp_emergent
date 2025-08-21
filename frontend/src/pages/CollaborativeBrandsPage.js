@@ -11,6 +11,8 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedBrandForContribution, setSelectedBrandForContribution] = useState(null);
   
   // Get unique countries for filter
   const countries = [...new Set(brands.map(brand => brand.country).filter(Boolean))];
