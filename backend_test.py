@@ -100,10 +100,10 @@ class TopKitContributionsImagesTester:
             
         try:
             # Données de test avec images base64 comme spécifié dans la review request
-            # Utiliser AC Milan comme entité existante (pas de contribution en attente)
+            # Utiliser un nouvel entity_id pour éviter les conflits avec les contributions existantes
             contribution_data = {
                 "entity_type": "team",
-                "entity_id": "67fdd572-78bd-4207-b3a1-0503970b482b",
+                "entity_id": "new-test-entity-" + str(int(datetime.now().timestamp())),
                 "proposed_data": {
                     "name": "AC Milan Actualisation",
                     "city": "Milano"
