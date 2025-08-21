@@ -379,7 +379,10 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
                   <h2 className="text-xl font-semibold text-gray-900">
                     Mes maillots ({collections.owned.length})
                   </h2>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => window.location.href = '#vestiaire'}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                  >
                     Ajouter un maillot
                   </button>
                 </div>
