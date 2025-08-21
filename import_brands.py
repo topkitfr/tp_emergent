@@ -13,8 +13,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Ajouter le répertoire parent au path pour importer les modèles
-sys.path.append(str(Path(__file__).parent))
+# Ajouter le répertoire backend au path pour importer les modèles
+sys.path.append(str(Path(__file__).parent / 'backend'))
 
 from collaborative_models import Brand
 
