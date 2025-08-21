@@ -74,7 +74,7 @@ const CataloguePage = ({
       case 'competitions':
         return <CollaborativeCompetitionsPage {...commonProps} competitions={competitions} />;
       case 'master-jerseys':
-        return <CollaborativeMasterJerseyPage {...commonProps} masterJerseys={masterJerseys} />;
+        return <CollaborativeMasterJerseyPage {...commonProps} masterJerseys={masterJerseys} teams={teams} brands={brands} competitions={competitions} />;
       default:
         return <CollaborativeTeamsPage {...commonProps} teams={teams} />;
     }
