@@ -451,12 +451,25 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                 )}
                 <p className="text-blue-600 font-mono text-sm">{selectedTeam.topkit_reference}</p>
               </div>
-              <button
-                onClick={() => setSelectedTeam(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="text-2xl">×</span>
-              </button>
+              <div className="flex gap-2">
+                {user && (
+                  <button
+                    onClick={() => {
+                      setSelectedTeamForContribution(selectedTeam);
+                      setShowContributionModal(true);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    ✏️ Améliorer cette fiche
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedTeam(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
