@@ -22,9 +22,9 @@ const CollaborativeMasterJerseyPage = ({
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [loading, setLoading] = useState(false);
   
-  // Get unique values for filters
-  const seasons = [...new Set(masterJerseys.map(jersey => jersey.season).filter(Boolean))];
-  const jerseyTypes = [...new Set(masterJerseys.map(jersey => jersey.jersey_type).filter(Boolean))];
+  // Get unique values for filters - with safety checks
+  const seasons = [...new Set((masterJerseys || []).map(jersey => jersey.season).filter(Boolean))];
+  const jerseyTypes = [...new Set((masterJerseys || []).map(jersey => jersey.jersey_type).filter(Boolean))];
 
   // Apply filters
   useEffect(() => {
