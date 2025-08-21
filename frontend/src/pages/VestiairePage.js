@@ -53,7 +53,171 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     setLoading(false);
   };
 
-  const addToCollection = async (release) => {
+  const createJerseyRelease = async () => {
+    if (!user) {
+      alert('Connectez-vous pour créer une version');
+      return;
+    }
+    
+    try {
+      const releaseData = {
+        ...newRelease,
+        retail_price: parseFloat(newRelease.retail_price) || 80.0,
+        player_number: parseInt(newRelease.player_number) || null,
+        size_range: newRelease.size_range.length > 0 ? newRelease.size_range : ["S", "M", "L", "XL"],
+        topkit_reference: `TK-RELEASE-${Date.now()}`
+      };
+
+      const response = await fetch(`${API}/api/jersey-releases`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(releaseData)
+      });
+      
+      if (response.ok) {
+        setShowCreateModal(false);
+        setNewRelease({
+          master_jersey_id: '',
+          player_name: '',
+          player_number: '',
+          release_type: 'player_version',
+          retail_price: '',
+          size_range: [],
+          sku_code: ''
+        });
+        loadVestiaire(); // Refresh list
+        alert('Version créée avec succès !');
+      } else {
+        const error = await response.text();
+        alert(`Erreur: ${error}`);
+      }
+    } catch (error) {
+      console.error('Error creating release:', error);
+      alert('Erreur lors de la création');
+    }
+  };
+
+  const CreateReleaseModal = () => (
+    showCreateModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold">Créer une nouvelle version</h3>
+            <button 
+              onClick={() => setShowCreateModal(false)}
+              className="text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {/* Master Jersey Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Master Jersey *</label>
+              <select
+                value={newRelease.master_jersey_id}
+                onChange={(e) => setNewRelease({...newRelease, master_jersey_id: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                required
+              >
+                <option value="">Sélectionner un design</option>
+                {masterJerseys.map(master => (
+                  <option key={master.id} value={master.id}>
+                    {master.team_info?.name} {master.season} - {master.jersey_type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Player Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Nom du joueur</label>
+                <input
+                  type="text"
+                  value={newRelease.player_name}
+                  onChange={(e) => setNewRelease({...newRelease, player_name: e.target.value})}
+                  placeholder="ex: Mbappé"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Numéro</label>
+                <input
+                  type="number"
+                  value={newRelease.player_number}
+                  onChange={(e) => setNewRelease({...newRelease, player_number: e.target.value})}
+                  placeholder="ex: 7"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            </div>
+
+            {/* Release Type & Price */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Type de version</label>
+                <select
+                  value={newRelease.release_type}
+                  onChange={(e) => setNewRelease({...newRelease, release_type: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                >
+                  <option value="player_version">Version Joueur</option>
+                  <option value="fan_version">Version Fan</option>
+                  <option value="authentic">Authentique</option>
+                  <option value="replica">Réplique</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Prix de vente (€)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newRelease.retail_price}
+                  onChange={(e) => setNewRelease({...newRelease, retail_price: e.target.value})}
+                  placeholder="89.99"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            </div>
+
+            {/* SKU Code */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Code SKU</label>
+              <input
+                type="text"
+                value={newRelease.sku_code}
+                onChange={(e) => setNewRelease({...newRelease, sku_code: e.target.value})}
+                placeholder="ex: DJ7949-001"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={createJerseyRelease}
+              disabled={!newRelease.master_jersey_id}
+              className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              Créer la version
+            </button>
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
     if (!user) {
       alert('Connectez-vous pour ajouter à votre collection');
       return;
