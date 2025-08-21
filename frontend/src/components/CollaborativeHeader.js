@@ -23,7 +23,8 @@ const CollaborativeHeader = ({
     { id: 'brands', label: 'Marques', icon: '👕' },
     { id: 'players', label: 'Joueurs', icon: '👤' },
     { id: 'competitions', label: 'Compétitions', icon: '🏆' },
-    { id: 'master-jerseys', label: 'Maillots', icon: '📋' }
+    { id: 'master-jerseys', label: 'Maillots', icon: '📋' },
+    { id: 'contribute', label: 'Contribuer', icon: '🤝' }
   ];
 
   return (
