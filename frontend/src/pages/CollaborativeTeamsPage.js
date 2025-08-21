@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ContributionModal from '../ContributionModal';
 
 const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   const [filteredTeams, setFilteredTeams] = useState([]);
