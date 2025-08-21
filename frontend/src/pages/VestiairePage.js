@@ -219,14 +219,14 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     )
   );
 
-  const addToCollection = async (release) => {
+  const addToCollection = async (release, collectionType = 'owned') => {
     if (!user) {
       alert('Connectez-vous pour ajouter à votre collection');
       return;
     }
     
     try {
-      const response = await fetch(`${API}/api/users/${user.id}/collections`, {
+      const response = await fetch(`${API}/api/vestiaire/add-to-collection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,16 +234,25 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         },
         body: JSON.stringify({
           jersey_release_id: release.id,
+          collection_type: collectionType,
           size: 'M', // Default, could be selection modal
           condition: 'excellent'
         })
       });
       
+      const result = await response.json();
+      
       if (response.ok) {
-        alert('Maillot ajouté à votre collection !');
+        alert(`Maillot ajouté à votre ${collectionType === 'owned' ? 'collection' : 'wishlist'} !`);
+        if (onDataUpdate) {
+          onDataUpdate(); // Notify parent to refresh data
+        }
+      } else {
+        alert(`Erreur: ${result.detail || 'Impossible d\'ajouter à la collection'}`);
       }
     } catch (error) {
       console.error('Error adding to collection:', error);
+      alert('Erreur lors de l\'ajout à la collection');
     }
   };
 
