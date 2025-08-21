@@ -60,6 +60,73 @@ const CollectionsPage = ({ user, API, onDataUpdate }) => {
     setLoading(false);
   };
 
+  // Collection management functions
+  const updateEstimation = async (collectionId) => {
+    try {
+      // TODO: Implement estimation update
+      console.log('Updating estimation for collection:', collectionId);
+      alert('Fonction d\'estimation en cours de développement');
+    } catch (error) {
+      console.error('Error updating estimation:', error);
+    }
+  };
+
+  const editCollectionItem = (jerseyCollection) => {
+    // TODO: Open edit modal
+    console.log('Editing collection item:', jerseyCollection);
+    alert('Modal d\'édition en cours de développement');
+  };
+
+  const removeFromCollection = async (collectionId) => {
+    if (!confirm('Êtes-vous sûr de vouloir retirer ce maillot de votre collection?')) return;
+    
+    try {
+      const response = await fetch(`${API}/api/users/${user.id}/collections/${collectionId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.ok) {
+        alert('Maillot retiré de votre collection');
+        loadCollections(); // Reload collections
+      } else {
+        alert('Erreur lors de la suppression');
+      }
+    } catch (error) {
+      console.error('Error removing from collection:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  const addToOwned = async (jerseyCollection) => {
+    try {
+      const response = await fetch(`${API}/api/users/${user.id}/collections`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify({
+          jersey_release_id: jerseyCollection.jersey_release_id,
+          collection_type: 'owned',
+          size: 'M', // Default size
+          condition: 'mint'
+        })
+      });
+
+      if (response.ok) {
+        alert('Maillot ajouté à votre collection');
+        loadCollections(); // Reload collections
+      } else {
+        const error = await response.json();
+        alert(`Erreur: ${error.detail || 'Impossible d\'ajouter à la collection'}`);
+      }
+    } catch (error) {
+      console.error('Error adding to owned collection:', error);
+      alert('Erreur lors de l\'ajout');
+    }
+  };
+
   const tabs = [
     { 
       id: 'owned', 
