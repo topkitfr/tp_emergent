@@ -9053,32 +9053,7 @@ async def create_jersey_release(
 
 # ================================
 # CONTRIBUTIONS & COLLABORATION
-# ================================
-
-@api_router.post("/contributions")
-async def create_contribution(
-    contribution_data: ContributionCreate,
-    current_user: dict = Depends(get_current_user)
-):
-    """Create new contribution/modification proposal"""
-    contribution = Contribution(
-        **contribution_data.dict(),
-        contributor_id=current_user["id"]
-    )
-    
-    await db.contributions.insert_one(contribution.dict())
-    
-    await log_user_activity(
-        current_user["id"],
-        "contribution_created",
-        contribution.id,
-        {
-            "entity_type": contribution.entity_type,
-            "contribution_type": contribution.contribution_type
-        }
-    )
-    
-    return contribution.dict()
+# ================================.dict()
 
 @api_router.get("/contributions")
 async def get_contributions(
