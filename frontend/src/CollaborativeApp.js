@@ -140,6 +140,9 @@ const CollaborativeApp = () => {
       case 'catalogue':
         return <CataloguePage {...commonProps} />;
       
+      case 'vestiaire':
+        return <VestiairePage {...commonProps} />;
+      
       case 'collections':
         return <CollectionsPage {...commonProps} />;
       
