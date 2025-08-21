@@ -453,15 +453,15 @@ def main():
         contribution_data = {
             "entity_type": "team",
             "entity_id": "team-fc-barcelona",
-            "action_type": "update",
-            "proposed_data": {
+            "contribution_type": "update",
+            "proposed_changes": {
                 "name": "FC Barcelona",
                 "city": "Barcelona", 
                 "country": "Spain"
             },
-            "title": "Mise à jour informations FC Barcelona",
-            "description": "Ajout de la ville manquante",
-            "source_urls": ["https://example.com/source"]
+            "description": "Ajout de la ville manquante pour FC Barcelona",
+            "evidence_urls": ["https://example.com/source"],
+            "source_links": ["https://fcbarcelona.com"]
         }
         
         try:
