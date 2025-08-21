@@ -127,7 +127,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         }
       }
     }
-  }, [formData, originalData, entity, title]);
+  }, [formData, originalData, imageFiles, entity, title]);
 
   // Fonctions de gestion des images
   const handleImageUpload = (imageType, file) => {
