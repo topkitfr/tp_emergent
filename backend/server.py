@@ -5514,6 +5514,33 @@ async def update_collection_item(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating collection item: {str(e)}")
 
+@api_router.post("/vestiaire/add-to-collection")
+async def add_vestiaire_to_collection(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a Jersey Release from Vestiaire to user's collection"""
+    try:
+        # Validate required fields
+        required_fields = ["jersey_release_id", "collection_type"]
+        for field in required_fields:
+            if field not in data:
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+        
+        # Use the existing add_to_collection logic
+        collection_result = await add_to_collection(
+            current_user["id"],
+            data,
+            current_user
+        )
+        
+        return collection_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding vestiaire item to collection: {str(e)}")
+
 # Nouveaux endpoints pour profil utilisateur avancé
 
 @api_router.get("/profile/advanced")
