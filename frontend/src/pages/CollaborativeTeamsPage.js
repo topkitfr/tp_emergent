@@ -501,15 +501,15 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                 </div>
               </div>
 
-              {selectedTeam.colors && selectedTeam.colors.length > 0 && (
+              {(selectedTeam.colors || selectedTeam.primary_colors) && (selectedTeam.colors?.length > 0 || selectedTeam.primary_colors?.length > 0) && (
                 <div>
-                  <h3 className="font-semibold mb-2">Couleurs</h3>
+                  <h3 className="font-semibold mb-2 text-gray-900">Couleurs</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedTeam.colors.map((color, index) => (
+                    {(selectedTeam.colors || selectedTeam.primary_colors || []).map((color, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <div
                           className="w-6 h-6 rounded-full border border-gray-300"
-                          style={{ backgroundColor: color }}
+                          style={{ backgroundColor: color.toLowerCase() }}
                         ></div>
                         <span className="text-sm text-gray-600 capitalize">{color}</span>
                       </div>
