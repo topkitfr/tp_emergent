@@ -21,6 +21,8 @@ const CollaborativeMasterJerseyPage = ({
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
+  const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedJerseyForContribution, setSelectedJerseyForContribution] = useState(null);
   const [loading, setLoading] = useState(false);
   
   // Get unique values for filters - with safety checks
