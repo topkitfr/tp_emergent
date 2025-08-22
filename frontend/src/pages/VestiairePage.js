@@ -305,23 +305,31 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       <div className="space-y-1 mb-4">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Type:</span>
-          <span className="font-medium">{release.release_type}</span>
+          <span className="font-medium text-gray-900">{release.release_type || 'Non spécifié'}</span>
         </div>
         {release.player_name && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Joueur:</span>
-            <span className="font-medium">{release.player_name} #{release.player_number}</span>
+            <span className="font-medium text-gray-900">
+              {release.player_name}{release.player_number ? ` #${release.player_number}` : ''}
+            </span>
           </div>
         )}
         {release.size_range?.length > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Tailles:</span>
-            <span className="font-medium">{release.size_range.join(', ')}</span>
+            <span className="font-medium text-gray-900">{release.size_range.join(', ')}</span>
           </div>
         )}
         {release.sku_code && (
           <div className="text-xs text-gray-500">
             SKU: {release.sku_code}
+          </div>
+        )}
+        {release.retail_price && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Prix de vente:</span>
+            <span className="font-medium text-gray-900">{release.retail_price}€</span>
           </div>
         )}
       </div>
