@@ -20,9 +20,9 @@ BACKEND_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
 
 # Données d'authentification selon review request
 USER_EMAIL = "steinmetzlivio@gmail.com"
-USER_PASSWORD = "123"
+USER_PASSWORD = "T0p_Mdp_1288*"
 ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "adminpass123"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
 class TopKitImageUploadTester:
     def __init__(self):
