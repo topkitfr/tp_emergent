@@ -478,18 +478,18 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600">Pays:</span>
-                    <span className="ml-2">{selectedTeam.country}</span>
+                    <span className="ml-2 font-medium text-gray-900">{selectedTeam.country || 'Non spécifié'}</span>
                   </div>
                   {selectedTeam.city && (
                     <div>
                       <span className="text-gray-600">Ville:</span>
-                      <span className="ml-2">{selectedTeam.city}</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.city}</span>
                     </div>
                   )}
                   {selectedTeam.founded_year && (
                     <div>
                       <span className="text-gray-600">Fondation:</span>
-                      <span className="ml-2">{selectedTeam.founded_year}</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.founded_year}</span>
                     </div>
                   )}
                   <div>
