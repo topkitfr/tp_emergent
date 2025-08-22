@@ -239,7 +239,7 @@ class TopKitTeamReferencesTest:
             
             for team in teams_data:
                 team_name = team.get('name', 'Unknown')
-                reference = team.get('reference', '').strip()
+                reference = team.get('topkit_reference', '').strip()
                 
                 if reference:
                     references.append(reference)
