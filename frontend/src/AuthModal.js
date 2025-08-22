@@ -296,9 +296,26 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   if (!isOpen) return null;
 
+  const handleModalClick = (e) => {
+    // Close modal only if clicking on the backdrop (not the modal content)
+    if (e.target === e.currentTarget) {
+      setShowForgotPassword(false);
+      setShowResetForm(false);
+      resetForm();
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" 
+      style={{ zIndex: 9999 }}
+      onClick={handleModalClick}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-black">
