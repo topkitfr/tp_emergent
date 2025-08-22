@@ -829,6 +829,25 @@ const CollaborativeMasterJerseyPage = ({
         </div>
       )}
 
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => {
+            setShowContributionModal(false);
+            setSelectedJerseyForContribution(null);
+          }}
+          entity={selectedJerseyForContribution}
+          entityType="master_jersey"
+          onContributionCreated={(newContribution) => {
+            console.log('Contribution créée:', newContribution);
+            if (onDataUpdate) {
+              onDataUpdate();
+            }
+          }}
+        />
+      )}
+
     </div>
   );
 };
