@@ -404,37 +404,42 @@ class TopKitTeamReferencesTest:
             # Check integration with teams
             jerseys_with_teams = 0
             jerseys_without_teams = 0
-            team_reference_issues = []
+            team_integration_issues = []
             
             for jersey in master_jerseys:
                 team_info = jersey.get('team_info', {})
-                team_reference = team_info.get('reference', '') if team_info else ''
+                team_id = team_info.get('id', '') if team_info else ''
+                team_name = team_info.get('name', '') if team_info else ''
                 
-                if team_reference:
+                if team_info and team_id:
                     jerseys_with_teams += 1
                     
-                    # Check if reference format is correct
-                    if not team_reference.startswith('TK-TEAM-'):
-                        team_reference_issues.append({
+                    # Check if team info is complete
+                    if not team_name:
+                        team_integration_issues.append({
                             "jersey_id": jersey.get('id', 'Unknown'),
-                            "team_reference": team_reference,
-                            "issue": "Invalid reference format"
+                            "team_id": team_id,
+                            "issue": "Missing team name in team_info"
                         })
                 else:
                     jerseys_without_teams += 1
+                    team_integration_issues.append({
+                        "jersey_id": jersey.get('id', 'Unknown'),
+                        "issue": "Missing team_info"
+                    })
             
             total_jerseys = len(master_jerseys)
-            integration_success = jerseys_with_teams > 0 and len(team_reference_issues) == 0
+            integration_success = jerseys_with_teams > 0 and len(team_integration_issues) == 0
             
             self.log_test(
                 "Master Jerseys Integration",
                 integration_success,
-                f"Master Jerseys integration: {total_jerseys} jerseys, {jerseys_with_teams} with team references",
+                f"Master Jerseys integration: {total_jerseys} jerseys, {jerseys_with_teams} with team info",
                 {
                     "total_master_jerseys": total_jerseys,
                     "jerseys_with_teams": jerseys_with_teams,
                     "jerseys_without_teams": jerseys_without_teams,
-                    "team_reference_issues": team_reference_issues,
+                    "team_integration_issues": team_integration_issues,
                     "integration_rate": f"{(jerseys_with_teams/total_jerseys)*100:.1f}%" if total_jerseys > 0 else "0%"
                 }
             )
