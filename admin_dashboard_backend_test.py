@@ -398,6 +398,16 @@ class AdminDashboardTester:
             self.log_test("Invalid Token Security", True, "Invalid tokens properly rejected")
         else:
             self.log_test("Invalid Token Security", False, f"Security issue: {response_invalid_auth.status_code if response_invalid_auth else 'No response'}")
+            
+        # Test admin-only endpoints with regular user token (if available)
+        # For now, just test that admin token works
+        if self.admin_token:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            admin_only_response = self.make_request("GET", "/admin/traffic-stats", headers=headers)
+            if admin_only_response and admin_only_response.status_code == 200:
+                self.log_test("Admin-Only Access Control", True, "Admin token grants proper access")
+            else:
+                self.log_test("Admin-Only Access Control", False, f"Admin access issue: {admin_only_response.status_code if admin_only_response else 'No response'}")
 
     def run_all_tests(self):
         """Run all admin dashboard tests"""
