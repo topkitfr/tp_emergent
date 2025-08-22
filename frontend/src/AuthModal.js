@@ -324,7 +324,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
              isLogin ? 'Connexion' : 'Inscription'}
           </h2>
           <button 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShowForgotPassword(false);
               setShowResetForm(false);
               resetForm();
