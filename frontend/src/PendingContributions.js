@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from './App';
 
-const PendingContributions = ({ entityId, entityType, onVoteSubmitted }) => {
+const PendingContributions = ({ entityId, entityType, onVoteSubmitted, user }) => {
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [voting, setVoting] = useState({});
