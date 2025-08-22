@@ -436,6 +436,7 @@ class JerseyReleaseCreate(BaseModel):
     player_id: Optional[str] = None
     retail_price: Optional[float] = None
     sku_code: Optional[str] = None
+    product_images: List[str] = []
 
 # ================================
 # MODÈLES DE RÉPONSE
