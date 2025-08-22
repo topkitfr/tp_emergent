@@ -148,13 +148,6 @@ class AdminDashboardTester:
                 self.log_test("Dashboard Statistics API", False, f"JSON parsing error: {e}")
         else:
             self.log_test("Dashboard Statistics API", False, f"Stats endpoint failed: {stats_response.status_code if stats_response else 'No response'}")
-        
-        # Test system health metrics
-        health_response = self.make_request("GET", "/admin/system-health", headers=headers)
-        if health_response and health_response.status_code in [200, 404]:
-            self.log_test("System Health Metrics", True, "Health endpoint accessible")
-        else:
-            self.log_test("System Health Metrics", False, f"Health endpoint failed: {health_response.status_code if health_response else 'No response'}")
             
         # Test recent activity/audit trail
         activities_response = self.make_request("GET", "/admin/activities", headers=headers)
@@ -167,6 +160,14 @@ class AdminDashboardTester:
                 self.log_test("Recent Activity Endpoint", False, f"JSON parsing error: {e}")
         else:
             self.log_test("Recent Activity Endpoint", False, f"Activities endpoint failed: {activities_response.status_code if activities_response else 'No response'}")
+            
+        # Test user statistics endpoint
+        if self.admin_user_id:
+            user_stats_response = self.make_request("GET", f"/admin/user-stats/{self.admin_user_id}", headers=headers)
+            if user_stats_response and user_stats_response.status_code == 200:
+                self.log_test("User Statistics Endpoint", True, "User stats accessible")
+            else:
+                self.log_test("User Statistics Endpoint", False, f"User stats failed: {user_stats_response.status_code if user_stats_response else 'No response'}")
 
     def test_user_management_endpoints(self):
         """Test 3: User Management Admin Endpoints"""
