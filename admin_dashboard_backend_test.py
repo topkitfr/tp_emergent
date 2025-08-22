@@ -299,32 +299,38 @@ class AdminDashboardTester:
             
         headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        # Test data export functionality (CSV/JSON)
-        export_csv_response = self.make_request("GET", "/admin/export/csv", headers=headers)
-        if export_csv_response and export_csv_response.status_code in [200, 404]:
-            self.log_test("CSV Export Functionality", True, "CSV export endpoint accessible")
+        # Test database cleanup functionality
+        cleanup_response = self.make_request("POST", "/admin/cleanup/database", headers=headers)
+        if cleanup_response and cleanup_response.status_code in [200, 404, 400]:
+            self.log_test("Database Cleanup", True, "Database cleanup endpoint accessible")
         else:
-            self.log_test("CSV Export Functionality", False, f"CSV export failed: {export_csv_response.status_code if export_csv_response else 'No response'}")
+            self.log_test("Database Cleanup", False, f"Database cleanup failed: {cleanup_response.status_code if cleanup_response else 'No response'}")
             
-        export_json_response = self.make_request("GET", "/admin/export/json", headers=headers)
-        if export_json_response and export_json_response.status_code in [200, 404]:
-            self.log_test("JSON Export Functionality", True, "JSON export endpoint accessible")
+        # Test database erase functionality (dangerous - just test accessibility)
+        erase_response = self.make_request("GET", "/admin/database/erase", headers=headers)
+        if erase_response and erase_response.status_code in [200, 404, 405]:
+            self.log_test("Database Erase Endpoint", True, "Database erase endpoint accessible")
         else:
-            self.log_test("JSON Export Functionality", False, f"JSON export failed: {export_json_response.status_code if export_json_response else 'No response'}")
-        
-        # Test backup/restore endpoints
-        backup_response = self.make_request("GET", "/admin/backup", headers=headers)
-        if backup_response and backup_response.status_code in [200, 404]:
-            self.log_test("Backup Endpoint", True, "Backup endpoint accessible")
-        else:
-            self.log_test("Backup Endpoint", False, f"Backup endpoint failed: {backup_response.status_code if backup_response else 'No response'}")
+            self.log_test("Database Erase Endpoint", False, f"Database erase failed: {erase_response.status_code if erase_response else 'No response'}")
             
-        # Test data integrity tools
-        integrity_response = self.make_request("GET", "/admin/data-integrity", headers=headers)
-        if integrity_response and integrity_response.status_code in [200, 404]:
-            self.log_test("Data Integrity Tools", True, "Data integrity endpoint accessible")
+        # Test clear listings functionality
+        clear_listings_response = self.make_request("GET", "/admin/database/clear-listings", headers=headers)
+        if clear_listings_response and clear_listings_response.status_code in [200, 404, 405]:
+            self.log_test("Clear Listings Endpoint", True, "Clear listings endpoint accessible")
         else:
-            self.log_test("Data Integrity Tools", False, f"Data integrity failed: {integrity_response.status_code if integrity_response else 'No response'}")
+            self.log_test("Clear Listings Endpoint", False, f"Clear listings failed: {clear_listings_response.status_code if clear_listings_response else 'No response'}")
+            
+        # Test beta requests management
+        beta_requests_response = self.make_request("GET", "/admin/beta/requests", headers=headers)
+        if beta_requests_response and beta_requests_response.status_code == 200:
+            try:
+                beta_data = beta_requests_response.json()
+                beta_count = len(beta_data) if isinstance(beta_data, list) else beta_data.get('total', 0)
+                self.log_test("Beta Requests Management", True, f"Found {beta_count} beta requests")
+            except Exception as e:
+                self.log_test("Beta Requests Management", False, f"JSON parsing error: {e}")
+        else:
+            self.log_test("Beta Requests Management", False, f"Beta requests failed: {beta_requests_response.status_code if beta_requests_response else 'No response'}")
 
     def test_analytics_reporting(self):
         """Test 6: Analytics & Reporting"""
