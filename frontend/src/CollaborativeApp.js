@@ -13,6 +13,7 @@ import CollaborativePlayersPage from './pages/CollaborativePlayersPage';
 import CollaborativeCompetitionsPage from './pages/CollaborativeCompetitionsPage';
 import CollaborativeMasterJerseyPage from './pages/CollaborativeMasterJerseyPage';
 import CollaborativeContributionsPage from './pages/CollaborativeContributionsPage';
+import EnhancedContributionsPage from './pages/EnhancedContributionsPage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
 import AuthModal from './AuthModal';
 
