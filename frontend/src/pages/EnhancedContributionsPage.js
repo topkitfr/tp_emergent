@@ -404,6 +404,19 @@ const EnhancedContributionsPage = ({ user, API }) => {
         )}
 
       </div>
+
+      {/* Contribution Detail Modal */}
+      <ContributionDetailModal
+        contribution={selectedContribution}
+        isOpen={showDetailModal}
+        onClose={closeContributionDetail}
+        onVote={async (contributionId, voteType) => {
+          await submitVote(contributionId, voteType);
+          closeContributionDetail();
+        }}
+        voting={selectedContribution ? voting[selectedContribution.id] : false}
+        API={API}
+      />
     </div>
   );
 };
