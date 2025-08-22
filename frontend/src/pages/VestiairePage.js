@@ -260,15 +260,28 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
       
       {/* Jersey Image */}
-      <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-        {release.product_images?.[0] ? (
+      <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
+        {release.product_images && release.product_images.length > 0 && release.product_images[0] ? (
           <img 
             src={release.product_images[0]} 
-            alt="Jersey" 
+            alt={`${release.master_jersey_info?.team_info?.name || 'Maillot'} ${release.master_jersey_info?.season || ''}`}
             className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
           />
-        ) : (
-          <span className="text-4xl">👕</span>
+        ) : null}
+        <div className={`${release.product_images && release.product_images.length > 0 ? 'hidden' : 'flex'} w-full h-full items-center justify-center flex-col`}>
+          <span className="text-4xl mb-2">👕</span>
+          <span className="text-xs text-gray-500 text-center px-2">Image non disponible</span>
+        </div>
+        
+        {/* Status badge */}
+        {release.verified_level !== 'unverified' && (
+          <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+            ✓
+          </div>
         )}
       </div>
 
