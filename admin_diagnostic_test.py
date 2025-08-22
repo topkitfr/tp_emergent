@@ -7,7 +7,7 @@ import requests
 import json
 import jwt
 
-BACKEND_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-hub.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

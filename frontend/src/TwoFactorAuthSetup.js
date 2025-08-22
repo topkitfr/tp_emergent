@@ -11,7 +11,7 @@ const TwoFactorAuthSetup = ({ user, onClose, onSuccess }) => {
   const [error, setError] = useState('');
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://team-jersey-hub.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://football-kit-hub.preview.emergentagent.com';
 
   useEffect(() => {
     setupTwoFactor();

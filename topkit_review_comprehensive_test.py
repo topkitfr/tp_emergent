@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration - Use environment variable from frontend/.env
-BACKEND_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-hub.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_CREDENTIALS = {
