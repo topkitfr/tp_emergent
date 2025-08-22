@@ -301,6 +301,45 @@ backend:
         -working: true
         -agent: "testing"
         -comment: "Jersey Release collection endpoints tested comprehensively with 94.7% success rate. All 6 requested endpoints working excellently: GET /api/users/{user_id}/collections/owned (✅), GET /api/users/{user_id}/collections/wanted (✅), POST /api/users/{user_id}/collections (✅), DELETE /api/users/{user_id}/collections/{collection_id} (✅), PUT /api/users/{user_id}/collections/{collection_id} (✅), POST /api/vestiaire/add-to-collection (⚠️ expected duplicate prevention). Complete test flow successful: authentication with admin user, empty initial collections verified, Jersey Release creation/retrieval working, collection addition to owned/wanted working, collection item updates functional, collection removal working, vestiaire integration operational with expected duplicate prevention. All endpoints properly integrated with UserJerseyCollection model and Jersey Release system. Authentication, authorization, data validation, error handling all working correctly. System ready for production use."
+        -working: true
+        -agent: "testing"
+        -comment: "Jersey Release collection endpoints re-tested with 100% success rate. All collection endpoints working perfectly: GET /api/users/{user_id}/collections/owned returns proper data structure, GET /api/users/{user_id}/collections/wanted returns proper data structure, POST /api/users/{user_id}/collections successfully adds jersey releases to collections, POST /api/vestiaire/add-to-collection integrates vestiaire items to collection successfully. Complete CRUD operations functional with proper authentication and data validation."
+
+  - task: "Vestiaire Endpoint Data Structure"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "GET /api/vestiaire endpoint tested with 90% success rate. Found 5 jersey releases with proper data structure, filtering capabilities operational (player name filter 'Lionel Messi' returns 1 result), response includes most required fields (id, estimated_value, estimated_min, estimated_max, player_name, retail_price, topkit_reference), 2/5 items have Master Jersey integration. Minor issue: missing 'product_images' field in some items but core functionality working correctly."
+
+  - task: "Master Jerseys Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "GET /api/master-jerseys endpoint tested with 100% success rate. Retrieved 2 master jerseys with complete data structure, all required fields present (id, topkit_reference, team_info, brand_info, season, jersey_type, releases_count, collectors_count), 2/2 jerseys have proper team and brand info enrichment. Endpoint working perfectly with proper data enrichment."
+
+  - task: "Brands/Teams/Competitions Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "Brands/teams/competitions integration tested with 100% success rate. GET /api/brands returns 12 brands with TopKit references, GET /api/teams returns 346 teams with TopKit references, GET /api/competitions returns 29 competitions with TopKit references, Master Jersey integration with brands/teams confirmed (2/2 master jerseys properly linked). All integration endpoints working excellently with proper TopKit reference systems."
 
 frontend:
   - task: "Jersey Photos for Explorer Display Verification"
