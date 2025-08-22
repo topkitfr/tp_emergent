@@ -292,16 +292,46 @@ const ContributionDetailModal = ({
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {/* Content with Tabs */}
+          <div className="p-6">
             
-            {/* Description */}
-            {contribution.description && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-medium text-blue-900 mb-2">💭 Justification du contributeur</h3>
-                <p className="text-blue-800 text-sm">{contribution.description}</p>
+            {/* Advanced Tabs */}
+            <div className="mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setActiveTab('comparison')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'comparison'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    📊 Comparaison AVANT/APRÈS
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('history')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'history'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    📈 Historique ({entityHistory.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('analytics')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'analytics'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    🏆 Contributeur
+                  </button>
+                </nav>
               </div>
-            )}
+            </div>
 
             {loading ? (
               <div className="flex justify-center py-8">
@@ -309,113 +339,227 @@ const ContributionDetailModal = ({
               </div>
             ) : (
               <>
-                {/* BEFORE/AFTER Comparison */}
-                {contribution.proposed_data && Object.keys(contribution.proposed_data).length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">📊 Comparaison AVANT / APRÈS</h3>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      
-                      {/* BEFORE Column */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-                          ⬅️ AVANT (Actuel)
-                        </h4>
-                        <div className="space-y-3">
-                          {Object.entries(contribution.proposed_data).map(([key, proposedValue]) => (
-                            <div key={`before-${key}`} className="flex flex-col">
-                              <span className="text-xs font-medium text-gray-600 mb-1">
-                                {getFieldLabel(key)}
-                              </span>
-                              <div className={`p-2 bg-white rounded border text-sm ${
-                                hasChanged(key, proposedValue) ? 'border-red-200 bg-red-50' : 'border-gray-200'
-                              }`}>
-                                {currentData ? formatValue(key, currentData[key]) : 'Loading...'}
+                {/* COMPARISON TAB */}
+                {activeTab === 'comparison' && (
+                  <div>
+                    {/* Description */}
+                    {contribution.description && (
+                      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                        <h3 className="font-medium text-blue-900 mb-2">💭 Justification du contributeur</h3>
+                        <p className="text-blue-800 text-sm">{contribution.description}</p>
+                      </div>
+                    )}
+
+                    {/* BEFORE/AFTER Comparison with Granular Voting */}
+                    {contribution.proposed_data && Object.keys(contribution.proposed_data).length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="font-semibold text-gray-900 mb-4">📊 Comparaison détaillée avec vote granulaire</h3>
+                        
+                        <div className="space-y-4">
+                          {Object.entries(contribution.proposed_data).map(([key, proposedValue]) => {
+                            const fieldChanged = hasChanged(key, proposedValue);
+                            const granularVote = granularVotes[key];
+                            
+                            return (
+                              <div key={key} className={`border rounded-lg p-4 ${fieldChanged ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200'}`}>
+                                <div className="flex justify-between items-center mb-3">
+                                  <h4 className="font-medium text-gray-900">{getFieldLabel(key)}</h4>
+                                  {fieldChanged && (
+                                    <div className="flex space-x-2">
+                                      <button
+                                        onClick={() => handleGranularVote(key, 'reject')}
+                                        className={`px-2 py-1 rounded text-xs ${
+                                          granularVote === 'reject'
+                                            ? 'bg-red-500 text-white'
+                                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                        }`}
+                                      >
+                                        ❌ Rejeter ce champ
+                                      </button>
+                                      <button
+                                        onClick={() => handleGranularVote(key, 'approve')}
+                                        className={`px-2 py-1 rounded text-xs ${
+                                          granularVote === 'approve'
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                        }`}
+                                      >
+                                        ✅ Approuver ce champ
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* BEFORE */}
+                                  <div className="bg-gray-50 rounded p-3">
+                                    <p className="text-xs font-medium text-gray-600 mb-1">⬅️ AVANT (Actuel)</p>
+                                    <div className={`p-2 bg-white rounded border text-sm ${
+                                      fieldChanged ? 'border-red-200 text-red-700' : 'border-gray-200'
+                                    }`}>
+                                      {currentData ? formatValue(key, currentData[key]) : 'Loading...'}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* AFTER */}
+                                  <div className="bg-green-50 rounded p-3">
+                                    <p className="text-xs font-medium text-gray-600 mb-1">➡️ APRÈS (Proposé)</p>
+                                    <div className={`p-2 bg-white rounded border text-sm ${
+                                      fieldChanged ? 'border-green-200 text-green-700 font-medium' : 'border-gray-200'
+                                    }`}>
+                                      {formatValue(key, proposedValue)}
+                                      {fieldChanged && (
+                                        <span className="ml-2 text-green-600 text-xs">✨ MODIFIÉ</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
+                    )}
 
-                      {/* AFTER Column */}
-                      <div className="bg-green-50 rounded-lg p-4">
-                        <h4 className="font-medium text-gray-700 mb-3 flex items-center">
-                          ➡️ APRÈS (Proposé)
-                        </h4>
-                        <div className="space-y-3">
-                          {Object.entries(contribution.proposed_data).map(([key, proposedValue]) => (
-                            <div key={`after-${key}`} className="flex flex-col">
-                              <span className="text-xs font-medium text-gray-600 mb-1">
-                                {getFieldLabel(key)}
-                              </span>
-                              <div className={`p-2 bg-white rounded border text-sm ${
-                                hasChanged(key, proposedValue) ? 'border-green-200 bg-green-50 font-medium' : 'border-gray-200'
-                              }`}>
-                                {formatValue(key, proposedValue)}
-                                {hasChanged(key, proposedValue) && (
-                                  <span className="ml-2 text-green-600 text-xs">✨ MODIFIÉ</span>
-                                )}
+                    {/* Enhanced Images Gallery */}
+                    {contribution.images && Object.keys(contribution.images).length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="font-semibold text-gray-900 mb-4">🖼️ Galerie d'images proposées</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {Object.entries(contribution.images).map(([imageKey, imageData], index) => {
+                            const imageSrc = Array.isArray(imageData) ? imageData[0] : imageData;
+                            return (
+                              <div key={imageKey} className="bg-gray-50 rounded-lg p-2">
+                                <div className="relative group">
+                                  <img 
+                                    src={imageSrc}
+                                    alt={imageKey}
+                                    className="w-full h-24 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
+                                    onClick={() => {
+                                      const allImages = Object.entries(contribution.images).map(([key, data]) => ({
+                                        src: Array.isArray(data) ? data[0] : data,
+                                        alt: getFieldLabel(key)
+                                      }));
+                                      setSelectedImageView({ images: allImages, selectedIndex: index });
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                                    <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100">🔍 Zoom</span>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1 text-center font-medium">{getFieldLabel(imageKey)}</p>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Images Comparison */}
-                {contribution.images && Object.keys(contribution.images).length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">🖼️ Images proposées</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(contribution.images).map(([imageKey, imageData]) => {
-                        const imageSrc = Array.isArray(imageData) ? imageData[0] : imageData;
-                        return (
-                          <div key={imageKey} className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2 capitalize">
-                              {getFieldLabel(imageKey)}
-                            </h4>
-                            <div className="relative">
-                              <img 
-                                src={imageSrc}
-                                alt={imageKey}
-                                className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
-                                onClick={() => setSelectedImageView({ src: imageSrc, alt: imageKey })}
-                              />
-                              <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                                🔍 Cliquer pour agrandir
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Original Form Data */}
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-3">📋 Données du formulaire original</h3>
-                  <div className="text-sm space-y-2">
-                    <div><strong>ID Entité:</strong> {contribution.entity_id}</div>
-                    <div><strong>Statut:</strong> {contribution.status}</div>
-                    {contribution.source_urls && contribution.source_urls.length > 0 && (
-                      <div>
-                        <strong>Sources:</strong>
-                        <ul className="list-disc list-inside ml-4 mt-1">
-                          {contribution.source_urls.map((url, index) => (
-                            <li key={index}>
-                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                {url}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
                       </div>
                     )}
                   </div>
-                </div>
+                )}
+
+                {/* HISTORY TAB */}
+                {activeTab === 'history' && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-4">📈 Historique des modifications de cette entité</h3>
+                    {entityHistory.length > 0 ? (
+                      <div className="space-y-3">
+                        {entityHistory.map((historyItem, index) => (
+                          <div key={historyItem.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-medium text-sm">{historyItem.title}</h4>
+                                <p className="text-xs text-gray-600">Par {historyItem.contributor_name}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500">{new Date(historyItem.created_at).toLocaleDateString('fr-FR')}</p>
+                                <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Approuvé</div>
+                              </div>
+                            </div>
+                            {historyItem.description && (
+                              <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded">{historyItem.description}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>Aucune modification précédente pour cette entité</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ANALYTICS TAB */}
+                {activeTab === 'analytics' && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-4">🏆 Profil du contributeur</h3>
+                    
+                    {/* Contributor Reputation */}
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-semibold text-lg">{contribution.contributor_name || 'Anonyme'}</h4>
+                          {(() => {
+                            const reputation = getContributorReputation();
+                            return (
+                              <div className="flex items-center space-x-2">
+                                <div className={`px-3 py-1 rounded-full text-sm font-bold bg-${reputation.color}-100 text-${reputation.color}-800`}>
+                                  {reputation.level}
+                                </div>
+                                <span className="text-sm text-gray-600">{reputation.score}% de contributions approuvées</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-gray-900">{contributorHistory.length}</p>
+                          <p className="text-sm text-gray-600">contributions totales</p>
+                        </div>
+                      </div>
+                      
+                      {/* Reputation Stats */}
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <p className="text-xl font-bold text-green-600">
+                            {contributorHistory.filter(c => c.status === 'approved').length}
+                          </p>
+                          <p className="text-xs text-gray-600">Approuvées</p>
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-red-600">
+                            {contributorHistory.filter(c => c.status === 'rejected').length}
+                          </p>
+                          <p className="text-xs text-gray-600">Rejetées</p>
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-orange-600">
+                            {contributorHistory.filter(c => c.status === 'pending').length}
+                          </p>
+                          <p className="text-xs text-gray-600">En attente</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Recent Contributions */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Contributions récentes</h4>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {contributorHistory.slice(0, 5).map(item => (
+                          <div key={item.id} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                            <span className="truncate">{item.title}</span>
+                            <div className={`px-2 py-1 rounded text-xs ${
+                              item.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              item.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-orange-100 text-orange-800'
+                            }`}>
+                              {item.status}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
