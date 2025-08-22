@@ -691,12 +691,24 @@ const CollaborativeMasterJerseyPage = ({
                 </p>
                 <p className="text-blue-600 font-mono text-sm">{selectedJersey.topkit_reference}</p>
               </div>
-              <button
-                onClick={() => setSelectedJersey(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="text-2xl">×</span>
-              </button>
+              <div className="flex gap-2">
+                {user && (
+                  <button
+                    onClick={() => {
+                      alert('Fonctionnalité de contribution pour Master Jersey à venir !');
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    ✏️ Améliorer cette fiche
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedJersey(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
