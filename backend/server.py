@@ -10082,6 +10082,7 @@ async def approve_contribution_auto(contribution_id: str, reason: str = "Approuv
         entity_type = contribution["entity_type"]
         entity_id = contribution["entity_id"]
         proposed_data = contribution["proposed_data"]
+        images = contribution.get("images", {})
         
         # Déterminer la collection MongoDB
         collection_map = {
@@ -10094,18 +10095,78 @@ async def approve_contribution_auto(contribution_id: str, reason: str = "Approuv
         
         collection_name = collection_map.get(entity_type)
         if collection_name:
-            # Mettre à jour l'entité avec les données proposées
-            await db[collection_name].update_one(
+            # Préparer les données de mise à jour
+            update_data = {
+                **proposed_data,
+                "last_modified_at": datetime.utcnow(),
+                "last_modified_by": contribution["contributor_id"],
+                "modification_count": contribution["current_data"].get("modification_count", 0) + 1
+            }
+            
+            # CORRECTION: Appliquer les images de la contribution
+            if images:
+                print(f"🖼️ Applying images from contribution {contribution_id} to {entity_type} {entity_id}")
+                
+                # Mapper les champs d'images selon le type d'entité
+                if entity_type in ["team", "brand", "competition"]:
+                    # Pour teams, brands, competitions -> logo_url
+                    if "logo" in images:
+                        # Gérer le cas où logo est une liste ou une chaîne
+                        logo_data = images["logo"]
+                        if isinstance(logo_data, list) and len(logo_data) > 0:
+                            update_data["logo_url"] = logo_data[0]
+                        elif isinstance(logo_data, str):
+                            update_data["logo_url"] = logo_data
+                    
+                    # Gérer team_photos pour les équipes
+                    if entity_type == "team" and "team_photos" in images and "logo_url" not in update_data:
+                        team_photos = images["team_photos"]
+                        if isinstance(team_photos, list) and len(team_photos) > 0:
+                            update_data["logo_url"] = team_photos[0]
+                
+                elif entity_type == "player":
+                    # Pour players -> photo_url
+                    if "photo" in images:
+                        photo_data = images["photo"]
+                        if isinstance(photo_data, list) and len(photo_data) > 0:
+                            update_data["photo_url"] = photo_data[0]
+                        elif isinstance(photo_data, str):
+                            update_data["photo_url"] = photo_data
+                    elif "profile_photo" in images:
+                        profile_data = images["profile_photo"]
+                        if isinstance(profile_data, list) and len(profile_data) > 0:
+                            update_data["photo_url"] = profile_data[0]
+                        elif isinstance(profile_data, str):
+                            update_data["photo_url"] = profile_data
+                
+                elif entity_type == "master_jersey":
+                    # Pour master jerseys -> front_photo_url, back_photo_url
+                    if "front_image" in images:
+                        front_data = images["front_image"]
+                        if isinstance(front_data, list) and len(front_data) > 0:
+                            update_data["front_photo_url"] = front_data[0]
+                        elif isinstance(front_data, str):
+                            update_data["front_photo_url"] = front_data
+                    
+                    if "back_image" in images:
+                        back_data = images["back_image"]
+                        if isinstance(back_data, list) and len(back_data) > 0:
+                            update_data["back_photo_url"] = back_data[0]
+                        elif isinstance(back_data, str):
+                            update_data["back_photo_url"] = back_data
+                
+                print(f"✅ Image fields added to update: {[k for k in update_data.keys() if 'url' in k or 'photo' in k]}")
+            
+            # Mettre à jour l'entité avec les données proposées ET les images
+            result = await db[collection_name].update_one(
                 {"id": entity_id},
-                {
-                    "$set": {
-                        **proposed_data,
-                        "last_modified_at": datetime.utcnow(),
-                        "last_modified_by": contribution["contributor_id"],
-                        "modification_count": contribution["current_data"].get("modification_count", 0) + 1
-                    }
-                }
+                {"$set": update_data}
             )
+            
+            if result.modified_count > 0:
+                print(f"✅ Successfully applied contribution {contribution_id} to {entity_type} {entity_id}")
+            else:
+                print(f"⚠️ No changes applied to {entity_type} {entity_id}")
         
         # Marquer la contribution comme approuvée
         await db.contributions.update_one(
