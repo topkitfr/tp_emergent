@@ -72,11 +72,18 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     setLoading(false);
   };
 
-  const TeamCard = ({ team }) => (
-    <div 
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
-      onClick={() => setSelectedTeam(team)}
-    >
+  const TeamCard = ({ team }) => {
+    const handleTeamClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setSelectedTeam(team);
+    };
+
+    return (
+      <div 
+        className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+        onClick={handleTeamClick}
+      >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
