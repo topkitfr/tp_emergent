@@ -2795,7 +2795,8 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Fix Image Display - Apply Images from Approved Contributions"
   stuck_tasks:
     - "Collaborative Database API - Search Functionality"
   test_all: false
