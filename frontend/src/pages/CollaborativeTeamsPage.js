@@ -84,60 +84,71 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
         onClick={handleTeamClick}
       >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-            <span className="text-xl">⚽</span>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600">
-              {team.name}
-            </h3>
-            {team.short_name && (
-              <p className="text-sm text-gray-500">{team.short_name}</p>
-            )}
-          </div>
-        </div>
-        
-        {team.verified_level !== 'unverified' && (
-          <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-            ✓ Vérifié
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex items-center text-gray-600">
-          <span className="mr-2">🌍</span>
-          <span>{team.country}</span>
-          {team.city && <span className="ml-2 text-gray-400">• {team.city}</span>}
-        </div>
-        
-        {(team.colors || team.primary_colors) && (team.colors?.length > 0 || team.primary_colors?.length > 0) && (
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">🎨</span>
-            <div className="flex space-x-1">
-              {(team.colors || team.primary_colors || []).slice(0, 3).map((color, index) => (
-                <div
-                  key={index}
-                  className="w-4 h-4 rounded-full border border-gray-300"
-                  style={{ backgroundColor: color.toLowerCase() }}
-                  title={color}
-                ></div>
-              ))}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+              <span className="text-xl">⚽</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600">
+                {team.name}
+              </h3>
+              {team.short_name && (
+                <p className="text-sm text-gray-500">{team.short_name}</p>
+              )}
             </div>
           </div>
-        )}
+          
+          {team.verified_level !== 'unverified' && (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+              ✓ Vérifié
+            </div>
+          )}
+        </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center text-gray-600">
+            <span className="mr-2">🌍</span>
+            <span>{team.country}</span>
+            {team.city && <span className="ml-2 text-gray-400">• {team.city}</span>}
+          </div>
+          
+          {(team.colors || team.primary_colors) && (team.colors?.length > 0 || team.primary_colors?.length > 0) && (
+            <div className="flex items-center text-gray-600">
+              <span className="mr-2">🎨</span>
+              <div className="flex space-x-1">
+                {(team.colors || team.primary_colors || []).slice(0, 3).map((color, index) => (
+                  <div
+                    key={index}
+                    className="w-4 h-4 rounded-full border border-gray-300"
+                    style={{ backgroundColor: color.toLowerCase() }}
+                    title={color}
+                  ></div>
+                ))}
+                {(team.colors || team.primary_colors || []).length > 3 && (
+                  <span className="text-xs text-gray-400 ml-1">+{(team.colors || team.primary_colors || []).length - 3}</span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {team.founded_year && (
+            <div className="flex items-center text-gray-600">
+              <span className="mr-2">📅</span>
+              <span>Fondée en {team.founded_year}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
           <span className="text-blue-600 font-mono text-xs">{team.topkit_reference}</span>
-          <div className="text-xs text-gray-500">
-            {team.master_jerseys_count || 0} maillots
+          <div className="flex items-center text-gray-400 text-xs">
+            <span>Cliquer pour voir les détails</span>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const CreateTeamModal = () => {
     const [formData, setFormData] = useState({
