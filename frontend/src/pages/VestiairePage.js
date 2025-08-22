@@ -296,6 +296,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         <p className="text-xs text-gray-500">
           {release.master_jersey_info?.brand_info?.name}
         </p>
+        <p className="text-xs text-blue-600 font-mono">
+          {release.topkit_reference}
+        </p>
       </div>
 
       {/* Release Specific Info */}
