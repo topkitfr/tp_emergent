@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ContributionDetailModal from '../components/ContributionDetailModal';
 
 const EnhancedContributionsPage = ({ user, API }) => {
   const [pendingContributions, setPendingContributions] = useState([]);
