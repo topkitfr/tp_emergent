@@ -121,6 +121,19 @@ const EnhancedContributionsPage = ({ user, API }) => {
     return labels[type] || type;
   };
 
+  // Get entity type badge configuration
+  const getEntityBadge = (entityType) => {
+    const badges = {
+      'team': { label: '🏟️ ÉQUIPE', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
+      'brand': { label: '👕 MARQUE', bgColor: 'bg-purple-100', textColor: 'text-purple-800' },
+      'player': { label: '👤 JOUEUR', bgColor: 'bg-green-100', textColor: 'text-green-800' },
+      'competition': { label: '🏆 COMPÉTITION', bgColor: 'bg-orange-100', textColor: 'text-orange-800' },
+      'master_jersey': { label: '👕 MASTER JERSEY', bgColor: 'bg-red-100', textColor: 'text-red-800' },
+      'jersey_release': { label: '📦 JERSEY RELEASE', bgColor: 'bg-cyan-100', textColor: 'text-cyan-800' }
+    };
+    return badges[entityType] || { label: entityType.toUpperCase(), bgColor: 'bg-gray-100', textColor: 'text-gray-800' };
+  };
+
   const formatChangeValue = (key, value) => {
     if (key === 'colors' && Array.isArray(value)) {
       return value.join(', ');
