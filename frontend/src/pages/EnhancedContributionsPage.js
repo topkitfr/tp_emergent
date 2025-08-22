@@ -153,11 +153,17 @@ const EnhancedContributionsPage = ({ user, API }) => {
   // Contribution Card Component
   const ContributionCard = ({ contribution, showVoting = false, isRecent = false }) => {
     const statusInfo = getStatusInfo(contribution.status);
+    const badge = getEntityBadge(contribution.entity_type);
     
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all ${isRecent ? 'border-l-4 border-l-green-400' : ''}`}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
+            {/* Entity Type Badge */}
+            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold mb-2 ${badge.bgColor} ${badge.textColor}`}>
+              {badge.label}
+            </div>
+            
             <h4 className="font-medium text-sm text-gray-900 mb-1">
               {contribution.title || `${getEntityTypeLabel(contribution.entity_type)} - Modification`}
             </h4>
@@ -180,25 +186,25 @@ const EnhancedContributionsPage = ({ user, API }) => {
           </div>
         </div>
 
-        {/* Affichage des changements proposés */}
+        {/* Preview of changes */}
         {contribution.proposed_data && Object.keys(contribution.proposed_data).length > 0 && (
           <div className="mb-3">
             <p className="text-xs font-medium text-gray-700 mb-2">Changements proposés:</p>
             <div className="space-y-1">
-              {Object.entries(contribution.proposed_data).slice(0, 3).map(([key, value]) => (
+              {Object.entries(contribution.proposed_data).slice(0, 2).map(([key, value]) => (
                 <div key={key} className="flex text-xs">
                   <span className="text-gray-600 w-20 capitalize">{key.replace('_', ' ')}:</span>
                   <span className="text-gray-900 font-medium truncate">{formatChangeValue(key, value)}</span>
                 </div>
               ))}
-              {Object.keys(contribution.proposed_data).length > 3 && (
-                <p className="text-xs text-gray-500">+{Object.keys(contribution.proposed_data).length - 3} autres changements</p>
+              {Object.keys(contribution.proposed_data).length > 2 && (
+                <p className="text-xs text-blue-600 font-medium">+{Object.keys(contribution.proposed_data).length - 2} autres changements</p>
               )}
             </div>
           </div>
         )}
 
-        {/* Affichage des images */}
+        {/* Preview of images */}
         {contribution.images && Object.keys(contribution.images).length > 0 && (
           <div className="mb-3">
             <p className="text-xs font-medium text-gray-700 mb-2">Images proposées:</p>
@@ -208,43 +214,59 @@ const EnhancedContributionsPage = ({ user, API }) => {
                   <img 
                     src={Array.isArray(imageData) ? imageData[0] : imageData}
                     alt={imageKey}
-                    className="w-12 h-12 object-cover rounded border"
+                    className="w-10 h-10 object-cover rounded border"
                   />
                   <p className="text-xs text-gray-500 mt-1 capitalize">{imageKey}</p>
                 </div>
               ))}
+              {Object.keys(contribution.images).length > 3 && (
+                <div className="w-10 h-10 bg-gray-100 rounded border flex items-center justify-center">
+                  <span className="text-xs text-gray-500">+{Object.keys(contribution.images).length - 3}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Boutons de vote */}
-        {showVoting && user && contribution.status === 'pending' && (
-          <div className="flex space-x-2 pt-2 border-t">
-            <button
-              onClick={() => submitVote(contribution.id, 'upvote')}
-              disabled={voting[contribution.id]}
-              className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded text-xs font-medium disabled:opacity-50 transition-colors"
-            >
-              {voting[contribution.id] ? '...' : '👍 Approuver'}
-            </button>
-            <button
-              onClick={() => submitVote(contribution.id, 'downvote')}
-              disabled={voting[contribution.id]}
-              className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded text-xs font-medium disabled:opacity-50 transition-colors"
-            >
-              {voting[contribution.id] ? '...' : '👎 Rejeter'}
-            </button>
-          </div>
-        )}
+        {/* Action buttons */}
+        <div className="flex justify-between items-center pt-2 border-t">
+          <button
+            onClick={() => openContributionDetail(contribution)}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
+          >
+            👁️ Voir détails complets
+          </button>
 
-        {/* Pour les contributions récentes, afficher un bouton d'action rapide */}
-        {isRecent && user && (
-          <div className="pt-2 border-t">
-            <button className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-              Voir les détails →
+          {/* Voting buttons for pending contributions */}
+          {showVoting && user && contribution.status === 'pending' && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => submitVote(contribution.id, 'downvote')}
+                disabled={voting[contribution.id]}
+                className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-medium disabled:opacity-50 transition-colors"
+              >
+                {voting[contribution.id] ? '...' : '👎'}
+              </button>
+              <button
+                onClick={() => submitVote(contribution.id, 'upvote')}
+                disabled={voting[contribution.id]}
+                className="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs font-medium disabled:opacity-50 transition-colors"
+              >
+                {voting[contribution.id] ? '...' : '👍'}
+              </button>
+            </div>
+          )}
+
+          {/* For recent contributions, just show detail button */}
+          {isRecent && (
+            <button 
+              onClick={() => openContributionDetail(contribution)}
+              className="text-xs text-green-600 hover:text-green-800 font-medium"
+            >
+              Voir →
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
