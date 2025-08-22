@@ -564,46 +564,119 @@ const ContributionDetailModal = ({
             )}
           </div>
 
-          {/* Footer with voting actions */}
+          {/* Footer with advanced voting */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                Cette contribution nécessite votre vote pour être appliquée
+            
+            {/* Vote Comment Modal */}
+            {showVoteComment && (
+              <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  💬 Commentaire de vote {pendingVoteType === 'upvote' ? '(Approbation)' : '(Rejet)'}
+                </h4>
+                <textarea
+                  value={voteComments[pendingVoteType] || ''}
+                  onChange={(e) => setVoteComments(prev => ({ ...prev, [pendingVoteType]: e.target.value }))}
+                  placeholder="Expliquez votre décision (obligatoire pour justifier votre vote)..."
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm resize-none"
+                  rows={3}
+                />
+                
+                {/* Granular vote summary */}
+                {Object.keys(granularVotes).length > 0 && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Votes par champ :</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(granularVotes).map(([field, vote]) => (
+                        <span
+                          key={field}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            vote === 'approve' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {getFieldLabel(field)}: {vote === 'approve' ? '✅' : '❌'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end space-x-2 mt-3">
+                  <button
+                    onClick={() => {
+                      setShowVoteComment(false);
+                      setPendingVoteType(null);
+                    }}
+                    className="px-3 py-1 text-gray-600 hover:text-gray-800 text-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={submitVoteWithComment}
+                    className={`px-4 py-2 rounded font-medium text-sm ${
+                      pendingVoteType === 'upvote'
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
+                  >
+                    Confirmer le vote
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={() => onVote(contribution.id, 'downvote')}
-                  disabled={voting}
-                  className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium disabled:opacity-50 transition-colors"
-                >
-                  {voting ? 'Vote...' : '👎 Rejeter'}
-                </button>
-                <button
-                  onClick={() => onVote(contribution.id, 'upvote')}
-                  disabled={voting}
-                  className="px-6 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium disabled:opacity-50 transition-colors"
-                >
-                  {voting ? 'Vote...' : '👍 Approuver'}
-                </button>
+            )}
+            
+            {!showVoteComment && (
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  <p>📊 Vote avec commentaire obligatoire</p>
+                  {Object.keys(granularVotes).length > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      {Object.keys(granularVotes).length} champ(s) évalué(s) individuellement
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Fermer
+                  </button>
+                  <button
+                    onClick={() => handleVoteWithComment('downvote')}
+                    disabled={voting}
+                    className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  >
+                    <span>👎</span>
+                    <span>{voting ? 'Vote...' : 'Rejeter avec commentaire'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleVoteWithComment('upvote')}
+                    disabled={voting}
+                    className="px-6 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  >
+                    <span>👍</span>
+                    <span>{voting ? 'Vote...' : 'Approuver avec commentaire'}</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Image Zoom Modal */}
-      {selectedImageView && (
+      {/* Enhanced Image Zoom Modal with Gallery */}
+      {selectedImageView && selectedImageView.images && (
         <ImageZoomModal 
-          src={selectedImageView.src}
-          alt={selectedImageView.alt}
+          images={selectedImageView.images}
+          selectedIndex={selectedImageView.selectedIndex}
           onClose={() => setSelectedImageView(null)}
+          onNavigate={(newIndex) => {
+            const clampedIndex = Math.max(0, Math.min(newIndex, selectedImageView.images.length - 1));
+            setSelectedImageView(prev => ({ ...prev, selectedIndex: clampedIndex }));
+          }}
         />
       )}
     </>
