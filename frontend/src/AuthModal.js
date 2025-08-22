@@ -118,16 +118,18 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           console.log('💾 Token stored:', response.data.token.substring(0, 20) + '...');
           console.log('👤 User stored:', response.data.user);
           
-          // Close modal
-          if (onClose) onClose();
-          
-          // Call success callback
+          // Call success callback FIRST
           if (onLoginSuccess) {
             onLoginSuccess(response.data.token, response.data.user);
           }
           
           // Show success message
           console.log('✅ Login completed successfully');
+          
+          // Close modal AFTER callback
+          setTimeout(() => {
+            if (onClose) onClose();
+          }, 100);
           
         } else {
           console.error('❌ Invalid login response structure');
