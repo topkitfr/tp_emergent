@@ -116,7 +116,7 @@ const CollaborativeHeader = ({
                     
                     <button
                       onClick={() => {
-                        onViewChange('contribute');
+                        onViewChange('contributions');
                         setShowUserMenu(false);
                       }}
                       className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
