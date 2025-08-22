@@ -338,7 +338,7 @@ class TopKitTeamReferencesTest:
                                         search_results.append({
                                             "team": team_name,
                                             "found": True,
-                                            "reference": team.get('reference', 'N/A'),
+                                            "reference": team.get('topkit_reference', 'N/A'),
                                             "endpoint": endpoint
                                         })
                                         break
