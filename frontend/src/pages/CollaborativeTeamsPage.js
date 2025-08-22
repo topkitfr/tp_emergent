@@ -578,6 +578,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
               <PendingContributions 
                 entityId={selectedTeam.id} 
                 entityType="team"
+                user={user}
                 onVoteSubmitted={() => {
                   // Refresh entity data after vote
                   console.log('Vote submitted, refreshing data...');
