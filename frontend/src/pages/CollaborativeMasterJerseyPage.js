@@ -695,7 +695,8 @@ const CollaborativeMasterJerseyPage = ({
                 {user && (
                   <button
                     onClick={() => {
-                      alert('Fonctionnalité de contribution pour Master Jersey à venir !');
+                      setSelectedJerseyForContribution(selectedJersey);
+                      setShowContributionModal(true);
                     }}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
                   >
