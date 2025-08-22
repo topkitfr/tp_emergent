@@ -106,15 +106,15 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
           {team.city && <span className="ml-2 text-gray-400">• {team.city}</span>}
         </div>
         
-        {team.colors && team.colors.length > 0 && (
+        {(team.colors || team.primary_colors) && (team.colors?.length > 0 || team.primary_colors?.length > 0) && (
           <div className="flex items-center text-gray-600">
             <span className="mr-2">🎨</span>
             <div className="flex space-x-1">
-              {team.colors.slice(0, 3).map((color, index) => (
+              {(team.colors || team.primary_colors || []).slice(0, 3).map((color, index) => (
                 <div
                   key={index}
                   className="w-4 h-4 rounded-full border border-gray-300"
-                  style={{ backgroundColor: color }}
+                  style={{ backgroundColor: color.toLowerCase() }}
                   title={color}
                 ></div>
               ))}
