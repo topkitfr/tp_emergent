@@ -15,6 +15,7 @@ import CollaborativeMasterJerseyPage from './pages/CollaborativeMasterJerseyPage
 import CollaborativeContributionsPage from './pages/CollaborativeContributionsPage';
 import EnhancedContributionsPage from './pages/EnhancedContributionsPage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
