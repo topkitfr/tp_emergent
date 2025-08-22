@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../App';
 import ContributionModal from '../ContributionModal';
+import PendingContributions from '../PendingContributions';
 
 const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   const [filteredTeams, setFilteredTeams] = useState([]);
