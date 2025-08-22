@@ -76,7 +76,10 @@ const CollaborativeExplorePage = ({
   };
 
   const TeamCard = ({ team }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all">
+    <div 
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group"
+      onClick={() => setSelectedTeam(team)}
+    >
       <div className="flex items-center space-x-3 mb-3">
         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
           <span className="text-lg">⚽</span>
