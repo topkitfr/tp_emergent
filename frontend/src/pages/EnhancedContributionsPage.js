@@ -96,6 +96,18 @@ const EnhancedContributionsPage = ({ user, API }) => {
     loadRecentContributions();
   }, [user, filters]);
 
+  // Open contribution detail modal
+  const openContributionDetail = (contribution) => {
+    setSelectedContribution(contribution);
+    setShowDetailModal(true);
+  };
+
+  // Close contribution detail modal
+  const closeContributionDetail = () => {
+    setSelectedContribution(null);
+    setShowDetailModal(false);
+  };
+
   // Helper functions
   const getEntityTypeLabel = (type) => {
     const labels = {
