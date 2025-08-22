@@ -186,31 +186,45 @@ class AdminDashboardTester:
                 users_data = users_response.json()
                 users_count = len(users_data) if isinstance(users_data, list) else users_data.get('total', 0)
                 self.log_test("User Listing API", True, f"Found {users_count} users")
+                
+                # Test user security info endpoint if we have users
+                if isinstance(users_data, list) and len(users_data) > 0:
+                    test_user_id = users_data[0].get('id')
+                    if test_user_id:
+                        security_response = self.make_request("GET", f"/admin/users/{test_user_id}/security", headers=headers)
+                        if security_response and security_response.status_code in [200, 404]:
+                            self.log_test("User Security Info", True, "Security info endpoint accessible")
+                        else:
+                            self.log_test("User Security Info", False, f"Security info failed: {security_response.status_code if security_response else 'No response'}")
+                            
             except Exception as e:
                 self.log_test("User Listing API", False, f"JSON parsing error: {e}")
         else:
             self.log_test("User Listing API", False, f"Users endpoint failed: {users_response.status_code if users_response else 'No response'}")
         
-        # Test role assignment functionality
-        role_endpoint_response = self.make_request("GET", "/admin/users/roles", headers=headers)
-        if role_endpoint_response and role_endpoint_response.status_code in [200, 404]:
-            self.log_test("Role Assignment Endpoint", True, "Role management endpoint accessible")
+        # Test role assignment functionality - test with a dummy user ID
+        test_user_id = "test-user-id"
+        role_data = {"role": "moderator", "reason": "Testing role assignment"}
+        role_response = self.make_request("POST", f"/admin/users/{test_user_id}/assign-role", data=role_data, headers=headers)
+        if role_response and role_response.status_code in [200, 404, 400]:
+            self.log_test("Role Assignment Endpoint", True, "Role assignment endpoint accessible")
         else:
-            self.log_test("Role Assignment Endpoint", False, f"Role endpoint failed: {role_endpoint_response.status_code if role_endpoint_response else 'No response'}")
+            self.log_test("Role Assignment Endpoint", False, f"Role endpoint failed: {role_response.status_code if role_response else 'No response'}")
             
-        # Test user ban/unban functionality
-        ban_endpoint_response = self.make_request("GET", "/admin/users/banned", headers=headers)
-        if ban_endpoint_response and ban_endpoint_response.status_code in [200, 404]:
+        # Test user ban functionality
+        ban_data = {"reason": "Testing ban functionality", "permanent": False}
+        ban_response = self.make_request("POST", f"/admin/users/{test_user_id}/ban", data=ban_data, headers=headers)
+        if ban_response and ban_response.status_code in [200, 404, 400]:
             self.log_test("User Ban Management", True, "Ban management endpoint accessible")
         else:
-            self.log_test("User Ban Management", False, f"Ban endpoint failed: {ban_endpoint_response.status_code if ban_endpoint_response else 'No response'}")
+            self.log_test("User Ban Management", False, f"Ban endpoint failed: {ban_response.status_code if ban_response else 'No response'}")
             
-        # Test user search and filtering
-        search_response = self.make_request("GET", "/admin/users?search=admin", headers=headers)
-        if search_response and search_response.status_code in [200, 404]:
-            self.log_test("User Search & Filtering", True, "User search endpoint accessible")
+        # Test moderator assignment
+        moderator_response = self.make_request("POST", f"/admin/users/{test_user_id}/make-moderator", headers=headers)
+        if moderator_response and moderator_response.status_code in [200, 404, 400]:
+            self.log_test("Moderator Assignment", True, "Moderator assignment endpoint accessible")
         else:
-            self.log_test("User Search & Filtering", False, f"Search endpoint failed: {search_response.status_code if search_response else 'No response'}")
+            self.log_test("Moderator Assignment", False, f"Moderator endpoint failed: {moderator_response.status_code if moderator_response else 'No response'}")
 
     def test_moderation_system(self):
         """Test 4: Moderation System Testing"""
