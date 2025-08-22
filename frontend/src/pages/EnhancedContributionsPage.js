@@ -11,6 +11,8 @@ const EnhancedContributionsPage = ({ user, API }) => {
   const [loading, setLoading] = useState(false);
   const [voting, setVoting] = useState({});
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'recent' | 'my'
+  const [selectedContribution, setSelectedContribution] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Load pending contributions (for voting)
   const loadPendingContributions = async () => {
