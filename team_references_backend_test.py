@@ -167,7 +167,7 @@ class TopKitTeamReferencesTest:
             team_references = {}
             for team in teams_data:
                 team_name = team.get('name', '').strip()
-                reference = team.get('reference', '').strip()
+                reference = team.get('topkit_reference', '').strip()
                 if team_name and reference:
                     team_references[team_name] = reference
             
