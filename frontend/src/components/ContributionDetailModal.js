@@ -23,6 +23,8 @@ const ContributionDetailModal = ({
   useEffect(() => {
     if (isOpen && contribution) {
       loadCurrentEntityData();
+      loadContributorHistory();
+      loadEntityHistory();
     }
   }, [isOpen, contribution]);
 
@@ -50,6 +52,32 @@ const ContributionDetailModal = ({
       console.error('Error loading current entity data:', error);
     }
     setLoading(false);
+  };
+
+  // Load contributor's history for reputation
+  const loadContributorHistory = async () => {
+    try {
+      const response = await fetch(`${API}/api/contributions?contributor_id=${contribution.contributor_id}&limit=10`);
+      if (response.ok) {
+        const data = await response.json();
+        setContributorHistory(data);
+      }
+    } catch (error) {
+      console.error('Error loading contributor history:', error);
+    }
+  };
+
+  // Load entity modification history
+  const loadEntityHistory = async () => {
+    try {
+      const response = await fetch(`${API}/api/contributions?entity_id=${contribution.entity_id}&entity_type=${contribution.entity_type}&status=approved&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        setEntityHistory(data);
+      }
+    } catch (error) {
+      console.error('Error loading entity history:', error);
+    }
   };
 
   // Get entity type badge configuration
