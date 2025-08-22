@@ -81,69 +81,91 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
 
     return (
       <div 
-        className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+        className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
         onClick={handleTeamClick}
       >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-              <span className="text-xl">⚽</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600">
-                {team.name}
-              </h3>
-              {team.short_name && (
-                <p className="text-sm text-gray-500">{team.short_name}</p>
-              )}
-            </div>
+        {/* Image section - same structure as Master Jersey */}
+        <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+          {team.logo_url ? (
+            <img 
+              src={team.logo_url.startsWith('http') ? team.logo_url : `${API}/${team.logo_url}`}
+              alt={`${team.name} logo`}
+              className="w-full h-full object-contain p-4"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: team.logo_url ? 'none' : 'flex'}}>
+            ⚽
           </div>
           
           {team.verified_level !== 'unverified' && (
-            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-              ✓ Vérifié
+            <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+              ✓
             </div>
           )}
+          
+          <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+            🌍 {team.country}
+          </div>
         </div>
-
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">🌍</span>
-            <span>{team.country}</span>
-            {team.city && <span className="ml-2 text-gray-400">• {team.city}</span>}
+        
+        {/* Content section - same structure as Master Jersey */}
+        <div className="p-4">
+          <h3 className="font-bold text-sm text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2">
+            {team.name}
+          </h3>
+          
+          <div className="space-y-1 text-xs text-gray-600 mb-3">
+            {team.short_name && (
+              <div className="flex items-center">
+                <span className="mr-1">🏷️</span>
+                <span>{team.short_name}</span>
+              </div>
+            )}
+            
+            {team.city && (
+              <div className="flex items-center">
+                <span className="mr-1">🏙️</span>
+                <span>{team.city}</span>
+              </div>
+            )}
+            
+            {team.founded_year && (
+              <div className="flex items-center">
+                <span className="mr-1">📅</span>
+                <span>Fondée en {team.founded_year}</span>
+              </div>
+            )}
+            
+            {(team.colors || team.primary_colors) && (team.colors?.length > 0 || team.primary_colors?.length > 0) && (
+              <div className="flex items-center">
+                <span className="mr-1">🎨</span>
+                <div className="flex space-x-1">
+                  {(team.colors || team.primary_colors || []).slice(0, 3).map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-3 h-3 rounded-full border border-gray-300"
+                      style={{ backgroundColor: color.toLowerCase() }}
+                      title={color}
+                    ></div>
+                  ))}
+                  {(team.colors || team.primary_colors || []).length > 3 && (
+                    <span className="text-xs text-gray-400">+{(team.colors || team.primary_colors || []).length - 3}</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
-          {(team.colors || team.primary_colors) && (team.colors?.length > 0 || team.primary_colors?.length > 0) && (
-            <div className="flex items-center text-gray-600">
-              <span className="mr-2">🎨</span>
-              <div className="flex space-x-1">
-                {(team.colors || team.primary_colors || []).slice(0, 3).map((color, index) => (
-                  <div
-                    key={index}
-                    className="w-4 h-4 rounded-full border border-gray-300"
-                    style={{ backgroundColor: color.toLowerCase() }}
-                    title={color}
-                  ></div>
-                ))}
-                {(team.colors || team.primary_colors || []).length > 3 && (
-                  <span className="text-xs text-gray-400 ml-1">+{(team.colors || team.primary_colors || []).length - 3}</span>
-                )}
-              </div>
+          {/* Bottom section - same structure as Master Jersey */}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-blue-600 font-mono">{team.topkit_reference}</span>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <span>{team.jerseys_count || 0} maillots</span>
             </div>
-          )}
-          
-          {team.founded_year && (
-            <div className="flex items-center text-gray-600">
-              <span className="mr-2">📅</span>
-              <span>Fondée en {team.founded_year}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-          <span className="text-blue-600 font-mono text-xs">{team.topkit_reference}</span>
-          <div className="flex items-center text-gray-400 text-xs">
-            <span>Cliquer pour voir les détails</span>
           </div>
         </div>
       </div>
