@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ContributionModal from '../ContributionModal';
 
 const CollaborativeMasterJerseyPage = ({ 
   user, 
