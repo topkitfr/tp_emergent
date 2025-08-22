@@ -146,19 +146,109 @@ const ContributionDetailModal = ({
     return currentValue !== proposedValue;
   };
 
-  // Image zoom modal
-  const ImageZoomModal = ({ src, alt, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="max-w-4xl max-h-4xl p-4">
-        <img 
-          src={src} 
-          alt={alt} 
-          className="max-w-full max-h-full object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
+  // Handle granular voting (by field)
+  const handleGranularVote = (field, voteType) => {
+    setGranularVotes(prev => ({
+      ...prev,
+      [field]: voteType
+    }));
+  };
+
+  // Handle vote with comment
+  const handleVoteWithComment = (voteType) => {
+    setPendingVoteType(voteType);
+    setShowVoteComment(true);
+  };
+
+  // Submit vote with comment
+  const submitVoteWithComment = () => {
+    if (!voteComments[pendingVoteType]?.trim()) {
+      alert('Veuillez ajouter un commentaire pour justifier votre vote');
+      return;
+    }
+    
+    const voteData = {
+      type: pendingVoteType,
+      comment: voteComments[pendingVoteType],
+      granular_votes: granularVotes
+    };
+    
+    onVote(contribution.id, pendingVoteType, voteData);
+    setShowVoteComment(false);
+    setPendingVoteType(null);
+  };
+
+  // Get contributor reputation
+  const getContributorReputation = () => {
+    const approved = contributorHistory.filter(c => c.status === 'approved').length;
+    const rejected = contributorHistory.filter(c => c.status === 'rejected').length;
+    const total = contributorHistory.length;
+    
+    if (total === 0) return { level: 'Nouveau', color: 'gray', score: 0 };
+    
+    const ratio = approved / total;
+    
+    if (ratio >= 0.9 && total >= 10) return { level: 'Expert', color: 'purple', score: Math.round(ratio * 100) };
+    if (ratio >= 0.8 && total >= 5) return { level: 'Expérimenté', color: 'blue', score: Math.round(ratio * 100) };
+    if (ratio >= 0.7) return { level: 'Confirmé', color: 'green', score: Math.round(ratio * 100) };
+    if (ratio >= 0.5) return { level: 'Apprenti', color: 'yellow', score: Math.round(ratio * 100) };
+    return { level: 'Débutant', color: 'red', score: Math.round(ratio * 100) };
+  };
+
+  // Enhanced Image zoom modal with gallery navigation
+  const ImageZoomModal = ({ images, selectedIndex, onClose, onNavigate }) => {
+    const currentImage = images[selectedIndex];
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" onClick={onClose}>
+        <div className="max-w-6xl max-h-6xl p-4 relative">
+          {/* Navigation arrows */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); onNavigate(selectedIndex - 1); }}
+                disabled={selectedIndex === 0}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-40 text-white p-2 rounded-full disabled:opacity-30"
+              >
+                ←
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onNavigate(selectedIndex + 1); }}
+                disabled={selectedIndex === images.length - 1}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-40 text-white p-2 rounded-full disabled:opacity-30"
+              >
+                →
+              </button>
+            </>
+          )}
+          
+          {/* Image */}
+          <img 
+            src={currentImage.src} 
+            alt={currentImage.alt} 
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {/* Image info */}
+          <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-2 rounded">
+            <p className="text-sm font-medium">{currentImage.alt}</p>
+            {images.length > 1 && (
+              <p className="text-xs opacity-75">{selectedIndex + 1} / {images.length}</p>
+            )}
+          </div>
+          
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 bg-black bg-opacity-70 text-white p-2 rounded-full hover:bg-opacity-90"
+          >
+            ×
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!isOpen || !contribution) return null;
 
