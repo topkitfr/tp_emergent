@@ -573,17 +573,6 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                   </div>
                 </div>
               </div>
-              
-              {/* NOUVEAU: Section Contributions en attente */}
-              <PendingContributions 
-                entityId={selectedTeam.id} 
-                entityType="team"
-                user={user}
-                onVoteSubmitted={() => {
-                  // Refresh entity data after vote
-                  console.log('Vote submitted, refreshing data...');
-                }}
-              />
             </div>
           </div>
         </div>
