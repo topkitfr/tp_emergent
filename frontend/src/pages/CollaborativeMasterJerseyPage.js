@@ -720,34 +720,34 @@ const CollaborativeMasterJerseyPage = ({
               {/* Details */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Informations générales</h3>
+                  <h3 className="font-semibold mb-2 text-gray-900">Informations générales</h3>
                   <div className="space-y-2 text-sm">
                     <div>
                       <span className="text-gray-600">Équipe:</span>
-                      <span className="ml-2 font-medium">{selectedJersey.team_info?.name}</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedJersey.team_info?.name}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Marque:</span>
-                      <span className="ml-2">{selectedJersey.brand_info?.name}</span>
+                      <span className="ml-2 text-gray-900">{selectedJersey.brand_info?.name}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Saison:</span>
-                      <span className="ml-2">{selectedJersey.season}</span>
+                      <span className="ml-2 text-gray-900">{selectedJersey.season}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Type:</span>
-                      <span className="ml-2">{getJerseyTypeLabel(selectedJersey.jersey_type)}</span>
+                      <span className="ml-2 text-gray-900">{getJerseyTypeLabel(selectedJersey.jersey_type)}</span>
                     </div>
                     {selectedJersey.design_name && (
                       <div>
                         <span className="text-gray-600">Design:</span>
-                        <span className="ml-2">{selectedJersey.design_name}</span>
+                        <span className="ml-2 text-gray-900">{selectedJersey.design_name}</span>
                       </div>
                     )}
                     {selectedJersey.main_sponsor && (
                       <div>
                         <span className="text-gray-600">Sponsor:</span>
-                        <span className="ml-2">{selectedJersey.main_sponsor}</span>
+                        <span className="ml-2 text-gray-900">{selectedJersey.main_sponsor}</span>
                       </div>
                     )}
                   </div>
@@ -755,14 +755,14 @@ const CollaborativeMasterJerseyPage = ({
 
                 {/* Colors */}
                 <div>
-                  <h3 className="font-semibold mb-2">Couleurs</h3>
+                  <h3 className="font-semibold mb-2 text-gray-900">Couleurs</h3>
                   <div className="flex items-center space-x-2">
                     <div
                       className="w-6 h-6 rounded-full border border-gray-300"
                       style={{ backgroundColor: selectedJersey.primary_color }}
                       title={selectedJersey.primary_color}
                     ></div>
-                    <span className="text-sm capitalize">{selectedJersey.primary_color}</span>
+                    <span className="text-sm capitalize text-gray-900">{selectedJersey.primary_color}</span>
                     {selectedJersey.secondary_colors && selectedJersey.secondary_colors.map((color, index) => (
                       <div key={index} className="flex items-center space-x-1">
                         <div
@@ -779,7 +779,7 @@ const CollaborativeMasterJerseyPage = ({
                 {/* Pattern Description */}
                 {selectedJersey.pattern_description && (
                   <div>
-                    <h3 className="font-semibold mb-2">Description du motif</h3>
+                    <h3 className="font-semibold mb-2 text-gray-900">Description du motif</h3>
                     <p className="text-sm text-gray-600">{selectedJersey.pattern_description}</p>
                   </div>
                 )}
@@ -787,7 +787,7 @@ const CollaborativeMasterJerseyPage = ({
                 {/* Special Features */}
                 {selectedJersey.special_features && selectedJersey.special_features.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">Caractéristiques spéciales</h3>
+                    <h3 className="font-semibold mb-2 text-gray-900">Caractéristiques spéciales</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedJersey.special_features.map((feature, index) => (
                         <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
@@ -800,15 +800,15 @@ const CollaborativeMasterJerseyPage = ({
 
                 {/* Stats */}
                 <div>
-                  <h3 className="font-semibold mb-2">Statistiques</h3>
+                  <h3 className="font-semibold mb-2 text-gray-900">Statistiques</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">Versions:</span>
-                      <span className="ml-2 font-medium">{selectedJersey.releases_count || 0}</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedJersey.releases_count || 0}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Collectionneurs:</span>
-                      <span className="ml-2 font-medium">{selectedJersey.collectors_count || 0}</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedJersey.collectors_count || 0}</span>
                     </div>
                   </div>
                 </div>
