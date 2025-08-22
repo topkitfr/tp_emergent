@@ -342,33 +342,43 @@ class AdminDashboardTester:
             
         headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        # Test admin analytics endpoints
-        analytics_response = self.make_request("GET", "/admin/analytics", headers=headers)
-        if analytics_response and analytics_response.status_code in [200, 404]:
-            self.log_test("Admin Analytics Endpoints", True, "Analytics endpoint accessible")
+        # Test transaction verification system (anti-fraud)
+        pending_transactions_response = self.make_request("GET", "/admin/transactions/pending-verification", headers=headers)
+        if pending_transactions_response and pending_transactions_response.status_code == 200:
+            try:
+                transactions_data = pending_transactions_response.json()
+                transactions_count = transactions_data.get('total_pending', 0)
+                self.log_test("Transaction Verification System", True, f"Found {transactions_count} pending transactions")
+            except Exception as e:
+                self.log_test("Transaction Verification System", False, f"JSON parsing error: {e}")
         else:
-            self.log_test("Admin Analytics Endpoints", False, f"Analytics failed: {analytics_response.status_code if analytics_response else 'No response'}")
+            self.log_test("Transaction Verification System", False, f"Transaction verification failed: {pending_transactions_response.status_code if pending_transactions_response else 'No response'}")
             
-        # Test usage statistics
-        usage_response = self.make_request("GET", "/admin/analytics/usage", headers=headers)
-        if usage_response and usage_response.status_code in [200, 404]:
-            self.log_test("Usage Statistics", True, "Usage stats endpoint accessible")
+        # Test transaction details endpoint
+        test_transaction_id = "test-transaction-id"
+        transaction_details_response = self.make_request("GET", f"/admin/transactions/{test_transaction_id}/details", headers=headers)
+        if transaction_details_response and transaction_details_response.status_code in [200, 404]:
+            self.log_test("Transaction Details Endpoint", True, "Transaction details endpoint accessible")
         else:
-            self.log_test("Usage Statistics", False, f"Usage stats failed: {usage_response.status_code if usage_response else 'No response'}")
+            self.log_test("Transaction Details Endpoint", False, f"Transaction details failed: {transaction_details_response.status_code if transaction_details_response else 'No response'}")
             
-        # Test report generation
-        reports_response = self.make_request("GET", "/admin/reports", headers=headers)
-        if reports_response and reports_response.status_code in [200, 404]:
-            self.log_test("Report Generation", True, "Reports endpoint accessible")
+        # Test transaction verification workflows
+        verify_data = {
+            "authenticity_score": 9,
+            "notes": "Test verification",
+            "evidence_photos": []
+        }
+        verify_authentic_response = self.make_request("POST", f"/admin/transactions/{test_transaction_id}/verify-authentic", data=verify_data, headers=headers)
+        if verify_authentic_response and verify_authentic_response.status_code in [200, 404, 400]:
+            self.log_test("Authentic Verification Workflow", True, "Authentic verification endpoint accessible")
         else:
-            self.log_test("Report Generation", False, f"Reports failed: {reports_response.status_code if reports_response else 'No response'}")
+            self.log_test("Authentic Verification Workflow", False, f"Authentic verification failed: {verify_authentic_response.status_code if verify_authentic_response else 'No response'}")
             
-        # Test KPI and metrics calculation
-        kpi_response = self.make_request("GET", "/admin/kpi", headers=headers)
-        if kpi_response and kpi_response.status_code in [200, 404]:
-            self.log_test("KPI & Metrics Calculation", True, "KPI endpoint accessible")
+        verify_fake_response = self.make_request("POST", f"/admin/transactions/{test_transaction_id}/verify-fake", data=verify_data, headers=headers)
+        if verify_fake_response and verify_fake_response.status_code in [200, 404, 400]:
+            self.log_test("Fake Detection Workflow", True, "Fake detection endpoint accessible")
         else:
-            self.log_test("KPI & Metrics Calculation", False, f"KPI endpoint failed: {kpi_response.status_code if kpi_response else 'No response'}")
+            self.log_test("Fake Detection Workflow", False, f"Fake detection failed: {verify_fake_response.status_code if verify_fake_response else 'No response'}")
 
     def test_admin_authorization_security(self):
         """Test 7: Admin Authorization & Security"""
