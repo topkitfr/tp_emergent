@@ -386,6 +386,135 @@ const CollaborativeExplorePage = ({
         )}
       </div>
 
+      {/* Team Detail Modal */}
+      {selectedTeam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">{selectedTeam.name}</h2>
+                {selectedTeam.short_name && (
+                  <p className="text-gray-600">{selectedTeam.short_name}</p>
+                )}
+                <p className="text-blue-600 font-mono text-sm">{selectedTeam.topkit_reference}</p>
+              </div>
+              <div className="flex gap-2">
+                {user && (
+                  <button
+                    onClick={() => {
+                      setSelectedEntityForContribution(selectedTeam);
+                      setContributionEntityType('team');
+                      setShowContributionModal(true);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    ✏️ Améliorer cette fiche
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedTeam(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2 text-gray-900">Informations générales</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Pays:</span>
+                    <span className="ml-2 font-medium text-gray-900">{selectedTeam.country || 'Non spécifié'}</span>
+                  </div>
+                  {selectedTeam.city && (
+                    <div>
+                      <span className="text-gray-600">Ville:</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.city}</span>
+                    </div>
+                  )}
+                  {selectedTeam.founded_year && (
+                    <div>
+                      <span className="text-gray-600">Fondation:</span>
+                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.founded_year}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-600">Statut:</span>
+                    <span className={`ml-2 ${selectedTeam.verified_level !== 'unverified' ? 'text-green-600' : 'text-orange-600'}`}>
+                      {selectedTeam.verified_level !== 'unverified' ? '✓ Vérifié' : 'En attente de vérification'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {(selectedTeam.colors || selectedTeam.primary_colors) && (selectedTeam.colors?.length > 0 || selectedTeam.primary_colors?.length > 0) && (
+                <div>
+                  <h3 className="font-semibold mb-2 text-gray-900">Couleurs</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedTeam.colors || selectedTeam.primary_colors || []).map((color, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <div
+                          className="w-6 h-6 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color.toLowerCase() }}
+                        ></div>
+                        <span className="text-sm text-gray-600 capitalize">{color}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTeam.logo_url && (
+                <div>
+                  <h3 className="font-semibold mb-2 text-gray-900">Logo</h3>
+                  <img 
+                    src={selectedTeam.logo_url} 
+                    alt={`Logo ${selectedTeam.name}`} 
+                    className="w-20 h-20 object-contain border border-gray-200 rounded-lg"
+                  />
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold mb-2 text-gray-900">Statistiques</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Maillots:</span>
+                    <span className="ml-2 font-medium text-gray-900">{selectedTeam.master_jerseys_count || 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Collectionneurs:</span>
+                    <span className="ml-2 font-medium text-gray-900">{selectedTeam.total_collectors || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => {
+            setShowContributionModal(false);
+            setSelectedEntityForContribution(null);
+            setContributionEntityType('');
+          }}
+          entity={selectedEntityForContribution}
+          entityType={contributionEntityType}
+          onContributionCreated={() => {
+            // Rafraîchir les données si nécessaire
+            setShowContributionModal(false);
+            setSelectedEntityForContribution(null);
+            setContributionEntityType('');
+          }}
+        />
+      )}
+
     </div>
   );
 };
