@@ -19,6 +19,18 @@ const CollaborativeExplorePage = ({
   });
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
+  
+  // États pour les modales de détails
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const [selectedMasterJersey, setSelectedMasterJersey] = useState(null);
+  
+  // États pour les contributions
+  const [showContributionModal, setShowContributionModal] = useState(false);
+  const [selectedEntityForContribution, setSelectedEntityForContribution] = useState(null);
+  const [contributionEntityType, setContributionEntityType] = useState('');
 
   // Perform search when searchQuery changes
   useEffect(() => {
