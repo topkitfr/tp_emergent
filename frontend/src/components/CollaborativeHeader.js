@@ -83,21 +83,6 @@ const CollaborativeHeader = ({
           {/* Right Side */}
           <div className="flex items-center space-x-2 lg:space-x-4">
             
-            {/* Contributions Button */}
-            {user && (
-              <button
-                onClick={() => onViewChange('contribute')}
-                className={`hidden md:block px-3 lg:px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  currentView === 'contribute'
-                    ? 'bg-black text-white'
-                    : 'text-gray-700 hover:text-black hover:bg-gray-100'
-                }`}
-              >
-                <span className="hidden lg:inline">Contribuer</span>
-                <span className="lg:hidden">Contrib.</span>
-              </button>
-            )}
-
             {/* User Menu or Login */}
             {user ? (
               <div className="relative">
