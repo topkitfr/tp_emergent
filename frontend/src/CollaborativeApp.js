@@ -176,6 +176,9 @@ const CollaborativeApp = () => {
       case 'profile':
         return <CollaborativeProfilePage {...commonProps} />;
       
+      case 'admin':
+        return <AdminDashboard user={user} API={API} />;
+      
       default:
         return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
     }
