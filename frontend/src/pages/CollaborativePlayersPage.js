@@ -77,70 +77,83 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
 
   const PlayerCard = ({ player }) => (
     <div 
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer group"
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
       onClick={() => setSelectedPlayer(player)}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-            <span className="text-xl">👤</span>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600">
-              {player.name}
-            </h3>
-            {player.full_name && player.full_name !== player.name && (
-              <p className="text-sm text-gray-500">{player.full_name}</p>
-            )}
-          </div>
+      {/* Image section - same structure as Master Jersey */}
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        {player.photo_url ? (
+          <img 
+            src={player.photo_url.startsWith('http') ? player.photo_url : `${API}/${player.photo_url}`}
+            alt={`${player.name} photo`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: player.photo_url ? 'none' : 'flex'}}>
+          👤
         </div>
         
         {player.verified_level !== 'unverified' && (
-          <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-            ✓ Vérifié
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2 text-sm">
-        {player.nationality && (
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">🌍</span>
-            <span>{player.nationality}</span>
+          <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+            ✓
           </div>
         )}
         
         {player.position && (
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">⚽</span>
-            <span>{player.position}</span>
+          <div className="absolute top-2 left-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+            ⚽ {player.position}
           </div>
         )}
-
-        {player.birth_date && (
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">📅</span>
-            <span>{new Date(player.birth_date).getFullYear()}</span>
-          </div>
-        )}
-
-        {player.common_names && player.common_names.length > 0 && (
-          <div className="flex items-start text-gray-600">
-            <span className="mr-2">🏷️</span>
-            <div className="flex flex-wrap gap-1">
-              {player.common_names.slice(0, 2).map((name, index) => (
-                <span key={index} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                  {name}
-                </span>
-              ))}
+      </div>
+      
+      {/* Content section - same structure as Master Jersey */}
+      <div className="p-4">
+        <h3 className="font-bold text-sm text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2">
+          {player.name}
+        </h3>
+        
+        <div className="space-y-1 text-xs text-gray-600 mb-3">
+          {player.full_name && player.full_name !== player.name && (
+            <div className="flex items-center">
+              <span className="mr-1">📋</span>
+              <span className="truncate">{player.full_name}</span>
             </div>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-blue-600 font-mono text-xs">{player.topkit_reference}</span>
-          <div className="text-xs text-gray-500">
-            {player.jerseys_count || 0} maillots
+          )}
+          
+          {player.nationality && (
+            <div className="flex items-center">
+              <span className="mr-1">🌍</span>
+              <span>{player.nationality}</span>
+            </div>
+          )}
+          
+          {player.birth_date && (
+            <div className="flex items-center">
+              <span className="mr-1">📅</span>
+              <span>Né en {new Date(player.birth_date).getFullYear()}</span>
+            </div>
+          )}
+          
+          {player.common_names && player.common_names.length > 0 && (
+            <div className="flex items-center">
+              <span className="mr-1">🏷️</span>
+              <span className="truncate">{player.common_names.slice(0, 2).join(", ")}</span>
+              {player.common_names.length > 2 && (
+                <span className="ml-1 text-gray-400">+{player.common_names.length - 2}</span>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Bottom section - same structure as Master Jersey */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-blue-600 font-mono">{player.topkit_reference}</span>
+          <div className="flex items-center space-x-2 text-gray-500">
+            <span>{player.jerseys_count || 0} maillots</span>
           </div>
         </div>
       </div>
