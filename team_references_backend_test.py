@@ -274,7 +274,7 @@ class TopKitTeamReferencesTest:
             self.log_test(
                 "Data Consistency",
                 success,
-                f"Data consistency check: {total_teams} teams, {unique_references} unique references, {len(duplicates)} duplicates",
+                f"Data consistency check: {total_teams} teams, {unique_references} unique references, {len(duplicates)} duplicates, {len(teams_without_references)} without references",
                 {
                     "total_teams": total_teams,
                     "teams_with_references": teams_with_references,
