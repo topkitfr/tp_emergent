@@ -21,7 +21,7 @@ const CollaborativeHeader = ({
     { id: 'catalogue', label: 'Catalogue', icon: '📚' },
     { id: 'vestiaire', label: 'Vestiaire', icon: '👕' },
     { id: 'collections', label: 'Collections', icon: '💎' },
-    { id: 'contribute', label: 'Contribuer', icon: '✏️' }
+    { id: 'contributions', label: 'Contributions', icon: '🗳️' }
   ];
 
   return (
