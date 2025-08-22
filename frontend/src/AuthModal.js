@@ -311,11 +311,12 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" 
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 9999, pointerEvents: 'auto' }}
       onClick={handleModalClick}
     >
       <div 
         className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200"
+        style={{ pointerEvents: 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
