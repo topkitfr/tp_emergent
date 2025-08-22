@@ -162,10 +162,14 @@ def main():
         print(f"Update fields: {list(update_data.keys())}")
         
         # Apply the update
-        result = db[collection_name].update_one(
-            {"id": entity_id},
-            {"$set": update_data}
-        )
+        try:
+            result = db[collection_name].update_one(
+                {"id": entity_id},
+                {"$set": update_data}
+            )
+        except Exception as e:
+            print(f"❌ Update error: {e}")
+            continue
         
         if result.modified_count > 0:
             print(f"✅ Successfully applied images to {entity_type} {entity_id}")
