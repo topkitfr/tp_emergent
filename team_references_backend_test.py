@@ -268,7 +268,8 @@ class TopKitTeamReferencesTest:
                 len(duplicates) == 0 and 
                 len(reference_format_errors) == 0 and
                 unique_references == teams_with_references and
-                teams_with_references == total_teams  # All teams should have references
+                teams_with_references == total_teams and  # All teams should have references
+                len(teams_without_references) == 0  # No teams should be without references
             )
             
             self.log_test(
