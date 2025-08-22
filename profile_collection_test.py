@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-vestiaire.preview.emergentagent.com/api"
+BACKEND_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
 
 # Test accounts from review request
 ADMIN_CREDENTIALS = {

@@ -10,7 +10,7 @@ import jwt
 from datetime import datetime
 import time
 
-BASE_URL = "https://topkit-vestiaire.preview.emergentagent.com/api"
+BASE_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
 
 def test_complete_auth_workflow():
     """Test the complete authentication workflow as requested"""

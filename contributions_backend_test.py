@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-API_BASE = "https://topkit-vestiaire.preview.emergentagent.com/api"
+API_BASE = "https://team-jersey-hub.preview.emergentagent.com/api"
 
 # Données de test pour l'authentification
 TEST_USER = {

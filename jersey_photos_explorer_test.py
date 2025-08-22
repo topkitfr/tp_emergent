@@ -23,7 +23,7 @@ from datetime import datetime
 import os
 
 # Configuration
-BACKEND_URL = "https://topkit-vestiaire.preview.emergentagent.com/api"
+BACKEND_URL = "https://team-jersey-hub.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"
