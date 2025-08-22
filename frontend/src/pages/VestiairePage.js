@@ -365,9 +365,19 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             ❤️ Recherché
           </button>
         </div>
-        <button className="w-full px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded">
-          📋 Voir détails
-        </button>
+        <div className="flex gap-2">
+          <button className="flex-1 px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded">
+            📋 Voir détails
+          </button>
+          {user && (
+            <button 
+              onClick={() => alert('Fonctionnalité de contribution pour Jersey Release à venir !')}
+              className="px-3 py-2 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 text-sm border border-yellow-300 rounded"
+            >
+              ✏️ Améliorer
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
