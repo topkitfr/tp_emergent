@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const PendingContributions = ({ entityId, entityType, onVoteSubmitted, user }) => {
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [voting, setVoting] = useState({});
-  const { user } = useContext(AuthContext);
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
