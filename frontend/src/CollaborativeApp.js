@@ -147,30 +147,11 @@ const CollaborativeApp = () => {
       case 'collections':
         return <CollectionsPage {...commonProps} />;
       
-      case 'contribute':
-        return <ContributePage {...commonProps} />;
-      
-      // Legacy routes (keep for direct access)
-      case 'explore':
-        return <CollaborativeExplorePage {...commonProps} />;
-      
-      case 'teams':
-        return <CollaborativeTeamsPage {...commonProps} />;
-      
-      case 'brands':
-        return <CollaborativeBrandsPage {...commonProps} />;
-      
-      case 'players':
-        return <CollaborativePlayersPage {...commonProps} />;
-      
-      case 'competitions':
-        return <CollaborativeCompetitionsPage {...commonProps} />;
-      
-      case 'master-jerseys':
-        return <CollaborativeMasterJerseyPage {...commonProps} />;
-      
       case 'contributions':
-        return <CollaborativeContributionsPage {...commonProps} />;
+        return <EnhancedContributionsPage {...commonProps} />;
+      
+      case 'contribute': // Legacy support
+        return <EnhancedContributionsPage {...commonProps} />;
       
       case 'profile':
         return <CollaborativeProfilePage {...commonProps} />;
