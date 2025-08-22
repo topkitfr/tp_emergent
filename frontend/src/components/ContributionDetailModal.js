@@ -11,6 +11,13 @@ const ContributionDetailModal = ({
   const [currentData, setCurrentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedImageView, setSelectedImageView] = useState(null);
+  const [activeTab, setActiveTab] = useState('comparison'); // 'comparison' | 'history' | 'analytics'
+  const [voteComments, setVoteComments] = useState({});
+  const [granularVotes, setGranularVotes] = useState({});
+  const [showVoteComment, setShowVoteComment] = useState(false);
+  const [pendingVoteType, setPendingVoteType] = useState(null);
+  const [contributorHistory, setContributorHistory] = useState([]);
+  const [entityHistory, setEntityHistory] = useState([]);
 
   // Load current entity data for comparison
   useEffect(() => {
