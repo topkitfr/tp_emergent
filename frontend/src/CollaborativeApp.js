@@ -99,7 +99,7 @@ const AppContent = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    setCurrentView('home');
+    navigate('/');
   };
 
   // Data loading functions
