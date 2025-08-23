@@ -331,7 +331,6 @@ const getModuleStatusColor = (status) => {
   };
   return colors[status] || 'bg-gray-100 text-gray-800';
 };
-};
 
 // Component for rendering different module contents
 const ModuleContent = ({ activeModule, dashboardData, API, user }) => {
