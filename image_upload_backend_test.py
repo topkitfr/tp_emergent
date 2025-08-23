@@ -83,11 +83,7 @@ class TopKitImageUploadTester:
                 "name": "Test Competition with Images",
                 "country": "France",
                 "competition_type": "League",
-                "logo_url": self.create_test_image_base64("png"),
-                "secondary_images": [
-                    self.create_test_image_base64("jpg"),
-                    self.create_test_image_base64("png")
-                ]
+                "logo_url": self.create_test_image_base64("png")
             }
             
             response = self.session.post(f"{BACKEND_URL}/competitions", json=competition_data)
