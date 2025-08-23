@@ -100,7 +100,7 @@ class TopKitImageUploadTester:
                     "competition_name": data.get("name"),
                     "topkit_reference": data.get("topkit_reference"),
                     "logo_url_present": bool(data.get("logo_url")),
-                    "logo_url_value": data.get("logo_url")
+                    "secondary_images_count": len(data.get("secondary_images", []))
                 })
                 return competition_id
             else:
