@@ -246,11 +246,11 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/settings/security" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')}/settings/security" 
                style="background-color: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 🔐 Sécuriser mon compte
             </a>
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/password/change" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')}/password/change" 
                style="background-color: #ffc107; color: #212529; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔑 Changer le mot de passe
             </a>
