@@ -243,15 +243,47 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       if (!formData.name || !formData.country) {
         alert('Nom et pays sont obligatoires');
         return;
       }
-      handleCreateTeam({
-        ...formData,
-        founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
+
+      try {
+        // Préparer les données avec les images en base64
+        const teamData = {
+          ...formData,
+          founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
+        };
+
+        // Ajouter le logo si présent
+        if (imageFiles.logo) {
+          const logoBase64 = await convertFileToBase64(imageFiles.logo);
+          teamData.logo_url = logoBase64;
+        }
+
+        // Ajouter les images secondaires si présentes
+        if (imageFiles.secondary_photos.length > 0) {
+          const secondaryImagesBase64 = await Promise.all(
+            imageFiles.secondary_photos.map(file => convertFileToBase64(file))
+          );
+          teamData.secondary_images = secondaryImagesBase64;
+        }
+
+        handleCreateTeam(teamData);
+      } catch (error) {
+        console.error('Erreur lors de la création:', error);
+        alert('Erreur lors de la création de l\'équipe');
+      }
+    };
+
+    const convertFileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
     };
 
