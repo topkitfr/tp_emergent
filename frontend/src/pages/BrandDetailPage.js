@@ -16,13 +16,9 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
       setBrand(foundBrand);
       setLoading(false);
       
-      // Simuler les images secondaires - à remplacer par de vraies données
-      if (foundBrand) {
-        setSecondaryImages([
-          foundBrand.secondary_image_1,
-          foundBrand.secondary_image_2, 
-          foundBrand.secondary_image_3
-        ].filter(Boolean));
+      // Charger les images secondaires depuis le champ secondary_images
+      if (foundBrand && foundBrand.secondary_images) {
+        setSecondaryImages(foundBrand.secondary_images.filter(Boolean));
       }
     }
   }, [brands, brandId]);
