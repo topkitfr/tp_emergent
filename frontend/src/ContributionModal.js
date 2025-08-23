@@ -649,7 +649,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
             </div>
             
             {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
+            <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200 flex-shrink-0">
               <div className="text-sm text-gray-600">
                 {changes.length === 0 ? (
                   "Aucun changement détecté"
