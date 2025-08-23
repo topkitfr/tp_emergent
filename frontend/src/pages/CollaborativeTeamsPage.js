@@ -77,7 +77,8 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     const handleTeamClick = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      setSelectedTeam(team);
+      // Naviguer vers la page détaillée au lieu d'ouvrir une modal
+      window.location.href = `/teams/${team.id}`;
     };
 
     return (
