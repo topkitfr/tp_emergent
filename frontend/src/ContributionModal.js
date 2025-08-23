@@ -648,31 +648,33 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
               </div>
             </div>
             
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200 flex-shrink-0">
-              <div className="text-sm text-gray-600">
-                {changes.length === 0 ? (
-                  "Aucun changement détecté"
-                ) : (
-                  `${changes.length} changement${changes.length > 1 ? 's' : ''} détecté${changes.length > 1 ? 's' : ''}`
-                )}
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  disabled={loading || changes.length === 0}
-                >
-                  {loading ? 'Soumission...' : '📝 Soumettre pour validation'}
-                </button>
+            {/* Footer - Optimisé mobile */}
+            <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+                  {changes.length === 0 ? (
+                    "Aucun changement détecté"
+                  ) : (
+                    `${changes.length} changement${changes.length > 1 ? 's' : ''} détecté${changes.length > 1 ? 's' : ''}`
+                  )}
+                </div>
+                
+                <div className="flex gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50"
+                    disabled={loading || changes.length === 0}
+                  >
+                    {loading ? 'Soumission...' : '📝 Soumettre'}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
