@@ -141,8 +141,8 @@ const AppContent = () => {
         if (response.ok) {
           const results = await response.json();
           console.log('Search results:', results);
-          // Switch to explore view with search results
-          setCurrentView('explore');
+          // Navigate to explore view with search results
+          navigate('/explore');
         }
       } catch (error) {
         console.error('Search error:', error);
