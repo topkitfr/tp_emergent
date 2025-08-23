@@ -448,11 +448,11 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                 ))}
               </div>
               
-              {/* Section Upload d'Images */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+              {/* Section Upload d'Images - Optimisée mobile */}
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
                   📸 Images à ajouter/modifier
-                  <span className="text-xs text-gray-500 font-normal">(optionnel, max 5MB par image)</span>
+                  <span className="text-xs text-gray-500 font-normal">(max 5MB)</span>
                 </h4>
                 
                 <div className="space-y-4">
