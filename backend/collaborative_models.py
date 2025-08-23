@@ -144,6 +144,7 @@ class Competition(BaseModel):
     
     # Logo et couleurs
     logo_url: Optional[str] = None
+    secondary_images: List[str] = []
     primary_color: Optional[str] = None
     
     # Métadonnées collaboratives
