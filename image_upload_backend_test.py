@@ -341,15 +341,15 @@ class TopKitImageUploadTester:
                 master_jerseys = response.json()
                 
                 # Find master jerseys with images
-                jerseys_with_images = [j for j in master_jerseys if j.get("main_image_url") or j.get("secondary_images")]
+                jerseys_with_images = [j for j in master_jerseys if j.get("reference_images")]
                 
                 if jerseys_with_images:
                     sample_jersey = jerseys_with_images[0]
                     self.log_result("Data Structure Verification - Master Jerseys", True, "Found master jerseys with proper image data structure", {
                         "total_master_jerseys": len(master_jerseys),
                         "jerseys_with_images": len(jerseys_with_images),
-                        "sample_has_main_image": bool(sample_jersey.get("main_image_url")),
-                        "sample_has_secondary": bool(sample_jersey.get("secondary_images")),
+                        "sample_has_reference_images": bool(sample_jersey.get("reference_images")),
+                        "sample_reference_images_count": len(sample_jersey.get("reference_images", [])),
                         "sample_reference": sample_jersey.get("topkit_reference")
                     })
                 else:
