@@ -226,7 +226,8 @@ class TopKitImageUploadTester:
                 "brand_id": brand_id,
                 "season": "2023-24",
                 "jersey_type": "away",
-                "main_image_url": self.create_test_image_base64("jpg")
+                "primary_color": "Red",
+                "reference_images": [self.create_test_image_base64("jpg")]
             }
             
             response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
