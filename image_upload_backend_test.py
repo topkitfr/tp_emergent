@@ -323,7 +323,7 @@ class TopKitImageUploadTester:
                 competitions = response.json()
                 
                 # Find competitions with images
-                competitions_with_images = [c for c in competitions if c.get("logo_url")]
+                competitions_with_images = [c for c in competitions if c.get("logo_url") or c.get("secondary_images")]
                 
                 if competitions_with_images:
                     sample_competition = competitions_with_images[0]
@@ -331,7 +331,7 @@ class TopKitImageUploadTester:
                         "total_competitions": len(competitions),
                         "competitions_with_images": len(competitions_with_images),
                         "sample_has_logo": bool(sample_competition.get("logo_url")),
-                        "sample_logo_url": sample_competition.get("logo_url")[:50] + "..." if sample_competition.get("logo_url") else None,
+                        "sample_has_secondary": bool(sample_competition.get("secondary_images")),
                         "sample_reference": sample_competition.get("topkit_reference")
                     })
                 else:
