@@ -38,37 +38,29 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     e.preventDefault();
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Get actual DOM values to handle autofill issues
-    const emailInput = e.target.querySelector('input[type="email"]');
-    const passwordInput = e.target.querySelector('input[type="password"]');
-    const nameInput = e.target.querySelector('input[placeholder="Nom complet"]');
-    
-    const actualEmail = emailInput?.value || formData.email;
-    const actualPassword = passwordInput?.value || formData.password;
-    const actualName = nameInput?.value || formData.name;
+    // Utiliser directement les valeurs du state formData
+    const actualEmail = formData.email?.trim() || '';
+    const actualPassword = formData.password?.trim() || '';
+    const actualName = formData.name?.trim() || '';
     
     console.log('📧 Form data:', { 
       email: actualEmail, 
       password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
-      name: actualName 
+      name: actualName,
+      isLogin: isLogin
     });
-    console.log('🔄 isLogin mode:', isLogin);
-    console.log('🌐 API URL:', API);
     
-    // Update formData with actual values if they differ
-    if (actualEmail !== formData.email || actualPassword !== formData.password || actualName !== formData.name) {
-      setFormData({
-        ...formData,
-        email: actualEmail,
-        password: actualPassword,
-        name: actualName
-      });
-    }
-    
-    // Validation using actual values
+    // Validation simplifiée
     if (!actualEmail || !actualPassword) {
-      console.error('❌ Missing required fields');
+      console.error('❌ Missing required fields - Email or password empty');
       setError('Veuillez remplir tous les champs requis');
+      return;
+    }
+
+    // Validation email basique
+    if (!actualEmail.includes('@')) {
+      console.error('❌ Invalid email format');
+      setError('Format d\'email invalide');
       return;
     }
 
