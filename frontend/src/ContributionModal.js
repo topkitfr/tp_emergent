@@ -403,7 +403,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
             </div>
             
             {/* Body */}
-            <div className="px-6 py-4 max-h-96 overflow-y-auto">
+            <div className="px-6 py-4 overflow-y-auto flex-1">
               
               {/* Informations actuelles */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
