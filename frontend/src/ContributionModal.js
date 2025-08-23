@@ -385,7 +385,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full max-h-[90vh] flex flex-col">
           <form onSubmit={handleSubmit}>
             {/* Header */}
-            <div className="bg-blue-600 px-6 py-4">
+            <div className="bg-blue-600 px-6 py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-white">
                   ✏️ Améliorer la fiche : {entity?.name}
