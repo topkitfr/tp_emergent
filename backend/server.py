@@ -9458,72 +9458,7 @@ async def get_contributions(
     
     return contributions
 
-@api_router.post("/contributions/{contribution_id}/vote")
-async def vote_on_contribution(
-    contribution_id: str,
-    vote_type: str,  # "upvote" or "downvote"
-    reason: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
-):
-    """Vote on a contribution"""
-    if vote_type not in ["upvote", "downvote"]:
-        raise HTTPException(status_code=400, detail="Type de vote invalide")
-    
-    # Vérifier que contribution existe
-    contribution = await db.contributions.find_one({"id": contribution_id})
-    if not contribution:
-        raise HTTPException(status_code=404, detail="Contribution non trouvée")
-    
-    # Vérifier si l'utilisateur a déjà voté
-    existing_vote = await db.contribution_votes.find_one({
-        "contribution_id": contribution_id,
-        "voter_id": current_user["id"]
-    })
-    
-    if existing_vote:
-        # Mettre à jour le vote existant
-        old_vote_type = existing_vote["vote_type"]
-        await db.contribution_votes.update_one(
-            {"id": existing_vote["id"]},
-            {"$set": {"vote_type": VoteType.UPVOTE if vote_type == "upvote" else VoteType.DOWNVOTE, "comment": reason}}
-        )
-        
-        # Mettre à jour les compteurs
-        if old_vote_type != (VoteType.UPVOTE if vote_type == "upvote" else VoteType.DOWNVOTE):
-            if old_vote_type == VoteType.UPVOTE:
-                await db.contributions.update_one(
-                    {"id": contribution_id},
-                    {"$inc": {"upvotes": -1, "downvotes": 1 if vote_type == "downvote" else 0}}
-                )
-            else:
-                await db.contributions.update_one(
-                    {"id": contribution_id},
-                    {"$inc": {"downvotes": -1, "upvotes": 1 if vote_type == "upvote" else 0}}
-                )
-    else:
-        # Nouveau vote
-        vote = ContributionVote(
-            contribution_id=contribution_id,
-            voter_id=current_user["id"],
-            vote_type=VoteType.UPVOTE if vote_type == "upvote" else VoteType.DOWNVOTE,
-            comment=reason
-        )
-        
-        await db.contribution_votes.insert_one(vote.dict())
-        
-        # Mettre à jour les compteurs
-        update_fields = {"total_votes": 1}
-        if vote_type == "upvote":
-            update_fields["upvotes"] = 1
-        else:
-            update_fields["downvotes"] = 1
-            
-        await db.contributions.update_one(
-            {"id": contribution_id},
-            {"$inc": update_fields}
-        )
-    
-    return {"message": "Vote enregistré avec succès"}
+# Premier endpoint de vote supprimé - conflit avec le second endpoint
 
 # ================================
 # MIGRATION FROM OLD JERSEY SYSTEM
