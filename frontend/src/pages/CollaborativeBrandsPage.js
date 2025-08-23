@@ -395,6 +395,78 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
               </div>
             </div>
 
+            {/* Section Upload d'Images */}
+            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                📸 Images de la marque
+                <span className="text-xs text-gray-500 font-normal">(optionnel, max 5MB par image)</span>
+              </h4>
+              
+              {/* Logo de la marque */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Logo de la marque
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('logo', e.target.files[0])}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {imagePreviews.logo && (
+                    <div className="relative">
+                      <img src={imagePreviews.logo} alt="Aperçu logo" className="w-12 h-12 object-cover rounded-lg border" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageFiles(prev => ({ ...prev, logo: null }));
+                          setImagePreviews(prev => ({ ...prev, logo: '' }));
+                        }}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Images secondaires */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Images secondaires (évolution du logo, etc.)
+                  <span className="text-xs text-gray-500 ml-1">- Maximum 3 images</span>
+                </label>
+                
+                {imageFiles.secondary_photos.length < 3 && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload('secondary_photo', e.target.files[0])}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 mb-3"
+                  />
+                )}
+                
+                {imagePreviews.secondary_photos.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {imagePreviews.secondary_photos.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img src={preview} alt={`Aperçu ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
+                        <button
+                          type="button"
+                          onClick={() => removeSecondaryPhoto(index)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
