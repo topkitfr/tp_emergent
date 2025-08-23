@@ -187,6 +187,61 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     });
 
     const [newColor, setNewColor] = useState('');
+    
+    // États pour la gestion des images
+    const [imageFiles, setImageFiles] = useState({
+      logo: null,
+      secondary_photos: []
+    });
+    const [imagePreviews, setImagePreviews] = useState({
+      logo: '',
+      secondary_photos: []
+    });
+
+    const handleImageUpload = async (imageType, file) => {
+      if (!file) return;
+      
+      // Vérifier la taille du fichier (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('L\'image est trop volumineuse. Taille maximale : 5MB');
+        return;
+      }
+
+      try {
+        // Convertir en base64 pour l'aperçu
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (imageType === 'logo') {
+            setImageFiles(prev => ({ ...prev, logo: file }));
+            setImagePreviews(prev => ({ ...prev, logo: e.target.result }));
+          } else if (imageType === 'secondary_photo') {
+            setImageFiles(prev => ({
+              ...prev,
+              secondary_photos: [...prev.secondary_photos, file]
+            }));
+            setImagePreviews(prev => ({
+              ...prev,
+              secondary_photos: [...prev.secondary_photos, e.target.result]
+            }));
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Erreur lors du traitement de l\'image:', error);
+        alert('Erreur lors du traitement de l\'image');
+      }
+    };
+
+    const removeSecondaryPhoto = (index) => {
+      setImageFiles(prev => ({
+        ...prev,
+        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+      }));
+      setImagePreviews(prev => ({
+        ...prev,
+        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+      }));
+    };
 
     const handleSubmit = (e) => {
       e.preventDefault();
