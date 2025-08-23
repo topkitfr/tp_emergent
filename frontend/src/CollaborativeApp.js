@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import CollaborativeHeader from './components/CollaborativeHeader';
 import CollaborativeHomepage from './pages/CollaborativeHomepage';
 import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
 import CataloguePage from './pages/CataloguePage';
-import VestiairePage from './pages/VestiairePage'; // Nouvelle page Vestiaire
+import VestiairePage from './pages/VestiairePage';
 import CollectionsPage from './pages/CollectionsPage';
 import ContributePage from './pages/ContributePage';
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
@@ -16,6 +17,12 @@ import CollaborativeContributionsPage from './pages/CollaborativeContributionsPa
 import EnhancedContributionsPage from './pages/EnhancedContributionsPage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
+// Import nouvelles pages détaillées
+import TeamDetailPage from './pages/TeamDetailPage';
+import BrandDetailPage from './pages/BrandDetailPage';
+import CompetitionDetailPage from './pages/CompetitionDetailPage';
+import PlayerDetailPage from './pages/PlayerDetailPage';
+import MasterJerseyDetailPage from './pages/MasterJerseyDetailPage';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
