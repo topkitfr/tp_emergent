@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ContributionModal from '../ContributionModal';
 
 const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
+  const navigate = useNavigate();
   const [filteredBrands, setFilteredBrands] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
