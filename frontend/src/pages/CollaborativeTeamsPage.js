@@ -4,6 +4,7 @@ import { AuthContext } from '../App';
 import ContributionModal from '../ContributionModal';
 
 const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
+  const navigate = useNavigate();
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
