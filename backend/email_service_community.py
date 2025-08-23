@@ -89,7 +89,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/jersey/{jersey_data.get('id', '')}" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')}/jersey/{jersey_data.get('id', '')}" 
                style="background-color: #ff6b35; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">
                 👀 Voir le maillot
             </a>
