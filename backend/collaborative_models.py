@@ -428,6 +428,8 @@ class MasterJerseyCreate(BaseModel):
     pattern_description: Optional[str] = None
     main_sponsor: Optional[str] = None
     competition_id: Optional[str] = None
+    main_image_url: Optional[str] = None
+    secondary_images: List[str] = []
 
 class JerseyReleaseCreate(BaseModel):
     master_jersey_id: str
