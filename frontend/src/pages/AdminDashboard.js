@@ -4,6 +4,7 @@ const AdminDashboard = ({ user, API }) => {
   const [activeModule, setActiveModule] = useState('overview');
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Admin modules avec leurs configurations
   const adminModules = [
