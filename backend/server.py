@@ -1530,7 +1530,8 @@ async def register(user_data: UserRegister, request: Request):
             logger.error(f"Failed to send confirmation email to {user.email}: {e}")
     
     # Fallback verification link for development
-    verification_link = f"https://topkit-ui-fix.preview.emergentagent.com/verify-email?token={verification_token}"
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+    verification_link = f"{frontend_url}/verify-email?token={verification_token}"
     
     return {
         "message": "Compte créé avec succès! " + ("Un email de confirmation a été envoyé à votre adresse." if email_sent else "Veuillez vérifier votre email pour activer votre compte."),
