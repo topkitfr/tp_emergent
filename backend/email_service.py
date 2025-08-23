@@ -344,7 +344,8 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         
         subject = f"🎉 Accès accordé à {self.app_name} !"
         
-        login_url = "https://topkit-ui-fix.preview.emergentagent.com"
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+        login_url = frontend_url
         
         # Plain text version
         text_body = f"""
