@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-API_BASE = "https://topkit-admin-1.preview.emergentagent.com/api"
+API_BASE = "https://topkit-ui-fix.preview.emergentagent.com/api"
 
 # Données de test pour l'authentification
 TEST_USER = {

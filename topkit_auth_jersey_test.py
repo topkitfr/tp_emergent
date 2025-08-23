@@ -12,7 +12,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-admin-1.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-ui-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 

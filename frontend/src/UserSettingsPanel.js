@@ -48,7 +48,7 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
   });
 
   // Get API URL from environment
-  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-admin-1.preview.emergentagent.com';
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://topkit-ui-fix.preview.emergentagent.com';
 
   useEffect(() => {
     fetchUserSettings();
