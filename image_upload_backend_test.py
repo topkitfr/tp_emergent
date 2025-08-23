@@ -169,10 +169,10 @@ class TopKitImageUploadTester:
                 "brand_id": brand_id,
                 "season": "2024-25",
                 "jersey_type": "home",
-                "main_image_url": self.create_test_image_base64("png"),
-                "secondary_images": [
-                    self.create_test_image_base64("jpg"),
-                    self.create_test_image_base64("png")
+                "primary_color": "Blue",
+                "reference_images": [
+                    self.create_test_image_base64("png"),
+                    self.create_test_image_base64("jpg")
                 ]
             }
             
