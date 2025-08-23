@@ -418,7 +418,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 {fields.map((field) => (
                   <div key={field.key} className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-700 mb-1">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
                       {field.label}
                       {field.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
@@ -427,7 +427,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                       <select
                         value={formData[field.key] || ''}
                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Sélectionner...</option>
                         {field.options?.map(option => (
@@ -439,7 +439,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                         type={field.type}
                         value={formData[field.key] || ''}
                         onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder={`Saisir ${field.label.toLowerCase()}`}
                         required={field.required}
                       />
