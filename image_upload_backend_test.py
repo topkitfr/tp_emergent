@@ -130,7 +130,7 @@ class TopKitImageUploadTester:
                 self.log_result("Competition Creation (Logo Only)", True, "Successfully created competition with logo only", {
                     "competition_id": data.get("id"),
                     "logo_url_present": bool(data.get("logo_url")),
-                    "logo_url_value": data.get("logo_url")
+                    "secondary_images_present": bool(data.get("secondary_images"))
                 })
                 return data.get("id")
             else:
