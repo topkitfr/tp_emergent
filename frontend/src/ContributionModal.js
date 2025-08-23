@@ -405,17 +405,17 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
             {/* Body - Défilement optimisé mobile */}
             <div className="px-3 sm:px-6 py-3 sm:py-4 overflow-y-auto flex-1">
               
-              {/* Informations actuelles */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Informations actuelles :</h4>
-                <div className="text-sm text-gray-600">
+              {/* Informations actuelles - Plus compact sur mobile */}
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Informations actuelles :</h4>
+                <div className="text-xs sm:text-sm text-gray-600">
                   <p><strong>Référence :</strong> {entity?.topkit_reference}</p>
                   <p><strong>Type :</strong> {entityType}</p>
                 </div>
               </div>
               
-              {/* Formulaire d'édition */}
-              <div className="grid md:grid-cols-2 gap-4 mb-6">
+              {/* Formulaire d'édition - Responsive grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 {fields.map((field) => (
                   <div key={field.key} className="flex flex-col">
                     <label className="text-sm font-medium text-gray-700 mb-1">
