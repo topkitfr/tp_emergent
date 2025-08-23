@@ -16,13 +16,9 @@ const MasterJerseyDetailPage = ({ user, API, masterJerseys, onDataUpdate }) => {
       setJersey(foundJersey);
       setLoading(false);
       
-      // Simuler les images secondaires - à remplacer par de vraies données
-      if (foundJersey) {
-        setSecondaryImages([
-          foundJersey.secondary_image_1,
-          foundJersey.secondary_image_2, 
-          foundJersey.secondary_image_3
-        ].filter(Boolean));
+      // Charger les images secondaires depuis le champ secondary_images
+      if (foundJersey && foundJersey.secondary_images) {
+        setSecondaryImages(foundJersey.secondary_images.filter(Boolean));
       }
     }
   }, [masterJerseys, jerseyId]);
