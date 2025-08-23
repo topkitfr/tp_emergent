@@ -16,13 +16,9 @@ const TeamDetailPage = ({ user, API, teams, onDataUpdate }) => {
       setTeam(foundTeam);
       setLoading(false);
       
-      // Simuler les images secondaires - à remplacer par de vraies données
-      if (foundTeam) {
-        setSecondaryImages([
-          foundTeam.secondary_image_1,
-          foundTeam.secondary_image_2, 
-          foundTeam.secondary_image_3
-        ].filter(Boolean));
+      // Charger les images secondaires depuis le champ secondary_images
+      if (foundTeam && foundTeam.secondary_images) {
+        setSecondaryImages(foundTeam.secondary_images.filter(Boolean));
       }
     }
   }, [teams, teamId]);
