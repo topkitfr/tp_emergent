@@ -377,33 +377,33 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex items-end justify-center min-h-screen pt-4 px-2 pb-2 text-center sm:block sm:p-0">
         {/* Overlay */}
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
         
-        {/* Modal */}
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full max-h-[90vh] flex flex-col">
-          <form onSubmit={handleSubmit}>
-            {/* Header */}
-            <div className="bg-blue-600 px-6 py-4 flex-shrink-0">
+        {/* Modal - Responsive pour mobile */}
+        <div className="inline-block w-full bg-white rounded-t-lg sm:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            {/* Header - Plus compact sur mobile */}
+            <div className="bg-blue-600 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">
-                  ✏️ Améliorer la fiche : {entity?.name}
+                <h3 className="text-base sm:text-lg font-medium text-white truncate pr-2">
+                  ✏️ Améliorer : {entity?.name}
                 </h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-white hover:text-gray-200"
+                  className="text-white hover:text-gray-200 p-1"
                 >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
             </div>
             
-            {/* Body */}
-            <div className="px-6 py-4 overflow-y-auto flex-1">
+            {/* Body - Défilement optimisé mobile */}
+            <div className="px-3 sm:px-6 py-3 sm:py-4 overflow-y-auto flex-1">
               
               {/* Informations actuelles */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
