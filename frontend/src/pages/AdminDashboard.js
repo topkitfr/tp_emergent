@@ -104,23 +104,11 @@ const AdminDashboard = ({ user, API }) => {
     setLoading(false);
   };
 
-  const getModuleStatusColor = (status) => {
-    const colors = {
-      'recommended': 'bg-green-100 text-green-800',
-      'essential': 'bg-blue-100 text-blue-800', 
-      'premium': 'bg-purple-100 text-purple-800',
-      'enterprise': 'bg-red-100 text-red-800',
-      'advanced': 'bg-yellow-100 text-yellow-800',
-      'business': 'bg-pink-100 text-pink-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
   // Check if user is admin (topkitfr@gmail.com)
   if (!user || user.email !== 'topkitfr@gmail.com') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center py-12">
           <div className="text-6xl mb-4">🚫</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès Refusé</h2>
           <p className="text-gray-600">Seul l'administrateur TopKit peut accéder à cette interface.</p>
@@ -129,99 +117,220 @@ const AdminDashboard = ({ user, API }) => {
     );
   }
 
+  const getActiveModuleData = () => {
+    return adminModules.find(module => module.id === activeModule) || adminModules[0];
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       
-      {/* Header Admin */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="text-2xl">🛡️</div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">TopKit Administration</h1>
-              <p className="text-sm text-gray-600">Interface complète de gestion • Version Enterprise</p>
-            </div>
+      {/* Header - Design Standard TopKit */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Administration TopKit</h1>
+          <p className="text-gray-600">
+            Interface complète de gestion et supervision de la plateforme
+          </p>
+        </div>
+        
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+        >
+          <span className="mr-2">🛡️</span>
+          Modules
+        </button>
+
+        {/* Desktop User Info */}
+        <div className="hidden md:flex items-center space-x-4">
+          <div className="text-right">
+            <p className="text-sm font-medium text-gray-900">Super Admin</p>
+            <p className="text-xs text-gray-500">{user.email}</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Super Admin</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
-            </div>
-            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-red-600 font-bold">A</span>
-            </div>
+          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <span className="text-red-600 font-bold">A</span>
           </div>
         </div>
       </div>
 
-      <div className="flex">
+      {/* Stats rapides - Design Standard TopKit */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-blue-600">{dashboardData.users?.total || 1247}</div>
+          <div className="text-sm text-blue-700">Utilisateurs</div>
+        </div>
         
-        {/* Sidebar Navigation */}
-        <div className="w-80 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Modules Disponibles</h2>
-            
-            {/* Module Selection */}
-            <div className="space-y-2">
-              {adminModules.map(module => (
-                <div
-                  key={module.id}
-                  onClick={() => setActiveModule(module.id)}
-                  className={`p-3 rounded-lg cursor-pointer transition-all border ${
-                    activeModule === module.id 
-                      ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                      : 'hover:bg-gray-50 border-transparent'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <h3 className={`text-sm font-medium ${
-                      activeModule === module.id ? 'text-blue-900' : 'text-gray-900'
-                    }`}>
-                      {module.name}
-                    </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModuleStatusColor(module.status)}`}>
-                      {module.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600">{module.description}</p>
-                </div>
-              ))}
-            </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-green-600">{dashboardData.contributions?.approved || 156}</div>
+          <div className="text-sm text-green-700">Contributions</div>
+        </div>
+        
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-purple-600">{dashboardData.entities?.teams || 348}</div>
+          <div className="text-sm text-purple-700">Équipes</div>
+        </div>
+        
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="text-2xl font-bold text-orange-600">{dashboardData.contributions?.pending || 23}</div>
+          <div className="text-sm text-orange-700">En attente</div>
+        </div>
+      </div>
 
-            {/* Quick Stats */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Stats Rapides</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Utilisateurs:</span>
-                  <span className="font-medium">{dashboardData.users?.total || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">En attente:</span>
-                  <span className="font-medium text-orange-600">{dashboardData.contributions?.pending || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Équipes:</span>
-                  <span className="font-medium">{dashboardData.entities?.teams || 0}</span>
-                </div>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+          <div className="fixed inset-y-0 left-0 w-80 bg-white shadow-xl">
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Modules Admin</h2>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
               </div>
+            </div>
+            
+            <div className="p-4 overflow-y-auto">
+              <ModuleSelector 
+                modules={adminModules}
+                activeModule={activeModule}
+                setActiveModule={setActiveModule}
+                setMobileMenuOpen={setMobileMenuOpen}
+              />
             </div>
           </div>
         </div>
+      )}
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          {/* Module Content will be rendered here */}
-          <ModuleContent 
-            activeModule={activeModule} 
-            dashboardData={dashboardData}
-            API={API}
-            user={user}
-          />
+      {/* Desktop Module Selector */}
+      <div className="hidden md:block mb-8">
+        <ModuleSelector 
+          modules={adminModules}
+          activeModule={activeModule}
+          setActiveModule={setActiveModule}
+          isDesktop={true}
+        />
+      </div>
+
+      {/* Active Module Content */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{getActiveModuleData().name}</h2>
+            <p className="text-sm text-gray-600">{getActiveModuleData().description}</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getModuleStatusColor(getActiveModuleData().status)}`}>
+            {getActiveModuleData().status}
+          </span>
         </div>
+        
+        <ModuleContent 
+          activeModule={activeModule} 
+          dashboardData={dashboardData}
+          API={API}
+          user={user}
+        />
       </div>
     </div>
   );
+};
+
+// Module Selector Component
+const ModuleSelector = ({ modules, activeModule, setActiveModule, setMobileMenuOpen, isDesktop = false }) => {
+  const handleModuleClick = (moduleId) => {
+    setActiveModule(moduleId);
+    if (setMobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  };
+
+  if (isDesktop) {
+    // Desktop: Grid layout
+    return (
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Modules Disponibles</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {modules.map(module => (
+            <ModuleCard 
+              key={module.id}
+              module={module}
+              isActive={activeModule === module.id}
+              onClick={() => handleModuleClick(module.id)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile: List layout
+  return (
+    <div className="space-y-2">
+      {modules.map(module => (
+        <div
+          key={module.id}
+          onClick={() => handleModuleClick(module.id)}
+          className={`p-3 rounded-lg cursor-pointer transition-all border ${
+            activeModule === module.id 
+              ? 'bg-blue-50 border-blue-200 shadow-sm' 
+              : 'hover:bg-gray-50 border-transparent'
+          }`}
+        >
+          <div className="flex items-start justify-between mb-1">
+            <h3 className={`text-sm font-medium ${
+              activeModule === module.id ? 'text-blue-900' : 'text-gray-900'
+            }`}>
+              {module.name}
+            </h3>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModuleStatusColor(module.status)}`}>
+              {module.status}
+            </span>
+          </div>
+          <p className="text-xs text-gray-600">{module.description}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Module Card Component
+const ModuleCard = ({ module, isActive, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+      isActive 
+        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+        : 'bg-white border-gray-200 hover:border-gray-300'
+    }`}
+  >
+    <div className="flex items-start justify-between mb-2">
+      <h3 className={`text-sm font-medium ${
+        isActive ? 'text-blue-900' : 'text-gray-900'
+      }`}>
+        {module.name}
+      </h3>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModuleStatusColor(module.status)}`}>
+        {module.status}
+      </span>
+    </div>
+    <p className="text-xs text-gray-600">{module.description}</p>
+  </div>
+);
+
+const getModuleStatusColor = (status) => {
+  const colors = {
+    'recommended': 'bg-green-100 text-green-800',
+    'essential': 'bg-blue-100 text-blue-800', 
+    'premium': 'bg-purple-100 text-purple-800',
+    'enterprise': 'bg-red-100 text-red-800',
+    'advanced': 'bg-yellow-100 text-yellow-800',
+    'business': 'bg-pink-100 text-pink-800'
+  };
+  return colors[status] || 'bg-gray-100 text-gray-800';
+};
 };
 
 // Component for rendering different module contents
