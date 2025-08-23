@@ -195,6 +195,8 @@ class MasterJersey(BaseModel):
     
     # Images de référence (photos officielles)
     reference_images: List[str] = []
+    main_image_url: Optional[str] = None
+    secondary_images: List[str] = []
     
     # Métadonnées collaboratives
     created_at: datetime = Field(default_factory=datetime.utcnow)
