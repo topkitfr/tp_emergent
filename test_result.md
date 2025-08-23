@@ -2812,7 +2812,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Admin Dashboard Backend Testing - COMPLETED"
+    - "Detailed Routes Backend Testing - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
