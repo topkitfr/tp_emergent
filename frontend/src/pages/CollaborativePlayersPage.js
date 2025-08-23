@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
   const [filteredPlayers, setFilteredPlayers] = useState([]);
