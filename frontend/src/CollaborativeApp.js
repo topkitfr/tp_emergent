@@ -150,6 +150,28 @@ const AppContent = () => {
     }
   };
 
+  // Handler pour le changement de vue depuis le header
+  const handleViewChange = (viewName) => {
+    const routes = {
+      'home': '/',
+      'explore': '/explore',
+      'catalogue': '/catalogue',
+      'vestiaire': '/vestiaire',
+      'collections': '/collections',
+      'contributions': '/contributions',
+      'teams': '/teams',
+      'brands': '/brands',
+      'players': '/players',
+      'competitions': '/competitions',
+      'master-jerseys': '/master-jerseys',
+      'profile': '/profile',
+      'admin': '/admin'
+    };
+    
+    const route = routes[viewName] || '/';
+    navigate(route);
+  };
+
   // Render current view
   const renderCurrentView = () => {
     const commonProps = {
