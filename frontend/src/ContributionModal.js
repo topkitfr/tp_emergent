@@ -382,7 +382,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
         
         {/* Modal */}
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full max-h-[90vh] flex flex-col">
           <form onSubmit={handleSubmit}>
             {/* Header */}
             <div className="bg-blue-600 px-6 py-4">
