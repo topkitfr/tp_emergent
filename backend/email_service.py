@@ -867,7 +867,8 @@ L'équipe {self.app_name}
         
         subject = f"🔑 Réinitialisation de votre mot de passe - {self.app_name}"
         
-        reset_url = f"https://topkit-ui-fix.preview.emergentagent.com/reset-password?token={reset_token}"
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+        reset_url = f"{frontend_url}/reset-password?token={reset_token}"
         
         text_body = f"""
 Bonjour {user_name},
