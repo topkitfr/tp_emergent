@@ -18,7 +18,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-kit-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-admin-1.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {
