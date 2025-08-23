@@ -458,29 +458,29 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                 <div className="space-y-4">
                   {/* Logo/Image principale */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       {entityType === 'team' ? 'Logo de l\'équipe' : 
                        entityType === 'competition' ? 'Logo de la compétition' :
                        entityType === 'brand' ? 'Logo de la marque' :
                        entityType === 'player' ? 'Photo du joueur' : 'Image principale'}
                     </label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => handleImageUpload('logo', e.target.files[0])}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
                       {imagePreviews.logo && (
-                        <div className="relative">
-                          <img src={imagePreviews.logo} alt="Aperçu logo" className="w-16 h-16 object-cover rounded-lg border" />
+                        <div className="relative self-start sm:self-auto">
+                          <img src={imagePreviews.logo} alt="Aperçu logo" className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border" />
                           <button
                             type="button"
                             onClick={() => {
                               setImageFiles(prev => ({ ...prev, logo: null }));
                               setImagePreviews(prev => ({ ...prev, logo: '' }));
                             }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-xs hover:bg-red-600"
                           >
                             ×
                           </button>
