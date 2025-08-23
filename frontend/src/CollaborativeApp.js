@@ -245,4 +245,13 @@ const AppContent = () => {
   );
 };
 
+// Composant principal avec BrowserRouter
+const CollaborativeApp = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+};
+
 export default CollaborativeApp;
