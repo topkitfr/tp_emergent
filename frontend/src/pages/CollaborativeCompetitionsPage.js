@@ -106,7 +106,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
   const CompetitionCard = ({ competition }) => (
     <div 
       className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-      onClick={() => setSelectedCompetition(competition)}
+      onClick={() => window.location.href = `/competitions/${competition.id}`}
     >
       {/* Image section - same structure as Master Jersey */}
       <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
