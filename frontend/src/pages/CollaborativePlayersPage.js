@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
+  const navigate = useNavigate();
   const [filteredPlayers, setFilteredPlayers] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
