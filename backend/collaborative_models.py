@@ -414,6 +414,8 @@ class CompetitionCreate(BaseModel):
     competition_type: str
     country: Optional[str] = None
     level: Optional[int] = None
+    logo_url: Optional[str] = None
+    secondary_images: List[str] = []
 
 class MasterJerseyCreate(BaseModel):
     team_id: str
