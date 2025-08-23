@@ -483,65 +483,91 @@ const OverviewModule = ({ dashboardData }) => (
 
 // Users Module - Gestion Utilisateurs
 const UsersModule = ({ API }) => (
-  <div>
-    <div className="mb-6">
-      <h2 className="text-2xl font-bold text-gray-900">👥 Gestion Utilisateurs</h2>
-      <p className="text-gray-600 mt-1">Assignation rôles, profils détaillés, sanctions et KYC</p>
-    </div>
+  <div className="space-y-6">
 
-    {/* User Management Preview */}
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Fonctionnalités Utilisateurs</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {/* Role Management */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl mb-3">🎭</div>
-          <h4 className="font-semibold text-gray-900 mb-2">Assignation Rôles</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Super Admin</li>
-            <li>• Admin</li>
-            <li>• Modérateur</li>
-            <li>• VIP</li>
-            <li>• User</li>
-            <li>• Suspect</li>
-            <li>• Banni</li>
-          </ul>
+    {/* User Management Features */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      {/* Role Management */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-3xl mb-3">🎭</div>
+        <h4 className="font-semibold text-gray-900 mb-3">Assignation Rôles</h4>
+        <div className="space-y-2 text-sm text-gray-600">
+          <div className="flex items-center justify-between">
+            <span>Super Admin</span>
+            <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">1</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Admin</span>
+            <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">2</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Modérateur</span>
+            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">5</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>VIP</span>
+            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">12</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>User</span>
+            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">1,227</span>
+          </div>
         </div>
+      </div>
 
-        {/* User Profiles */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl mb-3">📋</div>
-          <h4 className="font-semibold text-gray-900 mb-2">Profils Détaillés</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Historique complet</li>
-            <li>• Score réputation</li>
-            <li>• Sanctions actives</li>
-            <li>• Contributions</li>
-            <li>• Temps connexion</li>
-            <li>• Géolocalisation</li>
-          </ul>
-        </div>
+      {/* User Profiles */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-3xl mb-3">📋</div>
+        <h4 className="font-semibold text-gray-900 mb-3">Profils Détaillés</h4>
+        <ul className="text-sm text-gray-600 space-y-2">
+          <li className="flex items-center">
+            <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+            Historique complet
+          </li>
+          <li className="flex items-center">
+            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+            Score réputation
+          </li>
+          <li className="flex items-center">
+            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+            Sanctions actives
+          </li>
+          <li className="flex items-center">
+            <span className="w-2 h-2 bg-purple-400 rounded-full mr-2"></span>
+            Contributions
+          </li>
+          <li className="flex items-center">
+            <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+            Géolocalisation
+          </li>
+        </ul>
+      </div>
 
-        {/* Mass Actions */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl mb-3">⚡</div>
-          <h4 className="font-semibold text-gray-900 mb-2">Actions en Masse</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Promotion groupe</li>
-            <li>• Suspension multiple</li>
-            <li>• Export données</li>
-            <li>• Notifications bulk</li>
-            <li>• Reset passwords</li>
-            <li>• Badge assignment</li>
-          </ul>
+      {/* Mass Actions */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-3xl mb-3">⚡</div>
+        <h4 className="font-semibold text-gray-900 mb-3">Actions en Masse</h4>
+        <div className="space-y-2">
+          <button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded text-sm transition-colors">
+            Promotion groupe
+          </button>
+          <button className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 px-3 rounded text-sm transition-colors">
+            Suspension multiple
+          </button>
+          <button className="w-full bg-green-50 hover:bg-green-100 text-green-700 py-2 px-3 rounded text-sm transition-colors">
+            Export données
+          </button>
+          <button className="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 py-2 px-3 rounded text-sm transition-colors">
+            Notifications bulk
+          </button>
         </div>
       </div>
     </div>
 
     {/* User List Preview */}
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Aperçu Liste Utilisateurs</h3>
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Liste Utilisateurs</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -582,7 +608,6 @@ const UsersModule = ({ API }) => (
                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Voir détails</button>
               </td>
             </tr>
-            {/* More users... */}
           </tbody>
         </table>
       </div>
