@@ -1623,8 +1623,9 @@ async def resend_verification_email(email: EmailStr):
     # Generate new verification token
     verification_token = generate_email_verification_token(user["id"], user["email"])
     
-    # In production, send actual email here
-    verification_link = f"https://topkit-ui-fix.preview.emergentagent.com/verify-email?token={verification_token}"
+    # Generate verification link using environment variable
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+    verification_link = f"{frontend_url}/verify-email?token={verification_token}"
     
     return {
         "message": "Un nouveau lien de vérification a été envoyé à votre email.",
