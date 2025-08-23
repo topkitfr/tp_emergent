@@ -28,9 +28,12 @@ import AuthModal from './AuthModal';
 // Get the backend URL from environment variables
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-const CollaborativeApp = () => {
+// Composant interne qui utilise les hooks de React Router
+const AppContent = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   // State management
-  const [currentView, setCurrentView] = useState('home');
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,6 +45,25 @@ const CollaborativeApp = () => {
   const [competitions, setCompetitions] = useState([]);
   const [masterJerseys, setMasterJerseys] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Déterminer la vue actuelle à partir de l'URL
+  const getCurrentView = () => {
+    const path = location.pathname;
+    if (path === '/') return 'home';
+    if (path === '/explore') return 'explore';
+    if (path === '/catalogue') return 'catalogue';
+    if (path === '/vestiaire') return 'vestiaire';
+    if (path === '/collections') return 'collections';
+    if (path === '/contributions') return 'contributions';
+    if (path === '/teams') return 'teams';
+    if (path === '/brands') return 'brands';
+    if (path === '/players') return 'players';
+    if (path === '/competitions') return 'competitions';
+    if (path === '/master-jerseys') return 'master-jerseys';
+    if (path === '/profile') return 'profile';
+    if (path === '/admin') return 'admin';
+    return 'home';
+  };
 
   // Authentication check
   useEffect(() => {
