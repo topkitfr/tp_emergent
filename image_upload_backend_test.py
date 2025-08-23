@@ -237,8 +237,8 @@ class TopKitImageUploadTester:
                 data = response.json()
                 self.log_result("Master Jersey Creation (Main Image Only)", True, "Successfully created master jersey with main image only", {
                     "master_jersey_id": data.get("id"),
-                    "reference_images_present": bool(data.get("reference_images")),
-                    "reference_images_count": len(data.get("reference_images", []))
+                    "main_image_url_present": bool(data.get("main_image_url")),
+                    "secondary_images_present": bool(data.get("secondary_images"))
                 })
                 return data.get("id")
             else:
