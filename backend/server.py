@@ -1023,8 +1023,9 @@ async def send_password_reset_email(email: str, token: str, user_name: str = "")
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import Mail
         
-        # Create reset link (in production, use your actual domain)
-        reset_link = f"https://topkit-ui-fix.preview.emergentagent.com/reset-password?token={token}"
+        # Create reset link using environment variable
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+        reset_link = f"{frontend_url}/reset-password?token={token}"
         
         # HTML email content
         html_content = f"""
