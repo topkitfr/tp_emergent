@@ -80,7 +80,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       e.preventDefault();
       e.stopPropagation();
       // Naviguer vers la page détaillée au lieu d'ouvrir une modal
-      window.location.href = `/teams/${team.id}`;
+      navigate(`/teams/${team.id}`);
     };
 
     return (
