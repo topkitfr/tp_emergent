@@ -16,13 +16,9 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
       setCompetition(foundCompetition);
       setLoading(false);
       
-      // Simuler les images secondaires - à remplacer par de vraies données
-      if (foundCompetition) {
-        setSecondaryImages([
-          foundCompetition.secondary_image_1,
-          foundCompetition.secondary_image_2, 
-          foundCompetition.secondary_image_3
-        ].filter(Boolean));
+      // Charger les images secondaires depuis le champ secondary_images
+      if (foundCompetition && foundCompetition.secondary_images) {
+        setSecondaryImages(foundCompetition.secondary_images.filter(Boolean));
       }
     }
   }, [competitions, competitionId]);
