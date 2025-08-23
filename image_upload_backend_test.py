@@ -184,8 +184,8 @@ class TopKitImageUploadTester:
                 self.log_result("Master Jersey Creation with Images", True, "Successfully created master jersey with images", {
                     "master_jersey_id": data.get("id"),
                     "topkit_reference": data.get("topkit_reference"),
-                    "reference_images_present": bool(data.get("reference_images")),
-                    "reference_images_count": len(data.get("reference_images", [])),
+                    "main_image_url_present": bool(data.get("main_image_url")),
+                    "secondary_images_count": len(data.get("secondary_images", [])),
                     "team_info": data.get("team_info", {}).get("name"),
                     "brand_info": data.get("brand_info", {}).get("name")
                 })
