@@ -198,6 +198,16 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
     });
 
     const [newName, setNewName] = useState('');
+    
+    // États pour la gestion des images
+    const [imageFiles, setImageFiles] = useState({
+      logo: null,
+      secondary_photos: []
+    });
+    const [imagePreviews, setImagePreviews] = useState({
+      logo: '',
+      secondary_photos: []
+    });
 
     const handleSubmit = (e) => {
       e.preventDefault();
