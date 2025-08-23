@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ContributionModal from '../ContributionModal';
 
 const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }) => {
+  const navigate = useNavigate();
   const [filteredCompetitions, setFilteredCompetitions] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
