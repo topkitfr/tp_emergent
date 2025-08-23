@@ -11,6 +11,7 @@ const CollaborativeMasterJerseyPage = ({
   competitions, 
   onDataUpdate 
 }) => {
+  const navigate = useNavigate();
   const [filteredJerseys, setFilteredJerseys] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
