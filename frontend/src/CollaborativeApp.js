@@ -172,67 +172,16 @@ const AppContent = () => {
     navigate(route);
   };
 
-  // Render current view
-  const renderCurrentView = () => {
-    const commonProps = {
-      user,
-      API,
-      teams,
-      brands,
-      players,
-      competitions,
-      masterJerseys,
-      onDataUpdate: loadCollaborativeData,
-      searchQuery
-    };
-
-    switch (currentView) {
-      case 'home':
-        return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
-      
-      case 'catalogue':
-        return <CataloguePage {...commonProps} />;
-      
-      case 'vestiaire':
-        return <VestiairePage {...commonProps} />;
-      
-      case 'collections':
-        return <CollectionsPage {...commonProps} />;
-      
-      case 'contributions':
-        return <EnhancedContributionsPage {...commonProps} />;
-      
-      case 'contribute': // Legacy support
-        return <EnhancedContributionsPage {...commonProps} />;
-      
-      // Legacy routes (keep for direct access)
-      case 'explore':
-        return <CollaborativeExplorePage {...commonProps} />;
-      
-      case 'teams':
-        return <CollaborativeTeamsPage {...commonProps} />;
-      
-      case 'brands':
-        return <CollaborativeBrandsPage {...commonProps} />;
-      
-      case 'players':
-        return <CollaborativePlayersPage {...commonProps} />;
-      
-      case 'competitions':
-        return <CollaborativeCompetitionsPage {...commonProps} />;
-      
-      case 'master-jerseys':
-        return <CollaborativeMasterJerseyPage {...commonProps} />;
-      
-      case 'profile':
-        return <CollaborativeProfilePage {...commonProps} />;
-      
-      case 'admin':
-        return <AdminDashboard user={user} API={API} />;
-      
-      default:
-        return <CollaborativeHomepage {...commonProps} onViewChange={setCurrentView} />;
-    }
+  const commonProps = {
+    user,
+    API,
+    teams,
+    brands,
+    players,
+    competitions,
+    masterJerseys,
+    onDataUpdate: loadCollaborativeData,
+    searchQuery
   };
 
   return (
@@ -240,8 +189,8 @@ const AppContent = () => {
       {/* Header */}
       <CollaborativeHeader
         user={user}
-        currentView={currentView}
-        onViewChange={setCurrentView}
+        currentView={getCurrentView()}
+        onViewChange={handleViewChange}
         onSearch={handleSearch}
         onLogin={() => setShowAuthModal(true)}
         onLogout={handleLogout}
@@ -249,29 +198,46 @@ const AppContent = () => {
       />
 
       {/* Main Content */}
-      <main className="min-h-screen">
-        {renderCurrentView()}
-      </main>
+      <div className="pt-20">
+        <Routes>
+          <Route path="/" element={<CollaborativeHomepage {...commonProps} onViewChange={handleViewChange} />} />
+          <Route path="/explore" element={<CollaborativeExplorePage {...commonProps} />} />
+          <Route path="/catalogue" element={<CataloguePage {...commonProps} />} />
+          <Route path="/vestiaire" element={<VestiairePage {...commonProps} />} />
+          <Route path="/collections" element={<CollectionsPage {...commonProps} />} />
+          <Route path="/contributions" element={<EnhancedContributionsPage {...commonProps} />} />
+          <Route path="/teams" element={<CollaborativeTeamsPage {...commonProps} />} />
+          <Route path="/brands" element={<CollaborativeBrandsPage {...commonProps} />} />
+          <Route path="/players" element={<CollaborativePlayersPage {...commonProps} />} />
+          <Route path="/competitions" element={<CollaborativeCompetitionsPage {...commonProps} />} />
+          <Route path="/master-jerseys" element={<CollaborativeMasterJerseyPage {...commonProps} />} />
+          <Route path="/profile" element={<CollaborativeProfilePage {...commonProps} />} />
+          <Route path="/admin" element={<AdminDashboard user={user} API={API} />} />
+          
+          {/* Routes pour les pages détaillées */}
+          <Route path="/teams/:teamId" element={<TeamDetailPage {...commonProps} />} />
+          <Route path="/brands/:brandId" element={<BrandDetailPage {...commonProps} />} />
+          <Route path="/competitions/:competitionId" element={<CompetitionDetailPage {...commonProps} />} />
+          <Route path="/players/:playerId" element={<PlayerDetailPage {...commonProps} />} />
+          <Route path="/master-jerseys/:jerseyId" element={<MasterJerseyDetailPage {...commonProps} />} />
+        </Routes>
+      </div>
 
-          {/* Auth Modal */}
-          {showAuthModal && (
-            <div className="fixed inset-0 z-50">
-              <AuthModal
-                isOpen={showAuthModal}
-                onClose={() => setShowAuthModal(false)}
-                onLoginSuccess={handleLoginSuccess}
-              />
-            </div>
-          )}
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
 
-      {/* Loading Overlay */}
+      {/* Loading overlay */}
       {loading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
-              <p className="text-gray-600">Chargement des données collaboratives...</p>
-            </div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Chargement des données collaboratives...</p>
           </div>
         </div>
       )}
