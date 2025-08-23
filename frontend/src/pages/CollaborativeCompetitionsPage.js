@@ -209,17 +209,94 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
       secondary_photos: []
     });
 
-    const handleSubmit = (e) => {
+    const handleImageUpload = async (imageType, file) => {
+      if (!file) return;
+      
+      // Vérifier la taille du fichier (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('L\'image est trop volumineuse. Taille maximale : 5MB');
+        return;
+      }
+
+      try {
+        // Convertir en base64 pour l'aperçu
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (imageType === 'logo') {
+            setImageFiles(prev => ({ ...prev, logo: file }));
+            setImagePreviews(prev => ({ ...prev, logo: e.target.result }));
+          } else if (imageType === 'secondary_photo') {
+            setImageFiles(prev => ({
+              ...prev,
+              secondary_photos: [...prev.secondary_photos, file]
+            }));
+            setImagePreviews(prev => ({
+              ...prev,
+              secondary_photos: [...prev.secondary_photos, e.target.result]
+            }));
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Erreur lors du traitement de l\'image:', error);
+        alert('Erreur lors du traitement de l\'image');
+      }
+    };
+
+    const removeSecondaryPhoto = (index) => {
+      setImageFiles(prev => ({
+        ...prev,
+        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+      }));
+      setImagePreviews(prev => ({
+        ...prev,
+        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+      }));
+    };
+
+    const convertFileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const handleSubmit = async (e) => {
       e.preventDefault();
       if (!formData.name || !formData.competition_type) {
         alert('Le nom et le type de compétition sont obligatoires');
         return;
       }
-      handleCreateCompetition({
-        ...formData,
-        level: formData.level ? parseInt(formData.level) : null,
-        start_year: formData.start_year ? parseInt(formData.start_year) : null
-      });
+
+      try {
+        // Préparer les données avec les images en base64
+        const competitionData = {
+          ...formData,
+          level: formData.level ? parseInt(formData.level) : null,
+          start_year: formData.start_year ? parseInt(formData.start_year) : null
+        };
+
+        // Ajouter le logo si présent
+        if (imageFiles.logo) {
+          const logoBase64 = await convertFileToBase64(imageFiles.logo);
+          competitionData.logo_url = logoBase64;
+        }
+
+        // Ajouter les images secondaires si présentes
+        if (imageFiles.secondary_photos.length > 0) {
+          const secondaryImagesBase64 = await Promise.all(
+            imageFiles.secondary_photos.map(file => convertFileToBase64(file))
+          );
+          competitionData.secondary_images = secondaryImagesBase64;
+        }
+
+        handleCreateCompetition(competitionData);
+      } catch (error) {
+        console.error('Erreur lors de la création:', error);
+        alert('Erreur lors de la création de la compétition');
+      }
     };
 
     const addName = () => {
