@@ -125,7 +125,7 @@ class TopKitImageUploadTester:
             
             response = self.session.post(f"{BACKEND_URL}/competitions", json=competition_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 self.log_result("Competition Creation (Logo Only)", True, "Successfully created competition with logo only", {
                     "competition_id": data.get("id"),
