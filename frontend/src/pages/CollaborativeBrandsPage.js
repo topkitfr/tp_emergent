@@ -228,16 +228,39 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
       });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       if (!formData.name) {
         alert('Le nom de la marque est obligatoire');
         return;
       }
-      handleCreateBrand({
-        ...formData,
-        founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
-      });
+
+      try {
+        // Préparer les données avec les images en base64
+        const brandData = {
+          ...formData,
+          founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
+        };
+
+        // Ajouter le logo si présent
+        if (imageFiles.logo) {
+          const logoBase64 = await convertFileToBase64(imageFiles.logo);
+          brandData.logo_url = logoBase64;
+        }
+
+        // Ajouter les images secondaires si présentes
+        if (imageFiles.secondary_photos.length > 0) {
+          const secondaryImagesBase64 = await Promise.all(
+            imageFiles.secondary_photos.map(file => convertFileToBase64(file))
+          );
+          brandData.secondary_images = secondaryImagesBase64;
+        }
+
+        handleCreateBrand(brandData);
+      } catch (error) {
+        console.error('Erreur lors de la création:', error);
+        alert('Erreur lors de la création de la marque');
+      }
     };
 
     const addName = () => {
