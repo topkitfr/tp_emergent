@@ -156,8 +156,9 @@ class GmailSMTPService:
         
         subject = f"Confirmez votre compte - {self.app_name}"
         
-        # Create confirmation URL
-        confirmation_url = f"https://topkit-ui-fix.preview.emergentagent.com/verify-email?token={confirmation_token}"
+        # Create confirmation URL using environment variable
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://topkit-ui-fix.preview.emergentagent.com')
+        confirmation_url = f"{frontend_url}/verify-email?token={confirmation_token}"
         
         # Plain text version
         text_body = f"""
