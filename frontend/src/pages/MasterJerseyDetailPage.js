@@ -60,7 +60,7 @@ const MasterJerseyDetailPage = ({ user, API, masterJerseys, onDataUpdate }) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Master Jersey non trouvé</h2>
         <button 
           onClick={() => navigate('/master-jerseys')}
-          className="bg-blue-600 hover:blue-blue-700 text-white px-6 py-2 rounded-lg"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
         >
           Retour aux Master Jerseys
         </button>
