@@ -16,13 +16,9 @@ const PlayerDetailPage = ({ user, API, players, onDataUpdate }) => {
       setPlayer(foundPlayer);
       setLoading(false);
       
-      // Simuler les images secondaires - à remplacer par de vraies données
-      if (foundPlayer) {
-        setSecondaryImages([
-          foundPlayer.secondary_image_1,
-          foundPlayer.secondary_image_2, 
-          foundPlayer.secondary_image_3
-        ].filter(Boolean));
+      // Charger les images secondaires depuis le champ secondary_images (pour les joueurs, ce pourrait être des photos d'action, etc.)
+      if (foundPlayer && foundPlayer.secondary_images) {
+        setSecondaryImages(foundPlayer.secondary_images.filter(Boolean));
       }
     }
   }, [players, playerId]);
