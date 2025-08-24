@@ -460,9 +460,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
             <input
               type="email"
+              name="email"
               placeholder="Email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                console.log('Email field updated:', e.target.value);
+              }}
+              onInput={(e) => setFormData({ ...formData, email: e.target.value })} // Handle programmatic input
               onBlur={(e) => setFormData({ ...formData, email: e.target.value })} // Handle autofill
               autoComplete="email"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -471,9 +476,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
             <input
               type="password"
+              name="password"
               placeholder="Mot de passe"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, password: e.target.value });
+                console.log('Password field updated:', e.target.value ? '***HIDDEN***' : 'EMPTY');
+              }}
+              onInput={(e) => setFormData({ ...formData, password: e.target.value })} // Handle programmatic input
               onBlur={(e) => setFormData({ ...formData, password: e.target.value })} // Handle autofill
               autoComplete="current-password"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
