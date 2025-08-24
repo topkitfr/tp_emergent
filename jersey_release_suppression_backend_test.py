@@ -220,8 +220,17 @@ class JerseyReleaseSuppressionTester:
             response = requests.get(f"{BACKEND_URL}/users/{self.admin_user_id}/collections", headers=headers)
             if response.status_code == 200:
                 collections_data = response.json()
-                is_empty = isinstance(collections_data, list) and len(collections_data) == 0
-                collection_count = len(collections_data) if isinstance(collections_data, list) else "unknown"
+                # Handle both list format and object format with collections array
+                if isinstance(collections_data, dict) and 'collections' in collections_data:
+                    collections_array = collections_data['collections']
+                    is_empty = isinstance(collections_array, list) and len(collections_array) == 0
+                    collection_count = len(collections_array)
+                elif isinstance(collections_data, list):
+                    is_empty = len(collections_data) == 0
+                    collection_count = len(collections_data)
+                else:
+                    is_empty = False
+                    collection_count = "unknown format"
                 
                 self.log_result(
                     "Admin Collections Empty Verification",
