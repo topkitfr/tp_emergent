@@ -247,7 +247,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
     
     try {
-      const response = await fetch(`${API}/api/collections/jersey-releases`, {
+      const response = await fetch(`${API}/api/users/${user.id}/collections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
