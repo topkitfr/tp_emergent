@@ -291,8 +291,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   if (!isOpen) return null;
 
   const handleModalClick = (e) => {
-    // Close modal only if clicking on the backdrop (not the modal content)
-    if (e.target === e.currentTarget) {
+    // Close modal only if clicking directly on the backdrop
+    if (e.target.classList.contains('auth-modal-backdrop')) {
       setShowForgotPassword(false);
       setShowResetForm(false);
       resetForm();
@@ -302,13 +302,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" 
+      className="auth-modal-backdrop fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" 
       style={{ zIndex: 10000 }}
       onClick={handleModalClick}
     >
       <div 
         className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200"
-        style={{ position: 'relative', zIndex: 10001 }}
+        style={{ position: 'relative' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
