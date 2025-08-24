@@ -126,11 +126,20 @@ class CollectionsEndpointTester:
             response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections", headers=headers)
             
             if response.status_code == 200:
-                collections = response.json()
+                response_data = response.json()
+                
+                # Handle both direct array and object with collections array
+                if isinstance(response_data, list):
+                    collections = response_data
+                elif isinstance(response_data, dict) and 'collections' in response_data:
+                    collections = response_data['collections']
+                else:
+                    collections = []
+                
                 collection_count = len(collections)
                 
                 # Log the actual response for debugging
-                print(f"   Raw collections response: {json.dumps(collections, indent=2)[:500]}...")
+                print(f"   Collections found: {collection_count}")
                 
                 if collection_count >= 8:
                     self.log_result(
@@ -147,10 +156,16 @@ class CollectionsEndpointTester:
                     
                     # Show first few collections as sample
                     for i, collection in enumerate(collections[:3]):
-                        jersey_info = collection.get('jersey_release', {}).get('master_jersey_info', {})
-                        team = jersey_info.get('team_name', 'Unknown Team')
-                        player = jersey_info.get('player_name', collection.get('player_name', 'Unknown Player'))
-                        print(f"   Sample {i+1}: {team} - {player} ({collection.get('collection_type')})")
+                        if isinstance(collection, dict):
+                            jersey_info = collection.get('jersey_release', {})
+                            if isinstance(jersey_info, dict):
+                                master_info = jersey_info.get('master_jersey_info', {})
+                                team = master_info.get('team_name', 'Unknown Team')
+                                player = jersey_info.get('player_name', collection.get('player_name', 'Unknown Player'))
+                            else:
+                                team = 'Unknown Team'
+                                player = collection.get('player_name', 'Unknown Player')
+                            print(f"   Sample {i+1}: {team} - {player} ({collection.get('collection_type')})")
                     
                     return True
                 elif collection_count == 0:
@@ -169,8 +184,8 @@ class CollectionsEndpointTester:
                     )
                     
                     # Still show what we have
-                    owned_count = len([c for c in collections if c.get('collection_type') == 'owned'])
-                    wanted_count = len([c for c in collections if c.get('collection_type') == 'wanted'])
+                    owned_count = len([c for c in collections if isinstance(c, dict) and c.get('collection_type') == 'owned'])
+                    wanted_count = len([c for c in collections if isinstance(c, dict) and c.get('collection_type') == 'wanted'])
                     print(f"   Collection breakdown: {owned_count} owned, {wanted_count} wanted")
                     
                     return collection_count > 0
