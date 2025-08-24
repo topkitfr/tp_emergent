@@ -668,3 +668,5 @@ class VoteRequest(BaseModel):
     """Requête pour voter sur une contribution"""
     vote_type: VoteType
     comment: Optional[str] = None
+    field_votes: Optional[Dict[str, str]] = {}  # Field-level votes: {"field_name": "approve"|"reject"}
+    granular_votes: Optional[Dict[str, str]] = {}  # Alias for field_votes for compatibility
