@@ -316,14 +316,14 @@ const UnifiedContributionsPage = ({ user, API }) => {
                   
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleVote(contribution.id, 'upvote')}
+                      onClick={() => handleVote(contribution.id, 'up')}
                       className="flex items-center space-x-1 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
                       <span>👍</span>
                       <span>Approuver</span>
                     </button>
                     <button
-                      onClick={() => handleVote(contribution.id, 'downvote')}
+                      onClick={() => handleVote(contribution.id, 'down')}
                       className="flex items-center space-x-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
                       <span>👎</span>
