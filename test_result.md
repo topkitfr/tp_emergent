@@ -2253,9 +2253,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Notifications Cliquables Testing"
-    - "TopKit User Profile Viewing Testing"
-    - "TopKit Mobile Interface Testing"
+    - "Profile Enhancement Features Backend Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
