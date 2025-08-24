@@ -9045,6 +9045,8 @@ async def get_teams_dropdown():
     except Exception as e:
         logger.error(f"Error getting teams dropdown: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération des équipes")
+
+@api_router.get("/teams", response_model=List[TeamResponse])
 async def get_teams(
     search: Optional[str] = None,
     country: Optional[str] = None,
