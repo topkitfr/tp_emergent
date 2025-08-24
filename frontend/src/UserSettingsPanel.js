@@ -7,6 +7,9 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
+  // Teams data for favorite club dropdown
+  const [teams, setTeams] = useState([]);
+  
   // Profile picture states
   const [profilePictureLoading, setProfilePictureLoading] = useState(false);
   const [profilePictureError, setProfilePictureError] = useState('');
