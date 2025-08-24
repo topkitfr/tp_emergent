@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ContributionDetailModal from '../components/ContributionDetailModal';
 
 const UnifiedContributionsPage = ({ user, API }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [contributions, setContributions] = useState([]);
   const [myContributions, setMyContributions] = useState([]);
