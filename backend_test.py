@@ -26,7 +26,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://jersey-database-1.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-bugfix.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Test credentials from review request
@@ -1296,7 +1296,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-database-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-bugfix.preview.emergentagent.com/api"
 
 # Test accounts from review request
 TEST_ACCOUNTS = [

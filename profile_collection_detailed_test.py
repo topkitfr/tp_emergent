@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-database-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-bugfix.preview.emergentagent.com/api"
 
 # Working credentials from previous test
 ADMIN_CREDENTIALS = {
