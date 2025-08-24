@@ -23,12 +23,17 @@ const CollaborativeHeader = ({
   };
 
   const navigationItems = [
-    { id: 'home', label: 'Accueil', icon: '🏠' },
-    { id: 'catalogue', label: 'Catalogue', icon: '📚' },
-    { id: 'vestiaire', label: 'Vestiaire', icon: '👕' },
-    { id: 'collections', label: 'Collections', icon: '💎' },
-    { id: 'contributions', label: 'Contributions', icon: '🗳️' }
+    { id: 'home', label: 'Accueil', icon: '🏠', requiresAuth: false },
+    { id: 'catalogue', label: 'Catalogue', icon: '📚', requiresAuth: false },
+    { id: 'vestiaire', label: 'Vestiaire', icon: '👕', requiresAuth: false },
+    { id: 'collections', label: 'Collections', icon: '💎', requiresAuth: true },
+    { id: 'contributions', label: 'Contributions', icon: '🗳️', requiresAuth: true }
   ];
+
+  // Filter navigation items based on authentication
+  const visibleNavigationItems = navigationItems.filter(item => 
+    !item.requiresAuth || user
+  );
 
   return (
     <>
