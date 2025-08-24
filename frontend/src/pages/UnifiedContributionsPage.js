@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ContributionDetailModal from '../components/ContributionDetailModal';
 
 const UnifiedContributionsPage = ({ user, API }) => {
   const [activeTab, setActiveTab] = useState('all');
