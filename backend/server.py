@@ -8792,7 +8792,37 @@ async def generate_reference(entity_type: str) -> str:
 # TEAMS API
 # ================================
 
-@api_router.get("/teams", response_model=List[TeamResponse])
+@api_router.get("/teams/dropdown")
+async def get_teams_dropdown():
+    """Get simplified teams list for dropdown selection"""
+    try:
+        teams = await db.teams.find(
+            {"verification_level": {"$in": ["verified", "pending"]}},
+            {"name": 1, "id": 1, "short_name": 1}
+        ).sort("name", 1).to_list(2000)
+        
+        # Remove MongoDB ObjectId
+        for team in teams:
+            team.pop('_id', None)
+        
+        # Format for dropdown
+        dropdown_teams = []
+        for team in teams:
+            display_name = team.get('short_name', team['name'])
+            if team.get('short_name') and team['short_name'] != team['name']:
+                display_name = f"{team['name']} ({team['short_name']})"
+            
+            dropdown_teams.append({
+                "id": team['id'],
+                "name": team['name'],
+                "display_name": display_name
+            })
+        
+        return dropdown_teams
+        
+    except Exception as e:
+        logger.error(f"Error getting teams dropdown: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des équipes")
 async def get_teams(
     search: Optional[str] = None,
     country: Optional[str] = None,
