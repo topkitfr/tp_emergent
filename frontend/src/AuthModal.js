@@ -496,13 +496,24 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               type="password"
               name="password"
               placeholder="Mot de passe"
-              value={formData.password}
+              defaultValue={formData.password}
               onChange={(e) => {
-                setFormData({ ...formData, password: e.target.value });
-                console.log('Password field updated:', e.target.value ? '***HIDDEN***' : 'EMPTY');
+                const value = e.target.value;
+                console.log('Password field updated:', value ? '***HIDDEN***' : 'EMPTY');
+                setFormData(prev => ({ ...prev, password: value }));
               }}
-              onInput={(e) => setFormData({ ...formData, password: e.target.value })} // Handle programmatic input
-              onBlur={(e) => setFormData({ ...formData, password: e.target.value })} // Handle autofill
+              onInput={(e) => {
+                const value = e.target.value;
+                setFormData(prev => ({ ...prev, password: value }));
+              }}
+              onKeyUp={(e) => {
+                const value = e.target.value;
+                setFormData(prev => ({ ...prev, password: value }));
+              }}
+              onBlur={(e) => {
+                const value = e.target.value;
+                setFormData(prev => ({ ...prev, password: value }));
+              }}
               autoComplete="current-password"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
