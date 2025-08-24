@@ -44,11 +44,32 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       if (filters.season) params.append('season', filters.season);
       if (filters.player_name) params.append('player_name', filters.player_name);
       
+      console.log(`🔄 Loading vestiaire with params: ${params}`);
+      
       const response = await fetch(`${API}/api/vestiaire?${params}`);
-      const data = await response.json();
-      setJerseyReleases(data || []);
+      
+      console.log(`📥 Vestiaire response: ${response.status}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Loaded ${Array.isArray(data) ? data.length : 'non-array'} vestiaire items:`, data);
+        
+        // Ensure data is an array
+        if (Array.isArray(data)) {
+          setJerseyReleases(data);
+        } else {
+          console.warn('Vestiaire API returned non-array data:', data);
+          setJerseyReleases([]);
+        }
+      } else {
+        console.error(`❌ Vestiaire API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
+        setJerseyReleases([]);
+      }
     } catch (error) {
       console.error('Error loading vestiaire:', error);
+      setJerseyReleases([]);
     }
     setLoading(false);
   };
