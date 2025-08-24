@@ -529,6 +529,7 @@ class ContributionVote(BaseModel):
     voter_id: str
     vote_type: VoteType  # upvote, downvote
     comment: Optional[str] = None
+    field_votes: Optional[Dict[str, str]] = {}  # Field-level votes: {"field_name": "approve"|"reject"}
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Contribution(BaseModel):
