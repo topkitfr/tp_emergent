@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: {problem_statement}
+## user_problem_statement: "Comprehensive TopKit workflow testing requested by user with specific test plan covering: 1) Account Creation with email verification, 2) Creating References (Team/Brand/Player/Master Jersey/Competition) with Test.jpg uploads, 3) Editing References with photo uploads, 4) Voting system for reference improvements, 5) Automatic approval after 3 votes, 6) Creating 2 Jersey Release references, 7) Voting to approve Jersey Releases, 8) Adding Jersey Releases to Collection, 9) Adding Jersey Releases to Wishlist. Focus areas include vote threshold (exactly 3 votes), notifications system, and edge case testing with invalid files. User provided test.jpg for image upload testing."
 ## backend:
 ##   - task: "Task name"
 ##     implemented: true
