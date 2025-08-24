@@ -85,18 +85,37 @@ const UnifiedContributionsPage = ({ user, API }) => {
 
   const handleVote = async (contributionId, voteType) => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      console.log(`🗳️ Voting ${voteType} on contribution ${contributionId}`);
+      
       const response = await fetch(`${API}/api/contributions/${contributionId}/vote`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ vote_type: voteType })
+        body: JSON.stringify({
+          vote_type: voteType === 'up' ? 'upvote' : 'downvote',
+          comment: `Voted ${voteType === 'up' ? 'positively' : 'negatively'} via UI`
+        })
       });
 
+      console.log(`📥 Vote response: ${response.status}`);
+
       if (response.ok) {
-        // Reload contributions after voting
-        loadContributions();
+        const result = await response.json();
+        console.log(`✅ Vote successful:`, result);
+        
+        // Reload contributions to show updated vote counts
+        await loadContributions();
+      } else {
+        const error = await response.text();
+        console.error('Vote failed:', response.status, error);
       }
     } catch (error) {
       console.error('Error voting on contribution:', error);
