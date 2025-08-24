@@ -275,7 +275,109 @@ class VestiaireCollectionTester:
             self.log_result(f"{user_type} - Add to {collection_type.title()} Collection", False, f"Exception: {str(e)}")
             return False
             
-    def test_complete_workflow(self):
+    def test_user_experience_issues(self):
+        """Test for user experience issues that explain the reported bug"""
+        if not self.user_token or not self.user_user_id:
+            self.log_result("User Experience Issues", False, "User not authenticated")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.user_token}"}
+        
+        # Test 1: Check if general collections endpoint works
+        try:
+            response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                collections = data.get('collections', [])
+                if len(collections) == 0:
+                    self.log_result(
+                        "General Collections Endpoint",
+                        False,
+                        f"General collections endpoint returns empty array despite user having collections. Response: {data}"
+                    )
+                else:
+                    self.log_result(
+                        "General Collections Endpoint",
+                        True,
+                        f"General collections endpoint working - {len(collections)} items"
+                    )
+            else:
+                self.log_result(
+                    "General Collections Endpoint",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+        except Exception as e:
+            self.log_result("General Collections Endpoint", False, f"Exception: {str(e)}")
+            
+        # Test 2: Check data quality in collections
+        try:
+            response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections/owned", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    sample = data[0]
+                    jersey_release = sample.get('jersey_release', {})
+                    master_info = jersey_release.get('master_jersey_info', {})
+                    
+                    # Check for missing data
+                    issues = []
+                    if not jersey_release.get('player_name') or jersey_release.get('player_name') == 'Unknown':
+                        issues.append("Missing player name")
+                    if not master_info.get('season') or master_info.get('season') == 'Unknown':
+                        issues.append("Missing season info")
+                    if not sample.get('added_at'):
+                        issues.append("Missing added_at timestamp")
+                        
+                    if issues:
+                        self.log_result(
+                            "Collection Data Quality",
+                            False,
+                            f"Data quality issues found: {', '.join(issues)}"
+                        )
+                    else:
+                        self.log_result(
+                            "Collection Data Quality",
+                            True,
+                            "Collection data quality is good"
+                        )
+                else:
+                    self.log_result("Collection Data Quality", False, "No owned collections to check")
+            else:
+                self.log_result("Collection Data Quality", False, f"Cannot retrieve owned collections")
+        except Exception as e:
+            self.log_result("Collection Data Quality", False, f"Exception: {str(e)}")
+            
+        # Test 3: Check if user can see available jersey releases that aren't in collection
+        try:
+            vestiaire_response = requests.get(f"{BACKEND_URL}/vestiaire")
+            owned_response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections/owned", headers=headers)
+            
+            if vestiaire_response.status_code == 200 and owned_response.status_code == 200:
+                vestiaire_data = vestiaire_response.json()
+                owned_data = owned_response.json()
+                
+                vestiaire_ids = {jersey.get('id') for jersey in vestiaire_data}
+                owned_ids = {item.get('jersey_release', {}).get('id') for item in owned_data}
+                
+                available_to_add = vestiaire_ids - owned_ids
+                
+                if len(available_to_add) == 0:
+                    self.log_result(
+                        "Available Items to Add",
+                        True,
+                        f"User has all {len(vestiaire_ids)} available jersey releases in owned collection - duplicate prevention working correctly"
+                    )
+                else:
+                    self.log_result(
+                        "Available Items to Add",
+                        True,
+                        f"{len(available_to_add)} jersey releases available to add to collection"
+                    )
+            else:
+                self.log_result("Available Items to Add", False, "Cannot compare vestiaire and collections")
+        except Exception as e:
+            self.log_result("Available Items to Add", False, f"Exception: {str(e)}")
         """Test the complete workflow: login → load vestiaire → add to collection"""
         print("\n" + "="*80)
         print("COMPLETE WORKFLOW TEST: User Login → Load Vestiaire → Add to Collection")
