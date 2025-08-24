@@ -311,11 +311,11 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/#beta-requests" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/#beta-requests" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 ✅ Gérer la demande
             </a>
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/admin" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/admin" 
                style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔧 Panel Admin
             </a>
@@ -632,11 +632,11 @@ Connectez-vous au panel admin pour approuver ou rejeter cette soumission.
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/admin" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/admin" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 ✅ Approuver
             </a>
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/admin" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/admin" 
                style="background-color: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 ❌ Rejeter
             </a>
@@ -729,7 +729,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px;">
                 🔍 Voir mon maillot
             </a>
@@ -780,7 +780,7 @@ Recommandations :
 
 Vous pouvez re-soumettre votre maillot une fois les modifications effectuées.
 
-Notre guide de soumission : https://topkit-ui-fix.preview.emergentagent.com/guide
+Notre guide de soumission : {{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/guide
 
 L'équipe {self.app_name}
 """
@@ -826,11 +826,11 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="https://topkit-ui-fix.preview.emergentagent.com/guide" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}/guide" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 📖 Guide de soumission
             </a>
-            <a href="https://topkit-ui-fix.preview.emergentagent.com" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://topkit-ui-fix.preview.emergentagent.com")}}" 
                style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔄 Re-soumettre
             </a>
