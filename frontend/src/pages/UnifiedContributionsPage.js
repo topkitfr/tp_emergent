@@ -440,6 +440,16 @@ const UnifiedContributionsPage = ({ user, API }) => {
           ))}
         </div>
       )}
+      
+      {/* Contribution Detail Modal */}
+      <ContributionDetailModal
+        contribution={selectedContribution}
+        isOpen={isDetailModalOpen}
+        onClose={closeDetailModal}
+        onVote={handleVote}
+        voting={voting}
+        API={API}
+      />
     </div>
   );
 };
