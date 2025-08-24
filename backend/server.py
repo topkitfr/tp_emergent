@@ -5321,27 +5321,27 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
         if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
             raise HTTPException(status_code=403, detail="This user's profile is private")
         
-        # Get Jersey Release collections with enriched data - fixed to use user_jersey_collections
-        pipeline = [
-            {"$match": {"user_id": user_id}},
+        # Get both owned and wanted collections using the same logic as working endpoints
+        owned_pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "owned"}},
             {
                 "$lookup": {
                     "from": "jersey_releases",
                     "localField": "jersey_release_id",
                     "foreignField": "id",
-                    "as": "jersey_release"
+                    "as": "jersey_release_lookup"
                 }
             },
-            {"$unwind": {"path": "$jersey_release", "preserveNullAndEmptyArrays": True}},
+            {"$unwind": {"path": "$jersey_release_lookup", "preserveNullAndEmptyArrays": True}},
             {
                 "$lookup": {
                     "from": "master_jerseys",
-                    "localField": "jersey_release.master_jersey_id",
+                    "localField": "jersey_release_lookup.master_jersey_id",
                     "foreignField": "id",
-                    "as": "master_jersey"
+                    "as": "master_jersey_lookup"
                 }
             },
-            {"$unwind": {"path": "$master_jersey", "preserveNullAndEmptyArrays": True}},
+            {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
             {
                 "$project": {
                     "_id": 0,
@@ -5351,41 +5351,124 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
                     "collection_type": 1,
                     "size": 1,
                     "condition": 1,
+                    "purchase_price": 1,
+                    "estimated_value": 1,
                     "created_at": 1,
                     "jersey_release": {
-                        "id": "$jersey_release.id",
-                        "player_name": "$jersey_release.player_name",
-                        "player_number": "$jersey_release.player_number",
-                        "release_type": "$jersey_release.release_type",
-                        "retail_price": "$jersey_release.retail_price",
-                        "product_images": "$jersey_release.product_images",
-                        "topkit_reference": "$jersey_release.topkit_reference"
+                        "$cond": {
+                            "if": {"$ne": ["$jersey_release_lookup", None]},
+                            "then": {
+                                "id": "$jersey_release_lookup.id",
+                                "player_name": "$jersey_release_lookup.player_name",
+                                "player_number": "$jersey_release_lookup.player_number",
+                                "release_type": "$jersey_release_lookup.release_type",
+                                "retail_price": "$jersey_release_lookup.retail_price",
+                                "product_images": "$jersey_release_lookup.product_images",
+                                "topkit_reference": "$jersey_release_lookup.topkit_reference",
+                                "master_jersey_id": "$jersey_release_lookup.master_jersey_id"
+                            },
+                            "else": None
+                        }
                     },
                     "master_jersey": {
-                        "id": "$master_jersey.id",
-                        "team_info": "$master_jersey.team_info",
-                        "season": "$master_jersey.season",
-                        "jersey_type": "$master_jersey.jersey_type",
-                        "brand_info": "$master_jersey.brand_info",
-                        "competition_info": "$master_jersey.competition_info",
-                        "topkit_reference": "$master_jersey.topkit_reference"
+                        "$cond": {
+                            "if": {"$ne": ["$master_jersey_lookup", None]},
+                            "then": {
+                                "id": "$master_jersey_lookup.id",
+                                "team_info": "$master_jersey_lookup.team_info",
+                                "season": "$master_jersey_lookup.season",
+                                "jersey_type": "$master_jersey_lookup.jersey_type",
+                                "brand_info": "$master_jersey_lookup.brand_info",
+                                "competition_info": "$master_jersey_lookup.competition_info",
+                                "topkit_reference": "$master_jersey_lookup.topkit_reference"
+                            },
+                            "else": None
+                        }
                     }
                 }
             }
         ]
         
-        collections = await db.user_jersey_collections.aggregate(pipeline).to_list(1000)
+        wanted_pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "wanted"}},
+            {
+                "$lookup": {
+                    "from": "jersey_releases",
+                    "localField": "jersey_release_id",
+                    "foreignField": "id",
+                    "as": "jersey_release_lookup"
+                }
+            },
+            {"$unwind": {"path": "$jersey_release_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "jersey_release_lookup.master_jersey_id",
+                    "foreignField": "id",
+                    "as": "master_jersey_lookup"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "jersey_release_id": 1,
+                    "collection_type": 1,
+                    "created_at": 1,
+                    "jersey_release": {
+                        "$cond": {
+                            "if": {"$ne": ["$jersey_release_lookup", None]},
+                            "then": {
+                                "id": "$jersey_release_lookup.id",
+                                "player_name": "$jersey_release_lookup.player_name",
+                                "player_number": "$jersey_release_lookup.player_number",
+                                "release_type": "$jersey_release_lookup.release_type",
+                                "retail_price": "$jersey_release_lookup.retail_price",
+                                "product_images": "$jersey_release_lookup.product_images",
+                                "topkit_reference": "$jersey_release_lookup.topkit_reference",
+                                "master_jersey_id": "$jersey_release_lookup.master_jersey_id"
+                            },
+                            "else": None
+                        }
+                    },
+                    "master_jersey": {
+                        "$cond": {
+                            "if": {"$ne": ["$master_jersey_lookup", None]},
+                            "then": {
+                                "id": "$master_jersey_lookup.id",
+                                "team_info": "$master_jersey_lookup.team_info",
+                                "season": "$master_jersey_lookup.season",
+                                "jersey_type": "$master_jersey_lookup.jersey_type",
+                                "brand_info": "$master_jersey_lookup.brand_info",
+                                "competition_info": "$master_jersey_lookup.competition_info",
+                                "topkit_reference": "$master_jersey_lookup.topkit_reference"
+                            },
+                            "else": None
+                        }
+                    }
+                }
+            }
+        ]
+        
+        # Execute both pipelines and combine results
+        owned_collections = await db.user_jersey_collections.aggregate(owned_pipeline).to_list(1000)
+        wanted_collections = await db.user_jersey_collections.aggregate(wanted_pipeline).to_list(1000)
+        
+        # Combine all collections
+        all_collections = owned_collections + wanted_collections
         
         # For privacy, remove purchase prices and valuations if not profile owner
         if current_user_id != user_id:
-            for collection in collections:
+            for collection in all_collections:
                 collection.pop('purchase_price', None)
                 collection.pop('estimated_value', None)
         
         return {
             "user_id": user_id,
             "profile_owner": current_user_id == user_id,
-            "collections": collections
+            "collections": all_collections
         }
     except HTTPException:
         raise
