@@ -229,7 +229,7 @@ class CollectionsEndpointTester:
                 self.log_result(
                     f"Create Jersey Release - {player_name}", 
                     True, 
-                    f"Jersey Release created successfully. ID: {jersey_release_id}, Price: €{jersey_release_data['market_price']}"
+                    f"Jersey Release created successfully. ID: {jersey_release_id}, Price: €{jersey_release_data['retail_price']}"
                 )
                 return jersey_release_id
             else:
