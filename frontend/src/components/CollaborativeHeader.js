@@ -225,60 +225,60 @@ const CollaborativeHeader = ({
               </div>
               
               <div className="space-y-1">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onViewChange(item.id);
-                    setShowMobileMenu(false);
-                  }}
-                  className={`block w-full text-left px-4 py-3 text-sm font-medium transition-all ${
-                    currentView === item.id
-                      ? 'text-black bg-gray-50 font-semibold'
-                      : 'text-gray-600 hover:text-black hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-              
-              {user && (
-                <>
-                  <hr className="my-3 border-gray-100" />
+                {navigationItems.map((item) => (
                   <button
+                    key={item.id}
                     onClick={() => {
-                      onViewChange('profile');
+                      onViewChange(item.id);
                       setShowMobileMenu(false);
                     }}
-                    className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50"
+                    className={`block w-full text-left px-4 py-3 text-sm font-medium transition-all ${
+                      currentView === item.id
+                        ? 'text-black bg-gray-50 font-semibold'
+                        : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                    }`}
                   >
-                    Mon Profil
+                    {item.label}
                   </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setShowMobileMenu(false);
-                    }}
-                    className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Déconnexion
-                  </button>
-                </>
-              )}
+                ))}
+                
+                {user && (
+                  <>
+                    <hr className="my-3 border-gray-100" />
+                    <button
+                      onClick={() => {
+                        onViewChange('profile');
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50"
+                    >
+                      Mon Profil
+                    </button>
+                    <button
+                      onClick={() => {
+                        onLogout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Déconnexion
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </header>
+          )}
+        </div>
+      </header>
 
-    {/* Profile Picture Modal */}
-    {showProfilePictureModal && (
-      <ProfilePictureModal
-        user={user}
-        onClose={() => setShowProfilePictureModal(false)}
-        onUpdate={onUserUpdate}
-      />
-    )}
+      {/* Profile Picture Modal */}
+      {showProfilePictureModal && (
+        <ProfilePictureModal
+          user={user}
+          onClose={() => setShowProfilePictureModal(false)}
+          onUpdate={onUserUpdate}
+        />
+      )}
     </>
   );
 
