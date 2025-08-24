@@ -17,6 +17,7 @@ import CollaborativeCompetitionsPage from './pages/CollaborativeCompetitionsPage
 import CollaborativeMasterJerseyPage from './pages/CollaborativeMasterJerseyPage';
 import CollaborativeContributionsPage from './pages/CollaborativeContributionsPage';
 import EnhancedContributionsPage from './pages/EnhancedContributionsPage';
+import UnifiedContributionsPage from './pages/UnifiedContributionsPage';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
 // Import nouvelles pages détaillées
