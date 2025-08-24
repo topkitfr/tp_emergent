@@ -832,7 +832,27 @@ class SystemMessage(BaseModel):
     data: dict = {}
     auto_generated: bool = True
 
-# Security helpers
+# Profile settings model
+class ProfileSettings(BaseModel):
+    bio: Optional[str] = Field(None, max_length=200)
+    favorite_club: Optional[str] = None
+    instagram_username: Optional[str] = Field(None, max_length=50)
+    twitter_username: Optional[str] = Field(None, max_length=50)
+    website: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+
+# Public profile response model
+class PublicProfile(BaseModel):
+    id: str
+    name: str 
+    bio: Optional[str] = None
+    favorite_club: Optional[str] = None
+    instagram_username: Optional[str] = None
+    twitter_username: Optional[str] = None
+    website: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    role: str
+    created_at: datetime
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """Validate password meets security requirements"""
     if len(password) < PASSWORD_REQUIREMENTS['min_length']:
