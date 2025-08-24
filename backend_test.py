@@ -378,6 +378,58 @@ class VestiaireCollectionTester:
                 self.log_result("Available Items to Add", False, "Cannot compare vestiaire and collections")
         except Exception as e:
             self.log_result("Available Items to Add", False, f"Exception: {str(e)}")
+            
+    def test_complete_workflow(self):
+        """Test the complete workflow: login → load vestiaire → add to collection"""
+        print("\n" + "="*80)
+        print("COMPLETE WORKFLOW TEST: User Login → Load Vestiaire → Add to Collection")
+        print("="*80)
+        
+        # Step 1: User Authentication
+        if not self.authenticate_user():
+            self.log_result("Complete Workflow", False, "User authentication failed - cannot proceed")
+            return False
+            
+        # Step 2: Load Vestiaire Data
+        vestiaire_data = self.test_vestiaire_endpoint()
+        if not vestiaire_data or len(vestiaire_data) == 0:
+            self.log_result("Complete Workflow", False, "No vestiaire data available - cannot test collection functionality")
+            return False
+            
+        # Step 3: Test adding first available jersey release to both collections
+        first_jersey = vestiaire_data[0]
+        jersey_id = first_jersey.get('id')
+        
+        if not jersey_id:
+            self.log_result("Complete Workflow", False, "Jersey release missing ID field")
+            return False
+            
+        # Get jersey display info
+        master_info = first_jersey.get('master_jersey_info', {})
+        player_name = first_jersey.get('player_name', 'Unknown Player')
+        season = master_info.get('season', 'Unknown Season')
+        
+        print(f"\nTesting with Jersey Release: {player_name} - {season}")
+        
+        # Test adding to owned collection
+        owned_success = self.test_add_to_collection(
+            self.user_token, self.user_user_id, "User", jersey_id, "owned"
+        )
+        
+        # Test adding to wanted collection  
+        wanted_success = self.test_add_to_collection(
+            self.user_token, self.user_user_id, "User", jersey_id, "wanted"
+        )
+        
+        # Overall workflow success
+        workflow_success = owned_success or wanted_success
+        self.log_result(
+            "Complete Workflow",
+            workflow_success,
+            f"Workflow {'completed successfully' if workflow_success else 'failed'} - Owned: {owned_success}, Wanted: {wanted_success}"
+        )
+        
+        return workflow_success
         """Test the complete workflow: login → load vestiaire → add to collection"""
         print("\n" + "="*80)
         print("COMPLETE WORKFLOW TEST: User Login → Load Vestiaire → Add to Collection")
