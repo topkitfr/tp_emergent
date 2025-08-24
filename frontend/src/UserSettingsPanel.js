@@ -63,6 +63,7 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
 
   useEffect(() => {
     fetchUserSettings();
+    fetchTeams();
   }, []);
 
   const fetchUserSettings = async () => {
