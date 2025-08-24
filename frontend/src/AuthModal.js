@@ -448,9 +448,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             {!isLogin && (
               <input
                 type="text"
+                name="name"
                 placeholder="Nom complet"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onInput={(e) => setFormData({ ...formData, name: e.target.value })} // Handle programmatic input
                 onBlur={(e) => setFormData({ ...formData, name: e.target.value })} // Handle autofill
                 autoComplete="name"
                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
