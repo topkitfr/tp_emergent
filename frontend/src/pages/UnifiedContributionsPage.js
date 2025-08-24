@@ -87,7 +87,8 @@ const UnifiedContributionsPage = ({ user, API }) => {
     setLoading(false);
   };
 
-  const handleVote = async (contributionId, voteType) => {
+  const handleVote = async (contributionId, voteType, voteData = null) => {
+    setVoting(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -97,16 +98,18 @@ const UnifiedContributionsPage = ({ user, API }) => {
 
       console.log(`🗳️ Voting ${voteType} on contribution ${contributionId}`);
       
+      const requestBody = voteData || {
+        vote_type: voteType === 'up' ? 'upvote' : 'downvote',
+        comment: `Voted ${voteType === 'up' ? 'positively' : 'negatively'} via UI`
+      };
+      
       const response = await fetch(`${API}/api/contributions/${contributionId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          vote_type: voteType === 'up' ? 'upvote' : 'downvote',
-          comment: `Voted ${voteType === 'up' ? 'positively' : 'negatively'} via UI`
-        })
+        body: JSON.stringify(requestBody)
       });
 
       console.log(`📥 Vote response: ${response.status}`);
@@ -123,7 +126,19 @@ const UnifiedContributionsPage = ({ user, API }) => {
       }
     } catch (error) {
       console.error('Error voting on contribution:', error);
+    } finally {
+      setVoting(false);
     }
+  };
+
+  const openDetailModal = (contribution) => {
+    setSelectedContribution(contribution);
+    setIsDetailModalOpen(true);
+  };
+
+  const closeDetailModal = () => {
+    setSelectedContribution(null);
+    setIsDetailModalOpen(false);
   };
 
   const filteredData = activeTab === 'all' 
