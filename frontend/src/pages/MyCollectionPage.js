@@ -83,6 +83,8 @@ const MyCollectionPage = ({ user, API }) => {
   };
 
   const collectionValue = calculateCollectionValue();
+  const ownedCount = collections.filter(c => c.collection_type === 'owned').length;
+  const wantedCount = collections.filter(c => c.collection_type === 'wanted').length;
 
   if (!user) {
     return (
