@@ -70,23 +70,56 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/api/users/${user.id}/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       
-      // Merge with existing data
-      setProfileData(prev => ({
-        ...prev,
-        ...response.data,
-        name: user.name,
-        email: user.email,
-        profile_picture_url: response.data.profile_picture_url || null
-      }));
+      // Fetch both profile settings and public profile info
+      const [profileResponse, publicInfoResponse] = await Promise.all([
+        axios.get(`${API}/api/users/${user.id}/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API}/api/users/profile/public-info`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      
+      // Merge profile settings
+      if (profileResponse.data) {
+        setProfileData(prev => ({
+          ...prev,
+          ...profileResponse.data,
+          name: user.name,
+          email: user.email,
+          profile_picture_url: profileResponse.data.profile_picture_url || null
+        }));
+      }
+      
+      // Merge public info
+      if (publicInfoResponse.data) {
+        setProfileData(prev => ({
+          ...prev,
+          bio: publicInfoResponse.data.bio || '',
+          favorite_club: publicInfoResponse.data.favorite_club || '',
+          favorite_club_name: publicInfoResponse.data.favorite_club_name || '',
+          instagram_username: publicInfoResponse.data.instagram_username || '',
+          twitter_username: publicInfoResponse.data.twitter_username || '',
+          website: publicInfoResponse.data.website || '',
+          profile_picture_url: publicInfoResponse.data.profile_picture_url || prev.profile_picture_url
+        }));
+      }
       
     } catch (error) {
       console.log('Settings not found, using defaults');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeams = async () => {
+    try {
+      const response = await axios.get(`${API}/api/teams/dropdown`);
+      setTeams(response.data || []);
+    } catch (error) {
+      console.log('Could not fetch teams for dropdown');
+      setTeams([]);
     }
   };
 
