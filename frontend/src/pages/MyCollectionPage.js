@@ -43,8 +43,46 @@ const MyCollectionPage = ({ user, API }) => {
     return matchesTab && matchesSearch;
   });
 
-  const ownedCount = collections.filter(c => c.collection_type === 'owned').length;
-  const wantedCount = collections.filter(c => c.collection_type === 'wanted').length;
+  // Calculate collection value estimates
+  const calculateCollectionValue = () => {
+    const ownedItems = collections.filter(c => c.collection_type === 'owned');
+    
+    let totalLow = 0;
+    let totalMid = 0;
+    let totalHigh = 0;
+    
+    ownedItems.forEach(item => {
+      // Basic estimation logic (could be enhanced with real market data)
+      const baseValue = item.purchase_price || 50; // Default base value
+      const condition = item.condition || 'good';
+      
+      // Condition multiplier
+      const conditionMultiplier = {
+        'new': 1.2,
+        'near_mint': 1.1,
+        'very_good': 1.0,
+        'good': 0.8,
+        'worn': 0.6
+      };
+      
+      const multiplier = conditionMultiplier[condition] || 1.0;
+      const adjustedValue = baseValue * multiplier;
+      
+      // Range estimation (±20% for low/high)
+      totalLow += adjustedValue * 0.8;
+      totalMid += adjustedValue;
+      totalHigh += adjustedValue * 1.2;
+    });
+    
+    return {
+      low: Math.round(totalLow),
+      mid: Math.round(totalMid),
+      high: Math.round(totalHigh),
+      count: ownedItems.length
+    };
+  };
+
+  const collectionValue = calculateCollectionValue();
 
   if (!user) {
     return (
