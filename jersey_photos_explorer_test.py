@@ -23,7 +23,7 @@ from datetime import datetime
 import os
 
 # Configuration
-BACKEND_URL = "https://football-kit-deploy.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-database-1.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"

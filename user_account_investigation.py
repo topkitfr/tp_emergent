@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://football-kit-deploy.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-database-1.preview.emergentagent.com/api"
 
 # Test different password combinations for steinmetzlivio@gmail.com
 USER_EMAIL = "steinmetzlivio@gmail.com"

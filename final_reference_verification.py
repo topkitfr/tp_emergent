@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-BASE_URL = "https://football-kit-deploy.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-database-1.preview.emergentagent.com/api"
 
 def authenticate_user():
     """Authenticate as regular user"""
