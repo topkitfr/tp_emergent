@@ -300,7 +300,12 @@ class VestiaireCollectionTester:
             self.log_result("Complete Workflow", False, "Jersey release missing ID field")
             return False
             
-        print(f"\nTesting with Jersey Release: {first_jersey.get('team', 'Unknown')} - {first_jersey.get('season', 'Unknown')}")
+        # Get jersey display info
+        master_info = first_jersey.get('master_jersey_info', {})
+        player_name = first_jersey.get('player_name', 'Unknown Player')
+        season = master_info.get('season', 'Unknown Season')
+        
+        print(f"\nTesting with Jersey Release: {player_name} - {season}")
         
         # Test adding to owned collection
         owned_success = self.test_add_to_collection(
