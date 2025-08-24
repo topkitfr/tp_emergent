@@ -341,6 +341,26 @@ const MyCollectionPage = ({ user, API }) => {
                       <span className="font-medium text-green-600">€{item.purchase_price}</span>
                     </div>
                   )}
+
+                  {/* Individual Item Estimation */}
+                  {activeTab === 'owned' && (
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="text-xs text-gray-600 mb-1">Estimation actuelle:</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">
+                          €{Math.round((item.purchase_price || 50) * 
+                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0) * 0.8)}
+                          {' - '}
+                          €{Math.round((item.purchase_price || 50) * 
+                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0) * 1.2)}
+                        </div>
+                        <div className="text-sm font-bold text-blue-600">
+                          €{Math.round((item.purchase_price || 50) * 
+                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Collection Type Badge */}
