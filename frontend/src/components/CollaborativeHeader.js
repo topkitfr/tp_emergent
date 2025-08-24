@@ -31,6 +31,7 @@ const CollaborativeHeader = ({
   ];
 
   return (
+    <>
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-full px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
