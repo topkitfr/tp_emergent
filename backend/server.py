@@ -5620,7 +5620,98 @@ async def remove_from_collection(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error removing from collection: {str(e)}")
+        logger.error(f"Remove collection item error: {e}")
+        raise HTTPException(status_code=500, detail="Error removing Jersey Release from collection")
+
+@api_router.get("/collections/public")
+async def get_public_collections():
+    """Get all public collections from users for the Collections page"""
+    try:
+        # Aggregate user collections with jersey details
+        pipeline = [
+            # Match users with public profiles and non-empty collections
+            {"$match": {"profile_privacy": "public"}},
+            # Lookup user collections
+            {
+                "$lookup": {
+                    "from": "user_jersey_collections",
+                    "localField": "id",
+                    "foreignField": "user_id", 
+                    "as": "collections"
+                }
+            },
+            # Filter users with at least one collection item
+            {"$match": {"collections": {"$ne": []}}},
+            # Unwind collections to process each item
+            {"$unwind": "$collections"},
+            # Lookup jersey release details
+            {
+                "$lookup": {
+                    "from": "jersey_releases",
+                    "localField": "collections.jersey_release_id",
+                    "foreignField": "id",
+                    "as": "jersey_release"
+                }
+            },
+            {"$unwind": {"path": "$jersey_release", "preserveNullAndEmptyArrays": True}},
+            # Lookup master jersey details
+            {
+                "$lookup": {
+                    "from": "master_jerseys", 
+                    "localField": "jersey_release.master_jersey_id",
+                    "foreignField": "id",
+                    "as": "master_jersey"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey", "preserveNullAndEmptyArrays": True}},
+            # Lookup team details
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "master_jersey.team_id", 
+                    "foreignField": "id",
+                    "as": "team"
+                }
+            },
+            {"$unwind": {"path": "$team", "preserveNullAndEmptyArrays": True}},
+            # Project final format
+            {
+                "$project": {
+                    "id": "$collections.id",
+                    "user_id": "$id", 
+                    "user_name": "$name",
+                    "user_profile_picture": "$profile_picture_url",
+                    "collection_type": "$collections.collection_type",
+                    "jersey_name": {"$ifNull": ["$master_jersey.name", "Maillot"]},
+                    "team_name": {"$ifNull": ["$team.name", ""]},
+                    "jersey_image_url": {"$ifNull": ["$master_jersey.main_image", None]},
+                    "size": "$collections.size",
+                    "condition": "$collections.condition",
+                    "purchase_price": "$collections.purchase_price",
+                    "added_at": "$collections.created_at"
+                }
+            },
+            # Sort by user and then by added date
+            {"$sort": {"user_name": 1, "added_at": -1}},
+            # Limit to prevent excessive data transfer
+            {"$limit": 1000}
+        ]
+        
+        collections = await db.users.aggregate(pipeline).to_list(None)
+        
+        # Remove MongoDB ObjectId from results
+        for collection in collections:
+            collection.pop('_id', None)
+        
+        return collections
+        
+    except Exception as e:
+        logger.error(f"Get public collections error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving public collections")
+
+# ===================
+# LISTING MANAGEMENT  
+# ===================
 
 @api_router.put("/users/{user_id}/collections/{collection_id}")
 async def update_collection_item(
