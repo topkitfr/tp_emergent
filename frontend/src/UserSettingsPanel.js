@@ -394,6 +394,103 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
               </div>
             )}
 
+            {/* Public Information Tab */}
+            {activeTab === 'public' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">Informations Publiques</h3>
+                <p className="text-sm text-gray-600">Ces informations seront visibles par les autres utilisateurs sur votre profil public.</p>
+                
+                <div className="space-y-6">
+                  {/* Bio */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={profileData.bio}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24"
+                      placeholder="Présentez-vous en quelques mots... (max 200 caractères)"
+                      maxLength={200}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{profileData.bio?.length || 0}/200 caractères</p>
+                  </div>
+                  
+                  {/* Favorite Club */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Club préféré
+                    </label>
+                    <select
+                      value={profileData.favorite_club}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, favorite_club: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sélectionnez votre club préféré</option>
+                      {teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.display_name || team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Social Networks */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Instagram
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          value={profileData.instagram_username}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, instagram_username: e.target.value }))}
+                          className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="nom_utilisateur"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        X / Twitter
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          value={profileData.twitter_username}
+                          onChange={(e) => setProfileData(prev => ({ ...prev, twitter_username: e.target.value }))}
+                          className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="nom_utilisateur"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Website */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Site web
+                    </label>
+                    <input
+                      type="url"
+                      value={profileData.website}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, website: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://monsite.com"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Address Tab */}
             {activeTab === 'address' && (
               <div className="space-y-6">
