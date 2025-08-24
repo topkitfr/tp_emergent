@@ -280,6 +280,6 @@ const CollaborativeHeader = ({
       />
     )}
     </>
-};
+  );
 
 export default CollaborativeHeader;
