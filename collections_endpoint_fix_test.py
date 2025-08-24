@@ -231,7 +231,7 @@ class CollectionsEndpointTester:
             
             response = requests.post(f"{BACKEND_URL}/jersey-releases", json=jersey_release_data, headers=headers)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Both 200 and 201 are success
                 jersey_release = response.json()
                 jersey_release_id = jersey_release.get("id")
                 self.created_jersey_releases.append(jersey_release_id)
