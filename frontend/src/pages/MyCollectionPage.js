@@ -19,10 +19,10 @@ const MyCollectionPage = ({ user, API }) => {
     try {
       const [ownedRes, wantedRes] = await Promise.all([
         fetch(`${API}/api/users/${user.id}/collections/owned`, {
-          headers: { 'Authorization': `Bearer ${user.token}` }
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
         fetch(`${API}/api/users/${user.id}/collections/wanted`, {
-          headers: { 'Authorization': `Bearer ${user.token}` }
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
 
