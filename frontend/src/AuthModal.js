@@ -39,31 +39,57 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     e.stopPropagation();
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Multiple methods to get form values for maximum compatibility
+    // Get form values using multiple methods for maximum reliability
     const formElement = e.target.closest('form') || e.target;
-    const emailField = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
-    const passwordField = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
+    
+    // Method 1: By ID (most reliable)
+    const emailFieldById = document.getElementById('auth-email-field');
+    const passwordFieldById = document.getElementById('auth-password-field');
+    
+    // Method 2: By name/type (fallback)
+    const emailFieldByName = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
+    const passwordFieldByName = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
     const nameField = formElement.querySelector('input[name="name"]') || formElement.querySelector('input[type="text"]');
     
-    // Try multiple sources for values - DOM first, then state
-    const domEmail = emailField?.value?.trim() || '';
-    const domPassword = passwordField?.value?.trim() || '';
-    const domName = nameField?.value?.trim() || '';
+    // Extract values using priority order
+    const actualEmail = (
+      emailFieldById?.value?.trim() || 
+      emailFieldByName?.value?.trim() || 
+      formData.email?.trim() || 
+      ''
+    );
     
-    const actualEmail = domEmail || formData.email?.trim() || '';
-    const actualPassword = domPassword || formData.password?.trim() || '';
-    const actualName = domName || formData.name?.trim() || '';
+    const actualPassword = (
+      passwordFieldById?.value?.trim() || 
+      passwordFieldByName?.value?.trim() || 
+      formData.password?.trim() || 
+      ''
+    );
     
-    console.log('📧 Enhanced form data capture:', { 
+    const actualName = (
+      nameField?.value?.trim() || 
+      formData.name?.trim() || 
+      ''
+    );
+    
+    console.log('📧 Comprehensive form data capture:', { 
       email: actualEmail, 
       password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
       name: actualName,
       isLogin: isLogin,
-      sources: {
-        domEmail: domEmail || 'DOM_EMPTY',
-        domPassword: domPassword ? '***HIDDEN***' : 'DOM_EMPTY',
-        stateEmail: formData.email || 'STATE_EMPTY',
-        statePassword: formData.password ? '***HIDDEN***' : 'STATE_EMPTY'
+      methods: {
+        byId: {
+          email: emailFieldById?.value || 'ID_EMPTY',
+          password: passwordFieldById?.value ? '***HIDDEN***' : 'ID_EMPTY'
+        },
+        byName: {
+          email: emailFieldByName?.value || 'NAME_EMPTY',
+          password: passwordFieldByName?.value ? '***HIDDEN***' : 'NAME_EMPTY'
+        },
+        state: {
+          email: formData.email || 'STATE_EMPTY',
+          password: formData.password ? '***HIDDEN***' : 'STATE_EMPTY'
+        }
       }
     });
     
