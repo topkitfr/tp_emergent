@@ -9837,15 +9837,24 @@ async def get_vestiaire(
                     master.pop('_id', None)
                     release["master_jersey_info"] = master
             
-            # Quick price estimation
-            retail_price = release.get("retail_price", 80.0)
+            # Quick price estimation with safe handling
+            retail_price = release.get("retail_price")
+            if retail_price is None or not isinstance(retail_price, (int, float)):
+                retail_price = 80.0
+            
             rarity = 5  # Default rarity
             player_bonus = 1.2 if release.get("player_name") else 1.0
             
-            estimated_value = retail_price * (rarity / 5.0) * player_bonus
-            release["estimated_value"] = round(estimated_value, 2)
-            release["estimated_min"] = round(estimated_value * 0.8, 2)
-            release["estimated_max"] = round(estimated_value * 1.2, 2)
+            try:
+                estimated_value = float(retail_price) * (float(rarity) / 5.0) * float(player_bonus)
+                release["estimated_value"] = round(estimated_value, 2)
+                release["estimated_min"] = round(estimated_value * 0.8, 2)
+                release["estimated_max"] = round(estimated_value * 1.2, 2)
+            except (TypeError, ValueError) as e:
+                # Fallback values if calculation fails
+                release["estimated_value"] = 80.0
+                release["estimated_min"] = 64.0
+                release["estimated_max"] = 96.0
         
         return releases
         
