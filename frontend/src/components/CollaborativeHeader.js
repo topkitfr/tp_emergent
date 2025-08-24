@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ProfilePictureModal from '../ProfilePictureModal';
 
 const CollaborativeHeader = ({ 
   user, 
@@ -7,10 +8,15 @@ const CollaborativeHeader = ({
   onSearch, 
   onLogin, 
   onLogout, 
-  searchQuery 
+  searchQuery,
+  onUserUpdate
 }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
+
+  // Get API URL from environment
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
 
   const handleSearchChange = (e) => {
     onSearch(e.target.value);
