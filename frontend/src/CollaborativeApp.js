@@ -102,6 +102,27 @@ const AppContent = () => {
     navigate('/');
   };
 
+  // Update user data (for profile picture changes, etc.)
+  const handleUserUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const updatedUser = { ...userData, token };
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(updatedUser);
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
+  };
+
   // Data loading functions
   const loadCollaborativeData = async () => {
     setLoading(true);
