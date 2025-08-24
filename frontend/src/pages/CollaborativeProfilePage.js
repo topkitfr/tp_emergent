@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import UserSettingsPanel from '../UserSettingsPanel';
+import ProfilePictureModal from '../ProfilePictureModal';
 
 const CollaborativeProfilePage = ({ user, API }) => {
   const [userProfile, setUserProfile] = useState(null);
+  const [publicInfo, setPublicInfo] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
 
   // Load user profile data
   useEffect(() => {
