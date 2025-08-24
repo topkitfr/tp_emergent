@@ -18,23 +18,63 @@ const UnifiedContributionsPage = ({ user, API }) => {
     
     setLoading(true);
     try {
+      // Get token from localStorage for authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        setLoading(false);
+        return;
+      }
+
+      console.log(`🔄 Loading ${activeTab === 'all' ? 'community' : 'personal'} contributions...`);
+      
       if (activeTab === 'all') {
         // Load all community contributions
         const response = await fetch(`${API}/api/contributions/community`, {
-          headers: { 'Authorization': `Bearer ${user.token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
+        
+        console.log(`📥 Community contributions response: ${response.status}`);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log(`✅ Loaded ${data.length} community contributions:`, data);
           setContributions(data);
+        } else {
+          console.error('Failed to load community contributions:', response.status);
+          // Fallback to basic contributions endpoint
+          const fallbackResponse = await fetch(`${API}/api/contributions`, {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            console.log(`✅ Fallback: Loaded ${fallbackData.length} contributions:`, fallbackData);
+            setContributions(fallbackData);
+          }
         }
       } else {
         // Load user's own contributions
         const response = await fetch(`${API}/api/contributions/my-contributions`, {
-          headers: { 'Authorization': `Bearer ${user.token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
+        
+        console.log(`📥 Personal contributions response: ${response.status}`);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log(`✅ Loaded ${data.length} personal contributions:`, data);
           setMyContributions(data);
+        } else {
+          console.error('Failed to load personal contributions:', response.status);
         }
       }
     } catch (error) {
