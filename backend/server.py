@@ -5709,6 +5709,94 @@ async def get_public_collections():
         logger.error(f"Get public collections error: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving public collections")
 
+@api_router.get("/users/with-collections")
+async def get_users_with_collections():
+    """Get all users with their collection summary for the Collections page"""
+    try:
+        # Aggregate users with their collection stats
+        pipeline = [
+            # Match users with public profiles
+            {"$match": {"profile_privacy": "public"}},
+            # Lookup user collections
+            {
+                "$lookup": {
+                    "from": "user_jersey_collections",
+                    "localField": "id",
+                    "foreignField": "user_id",
+                    "as": "collections"
+                }
+            },
+            # Filter users who have at least one collection item
+            {"$match": {"collections": {"$ne": []}}},
+            # Add collection stats
+            {
+                "$addFields": {
+                    "total_owned": {
+                        "$size": {
+                            "$filter": {
+                                "input": "$collections",
+                                "cond": {"$eq": ["$$this.collection_type", "owned"]}
+                            }
+                        }
+                    },
+                    "total_wanted": {
+                        "$size": {
+                            "$filter": {
+                                "input": "$collections", 
+                                "cond": {"$eq": ["$$this.collection_type", "wanted"]}
+                            }
+                        }
+                    }
+                }
+            },
+            # Get favorite club name if exists
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "favorite_club",
+                    "foreignField": "id",
+                    "as": "favorite_club_info"
+                }
+            },
+            # Project final user data
+            {
+                "$project": {
+                    "id": 1,
+                    "name": 1,
+                    "profile_picture_url": 1,
+                    "bio": 1,
+                    "instagram_username": 1,
+                    "twitter_username": 1,
+                    "website": 1,
+                    "created_at": 1,
+                    "total_owned": 1,
+                    "total_wanted": 1,
+                    "favorite_club_name": {
+                        "$ifNull": [
+                            {"$arrayElemAt": ["$favorite_club_info.name", 0]},
+                            None
+                        ]
+                    }
+                }
+            },
+            # Sort by total collection size (owned + wanted) in descending order
+            {"$sort": {"total_owned": -1, "total_wanted": -1, "name": 1}},
+            # Limit to prevent excessive data
+            {"$limit": 500}
+        ]
+        
+        users = await db.users.aggregate(pipeline).to_list(None)
+        
+        # Remove MongoDB ObjectId from results
+        for user in users:
+            user.pop('_id', None)
+        
+        return users
+        
+    except Exception as e:
+        logger.error(f"Get users with collections error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving users with collections")
+
 # ===================
 # LISTING MANAGEMENT  
 # ===================
