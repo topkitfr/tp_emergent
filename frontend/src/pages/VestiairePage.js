@@ -394,7 +394,10 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           </button>
         </div>
         <div className="flex gap-2">
-          <button className="flex-1 px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded">
+          <button 
+            onClick={() => showReleaseDetails(release)}
+            className="flex-1 px-3 py-2 text-gray-600 hover:text-gray-800 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+          >
             📋 Voir détails
           </button>
           {user && (
