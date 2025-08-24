@@ -580,6 +580,17 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
+              onClick={(e) => {
+                // Backup form submission trigger for testing compatibility
+                console.log('🔘 Submit button clicked directly');
+                if (!loading) {
+                  const form = e.target.closest('form');
+                  if (form) {
+                    const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                    form.dispatchEvent(formEvent);
+                  }
+                }
+              }}
               className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-all"
             >
               {loading ? (
