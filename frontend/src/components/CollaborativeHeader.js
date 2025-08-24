@@ -226,7 +226,7 @@ const CollaborativeHeader = ({
               </div>
               
               <div className="space-y-1">
-                {navigationItems.map((item) => (
+                {visibleNavigationItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => {
