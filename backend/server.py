@@ -2452,17 +2452,14 @@ async def upload_profile_picture(
         with open(file_path, 'wb') as f:
             f.write(file_content)
         
-        # Update user profile with picture URL
+        # Update user with picture URL
         profile_picture_url = f"uploads/profile_pictures/{filename}"
         
-        # Get or create user profile
-        user_profile = await db.user_profiles.find_one({"user_id": user_id})
-        if not user_profile:
-            user_profile = UserProfile(user_id=user_id).dict()
-            await db.user_profiles.insert_one(user_profile)
+        # Get current user to check for old picture
+        user = await db.users.find_one({"id": user_id})
+        old_picture = user.get('profile_picture_url') if user else None
         
         # Delete old profile picture if exists
-        old_picture = user_profile.get('profile_picture_url')
         if old_picture and old_picture.startswith('uploads/profile_pictures/'):
             old_file_path = Path(old_picture)
             if old_file_path.exists():
@@ -2471,13 +2468,10 @@ async def upload_profile_picture(
                 except Exception as e:
                     logger.warning(f"Failed to delete old profile picture: {e}")
         
-        # Update profile with new picture URL
-        await db.user_profiles.update_one(
-            {"user_id": user_id},
-            {"$set": {
-                "profile_picture_url": profile_picture_url,
-                "updated_at": datetime.utcnow()
-            }}
+        # Update user with new picture URL
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"profile_picture_url": profile_picture_url}}
         )
         
         # Log activity
