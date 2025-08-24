@@ -38,23 +38,26 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     e.preventDefault();
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Get form values both from state and directly from form elements as fallback
+    // Get form values directly from DOM elements as primary source
     const formElement = e.target.closest('form') || e.target;
     const emailField = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
     const passwordField = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
     const nameField = formElement.querySelector('input[name="name"]') || formElement.querySelector('input[type="text"]');
     
-    const actualEmail = formData.email?.trim() || emailField?.value?.trim() || '';
-    const actualPassword = formData.password?.trim() || passwordField?.value?.trim() || '';
-    const actualName = formData.name?.trim() || nameField?.value?.trim() || '';
+    // Use DOM values as primary, state as fallback
+    const actualEmail = emailField?.value?.trim() || formData.email?.trim() || '';
+    const actualPassword = passwordField?.value?.trim() || formData.password?.trim() || '';
+    const actualName = nameField?.value?.trim() || formData.name?.trim() || '';
     
-    console.log('📧 Form data (with fallback):', { 
+    console.log('📧 Form data (DOM-first approach):', { 
       email: actualEmail, 
       password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
       name: actualName,
       isLogin: isLogin,
-      stateEmail: formData.email || 'EMPTY',
-      statePassword: formData.password ? '***HIDDEN***' : 'EMPTY'
+      domEmail: emailField?.value || 'DOM_EMPTY',
+      domPassword: passwordField?.value ? '***HIDDEN***' : 'DOM_EMPTY',
+      stateEmail: formData.email || 'STATE_EMPTY',
+      statePassword: formData.password ? '***HIDDEN***' : 'STATE_EMPTY'
     });
     
     // Validation simplifiée
