@@ -2497,13 +2497,13 @@ async def delete_profile_picture(current_user: dict = Depends(get_current_user))
     try:
         user_id = current_user['id']
         
-        # Get user profile
-        user_profile = await db.user_profiles.find_one({"user_id": user_id})
-        if not user_profile or not user_profile.get('profile_picture_url'):
+        # Get user
+        user = await db.users.find_one({"id": user_id})
+        if not user or not user.get('profile_picture_url'):
             raise HTTPException(status_code=404, detail="Aucune photo de profil trouvée")
         
         # Delete file from disk
-        profile_picture_url = user_profile['profile_picture_url']
+        profile_picture_url = user['profile_picture_url']
         if profile_picture_url.startswith('uploads/profile_pictures/'):
             file_path = Path(profile_picture_url)
             if file_path.exists():
@@ -2512,11 +2512,10 @@ async def delete_profile_picture(current_user: dict = Depends(get_current_user))
                 except Exception as e:
                     logger.warning(f"Failed to delete profile picture file: {e}")
         
-        # Remove from database
-        await db.user_profiles.update_one(
-            {"user_id": user_id},
-            {"$unset": {"profile_picture_url": ""},
-             "$set": {"updated_at": datetime.utcnow()}}
+        # Remove picture URL from user
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"profile_picture_url": None}}
         )
         
         # Log activity
