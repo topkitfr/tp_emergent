@@ -201,6 +201,13 @@ class User(BaseModel):
     role: str = "user"  # Default role is user
     assigned_by: Optional[str] = None  # ID of admin who assigned the role
     role_assigned_at: Optional[datetime] = None
+    # Enhanced profile fields - Public information
+    bio: Optional[str] = None  # User biography (max 200 characters)
+    favorite_club: Optional[str] = None  # Favorite football club from database
+    instagram_username: Optional[str] = None  # Instagram username (without @)
+    twitter_username: Optional[str] = None  # Twitter/X username (without @)
+    website: Optional[str] = None  # Personal website URL
+    profile_picture_url: Optional[str] = None  # Profile picture path
     # Enhanced security fields
     email_verified: bool = False  # Email verification status
     email_verified_at: Optional[datetime] = None  # When email was verified
