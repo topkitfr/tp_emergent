@@ -181,6 +181,7 @@ const AppContent = () => {
       'catalogue': '/catalogue',
       'vestiaire': '/vestiaire',
       'collections': '/collections',
+      'my-collection': '/my-collection',
       'contributions': '/contributions',
       'teams': '/teams',
       'brands': '/brands',
