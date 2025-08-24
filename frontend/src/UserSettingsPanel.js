@@ -248,6 +248,7 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
 
   const tabs = [
     { id: 'profile', label: '👤 Profil', icon: '👤' },
+    { id: 'public', label: '📋 Informations Publiques', icon: '📋' },
     { id: 'address', label: '📍 Adresse', icon: '📍' },
     { id: 'seller', label: '🏪 Vendeur', icon: '🏪' },
     { id: 'buyer', label: '🛒 Acheteur', icon: '🛒' },
