@@ -370,7 +370,12 @@ class VestiaireCollectionTester:
             jersey_id = test_jersey.get('id')
             
             if jersey_id:
-                print(f"Testing with Jersey: {test_jersey.get('team', 'Unknown')} - {test_jersey.get('season', 'Unknown')} (ID: {jersey_id})")
+                # Get jersey display info
+                master_info = test_jersey.get('master_jersey_info', {})
+                player_name = test_jersey.get('player_name', 'Unknown Player')
+                season = master_info.get('season', 'Unknown Season')
+                
+                print(f"Testing with Jersey: {player_name} - {season} (ID: {jersey_id})")
                 
                 # Test both collection types for both users
                 self.test_add_to_collection(self.admin_token, self.admin_user_id, "Admin", jersey_id, "owned")
@@ -383,7 +388,11 @@ class VestiaireCollectionTester:
                     second_jersey = vestiaire_data[1]
                     second_jersey_id = second_jersey.get('id')
                     if second_jersey_id:
-                        print(f"\nTesting with Second Jersey: {second_jersey.get('team', 'Unknown')} - {second_jersey.get('season', 'Unknown')} (ID: {second_jersey_id})")
+                        second_master_info = second_jersey.get('master_jersey_info', {})
+                        second_player_name = second_jersey.get('player_name', 'Unknown Player')
+                        second_season = second_master_info.get('season', 'Unknown Season')
+                        
+                        print(f"\nTesting with Second Jersey: {second_player_name} - {second_season} (ID: {second_jersey_id})")
                         self.test_add_to_collection(self.user_token, self.user_user_id, "User", second_jersey_id, "owned")
                         self.test_add_to_collection(self.user_token, self.user_user_id, "User", second_jersey_id, "wanted")
             else:
