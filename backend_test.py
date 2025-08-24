@@ -127,14 +127,22 @@ class VestiaireCollectionTester:
                     # Analyze data structure
                     if jersey_count > 0:
                         sample_jersey = data[0]
-                        required_fields = ['id', 'team', 'season', 'manufacturer']
+                        
+                        # Check for jersey release structure (not direct team/season fields)
+                        required_fields = ['id', 'master_jersey_info', 'player_name']
                         missing_fields = [field for field in required_fields if field not in sample_jersey]
                         
                         if not missing_fields:
+                            # Check nested master_jersey_info structure
+                            master_info = sample_jersey.get('master_jersey_info', {})
+                            season = master_info.get('season', 'Unknown')
+                            team_id = master_info.get('team_id', 'Unknown')
+                            brand_id = master_info.get('brand_id', 'Unknown')
+                            
                             self.log_result(
                                 "Vestiaire Endpoint Data Structure",
                                 True,
-                                f"Perfect array format with {jersey_count} jersey releases. Sample fields: {list(sample_jersey.keys())}"
+                                f"Perfect array format with {jersey_count} jersey releases. Sample: Player {sample_jersey.get('player_name')}, Season {season}, Team ID {team_id}, Brand ID {brand_id}"
                             )
                         else:
                             self.log_result(
