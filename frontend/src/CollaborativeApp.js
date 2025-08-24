@@ -216,6 +216,7 @@ const AppContent = () => {
         onLogin={() => setShowAuthModal(true)}
         onLogout={handleLogout}
         searchQuery={searchQuery}
+        onUserUpdate={handleUserUpdate}
       />
 
       {/* Main Content */}
