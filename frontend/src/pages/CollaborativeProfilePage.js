@@ -82,15 +82,99 @@ const CollaborativeProfilePage = ({ user, API }) => {
       {/* Profile Header */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-start space-x-6">
-          <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-3xl font-bold text-white">
-              {user.name?.charAt(0).toUpperCase() || 'U'}
-            </span>
-          </div>
+          {/* Clickable Profile Picture */}
+          <button
+            onClick={() => setShowProfilePictureModal(true)}
+            className="w-24 h-24 rounded-full overflow-hidden hover:ring-4 hover:ring-blue-500 hover:ring-opacity-30 transition-all cursor-pointer group relative"
+            title="Changer la photo de profil"
+          >
+            {publicInfo?.profile_picture_url ? (
+              <img 
+                src={`${API}/${publicInfo.profile_picture_url}`}
+                alt="Profile"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors" 
+              style={{display: publicInfo?.profile_picture_url ? 'none' : 'flex'}}
+            >
+              <span className="text-3xl font-bold text-white">
+                {user.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            </div>
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all">
+              <div className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">
+                📷
+              </div>
+            </div>
+          </button>
           
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h1>
-            <p className="text-gray-600 mb-4">{user.email}</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h1>
+                <p className="text-gray-600 mb-2">{user.email}</p>
+                
+                {/* Public Bio */}
+                {publicInfo?.bio && (
+                  <p className="text-gray-700 mb-4 italic">"{publicInfo.bio}"</p>
+                )}
+                
+                {/* Public Info Display */}
+                <div className="space-y-2 mb-4">
+                  {publicInfo?.favorite_club_name && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Club préféré:</span>
+                      <span className="text-sm font-medium text-blue-600">⚽ {publicInfo.favorite_club_name}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-4">
+                    {publicInfo?.instagram_username && (
+                      <a 
+                        href={`https://instagram.com/${publicInfo.instagram_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-1 text-sm text-pink-600 hover:text-pink-700"
+                      >
+                        <span>📷</span>
+                        <span>@{publicInfo.instagram_username}</span>
+                      </a>
+                    )}
+                    
+                    {publicInfo?.twitter_username && (
+                      <a 
+                        href={`https://x.com/${publicInfo.twitter_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-1 text-sm text-blue-500 hover:text-blue-600"
+                      >
+                        <span>🐦</span>
+                        <span>@{publicInfo.twitter_username}</span>
+                      </a>
+                    )}
+                    
+                    {publicInfo?.website && (
+                      <a 
+                        href={publicInfo.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-700"
+                      >
+                        <span>🌐</span>
+                        <span>Site web</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
