@@ -136,16 +136,12 @@ class JerseyReleaseSuppressionTester:
             self.log_result("Initial Admin Collections State", False, f"Exception: {str(e)}")
 
     def perform_jersey_release_cleanup(self):
-        """Perform the complete Jersey Release cleanup"""
+        """Perform the complete Jersey Release cleanup using admin database cleanup endpoint"""
         print("🧹 PERFORMING JERSEY RELEASE CLEANUP...")
         
-        # Note: Since we don't have direct database access endpoints for cleanup,
-        # we'll need to use available API endpoints or create a cleanup endpoint
-        
-        # First, let's try to find if there are any admin endpoints for cleanup
         headers = self.get_auth_headers()
         
-        # Try to get all jersey releases first
+        # First, let's get the current counts
         try:
             response = requests.get(f"{BACKEND_URL}/jersey-releases", headers=headers)
             if response.status_code == 200:
@@ -156,75 +152,94 @@ class JerseyReleaseSuppressionTester:
                     True,
                     f"Found {jersey_count} Jersey Releases to clean up"
                 )
-                
-                # If we have jersey releases, try to delete them one by one
-                if jersey_count > 0 and isinstance(jersey_releases, list):
-                    deleted_count = 0
-                    for jersey_release in jersey_releases:
-                        jersey_id = jersey_release.get('id')
-                        if jersey_id:
-                            try:
-                                delete_response = requests.delete(f"{BACKEND_URL}/jersey-releases/{jersey_id}", headers=headers)
-                                if delete_response.status_code in [200, 204]:
-                                    deleted_count += 1
-                            except Exception as e:
-                                print(f"    Failed to delete Jersey Release {jersey_id}: {e}")
-                    
-                    self.log_result(
-                        "Jersey Release Deletion",
-                        deleted_count > 0,
-                        f"Deleted {deleted_count} out of {jersey_count} Jersey Releases"
-                    )
-                
             else:
                 self.log_result(
-                    "Jersey Releases Retrieval",
+                    "Jersey Releases Count",
                     False,
                     f"Failed to get jersey releases - Status: {response.status_code}"
                 )
         except Exception as e:
-            self.log_result("Jersey Releases Cleanup", False, f"Exception: {str(e)}")
+            self.log_result("Jersey Releases Count", False, f"Exception: {str(e)}")
 
-        # Try to clean up user collections that reference Jersey Releases
+        # Use the admin database cleanup endpoint which should clean everything
         try:
-            # Get all users first (if admin endpoint exists)
-            response = requests.get(f"{BACKEND_URL}/admin/users", headers=headers)
+            response = requests.post(f"{BACKEND_URL}/admin/cleanup/database", headers=headers)
             if response.status_code == 200:
-                users = response.json()
-                if isinstance(users, list):
-                    cleaned_collections = 0
-                    for user in users:
-                        user_id = user.get('id')
-                        if user_id:
-                            # Get user collections
-                            collections_response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections", headers=headers)
-                            if collections_response.status_code == 200:
-                                collections = collections_response.json()
-                                if isinstance(collections, list):
-                                    for collection in collections:
-                                        collection_id = collection.get('id')
-                                        if collection_id:
-                                            # Delete collection
-                                            try:
-                                                delete_response = requests.delete(f"{BACKEND_URL}/users/{user_id}/collections/{collection_id}", headers=headers)
-                                                if delete_response.status_code in [200, 204]:
-                                                    cleaned_collections += 1
-                                            except Exception as e:
-                                                print(f"    Failed to delete collection {collection_id}: {e}")
-                    
-                    self.log_result(
-                        "User Collections Cleanup",
-                        True,
-                        f"Cleaned {cleaned_collections} user collections"
-                    )
+                cleanup_data = response.json()
+                self.log_result(
+                    "Database Cleanup Execution",
+                    True,
+                    f"Database cleanup executed successfully - {cleanup_data.get('message', 'No message')}"
+                )
+                
+                # Log the cleanup details
+                if 'deleted' in cleanup_data:
+                    deleted = cleanup_data['deleted']
+                    print(f"    Deleted items: {deleted}")
+                
             else:
                 self.log_result(
-                    "User Collections Cleanup",
+                    "Database Cleanup Execution",
                     False,
-                    f"Failed to get users for collection cleanup - Status: {response.status_code}"
+                    f"Database cleanup failed - Status: {response.status_code}, Response: {response.text}"
                 )
         except Exception as e:
-            self.log_result("User Collections Cleanup", False, f"Exception: {str(e)}")
+            self.log_result("Database Cleanup Execution", False, f"Exception: {str(e)}")
+
+        # Since the standard cleanup doesn't include Jersey Releases, let's try to create a custom cleanup
+        # by manually deleting Jersey Release collections
+        try:
+            # Try to delete all user jersey collections first
+            print("    Attempting manual Jersey Release collections cleanup...")
+            
+            # We'll need to use MongoDB operations through a custom endpoint
+            # For now, let's try to get and delete individual collections
+            
+            # Get all users to clean their collections
+            users_response = requests.get(f"{BACKEND_URL}/admin/users", headers=headers)
+            if users_response.status_code == 200:
+                users = users_response.json()
+                cleaned_collections = 0
+                
+                for user in users:
+                    user_id = user.get('id')
+                    if user_id:
+                        # Get owned collections
+                        try:
+                            owned_response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/owned", headers=headers)
+                            if owned_response.status_code == 200:
+                                owned_collections = owned_response.json()
+                                for collection in owned_collections:
+                                    collection_id = collection.get('id')
+                                    if collection_id:
+                                        delete_response = requests.delete(f"{BACKEND_URL}/users/{user_id}/collections/{collection_id}", headers=headers)
+                                        if delete_response.status_code in [200, 204]:
+                                            cleaned_collections += 1
+                        except:
+                            pass
+                        
+                        # Get wanted collections
+                        try:
+                            wanted_response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/wanted", headers=headers)
+                            if wanted_response.status_code == 200:
+                                wanted_collections = wanted_response.json()
+                                for collection in wanted_collections:
+                                    collection_id = collection.get('id')
+                                    if collection_id:
+                                        delete_response = requests.delete(f"{BACKEND_URL}/users/{user_id}/collections/{collection_id}", headers=headers)
+                                        if delete_response.status_code in [200, 204]:
+                                            cleaned_collections += 1
+                        except:
+                            pass
+                
+                self.log_result(
+                    "Manual Collections Cleanup",
+                    cleaned_collections > 0,
+                    f"Manually cleaned {cleaned_collections} Jersey Release collections"
+                )
+            
+        except Exception as e:
+            self.log_result("Manual Collections Cleanup", False, f"Exception: {str(e)}")
 
     def verify_cleanup_success(self):
         """Verify that the cleanup was successful"""
