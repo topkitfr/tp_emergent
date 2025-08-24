@@ -269,6 +269,16 @@ const CollaborativeHeader = ({
         )}
       </div>
     </header>
+
+    {/* Profile Picture Modal */}
+    {showProfilePictureModal && (
+      <ProfilePictureModal
+        user={user}
+        onClose={() => setShowProfilePictureModal(false)}
+        onUpdate={onUserUpdate}
+      />
+    )}
+  </>
   );
 };
 
