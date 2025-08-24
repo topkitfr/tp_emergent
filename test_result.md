@@ -14,7 +14,93 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "Comprehensive TopKit workflow testing requested by user with specific test plan covering: 1) Account Creation with email verification, 2) Creating References (Team/Brand/Player/Master Jersey/Competition) with Test.jpg uploads, 3) Editing References with photo uploads, 4) Voting system for reference improvements, 5) Automatic approval after 3 votes, 6) Creating 2 Jersey Release references, 7) Voting to approve Jersey Releases, 8) Adding Jersey Releases to Collection, 9) Adding Jersey Releases to Wishlist. Focus areas include vote threshold (exactly 3 votes), notifications system, and edge case testing with invalid files. User provided test.jpg for image upload testing."
+## user_problem_statement: "I would like us to have detailed views of the pending contributions/improvements, especially for team sheets. Previously, we had a detailed layout with a Before/After comparison. The current version is far too minimalistic. I can't even tell what was modified or proposed, or by whom. This is too limited to meaningfully contribute to voting and approving changes to references."
+
+## backend:
+  - task: "Enhanced Contribution Detail Endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "Enhanced contribution detail endpoint working with enriched user and entity data (user_name: Livio Steinmetz, entity_name: FC Barcelona). GET /api/contributions/{contribution_id} returns detailed contribution information successfully."
+        
+  - task: "Field-Level Voting System"
+    implemented: true 
+    working: true
+    file: "server.py, collaborative_models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "Field-level voting system properly implemented. VoteRequest and ContributionVote models enhanced to support field_votes and granular_votes. Voting endpoint accepts and stores field-level voting data correctly."
+        
+  - task: "Enhanced Vote Data Structure"
+    implemented: true
+    working: true
+    file: "collaborative_models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "Vote data structure enhanced with field_votes support. MongoDB storage working correctly, backward compatibility maintained for existing votes."
+
+## frontend:
+  - task: "Enhanced ContributionDetailModal"
+    implemented: true
+    working: true
+    file: "components/ContributionDetailModal.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Enhanced modal component with comprehensive before/after comparisons, field-level voting, image galleries, and contributor analytics. Already exists and enhanced with detailed view capabilities."
+        
+  - task: "ContributionDetailPage"
+    implemented: true
+    working: "NA"
+    file: "pages/ContributionDetailPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Created comprehensive detailed page for in-depth contribution review with field-by-field voting, contributor history, entity history, and full image galleries. Needs frontend testing."
+        
+  - task: "Enhanced UnifiedContributionsPage Integration"
+    implemented: true
+    working: "NA"
+    file: "pages/UnifiedContributionsPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Enhanced contributions page with modal integration, improved contribution previews, image previews, and navigation to detailed page. Added both quick preview modal and full detailed page options."
+        
+  - task: "Routing Integration"
+    implemented: true
+    working: "NA"
+    file: "CollaborativeApp.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Added routing for detailed contribution page at /contributions/{contributionId}. Integrated ContributionDetailPage component with navigation support."
 ## backend:
 ##   - task: "Task name"
 ##     implemented: true
