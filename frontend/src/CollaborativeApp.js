@@ -26,6 +26,7 @@ import BrandDetailPage from './pages/BrandDetailPage';
 import CompetitionDetailPage from './pages/CompetitionDetailPage';
 import PlayerDetailPage from './pages/PlayerDetailPage';
 import MasterJerseyDetailPage from './pages/MasterJerseyDetailPage';
+import ContributionDetailPage from './pages/ContributionDetailPage';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
