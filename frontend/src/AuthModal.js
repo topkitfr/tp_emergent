@@ -38,16 +38,23 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     e.preventDefault();
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Utiliser directement les valeurs du state formData
-    const actualEmail = formData.email?.trim() || '';
-    const actualPassword = formData.password?.trim() || '';
-    const actualName = formData.name?.trim() || '';
+    // Get form values both from state and directly from form elements as fallback
+    const formElement = e.target;
+    const emailField = formElement.querySelector('input[type="email"]');
+    const passwordField = formElement.querySelector('input[type="password"]');
+    const nameField = formElement.querySelector('input[type="text"]');
     
-    console.log('📧 Form data:', { 
+    const actualEmail = formData.email?.trim() || emailField?.value?.trim() || '';
+    const actualPassword = formData.password?.trim() || passwordField?.value?.trim() || '';
+    const actualName = formData.name?.trim() || nameField?.value?.trim() || '';
+    
+    console.log('📧 Form data (with fallback):', { 
       email: actualEmail, 
       password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
       name: actualName,
-      isLogin: isLogin
+      isLogin: isLogin,
+      stateEmail: formData.email || 'EMPTY',
+      statePassword: formData.password ? '***HIDDEN***' : 'EMPTY'
     });
     
     // Validation simplifiée
