@@ -176,23 +176,47 @@ class CollectionsEndpointTester:
             self.log_result("Collections Endpoint Fix", False, f"Exception: {str(e)}")
             return False
 
+    def get_available_master_jerseys(self):
+        """Get available master jerseys for creating releases"""
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{BACKEND_URL}/master-jerseys", headers=headers)
+            
+            if response.status_code == 200:
+                master_jerseys = response.json()
+                return master_jerseys
+            else:
+                return []
+        except Exception as e:
+            return []
+
     def create_jersey_release(self, team_name, player_name, season="2024/25"):
         """Create a new Jersey Release for testing"""
         try:
             headers = {"Authorization": f"Bearer {self.admin_token}"}
             
+            # Get available master jerseys first
+            master_jerseys = self.get_available_master_jerseys()
+            if not master_jerseys:
+                self.log_result(
+                    f"Create Jersey Release - {player_name}", 
+                    False, 
+                    "No master jerseys available to create releases from"
+                )
+                return None
+            
+            # Use the first available master jersey
+            master_jersey_id = master_jerseys[0].get('id')
+            
             jersey_release_data = {
-                "master_jersey_id": "test-master-jersey-001",  # Using a test master jersey
+                "master_jersey_id": master_jersey_id,
+                "release_type": "player_edition",  # Required field
+                "size_range": ["S", "M", "L", "XL"],
                 "player_name": player_name,
-                "player_number": str(random.randint(1, 99)),
-                "size": "L",
-                "condition": "mint",
-                "market_price": round(random.uniform(80.0, 150.0), 2),
-                "rarity_score": random.randint(6, 9),
-                "authenticity_verified": True,
-                "photos": [],
-                "description": f"Test Jersey Release - {team_name} {player_name} {season}",
-                "created_by": self.admin_user_id
+                "player_number": random.randint(1, 99),
+                "retail_price": round(random.uniform(80.0, 150.0), 2),
+                "sku_code": f"TK-{player_name.replace(' ', '').upper()}-{random.randint(1000, 9999)}",
+                "product_images": []
             }
             
             response = requests.post(f"{BACKEND_URL}/jersey-releases", json=jersey_release_data, headers=headers)
