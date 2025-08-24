@@ -5797,6 +5797,129 @@ async def get_users_with_collections():
         logger.error(f"Get users with collections error: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving users with collections")
 
+@api_router.get("/contributions/community")
+async def get_community_contributions(current_user: dict = Depends(get_current_user)):
+    """Get all community contributions for the unified contributions page"""
+    try:
+        # Get all contributions with user and entity details
+        pipeline = [
+            # Match all contributions
+            {"$match": {}},
+            # Lookup user details
+            {
+                "$lookup": {
+                    "from": "users",
+                    "localField": "user_id",
+                    "foreignField": "id",
+                    "as": "user"
+                }
+            },
+            {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+            # Add vote counts
+            {
+                "$addFields": {
+                    "upvotes": {"$size": {"$ifNull": ["$votes.upvotes", []]}},
+                    "downvotes": {"$size": {"$ifNull": ["$votes.downvotes", []]}},
+                    "vote_score": {
+                        "$subtract": [
+                            {"$size": {"$ifNull": ["$votes.upvotes", []]}},
+                            {"$size": {"$ifNull": ["$votes.downvotes", []]}}
+                        ]
+                    }
+                }
+            },
+            # Project final format
+            {
+                "$project": {
+                    "id": 1,
+                    "entity_type": 1,
+                    "entity_id": 1,
+                    "entity_name": "$entity_name",
+                    "user_id": "$user_id",
+                    "user_name": "$user.name",
+                    "user_profile_picture": "$user.profile_picture_url",
+                    "status": 1,
+                    "changes_summary": "$changes_summary",
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "upvotes": 1,
+                    "downvotes": 1,
+                    "vote_score": 1
+                }
+            },
+            # Sort by creation date (newest first)
+            {"$sort": {"created_at": -1}},
+            # Limit results
+            {"$limit": 100}
+        ]
+        
+        contributions = await db.contributions.aggregate(pipeline).to_list(None)
+        
+        # Remove MongoDB ObjectId
+        for contribution in contributions:
+            contribution.pop('_id', None)
+        
+        return contributions
+        
+    except Exception as e:
+        logger.error(f"Get community contributions error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving community contributions")
+
+@api_router.get("/contributions/my-contributions")
+async def get_my_contributions(current_user: dict = Depends(get_current_user)):
+    """Get current user's contributions"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user's contributions with vote details
+        pipeline = [
+            # Match user's contributions
+            {"$match": {"user_id": user_id}},
+            # Add vote counts
+            {
+                "$addFields": {
+                    "upvotes": {"$size": {"$ifNull": ["$votes.upvotes", []]}},
+                    "downvotes": {"$size": {"$ifNull": ["$votes.downvotes", []]}},
+                    "vote_score": {
+                        "$subtract": [
+                            {"$size": {"$ifNull": ["$votes.upvotes", []]}},
+                            {"$size": {"$ifNull": ["$votes.downvotes", []]}}
+                        ]
+                    }
+                }
+            },
+            # Project final format
+            {
+                "$project": {
+                    "id": 1,
+                    "entity_type": 1,
+                    "entity_id": 1,
+                    "entity_name": "$entity_name",
+                    "status": 1,
+                    "changes_summary": "$changes_summary",
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "upvotes": 1,
+                    "downvotes": 1,
+                    "vote_score": 1
+                }
+            },
+            # Sort by creation date (newest first)
+            {"$sort": {"created_at": -1}}
+        ]
+        
+        contributions = await db.contributions.aggregate(pipeline).to_list(None)
+        
+        # Remove MongoDB ObjectId
+        for contribution in contributions:
+            contribution.pop('_id', None)
+        
+        return contributions
+        
+    except Exception as e:
+        logger.error(f"Get my contributions error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving user contributions")
+
 # ===================
 # LISTING MANAGEMENT  
 # ===================
