@@ -631,9 +631,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "TopKit Admin Dashboard Mobile-Friendly Refactoring Testing Complete"
+    - "Enhanced TopKit Contributions System - Navigation Changes"
+    - "Unified Contributions Page with Tabs"
+    - "Contributions Content Display and Voting System"
+    - "Access Control for Authenticated Pages"
+    - "Contributions Search Functionality"
+    - "Mobile Responsiveness for Contributions"
   stuck_tasks:
-    - "Production Authentication Testing for Beta Users"
+    - "Unified Contributions Page with Tabs"
+    - "Contributions Content Display and Voting System"
+    - "Access Control for Authenticated Pages"
   test_all: false
   test_priority: "high_first"
 
