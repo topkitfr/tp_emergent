@@ -2535,13 +2535,13 @@ async def delete_profile_picture(current_user: dict = Depends(get_current_user))
 async def get_profile_picture(user_id: str):
     """Get user profile picture URL (public endpoint)"""
     try:
-        # Get user profile
-        user_profile = await db.user_profiles.find_one({"user_id": user_id})
+        # Get user data
+        user = await db.users.find_one({"id": user_id})
         
-        if not user_profile or not user_profile.get('profile_picture_url'):
+        if not user or not user.get('profile_picture_url'):
             return {"profile_picture_url": None}
         
-        return {"profile_picture_url": user_profile['profile_picture_url']}
+        return {"profile_picture_url": user['profile_picture_url']}
         
     except Exception as e:
         logger.error(f"Get profile picture error: {e}")
