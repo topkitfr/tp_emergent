@@ -433,7 +433,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {new Set(jerseyReleases.map(r => r.player_name).filter(Boolean)).size}
+                {Array.isArray(jerseyReleases) ? new Set(jerseyReleases.map(r => r.player_name).filter(Boolean)).size : 0}
               </div>
               <div className="text-sm text-purple-700">Joueurs différents</div>
             </div>
