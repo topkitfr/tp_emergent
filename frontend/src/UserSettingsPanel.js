@@ -16,6 +16,14 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
     email: user?.email || '',
     profile_picture_url: null,
     
+    // Public profile information
+    bio: '',
+    favorite_club: '',
+    favorite_club_name: '',
+    instagram_username: '',
+    twitter_username: '',
+    website: '',
+    
     // Address settings
     address: {
       street: '',
