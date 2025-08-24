@@ -422,12 +422,14 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{jerseyReleases.length}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {Array.isArray(jerseyReleases) ? jerseyReleases.length : 0}
+              </div>
               <div className="text-sm text-blue-700">Releases disponibles</div>
             </div>
             <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {jerseyReleases.length > 0 ? Math.round(jerseyReleases.reduce((sum, r) => sum + (r.estimated_value || 0), 0) / jerseyReleases.length) : 0}€
+                {Array.isArray(jerseyReleases) && jerseyReleases.length > 0 ? Math.round(jerseyReleases.reduce((sum, r) => sum + (r.estimated_value || 0), 0) / jerseyReleases.length) : 0}€
               </div>
               <div className="text-sm text-green-700">Prix moyen estimé</div>
             </div>
