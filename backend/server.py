@@ -10445,7 +10445,8 @@ async def vote_on_contribution(
                 {"id": existing_vote["id"]},
                 {"$set": {
                     "vote_type": vote_request.vote_type,
-                    "comment": vote_request.comment
+                    "comment": vote_request.comment,
+                    "field_votes": vote_request.field_votes or vote_request.granular_votes or {}
                 }}
             )
             
