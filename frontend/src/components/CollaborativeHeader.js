@@ -278,8 +278,7 @@ const CollaborativeHeader = ({
         onUpdate={onUserUpdate}
       />
     )}
-  </>
-  );
+    </>
 };
 
 export default CollaborativeHeader;
