@@ -382,13 +382,22 @@ const UnifiedContributionsPage = ({ user, API }) => {
 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => openDetailModal(contribution)}
-                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  >
-                    <span>👁️</span>
-                    <span>Voir détails complets</span>
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => openDetailModal(contribution)}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    >
+                      <span>👁️</span>
+                      <span>Aperçu rapide</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/contributions/${contribution.id}`)}
+                      className="flex items-center space-x-2 text-purple-600 hover:text-purple-800 text-sm font-medium transition-colors"
+                    >
+                      <span>📋</span>
+                      <span>Vue détaillée complète</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
