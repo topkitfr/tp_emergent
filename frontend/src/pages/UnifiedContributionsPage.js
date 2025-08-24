@@ -7,6 +7,9 @@ const UnifiedContributionsPage = ({ user, API }) => {
   const [myContributions, setMyContributions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedContribution, setSelectedContribution] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [voting, setVoting] = useState(false);
 
   useEffect(() => {
     if (user) {
