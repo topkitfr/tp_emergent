@@ -434,6 +434,30 @@ const CollaborativeProfilePage = ({ user, API }) => {
         </div>
       </div>
 
+      {/* Profile Picture Modal */}
+      {showProfilePictureModal && (
+        <ProfilePictureModal
+          user={{...user, profile_picture_url: publicInfo?.profile_picture_url}}
+          onClose={() => setShowProfilePictureModal(false)}
+          onUpdate={() => {
+            loadUserProfile();
+            // Also update the user in parent component if needed
+          }}
+        />
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <UserSettingsPanel
+          user={user}
+          onClose={() => setShowSettingsModal(false)}
+          onUpdate={() => {
+            loadUserProfile();
+            // Also update the user in parent component if needed
+          }}
+        />
+      )}
+
     </div>
   );
 };
