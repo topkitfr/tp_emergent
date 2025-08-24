@@ -90,8 +90,8 @@
         - agent: "main"
   - task: "Jersey Collection Buttons Fix"
     implemented: true
-    working: true
-    file: "pages/VestiairePage.js, AuthModal.js"
+    working: false
+    file: "pages/VestiairePage.js, AuthModal.js, server.py"
     stuck_count: 0
     priority: "critical"
     needs_retesting: false
@@ -102,6 +102,9 @@
         - working: true
         - agent: "testing"
         - comment: "🎉 VESTIAIRE COLLECTION FUNCTIONALITY COMPREHENSIVE INVESTIGATION COMPLETE - ROOT CAUSE IDENTIFIED! Exhaustive backend testing reveals the EXACT reason for user's reported issue: ✅ BACKEND COLLECTION SYSTEM (90.5% SUCCESS): All core collection APIs working perfectly - authentication, vestiaire endpoint, collection CRUD operations all functional ✅ USER'S ACTUAL SITUATION DISCOVERED: User (steinmetzlivio@gmail.com) already has ALL 3 available jersey releases in BOTH owned and wanted collections (Test Messi, Test Player 1, Test Player 2), explaining why they get 'Jersey Release already in collection' error - this is CORRECT duplicate prevention behavior ✅ COLLECTION ADDITION WORKING: Successfully tested with fresh user (Test User 2) - jersey releases added to collections without issues, proving the functionality works for new additions ❌ USER EXPERIENCE ISSUES IDENTIFIED (2 critical issues): 1) General collections endpoint (/api/users/{user_id}/collections) returns empty array despite user having 8 total collections, preventing 'Ma Collection' page from displaying items 2) Collection data quality issues - missing player names, season info, and timestamps in collection display ✅ VESTIAIRE ENDPOINT (100%): Perfect data structure with 3 jersey releases, proper nested master_jersey_info with team/season/brand data ✅ DUPLICATE PREVENTION (100%): Working correctly - prevents adding same jersey release twice to same collection type. CONCLUSION: The reported bug is NOT a collection addition failure - it's a combination of: 1) User already owns all available items (correct duplicate prevention), 2) 'Ma Collection' page not displaying existing collections due to endpoint bug, 3) Poor data quality in collection display. Backend collection functionality is PRODUCTION-READY. Frontend display and general collections endpoint need fixes."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL BACKEND BUG CONFIRMED - GENERAL COLLECTIONS ENDPOINT BROKEN! Detailed investigation of user's reported issue (Jersey Release TK-RELEASE-000001 not appearing in 'Ma Collection') reveals EXACT ROOT CAUSE: ✅ JERSEY RELEASE & COLLECTION ADDITION WORKING (85.7% SUCCESS): Jersey Release TK-RELEASE-000001 EXISTS (ID: 7f267e15-196d-4b87-abb4-755f68ed40aa), user successfully has it in owned collection with proper data enrichment, collection addition functionality working correctly (added to wanted collection successfully), authentication and vestiaire endpoints fully operational ❌ CRITICAL BACKEND BUG IDENTIFIED: GET /api/users/{user_id}/collections (general endpoint) returns empty array despite user having 1 owned collection visible in /api/users/{user_id}/collections/owned, this broken aggregation pipeline prevents 'Ma Collection' page from displaying user's collections, backend inconsistency between specific (owned/wanted) and general collections endpoints. TECHNICAL ISSUE: The general collections endpoint aggregation pipeline is broken and fails to combine owned + wanted collections properly. This is a backend server.py issue that needs immediate fixing. USER IMPACT: User's collections exist but are invisible in 'Ma Collection' page due to frontend likely using the broken general endpoint. SOLUTION REQUIRED: Fix server.py general collections endpoint aggregation pipeline to properly retrieve and return combined collections data."
         
   - task: "Routing Integration"
     implemented: true
