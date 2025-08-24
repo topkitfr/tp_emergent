@@ -466,11 +466,17 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               placeholder="Email"
               value={formData.email}
               onChange={(e) => {
+                console.log('Email onChange triggered:', e.target.value);
                 setFormData({ ...formData, email: e.target.value });
-                console.log('Email field updated:', e.target.value);
               }}
-              onInput={(e) => setFormData({ ...formData, email: e.target.value })} // Handle programmatic input
-              onBlur={(e) => setFormData({ ...formData, email: e.target.value })} // Handle autofill
+              onInput={(e) => {
+                console.log('Email onInput triggered:', e.target.value);
+                setFormData({ ...formData, email: e.target.value });
+              }}
+              onBlur={(e) => {
+                console.log('Email onBlur triggered:', e.target.value);
+                setFormData({ ...formData, email: e.target.value });
+              }}
               autoComplete="email"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
