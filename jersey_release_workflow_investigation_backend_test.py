@@ -184,18 +184,15 @@ class JerseyReleaseWorkflowInvestigator:
             fc_barcelona_jerseys = [mj for mj in self.master_jerseys if 'barcelona' in mj.get('team', {}).get('name', '').lower()]
             target_master_jersey = fc_barcelona_jerseys[0] if fc_barcelona_jerseys else self.master_jerseys[0]
             
-            # Create Jersey Release data
+            # Create Jersey Release data with required release_type field
             jersey_release_data = {
                 "master_jersey_id": target_master_jersey.get("id"),
+                "release_type": "player_version",  # Required field: "player_version", "fan_version", "authentic", "replica"
                 "player_name": "Test Player Investigation",
                 "player_number": 10,
-                "size": "L",
-                "condition": "mint",
-                "price": 89.99,
-                "description": f"Jersey Release created for workflow investigation - {datetime.now().isoformat()}",
-                "season": target_master_jersey.get("season", "2024/25"),
-                "is_limited_edition": False,
-                "authenticity_verified": True
+                "retail_price": 89.99,
+                "size_range": ["S", "M", "L", "XL"],
+                "product_images": []
             }
             
             headers = {"Authorization": f"Bearer {self.admin_token}"}
