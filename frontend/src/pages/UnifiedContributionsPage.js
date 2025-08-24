@@ -335,6 +335,58 @@ const UnifiedContributionsPage = ({ user, API }) => {
                       <p className="text-sm text-gray-700">{contribution.changes_summary}</p>
                     </div>
                   )}
+
+                  {/* Proposed Data Preview */}
+                  {contribution.proposed_data && Object.keys(contribution.proposed_data).length > 0 && (
+                    <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">📝 Aperçu des modifications :</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        {Object.entries(contribution.proposed_data).slice(0, 3).map(([field, value]) => (
+                          <div key={field} className="flex">
+                            <span className="font-medium mr-2">{field}:</span>
+                            <span className="truncate">{Array.isArray(value) ? value.join(', ') : String(value).slice(0, 50)}{String(value).length > 50 ? '...' : ''}</span>
+                          </div>
+                        ))}
+                        {Object.keys(contribution.proposed_data).length > 3 && (
+                          <div className="text-blue-600 text-xs">+ {Object.keys(contribution.proposed_data).length - 3} autre(s) modification(s)</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Images Preview */}
+                  {contribution.images && Object.keys(contribution.images).length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">📸 Images proposées :</h4>
+                      <div className="flex space-x-2">
+                        {Object.entries(contribution.images).slice(0, 4).map(([key, img], index) => (
+                          <div key={index} className="w-12 h-12 bg-gray-200 rounded border overflow-hidden">
+                            <img 
+                              src={Array.isArray(img) ? img[0] : img}
+                              alt={key}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        {Object.keys(contribution.images).length > 4 && (
+                          <div className="w-12 h-12 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-600">
+                            +{Object.keys(contribution.images).length - 4}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => openDetailModal(contribution)}
+                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  >
+                    <span>👁️</span>
+                    <span>Voir détails complets</span>
+                  </button>
                 </div>
               </div>
 
