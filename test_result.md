@@ -49,16 +49,19 @@
 ##
 ## test_plan:
 ##   current_focus:
-##     - "Fix Messaging System - Messages Not Visible"
-##     - "Remove Friend Requirement for Messaging" 
-##     - "Implement Seller Chat Functionality"
-##     - "Streamline Admin Moderation - Confirmation Messages"
-##     - "Fix Admin Submission Form Access"
-##     - "Correct Suggest Change vs Reject Behavior"
-##     - "Implement Rejection Notifications"
+##     - "Account Creation Workflow - Email + Password Registration" 
+##     - "Reference Creation System - Teams/Brands/Players/Competitions/Master Jerseys with Image Uploads"
+##     - "Reference Editing System - Field Updates + Photo Upload with Test.jpg"
+##     - "Voting System - Community Voting for Reference Improvements"
+##     - "Automatic Approval System - 3 Vote Threshold Validation"
+##     - "Jersey Release Management - Creation, Voting, Approval Workflow"
+##     - "Collection Management - Add Jersey Releases to Personal Collection"
+##     - "Wishlist System - Add Jersey Releases to Wishlist"
+##     - "Notifications System - Vote Results and Approval Notifications"
+##     - "Edge Case Testing - Invalid File Formats and Size Constraints"
 ##   stuck_tasks: []
-##   test_all: false
-##   test_priority: "high_first"
+##   test_all: true
+##   test_priority: "workflow_complete"
 ##
 agent_communication:
     -agent: "main"
