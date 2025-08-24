@@ -59,7 +59,7 @@ const CollaborativeHeader = ({
 
           {/* Desktop Navigation - WhenToCop Style */}
           <nav className="hidden lg:flex space-x-8">
-            {navigationItems.map((item) => (
+            {visibleNavigationItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
