@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://topkit-ui-fix.preview.emergentagent.com/api"
+BASE_URL = "https://football-kit-deploy.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

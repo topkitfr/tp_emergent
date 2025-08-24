@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-ui-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-deploy.preview.emergentagent.com/api"
 
 # Test accounts from review request
 TEST_ACCOUNTS = [
