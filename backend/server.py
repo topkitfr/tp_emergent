@@ -9938,6 +9938,45 @@ async def create_jersey_release(
 # CONTRIBUTIONS & COLLABORATION
 # ================================.dict()
 
+@api_router.get("/contributions/{contribution_id}")
+async def get_contribution_detail(
+    contribution_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Obtenir les détails d'une contribution spécifique"""
+    
+    # Vérifier que la contribution existe
+    contribution = await db.contributions.find_one({"id": contribution_id})
+    if not contribution:
+        raise HTTPException(status_code=404, detail="Contribution non trouvée")
+    
+    # Enrichir avec les données utilisateur
+    contributor = await db.users.find_one({"id": contribution["contributor_id"]})
+    if contributor:
+        contribution["user_name"] = contributor.get("name", "Anonyme")
+        contribution["user_profile_picture"] = contributor.get("profile_picture_url")
+    
+    # Ajouter le nom de l'entité
+    entity_collections = {
+        "team": "teams",
+        "brand": "brands", 
+        "player": "players",
+        "competition": "competitions",
+        "master_jersey": "master_jerseys",
+        "jersey_release": "jersey_releases"
+    }
+    
+    entity_collection = entity_collections.get(contribution["entity_type"])
+    if entity_collection:
+        entity = await db[entity_collection].find_one({"id": contribution["entity_id"]})
+        if entity:
+            contribution["entity_name"] = entity.get("name", "Nom non disponible")
+    
+    # Retirer l'_id de MongoDB pour éviter les erreurs de sérialisation
+    contribution.pop('_id', None)
+    
+    return contribution
+
 @api_router.get("/contributions")
 async def get_contributions(
     entity_type: Optional[EntityType] = None,
