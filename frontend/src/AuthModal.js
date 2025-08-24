@@ -467,7 +467,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               type="email"
               name="email"
               placeholder="Email"
-              value={formData.email}
+              defaultValue={formData.email}
               onChange={(e) => {
                 console.log('Email onChange triggered:', e.target.value);
                 setFormData({ ...formData, email: e.target.value });
