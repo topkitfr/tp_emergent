@@ -5311,7 +5311,7 @@ async def get_public_user_info(user_id: str, current_user_id: Optional[str] = No
 
 @api_router.get("/users/{user_id}/collections")
 async def get_user_public_collections(user_id: str, current_user_id: str = Depends(get_current_user)):
-    """Get user's public collections (no valuations shown to others)"""
+    """Get user's public Jersey Release collections (both owned and wanted)"""
     try:
         user = await db.users.find_one({"id": user_id})
         if not user:
@@ -5321,44 +5321,66 @@ async def get_user_public_collections(user_id: str, current_user_id: str = Depen
         if user.get("profile_privacy", "public") == "private" and current_user_id != user_id:
             raise HTTPException(status_code=403, detail="This user's profile is private")
         
-        # Get collection without valuations - fixed to exclude MongoDB ObjectId
+        # Get Jersey Release collections with enriched data - fixed to use user_jersey_collections
         pipeline = [
             {"$match": {"user_id": user_id}},
             {
                 "$lookup": {
-                    "from": "jerseys",
-                    "localField": "jersey_id",
+                    "from": "jersey_releases",
+                    "localField": "jersey_release_id",
                     "foreignField": "id",
-                    "as": "jersey"
+                    "as": "jersey_release"
                 }
             },
-            {"$unwind": {"path": "$jersey", "preserveNullAndEmptyArrays": True}},
+            {"$unwind": {"path": "$jersey_release", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "jersey_release.master_jersey_id",
+                    "foreignField": "id",
+                    "as": "master_jersey"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey", "preserveNullAndEmptyArrays": True}},
             {
                 "$project": {
+                    "_id": 0,
                     "id": 1,
-                    "collection_type": 1,
-                    "added_at": 1,
                     "user_id": 1,
-                    "jersey_id": 1,
-                    "jersey": {
-                        "id": "$jersey.id",
-                        "team": "$jersey.team",
-                        "season": "$jersey.season",
-                        "league": "$jersey.league",
-                        "manufacturer": "$jersey.manufacturer",
-                        "images": "$jersey.images",
-                        "status": "$jersey.status"
+                    "jersey_release_id": 1,
+                    "collection_type": 1,
+                    "size": 1,
+                    "condition": 1,
+                    "created_at": 1,
+                    "jersey_release": {
+                        "id": "$jersey_release.id",
+                        "player_name": "$jersey_release.player_name",
+                        "player_number": "$jersey_release.player_number",
+                        "release_type": "$jersey_release.release_type",
+                        "retail_price": "$jersey_release.retail_price",
+                        "product_images": "$jersey_release.product_images",
+                        "topkit_reference": "$jersey_release.topkit_reference"
                     },
-                    "_id": 0  # Exclude MongoDB ObjectId to prevent serialization errors
+                    "master_jersey": {
+                        "id": "$master_jersey.id",
+                        "team_info": "$master_jersey.team_info",
+                        "season": "$master_jersey.season",
+                        "jersey_type": "$master_jersey.jersey_type",
+                        "brand_info": "$master_jersey.brand_info",
+                        "competition_info": "$master_jersey.competition_info",
+                        "topkit_reference": "$master_jersey.topkit_reference"
+                    }
                 }
             }
         ]
         
-        collections = await db.collections.aggregate(pipeline).to_list(1000)
+        collections = await db.user_jersey_collections.aggregate(pipeline).to_list(1000)
         
-        # Remove valuation data for privacy (already excluded in projection)
-        for collection in collections:
-            collection.pop('valuation', None)
+        # For privacy, remove purchase prices and valuations if not profile owner
+        if current_user_id != user_id:
+            for collection in collections:
+                collection.pop('purchase_price', None)
+                collection.pop('estimated_value', None)
         
         return {
             "user_id": user_id,
