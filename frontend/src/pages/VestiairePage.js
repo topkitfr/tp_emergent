@@ -123,6 +123,52 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
   };
 
+  // Collection functions
+  const addToCollection = async (release, collectionType = 'owned') => {
+    if (!user) {
+      alert('Connectez-vous pour ajouter à votre collection');
+      return;
+    }
+    
+    try {
+      console.log(`Adding jersey release ${release.id} to ${collectionType} collection for user ${user.id}`);
+      
+      const response = await fetch(`${API}/api/users/${user.id}/collections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          jersey_release_id: release.id,
+          collection_type: collectionType,
+          size: 'M', // Default, could be selection modal
+          condition: 'excellent'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert(`Maillot ajouté à votre ${collectionType === 'owned' ? 'collection' : 'wishlist'} !`);
+        if (onDataUpdate) {
+          onDataUpdate(); // Notify parent to refresh data
+        }
+      } else {
+        console.error('Collection API error:', result);
+        alert(`Erreur: ${result.detail || 'Impossible d\'ajouter à la collection'}`);
+      }
+    } catch (error) {
+      console.error('Error adding to collection:', error);
+      alert('Erreur lors de l\'ajout à la collection');
+    }
+  };
+
+  const showReleaseDetails = (release) => {
+    setSelectedRelease(release);
+    setShowDetailModal(true);
+  };
+
   const CreateReleaseModal = () => (
     showCreateModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
