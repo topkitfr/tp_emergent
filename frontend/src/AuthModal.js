@@ -500,6 +500,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               type="email"
               name="email"
               id="auth-email-field"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="Email"
               autoComplete="email"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -510,6 +512,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
               type="password"
               name="password"
               id="auth-password-field"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="Mot de passe"
               autoComplete="current-password"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
