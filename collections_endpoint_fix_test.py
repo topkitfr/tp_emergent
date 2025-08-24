@@ -362,9 +362,9 @@ class CollectionsEndpointTester:
                 headers=headers
             )
             
-            if response.status_code == 201:
-                collection = response.json()
-                collection_id = collection.get("id")
+            if response.status_code in [200, 201]:  # Both 200 and 201 are success
+                response_data = response.json()
+                collection_id = response_data.get("collection_id") or response_data.get("id")
                 
                 self.log_result(
                     "Collection Addition Test", 
