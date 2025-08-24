@@ -7,6 +7,8 @@ import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
 import CataloguePage from './pages/CataloguePage';
 import VestiairePage from './pages/VestiairePage';
 import CollectionsPage from './pages/CollectionsPage';
+import PublicCollectionsPage from './pages/PublicCollectionsPage';
+import MyCollectionPage from './pages/MyCollectionPage';
 import ContributePage from './pages/ContributePage';
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
 import CollaborativeBrandsPage from './pages/CollaborativeBrandsPage';
