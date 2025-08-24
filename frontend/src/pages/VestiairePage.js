@@ -498,7 +498,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Chargement du vestiaire...</p>
           </div>
-        ) : jerseyReleases.length > 0 ? (
+        ) : Array.isArray(jerseyReleases) && jerseyReleases.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {jerseyReleases.map(release => (
               <JerseyReleaseCard key={release.id} release={release} />
