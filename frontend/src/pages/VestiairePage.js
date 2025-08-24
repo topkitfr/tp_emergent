@@ -242,6 +242,155 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     )
   );
 
+  const JerseyDetailModal = () => (
+    showDetailModal && selectedRelease && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900">
+                Détails du maillot
+              </h3>
+              <button 
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left: Image */}
+              <div>
+                <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center relative overflow-hidden">
+                  {selectedRelease.product_images && selectedRelease.product_images.length > 0 && selectedRelease.product_images[0] ? (
+                    <img 
+                      src={selectedRelease.product_images[0]} 
+                      alt={`${selectedRelease.master_jersey_info?.team_info?.name} ${selectedRelease.master_jersey_info?.season}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex w-full h-full items-center justify-center flex-col">
+                      <span className="text-6xl mb-4">👕</span>
+                      <span className="text-gray-500 text-center px-4">Image non disponible</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => addToCollection(selectedRelease, 'owned')}
+                      className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      💎 Possédé
+                    </button>
+                    <button 
+                      onClick={() => addToCollection(selectedRelease, 'wanted')}
+                      className="bg-red-100 text-red-700 py-3 px-4 rounded-lg hover:bg-red-200 transition-colors font-medium"
+                    >
+                      ❤️ Recherché
+                    </button>
+                  </div>
+                  {user && (
+                    <button 
+                      onClick={() => alert('Fonctionnalité de contribution pour Jersey Release à venir !')}
+                      className="w-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 py-3 px-4 rounded-lg font-medium"
+                    >
+                      ✏️ Améliorer cette fiche
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Details */}
+              <div className="space-y-6">
+                {/* Team & Basic Info */}
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                    {selectedRelease.master_jersey_info?.team_info?.name || 'Équipe inconnue'}
+                  </h4>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><span className="font-medium">Saison:</span> {selectedRelease.master_jersey_info?.season}</p>
+                    <p><span className="font-medium">Type:</span> {selectedRelease.master_jersey_info?.jersey_type}</p>
+                    <p><span className="font-medium">Marque:</span> {selectedRelease.master_jersey_info?.brand_info?.name}</p>
+                    <p className="text-blue-600 font-mono text-xs">
+                      {selectedRelease.topkit_reference}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Release Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h5 className="font-semibold text-gray-900 mb-3">Informations de la version</h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Type de version:</span>
+                      <span className="font-medium">{selectedRelease.release_type || 'Non spécifié'}</span>
+                    </div>
+                    {selectedRelease.player_name && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Joueur:</span>
+                        <span className="font-medium">
+                          {selectedRelease.player_name}{selectedRelease.player_number ? ` #${selectedRelease.player_number}` : ''}
+                        </span>
+                      </div>
+                    )}
+                    {selectedRelease.size_range?.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tailles disponibles:</span>
+                        <span className="font-medium">{selectedRelease.size_range.join(', ')}</span>
+                      </div>
+                    )}
+                    {selectedRelease.sku_code && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Code SKU:</span>
+                        <span className="font-medium font-mono">{selectedRelease.sku_code}</span>
+                      </div>
+                    )}
+                    {selectedRelease.retail_price && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Prix de vente:</span>
+                        <span className="font-medium">{selectedRelease.retail_price}€</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Price Estimation */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-green-900 mb-3">💰 Estimation de valeur</h5>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600 mb-2">
+                      {selectedRelease.estimated_value}€
+                    </div>
+                    <div className="text-sm text-green-700">
+                      Fourchette: {selectedRelease.estimated_min}€ - {selectedRelease.estimated_max}€
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Info */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-blue-900 mb-3">ℹ️ Informations complémentaires</h5>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p>• Cette estimation est basée sur les données de marché disponibles</p>
+                    <p>• Les prix peuvent varier selon l'état et la rareté</p>
+                    <p>• Référence unique TopKit pour authentification</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  );
+
   const addToCollection = async (release, collectionType = 'owned') => {
     if (!user) {
       alert('Connectez-vous pour ajouter à votre collection');
