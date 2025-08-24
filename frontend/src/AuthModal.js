@@ -473,27 +473,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
             <input
               type="email"
               name="email"
+              id="auth-email-field"
               placeholder="Email"
-              defaultValue={formData.email}
-              onChange={(e) => {
-                const value = e.target.value;
-                console.log('Email onChange triggered:', value);
-                setFormData(prev => ({ ...prev, email: value }));
-              }}
-              onInput={(e) => {
-                const value = e.target.value;
-                console.log('Email onInput triggered:', value);
-                setFormData(prev => ({ ...prev, email: value }));
-              }}
-              onKeyUp={(e) => {
-                const value = e.target.value;
-                setFormData(prev => ({ ...prev, email: value }));
-              }}
-              onBlur={(e) => {
-                const value = e.target.value;
-                console.log('Email onBlur triggered:', value);
-                setFormData(prev => ({ ...prev, email: value }));
-              }}
               autoComplete="email"
               className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               disabled={loading}
