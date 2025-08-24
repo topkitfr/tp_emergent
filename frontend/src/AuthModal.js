@@ -39,10 +39,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
     // Get form values both from state and directly from form elements as fallback
-    const formElement = e.target;
-    const emailField = formElement.querySelector('input[type="email"]');
-    const passwordField = formElement.querySelector('input[type="password"]');
-    const nameField = formElement.querySelector('input[type="text"]');
+    const formElement = e.target.closest('form') || e.target;
+    const emailField = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
+    const passwordField = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
+    const nameField = formElement.querySelector('input[name="name"]') || formElement.querySelector('input[type="text"]');
     
     const actualEmail = formData.email?.trim() || emailField?.value?.trim() || '';
     const actualPassword = formData.password?.trim() || passwordField?.value?.trim() || '';
