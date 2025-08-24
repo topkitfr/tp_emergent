@@ -502,8 +502,13 @@ class VestiaireCollectionTester:
         else:
             print("❌ No jersey releases available for collection testing")
             
-        # Phase 5: Complete Workflow Test
-        print("\nPHASE 5: COMPLETE WORKFLOW TEST")
+        # Phase 5: User Experience Issues Investigation
+        print("\nPHASE 5: USER EXPERIENCE ISSUES INVESTIGATION")
+        print("-" * 40)
+        self.test_user_experience_issues()
+        
+        # Phase 6: Complete Workflow Test
+        print("\nPHASE 6: COMPLETE WORKFLOW TEST")
         print("-" * 40)
         self.test_complete_workflow()
         
