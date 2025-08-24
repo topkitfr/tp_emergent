@@ -10469,7 +10469,8 @@ async def vote_on_contribution(
             contribution_id=contribution_id,
             voter_id=current_user["id"],
             vote_type=vote_request.vote_type,
-            comment=vote_request.comment
+            comment=vote_request.comment,
+            field_votes=vote_request.field_votes or vote_request.granular_votes or {}
         )
         
         await db.contribution_votes.insert_one(vote.dict())
