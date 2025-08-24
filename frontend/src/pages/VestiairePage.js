@@ -5,6 +5,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   const [masterJerseys, setMasterJerseys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedRelease, setSelectedRelease] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     team_id: '',
