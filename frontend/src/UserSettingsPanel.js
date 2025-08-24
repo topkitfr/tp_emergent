@@ -130,9 +130,22 @@ const UserSettingsPanel = ({ user, onClose, onUpdate }) => {
       setSuccess('');
       
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/api/users/profile/settings`, profileData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      
+      // Save both profile settings and public info
+      await Promise.all([
+        axios.put(`${API}/api/users/profile/settings`, profileData, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.put(`${API}/api/users/profile/public-info`, {
+          bio: profileData.bio,
+          favorite_club: profileData.favorite_club,
+          instagram_username: profileData.instagram_username,
+          twitter_username: profileData.twitter_username,
+          website: profileData.website
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
       
       setSuccess('Paramètres sauvegardés avec succès !');
       if (onUpdate) onUpdate();
