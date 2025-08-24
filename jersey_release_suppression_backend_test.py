@@ -136,7 +136,7 @@ class JerseyReleaseSuppressionTester:
             self.log_result("Initial Admin Collections State", False, f"Exception: {str(e)}")
 
     def perform_jersey_release_cleanup(self):
-        """Perform the complete Jersey Release cleanup using admin database cleanup endpoint"""
+        """Perform the complete Jersey Release cleanup using the new admin endpoint"""
         print("🧹 PERFORMING JERSEY RELEASE CLEANUP...")
         
         headers = self.get_auth_headers()
@@ -161,85 +161,32 @@ class JerseyReleaseSuppressionTester:
         except Exception as e:
             self.log_result("Jersey Releases Count", False, f"Exception: {str(e)}")
 
-        # Use the admin database cleanup endpoint which should clean everything
+        # Use the new admin Jersey Release cleanup endpoint
         try:
-            response = requests.post(f"{BACKEND_URL}/admin/cleanup/database", headers=headers)
+            response = requests.post(f"{BACKEND_URL}/admin/cleanup/jersey-releases", headers=headers)
             if response.status_code == 200:
                 cleanup_data = response.json()
+                deleted_jersey_releases = cleanup_data.get('deleted', {}).get('jersey_releases', 0)
+                deleted_collections = cleanup_data.get('deleted', {}).get('user_jersey_collections', 0)
+                
                 self.log_result(
-                    "Database Cleanup Execution",
+                    "Jersey Release Cleanup Execution",
                     True,
-                    f"Database cleanup executed successfully - {cleanup_data.get('message', 'No message')}"
+                    f"Jersey Release cleanup executed successfully - Deleted {deleted_jersey_releases} Jersey Releases and {deleted_collections} user collections"
                 )
                 
                 # Log the cleanup details
-                if 'deleted' in cleanup_data:
-                    deleted = cleanup_data['deleted']
-                    print(f"    Deleted items: {deleted}")
+                print(f"    Initial counts: {cleanup_data.get('initial_counts', {})}")
+                print(f"    Final counts: {cleanup_data.get('final_counts', {})}")
                 
             else:
                 self.log_result(
-                    "Database Cleanup Execution",
+                    "Jersey Release Cleanup Execution",
                     False,
-                    f"Database cleanup failed - Status: {response.status_code}, Response: {response.text}"
+                    f"Jersey Release cleanup failed - Status: {response.status_code}, Response: {response.text}"
                 )
         except Exception as e:
-            self.log_result("Database Cleanup Execution", False, f"Exception: {str(e)}")
-
-        # Since the standard cleanup doesn't include Jersey Releases, let's try to create a custom cleanup
-        # by manually deleting Jersey Release collections
-        try:
-            # Try to delete all user jersey collections first
-            print("    Attempting manual Jersey Release collections cleanup...")
-            
-            # We'll need to use MongoDB operations through a custom endpoint
-            # For now, let's try to get and delete individual collections
-            
-            # Get all users to clean their collections
-            users_response = requests.get(f"{BACKEND_URL}/admin/users", headers=headers)
-            if users_response.status_code == 200:
-                users = users_response.json()
-                cleaned_collections = 0
-                
-                for user in users:
-                    user_id = user.get('id')
-                    if user_id:
-                        # Get owned collections
-                        try:
-                            owned_response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/owned", headers=headers)
-                            if owned_response.status_code == 200:
-                                owned_collections = owned_response.json()
-                                for collection in owned_collections:
-                                    collection_id = collection.get('id')
-                                    if collection_id:
-                                        delete_response = requests.delete(f"{BACKEND_URL}/users/{user_id}/collections/{collection_id}", headers=headers)
-                                        if delete_response.status_code in [200, 204]:
-                                            cleaned_collections += 1
-                        except:
-                            pass
-                        
-                        # Get wanted collections
-                        try:
-                            wanted_response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/wanted", headers=headers)
-                            if wanted_response.status_code == 200:
-                                wanted_collections = wanted_response.json()
-                                for collection in wanted_collections:
-                                    collection_id = collection.get('id')
-                                    if collection_id:
-                                        delete_response = requests.delete(f"{BACKEND_URL}/users/{user_id}/collections/{collection_id}", headers=headers)
-                                        if delete_response.status_code in [200, 204]:
-                                            cleaned_collections += 1
-                        except:
-                            pass
-                
-                self.log_result(
-                    "Manual Collections Cleanup",
-                    cleaned_collections > 0,
-                    f"Manually cleaned {cleaned_collections} Jersey Release collections"
-                )
-            
-        except Exception as e:
-            self.log_result("Manual Collections Cleanup", False, f"Exception: {str(e)}")
+            self.log_result("Jersey Release Cleanup Execution", False, f"Exception: {str(e)}")
 
     def verify_cleanup_success(self):
         """Verify that the cleanup was successful"""
