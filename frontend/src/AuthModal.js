@@ -36,28 +36,35 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   const handleAuthFormSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Get form values directly from DOM elements as primary source
+    // Multiple methods to get form values for maximum compatibility
     const formElement = e.target.closest('form') || e.target;
     const emailField = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
     const passwordField = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
     const nameField = formElement.querySelector('input[name="name"]') || formElement.querySelector('input[type="text"]');
     
-    // Use DOM values as primary, state as fallback
-    const actualEmail = emailField?.value?.trim() || formData.email?.trim() || '';
-    const actualPassword = passwordField?.value?.trim() || formData.password?.trim() || '';
-    const actualName = nameField?.value?.trim() || formData.name?.trim() || '';
+    // Try multiple sources for values - DOM first, then state
+    const domEmail = emailField?.value?.trim() || '';
+    const domPassword = passwordField?.value?.trim() || '';
+    const domName = nameField?.value?.trim() || '';
     
-    console.log('📧 Form data (DOM-first approach):', { 
+    const actualEmail = domEmail || formData.email?.trim() || '';
+    const actualPassword = domPassword || formData.password?.trim() || '';
+    const actualName = domName || formData.name?.trim() || '';
+    
+    console.log('📧 Enhanced form data capture:', { 
       email: actualEmail, 
       password: actualPassword ? '***HIDDEN***' : 'EMPTY', 
       name: actualName,
       isLogin: isLogin,
-      domEmail: emailField?.value || 'DOM_EMPTY',
-      domPassword: passwordField?.value ? '***HIDDEN***' : 'DOM_EMPTY',
-      stateEmail: formData.email || 'STATE_EMPTY',
-      statePassword: formData.password ? '***HIDDEN***' : 'STATE_EMPTY'
+      sources: {
+        domEmail: domEmail || 'DOM_EMPTY',
+        domPassword: domPassword ? '***HIDDEN***' : 'DOM_EMPTY',
+        stateEmail: formData.email || 'STATE_EMPTY',
+        statePassword: formData.password ? '***HIDDEN***' : 'STATE_EMPTY'
+      }
     });
     
     // Validation simplifiée
