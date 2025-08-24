@@ -122,7 +122,7 @@ const MyCollectionPage = ({ user, API }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -152,7 +152,69 @@ const MyCollectionPage = ({ user, API }) => {
             <div className="text-3xl">📱</div>
           </div>
         </div>
+
+        {/* Estimation Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm text-gray-600">Valeur estimée</div>
+            <div className="text-3xl">💰</div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-500">Basse:</span>
+              <span className="font-medium">€{collectionValue.low}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Moyenne:</span>
+              <span className="font-bold text-green-600">€{collectionValue.mid}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-gray-500">Haute:</span>
+              <span className="font-medium">€{collectionValue.high}</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Collection Value Details */}
+      {ownedCount > 0 && (
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">📊</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Estimation de votre collection</h3>
+                <p className="text-sm text-gray-600">Basée sur {collectionValue.count} maillot{collectionValue.count > 1 ? 's' : ''} possédé{collectionValue.count > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-white rounded-lg border">
+              <div className="text-xl font-bold text-red-600">€{collectionValue.low}</div>
+              <div className="text-xs text-gray-600">Estimation basse</div>
+              <div className="text-xs text-gray-500 mt-1">État moyen, marché conservateur</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white rounded-lg border-2 border-green-500">
+              <div className="text-2xl font-bold text-green-600">€{collectionValue.mid}</div>
+              <div className="text-sm text-gray-700 font-medium">Estimation moyenne</div>
+              <div className="text-xs text-gray-500 mt-1">Valeur de marché actuelle</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white rounded-lg border">
+              <div className="text-xl font-bold text-blue-600">€{collectionValue.high}</div>
+              <div className="text-xs text-gray-600">Estimation haute</div>
+              <div className="text-xs text-gray-500 mt-1">Bon état, marché optimiste</div>
+            </div>
+          </div>
+          
+          <div className="mt-4 text-xs text-gray-500 text-center">
+            💡 Les estimations sont calculées selon l'état, l'âge et la rareté présumée des maillots. 
+            Elles sont indicatives et peuvent varier selon le marché actuel.
+          </div>
+        </div>
+      )}
 
       {/* Tabs and Search */}
       <div className="bg-white rounded-lg border border-gray-200 mb-8">
