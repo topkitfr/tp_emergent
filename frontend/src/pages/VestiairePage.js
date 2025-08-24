@@ -279,6 +279,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
   };
 
+  const showReleaseDetails = (release) => {
+    setSelectedRelease(release);
+    setShowDetailModal(true);
+  };
+
   const JerseyReleaseCard = ({ release }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
       
