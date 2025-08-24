@@ -7045,6 +7045,52 @@ async def cleanup_database(
         }
     }
 
+@api_router.post("/admin/cleanup/jersey-releases")
+async def cleanup_jersey_releases(
+    admin_user: dict = Depends(get_current_user_admin)
+):
+    """Clean all Jersey Releases and related collections (Admin only)"""
+    
+    # Count before deletion
+    initial_counts = {
+        "jersey_releases": await db.jersey_releases.count_documents({}),
+        "user_jersey_collections": await db.user_jersey_collections.count_documents({})
+    }
+    
+    # Delete all Jersey Releases
+    await db.jersey_releases.delete_many({})
+    
+    # Delete all user Jersey Release collections
+    await db.user_jersey_collections.delete_many({})
+    
+    # Count after deletion
+    final_counts = {
+        "jersey_releases": await db.jersey_releases.count_documents({}),
+        "user_jersey_collections": await db.user_jersey_collections.count_documents({})
+    }
+    
+    # Log cleanup activity
+    await db.user_activities.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": admin_user['id'],
+        "action": "jersey_releases_cleanup",
+        "details": {
+            "initial_counts": initial_counts,
+            "final_counts": final_counts
+        },
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {
+        "message": "Jersey Releases et collections supprimés avec succès",
+        "initial_counts": initial_counts,
+        "final_counts": final_counts,
+        "deleted": {
+            "jersey_releases": initial_counts["jersey_releases"],
+            "user_jersey_collections": initial_counts["user_jersey_collections"]
+        }
+    }
+
 @api_router.get("/users/{user_id}/profile")
 async def get_user_profile(
     user_id: str,
