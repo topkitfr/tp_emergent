@@ -93,44 +93,27 @@ const CollaborativeHeader = ({
             {/* User Menu or Login */}
             {user ? (
               <div className="relative">
-                {/* Profile Picture - Clickable */}
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setShowProfilePictureModal(true)}
-                    className="w-8 h-8 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all"
-                    title="Changer la photo de profil"
+                {/* Profile Picture - Display only */}
+                <div className="w-8 h-8 rounded-full overflow-hidden">
+                  {user.profile_picture_url ? (
+                    <img 
+                      src={`${API}/${user.profile_picture_url}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-8 h-8 bg-black rounded-full flex items-center justify-center" 
+                    style={{display: user.profile_picture_url ? 'none' : 'flex'}}
                   >
-                    {user.profile_picture_url ? (
-                      <img 
-                        src={`${API}/${user.profile_picture_url}`}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div 
-                      className="w-8 h-8 bg-black rounded-full flex items-center justify-center" 
-                      style={{display: user.profile_picture_url ? 'none' : 'flex'}}
-                    >
-                      <span className="text-sm font-medium text-white">
-                        {user.name?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                  </button>
-                  
-                  {/* Dropdown Button */}
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-1 text-gray-700 hover:text-black transition-colors"
-                  >
-                    <span className="hidden xl:block font-medium">{user.name}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                    <span className="text-sm font-medium text-white">
+                      {user.name?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* User Dropdown - WhenToCop Style */}
