@@ -203,9 +203,9 @@ const CollaborativeHeader = ({
           </div>
         </div>
 
-        {/* Mobile Menu - WhenToCop Style */}
-        {showMobileMenu && (
-          <div className="lg:hidden bg-white border-t border-gray-100 py-4">
+          {/* Mobile Menu - WhenToCop Style */}
+          {showMobileMenu && (
+            <div className="lg:hidden bg-white border-t border-gray-100 py-4">
             {/* Mobile Search Bar */}
             <div className="px-4 pb-4 md:hidden">
               <div className="relative">
