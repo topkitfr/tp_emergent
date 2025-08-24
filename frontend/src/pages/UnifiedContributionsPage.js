@@ -123,13 +123,30 @@ const UnifiedContributionsPage = ({ user, API }) => {
   };
 
   const filteredData = activeTab === 'all' 
-    ? contributions.filter(contrib => 
-        contrib.entity_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contrib.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : myContributions.filter(contrib => 
-        contrib.entity_name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    ? contributions.filter(contrib => {
+        const searchLower = searchQuery.toLowerCase();
+        const entityName = contrib.entity_name || contrib.title || '';
+        const userName = contrib.user_name || contrib.author_name || '';
+        
+        return entityName.toLowerCase().includes(searchLower) ||
+               userName.toLowerCase().includes(searchLower);
+      })
+    : myContributions.filter(contrib => {
+        const searchLower = searchQuery.toLowerCase();
+        const entityName = contrib.entity_name || contrib.title || '';
+        
+        return entityName.toLowerCase().includes(searchLower);
+      });
+
+  // Debug logging
+  console.log('🔍 UnifiedContributionsPage Debug:', {
+    activeTab,
+    contributionsCount: contributions.length,
+    myContributionsCount: myContributions.length,
+    filteredDataCount: filteredData.length,
+    searchQuery,
+    sampleContribution: contributions[0]
+  });
 
   if (!user) {
     return (
