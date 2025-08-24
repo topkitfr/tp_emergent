@@ -23,8 +23,11 @@ const CollaborativeProfilePage = ({ user, API }) => {
 
     setLoading(true);
     try {
-      const [profileRes, statsRes] = await Promise.all([
+      const [profileRes, publicInfoRes, statsRes] = await Promise.all([
         fetch(`${API}/api/users/${user.id}/profile`, {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        }),
+        fetch(`${API}/api/users/profile/public-info`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         }),
         fetch(`${API}/api/users/${user.id}/stats`, {
@@ -35,6 +38,11 @@ const CollaborativeProfilePage = ({ user, API }) => {
       if (profileRes.ok) {
         const profileData = await profileRes.json();
         setUserProfile(profileData);
+      }
+
+      if (publicInfoRes.ok) {
+        const publicData = await publicInfoRes.json();
+        setPublicInfo(publicData);
       }
 
       if (statsRes.ok) {
