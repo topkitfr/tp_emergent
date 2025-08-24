@@ -173,7 +173,7 @@ class OrphanedCollectionsCleanupTester:
                 
                 # Verify the Jersey Release doesn't exist before deleting
                 if not self.verify_jersey_release_exists(jersey_release_id):
-                    headers = {"Authorization": f"Bearer {self.admin_token}"}
+                    headers = {"Authorization": f"Bearer {self.test_user_token}"}
                     response = self.session.delete(f"{BACKEND_URL}/users/{self.test_user['id']}/collections/{collection_id}", headers=headers)
                     
                     if response.status_code in [200, 204, 404]:  # 404 means already deleted
