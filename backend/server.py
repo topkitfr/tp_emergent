@@ -2553,6 +2553,144 @@ async def get_profile_picture(user_id: str):
     except Exception as e:
         logger.error(f"Get profile picture error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération de l'image")
+
+@api_router.put("/users/profile/public-info")
+async def update_public_profile_info(
+    profile_data: ProfileSettings,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's public profile information"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate bio length
+        if profile_data.bio and len(profile_data.bio) > 200:
+            raise HTTPException(status_code=400, detail="La bio ne peut pas dépasser 200 caractères")
+        
+        # Validate usernames (no @ symbol, alphanumeric + underscores)
+        username_pattern = r'^[a-zA-Z0-9._]+$'
+        if profile_data.instagram_username and not re.match(username_pattern, profile_data.instagram_username):
+            raise HTTPException(status_code=400, detail="Nom d'utilisateur Instagram invalide")
+        
+        if profile_data.twitter_username and not re.match(username_pattern, profile_data.twitter_username):
+            raise HTTPException(status_code=400, detail="Nom d'utilisateur X/Twitter invalide")
+        
+        # Validate website URL
+        if profile_data.website:
+            if not profile_data.website.startswith(('http://', 'https://')):
+                profile_data.website = 'https://' + profile_data.website
+            
+            # Basic URL validation
+            url_pattern = r'^https?://[^\s/$.?#].[^\s]*$'
+            if not re.match(url_pattern, profile_data.website):
+                raise HTTPException(status_code=400, detail="URL du site web invalide")
+        
+        # Validate favorite club exists
+        if profile_data.favorite_club:
+            team = await db.teams.find_one({"id": profile_data.favorite_club})
+            if not team:
+                raise HTTPException(status_code=400, detail="Club sélectionné non trouvé")
+        
+        # Prepare update data
+        update_data = {}
+        if profile_data.bio is not None:
+            update_data['bio'] = profile_data.bio.strip() if profile_data.bio else None
+        if profile_data.favorite_club is not None:
+            update_data['favorite_club'] = profile_data.favorite_club
+        if profile_data.instagram_username is not None:
+            update_data['instagram_username'] = profile_data.instagram_username.lower() if profile_data.instagram_username else None
+        if profile_data.twitter_username is not None:
+            update_data['twitter_username'] = profile_data.twitter_username.lower() if profile_data.twitter_username else None
+        if profile_data.website is not None:
+            update_data['website'] = profile_data.website if profile_data.website else None
+        
+        # Update user document
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_data}
+        )
+        
+        return {"message": "Informations publiques mises à jour avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update public profile error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du profil")
+
+@api_router.get("/users/profile/public-info")
+async def get_public_profile_info(current_user: dict = Depends(get_current_user)):
+    """Get user's public profile information for editing"""
+    try:
+        user_id = current_user['id']
+        
+        # Get user data
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Get favorite club name if set
+        favorite_club_name = None
+        if user.get('favorite_club'):
+            team = await db.teams.find_one({"id": user['favorite_club']})
+            if team:
+                favorite_club_name = team.get('name', team.get('short_name', ''))
+        
+        return {
+            "bio": user.get('bio'),
+            "favorite_club": user.get('favorite_club'),
+            "favorite_club_name": favorite_club_name,
+            "instagram_username": user.get('instagram_username'),
+            "twitter_username": user.get('twitter_username'),
+            "website": user.get('website'),
+            "profile_picture_url": user.get('profile_picture_url')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get public profile error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération du profil")
+
+@api_router.get("/users/{user_id}/public-profile")
+async def get_user_public_profile(user_id: str):
+    """Get user's public profile information (visible to everyone)"""
+    try:
+        # Get user data
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+        
+        # Check if profile is public (for future privacy settings)
+        if user.get('profile_privacy', 'public') == 'private':
+            raise HTTPException(status_code=403, detail="Profil privé")
+        
+        # Get favorite club name if set
+        favorite_club_name = None
+        if user.get('favorite_club'):
+            team = await db.teams.find_one({"id": user['favorite_club']})
+            if team:
+                favorite_club_name = team.get('name', team.get('short_name', ''))
+        
+        return PublicProfile(
+            id=user['id'],
+            name=user['name'],
+            bio=user.get('bio'),
+            favorite_club=favorite_club_name,
+            instagram_username=user.get('instagram_username'),
+            twitter_username=user.get('twitter_username'),
+            website=user.get('website'),
+            profile_picture_url=user.get('profile_picture_url'),
+            role=user.get('role', 'user'),
+            created_at=user['created_at']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get user public profile error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération du profil public")
+
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: PasswordResetRequest):
     """Request password reset email"""
