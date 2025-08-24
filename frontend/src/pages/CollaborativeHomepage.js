@@ -17,9 +17,14 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
   return (
     <div className="min-h-screen bg-white">
       
-      {/* Hero Section - TopKit Narrative */}
-      <div className="bg-white py-16 md:py-24">
-        <div className="max-w-6xl mx-auto px-4 text-center">
+      {/* Hero Section - TopKit Narrative with Background Banner */}
+      <div 
+        className="bg-white py-16 md:py-24 relative bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('https://customer-assets.emergentagent.com/job_footwear-collab/artifacts/3cir86pr_EmzagksXIAg35Ia.jpg')`
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Estimez votre collection<br />
             <span className="text-gray-600">de maillots de football</span>
@@ -30,19 +35,13 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
             la base de données collaborative la plus complète du monde sur le football
           </p>
           
-          {/* CTA Buttons - TopKit Focus */}
+          {/* CTA Buttons - TopKit Focus - Removed Documenter button */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={() => onViewChange('catalogue')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-full font-semibold transition-all text-lg"
             >
               Explorer la base
-            </button>
-            <button
-              onClick={() => onViewChange('catalogue')}
-              className="border border-gray-300 hover:border-gray-900 text-gray-900 hover:bg-gray-50 px-8 py-3 rounded-full font-semibold transition-all text-lg"
-            >
-              Documenter
             </button>
           </div>
         </div>
