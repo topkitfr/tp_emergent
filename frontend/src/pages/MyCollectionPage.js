@@ -306,10 +306,10 @@ const MyCollectionPage = ({ user, API }) => {
             >
               {/* Jersey Image */}
               <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                {item.jersey_image_url ? (
+                {item.jersey_release?.product_images?.[0] ? (
                   <img 
-                    src={`${API}/${item.jersey_image_url}`}
-                    alt={item.jersey_name}
+                    src={item.jersey_release.product_images[0]}
+                    alt={item.jersey_release?.player_name || 'Maillot'}
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
@@ -320,8 +320,16 @@ const MyCollectionPage = ({ user, API }) => {
               {/* Jersey Info */}
               <div className="space-y-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{item.jersey_name || 'Maillot'}</h3>
-                  <p className="text-sm text-gray-600">{item.team_name}</p>
+                  <h3 className="font-semibold text-gray-900">
+                    {item.jersey_release?.player_name || 'Maillot'} 
+                    {item.jersey_release?.player_number && ` #${item.jersey_release.player_number}`}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {item.master_jersey?.team_info?.name || 'Équipe inconnue'} - {item.master_jersey?.season || 'Saison inconnue'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {item.jersey_release?.topkit_reference}
+                  </p>
                 </div>
 
                 {/* Details */}
