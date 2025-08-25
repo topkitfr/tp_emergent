@@ -1,18 +1,34 @@
 <analysis>
-The AI engineer's trajectory focused on two main objectives: enhancing the contribution viewing system and resolving critical bugs in core application functionality. Initially, the user requested detailed contribution views, including before/after comparisons and field-level voting. The AI engineer designed and implemented both a  and a , along with backend API modifications for granular voting. Following this, a critical bug emerged where users couldn't add 'jersey releases' to collections or wishlists due to incorrect API endpoints and JavaScript hoisting issues in . A regression in , where authentication failed due to missing  and  props, was also introduced and subsequently fixed. The trajectory concludes with the successful resolution of both the collection functionality and the authentication regression, deeming the features production-ready.
+The trajectory details a series of complex bug fixes and UI enhancements for the TopKit application. Initially, the AI engineer addressed detailed contribution views and field-level voting. The core of the recent work revolved around fixing the non-functional jersey release collection and wishlist buttons, which required extensive debugging across frontend and backend. This involved correcting API endpoints, fixing JavaScript hoisting issues, and resolving MongoDB aggregation pipeline problems for collection data.
+
+A critical regression in  was also identified and fixed. Subsequent user reports led to further frontend debugging in , addressing incorrect data filtering, display logic, and a significant React state management bug ( fix). Finally, a broad terminology update from Compétitions to Ligues was executed across multiple frontend components, concluding the recent development cycle.
 </analysis>
 
 <product_requirements>
-TopKit is a collaborative football jersey database aiming for a robust, user-friendly platform. Initial requirements included image verification, authentication fixes, unified card structures, contribution voting, and an admin interface. Prior work added user profile customization, collection management with Discogs-like estimation, public collections listing other users, and a unified contributions page with voting and status badges, accessible only to logged-in users. This trajectory specifically addressed the user's explicit request for **detailed views of pending contributions**, requiring before/after comparisons, contributor information, field-by-field voting, and image galleries. Subsequently, a critical bug was reported: **non-functional buttons for adding 'jersey releases' to collections/wishlists** (Possédé, Recherché, Voir détails), which needed urgent resolution as it impacted core collaborative functionality.
+TopKit is a collaborative platform for football jersey enthusiasts, aiming to provide a robust database and community features.
+**Problem Statement:** Users need to efficiently manage their football jersey collections, view detailed contributions, and interact with a reliable, visually appealing interface. The platform's core value lies in its collaborative nature, allowing users to contribute jersey information and vote on proposed changes.
+
+**Implemented Features (prior to this trajectory):**
+*   Image verification, authentication, unified card structures.
+*   Contribution voting, admin interface.
+*   User profile customization, collection management with Discogs-like estimation.
+*   Public collections and a unified contributions page with voting (for logged-in users).
+
+**Specific Requests Addressed in this Trajectory:**
+1.  **Detailed Views of Pending Contributions:** Requires before/after comparisons, contributor info, field-by-field voting, and image galleries. (Largely implemented prior to the critical bug reports, but context is set).
+2.  **Fix Non-Functional Collection/Wishlist Buttons:** Resolve the issue preventing users from adding 'jersey releases' to their Possédé (owned) or Recherché (wanted) lists, including the Voir détails button. This was a critical bug impacting core functionality on .
+3.  **UI/UX Enhancements:** Add an image behind the title Estimez votre collection de maillots de football (banner effect) and remove the redundant documenter button.
+4.  **Terminology Change:** Modify compétition to Ligues across the application for better user experience and accuracy.
 </product_requirements>
 
 <key_technical_concepts>
--   **React/FastAPI/MongoDB Stack**: Core full-stack technologies for development.
--   **JWT Authentication**: Secure user session and access control.
--   **React Router DOM**: Frontend routing for navigation.
--   **Conditional Rendering/UI State Management**: Dynamic display and interaction logic.
--   **JavaScript Hoisting**: A critical concept whose misunderstanding caused a bug.
--   **Environment Variables**: Secure and dynamic configuration.
+-   **React/FastAPI/MongoDB Stack**: Core full-stack technologies.
+-   **JWT Authentication**: Secure user sessions.
+-   **React Router DOM**: Frontend navigation.
+-   **State Management/Hooks (useState, useEffect, useMemo)**: Frontend data flow and rendering.
+-   **MongoDB Aggregation Pipelines**: Backend data querying and transformation.
+-   **JavaScript Hoisting**: A bug cause.
+-   **Environment Variables**: Secure configuration.
 </key_technical_concepts>
 
 <code_architecture>
@@ -20,32 +36,67 @@ TopKit is a collaborative football jersey database aiming for a robust, user-fri
 
 -   ****:
     -   **Summary**: Main FastAPI application handling all API routes.
-    -   **Changes Made**: The  endpoint was enhanced to accept  and  for granular, field-level voting. A new  endpoint was added to provide comprehensive contribution details.
+    -   **Changes Made**:
+        -    endpoint enhanced (prior).
+        -    endpoint added (prior).
+        -   Crucially, the MongoDB aggregation pipelines for  and its sub-endpoints (, ) were modified multiple times to correctly populate  and  data, resolving empty object issues.
+        -   Added/modified logic for deleting Jersey Releases and associated collections.
 -   ****:
-    -   **Summary**: Defines MongoDB document structures for collaborative entities.
-    -   **Changes Made**: The  model was updated to include  and  to support field-level voting. The  model was also updated to store .
+    -   **Summary**: Defines MongoDB document structures.
+    -   **Changes Made**:  and  updated for field-level voting (prior).
+-   ****:
+    -   **Summary**: Main application component, handles routing and global state.
+    -   **Changes Made**:
+        -   Added route  (prior).
+        -   **Critical fix**: Modified to correctly import and render  instead of  for the user's collection route, ensuring the right component with the latest fixes is used.
+        -   Added .
 -   ****:
     -   **Summary**: User authentication and registration modal.
-    -   **Changes Made**: Fixed a regression by re-adding  and  props to the email and password input fields, making them controlled components to correctly capture user input for login/registration.
+    -   **Changes Made**: Fixed a regression by re-adding  and  props to input fields (prior, but implicitly re-validated during current work).
 -   ****:
-    -   **Summary**: Main application component, handling routing and global state.
-    -   **Changes Made**: A new route  was added to integrate the , allowing users to navigate to detailed contribution views.
+    -   **Summary**: Displays detailed contribution info in a modal.
+    -   **Changes Made**: Enhanced to display rich contribution details (prior).
 -   ****:
-    -   **Summary**: A component for displaying detailed contribution information in a modal.
-    -   **Changes Made**: This existing component was enhanced to display rich contribution details, including before/after comparisons and potentially field-specific voting. It is integrated into .
+    -   **Summary**: Centralized page for managing contributions.
+    -   **Changes Made**: Integrated  and  (prior).
 -   ****:
-    -   **Summary**: Centralized page for managing user and global contributions.
-    -   **Changes Made**: Significant modifications were made to integrate the  and . View Details buttons were added to contribution cards, triggering either the modal for quick view or navigation to the dedicated detail page. State management () and routing (, ) were updated to support this new functionality.
+    -   **Summary**: New page for in-depth contribution review.
+    -   **Changes Made**: File created with detailed view layout (prior).
 -   ****:
-    -   **Summary**: A newly created page dedicated to providing an in-depth, comprehensive review of a single contribution.
-    -   **Changes Made**: This file was created to house the detailed view, offering an extensive layout for before/after comparisons, contributor information, image galleries, and field-by-field voting.
--   ****:
-    -   **Summary**: Displays user's collected jersey releases and related actions.
+    -   **Summary**: Displays user's collected jersey releases.
     -   **Changes Made**:
-        1.  Corrected the API endpoint for  from  to the correct  to fix collection/wishlist functionality.
-        2.  Resolved a JavaScript hoisting issue by moving the  and  functions to be defined before the  component that calls them.
-        3.  Added state management for  and .
-        4.  Implemented a  (defined within the page) to be shown when the Voir détails button is clicked.
+        -   **Critical fix**: Corrected API endpoint for  from  to .
+        -   **Critical fix**: Resolved JavaScript hoisting by defining  and  before  component.
+        -   Added state for  and , and implemented  (prior, but re-investigated during current work).
+-   ****:
+    -   **Summary**: Displays the user's personal collection of jerseys.
+    -   **Changes Made**:
+        -   Modified to correctly load and display user collections by ensuring the correct API endpoints are called and data is processed.
+        -   **Critical fix**: Updated filtering logic within  to correctly access nested  and  instead of flat  and .
+        -   Corrected value calculation logic to use .
+        -   Adjusted rendering logic to display collection items using the correct nested data paths (e.g., ).
+        -   **Critical fix**: Implemented  for  and  to ensure they reactively update with state changes, fixing a React state synchronization bug.
+        -   Added  for debugging purposes.
+-   ****:
+    -   **Summary**: Main landing page with collaborative features.
+    -   **Changes Made**:
+        -   Added banner image functionality as per user request (URL: ).
+        -   Removed the redundant documenter button.
+-   ****:
+    -   **Summary**: Page for browsing the jersey catalogue.
+    -   **Changes Made**: Replaced Compétition with Ligue in navigation and descriptions.
+-   ****:
+    -   **Summary**: Page for exploring different categories.
+    -   **Changes Made**: Replaced Compétition with Ligue in categories and search results.
+-   ****:
+    -   **Summary**: Page specific to competitions.
+    -   **Changes Made**: Replaced Compétition with Ligue in title, descriptions, and forms.
+-   ****:
+    -   **Summary**: Page for contributing new jersey information.
+    -   **Changes Made**: Replaced Compétition with Ligue in the contribution section.
+-   ****:
+    -   **Summary**: Page displaying details of a specific competition.
+    -   **Changes Made**: Replaced Compétition with Ligue in error messages and navigation.
 </code_architecture>
 
 <pending_tasks>
@@ -54,13 +105,17 @@ TopKit is a collaborative football jersey database aiming for a robust, user-fri
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer successfully resolved two critical issues:
-1.  **Jersey Collection Functionality Fix**: The Possédé and Recherché buttons on  were non-functional, preventing users from adding jersey releases to their collections or wishlists. This was due to an incorrect API endpoint being called ( instead of ) and a JavaScript hoisting problem where  and  functions were defined after the  component, making them inaccessible. The API URL was corrected, and the function definitions were moved to the correct scope. Additionally, the Voir détails button now correctly opens a .
-2.  **Authentication Regression Fix**: During the work, a regression in  caused the authentication system to break, preventing user logins. The root cause was identified as missing  and  props for the email and password input fields, making them uncontrolled components. These props were re-added, restoring proper form input capture and successful authentication.
+Immediately prior to this summary, the AI engineer was focused on resolving a persistent bug where newly added jersey releases were not appearing in the user's Ma Collection page, particularly on mobile. This involved a multi-faceted debugging process that confirmed backend data was correctly saved but failed to display on the frontend.
 
-Both issues were confirmed fixed through comprehensive frontend and backend testing, bringing these core features back to a production-ready state.
+The key issues and fixes implemented were:
+1.  **Wrong Component Used**: It was discovered that  was erroneously rendering  instead of  for the user's collection route. This was critical because all previous frontend display fixes were implemented in  but were not being utilized. The  file was modified to correctly import and use .
+2.  **React State Synchronization Bug**: Even after using the correct component, the collection items still didn't display. The root cause was identified as a React state management issue in , where  and  (which controlled conditional rendering) were not reactively updating when the  data changed. The solution involved refactoring these calculations to use the  hook, ensuring they re-evaluate only when  changes, thereby correctly reflecting the fetched data in the UI.
+
+Following these critical bug fixes, the engineer also completed a general terminology update across the application, changing all instances of compétition to Ligues in various frontend components (, , , , ). This was a distinct UI/UX enhancement.
+
+The latest interaction confirms that the terminology changes were applied successfully. The previous issue with Ma Collection not displaying items was believed to be fixed with the  update, and the user was asked to re-test.
 </current_work>
 
 <optional_next_step>
-The last explicit user request (bug report) has been concluded.
+The next step is to get user confirmation on the  fix after the  implementation.
 </optional_next_step>
