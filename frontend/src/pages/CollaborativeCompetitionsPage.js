@@ -565,7 +565,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Compétitions de football</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ligues de football</h1>
           <p className="text-gray-600">
             Base de données collaborative des championnats, coupes et compétitions
           </p>
