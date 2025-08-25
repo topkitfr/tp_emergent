@@ -676,7 +676,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
         
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="text-2xl font-bold text-yellow-600">{competitionTypes.length}</div>
-          <div className="text-sm text-yellow-700">Types de compétitions</div>
+          <div className="text-sm text-yellow-700">Types de ligues</div>
         </div>
       </div>
 
