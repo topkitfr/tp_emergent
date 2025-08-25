@@ -66,15 +66,17 @@ const MyCollectionPage = ({ user, API }) => {
     let totalHigh = 0;
     
     ownedItems.forEach(item => {
-      // Basic estimation logic (could be enhanced with real market data)
-      const baseValue = item.purchase_price || 50; // Default base value
+      // Use jersey release retail price or fallback to purchase price
+      const jerseyRelease = item.jersey_release || {};
+      const baseValue = item.purchase_price || jerseyRelease.retail_price || 50; // Use retail price from jersey release
       const condition = item.condition || 'good';
       
       // Condition multiplier
       const conditionMultiplier = {
-        'new': 1.2,
+        'mint': 1.2,
         'near_mint': 1.1,
-        'very_good': 1.0,
+        'excellent': 1.0,
+        'very_good': 0.9,
         'good': 0.8,
         'worn': 0.6
       };
