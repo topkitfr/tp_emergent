@@ -71,8 +71,7 @@ const MyCollectionPage = ({ user, API }) => {
     return matchesTab;
   });
 
-  // Calculate collection value estimates
-  const calculateCollectionValue = () => {
+  const collectionValue = useMemo(() => {
     const ownedItems = collections.filter(c => c.collection_type === 'owned');
     
     let totalLow = 0;
@@ -110,11 +109,10 @@ const MyCollectionPage = ({ user, API }) => {
       high: Math.round(totalHigh),
       count: ownedItems.length
     };
-  };
+  }, [collections]);
 
-  const collectionValue = calculateCollectionValue();
-  const ownedCount = collections.filter(c => c.collection_type === 'owned').length;
-  const wantedCount = collections.filter(c => c.collection_type === 'wanted').length;
+  const ownedCount = useMemo(() => collections.filter(c => c.collection_type === 'owned').length, [collections]);
+  const wantedCount = useMemo(() => collections.filter(c => c.collection_type === 'wanted').length, [collections]);
 
   if (!user) {
     return (
