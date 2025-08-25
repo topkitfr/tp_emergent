@@ -46,7 +46,7 @@ const ContributePage = ({
     },
     {
       id: 'competition',
-      title: 'Compétitions',
+      title: 'Ligues',
       icon: '🏆',
       description: 'Référencer un championnat ou une coupe',
       color: 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
