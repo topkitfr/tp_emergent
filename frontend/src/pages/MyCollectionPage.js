@@ -359,10 +359,10 @@ const MyCollectionPage = ({ user, API }) => {
                     </div>
                   )}
 
-                  {item.purchase_price && activeTab === 'owned' && (
+                  {(item.purchase_price || item.jersey_release?.retail_price) && activeTab === 'owned' && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Prix d'achat:</span>
-                      <span className="font-medium text-green-600">€{item.purchase_price}</span>
+                      <span className="font-medium text-green-600">€{item.purchase_price || item.jersey_release?.retail_price}</span>
                     </div>
                   )}
 
@@ -371,17 +371,25 @@ const MyCollectionPage = ({ user, API }) => {
                     <div className="bg-gray-50 rounded-lg p-3">
                       <div className="text-xs text-gray-600 mb-1">Estimation actuelle:</div>
                       <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-500">
-                          €{Math.round((item.purchase_price || 50) * 
-                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0) * 0.8)}
-                          {' - '}
-                          €{Math.round((item.purchase_price || 50) * 
-                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0) * 1.2)}
-                        </div>
-                        <div className="text-sm font-bold text-blue-600">
-                          €{Math.round((item.purchase_price || 50) * 
-                            ({new: 1.2, near_mint: 1.1, very_good: 1.0, good: 0.8, worn: 0.6}[item.condition] || 1.0))}
-                        </div>
+                        {(() => {
+                          const baseValue = item.purchase_price || item.jersey_release?.retail_price || 50;
+                          const conditionMultiplier = {
+                            'mint': 1.2, 'near_mint': 1.1, 'excellent': 1.0, 'very_good': 0.9, 'good': 0.8, 'worn': 0.6
+                          };
+                          const multiplier = conditionMultiplier[item.condition] || 1.0;
+                          const adjustedValue = baseValue * multiplier;
+                          
+                          return (
+                            <>
+                              <div className="text-xs text-gray-500">
+                                €{Math.round(adjustedValue * 0.8)} - €{Math.round(adjustedValue * 1.2)}
+                              </div>
+                              <div className="text-sm font-bold text-blue-600">
+                                €{Math.round(adjustedValue)}
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
