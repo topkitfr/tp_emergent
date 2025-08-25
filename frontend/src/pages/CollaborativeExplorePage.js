@@ -68,7 +68,7 @@ const CollaborativeExplorePage = ({
     { id: 'teams', label: 'Équipes', icon: '⚽' },
     { id: 'brands', label: 'Marques', icon: '👕' },
     { id: 'players', label: 'Joueurs', icon: '👤' },
-    { id: 'competitions', label: 'Compétitions', icon: '🏆' },
+    { id: 'competitions', label: 'Ligues', icon: '🏆' },
     { id: 'master_jerseys', label: 'Maillots', icon: '📋' }
   ];
 
