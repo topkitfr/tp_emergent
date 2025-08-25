@@ -2852,7 +2852,7 @@ const AppContent = () => {
         />
       )}
       {currentView === 'collection' && (
-        <CollectionPage API={API} />
+        <MyCollectionPage user={user} API={API} />
       )}
       {currentView === 'admin' && <AdminPanel />}
 
