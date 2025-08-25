@@ -640,7 +640,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
                 onChange={(e) => setFilters({...filters, verified_only: e.target.checked})}
                 className="mr-2"
               />
-              <span className="text-sm text-gray-700">Compétitions vérifiées uniquement</span>
+              <span className="text-sm text-gray-700">Ligues vérifiées uniquement</span>
             </label>
           </div>
 
