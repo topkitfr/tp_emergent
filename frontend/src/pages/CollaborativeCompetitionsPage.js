@@ -324,7 +324,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom de la compétition *
+                Nom de la ligue *
               </label>
               <input
                 type="text"
