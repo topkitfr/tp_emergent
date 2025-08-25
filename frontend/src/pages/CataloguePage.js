@@ -92,7 +92,7 @@ const CataloguePage = ({
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Explorez notre base de données collaborative complète : 
-              équipes, marques, joueurs, compétitions et designs de maillots documentés par la communauté
+              équipes, marques, joueurs, ligues et designs de maillots documentés par la communauté
             </p>
           </div>
 
