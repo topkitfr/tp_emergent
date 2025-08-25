@@ -351,7 +351,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type de compétition *
+                Type de ligue *
               </label>
               <select
                 value={formData.competition_type}
