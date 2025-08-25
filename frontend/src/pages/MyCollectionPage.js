@@ -17,6 +17,8 @@ const MyCollectionPage = ({ user, API }) => {
     
     setLoading(true);
     try {
+      console.log('🔄 Loading collections for user:', user.id);
+      
       const [ownedRes, wantedRes] = await Promise.all([
         fetch(`${API}/api/users/${user.id}/collections/owned`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
@@ -26,12 +28,24 @@ const MyCollectionPage = ({ user, API }) => {
         })
       ]);
 
+      console.log('📥 API Response Status:', {
+        owned: ownedRes.status,
+        wanted: wantedRes.status
+      });
+
       const owned = ownedRes.ok ? await ownedRes.json() : [];
       const wanted = wantedRes.ok ? await wantedRes.json() : [];
 
+      console.log('📊 Collections Data:', {
+        owned: owned,
+        wanted: wanted,
+        ownedCount: owned.length,
+        wantedCount: wanted.length
+      });
+
       setCollections([...owned, ...wanted]);
     } catch (error) {
-      console.error('Error loading my collections:', error);
+      console.error('❌ Error loading my collections:', error);
     }
     setLoading(false);
   };
