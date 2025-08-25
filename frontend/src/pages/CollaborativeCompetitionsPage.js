@@ -666,7 +666,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
           <div className="text-2xl font-bold text-green-600">
             {filteredCompetitions.filter(c => c.verified_level !== 'unverified').length}
           </div>
-          <div className="text-sm text-green-700">Compétitions vérifiées</div>
+          <div className="text-sm text-green-700">Ligues vérifiées</div>
         </div>
         
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
