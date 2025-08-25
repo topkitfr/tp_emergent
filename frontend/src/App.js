@@ -8,6 +8,7 @@ import JerseyDetailEditor from './JerseyDetailEditor';
 import PaginationControls from './PaginationControls';
 import JerseyDetailModal from './JerseyDetailModal';
 import CollectionPage from './CollectionPage';
+import MyCollectionPage from './pages/MyCollectionPage';
 import PasswordResetPage from './PasswordResetPage';
 import { useCSVData } from './utils/csvLoader';
 import tokenManager from './utils/tokenManager';
