@@ -92,8 +92,7 @@ class JerseyCollectionPostFixTester:
             response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections/owned", headers=headers)
             
             if response.status_code == 200:
-                data = response.json()
-                collections = data.get("collections", [])
+                collections = response.json()  # API returns array directly
                 
                 # Check if we have exactly 1 collection as expected
                 if len(collections) == 1:
