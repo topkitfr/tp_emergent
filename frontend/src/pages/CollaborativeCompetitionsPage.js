@@ -567,7 +567,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Ligues de football</h1>
           <p className="text-gray-600">
-            Base de données collaborative des championnats, coupes et compétitions
+            Base de données collaborative des championnats, coupes et ligues
           </p>
         </div>
         
