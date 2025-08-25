@@ -38,9 +38,23 @@ const MyCollectionPage = ({ user, API }) => {
 
   const filteredCollections = collections.filter(collection => {
     const matchesTab = collection.collection_type === activeTab;
-    const matchesSearch = collection.jersey_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         collection.team_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
+    
+    // Fix search to work with new data structure
+    if (searchQuery) {
+      const jerseyRelease = collection.jersey_release || {};
+      const masterJersey = collection.master_jersey || {};
+      const teamInfo = masterJersey.team_info || {};
+      
+      const matchesSearch = 
+        jerseyRelease.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        teamInfo.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        jerseyRelease.topkit_reference?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesTab && matchesSearch;
+    }
+    
+    // If no search query, just filter by tab
+    return matchesTab;
   });
 
   // Calculate collection value estimates
