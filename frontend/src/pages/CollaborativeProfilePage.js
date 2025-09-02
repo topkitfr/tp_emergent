@@ -72,22 +72,39 @@ const CollaborativeProfilePage = ({ user, API }) => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
-  // Auto-open settings modal when settings tab is selected
-  useEffect(() => {
-    if (activeTab === 'settings') {
-      setShowSettingsModal(true);
-    }
-  }, [activeTab]);
-
-  // Handle settings modal close - switch back to overview tab
-  const handleSettingsClose = () => {
-    setShowSettingsModal(false);
-    setActiveTab('overview');
-  };
-
   const handleProfileUpdate = (updatedProfile) => {
     setUserProfile(updatedProfile);
     // Update user context if needed
+  };
+
+  const handleSettingsUpdate = async (e) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    
+    try {
+      const response = await fetch(`${API}/api/users/${user.id}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(settingsData)
+      });
+
+      if (response.ok) {
+        const updatedProfile = await response.json();
+        setUserProfile(updatedProfile);
+        alert('Profile updated successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail || 'Failed to update profile'}`);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Error updating profile');
+    } finally {
+      setSettingsLoading(false);
+    }
   };
 
   if (!user) {
