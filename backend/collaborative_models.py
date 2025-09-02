@@ -815,3 +815,96 @@ class VoteRequest(BaseModel):
     comment: Optional[str] = None
     field_votes: Optional[Dict[str, str]] = {}  # Field-level votes: {"field_name": "approve"|"reject"}
     granular_votes: Optional[Dict[str, str]] = {}  # Alias for field_votes for compatibility
+
+# ================================
+# LEGACY JERSEY SYSTEM (for compatibility)
+# ================================
+
+class MasterJersey(BaseModel):
+    """Legacy Master Jersey model for compatibility"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    team_id: str
+    brand_id: str
+    season: str
+    jersey_type: str
+    model: str
+    primary_color: str
+    secondary_colors: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
+    topkit_reference: str
+
+class JerseyRelease(BaseModel):
+    """Legacy Jersey Release model for compatibility"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    master_jersey_id: str
+    player_name: Optional[str] = None
+    player_number: Optional[int] = None
+    retail_price: Optional[float] = None
+    release_type: str = "standard"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str
+    topkit_reference: str
+
+class UserJerseyCollection(BaseModel):
+    """Legacy User Jersey Collection model for compatibility"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    jersey_release_id: str
+    collection_type: str  # "owned", "wanted"
+    size: Optional[str] = None
+    condition: Optional[str] = None
+    added_at: datetime = Field(default_factory=datetime.utcnow)
+
+class JerseyReleaseValuation(BaseModel):
+    """Legacy Jersey Release Valuation model for compatibility"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    jersey_release_id: str
+    estimated_value: float
+    market_trend: str = "stable"
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+# ================================
+# LEGACY CREATE MODELS
+# ================================
+
+class MasterJerseyCreate(BaseModel):
+    """Legacy Master Jersey creation model"""
+    team_id: str
+    brand_id: str
+    season: str
+    jersey_type: str
+    model: str
+    primary_color: str
+    secondary_colors: List[str] = []
+
+class JerseyReleaseCreate(BaseModel):
+    """Legacy Jersey Release creation model"""
+    master_jersey_id: str
+    player_name: Optional[str] = None
+    player_number: Optional[int] = None
+    retail_price: Optional[float] = None
+    release_type: str = "standard"
+
+# ================================
+# LEGACY RESPONSE MODELS
+# ================================
+
+class MasterJerseyResponse(BaseModel):
+    """Legacy Master Jersey response model"""
+    id: str
+    team_id: str
+    brand_id: str
+    season: str
+    jersey_type: str
+    model: str
+    primary_color: str
+    secondary_colors: List[str] = []
+    created_at: datetime
+    created_by: str
+    verified_level: VerificationLevel
+    topkit_reference: str
+    team_info: Optional[Dict[str, Any]] = {}
+    brand_info: Optional[Dict[str, Any]] = {}
+    competition_info: Optional[Dict[str, Any]] = {}
