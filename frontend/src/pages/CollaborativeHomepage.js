@@ -98,7 +98,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   </h3>
                   <p className="text-xs text-gray-500 mb-2">{jersey.season}</p>
                   <p className="text-sm font-semibold text-gray-900">
-                    Valeur estimée<br />
+                    Estimated value<br />
                     <span className="text-lg">120€</span>
                   </p>
                 </div>
