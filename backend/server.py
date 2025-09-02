@@ -11609,6 +11609,8 @@ async def get_kit_store(
     This replaces the old vestiaire endpoint and shows Reference Kits that users can add to their Personal Collections
     """
     try:
+        logger.info("=== VESTIAIRE ENDPOINT CALLED ===")
+        
         # Simple approach: get reference kits and manually enrich them
         # This bypasses the aggregation pipeline issues
         
