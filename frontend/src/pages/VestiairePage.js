@@ -516,22 +516,58 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Step 1: Select Club/Team */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Master Kit ID *
+                Select Club *
               </label>
-              <input
-                type="text"
-                value={formData.master_kit_id}
-                onChange={(e) => setFormData(prev => ({...prev, master_kit_id: e.target.value}))}
+              <select
+                value={selectedTeam}
+                onChange={(e) => handleTeamChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter Master Kit ID"
                 required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                You can find this ID on the Master Kit's detail page
-              </p>
+              >
+                <option value="">Choose a club...</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Step 2: Select Master Kit (only shown after team selection) */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Master Kit *
+                </label>
+                {loadingMasterKits ? (
+                  <div className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-500">
+                    Loading master kits...
+                  </div>
+                ) : (
+                  <select
+                    value={formData.master_kit_id}
+                    onChange={(e) => setFormData(prev => ({...prev, master_kit_id: e.target.value}))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Choose a master kit...</option>
+                    {masterKitsForTeam.map(kit => (
+                      <option key={kit.id} value={kit.id}>
+                        {kit.season} {kit.kit_type} - {kit.design_name || `${kit.kit_type} Kit`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {masterKitsForTeam.length === 0 && selectedTeam && !loadingMasterKits && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    No master kits found for this club. Create a Master Kit first.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
