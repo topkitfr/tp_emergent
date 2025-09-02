@@ -606,9 +606,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input
               type="text"
-              placeholder="Search for a player..."
-              value={filters.player_name}
-              onChange={(e) => setFilters({...filters, player_name: e.target.value})}
+              placeholder="Search reference kits..."
+              value={filters.search}
+              onChange={(e) => setFilters({...filters, search: e.target.value})}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
             <input
@@ -625,7 +625,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               Filter
             </button>
             <button 
-              onClick={() => setFilters({search: '', team_id: '', season: '', player_name: ''})}
+              onClick={() => setFilters({search: '', team_id: '', season: '', kit_type: ''})}
               className="text-gray-600 hover:text-gray-800"
             >
               Reset
