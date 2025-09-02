@@ -207,17 +207,6 @@ const CollaborativeMasterJerseyPage = ({
     });
 
     const [newColor, setNewColor] = useState('');
-    const [newFeature, setNewFeature] = useState('');
-    
-    // États pour la gestion des images
-    const [imageFiles, setImageFiles] = useState({
-      main_image: null,
-      secondary_photos: []
-    });
-    const [imagePreviews, setImagePreviews] = useState({
-      main_image: '',
-      secondary_photos: []
-    });
 
     const handleImageUpload = async (imageType, file) => {
       if (!file) return;
