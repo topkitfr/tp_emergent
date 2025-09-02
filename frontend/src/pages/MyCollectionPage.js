@@ -109,9 +109,9 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     let totalHigh = 0;
     
     ownedItems.forEach(item => {
-      // Use jersey release retail price or fallback to purchase price
-      const jerseyRelease = item.jersey_release || {};
-      const baseValue = item.purchase_price || jerseyRelease.retail_price || 50; // Use retail price from jersey release
+      // Use reference kit pricing or fallback to purchase price
+      const referenceKit = item.reference_kit_info || {};
+      const baseValue = item.purchase_price || referenceKit.original_retail_price || referenceKit.current_market_estimate || 50;
       const condition = item.condition || 'good';
       
       // Condition multiplier
