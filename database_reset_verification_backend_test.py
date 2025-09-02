@@ -253,13 +253,13 @@ class DatabaseResetVerificationTester:
                         self.log_result(
                             "Admin Profile Access", 
                             True, 
-                            f"Admin profile accessible - Email: {data.get('email')}, Name: {data.get('name')}"
+                            f"Admin profile accessible - Email: {user_data.get('email')}, Name: {user_data.get('name')}"
                         )
                     else:
                         self.log_result(
                             "Admin Profile Access", 
                             False, 
-                            f"Admin profile data mismatch - Expected: {ADMIN_CREDENTIALS['email']}, Got: {data.get('email')}"
+                            f"Admin profile data mismatch - Expected: {ADMIN_CREDENTIALS['email']}, Got: {user_data.get('email')}"
                         )
                 else:
                     self.log_result(
