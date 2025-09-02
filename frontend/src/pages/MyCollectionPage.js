@@ -159,7 +159,13 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       condition: item.condition || 'good',
       purchase_price: item.purchase_price || '',
       purchase_date: item.purchase_date || '',
-      notes: item.notes || ''
+      personal_notes: item.personal_notes || '',
+      is_signed: item.is_signed || false,
+      signed_by: item.signed_by || '',
+      has_printing: item.has_printing || false,
+      printed_name: item.printed_name || '',
+      printed_number: item.printed_number || '',
+      is_worn: item.is_worn || false
     });
   };
 
