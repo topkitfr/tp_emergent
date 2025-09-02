@@ -294,14 +294,24 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              👕 Kit Store
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover all available physical versions of referenced kits.
-              Add them to your collection and track their value!
-            </p>
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-center flex-1">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                👕 Kit Store
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Discover all available physical versions of referenced kits.
+                Add them to your collection and track their value!
+              </p>
+            </div>
+            {user && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors ml-6"
+              >
+                Add New Kit Release
+              </button>
+            )}
           </div>
 
           {/* Quick Stats */}
