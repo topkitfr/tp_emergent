@@ -248,7 +248,8 @@ class DatabaseResetVerificationTester:
                 response = requests.get(f"{BACKEND_URL}/profile", headers=headers)
                 if response.status_code == 200:
                     data = response.json()
-                    if data.get('email') == ADMIN_CREDENTIALS['email']:
+                    user_data = data.get('user', {})
+                    if user_data.get('email') == ADMIN_CREDENTIALS['email']:
                         self.log_result(
                             "Admin Profile Access", 
                             True, 
