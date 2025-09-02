@@ -11113,11 +11113,21 @@ async def get_master_kits(
         for kit in master_kits:
             kit.pop('_id', None)
             
+            # Clean ObjectId fields from nested data
+            team_info = kit['team_info'][0] if kit['team_info'] else {}
+            brand_info = kit['brand_info'][0] if kit['brand_info'] else {}
+            competition_info = kit['competition_info'][0] if kit['competition_info'] else {}
+            
+            # Remove MongoDB ObjectId fields
+            team_info.pop('_id', None)
+            brand_info.pop('_id', None)
+            competition_info.pop('_id', None)
+            
             response = MasterKitResponse(
                 **kit,
-                team_info=kit['team_info'][0] if kit['team_info'] else {},
-                brand_info=kit['brand_info'][0] if kit['brand_info'] else {},
-                competition_info=kit['competition_info'][0] if kit['competition_info'] else None
+                team_info=team_info,
+                brand_info=brand_info,
+                competition_info=competition_info or {}
             )
             result.append(response)
         
