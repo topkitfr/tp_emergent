@@ -380,6 +380,61 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       official_product_code: ''
     });
     const [loading, setLoading] = useState(false);
+    const [teams, setTeams] = useState([]);
+    const [selectedTeam, setSelectedTeam] = useState('');
+    const [masterKitsForTeam, setMasterKitsForTeam] = useState([]);
+    const [loadingMasterKits, setLoadingMasterKits] = useState(false);
+
+    // Load teams when modal opens
+    useEffect(() => {
+      if (teams.length === 0) {
+        loadTeams();
+      }
+    }, []);
+
+    const loadTeams = async () => {
+      try {
+        const response = await fetch(`${API}/api/teams`);
+        if (response.ok) {
+          const teamsData = await response.json();
+          setTeams(teamsData);
+        }
+      } catch (error) {
+        console.error('Error loading teams:', error);
+      }
+    };
+
+    const loadMasterKitsForTeam = async (teamId) => {
+      setLoadingMasterKits(true);
+      try {
+        const response = await fetch(`${API}/api/master-kits?team_id=${teamId}`, {
+          headers: {
+            'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          }
+        });
+        if (response.ok) {
+          const masterKits = await response.json();
+          setMasterKitsForTeam(masterKits);
+        } else {
+          setMasterKitsForTeam([]);
+        }
+      } catch (error) {
+        console.error('Error loading master kits:', error);
+        setMasterKitsForTeam([]);
+      } finally {
+        setLoadingMasterKits(false);
+      }
+    };
+
+    const handleTeamChange = (teamId) => {
+      setSelectedTeam(teamId);
+      setFormData(prev => ({ ...prev, master_kit_id: '' })); // Reset master kit selection
+      setMasterKitsForTeam([]); // Clear previous master kits
+      
+      if (teamId) {
+        loadMasterKitsForTeam(teamId);
+      }
+    };
 
     const handleSizeToggle = (size) => {
       const sizes = formData.available_sizes || [];
