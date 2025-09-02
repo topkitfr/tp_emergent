@@ -157,6 +157,34 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       setLoading(false);
     }
   };
+  // Handle player selection and load their numbers for personal details modal
+  const handlePlayerChange = async (playerId) => {
+    setPersonalDetails(prev => ({ 
+      ...prev, 
+      player_name: playerId, 
+      player_number: '' // Reset number when player changes
+    }));
+    
+    if (playerId) {
+      try {
+        // Load player numbers for the selected player
+        const response = await fetch(`${API}/api/players/${playerId}/numbers`);
+        if (response.ok) {
+          const numbers = await response.json();
+          setPlayerNumbers(numbers);
+        } else {
+          // If no specific numbers endpoint, use a default set
+          setPlayerNumbers(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30']);
+        }
+      } catch (error) {
+        console.error('Error loading player numbers:', error);
+        // Default numbers if error
+        setPlayerNumbers(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30']);
+      }
+    } else {
+      setPlayerNumbers([]);
+    }
+  };
 
   // Reference Kit Card Component
   const JerseyReleaseCard = ({ release }) => {
