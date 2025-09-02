@@ -11022,12 +11022,19 @@ async def create_master_kit(
         # Generate TopKit reference
         reference = await get_next_kit_reference("MASTER")
         
+        # Debug logging
+        logger.info(f"Creating Master Kit with data: {kit_data.dict()}")
+        logger.info(f"User ID: {user_id}, Reference: {reference}")
+        
         # Create Master Kit
         master_kit = MasterKit(
             **kit_data.dict(),
             created_by=user_id,
             topkit_reference=reference
         )
+        
+        # Debug the created object
+        logger.info(f"Created Master Kit object: {master_kit.dict()}")
         
         # Insert into database
         await db.master_kits.insert_one(master_kit.dict())
