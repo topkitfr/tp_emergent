@@ -203,7 +203,7 @@ const CollaborativeMasterJerseyPage = ({
       pattern: ''
     });
 
-    const [newColor, setNewColor] = useState('');
+
 
     const handleSubmit = async (e) => {
       e.preventDefault();
