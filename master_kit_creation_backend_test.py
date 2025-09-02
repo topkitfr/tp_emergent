@@ -223,6 +223,9 @@ class MasterKitCreationTester:
                 "brand_id": test_brand["id"],
                 "season": "2024-25",
                 "jersey_type": "home",
+                "model": "authentic",
+                "primary_color": "Blue",
+                "secondary_colors": ["Red"],
                 "description": f"Test Master Jersey for {test_team.get('name')} - {test_brand.get('name')} Home Kit 2024-25"
             }
             
