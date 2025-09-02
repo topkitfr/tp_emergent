@@ -225,7 +225,7 @@ const AppContent = () => {
       />
 
       {/* Main Content */}
-      <div className="pt-20">
+      <div>
         <Routes>
           <Route path="/" element={<CollaborativeHomepage {...commonProps} onViewChange={handleViewChange} />} />
           <Route path="/explore" element={<CollaborativeExplorePage {...commonProps} />} />
