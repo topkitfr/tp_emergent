@@ -9,7 +9,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
   const [loading, setLoading] = useState(false);
   const [changes, setChanges] = useState([]);
   
-  // États pour la gestion des images
+  // Image management states
   const [imageFiles, setImageFiles] = useState({
     logo: null,
     primary_photo: null,
@@ -25,7 +25,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
 
   useEffect(() => {
     if (isOpen && entity) {
-      // Initialiser le formulaire avec les données actuelles
+      // Initialize form with current data
       const initialData = {
         name: entity.name || '',
         short_name: entity.short_name || '',
@@ -38,7 +38,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         competition_type: entity.competition_type || '',
         level: entity.level || '',
         website: entity.website || '',
-        // Autres champs selon le type d'entité...
+        // Other fields based on entity type...
       };
       
       setOriginalData(initialData);
@@ -48,7 +48,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       setSourceUrls(['']);
       setChanges([]);
       
-      // Réinitialiser les images
+      // Reset image states
       setImageFiles({
         logo: null,
         primary_photo: null,
@@ -62,36 +62,28 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
     }
   }, [isOpen, entity]);
 
+  // Detect changes between original and current form data
   useEffect(() => {
-    // Calculer les changements en temps réel (incluant images)
     if (Object.keys(originalData).length > 0) {
       const detectedChanges = [];
       
-      // Vérifier les changements dans les champs de texte
-      Object.keys(formData).forEach(field => {
-        const originalValue = originalData[field];
-        const newValue = formData[field];
-        
-        // Normaliser les valeurs pour la comparaison
-        const normalizedOriginal = originalValue === null || originalValue === undefined ? '' : String(originalValue);
-        const normalizedNew = newValue === null || newValue === undefined ? '' : String(newValue);
-        
-        if (normalizedOriginal !== normalizedNew && normalizedNew.trim() !== '') {
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== originalData[key] && formData[key] !== '') {
           detectedChanges.push({
-            field,
-            from: originalValue,
-            to: field === 'colors' ? newValue.split(',').map(c => c.trim()).filter(c => c) : newValue,
-            type: normalizedOriginal === '' ? 'add' : 'update'
+            field: key,
+            from: originalData[key] || 'Not set',
+            to: formData[key],
+            type: originalData[key] ? 'update' : 'add'
           });
         }
       });
       
-      // Vérifier les changements dans les images
+      // Check for new images
       if (imageFiles.logo) {
         detectedChanges.push({
           field: 'logo',
-          from: 'Image actuelle',
-          to: 'Nouvelle image',
+          from: 'Current photo',
+          to: 'New photo',
           type: 'update'
         });
       }
@@ -99,8 +91,8 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       if (imageFiles.primary_photo) {
         detectedChanges.push({
           field: 'primary_photo',
-          from: 'Photo actuelle',
-          to: 'Nouvelle photo',
+          from: 'Current photo',
+          to: 'New photo',
           type: 'update'
         });
       }
@@ -108,95 +100,65 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       if (imageFiles.secondary_photos.length > 0) {
         detectedChanges.push({
           field: 'secondary_photos',
-          from: 'Photos actuelles',
-          to: `${imageFiles.secondary_photos.length} nouvelle(s) photo(s)`,
+          from: 'Current photos',
+          to: `${imageFiles.secondary_photos.length} new photo(s)`,
           type: 'add'
         });
       }
       
       setChanges(detectedChanges);
       
-      // Générer un titre automatique si pas de titre personnalisé
+      // Generate automatic title if no custom title
       if (detectedChanges.length > 0 && !title) {
         if (detectedChanges.length === 1) {
           const change = detectedChanges[0];
-          const actionText = change.type === 'add' ? 'Ajout' : 'Mise à jour';
+          const actionText = change.type === 'add' ? 'Addition' : 'Update';
           setTitle(`${actionText} ${getFieldDisplayName(change.field)} - ${entity.name}`);
         } else {
-          setTitle(`Amélioration de la fiche - ${entity.name}`);
+          setTitle(`Profile improvement - ${entity.name}`);
         }
       }
     }
   }, [formData, originalData, imageFiles, entity, title]);
 
-  // Fonctions de gestion des images
+  // Image management functions
   const handleImageUpload = (imageType, file) => {
     if (!file) return;
     
-    // Vérifier le type de fichier
+    // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner un fichier image valide');
+      alert('Please select a valid image file');
       return;
     }
     
-    // Vérifier la taille (max 5MB)
+    // Check size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('La taille de l\'image ne doit pas dépasser 5MB');
+      alert('Image size must not exceed 5MB');
       return;
     }
     
-    // Mettre à jour les fichiers
+    // Update files
     setImageFiles(prev => ({
       ...prev,
-      [imageType]: file
+      [imageType]: imageType === 'secondary_photos' 
+        ? [...prev.secondary_photos, file]
+        : file
     }));
     
-    // Créer l'aperçu
+    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreviews(prev => ({
         ...prev,
-        [imageType]: e.target.result
+        [imageType]: imageType === 'secondary_photos'
+          ? [...prev.secondary_photos, e.target.result]
+          : e.target.result
       }));
     };
     reader.readAsDataURL(file);
   };
 
-  const handleMultipleImagesUpload = (files) => {
-    const fileArray = Array.from(files);
-    const validFiles = fileArray.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        alert(`${file.name} n'est pas un fichier image valide`);
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name} dépasse la taille maximale de 5MB`);
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
-    setImageFiles(prev => ({
-      ...prev,
-      secondary_photos: [...prev.secondary_photos, ...validFiles]
-    }));
-
-    // Créer les aperçus
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreviews(prev => ({
-          ...prev,
-          secondary_photos: [...prev.secondary_photos, e.target.result]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeSecondaryImage = (index) => {
+  const removeSecondaryPhoto = (index) => {
     setImageFiles(prev => ({
       ...prev,
       secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
@@ -218,154 +180,154 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
 
   const getFieldDisplayName = (field) => {
     const fieldNames = {
-      name: 'du nom',
-      short_name: 'du nom court',
-      city: 'de la ville',
-      country: 'du pays',
-      founded_year: 'de l\'année de fondation',
-      colors: 'des couleurs',
-      logo_url: 'du logo',
-      logo: 'du logo',
-      primary_photo: 'de la photo principale',
-      secondary_photos: 'des photos supplémentaires',
-      official_name: 'du nom officiel',
-      competition_type: 'du type de compétition',
-      level: 'du niveau',
-      website: 'du site web'
+      name: 'name',
+      short_name: 'short name',
+      city: 'city',
+      country: 'country',
+      founded_year: 'founding year',
+      colors: 'colors',
+      logo_url: 'logo',
+      logo: 'logo',
+      primary_photo: 'main photo',
+      secondary_photos: 'additional photos',
+      official_name: 'official name',
+      competition_type: 'competition type',
+      level: 'level',
+      website: 'website'
     };
-    return fieldNames[field] || `de ${field}`;
+    return fieldNames[field] || field;
   };
 
   const getFieldsForEntityType = () => {
     switch (entityType) {
       case 'team':
         return [
-          { key: 'name', label: 'Nom de l\'équipe', type: 'text', required: true },
-          { key: 'short_name', label: 'Nom court', type: 'text' },
-          { key: 'city', label: 'Ville', type: 'text' },
-          { key: 'country', label: 'Pays', type: 'text' },
-          { key: 'founded_year', label: 'Année de fondation', type: 'number' },
-          { key: 'colors', label: 'Couleurs (séparées par des virgules)', type: 'text' },
-          { key: 'logo_url', label: 'URL du logo', type: 'url' }
-        ];
-      case 'competition':
-        return [
-          { key: 'name', label: 'Nom de la compétition', type: 'text', required: true },
-          { key: 'official_name', label: 'Nom officiel', type: 'text' },
-          { key: 'country', label: 'Pays', type: 'text' },
-          { key: 'competition_type', label: 'Type', type: 'select', options: ['domestic_league', 'cup', 'international'] },
-          { key: 'level', label: 'Niveau', type: 'number' },
-          { key: 'logo_url', label: 'URL du logo', type: 'url' }
+          { key: 'name', label: 'Team Name', type: 'text', required: true },
+          { key: 'short_name', label: 'Short Name', type: 'text' },
+          { key: 'city', label: 'City', type: 'text' },
+          { key: 'country', label: 'Country', type: 'text' },
+          { key: 'founded_year', label: 'Founded Year', type: 'number' },
+          { key: 'colors', label: 'Colors (comma separated)', type: 'text' },
+          { key: 'logo_url', label: 'Logo URL', type: 'url' }
         ];
       case 'brand':
         return [
-          { key: 'name', label: 'Nom de la marque', type: 'text', required: true },
-          { key: 'country', label: 'Pays d\'origine', type: 'text' },
-          { key: 'website', label: 'Site web', type: 'url' },
-          { key: 'logo_url', label: 'URL du logo', type: 'url' }
+          { key: 'name', label: 'Brand Name', type: 'text', required: true },
+          { key: 'country', label: 'Country', type: 'text' },
+          { key: 'founded_year', label: 'Founded Year', type: 'number' },
+          { key: 'website', label: 'Website', type: 'url' },
+          { key: 'logo_url', label: 'Logo URL', type: 'url' }
+        ];
+      case 'player':
+        return [
+          { key: 'name', label: 'Player Name', type: 'text', required: true },
+          { key: 'position', label: 'Position', type: 'text' },
+          { key: 'nationality', label: 'Nationality', type: 'text' },
+          { key: 'birth_date', label: 'Birth Date', type: 'date' },
+          { key: 'photo_url', label: 'Photo URL', type: 'url' }
+        ];
+      case 'competition':
+        return [
+          { key: 'name', label: 'Competition Name', type: 'text', required: true },
+          { key: 'official_name', label: 'Official Name', type: 'text' },
+          { key: 'competition_type', label: 'Type', type: 'select', options: ['League', 'Cup', 'International'] },
+          { key: 'level', label: 'Level', type: 'number' },
+          { key: 'country', label: 'Country', type: 'text' }
+        ];
+      case 'master_jersey':
+        return [
+          { key: 'season', label: 'Season', type: 'text', required: true },
+          { key: 'jersey_type', label: 'Kit Type', type: 'select', options: ['home', 'away', 'third', 'goalkeeper'] },
+          { key: 'colors', label: 'Colors (comma separated)', type: 'text' },
+          { key: 'description', label: 'Description', type: 'textarea' }
         ];
       default:
-        return [
-          { key: 'name', label: 'Nom', type: 'text', required: true }
-        ];
+        return [];
     }
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const addSourceUrl = () => {
-    setSourceUrls(prev => [...prev, '']);
-  };
-
-  const removeSourceUrl = (index) => {
-    setSourceUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updateSourceUrl = (index, value) => {
-    setSourceUrls(prev => prev.map((url, i) => i === index ? value : url));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (changes.length === 0) {
-      alert('Aucun changement détecté. Veuillez modifier au moins un champ.');
+    if (!title.trim() || !description.trim()) {
+      alert('Please provide a title and description for your contribution');
       return;
     }
-    
-    if (!title.trim()) {
-      alert('Veuillez saisir un titre pour votre contribution.');
+
+    if (changes.length === 0 && Object.values(imageFiles).every(f => !f || (Array.isArray(f) && f.length === 0))) {
+      alert('No changes detected. Please modify at least one field or add an image.');
       return;
     }
 
     setLoading(true);
-    
-    try {
-      const token = localStorage.getItem('token');
-      
-      // Préparer les données proposées
-      const proposedData = {};
-      changes.forEach(change => {
-        proposedData[change.field] = change.to;
-      });
-      
-      // Traitement des images
-      const images = {};
-      
-      // Logo principal
-      if (imageFiles.logo) {
-        images.logo = await convertFileToBase64(imageFiles.logo);
-      }
-      
-      // Photo principale
-      if (imageFiles.primary_photo) {
-        images.primary_photo = await convertFileToBase64(imageFiles.primary_photo);
-      }
-      
-      // Photos secondaires
-      if (imageFiles.secondary_photos.length > 0) {
-        images.secondary_photos = await Promise.all(
-          imageFiles.secondary_photos.map(file => convertFileToBase64(file))
-        );
-      }
 
+    try {
+      // Prepare contribution data
       const contributionData = {
+        title: title.trim(),
+        description: description.trim(),
         entity_type: entityType,
         entity_id: entity.id,
-        proposed_data: proposedData,
-        title: title.trim(),
-        description: description.trim() || null,
-        source_urls: sourceUrls.filter(url => url.trim()),
-        images: Object.keys(images).length > 0 ? images : null
+        proposed_data: formData,
+        source_urls: sourceUrls.filter(url => url.trim() !== ''),
+        changes: changes
       };
-      
+
+      // Convert images to base64 if present
+      if (imageFiles.logo) {
+        const logoBase64 = await convertFileToBase64(imageFiles.logo);
+        contributionData.images = { logo: logoBase64 };
+      }
+
+      if (imageFiles.primary_photo) {
+        const photoBase64 = await convertFileToBase64(imageFiles.primary_photo);
+        contributionData.images = {
+          ...(contributionData.images || {}),
+          primary_photo: photoBase64
+        };
+      }
+
+      if (imageFiles.secondary_photos.length > 0) {
+        const secondaryPhotos = await Promise.all(
+          imageFiles.secondary_photos.map(file => convertFileToBase64(file))
+        );
+        contributionData.images = {
+          ...(contributionData.images || {}),
+          secondary_photos: secondaryPhotos
+        };
+      }
+
+      console.log('Submitting contribution:', contributionData);
+
+      // Submit contribution
       const response = await fetch(`${API}/api/contributions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(contributionData)
       });
-      
+
       if (response.ok) {
         const result = await response.json();
-        alert(`Contribution créée avec succès ! Référence: ${result.topkit_reference}`);
-        onContributionCreated && onContributionCreated(result);
+        console.log('Contribution submitted successfully:', result);
+        
+        alert('Contribution submitted successfully! It will be reviewed by the community.');
+        
+        if (onContributionCreated) {
+          onContributionCreated(result);
+        }
+        
         onClose();
       } else {
-        const error = await response.json();
-        console.error('Server error:', error);
-        alert(`Erreur: ${error.detail || 'Une erreur est survenue'}`);
+        const errorData = await response.json();
+        console.error('Contribution submission error:', errorData);
+        alert(`Error: ${errorData.detail || 'Failed to submit contribution'}`);
       }
     } catch (error) {
-      console.error('Erreur lors de la création de la contribution:', error);
-      alert('Une erreur est survenue lors de la création de la contribution');
+      console.error('Error submitting contribution:', error);
+      alert('Error submitting contribution. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -376,309 +338,227 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
   const fields = getFieldsForEntityType();
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-2 pb-2 text-center sm:block sm:p-0">
-        {/* Overlay */}
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-        
-        {/* Modal - Responsive pour mobile */}
-        <div className="inline-block w-full bg-white rounded-t-lg sm:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            {/* Header - Plus compact sur mobile */}
-            <div className="bg-blue-600 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-medium text-white truncate pr-2">
-                  ✏️ Améliorer : {entity?.name}
-                </h3>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="text-white hover:text-gray-200 p-1"
-                >
-                  <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            
-            {/* Body - Défilement optimisé mobile */}
-            <div className="px-3 sm:px-6 py-3 sm:py-4 overflow-y-auto flex-1">
-              
-              {/* Informations actuelles - Plus compact sur mobile */}
-              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2 text-sm sm:text-base">Informations actuelles :</h4>
-                <div className="text-xs sm:text-sm text-gray-600">
-                  <p><strong>Référence :</strong> {entity?.topkit_reference}</p>
-                  <p><strong>Type :</strong> {entityType}</p>
-                </div>
-              </div>
-              
-              {/* Formulaire d'édition - Responsive grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                {fields.map((field) => (
-                  <div key={field.key} className="flex flex-col">
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {field.type === 'select' ? (
-                      <select
-                        value={formData[field.key] || ''}
-                        onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Sélectionner...</option>
-                        {field.options?.map(option => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type}
-                        value={formData[field.key] || ''}
-                        onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Saisir ${field.label.toLowerCase()}`}
-                        required={field.required}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Section Upload d'Images - Optimisée mobile */}
-              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                  📸 Images à ajouter/modifier
-                  <span className="text-xs text-gray-500 font-normal">(max 5MB)</span>
-                </h4>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Improve {entityType === 'master_jersey' ? 'Kit' : entityType.charAt(0).toUpperCase() + entityType.slice(1)} Profile
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Entity Information */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-2">Current {entityType === 'master_jersey' ? 'Kit' : entityType.charAt(0).toUpperCase() + entityType.slice(1)}</h3>
+            <p className="text-blue-800">{entity.name}</p>
+          </div>
+
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {fields.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {field.label}
+                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                </label>
                 
-                <div className="space-y-4">
-                  {/* Logo/Image principale */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                      {entityType === 'team' ? 'Logo de l\'équipe' : 
-                       entityType === 'competition' ? 'Logo de la compétition' :
-                       entityType === 'brand' ? 'Logo de la marque' :
-                       entityType === 'player' ? 'Photo du joueur' : 'Image principale'}
-                    </label>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload('logo', e.target.files[0])}
-                        className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      {imagePreviews.logo && (
-                        <div className="relative self-start sm:self-auto">
-                          <img src={imagePreviews.logo} alt="Aperçu logo" className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border" />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setImageFiles(prev => ({ ...prev, logo: null }));
-                              setImagePreviews(prev => ({ ...prev, logo: '' }));
-                            }}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Photo principale (pour maillots) */}
-                  {(entityType === 'master-jersey' || entityType === 'jersey') && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Photo principale du maillot
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload('primary_photo', e.target.files[0])}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                        />
-                        {imagePreviews.primary_photo && (
-                          <div className="relative">
-                            <img src={imagePreviews.primary_photo} alt="Aperçu photo principale" className="w-16 h-16 object-cover rounded-lg border" />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setImageFiles(prev => ({ ...prev, primary_photo: null }));
-                                setImagePreviews(prev => ({ ...prev, primary_photo: '' }));
-                              }}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Photos secondaires */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Photos supplémentaires
-                      <span className="text-xs text-gray-500 font-normal ml-2">(détails, autres angles...)</span>
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleMultipleImagesUpload(e.target.files)}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                    />
-                    {imagePreviews.secondary_photos.length > 0 && (
-                      <div className="flex gap-2 mt-3 flex-wrap">
-                        {imagePreviews.secondary_photos.map((preview, index) => (
-                          <div key={index} className="relative">
-                            <img src={preview} alt={`Aperçu ${index + 1}`} className="w-16 h-16 object-cover rounded-lg border" />
-                            <button
-                              type="button"
-                              onClick={() => removeSecondaryImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Prévisualisation des changements */}
-              {changes.length > 0 && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                  <h4 className="font-medium text-blue-900 mb-3">Aperçu des changements :</h4>
-                  <div className="space-y-2">
-                    {changes.map((change, index) => (
-                      <div key={index} className="flex items-center gap-4 text-sm">
-                        <span className="font-medium text-blue-900 min-w-0 flex-shrink-0">
-                          {getFieldDisplayName(change.field)}:
-                        </span>
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-red-600 truncate">
-                            {change.from || 'Non défini'}
-                          </span>
-                          <span className="text-gray-400">→</span>
-                          <span className="text-green-600 truncate font-medium">
-                            {Array.isArray(change.to) ? change.to.join(', ') : change.to}
-                          </span>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          change.type === 'add' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                        }`}>
-                          {change.type === 'add' ? 'Ajout' : 'Modification'}
-                        </span>
-                      </div>
+                {field.type === 'select' ? (
+                  <select
+                    value={formData[field.key] || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [field.key]: e.target.value
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required={field.required}
+                  >
+                    <option value="">Select {field.label.toLowerCase()}</option>
+                    {field.options?.map(option => (
+                      <option key={option} value={option}>{option}</option>
                     ))}
-                  </div>
+                  </select>
+                ) : field.type === 'textarea' ? (
+                  <textarea
+                    value={formData[field.key] || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [field.key]: e.target.value
+                    }))}
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    required={field.required}
+                  />
+                ) : (
+                  <input
+                    type={field.type}
+                    value={formData[field.key] || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [field.key]: e.target.value
+                    }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    required={field.required}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Images</h3>
+            
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Logo/Main Photo</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload('logo', e.target.files[0])}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {imagePreviews.logo && (
+                <div className="mt-2">
+                  <img src={imagePreviews.logo} alt="Logo preview" className="w-24 h-24 object-cover rounded-lg border" />
                 </div>
               )}
-              
-              {/* Titre de la contribution */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  Titre de la contribution <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Décrivez brièvement votre contribution..."
-                  required
-                />
-              </div>
-              
-              {/* Description */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  Justification (optionnelle)
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Expliquez pourquoi cette modification est nécessaire..."
-                />
-              </div>
-              
-              {/* Sources */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Sources (optionnelles)
-                </label>
-                {sourceUrls.map((url, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="url"
-                      value={url}
-                      onChange={(e) => updateSourceUrl(index, e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://exemple.com/source"
-                    />
-                    {sourceUrls.length > 1 && (
+            </div>
+
+            {/* Secondary Photos Upload */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Additional Photos</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  Array.from(e.target.files).forEach(file => {
+                    handleImageUpload('secondary_photos', file);
+                  });
+                }}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {imagePreviews.secondary_photos.length > 0 && (
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {imagePreviews.secondary_photos.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
                       <button
                         type="button"
-                        onClick={() => removeSourceUrl(index)}
-                        className="text-red-600 hover:text-red-800"
+                        onClick={() => removeSecondaryPhoto(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                       >
-                        ❌
+                        ×
                       </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addSourceUrl}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  + Ajouter une source
-                </button>
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Contribution Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Contribution Details</h3>
             
-            {/* Footer - Optimisé mobile */}
-            <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-                  {changes.length === 0 ? (
-                    "Aucun changement détecté"
-                  ) : (
-                    `${changes.length} changement${changes.length > 1 ? 's' : ''} détecté${changes.length > 1 ? 's' : ''}`
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="Brief title for your contribution"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows="3"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="Describe the changes you're making and why"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Source URLs</label>
+              {sourceUrls.map((url, index) => (
+                <div key={index} className="flex space-x-2 mb-2">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => {
+                      const newUrls = [...sourceUrls];
+                      newUrls[index] = e.target.value;
+                      setSourceUrls(newUrls);
+                    }}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://..."
+                  />
+                  {index === sourceUrls.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setSourceUrls([...sourceUrls, ''])}
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      +
+                    </button>
                   )}
                 </div>
-                
-                <div className="flex gap-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50"
-                    disabled={loading || changes.length === 0}
-                  >
-                    {loading ? 'Soumission...' : '📝 Soumettre'}
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          </form>
-        </div>
+          </div>
+
+          {/* Changes Summary */}
+          {changes.length > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-semibold text-green-900 mb-2">Detected Changes ({changes.length})</h4>
+              <ul className="space-y-1 text-sm text-green-800">
+                {changes.map((change, index) => (
+                  <li key={index}>
+                    <span className="font-medium">{getFieldDisplayName(change.field)}:</span> {change.from} → {change.to}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex space-x-4 pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || changes.length === 0}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Submitting...' : 'Submit Contribution'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
