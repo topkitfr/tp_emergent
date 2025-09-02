@@ -208,60 +208,6 @@ const CollaborativeMasterJerseyPage = ({
 
     const [newColor, setNewColor] = useState('');
 
-    const handleImageUpload = async (imageType, file) => {
-      if (!file) return;
-      
-      // Vérifier la taille du fichier (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('L\'image est trop volumineuse. Taille maximale : 5MB');
-        return;
-      }
-
-      try {
-        // Convertir en base64 pour l'aperçu
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (imageType === 'main_image') {
-            setImageFiles(prev => ({ ...prev, main_image: file }));
-            setImagePreviews(prev => ({ ...prev, main_image: e.target.result }));
-          } else if (imageType === 'secondary_photo') {
-            setImageFiles(prev => ({
-              ...prev,
-              secondary_photos: [...prev.secondary_photos, file]
-            }));
-            setImagePreviews(prev => ({
-              ...prev,
-              secondary_photos: [...prev.secondary_photos, e.target.result]
-            }));
-          }
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Erreur lors du traitement de l\'image:', error);
-        alert('Erreur lors du traitement de l\'image');
-      }
-    };
-
-    const removeSecondaryPhoto = (index) => {
-      setImageFiles(prev => ({
-        ...prev,
-        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
-      }));
-      setImagePreviews(prev => ({
-        ...prev,
-        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
-      }));
-    };
-
-    const convertFileToBase64 = (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    };
-
     const handleSubmit = async (e) => {
       e.preventDefault();
       if (!formData.team_id || !formData.brand_id || !formData.season || !formData.primary_color) {
