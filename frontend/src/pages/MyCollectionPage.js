@@ -84,14 +84,15 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     
     // Filter by search query
     if (searchQuery) {
-      const jerseyRelease = item.jersey_release || {};
-      const masterJersey = item.master_jersey || {};
-      const teamInfo = masterJersey.team_info || {};
+      const referenceKit = item.reference_kit_info || {};
+      const masterKit = item.master_kit_info || {};
+      const teamInfo = item.team_info || {};
       
       const matchesSearch = 
-        jerseyRelease.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.printed_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teamInfo.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        jerseyRelease.topkit_reference?.toLowerCase().includes(searchQuery.toLowerCase());
+        referenceKit.topkit_reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        masterKit.topkit_reference?.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesTab && matchesSearch;
     }
