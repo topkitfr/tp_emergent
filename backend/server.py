@@ -10952,6 +10952,715 @@ async def get_contributors_stats(limit: int = 20):
 
 # ====================================================
 
+# ================================
+# NEW KIT HIERARCHY SYSTEM - FRESH START
+# ================================
+
+# Helper function to generate TopKit references
+async def get_next_kit_reference(kit_type: str) -> str:
+    """Generate next TopKit reference number for different kit types"""
+    try:
+        # Get the last reference for this type
+        collection_name = {
+            "MASTER": "master_kits",
+            "REF": "reference_kits", 
+            "PERSONAL": "personal_kits"
+        }.get(kit_type, "master_kits")
+        
+        pipeline = [
+            {"$match": {"topkit_reference": {"$regex": f"^TK-{kit_type}-"}}},
+            {"$sort": {"topkit_reference": -1}},
+            {"$limit": 1}
+        ]
+        
+        last_item = await db[collection_name].aggregate(pipeline).to_list(1)
+        
+        if last_item:
+            last_ref = last_item[0]["topkit_reference"]
+            # Extract number from TK-MASTER-000001 format
+            last_num = int(last_ref.split('-')[-1])
+            next_num = last_num + 1
+        else:
+            next_num = 1
+        
+        return f"TK-{kit_type}-{next_num:06d}"
+        
+    except Exception as e:
+        logger.error(f"Error generating {kit_type} reference: {e}")
+        import time
+        return f"TK-{kit_type}-{int(time.time())}"
+
+# ================================
+# MASTER KIT ENDPOINTS
+# ================================
+
+@api_router.post("/master-kits", response_model=MasterKitResponse)
+async def create_master_kit(
+    kit_data: MasterKitCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new Master Kit (design template)"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate team and brand exist
+        team = await db.teams.find_one({"id": kit_data.team_id})
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+        
+        brand = await db.brands.find_one({"id": kit_data.brand_id})
+        if not brand:
+            raise HTTPException(status_code=404, detail="Brand not found")
+        
+        # Validate competition if provided
+        competition = None
+        if kit_data.competition_id:
+            competition = await db.competitions.find_one({"id": kit_data.competition_id})
+            if not competition:
+                raise HTTPException(status_code=404, detail="Competition not found")
+        
+        # Generate TopKit reference
+        reference = await get_next_kit_reference("MASTER")
+        
+        # Create Master Kit
+        master_kit = MasterKit(
+            **kit_data.dict(),
+            created_by=user_id,
+            topkit_reference=reference
+        )
+        
+        # Insert into database
+        await db.master_kits.insert_one(master_kit.dict())
+        
+        # Return enriched response
+        return MasterKitResponse(
+            **master_kit.dict(),
+            team_info=team,
+            brand_info=brand,
+            competition_info=competition
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Master kit creation error: {e}")
+        raise HTTPException(status_code=500, detail="Error creating master kit")
+
+@api_router.get("/master-kits", response_model=List[MasterKitResponse])
+async def get_master_kits(
+    team_id: Optional[str] = None,
+    brand_id: Optional[str] = None,
+    season: Optional[str] = None,
+    kit_type: Optional[KitType] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get Master Kits with filters and enriched data"""
+    try:
+        # Build filter query
+        filter_query = {}
+        if team_id:
+            filter_query["team_id"] = team_id
+        if brand_id:
+            filter_query["brand_id"] = brand_id  
+        if season:
+            filter_query["season"] = season
+        if kit_type:
+            filter_query["kit_type"] = kit_type
+        
+        # MongoDB aggregation pipeline to enrich with team/brand/competition data
+        pipeline = [
+            {"$match": filter_query},
+            {"$sort": {"created_at": -1}},
+            {"$skip": offset},
+            {"$limit": limit},
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "team_id",
+                    "foreignField": "id", 
+                    "as": "team_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "brands",
+                    "localField": "brand_id", 
+                    "foreignField": "id",
+                    "as": "brand_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "competitions",
+                    "localField": "competition_id",
+                    "foreignField": "id",
+                    "as": "competition_info"
+                }
+            }
+        ]
+        
+        master_kits = await db.master_kits.aggregate(pipeline).to_list(limit)
+        
+        # Convert to response format
+        result = []
+        for kit in master_kits:
+            kit.pop('_id', None)
+            
+            response = MasterKitResponse(
+                **kit,
+                team_info=kit['team_info'][0] if kit['team_info'] else {},
+                brand_info=kit['brand_info'][0] if kit['brand_info'] else {},
+                competition_info=kit['competition_info'][0] if kit['competition_info'] else None
+            )
+            result.append(response)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Get master kits error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching master kits")
+
+@api_router.get("/master-kits/{kit_id}", response_model=MasterKitResponse)
+async def get_master_kit(kit_id: str):
+    """Get single Master Kit with enriched data"""
+    try:
+        # Use aggregation to get enriched data
+        pipeline = [
+            {"$match": {"id": kit_id}},
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "team_id",
+                    "foreignField": "id",
+                    "as": "team_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "brands", 
+                    "localField": "brand_id",
+                    "foreignField": "id",
+                    "as": "brand_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "competitions",
+                    "localField": "competition_id", 
+                    "foreignField": "id",
+                    "as": "competition_info"
+                }
+            }
+        ]
+        
+        result = await db.master_kits.aggregate(pipeline).to_list(1)
+        if not result:
+            raise HTTPException(status_code=404, detail="Master kit not found")
+        
+        kit = result[0]
+        kit.pop('_id', None)
+        
+        return MasterKitResponse(
+            **kit,
+            team_info=kit['team_info'][0] if kit['team_info'] else {},
+            brand_info=kit['brand_info'][0] if kit['brand_info'] else {},
+            competition_info=kit['competition_info'][0] if kit['competition_info'] else None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get master kit error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching master kit")
+
+# ================================
+# REFERENCE KIT ENDPOINTS
+# ================================
+
+@api_router.post("/reference-kits", response_model=ReferenceKitResponse)
+async def create_reference_kit(
+    kit_data: ReferenceKitCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a Reference Kit from a Master Kit"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate master kit exists
+        master_kit = await db.master_kits.find_one({"id": kit_data.master_kit_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master kit not found")
+        
+        # Generate TopKit reference
+        reference = await get_next_kit_reference("REF")
+        
+        # Create Reference Kit
+        reference_kit = ReferenceKit(
+            **kit_data.dict(),
+            created_by=user_id,
+            topkit_reference=reference
+        )
+        
+        # Insert into database
+        await db.reference_kits.insert_one(reference_kit.dict())
+        
+        # Get enriched data for response
+        team = await db.teams.find_one({"id": master_kit["team_id"]})
+        brand = await db.brands.find_one({"id": master_kit["brand_id"]})
+        
+        return ReferenceKitResponse(
+            **reference_kit.dict(),
+            master_kit_info=master_kit,
+            team_info=team or {},
+            brand_info=brand or {}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Reference kit creation error: {e}")
+        raise HTTPException(status_code=500, detail="Error creating reference kit")
+
+@api_router.get("/reference-kits", response_model=List[ReferenceKitResponse])
+async def get_reference_kits(
+    master_kit_id: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get Reference Kits with enriched data - this is what shows in Kit Store"""
+    try:
+        # Build filter query
+        filter_query = {}
+        if master_kit_id:
+            filter_query["master_kit_id"] = master_kit_id
+        
+        # Aggregation pipeline to enrich data
+        pipeline = [
+            {"$match": filter_query},
+            {"$sort": {"created_at": -1}},
+            {"$skip": offset},
+            {"$limit": limit},
+            {
+                "$lookup": {
+                    "from": "master_kits",
+                    "localField": "master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_kit_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "master_kit_info.team_id",
+                    "foreignField": "id", 
+                    "as": "team_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "brands",
+                    "localField": "master_kit_info.brand_id",
+                    "foreignField": "id",
+                    "as": "brand_info"
+                }
+            }
+        ]
+        
+        reference_kits = await db.reference_kits.aggregate(pipeline).to_list(limit)
+        
+        # Convert to response format
+        result = []
+        for kit in reference_kits:
+            kit.pop('_id', None)
+            
+            response = ReferenceKitResponse(
+                **kit,
+                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
+                team_info=kit['team_info'][0] if kit['team_info'] else {},
+                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+            )
+            result.append(response)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Get reference kits error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching reference kits")
+
+# ================================
+# PERSONAL KIT ENDPOINTS (USER COLLECTIONS)
+# ================================
+
+@api_router.post("/personal-kits", response_model=PersonalKitResponse)
+async def add_kit_to_collection(
+    kit_data: PersonalKitCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a Reference Kit to user's personal collection with personalization"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate reference kit exists
+        reference_kit = await db.reference_kits.find_one({"id": kit_data.reference_kit_id})
+        if not reference_kit:
+            raise HTTPException(status_code=404, detail="Reference kit not found")
+        
+        # Check if user already has this kit in their collection
+        existing = await db.personal_kits.find_one({
+            "user_id": user_id,
+            "reference_kit_id": kit_data.reference_kit_id
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="Kit already in your collection")
+        
+        # Create Personal Kit
+        personal_kit = PersonalKit(
+            **kit_data.dict(),
+            user_id=user_id
+        )
+        
+        # Insert into database
+        await db.personal_kits.insert_one(personal_kit.dict())
+        
+        # Get enriched data for response
+        master_kit = await db.master_kits.find_one({"id": reference_kit["master_kit_id"]})
+        team = await db.teams.find_one({"id": master_kit["team_id"]}) if master_kit else {}
+        brand = await db.brands.find_one({"id": master_kit["brand_id"]}) if master_kit else {}
+        
+        return PersonalKitResponse(
+            **personal_kit.dict(),
+            reference_kit_info=reference_kit,
+            master_kit_info=master_kit or {},
+            team_info=team or {},
+            brand_info=brand or {}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Personal kit creation error: {e}")
+        raise HTTPException(status_code=500, detail="Error adding kit to collection")
+
+@api_router.get("/personal-kits", response_model=List[PersonalKitResponse])  
+async def get_user_collection(
+    collection_type: Optional[str] = None,  # "owned", "wanted"
+    current_user: dict = Depends(get_current_user)
+):
+    """Get user's personal kit collection with enriched data"""
+    try:
+        user_id = current_user['id']
+        
+        # Build filter query
+        filter_query = {"user_id": user_id}
+        if collection_type:
+            filter_query["collection_type"] = collection_type
+        
+        # Aggregation pipeline for enriched data
+        pipeline = [
+            {"$match": filter_query},
+            {"$sort": {"added_to_collection_at": -1}},
+            {
+                "$lookup": {
+                    "from": "reference_kits",
+                    "localField": "reference_kit_id",
+                    "foreignField": "id",
+                    "as": "reference_kit_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "master_kits", 
+                    "localField": "reference_kit_info.master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_kit_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "master_kit_info.team_id",
+                    "foreignField": "id",
+                    "as": "team_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "brands",
+                    "localField": "master_kit_info.brand_id", 
+                    "foreignField": "id",
+                    "as": "brand_info"
+                }
+            }
+        ]
+        
+        personal_kits = await db.personal_kits.aggregate(pipeline).to_list(1000)
+        
+        # Convert to response format
+        result = []
+        for kit in personal_kits:
+            kit.pop('_id', None)
+            
+            response = PersonalKitResponse(
+                **kit,
+                reference_kit_info=kit['reference_kit_info'][0] if kit['reference_kit_info'] else {},
+                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
+                team_info=kit['team_info'][0] if kit['team_info'] else {},
+                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+            )
+            result.append(response)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Get personal kits error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching personal kits")
+
+@api_router.put("/personal-kits/{kit_id}", response_model=PersonalKitResponse)
+async def update_personal_kit(
+    kit_id: str,
+    update_data: PersonalKitUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's personal kit details (only owner can edit)"""
+    try:
+        user_id = current_user['id']
+        
+        # Verify ownership
+        personal_kit = await db.personal_kits.find_one({
+            "id": kit_id,
+            "user_id": user_id
+        })
+        if not personal_kit:
+            raise HTTPException(status_code=404, detail="Personal kit not found or not owned by you")
+        
+        # Prepare update data (exclude None values)
+        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        if update_dict:
+            update_dict["last_updated_at"] = datetime.utcnow()
+            
+            # Update in database
+            await db.personal_kits.update_one(
+                {"id": kit_id},
+                {"$set": update_dict}
+            )
+        
+        # Get updated kit with enriched data
+        updated_kit = await get_enriched_personal_kit(kit_id)
+        return updated_kit
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Personal kit update error: {e}")
+        raise HTTPException(status_code=500, detail="Error updating personal kit")
+
+@api_router.delete("/personal-kits/{kit_id}")
+async def remove_kit_from_collection(
+    kit_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove kit from user's collection (only owner can remove)"""
+    try:
+        user_id = current_user['id']
+        
+        # Verify ownership and delete
+        result = await db.personal_kits.delete_one({
+            "id": kit_id,
+            "user_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Personal kit not found or not owned by you")
+        
+        return {"message": "Kit removed from collection successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Personal kit removal error: {e}")
+        raise HTTPException(status_code=500, detail="Error removing kit from collection")
+
+# Helper function for enriched personal kit data
+async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
+    """Get personal kit with all enriched data"""
+    pipeline = [
+        {"$match": {"id": kit_id}},
+        {
+            "$lookup": {
+                "from": "reference_kits",
+                "localField": "reference_kit_id", 
+                "foreignField": "id",
+                "as": "reference_kit_info"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "master_kits",
+                "localField": "reference_kit_info.master_kit_id",
+                "foreignField": "id", 
+                "as": "master_kit_info"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "teams",
+                "localField": "master_kit_info.team_id",
+                "foreignField": "id",
+                "as": "team_info"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "brands",
+                "localField": "master_kit_info.brand_id",
+                "foreignField": "id", 
+                "as": "brand_info"
+            }
+        }
+    ]
+    
+    result = await db.personal_kits.aggregate(pipeline).to_list(1)
+    if not result:
+        raise HTTPException(status_code=404, detail="Personal kit not found")
+    
+    kit = result[0]
+    kit.pop('_id', None)
+    
+    return PersonalKitResponse(
+        **kit,
+        reference_kit_info=kit['reference_kit_info'][0] if kit['reference_kit_info'] else {},
+        master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
+        team_info=kit['team_info'][0] if kit['team_info'] else {},
+        brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+    )
+
+# ================================
+# KIT STORE ENDPOINT (VESTIAIRE) - SHOWS REFERENCE KITS
+# ================================
+
+@api_router.get("/vestiaire", response_model=List[ReferenceKitResponse])
+async def get_kit_store(
+    team_id: Optional[str] = None,
+    brand_id: Optional[str] = None,
+    season: Optional[str] = None,
+    kit_type: Optional[KitType] = None,
+    search: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """
+    Get Kit Store (Vestiaire) - Shows Reference Kits available for collection
+    This replaces the old vestiaire endpoint and shows Reference Kits that users can add to their Personal Collections
+    """
+    try:
+        # Build filter for master kits first (for search functionality)
+        master_kit_filter = {}
+        if team_id:
+            master_kit_filter["team_id"] = team_id
+        if season:
+            master_kit_filter["season"] = {"$regex": season, "$options": "i"}
+        if kit_type:
+            master_kit_filter["kit_type"] = kit_type
+        
+        # Get matching master kits if filters applied
+        master_kit_ids = []
+        if master_kit_filter or search:
+            master_kits_pipeline = [{"$match": master_kit_filter}]
+            
+            if search:
+                # Add team/brand name search via lookup
+                master_kits_pipeline.extend([
+                    {
+                        "$lookup": {
+                            "from": "teams",
+                            "localField": "team_id", 
+                            "foreignField": "id",
+                            "as": "team_info"
+                        }
+                    },
+                    {
+                        "$lookup": {
+                            "from": "brands",
+                            "localField": "brand_id",
+                            "foreignField": "id", 
+                            "as": "brand_info"
+                        }
+                    },
+                    {
+                        "$match": {
+                            "$or": [
+                                {"team_info.name": {"$regex": search, "$options": "i"}},
+                                {"brand_info.name": {"$regex": search, "$options": "i"}},
+                                {"season": {"$regex": search, "$options": "i"}},
+                                {"design_name": {"$regex": search, "$options": "i"}}
+                            ]
+                        }
+                    }
+                ])
+            
+            matching_master_kits = await db.master_kits.aggregate(master_kits_pipeline).to_list(1000)
+            master_kit_ids = [mk["id"] for mk in matching_master_kits]
+        
+        # Build reference kit filter
+        ref_kit_filter = {}
+        if master_kit_ids:
+            ref_kit_filter["master_kit_id"] = {"$in": master_kit_ids}
+        
+        # Get reference kits with enriched data
+        pipeline = [
+            {"$match": ref_kit_filter},
+            {"$sort": {"created_at": -1}},
+            {"$skip": offset},
+            {"$limit": limit},
+            {
+                "$lookup": {
+                    "from": "master_kits",
+                    "localField": "master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_kit_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "teams",
+                    "localField": "master_kit_info.team_id", 
+                    "foreignField": "id",
+                    "as": "team_info"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "brands", 
+                    "localField": "master_kit_info.brand_id",
+                    "foreignField": "id",
+                    "as": "brand_info"
+                }
+            }
+        ]
+        
+        reference_kits = await db.reference_kits.aggregate(pipeline).to_list(limit)
+        
+        # Convert to response format
+        result = []
+        for kit in reference_kits:
+            kit.pop('_id', None)
+            
+            response = ReferenceKitResponse(
+                **kit,
+                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
+                team_info=kit['team_info'][0] if kit['team_info'] else {},
+                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+            )
+            result.append(response)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Kit store error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching kit store")
+
+
 app.include_router(api_router)
 
 # Mount static files for uploads
