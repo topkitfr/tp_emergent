@@ -525,19 +525,19 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {Array.isArray(jerseyReleases) ? jerseyReleases.length : 0}
+                {Array.isArray(referenceKits) ? referenceKits.length : 0}
               </div>
               <div className="text-sm text-blue-700">Available Releases</div>
             </div>
             <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {Array.isArray(jerseyReleases) && jerseyReleases.length > 0 ? Math.round(jerseyReleases.reduce((sum, r) => sum + (r.estimated_value || 0), 0) / jerseyReleases.length) : 0}€
+                {Array.isArray(referenceKits) && referenceKits.length > 0 ? Math.round(referenceKits.reduce((sum, r) => sum + (r.estimated_value || 0), 0) / referenceKits.length) : 0}€
               </div>
               <div className="text-sm text-green-700">Average Estimated Price</div>
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {Array.isArray(jerseyReleases) ? new Set(jerseyReleases.map(r => r.player_name).filter(Boolean)).size : 0}
+                {Array.isArray(referenceKits) ? new Set(referenceKits.map(r => r.player_name).filter(Boolean)).size : 0}
               </div>
               <div className="text-sm text-purple-700">Different Players</div>
             </div>
