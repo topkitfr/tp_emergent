@@ -59,7 +59,7 @@ const JerseyDetailModal = ({ jersey, isOpen, onClose, context = 'explorer', onAc
               onClick={() => onAction?.('remove', jersey)}
               className="flex-1 bg-red-100 text-red-800 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
             >
-              🗑️ Supprimer
+              🗑️ Remove
             </button>
           </div>
         );
