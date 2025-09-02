@@ -239,7 +239,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
     const handleSubmit = (e) => {
       e.preventDefault();
       if (!formData.name) {
-        alert('Le nom du joueur est obligatoire');
+        alert('Player name is required');
         return;
       }
       handleCreatePlayer({
