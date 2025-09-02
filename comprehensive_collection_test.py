@@ -9,7 +9,7 @@ import json
 import time
 from datetime import datetime
 
-BASE_URL = "https://football-jersey-hub-3.preview.emergentagent.com/api"
+BASE_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
 
 class ComprehensiveCollectionTester:
     def __init__(self):

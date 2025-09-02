@@ -18,7 +18,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://football-jersey-hub-3.preview.emergentagent.com/api"
+BASE_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
 
 class CollectionWorkflowTester:
     def __init__(self):

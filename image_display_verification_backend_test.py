@@ -13,7 +13,7 @@ from datetime import datetime
 import base64
 
 # Configuration des URLs
-BACKEND_URL = "https://football-jersey-hub-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
 
 # Données d'authentification admin
 ADMIN_EMAIL = "topkitfr@gmail.com"

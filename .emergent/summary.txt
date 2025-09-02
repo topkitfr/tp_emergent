@@ -1,102 +1,107 @@
 <analysis>
-The trajectory details a series of complex bug fixes and UI enhancements for the TopKit application. Initially, the AI engineer addressed detailed contribution views and field-level voting. The core of the recent work revolved around fixing the non-functional jersey release collection and wishlist buttons, which required extensive debugging across frontend and backend. This involved correcting API endpoints, fixing JavaScript hoisting issues, and resolving MongoDB aggregation pipeline problems for collection data.
+The AI engineer's work transitioned from bug fixes and UI/UX enhancements to a major architectural redesign. Initially, the focus was on critical frontend/backend issues, like correcting non-functional collection buttons and fixing data display on  ( bug). This included a broad Compétition to Ligues terminology update.
 
-A critical regression in  was also identified and fixed. Subsequent user reports led to further frontend debugging in , addressing incorrect data filtering, display logic, and a significant React state management bug ( fix). Finally, a broad terminology update from Compétitions to Ligues was executed across multiple frontend components, concluding the recent development cycle.
+The conversation then shifted significantly to implementing a user-requested database reset, preserving key user accounts. Following this, UI adjustments were made on the homepage (button rename and redirection). A comprehensive site-wide English translation and terminology update (e.g., Jersey to Kit) followed, along with refining the 'My Profile' settings to display inline instead of a modal.
+
+The most recent and critical phase involved a fundamental redesign of the core Kit Collection Hierarchy (Master Kit → Reference Kit → Personal Kit) as per the user's explicit request for a fresh start. This entailed developing new backend models and API endpoints, with initial frontend migration starting on . The current state represents a significant backend refactoring, with ongoing frontend adaptation.
 </analysis>
 
 <product_requirements>
-TopKit is a collaborative platform for football jersey enthusiasts, aiming to provide a robust database and community features.
-**Problem Statement:** Users need to efficiently manage their football jersey collections, view detailed contributions, and interact with a reliable, visually appealing interface. The platform's core value lies in its collaborative nature, allowing users to contribute jersey information and vote on proposed changes.
+TopKit is a collaborative platform for football jersey enthusiasts, enabling collection management, detailed contribution views, and community interaction.
 
-**Implemented Features (prior to this trajectory):**
-*   Image verification, authentication, unified card structures.
-*   Contribution voting, admin interface.
-*   User profile customization, collection management with Discogs-like estimation.
-*   Public collections and a unified contributions page with voting (for logged-in users).
+**Core Problem:** Users need an efficient, robust system for managing football jersey collections, coupled with a reliable and appealing interface.
 
-**Specific Requests Addressed in this Trajectory:**
-1.  **Detailed Views of Pending Contributions:** Requires before/after comparisons, contributor info, field-by-field voting, and image galleries. (Largely implemented prior to the critical bug reports, but context is set).
-2.  **Fix Non-Functional Collection/Wishlist Buttons:** Resolve the issue preventing users from adding 'jersey releases' to their Possédé (owned) or Recherché (wanted) lists, including the Voir détails button. This was a critical bug impacting core functionality on .
-3.  **UI/UX Enhancements:** Add an image behind the title Estimez votre collection de maillots de football (banner effect) and remove the redundant documenter button.
-4.  **Terminology Change:** Modify compétition to Ligues across the application for better user experience and accuracy.
+**Previous Requirements (Addressed in this trajectory):**
+1.  **Detailed Contribution Views:** Enhanced display for pending contributions (prioritized before critical bug reports).
+2.  **Collection/Wishlist Button Fix:** Resolved critical bug preventing users from adding jersey releases to their owned or wanted lists on , including Voir détails.
+3.  **UI/UX Enhancements:** Added a banner image to the homepage and removed a redundant documenter button.
+4.  **Terminology Change (Phase 1):** Modified Compétition to Ligues across the application.
+5.  **Database Reset:** Ability to wipe the database while preserving specified admin/user accounts.
+6.  **Homepage Button Update:** Rename Explorer la base to Create your collection and redirect it to Le Vestiaire.
+7.  **Full Site Translation & Terminology (Phase 2):** Translate the entire site to English, adjusting terms like 'Jersey' to 'Kit'.
+8.  **Profile Page Settings UX:** Display user settings directly within the 'My Profile' page's tab content, eliminating an intermediary modal.
+9.  **Restore Add Kit Form:** Re-implement the missing form for adding new kits on the Kit Store (VestiairePage).
+
+**Current Overarching Requirement (Hierarchy Redesign):**
+10. **Kit Information Hierarchy Redesign (Master Kit → Reference Kit → Personal Kit):** Rethink the core jersey collection system to support a precise hierarchy:
+    *   **Master Kit:** Template (Type, Model, Competition, badges).
+    *   **Reference Kit:** Generic version derived from Master Kit, added to user collections.
+    *   **Personal Kit:** User-specific details (Size, Condition, Price, Worn/Signed/Printed status, Notes), editable only by owner. This requires a fresh start for backend and frontend.
 </product_requirements>
 
 <key_technical_concepts>
--   **React/FastAPI/MongoDB Stack**: Core full-stack technologies.
--   **JWT Authentication**: Secure user sessions.
+-   **React/FastAPI/MongoDB Stack**: Core full-stack development.
+-   **JWT Authentication**: User session security.
 -   **React Router DOM**: Frontend navigation.
--   **State Management/Hooks (useState, useEffect, useMemo)**: Frontend data flow and rendering.
+-   **State Management/Hooks (useState, useEffect, useMemo)**: Frontend data flow.
 -   **MongoDB Aggregation Pipelines**: Backend data querying and transformation.
--   **JavaScript Hoisting**: A bug cause.
--   **Environment Variables**: Secure configuration.
+-   **Database Management**: Backup, restore, and collection operations.
+-   **JSON Serialization/Deserialization**: Data transfer between backend and frontend.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Summary**: Main FastAPI application handling all API routes.
-    -   **Changes Made**:
-        -    endpoint enhanced (prior).
-        -    endpoint added (prior).
-        -   Crucially, the MongoDB aggregation pipelines for  and its sub-endpoints (, ) were modified multiple times to correctly populate  and  data, resolving empty object issues.
-        -   Added/modified logic for deleting Jersey Releases and associated collections.
--   ****:
+    -   **Summary**: Main FastAPI application for API routes.
+    -   **Changes Made**: MongoDB aggregation pipelines fixed for collections. Significantly, all old jersey/collection-related endpoints were removed, and new API endpoints for , , and  were added at the end of the file. This includes CRUD operations and complex logic for kit store, user collections, and personalization, following the new hierarchy.
+-   ** (Previously )**:
     -   **Summary**: Defines MongoDB document structures.
-    -   **Changes Made**:  and  updated for field-level voting (prior).
+    -   **Changes Made**: Completely refactored. Old  and  models were removed. New Pydantic models for , , and  were defined, incorporating the detailed hierarchy fields (e.g., , , , , , ).
 -   ****:
-    -   **Summary**: Main application component, handles routing and global state.
-    -   **Changes Made**:
-        -   Added route  (prior).
-        -   **Critical fix**: Modified to correctly import and render  instead of  for the user's collection route, ensuring the right component with the latest fixes is used.
-        -   Added .
+    -   **Summary**: Main application component, handles routing.
+    -   **Changes Made**: Fixed to correctly import and render  instead of .
 -   ****:
     -   **Summary**: User authentication and registration modal.
-    -   **Changes Made**: Fixed a regression by re-adding  and  props to input fields (prior, but implicitly re-validated during current work).
+    -   **Changes Made**: Translated all French text to English (e.g., Connexion to Login, Inscription to Register) with correct field labels and placeholders.
 -   ****:
-    -   **Summary**: Displays detailed contribution info in a modal.
-    -   **Changes Made**: Enhanced to display rich contribution details (prior).
+    -   **Summary**: Global navigation header.
+    -   **Changes Made**: Fully translated French navigation items and search placeholders to English (e.g., Découvrir to Explore, Mon Profil to My Profile, Rechercher... to Search...).
 -   ****:
-    -   **Summary**: Centralized page for managing contributions.
-    -   **Changes Made**: Integrated  and  (prior).
--   ****:
-    -   **Summary**: New page for in-depth contribution review.
-    -   **Changes Made**: File created with detailed view layout (prior).
--   ****:
-    -   **Summary**: Displays user's collected jersey releases.
+    -   **Summary**: Displays user's collected jersey releases (now kits).
     -   **Changes Made**:
-        -   **Critical fix**: Corrected API endpoint for  from  to .
-        -   **Critical fix**: Resolved JavaScript hoisting by defining  and  before  component.
-        -   Added state for  and , and implemented  (prior, but re-investigated during current work).
+        -   Critical fix for API endpoint in  and hoisting issues.
+        -   Extensively translated all French text to English.
+        -   Re-implemented the Add New Kit Release button and its corresponding modal with detailed form fields aligning with the *old* Jersey Release concept, which is now being refactored.
+        -   **Currently undergoing migration** to interact with the new  and  APIs.
 -   ****:
     -   **Summary**: Displays the user's personal collection of jerseys.
     -   **Changes Made**:
-        -   Modified to correctly load and display user collections by ensuring the correct API endpoints are called and data is processed.
-        -   **Critical fix**: Updated filtering logic within  to correctly access nested  and  instead of flat  and .
-        -   Corrected value calculation logic to use .
-        -   Adjusted rendering logic to display collection items using the correct nested data paths (e.g., ).
-        -   **Critical fix**: Implemented  for  and  to ensure they reactively update with state changes, fixing a React state synchronization bug.
-        -   Added  for debugging purposes.
+        -   Corrected filtering logic (, ).
+        -   Implemented  for  and  to fix reactive updates.
+        -   Translated all French text to English, updating labels and descriptions.
 -   ****:
-    -   **Summary**: Main landing page with collaborative features.
+    -   **Summary**: Main landing page.
     -   **Changes Made**:
-        -   Added banner image functionality as per user request (URL: ).
-        -   Removed the redundant documenter button.
+        -   Added banner image. Removed documenter button.
+        -   Renamed Explorer la base button to Create your collection and redirected its  call from  to .
+        -   Translated all French text to English, including hero section, stats, and carousel categories.
 -   ****:
     -   **Summary**: Page for browsing the jersey catalogue.
-    -   **Changes Made**: Replaced Compétition with Ligue in navigation and descriptions.
+    -   **Changes Made**: Replaced Compétition with Ligue. Fully translated to English.
 -   ****:
-    -   **Summary**: Page for exploring different categories.
-    -   **Changes Made**: Replaced Compétition with Ligue in categories and search results.
+    -   **Summary**: Page for competitions.
+    -   **Changes Made**: Replaced Compétition with Ligue. Fully translated to English.
 -   ****:
-    -   **Summary**: Page specific to competitions.
-    -   **Changes Made**: Replaced Compétition with Ligue in title, descriptions, and forms.
+    -   **Summary**: Page for exploring categories.
+    -   **Changes Made**: Replaced Compétition with Ligue. Fully translated to English.
 -   ****:
     -   **Summary**: Page for contributing new jersey information.
-    -   **Changes Made**: Replaced Compétition with Ligue in the contribution section.
+    -   **Changes Made**: Replaced Compétition with Ligue. Fully translated to English.
 -   ****:
-    -   **Summary**: Page displaying details of a specific competition.
-    -   **Changes Made**: Replaced Compétition with Ligue in error messages and navigation.
+    -   **Summary**: Displays details of a specific competition.
+    -   **Changes Made**: Replaced Compétition with Ligue. Fully translated to English.
+-   ****:
+    -   **Summary**: User's profile page.
+    -   **Changes Made**: Modified to display settings directly inline within the tab content, removing the need for a separate modal. This involved adding a comprehensive settings form directly to the page. Fully translated to English.
+-   ****:
+    -   **Summary**: User settings panel.
+    -   **Changes Made**: It was previously used as a modal; its content is now effectively integrated directly into  for inline display.
+
+-   **New Backend Models in  (after refactoring)**:
+    
+-   **New Backend Endpoints in  (example of newly added structure, truncated for brevity)**:
+    
 </code_architecture>
 
 <pending_tasks>
@@ -105,17 +110,16 @@ TopKit is a collaborative platform for football jersey enthusiasts, aiming to pr
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was focused on resolving a persistent bug where newly added jersey releases were not appearing in the user's Ma Collection page, particularly on mobile. This involved a multi-faceted debugging process that confirmed backend data was correctly saved but failed to display on the frontend.
+Immediately prior to this summary, the AI engineer was engaged in a complete redesign and re-implementation of the core **Kit Information Hierarchy**, transitioning from the previous Master Jersey and Jersey Release concepts to a more granular **Master Kit → Reference Kit → Personal Kit** system, as requested by the user. The user explicitly chose a fresh start (Option A) for this redesign.
 
-The key issues and fixes implemented were:
-1.  **Wrong Component Used**: It was discovered that  was erroneously rendering  instead of  for the user's collection route. This was critical because all previous frontend display fixes were implemented in  but were not being utilized. The  file was modified to correctly import and use .
-2.  **React State Synchronization Bug**: Even after using the correct component, the collection items still didn't display. The root cause was identified as a React state management issue in , where  and  (which controlled conditional rendering) were not reactively updating when the  data changed. The solution involved refactoring these calculations to use the  hook, ensuring they re-evaluate only when  changes, thereby correctly reflecting the fetched data in the UI.
+The work completed so far includes:
+1.  **Backend Model Definition**: New Pydantic models for , , and  have been created in . These models accurately reflect the new hierarchy, including specific fields for kit type, model type, competition details, user-specific attributes (size, condition, worn, signed, printed), and unique reference numbers (e.g., ).
+2.  **Backend API Endpoints**: A comprehensive set of new CRUD (Create, Read, Update, Delete) API endpoints has been implemented in  to support the new , , and  models. This includes routes for managing master kits, reference kits, and personal kits, as well as an updated  endpoint to display  objects for users to add to their collections. Complex logic for MongoDB aggregation, ownership validation, and unique reference number generation has been incorporated.
+3.  **Frontend Migration Started**: The  (Kit Store) in the frontend has begun its migration to interact with these new  and  APIs. This involves updating API calls and adapting the component's logic to the new data structures and workflow (adding a  to create a ).
 
-Following these critical bug fixes, the engineer also completed a general terminology update across the application, changing all instances of compétition to Ligues in various frontend components (, , , , ). This was a distinct UI/UX enhancement.
-
-The latest interaction confirms that the terminology changes were applied successfully. The previous issue with Ma Collection not displaying items was believed to be fixed with the  update, and the user was asked to re-test.
+The current state is that the backend has been largely refactored and implemented according to the new hierarchy. The frontend, specifically , has been updated to initiate this new workflow. However, other frontend components that previously interacted with Jersey Releases or Master Jerseys will still need to be updated to integrate with the new , , and  endpoints. The previous Add New Kit Release button and modal on VestiairePage were implemented based on the *old* model, which now needs to be re-evaluated and adapted to the new Reference Kit creation flow.
 </current_work>
 
 <optional_next_step>
-The next step is to get user confirmation on the  fix after the  implementation.
+The next step is to continue the frontend migration, specifically updating the  to fully align with the new , , and  backend architecture and implement the Add New Kit functionality using the new Reference Kit creation flow.
 </optional_next_step>

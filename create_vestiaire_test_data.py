@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 import uuid
 
-API_BASE = "https://football-jersey-hub-3.preview.emergentagent.com/api"
+API_BASE = "https://kit-hierarchy.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
