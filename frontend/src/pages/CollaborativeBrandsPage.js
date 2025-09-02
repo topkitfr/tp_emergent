@@ -507,7 +507,7 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center"
           >
             <span className="mr-2">➕</span>
-            Ajouter une marque
+            Add Brand
           </button>
         )}
       </div>
