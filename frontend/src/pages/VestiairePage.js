@@ -73,7 +73,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
         },
         body: JSON.stringify(personalKitData)
       });
