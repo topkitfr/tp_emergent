@@ -47,7 +47,11 @@ from collaborative_models import (
     JerseyReleaseCreate,
     TeamResponse, MasterJerseyResponse,
     ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
-    ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel
+    ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel,
+    # New Kit Hierarchy Models
+    MasterKit, ReferenceKit, PersonalKit, KitType,
+    MasterKitCreate, ReferenceKitCreate, PersonalKitCreate, PersonalKitUpdate,
+    MasterKitResponse, ReferenceKitResponse, PersonalKitResponse
 )
 
 ROOT_DIR = Path(__file__).parent
