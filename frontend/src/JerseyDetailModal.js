@@ -53,7 +53,7 @@ const JerseyDetailModal = ({ jersey, isOpen, onClose, context = 'explorer', onAc
               onClick={() => onAction?.('edit', jersey)}
               className="flex-1 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              ✏️ Modifier
+              ✏️ Edit
             </button>
             <button 
               onClick={() => onAction?.('remove', jersey)}
