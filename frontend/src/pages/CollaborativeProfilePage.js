@@ -401,7 +401,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
       {showSettingsModal && (
         <UserSettingsPanel
           isOpen={showSettingsModal}
-          onClose={() => setShowSettingsModal(false)}
+          onClose={handleSettingsClose}
           user={user}
           onUpdate={handleProfileUpdate}
         />
