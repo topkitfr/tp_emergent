@@ -11302,11 +11302,26 @@ async def get_reference_kits(
         for kit in reference_kits:
             kit.pop('_id', None)
             
+            # Extract enriched data separately
+            master_kit_info = kit.pop('master_kit_info', [])
+            team_info = kit.pop('team_info', [])
+            brand_info = kit.pop('brand_info', [])
+            
+            # Clean ObjectId fields from nested data
+            master_kit_data = master_kit_info[0] if master_kit_info else {}
+            team_data = team_info[0] if team_info else {}
+            brand_data = brand_info[0] if brand_info else {}
+            
+            # Remove MongoDB ObjectId fields
+            master_kit_data.pop('_id', None)
+            team_data.pop('_id', None)
+            brand_data.pop('_id', None)
+            
             response = ReferenceKitResponse(
                 **kit,
-                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
-                team_info=kit['team_info'][0] if kit['team_info'] else {},
-                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+                master_kit_info=master_kit_data,
+                team_info=team_data,
+                brand_info=brand_data
             )
             result.append(response)
         
