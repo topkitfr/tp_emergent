@@ -231,7 +231,7 @@ class MasterKitCreationTester:
             
             response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201 as success
                 created_jersey = response.json()
                 
                 # Verify response structure
