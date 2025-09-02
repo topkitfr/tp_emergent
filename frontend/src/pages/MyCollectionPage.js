@@ -19,23 +19,23 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     
     try {
       setLoading(true);
-      console.log('🔄 Loading collections for user:', user.id);
+      console.log('🔄 Loading personal kit collections for user:', user.id);
 
-      // Load both owned and wanted collections
+      // Load both owned and wanted personal kits using the new API
       const [ownedResponse, wantedResponse] = await Promise.all([
-        fetch(`${API}/api/users/${user.id}/collections/owned`, {
+        fetch(`${API}/api/personal-kits?collection_type=owned`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${API}/api/users/${user.id}/collections/wanted`, {
+        fetch(`${API}/api/personal-kits?collection_type=wanted`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         })
       ]);
 
-      console.log('📥 Collection responses:', {
+      console.log('📥 Personal Kit Collection responses:', {
         owned: ownedResponse.status,
         wanted: wantedResponse.status
       });
@@ -46,7 +46,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
           wantedResponse.json()
         ]);
 
-        console.log('📊 Collections Data:', {
+        console.log('📊 Personal Kit Collections Data:', {
           owned: Array.isArray(ownedData) ? ownedData.length : 'not array',
           wanted: Array.isArray(wantedData) ? wantedData.length : 'not array'
         });
@@ -59,18 +59,18 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
         setCollections(allCollections);
         
-        console.log('Collections Data:', {
+        console.log('Personal Kit Collections Data:', {
           owned: Array.isArray(ownedData) ? ownedData : [],
           wanted: Array.isArray(wantedData) ? wantedData : [],
           ownedCount: Array.isArray(ownedData) ? ownedData.length : 0,
           wantedCount: Array.isArray(wantedData) ? wantedData.length : 0
         });
       } else {
-        console.error('❌ Failed to load collections');
+        console.error('❌ Failed to load personal kit collections');
         setCollections([]);
       }
     } catch (error) {
-      console.error('Error loading collections:', error);
+      console.error('Error loading personal kit collections:', error);
       setCollections([]);
     } finally {
       setLoading(false);
