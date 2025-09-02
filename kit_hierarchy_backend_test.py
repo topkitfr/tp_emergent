@@ -1,7 +1,22 @@
 #!/usr/bin/env python3
 """
-Kit Hierarchy Backend API Testing
-Testing the new Kit hierarchy system with Master Kits, Reference Kits, and Personal Kits
+KIT HIERARCHY WORKFLOW TESTING - BACKEND TEST
+==============================================
+
+This test validates the complete Kit hierarchy workflow with newly created test data:
+
+1. Authentication Test: Verify admin login with topkitfr@gmail.com/TopKitSecure789#
+2. Vestiaire Endpoint Test: Test GET /api/vestiaire to verify 14 Reference Kits with enriched data
+3. Personal Kit Creation Test: Test POST /api/personal-kits to create personal kits from reference kits
+4. Personal Kit Retrieval Test: Test GET /api/personal-kits?collection_type=owned and wanted
+5. Complete Workflow Test: Full user workflow from authentication to collection management
+
+Expected Results:
+- Vestiaire should return ~14 Reference Kits with team names like "FC Barcelona", "Paris Saint-Germain", "Manchester United"
+- Personal Kit creation should work with proper data validation
+- Personal Kit retrieval should return enriched data with reference_kit_info, master_kit_info, team_info, brand_info
+
+Focus: Validating new Kit hierarchy data structures and API responses match migrated frontend expectations.
 """
 
 import requests
