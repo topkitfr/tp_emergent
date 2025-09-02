@@ -197,19 +197,19 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     );
   };
 
-  // Jersey Release Detail Modal
+  // Reference Kit Detail Modal
   const JerseyReleaseDetailModal = ({ release, isOpen, onClose }) => {
     if (!isOpen || !release) return null;
 
-    const masterJerseyInfo = release.master_jersey_info || {};
-    const teamInfo = masterJerseyInfo.team_info || {};
-    const brandInfo = masterJerseyInfo.brand_info || {};
+    const masterKitInfo = release.master_kit_info || {};
+    const teamInfo = release.team_info || {};
+    const brandInfo = release.brand_info || {};
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Kit Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Reference Kit Details</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
           </div>
 
@@ -217,23 +217,22 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-gray-900">Kit Information</h3>
+                <h3 className="font-semibold text-lg text-gray-900">Reference Kit Information</h3>
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Reference:</span> {release.topkit_reference || 'No reference'}</div>
-                  <div><span className="font-medium">Player:</span> {release.player_name || 'No specific player'}</div>
-                  <div><span className="font-medium">Size:</span> {release.size || 'Not specified'}</div>
-                  <div><span className="font-medium">Condition:</span> {release.condition || 'Not specified'}</div>
-                  <div><span className="font-medium">Release Type:</span> {release.release_type || 'Not specified'}</div>
+                  <div><span className="font-medium">Available Sizes:</span> {release.available_sizes?.join(', ') || 'Not specified'}</div>
+                  <div><span className="font-medium">Limited Edition:</span> {release.is_limited_edition ? 'Yes' : 'No'}</div>
+                  <div><span className="font-medium">Verification:</span> {release.verified_level || 'Unverified'}</div>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <h3 className="font-semibold text-lg text-gray-900">Pricing</h3>
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Retail Price:</span> €{release.retail_price || 'N/A'}</div>
-                  <div><span className="font-medium">Estimated Value:</span> €{release.estimated_value || 'N/A'}</div>
-                  {release.purchase_price && (
-                    <div><span className="font-medium">Purchase Price:</span> €{release.purchase_price}</div>
+                  <div><span className="font-medium">Original Retail Price:</span> €{release.original_retail_price || 'N/A'}</div>
+                  <div><span className="font-medium">Current Market Estimate:</span> €{release.current_market_estimate || 'N/A'}</div>
+                  {release.price_range_min && release.price_range_max && (
+                    <div><span className="font-medium">Price Range:</span> €{release.price_range_min} - €{release.price_range_max}</div>
                   )}
                 </div>
               </div>
@@ -245,21 +244,43 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="space-y-2">
                   <div><span className="font-medium">Team:</span> {teamInfo.name || 'Unknown'}</div>
-                  <div><span className="font-medium">Season:</span> {masterJerseyInfo.season || 'Unknown'}</div>
-                  <div><span className="font-medium">Kit Type:</span> {masterJerseyInfo.jersey_type || 'Unknown'}</div>
+                  <div><span className="font-medium">Season:</span> {masterKitInfo.season || 'Unknown'}</div>
+                  <div><span className="font-medium">Kit Type:</span> {masterKitInfo.kit_type || 'Unknown'}</div>
                 </div>
                 <div className="space-y-2">
                   <div><span className="font-medium">Brand:</span> {brandInfo.name || 'Unknown'}</div>
-                  <div><span className="font-medium">Reference:</span> {masterJerseyInfo.topkit_reference || 'No reference'}</div>
+                  <div><span className="font-medium">Model:</span> {masterKitInfo.model || 'Unknown'}</div>
+                  <div><span className="font-medium">Master Kit Reference:</span> {masterKitInfo.topkit_reference || 'No reference'}</div>
                 </div>
               </div>
             </div>
 
-            {/* Description */}
-            {release.description && (
+            {/* Collection Statistics */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg text-gray-900">Collection Statistics</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{release.total_in_collections || 0}</div>
+                  <div className="text-blue-700">Collectors</div>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{release.total_for_sale || 0}</div>
+                  <div className="text-green-700">For Sale</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Available Prints */}
+            {release.available_prints && release.available_prints.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-gray-900">Description</h3>
-                <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-lg">{release.description}</p>
+                <h3 className="font-semibold text-lg text-gray-900">Available Player Prints</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {release.available_prints.map((print, index) => (
+                    <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                      {print.player_name} #{print.number}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
