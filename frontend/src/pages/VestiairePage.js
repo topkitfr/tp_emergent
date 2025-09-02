@@ -279,58 +279,80 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     );
   };
 
-  // Create Kit Release Modal Component
+  // Create Reference Kit Modal Component
   const CreateKitReleaseModal = () => {
     const [formData, setFormData] = useState({
-      master_jersey_id: '',
-      player_name: '',
-      size: '',
-      condition: 'good',
-      retail_price: '',
-      description: '',
-      release_type: 'official'
+      master_kit_id: '',
+      available_sizes: [],
+      original_retail_price: '',
+      current_market_estimate: '',
+      is_limited_edition: false,
+      production_run: '',
+      official_product_code: ''
     });
     const [loading, setLoading] = useState(false);
+
+    const handleSizeToggle = (size) => {
+      const sizes = formData.available_sizes || [];
+      if (sizes.includes(size)) {
+        setFormData(prev => ({
+          ...prev,
+          available_sizes: sizes.filter(s => s !== size)
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          available_sizes: [...sizes, size]
+        }));
+      }
+    };
 
     const handleSubmit = async (e) => {
       e.preventDefault();
       
-      if (!formData.master_jersey_id || !formData.retail_price) {
-        alert('Master Kit and Retail Price are required');
+      if (!formData.master_kit_id || !formData.original_retail_price) {
+        alert('Master Kit ID and Original Retail Price are required');
         return;
       }
 
       setLoading(true);
       try {
-        const response = await fetch(`${API}/api/jersey-releases`, {
+        const submitData = {
+          ...formData,
+          original_retail_price: parseFloat(formData.original_retail_price) || null,
+          current_market_estimate: parseFloat(formData.current_market_estimate) || null,
+          production_run: parseInt(formData.production_run) || null
+        };
+
+        const response = await fetch(`${API}/api/reference-kits`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${user.token}`
           },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(submitData)
         });
 
         if (response.ok) {
-          alert('Kit Release created successfully!');
+          alert('Reference Kit created successfully!');
           setShowCreateModal(false);
           setFormData({
-            master_jersey_id: '',
-            player_name: '',
-            size: '',
-            condition: 'good',
-            retail_price: '',
-            description: '',
-            release_type: 'official'
+            master_kit_id: '',
+            available_sizes: [],
+            original_retail_price: '',
+            current_market_estimate: '',
+            is_limited_edition: false,
+            production_run: '',
+            official_product_code: ''
           });
           loadKitStore(); // Refresh the list
         } else {
           const errorData = await response.json();
-          alert(`Error: ${errorData.detail || 'Failed to create kit release'}`);
+          alert(`Error: ${errorData.detail || 'Failed to create reference kit'}`);
         }
       } catch (error) {
-        console.error('Error creating kit release:', error);
-        alert('Error creating kit release');
+        console.error('Error creating reference kit:', error);
+        alert('Error creating reference kit');
       } finally {
         setLoading(false);
       }
