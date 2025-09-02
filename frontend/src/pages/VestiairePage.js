@@ -10,7 +10,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     player_name: ''
   });
   const [showReleaseDetailModal, setShowReleaseDetailModal] = useState(false);
-  const [selectedReleaseForDetail, setSelectedReleaseForDetail] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadVestiaire();
