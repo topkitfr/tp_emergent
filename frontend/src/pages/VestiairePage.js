@@ -537,7 +537,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 onClick={() => setShowCreateModal(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors ml-6"
               >
-                Add New Kit Release
+                Add New Reference Kit
               </button>
             )}
           </div>
