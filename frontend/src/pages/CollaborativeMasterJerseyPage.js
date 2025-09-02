@@ -201,13 +201,9 @@ const CollaborativeMasterJerseyPage = ({
       brand_id: '',
       season: '',
       jersey_type: 'home',
-      design_name: '',
+      model: 'authentic', // Required field for MasterJerseyCreate
       primary_color: '',
-      secondary_colors: [],
-      main_sponsor: '',
-      competition_id: '',
-      pattern_description: '',
-      special_features: []
+      secondary_colors: []
     });
 
     const [newColor, setNewColor] = useState('');
