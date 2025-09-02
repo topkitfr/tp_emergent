@@ -1,41 +1,43 @@
 import React, { useState, useEffect } from 'react';
 
 const VestiairePage = ({ user, API, onDataUpdate }) => {
-  const [jerseyReleases, setJerseyReleases] = useState([]);
+  const [referenceKits, setReferenceKits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
     team_id: '',
     season: '',
-    player_name: ''
+    kit_type: ''
   });
   const [showReleaseDetailModal, setShowReleaseDetailModal] = useState(false);
   const [selectedReleaseForDetail, setSelectedReleaseForDetail] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
-    loadVestiaire();
+    loadKitStore();
   }, []);
 
-  // Define addToCollection function BEFORE JerseyReleaseCard component
-  const addToCollection = async (jerseyReleaseId, collectionType) => {
+  // Define addToCollection function for new Personal Kit API
+  const addToCollection = async (referenceKitId, collectionType) => {
     if (!user) {
       alert('You must be signed in to add items to your collection');
       return;
     }
 
     try {
-      console.log(`🔄 Adding Jersey Release ${jerseyReleaseId} to ${collectionType} collection for user ${user.id}`);
+      console.log(`🔄 Adding Reference Kit ${referenceKitId} to ${collectionType} collection for user ${user.id}`);
       
-      const response = await fetch(`${API}/api/users/${user.id}/collections`, {
+      const response = await fetch(`${API}/api/personal-kits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({
-          jersey_release_id: jerseyReleaseId,
-          collection_type: collectionType
+          reference_kit_id: referenceKitId,
+          collection_type: collectionType,
+          condition: 'good',  // Default condition
+          size: '',  // User can edit later
         })
       });
 
@@ -45,7 +47,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       if (response.ok) {
         console.log(`✅ Successfully added to ${collectionType} collection`);
         alert(`Kit added to ${collectionType === 'owned' ? 'owned' : 'wanted'} collection!`);
-        loadVestiaire(); // Refresh list
+        loadKitStore(); // Refresh list
       } else {
         console.error(`❌ Failed to add to collection: ${response.status}`);
         alert(`Error: ${responseData.detail || 'Failed to add to collection'}`);
@@ -56,46 +58,46 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
   };
 
-  // Define showReleaseDetails function BEFORE JerseyReleaseCard component  
-  const showReleaseDetails = (release) => {
-    setSelectedReleaseForDetail(release);
+  // Define showReleaseDetails function
+  const showReleaseDetails = (referenceKit) => {
+    setSelectedReleaseForDetail(referenceKit);
     setShowReleaseDetailModal(true);
   };
 
-  const loadVestiaire = async () => {
+  const loadKitStore = async () => {
     try {
       setLoading(true);
       
-      // Build query parameters
+      // Build query parameters for new vestiaire API
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.team_id) params.append('team_id', filters.team_id);
       if (filters.season) params.append('season', filters.season);
-      if (filters.player_name) params.append('player_name', filters.player_name);
+      if (filters.kit_type) params.append('kit_type', filters.kit_type);
 
-      console.log(`🔄 Loading vestiaire with params: ${params}`);
+      console.log(`🔄 Loading kit store with params: ${params}`);
       
       const response = await fetch(`${API}/api/vestiaire?${params}`);
       
-      console.log(`📥 Vestiaire response: ${response.status}`);
+      console.log(`📥 Kit store response: ${response.status}`);
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ Loaded ${Array.isArray(data) ? data.length : 'non-array'} vestiaire items:`, data);
+        console.log(`✅ Loaded ${Array.isArray(data) ? data.length : 'non-array'} reference kits:`, data);
         
         if (Array.isArray(data)) {
-          setJerseyReleases(data);
+          setReferenceKits(data);
         } else {
-          console.warn('Vestiaire API returned non-array data:', data);
-          setJerseyReleases([]);
+          console.warn('Kit Store API returned non-array data:', data);
+          setReferenceKits([]);
         }
       } else {
-        console.error(`❌ Vestiaire API error: ${response.status}`);
-        setJerseyReleases([]);
+        console.error(`❌ Kit Store API error: ${response.status}`);
+        setReferenceKits([]);
       }
     } catch (error) {
-      console.error('Error loading vestiaire:', error);
-      setJerseyReleases([]);
+      console.error('Error loading kit store:', error);
+      setReferenceKits([]);
     } finally {
       setLoading(false);
     }
