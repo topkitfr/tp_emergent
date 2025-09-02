@@ -11348,7 +11348,7 @@ async def get_reference_kits(
 # PERSONAL KIT ENDPOINTS (USER COLLECTIONS)
 # ================================
 
-@api_router.post("/personal-kits", response_model=PersonalKitResponse)
+@api_router.post("/personal-kits")
 async def add_kit_to_collection(
     kit_data: PersonalKitCreate,
     current_user: dict = Depends(get_current_user)
@@ -11361,11 +11361,13 @@ async def add_kit_to_collection(
         reference_kit = await db.reference_kits.find_one({"id": kit_data.reference_kit_id})
         if not reference_kit:
             raise HTTPException(status_code=404, detail="Reference kit not found")
+        reference_kit.pop('_id', None)
         
         # Check if user already has this kit in their collection
         existing = await db.personal_kits.find_one({
             "user_id": user_id,
-            "reference_kit_id": kit_data.reference_kit_id
+            "reference_kit_id": kit_data.reference_kit_id,
+            "collection_type": kit_data.collection_type
         })
         if existing:
             raise HTTPException(status_code=400, detail="Kit already in your collection")
@@ -11381,21 +11383,34 @@ async def add_kit_to_collection(
         
         # Get enriched data for response
         master_kit = await db.master_kits.find_one({"id": reference_kit["master_kit_id"]})
-        team = await db.teams.find_one({"id": master_kit["team_id"]}) if master_kit else {}
-        brand = await db.brands.find_one({"id": master_kit["brand_id"]}) if master_kit else {}
+        if master_kit:
+            master_kit.pop('_id', None)
         
-        return PersonalKitResponse(
+        team = await db.teams.find_one({"id": master_kit["team_id"]}) if master_kit else None
+        if team:
+            team.pop('_id', None)
+            
+        brand = await db.brands.find_one({"id": master_kit["brand_id"]}) if master_kit else None
+        if brand:
+            brand.pop('_id', None)
+        
+        # Return enriched response without Pydantic validation
+        response = {
             **personal_kit.dict(),
-            reference_kit_info=reference_kit,
-            master_kit_info=master_kit or {},
-            team_info=team or {},
-            brand_info=brand or {}
-        )
+            "reference_kit_info": reference_kit,
+            "master_kit_info": master_kit or {},
+            "team_info": team or {},
+            "brand_info": brand or {}
+        }
+        
+        return response
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Personal kit creation error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Error adding kit to collection")
 
 @api_router.get("/personal-kits", response_model=List[PersonalKitResponse])  
