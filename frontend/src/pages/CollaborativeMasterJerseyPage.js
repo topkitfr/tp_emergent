@@ -207,28 +207,29 @@ const CollaborativeMasterJerseyPage = ({
 
     const handleSubmit = async (e) => {
       e.preventDefault();
-      if (!formData.team_id || !formData.brand_id || !formData.season || !formData.primary_color) {
-        alert('L\'équipe, la marque, la saison et la couleur principale sont obligatoires');
+      if (!formData.team_id || !formData.jersey_type || !formData.colors) {
+        alert('L\'équipe, le type et les couleurs sont obligatoires');
         return;
       }
 
       try {
-        // Préparer les données selon le modèle MasterJerseyCreate
-        const jerseyData = {
+        // Préparer les données selon le nouveau modèle Master Kit
+        const masterKitData = {
           team_id: formData.team_id,
-          brand_id: formData.brand_id,
-          season: formData.season,
-          jersey_type: formData.jersey_type,
-          model: formData.model,
-          primary_color: formData.primary_color,
-          secondary_colors: formData.secondary_colors
+          kit_type: formData.jersey_type, // Map jersey_type to kit_type for new system
+          primary_color: formData.colors, // Map colors to primary_color for backend
+          pattern_description: formData.pattern,
+          // Default values for required backend fields
+          brand_id: brands[0]?.id || '', // Use first available brand as default
+          season: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2),
+          model: 'authentic' // Default model
         };
 
-        console.log('Sending Master Jersey data:', jerseyData);
-        handleCreateMasterJersey(jerseyData);
+        console.log('Sending Master Kit data:', masterKitData);
+        handleCreateMasterJersey(masterKitData);
       } catch (error) {
         console.error('Erreur lors de la création:', error);
-        alert('Erreur lors de la création du Master Jersey');
+        alert('Erreur lors de la création du Master Kit');
       }
     };
 
