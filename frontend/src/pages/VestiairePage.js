@@ -186,9 +186,17 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       setPlayerNumbers([]);
     }
   };
+
+  // Load players for dropdown
+  const loadPlayers = async () => {
+    try {
+      const response = await fetch(`${API}/api/players`);
+      if (response.ok) {
+        const playersData = await response.json();
+        setPlayers(playersData);
       }
-    } else {
-      setPlayerNumbers([]);
+    } catch (error) {
+      console.error('Error loading players:', error);
     }
   };
 
