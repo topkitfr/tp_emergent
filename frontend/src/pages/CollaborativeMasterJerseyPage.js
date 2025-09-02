@@ -411,61 +411,33 @@ const CollaborativeMasterJerseyPage = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Compétition
+                  Modèle *
                 </label>
                 <select
-                  value={formData.competition_id}
-                  onChange={(e) => setFormData({...formData, competition_id: e.target.value})}
+                  value={formData.model}
+                  onChange={(e) => setFormData({...formData, model: e.target.value})}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
-                  <option value="">Aucune compétition spécifique</option>
-                  {(competitions || []).map(comp => (
-                    <option key={comp.id} value={comp.id}>{comp.name}</option>
-                  ))}
+                  <option value="authentic">Authentique</option>
+                  <option value="replica">Réplique</option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom du design
+                Couleur principale *
               </label>
               <input
                 type="text"
-                value={formData.design_name}
-                onChange={(e) => setFormData({...formData, design_name: e.target.value})}
+                value={formData.primary_color}
+                onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: Jordan Collection, Heritage Edition"
+                placeholder="Ex: blue, red, white"
+                required
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Couleur principale *
-                </label>
-                <input
-                  type="text"
-                  value={formData.primary_color}
-                  onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: blue, red, white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sponsor principal
-                </label>
-                <input
-                  type="text"
-                  value={formData.main_sponsor}
-                  onChange={(e) => setFormData({...formData, main_sponsor: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: Emirates, Qatar Airways"
-                />
-              </div>
             </div>
 
             <div>
