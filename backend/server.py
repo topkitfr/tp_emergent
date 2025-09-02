@@ -9986,61 +9986,62 @@ async def create_master_jersey(
         collectors_count=0  # Updated to match model field
     )
 
-@api_router.get("/vestiaire")
-async def get_vestiaire(
-    limit: int = 50,
-    team_id: Optional[str] = None,
-    season: Optional[str] = None,
-    player_name: Optional[str] = None
-):
-    """Get Jersey Releases with enriched data for Vestiaire page"""
-    try:
-        # Query filters
-        query = {}
-        if team_id:
-            query["team_id"] = team_id
-        if season:
-            query["season"] = season  
-        if player_name:
-            query["player_name"] = {"$regex": player_name, "$options": "i"}
-        
-        # Get jersey releases
-        releases = await db.jersey_releases.find(query).limit(limit).to_list(None)
-        
-        # Enrich with Master Jersey data and quick evaluation
-        for release in releases:
-            release.pop('_id', None)
-            
-            # Get Master Jersey info
-            if release.get("master_jersey_id"):
-                master = await db.master_jerseys.find_one({"id": release["master_jersey_id"]})
-                if master:
-                    master.pop('_id', None)
-                    release["master_jersey_info"] = master
-            
-            # Quick price estimation with safe handling
-            retail_price = release.get("retail_price")
-            if retail_price is None or not isinstance(retail_price, (int, float)):
-                retail_price = 80.0
-            
-            rarity = 5  # Default rarity
-            player_bonus = 1.2 if release.get("player_name") else 1.0
-            
-            try:
-                estimated_value = float(retail_price) * (float(rarity) / 5.0) * float(player_bonus)
-                release["estimated_value"] = round(estimated_value, 2)
-                release["estimated_min"] = round(estimated_value * 0.8, 2)
-                release["estimated_max"] = round(estimated_value * 1.2, 2)
-            except (TypeError, ValueError) as e:
-                # Fallback values if calculation fails
-                release["estimated_value"] = 80.0
-                release["estimated_min"] = 64.0
-                release["estimated_max"] = 96.0
-        
-        return releases
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching vestiaire: {str(e)}")
+# OLD VESTIAIRE ENDPOINT - COMMENTED OUT FOR KIT HIERARCHY SYSTEM
+# @api_router.get("/vestiaire")
+# async def get_vestiaire(
+#     limit: int = 50,
+#     team_id: Optional[str] = None,
+#     season: Optional[str] = None,
+#     player_name: Optional[str] = None
+# ):
+#     """Get Jersey Releases with enriched data for Vestiaire page"""
+#     try:
+#         # Query filters
+#         query = {}
+#         if team_id:
+#             query["team_id"] = team_id
+#         if season:
+#             query["season"] = season  
+#         if player_name:
+#             query["player_name"] = {"$regex": player_name, "$options": "i"}
+#         
+#         # Get jersey releases
+#         releases = await db.jersey_releases.find(query).limit(limit).to_list(None)
+#         
+#         # Enrich with Master Jersey data and quick evaluation
+#         for release in releases:
+#             release.pop('_id', None)
+#             
+#             # Get Master Jersey info
+#             if release.get("master_jersey_id"):
+#                 master = await db.master_jerseys.find_one({"id": release["master_jersey_id"]})
+#                 if master:
+#                     master.pop('_id', None)
+#                     release["master_jersey_info"] = master
+#             
+#             # Quick price estimation with safe handling
+#             retail_price = release.get("retail_price")
+#             if retail_price is None or not isinstance(retail_price, (int, float)):
+#                 retail_price = 80.0
+#             
+#             rarity = 5  # Default rarity
+#             player_bonus = 1.2 if release.get("player_name") else 1.0
+#             
+#             try:
+#                 estimated_value = float(retail_price) * (float(rarity) / 5.0) * float(player_bonus)
+#                 release["estimated_value"] = round(estimated_value, 2)
+#                 release["estimated_min"] = round(estimated_value * 0.8, 2)
+#                 release["estimated_max"] = round(estimated_value * 1.2, 2)
+#             except (TypeError, ValueError) as e:
+#                 # Fallback values if calculation fails
+#                 release["estimated_value"] = 80.0
+#                 release["estimated_min"] = 64.0
+#                 release["estimated_max"] = 96.0
+#         
+#         return releases
+#         
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error fetching vestiaire: {str(e)}")
 
 # ================================
 # JERSEY RELEASES API  
