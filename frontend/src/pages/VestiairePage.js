@@ -372,12 +372,17 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   const CreateKitReleaseModal = () => {
     const [formData, setFormData] = useState({
       master_kit_id: '',
+      league_competition: '', // New field for League/Competition
+      model: 'replica', // New required field (Replica/Authentic)
       available_sizes: [],
       original_retail_price: '',
       current_market_estimate: '',
       is_limited_edition: false,
       production_run: '',
-      official_product_code: ''
+      official_product_code: '', // This becomes SKU Code
+      barcode: '', // New field for Barcoding
+      main_photo: null, // New required field for Main Photo
+      secondary_photos: [] // New field for Secondary Photos
     });
     const [loading, setLoading] = useState(false);
     const [teams, setTeams] = useState([]);
