@@ -233,22 +233,7 @@ const CollaborativeMasterJerseyPage = ({
       }
     };
 
-    const addColor = () => {
-      if (newColor && !formData.secondary_colors.includes(newColor)) {
-        setFormData({
-          ...formData,
-          secondary_colors: [...formData.secondary_colors, newColor]
-        });
-        setNewColor('');
-      }
-    };
 
-    const removeColor = (colorToRemove) => {
-      setFormData({
-        ...formData,
-        secondary_colors: formData.secondary_colors.filter(color => color !== colorToRemove)
-      });
-    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
