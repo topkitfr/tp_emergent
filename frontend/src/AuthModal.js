@@ -134,7 +134,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
-        onLoginSuccess(response.data.user);
+        // Pass both token and user data to onLoginSuccess
+        onLoginSuccess(response.data.token, response.data.user);
         onClose();
       } else {
         console.log('📝 Registration successful');
