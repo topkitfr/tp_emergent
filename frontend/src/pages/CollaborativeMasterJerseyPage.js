@@ -90,7 +90,9 @@ const CollaborativeMasterJerseyPage = ({
         onDataUpdate(); // Refresh data
       } else {
         const error = await response.json();
-        alert(`❌ Erreur: ${error.detail}`);
+        console.error('API Error Response:', error);
+        const errorMessage = error.detail || error.message || JSON.stringify(error);
+        alert(`❌ Erreur: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error creating master jersey:', error);
