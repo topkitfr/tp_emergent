@@ -781,6 +781,99 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               </div>
             </div>
 
+            {/* League/Competition - Required Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                League/Competition *
+              </label>
+              <select
+                value={formData.league_competition}
+                onChange={(e) => setFormData(prev => ({...prev, league_competition: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Choose a league/competition...</option>
+                {competitions.map(comp => (
+                  <option key={comp.id} value={comp.id}>
+                    {comp.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Model - Required Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Model *
+              </label>
+              <select
+                value={formData.model}
+                onChange={(e) => setFormData(prev => ({...prev, model: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="replica">Replica</option>
+                <option value="authentic">Authentic</option>
+              </select>
+            </div>
+
+            {/* Main Photo - Required Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Main Photo (Front View) *
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleMainPhotoUpload}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              {mainPhotoPreview && (
+                <div className="mt-2">
+                  <img 
+                    src={mainPhotoPreview} 
+                    alt="Main Photo Preview" 
+                    className="w-32 h-32 object-cover rounded border"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Secondary Photos - Optional */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Secondary Photos (Back, Left Sleeve, Right Sleeve)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleSecondaryPhotosUpload}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+              {secondaryPhotoPreviews.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {secondaryPhotoPreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={preview} 
+                        alt={`Secondary Photo ${index + 1}`} 
+                        className="w-24 h-24 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSecondaryPhoto(index)}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
