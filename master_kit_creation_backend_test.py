@@ -326,6 +326,8 @@ class MasterKitCreationTester:
                 "brand_id": self.available_brands[0]["id"] if self.available_brands else "invalid-brand-id",
                 "season": "2024-25",
                 "jersey_type": "home",
+                "model": "authentic",
+                "primary_color": "Blue",
                 "description": "Test with invalid team ID"
             }
             
