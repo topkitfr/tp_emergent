@@ -66,8 +66,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         reference_kit_id: selectedReferenceKit.id,
         collection_type: selectedCollectionType,
         ...personalDetails,
-        purchase_price: personalDetails.purchase_price ? parseFloat(personalDetails.purchase_price) : null,
-        printed_number: personalDetails.printed_number ? parseInt(personalDetails.printed_number) : null
+        price_buy: personalDetails.price_buy ? parseFloat(personalDetails.price_buy) : null,
+        price_value: personalDetails.price_value ? parseFloat(personalDetails.price_value) : null,
+        player_number: personalDetails.player_number ? parseInt(personalDetails.player_number) : null
       };
 
       const response = await fetch(`${API}/api/personal-kits`, {
