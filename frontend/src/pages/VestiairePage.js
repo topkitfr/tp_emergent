@@ -415,6 +415,18 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       }
     };
 
+    const loadCompetitions = async () => {
+      try {
+        const response = await fetch(`${API}/api/competitions`);
+        if (response.ok) {
+          const competitionsData = await response.json();
+          setCompetitions(competitionsData);
+        }
+      } catch (error) {
+        console.error('Error loading competitions:', error);
+      }
+    };
+
     const loadMasterKitsForTeam = async (teamId) => {
       setLoadingMasterKits(true);
       try {
