@@ -15,6 +15,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
   useEffect(() => {
     loadKitStore();
+    loadPlayers();
   }, []);
 
   // Define addToCollection function for new Personal Kit API
