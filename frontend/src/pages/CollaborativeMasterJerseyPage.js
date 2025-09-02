@@ -204,7 +204,6 @@ const CollaborativeMasterJerseyPage = ({
     });
 
 
-
     const handleSubmit = async (e) => {
       e.preventDefault();
       if (!formData.team_id || !formData.jersey_type || !formData.colors) {
