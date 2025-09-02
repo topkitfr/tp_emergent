@@ -11609,107 +11609,64 @@ async def get_kit_store(
     This replaces the old vestiaire endpoint and shows Reference Kits that users can add to their Personal Collections
     """
     try:
-        # Build filter for master kits first (for search functionality)
-        master_kit_filter = {}
-        if team_id:
-            master_kit_filter["team_id"] = team_id
-        if season:
-            master_kit_filter["season"] = {"$regex": season, "$options": "i"}
-        if kit_type:
-            master_kit_filter["kit_type"] = kit_type
+        # Simple approach: get reference kits and manually enrich them
+        # This bypasses the aggregation pipeline issues
         
-        # Get matching master kits if filters applied
-        master_kit_ids = []
-        if master_kit_filter or search:
-            master_kits_pipeline = [{"$match": master_kit_filter}]
-            
-            if search:
-                # Add team/brand name search via lookup
-                master_kits_pipeline.extend([
-                    {
-                        "$lookup": {
-                            "from": "teams",
-                            "localField": "team_id", 
-                            "foreignField": "id",
-                            "as": "team_info"
-                        }
-                    },
-                    {
-                        "$lookup": {
-                            "from": "brands",
-                            "localField": "brand_id",
-                            "foreignField": "id", 
-                            "as": "brand_info"
-                        }
-                    },
-                    {
-                        "$match": {
-                            "$or": [
-                                {"team_info.name": {"$regex": search, "$options": "i"}},
-                                {"brand_info.name": {"$regex": search, "$options": "i"}},
-                                {"season": {"$regex": search, "$options": "i"}},
-                                {"design_name": {"$regex": search, "$options": "i"}}
-                            ]
-                        }
-                    }
-                ])
-            
-            matching_master_kits = await db.master_kits.aggregate(master_kits_pipeline).to_list(1000)
-            master_kit_ids = [mk["id"] for mk in matching_master_kits]
-        
-        # Build reference kit filter
+        # Get reference kits with basic filtering
         ref_kit_filter = {}
-        if master_kit_ids:
-            ref_kit_filter["master_kit_id"] = {"$in": master_kit_ids}
-        # If no specific master kit IDs, don't filter by master_kit_id (show all reference kits)
         
-        # Get reference kits with enriched data
-        pipeline = [
-            {"$match": ref_kit_filter},
-            {"$sort": {"created_at": -1}},
-            {"$skip": offset},
-            {"$limit": limit},
-            {
-                "$lookup": {
-                    "from": "master_kits",
-                    "localField": "master_kit_id",
-                    "foreignField": "id",
-                    "as": "master_kit_info"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "teams",
-                    "localField": "master_kit_info.team_id", 
-                    "foreignField": "id",
-                    "as": "team_info"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "brands", 
-                    "localField": "master_kit_info.brand_id",
-                    "foreignField": "id",
-                    "as": "brand_info"
-                }
-            }
-        ]
+        # Get all reference kits first
+        all_reference_kits = await db.reference_kits.find(ref_kit_filter).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
         
-        reference_kits = await db.reference_kits.aggregate(pipeline).to_list(limit)
-        
-        # Convert to response format
         result = []
-        for kit in reference_kits:
-            kit.pop('_id', None)
+        for rk in all_reference_kits:
+            rk.pop('_id', None)
             
+            # Get master kit
+            master_kit = await db.master_kits.find_one({"id": rk.get("master_kit_id")})
+            if not master_kit:
+                continue  # Skip if master kit not found
+            master_kit.pop('_id', None)
+            
+            # Apply filters based on master kit data
+            if team_id and master_kit.get("team_id") != team_id:
+                continue
+            if season and season.lower() not in master_kit.get("season", "").lower():
+                continue
+            if kit_type and master_kit.get("kit_type") != kit_type:
+                continue
+            
+            # Get team info
+            team = await db.teams.find_one({"id": master_kit.get("team_id")})
+            if team:
+                team.pop('_id', None)
+            
+            # Get brand info
+            brand = await db.brands.find_one({"id": master_kit.get("brand_id")})
+            if brand:
+                brand.pop('_id', None)
+            
+            # Apply search filter
+            if search:
+                search_lower = search.lower()
+                team_name = team.get("name", "").lower() if team else ""
+                brand_name = brand.get("name", "").lower() if brand else ""
+                season_name = master_kit.get("season", "").lower()
+                design_name = master_kit.get("design_name", "").lower()
+                
+                if not any(search_lower in field for field in [team_name, brand_name, season_name, design_name]):
+                    continue
+            
+            # Create response object
             response = ReferenceKitResponse(
-                **kit,
-                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
-                team_info=kit['team_info'][0] if kit['team_info'] else {},
-                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
+                **rk,
+                master_kit_info=master_kit,
+                team_info=team or {},
+                brand_info=brand or {}
             )
             result.append(response)
         
+        logger.info(f"Vestiaire returning {len(result)} reference kits")
         return result
         
     except Exception as e:
