@@ -495,9 +495,9 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Marques de maillots</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Football Brands</h1>
           <p className="text-gray-600">
-            Base de données collaborative des marques et fabricants de maillots de football
+            Collaborative database of football kit manufacturers and brands
           </p>
         </div>
         
