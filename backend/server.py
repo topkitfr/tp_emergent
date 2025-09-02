@@ -11594,12 +11594,12 @@ async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
 # KIT STORE ENDPOINT (VESTIAIRE) - SHOWS REFERENCE KITS
 # ================================
 
-@api_router.get("/vestiaire", response_model=List[ReferenceKitResponse])
+@api_router.get("/vestiaire")
 async def get_kit_store(
     team_id: Optional[str] = None,
     brand_id: Optional[str] = None,
     season: Optional[str] = None,
-    kit_type: Optional[KitType] = None,
+    kit_type: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = 50,
     offset: int = 0
@@ -11629,6 +11629,7 @@ async def get_kit_store(
             # Get master kit
             master_kit = await db.master_kits.find_one({"id": rk.get("master_kit_id")})
             if not master_kit:
+                logger.info(f"Skipping reference kit {rk.get('topkit_reference')} - master kit not found")
                 continue  # Skip if master kit not found
             master_kit.pop('_id', None)
             
@@ -11661,13 +11662,13 @@ async def get_kit_store(
                 if not any(search_lower in field for field in [team_name, brand_name, season_name, design_name]):
                     continue
             
-            # Create response object
-            response = ReferenceKitResponse(
+            # Create response object without strict Pydantic validation
+            response = {
                 **rk,
-                master_kit_info=master_kit,
-                team_info=team or {},
-                brand_info=brand or {}
-            )
+                "master_kit_info": master_kit,
+                "team_info": team or {},
+                "brand_info": brand or {}
+            }
             result.append(response)
         
         logger.info(f"Vestiaire returning {len(result)} reference kits")
@@ -11675,6 +11676,8 @@ async def get_kit_store(
         
     except Exception as e:
         logger.error(f"Kit store error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Error fetching kit store")
 
 
