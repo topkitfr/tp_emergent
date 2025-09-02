@@ -398,6 +398,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       if (teams.length === 0) {
         loadTeams();
       }
+      if (competitions.length === 0) {
+        loadCompetitions();
+      }
     }, []);
 
     const loadTeams = async () => {
