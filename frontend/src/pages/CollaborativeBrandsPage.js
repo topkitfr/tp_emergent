@@ -480,7 +480,7 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
                 disabled={loading}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Création...' : 'Créer la marque'}
+                {loading ? 'Creating...' : 'Create Brand'}
               </button>
             </div>
           </form>
