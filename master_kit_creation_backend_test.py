@@ -363,7 +363,7 @@ class MasterKitCreationTester:
                 self.log_result(
                     "Error Handling - Invalid Team ID",
                     False,
-                    f"Expected 400 status code for invalid data, got {response.status_code}",
+                    f"Expected 400 or 404 status code for invalid data, got {response.status_code}",
                     {"status_code": response.status_code, "response": response.text}
                 )
                 return False
