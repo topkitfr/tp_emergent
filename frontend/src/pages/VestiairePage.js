@@ -599,13 +599,13 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           <div className="text-center py-12">
             <p className="text-gray-600">Loading kit store...</p>
           </div>
-        ) : jerseyReleases.length === 0 ? (
+        ) : referenceKits.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600">No kit releases found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jerseyReleases.map((release) => (
+            {referenceKits.map((release) => (
               <JerseyReleaseCard key={release.id} release={release} />
             ))}
           </div>
