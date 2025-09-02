@@ -362,7 +362,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Add New Kit Release</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Add New Reference Kit</h2>
             <button
               onClick={() => setShowCreateModal(false)}
               className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -378,8 +378,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               </label>
               <input
                 type="text"
-                value={formData.master_jersey_id}
-                onChange={(e) => setFormData(prev => ({...prev, master_jersey_id: e.target.value}))}
+                value={formData.master_kit_id}
+                onChange={(e) => setFormData(prev => ({...prev, master_kit_id: e.target.value}))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter Master Kit ID"
                 required
@@ -390,98 +390,97 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Player Name
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Available Sizes
               </label>
-              <input
-                type="text"
-                value={formData.player_name}
-                onChange={(e) => setFormData(prev => ({...prev, player_name: e.target.value}))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter player name (optional)"
-              />
+              <div className="grid grid-cols-3 gap-2">
+                {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => handleSizeToggle(size)}
+                    className={`px-3 py-2 text-sm rounded border transition-colors ${
+                      formData.available_sizes.includes(size)
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Size
+                  Original Retail Price (€) *
                 </label>
-                <select
-                  value={formData.size}
-                  onChange={(e) => setFormData(prev => ({...prev, size: e.target.value}))}
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.original_retail_price}
+                  onChange={(e) => setFormData(prev => ({...prev, original_retail_price: e.target.value}))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select size</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                </select>
+                  placeholder="99.99"
+                  required
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Condition
+                  Current Market Estimate (€)
                 </label>
-                <select
-                  value={formData.condition}
-                  onChange={(e) => setFormData(prev => ({...prev, condition: e.target.value}))}
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.current_market_estimate}
+                  onChange={(e) => setFormData(prev => ({...prev, current_market_estimate: e.target.value}))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="mint">Mint</option>
-                  <option value="near_mint">Near Mint</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                  <option value="poor">Poor</option>
-                </select>
+                  placeholder="120.00"
+                />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Retail Price (€) *
+                Official Product Code
               </label>
               <input
-                type="number"
-                step="0.01"
-                value={formData.retail_price}
-                onChange={(e) => setFormData(prev => ({...prev, retail_price: e.target.value}))}
+                type="text"
+                value={formData.official_product_code}
+                onChange={(e) => setFormData(prev => ({...prev, official_product_code: e.target.value}))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="99.99"
-                required
+                placeholder="Brand SKU or product code"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Release Type
-              </label>
-              <select
-                value={formData.release_type}
-                onChange={(e) => setFormData(prev => ({...prev, release_type: e.target.value}))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="official">Official Release</option>
-                <option value="limited">Limited Edition</option>
-                <option value="player_issue">Player Issue</option>
-                <option value="match_worn">Match Worn</option>
-              </select>
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="limited_edition"
+                  checked={formData.is_limited_edition}
+                  onChange={(e) => setFormData(prev => ({...prev, is_limited_edition: e.target.checked}))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="limited_edition" className="ml-2 text-sm text-gray-700">
+                  Limited Edition
+                </label>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-                rows="3"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Additional details about this kit release..."
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Production Run
+                </label>
+                <input
+                  type="number"
+                  value={formData.production_run}
+                  onChange={(e) => setFormData(prev => ({...prev, production_run: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="Total pieces"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
@@ -497,7 +496,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
               >
-                {loading ? 'Creating...' : 'Create Kit Release'}
+                {loading ? 'Creating...' : 'Create Reference Kit'}
               </button>
             </div>
           </form>
