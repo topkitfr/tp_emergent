@@ -48,8 +48,8 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   const handleCreateTeam = async (teamData) => {
     if (!user) return;
 
-    setLoading(true);
     try {
+      setLoading(true);
       const response = await fetch(`${API}/api/teams`, {
         method: 'POST',
         headers: {
@@ -61,40 +61,45 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
 
       if (response.ok) {
         const newTeam = await response.json();
-        alert(`✅ Équipe "${newTeam.name}" créée avec succès ! (${newTeam.topkit_reference})`);
         setShowCreateModal(false);
-        onDataUpdate(); // Refresh data
+        onDataUpdate();
+        alert('Team created successfully!');
       } else {
-        const error = await response.json();
-        alert(`❌ Erreur: ${error.detail}`);
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail}`);
       }
     } catch (error) {
       console.error('Error creating team:', error);
-      alert('❌ Erreur lors de la création de l\'équipe');
+      alert('Error creating team');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const TeamCard = ({ team }) => {
-    const handleTeamClick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Naviguer vers la page détaillée au lieu d'ouvrir une modal
-      navigate(`/teams/${team.id}`);
-    };
+  const handleTeamClick = (team) => {
+    navigate(`/teams/${team.id}`);
+  };
 
+  const handleContributeClick = (team, e) => {
+    e.stopPropagation();
+    setSelectedTeamForContribution(team);
+    setShowContributionModal(true);
+  };
+
+  // Team Card Component
+  const TeamCard = ({ team }) => {
     return (
       <div 
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
-        onClick={handleTeamClick}
+        onClick={() => handleTeamClick(team)}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer group"
       >
         {/* Image section - same structure as Master Jersey */}
-        <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        <div className="relative w-full h-32 bg-gray-100 rounded-t-lg overflow-hidden flex items-center justify-center">
           {team.logo_url ? (
             <img 
-              src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') ? team.logo_url : `${API}/${team.logo_url}`}
-              alt={`${team.name} logo`}
-              className="w-full h-full object-contain p-4"
+              src={`${API}/${team.logo_url}`}
+              alt={team.name}
+              className="w-full h-full object-contain p-2"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -140,7 +145,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
             {team.founded_year && (
               <div className="flex items-center">
                 <span className="mr-1">📅</span>
-                <span>Fondée en {team.founded_year}</span>
+                <span>Founded in {team.founded_year}</span>
               </div>
             )}
             
@@ -168,7 +173,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
           <div className="flex items-center justify-between text-xs">
             <span className="text-blue-600 font-mono">{team.topkit_reference}</span>
             <div className="flex items-center space-x-2 text-gray-500">
-              <span>{team.jerseys_count || 0} maillots</span>
+              <span>{team.jerseys_count || 0} kits</span>
             </div>
           </div>
         </div>
@@ -188,7 +193,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
 
     const [newColor, setNewColor] = useState('');
     
-    // États pour la gestion des images
+    // Image management states
     const [imageFiles, setImageFiles] = useState({
       logo: null,
       secondary_photos: []
@@ -198,37 +203,52 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       secondary_photos: []
     });
 
-    const handleImageUpload = async (imageType, file) => {
+    const handleImageUpload = (imageType, file) => {
       if (!file) return;
       
-      // Vérifier la taille du fichier (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('L\'image est trop volumineuse. Taille maximale : 5MB');
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
         return;
       }
-
-      try {
-        // Convertir en base64 pour l'aperçu
+      
+      // Check size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must not exceed 5MB');
+        return;
+      }
+      
+      // Update files
+      if (imageType === 'secondary_photo') {
+        setImageFiles(prev => ({
+          ...prev,
+          secondary_photos: [...prev.secondary_photos, file]
+        }));
+        
+        // Create preview
         const reader = new FileReader();
         reader.onload = (e) => {
-          if (imageType === 'logo') {
-            setImageFiles(prev => ({ ...prev, logo: file }));
-            setImagePreviews(prev => ({ ...prev, logo: e.target.result }));
-          } else if (imageType === 'secondary_photo') {
-            setImageFiles(prev => ({
-              ...prev,
-              secondary_photos: [...prev.secondary_photos, file]
-            }));
-            setImagePreviews(prev => ({
-              ...prev,
-              secondary_photos: [...prev.secondary_photos, e.target.result]
-            }));
-          }
+          setImagePreviews(prev => ({
+            ...prev,
+            secondary_photos: [...prev.secondary_photos, e.target.result]
+          }));
         };
         reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Erreur lors du traitement de l\'image:', error);
-        alert('Erreur lors du traitement de l\'image');
+      } else {
+        setImageFiles(prev => ({
+          ...prev,
+          [imageType]: file
+        }));
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreviews(prev => ({
+            ...prev,
+            [imageType]: e.target.result
+          }));
+        };
+        reader.readAsDataURL(file);
       }
     };
 
@@ -243,155 +263,162 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       }));
     };
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      if (!formData.name || !formData.country) {
-        alert('Nom et pays sont obligatoires');
-        return;
-      }
-
-      try {
-        // Préparer les données avec les images en base64
-        const teamData = {
-          ...formData,
-          founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
-        };
-
-        // Ajouter le logo si présent
-        if (imageFiles.logo) {
-          const logoBase64 = await convertFileToBase64(imageFiles.logo);
-          teamData.logo_url = logoBase64;
-        }
-
-        // Ajouter les images secondaires si présentes
-        if (imageFiles.secondary_photos.length > 0) {
-          const secondaryImagesBase64 = await Promise.all(
-            imageFiles.secondary_photos.map(file => convertFileToBase64(file))
-          );
-          teamData.secondary_images = secondaryImagesBase64;
-        }
-
-        handleCreateTeam(teamData);
-      } catch (error) {
-        console.error('Erreur lors de la création:', error);
-        alert('Erreur lors de la création de l\'équipe');
-      }
-    };
-
-    const convertFileToBase64 = (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    };
-
     const addColor = () => {
       if (newColor && !formData.colors.includes(newColor)) {
-        setFormData({
-          ...formData,
-          colors: [...formData.colors, newColor]
-        });
+        setFormData(prev => ({
+          ...prev,
+          colors: [...prev.colors, newColor]
+        }));
         setNewColor('');
       }
     };
 
     const removeColor = (colorToRemove) => {
-      setFormData({
-        ...formData,
-        colors: formData.colors.filter(color => color !== colorToRemove)
-      });
+      setFormData(prev => ({
+        ...prev,
+        colors: prev.colors.filter(color => color !== colorToRemove)
+      }));
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      if (!formData.name || !formData.country) {
+        alert('Name and country are required');
+        return;
+      }
+
+      // Convert files to base64 if present
+      let teamDataWithImages = { ...formData };
+      
+      if (imageFiles.logo) {
+        const logoReader = new FileReader();
+        logoReader.onload = async () => {
+          teamDataWithImages.logo_base64 = logoReader.result;
+          
+          if (imageFiles.secondary_photos.length > 0) {
+            const photoPromises = imageFiles.secondary_photos.map(file => {
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+              });
+            });
+            
+            const photosBase64 = await Promise.all(photoPromises);
+            teamDataWithImages.secondary_photos_base64 = photosBase64;
+          }
+          
+          handleCreateTeam(teamDataWithImages);
+        };
+        logoReader.readAsDataURL(imageFiles.logo);
+      } else {
+        if (imageFiles.secondary_photos.length > 0) {
+          const photoPromises = imageFiles.secondary_photos.map(file => {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(file);
+            });
+          });
+          
+          const photosBase64 = await Promise.all(photoPromises);
+          teamDataWithImages.secondary_photos_base64 = photosBase64;
+        }
+        
+        handleCreateTeam(teamDataWithImages);
+      }
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <h3 className="text-lg font-bold mb-4">Créer une nouvelle équipe</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom de l'équipe *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: FC Barcelona"
-                required
-              />
-            </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900">Add New Team</h2>
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom court
-              </label>
-              <input
-                type="text"
-                value={formData.short_name}
-                onChange={(e) => setFormData({...formData, short_name: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: FCB"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pays *
+                  Team Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Short Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.short_name}
+                  onChange={(e) => setFormData(prev => ({...prev, short_name: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Country *
                 </label>
                 <input
                   type="text"
                   value={formData.country}
-                  onChange={(e) => setFormData({...formData, country: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: Spain"
+                  onChange={(e) => setFormData(prev => ({...prev, country: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ville
+                  City
                 </label>
                 <input
                   type="text"
                   value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: Barcelona"
+                  onChange={(e) => setFormData(prev => ({...prev, city: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Founded Year
+                </label>
+                <input
+                  type="number"
+                  value={formData.founded_year}
+                  onChange={(e) => setFormData(prev => ({...prev, founded_year: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Année de fondation
+                Team Colors
               </label>
-              <input
-                type="number"
-                value={formData.founded_year}
-                onChange={(e) => setFormData({...formData, founded_year: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: 1899"
-                min="1800"
-                max="2030"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Couleurs de l'équipe
-              </label>
-              <div className="flex space-x-2 mb-2">
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={newColor}
                   onChange={(e) => setNewColor(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: blue, red, white"
+                  placeholder="Enter color (e.g., Red, Blue, #FF0000)"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   type="button"
@@ -420,17 +447,17 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
               </div>
             </div>
 
-            {/* Section Upload d'Images */}
+            {/* Image Upload Section */}
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
               <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                📸 Images de l'équipe
-                <span className="text-xs text-gray-500 font-normal">(optionnel, max 5MB par image)</span>
+                📸 Team Images
+                <span className="text-xs text-gray-500 font-normal">(optional, max 5MB per image)</span>
               </h4>
               
-              {/* Logo de l'équipe */}
+              {/* Team Logo */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Logo de l'équipe
+                  Team Logo
                 </label>
                 <div className="flex items-center gap-4">
                   <input
@@ -441,7 +468,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                   />
                   {imagePreviews.logo && (
                     <div className="relative">
-                      <img src={imagePreviews.logo} alt="Aperçu logo" className="w-12 h-12 object-cover rounded-lg border" />
+                      <img src={imagePreviews.logo} alt="Logo preview" className="w-12 h-12 object-cover rounded-lg border" />
                       <button
                         type="button"
                         onClick={() => {
@@ -457,10 +484,10 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                 </div>
               </div>
 
-              {/* Images secondaires */}
+              {/* Secondary Images */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Images secondaires (anciennes logos, photos, etc.)
+                  Secondary images (old logos, photos, etc.)
                   <span className="text-xs text-gray-500 ml-1">- Maximum 3 images</span>
                 </label>
                 
@@ -477,7 +504,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                   <div className="grid grid-cols-3 gap-2">
                     {imagePreviews.secondary_photos.map((preview, index) => (
                       <div key={index} className="relative">
-                        <img src={preview} alt={`Aperçu ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
+                        <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
                         <button
                           type="button"
                           onClick={() => removeSecondaryPhoto(index)}
@@ -498,14 +525,14 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
               >
-                {loading ? 'Création...' : 'Créer l\'équipe'}
+                {loading ? 'Creating...' : 'Create Team'}
               </button>
             </div>
           </form>
@@ -515,232 +542,141 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Équipes de football</h1>
-          <p className="text-gray-600">
-            Base de données collaborative des équipes de football du monde entier
-          </p>
-        </div>
-        
-        {user && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center"
-          >
-            <span className="mr-2">➕</span>
-            Ajouter une équipe
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-        <h3 className="font-semibold mb-4">Filtres</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Recherche
-            </label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-              placeholder="Nom de l'équipe..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Football Teams</h1>
+              <p className="text-gray-600">
+                Collaborative database of football teams from around the world
+              </p>
+            </div>
+            {user && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                Add Team
+              </button>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pays
-            </label>
-            <select
-              value={filters.country}
-              onChange={(e) => setFilters({...filters, country: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Tous les pays</option>
-              {countries.map(country => (
-                <option key={country} value={country}>{country}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center">
-            <label className="flex items-center">
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
               <input
-                type="checkbox"
-                checked={filters.verified_only}
-                onChange={(e) => setFilters({...filters, verified_only: e.target.checked})}
-                className="mr-2"
+                type="text"
+                placeholder="Team name..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Équipes vérifiées uniquement</span>
-            </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+              <select
+                value={filters.country}
+                onChange={(e) => setFilters(prev => ({...prev, country: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All countries</option>
+                {countries.map(country => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={filters.verified_only}
+                  onChange={(e) => setFilters(prev => ({...prev, verified_only: e.target.checked}))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Verified teams only</span>
+              </label>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={() => setFilters({ search: '', country: '', verified_only: false })}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Reset filters
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({ search: '', country: '', verified_only: false })}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              Réinitialiser les filtres
-            </button>
+          {/* Statistics */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{filteredTeams.length}</div>
+              <div className="text-sm text-blue-700">Teams found</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {filteredTeams.filter(team => team.verified_level !== 'unverified').length}
+              </div>
+              <div className="text-sm text-green-700">Verified teams</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">{countries.length}</div>
+              <div className="text-sm text-purple-700">Countries represented</div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{filteredTeams.length}</div>
-          <div className="text-sm text-blue-700">Équipes trouvées</div>
-        </div>
-        
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {filteredTeams.filter(t => t.verified_level !== 'unverified').length}
-          </div>
-          <div className="text-sm text-green-700">Équipes vérifiées</div>
-        </div>
-        
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-purple-600">{countries.length}</div>
-          <div className="text-sm text-purple-700">Pays représentés</div>
         </div>
       </div>
 
       {/* Teams Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTeams.map(team => (
-          <TeamCard key={team.id} team={team} />
-        ))}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {filteredTeams.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">⚽</div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No teams found</h3>
+            <p className="text-gray-600 mb-6">
+              Try modifying your filters or contribute by adding a new team
+            </p>
+            {user && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                Add first team
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredTeams.map((team) => (
+              <div key={team.id} className="relative group">
+                <TeamCard team={team} />
+                {user && (
+                  <button
+                    onClick={(e) => handleContributeClick(team, e)}
+                    className="absolute top-2 right-2 bg-white/90 hover:bg-white text-blue-600 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Improve this profile"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {filteredTeams.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">⚽</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune équipe trouvée</h3>
-          <p className="text-gray-600 mb-4">
-            Essayez de modifier vos filtres ou contribuez en ajoutant une nouvelle équipe
-          </p>
-          {user && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-            >
-              Ajouter la première équipe
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Create Team Modal */}
       {showCreateModal && <CreateTeamModal />}
 
-      {/* Team Detail Modal */}
-      {selectedTeam && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedTeam.name}</h2>
-                {selectedTeam.short_name && (
-                  <p className="text-gray-600">{selectedTeam.short_name}</p>
-                )}
-                <p className="text-blue-600 font-mono text-sm">{selectedTeam.topkit_reference}</p>
-              </div>
-              <div className="flex gap-2">
-                {user && (
-                  <button
-                    onClick={() => {
-                      setSelectedTeamForContribution(selectedTeam);
-                      setShowContributionModal(true);
-                    }}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                  >
-                    ✏️ Améliorer cette fiche
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedTeam(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <span className="text-2xl">×</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Informations générales</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Pays:</span>
-                    <span className="ml-2 font-medium text-gray-900">{selectedTeam.country || 'Non spécifié'}</span>
-                  </div>
-                  {selectedTeam.city && (
-                    <div>
-                      <span className="text-gray-600">Ville:</span>
-                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.city}</span>
-                    </div>
-                  )}
-                  {selectedTeam.founded_year && (
-                    <div>
-                      <span className="text-gray-600">Fondation:</span>
-                      <span className="ml-2 font-medium text-gray-900">{selectedTeam.founded_year}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-600">Statut:</span>
-                    <span className={`ml-2 ${selectedTeam.verified_level !== 'unverified' ? 'text-green-600' : 'text-orange-600'}`}>
-                      {selectedTeam.verified_level !== 'unverified' ? '✓ Vérifié' : 'En attente de vérification'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {(selectedTeam.colors || selectedTeam.primary_colors) && (selectedTeam.colors?.length > 0 || selectedTeam.primary_colors?.length > 0) && (
-                <div>
-                  <h3 className="font-semibold mb-2 text-gray-900">Couleurs</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedTeam.colors || selectedTeam.primary_colors || []).map((color, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div
-                          className="w-6 h-6 rounded-full border border-gray-300"
-                          style={{ backgroundColor: color.toLowerCase() }}
-                        ></div>
-                        <span className="text-sm text-gray-600 capitalize">{color}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h3 className="font-semibold mb-2">Statistiques</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Maillots référencés:</span>
-                    <span className="ml-2 font-medium">{selectedTeam.master_jerseys_count || 0}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Collectionneurs:</span>
-                    <span className="ml-2 font-medium">{selectedTeam.total_collectors || 0}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Contribution Modal */}
-      {showContributionModal && (
+      {showContributionModal && selectedTeamForContribution && (
         <ContributionModal
           isOpen={showContributionModal}
           onClose={() => {
@@ -749,16 +685,13 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
           }}
           entity={selectedTeamForContribution}
           entityType="team"
-          onContributionCreated={(newContribution) => {
-            console.log('Contribution créée:', newContribution);
-            // Optionnel: rafraîchir les données
-            if (onDataUpdate) {
-              onDataUpdate();
-            }
+          onContributionCreated={() => {
+            setShowContributionModal(false);
+            setSelectedTeamForContribution(null);
+            onDataUpdate();
           }}
         />
       )}
-
     </div>
   );
 };
