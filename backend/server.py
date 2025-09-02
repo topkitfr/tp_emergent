@@ -11230,6 +11230,13 @@ async def create_reference_kit(
         team = await db.teams.find_one({"id": master_kit["team_id"]})
         brand = await db.brands.find_one({"id": master_kit["brand_id"]})
         
+        # Clean ObjectId fields
+        master_kit.pop('_id', None)
+        if team:
+            team.pop('_id', None)
+        if brand:
+            brand.pop('_id', None)
+        
         return ReferenceKitResponse(
             **reference_kit.dict(),
             master_kit_info=master_kit,
