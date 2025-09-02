@@ -198,12 +198,9 @@ const CollaborativeMasterJerseyPage = ({
   const CreateMasterJerseyModal = () => {
     const [formData, setFormData] = useState({
       team_id: '',
-      brand_id: '',
-      season: '',
       jersey_type: 'home',
-      model: 'authentic', // Required field for MasterJerseyCreate
-      primary_color: '',
-      secondary_colors: []
+      colors: '', // Changed from primary_color to colors
+      pattern: ''
     });
 
     const [newColor, setNewColor] = useState('');
