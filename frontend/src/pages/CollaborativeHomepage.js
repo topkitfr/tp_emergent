@@ -69,16 +69,16 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Maillots les plus recherchés Section - TopKit Focus */}
+      {/* Most wanted kits Section - TopKit Focus */}
       <div className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Maillots les plus recherchés</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Most wanted kits</h2>
             <button
               onClick={() => onViewChange('master-jerseys')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Tous les maillots
+              All kits
             </button>
           </div>
           
