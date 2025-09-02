@@ -731,6 +731,199 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
       {/* Create Kit Release Modal */}
       {showCreateModal && <CreateKitReleaseModal />}
+
+      {/* Personal Details Modal - When Adding to Collection */}
+      {showPersonalDetailsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">Add Personal Details</h2>
+              <button
+                onClick={() => setShowPersonalDetailsModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {selectedReferenceKit && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedReferenceKit.team_info?.name || 'Unknown Team'} - {selectedReferenceKit.master_kit_info?.season || 'Unknown Season'}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Adding to: <span className="font-medium">{selectedCollectionType === 'owned' ? 'Owned Collection' : 'Wanted List'}</span>
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size *</label>
+                  <select
+                    value={personalDetails.size}
+                    onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select your size</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                  <select
+                    value={personalDetails.condition}
+                    onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="mint">Mint</option>
+                    <option value="near_mint">Near Mint</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="poor">Poor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price You Paid (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={personalDetails.purchase_price}
+                    onChange={(e) => setPersonalDetails({...personalDetails, purchase_price: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="How much did you pay?"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+                  <input
+                    type="date"
+                    value={personalDetails.purchase_date}
+                    onChange={(e) => setPersonalDetails({...personalDetails, purchase_date: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="is_worn"
+                      checked={personalDetails.is_worn}
+                      onChange={(e) => setPersonalDetails({...personalDetails, is_worn: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="is_worn" className="ml-2 text-sm text-gray-700">
+                      Worn
+                    </label>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="is_signed"
+                      checked={personalDetails.is_signed}
+                      onChange={(e) => setPersonalDetails({...personalDetails, is_signed: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="is_signed" className="ml-2 text-sm text-gray-700">
+                      Signed
+                    </label>
+                  </div>
+
+                  {personalDetails.is_signed && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
+                      <input
+                        type="text"
+                        value={personalDetails.signed_by}
+                        onChange={(e) => setPersonalDetails({...personalDetails, signed_by: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Player name or person who signed"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="has_printing"
+                      checked={personalDetails.has_printing}
+                      onChange={(e) => setPersonalDetails({...personalDetails, has_printing: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="has_printing" className="ml-2 text-sm text-gray-700">
+                      Has Player Print
+                    </label>
+                  </div>
+
+                  {personalDetails.has_printing && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                        <input
+                          type="text"
+                          value={personalDetails.printed_name}
+                          onChange={(e) => setPersonalDetails({...personalDetails, printed_name: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="Player name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
+                        <input
+                          type="number"
+                          value={personalDetails.printed_number}
+                          onChange={(e) => setPersonalDetails({...personalDetails, printed_number: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="10"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Personal Notes</label>
+                  <textarea
+                    value={personalDetails.personal_notes}
+                    onChange={(e) => setPersonalDetails({...personalDetails, personal_notes: e.target.value})}
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Any special notes about this kit..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <button
+                  onClick={() => setShowPersonalDetailsModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePersonalDetailsSubmit}
+                  disabled={!personalDetails.size}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Add to {selectedCollectionType === 'owned' ? 'Owned' : 'Wanted'} Collection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
