@@ -8,7 +8,16 @@ const CollaborativeProfilePage = ({ user, API }) => {
   const [userStats, setUserStats] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsData, setSettingsData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    bio: '',
+    favorite_club: '',
+    instagram_username: '',
+    twitter_username: '',
+    website: ''
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
   const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
 
   // Load user profile data
