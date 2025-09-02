@@ -11618,6 +11618,8 @@ async def get_kit_store(
         # Get all reference kits first
         all_reference_kits = await db.reference_kits.find(ref_kit_filter).sort("created_at", -1).skip(offset).limit(limit).to_list(limit)
         
+        logger.info(f"Vestiaire debug: Found {len(all_reference_kits)} reference kits from database")
+        
         result = []
         for rk in all_reference_kits:
             rk.pop('_id', None)
