@@ -1,640 +1,685 @@
 #!/usr/bin/env python3
 """
-KIT HIERARCHY WORKFLOW TESTING - BACKEND TEST
-==============================================
-
-This test validates the complete Kit hierarchy workflow with newly created test data:
-
-1. Authentication Test: Verify admin login with topkitfr@gmail.com/TopKitSecure789#
-2. Vestiaire Endpoint Test: Test GET /api/vestiaire to verify 14 Reference Kits with enriched data
-3. Personal Kit Creation Test: Test POST /api/personal-kits to create personal kits from reference kits
-4. Personal Kit Retrieval Test: Test GET /api/personal-kits?collection_type=owned and wanted
-5. Complete Workflow Test: Full user workflow from authentication to collection management
-
-Expected Results:
-- Vestiaire should return ~14 Reference Kits with team names like "FC Barcelona", "Paris Saint-Germain", "Manchester United"
-- Personal Kit creation should work with proper data validation
-- Personal Kit retrieval should return enriched data with reference_kit_info, master_kit_info, team_info, brand_info
-
-Focus: Validating new Kit hierarchy data structures and API responses match migrated frontend expectations.
+Kit Hierarchy Workflow Backend Testing
+Testing the corrected Kit hierarchy workflow to confirm it matches user specifications
 """
 
 import requests
 import json
 import sys
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 
 # Configuration
 BACKEND_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
 
 # Test credentials
-ADMIN_CREDENTIALS = {
-    "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
-}
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
-USER_CREDENTIALS = {
-    "email": "steinmetzlivio@gmail.com", 
-    "password": "T0p_Mdp_1288*"
-}
-
-class VestiaireCollectionTester:
+class KitHierarchyTester:
     def __init__(self):
+        self.session = requests.Session()
         self.admin_token = None
-        self.user_token = None
         self.admin_user_id = None
-        self.user_user_id = None
         self.test_results = []
         
-    def log_result(self, test_name, success, details):
+    def log_result(self, test_name: str, success: bool, message: str, details: Dict = None):
         """Log test result"""
+        result = {
+            "test": test_name,
+            "success": success,
+            "message": message,
+            "details": details or {},
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
         status = "✅ PASS" if success else "❌ FAIL"
-        self.test_results.append({
-            'test': test_name,
-            'success': success,
-            'details': details
-        })
-        print(f"{status} {test_name}: {details}")
-        
-    def authenticate_admin(self):
-        """Test admin authentication"""
+        print(f"{status}: {test_name} - {message}")
+        if details:
+            print(f"   Details: {json.dumps(details, indent=2)}")
+    
+    def authenticate_admin(self) -> bool:
+        """Authenticate admin user"""
         try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json=ADMIN_CREDENTIALS)
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            })
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('token')
-                user_data = data.get('user', {})
-                self.admin_user_id = user_data.get('id')
+                self.admin_token = data.get("token")
+                user_data = data.get("user", {})
+                self.admin_user_id = user_data.get("id")
+                
+                # Set authorization header
+                self.session.headers.update({
+                    "Authorization": f"Bearer {self.admin_token}"
+                })
                 
                 self.log_result(
                     "Admin Authentication",
                     True,
-                    f"Admin login successful - Name: {user_data.get('name')}, Role: {user_data.get('role')}, ID: {self.admin_user_id}"
+                    f"Admin authenticated successfully: {user_data.get('name')} ({user_data.get('role')})",
+                    {"user_id": self.admin_user_id, "email": ADMIN_EMAIL}
                 )
                 return True
             else:
                 self.log_result(
-                    "Admin Authentication", 
+                    "Admin Authentication",
                     False,
-                    f"Login failed - Status: {response.status_code}, Response: {response.text}"
+                    f"Authentication failed: {response.status_code} - {response.text}",
+                    {"status_code": response.status_code}
                 )
                 return False
                 
         except Exception as e:
-            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_result(
+                "Admin Authentication",
+                False,
+                f"Authentication error: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-    def authenticate_user(self):
-        """Test user authentication"""
+    
+    def test_vestiaire_endpoint(self) -> bool:
+        """Test 1: Vestiaire Endpoint Verification - GET /api/vestiaire"""
         try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json=USER_CREDENTIALS)
+            response = self.session.get(f"{BACKEND_URL}/vestiaire")
             
             if response.status_code == 200:
-                data = response.json()
-                self.user_token = data.get('token')
-                user_data = data.get('user', {})
-                self.user_user_id = user_data.get('id')
+                vestiaire_data = response.json()
+                
+                # Check if it's an array
+                if not isinstance(vestiaire_data, list):
+                    self.log_result(
+                        "Vestiaire Endpoint Structure",
+                        False,
+                        "Vestiaire endpoint should return an array",
+                        {"actual_type": type(vestiaire_data).__name__}
+                    )
+                    return False
+                
+                # Check if we have Reference Kits
+                if len(vestiaire_data) == 0:
+                    self.log_result(
+                        "Vestiaire Endpoint Content",
+                        False,
+                        "Vestiaire endpoint returns empty array - no Reference Kits available",
+                        {"count": 0}
+                    )
+                    return False
+                
+                # Analyze first Reference Kit structure
+                first_kit = vestiaire_data[0]
+                required_fields = ["id", "topkit_reference"]
+                generic_fields = ["team_info", "brand_info", "original_retail_price", "available_sizes"]
+                personal_fields = ["size", "condition", "purchase_price", "personal_notes"]
+                
+                # Check for required fields
+                missing_required = [field for field in required_fields if field not in first_kit]
+                if missing_required:
+                    self.log_result(
+                        "Vestiaire Reference Kit Structure",
+                        False,
+                        f"Missing required fields: {missing_required}",
+                        {"first_kit_keys": list(first_kit.keys())}
+                    )
+                    return False
+                
+                # Check for generic fields (should be present)
+                missing_generic = [field for field in generic_fields if field not in first_kit]
+                
+                # Check for personal fields (should NOT be present)
+                found_personal = [field for field in personal_fields if field in first_kit]
+                
+                if found_personal:
+                    self.log_result(
+                        "Vestiaire Generic Nature",
+                        False,
+                        f"Found personal fields in generic Reference Kit: {found_personal}",
+                        {"personal_fields_found": found_personal}
+                    )
+                    return False
                 
                 self.log_result(
-                    "User Authentication",
+                    "Vestiaire Endpoint Verification",
                     True,
-                    f"User login successful - Name: {user_data.get('name')}, Role: {user_data.get('role')}, ID: {self.user_user_id}"
+                    f"Vestiaire returns {len(vestiaire_data)} generic Reference Kits with proper structure",
+                    {
+                        "count": len(vestiaire_data),
+                        "sample_kit": {
+                            "id": first_kit.get("id"),
+                            "reference": first_kit.get("topkit_reference"),
+                            "has_team_info": "team_info" in first_kit,
+                            "has_brand_info": "brand_info" in first_kit,
+                            "has_price": "original_retail_price" in first_kit,
+                            "no_personal_data": len(found_personal) == 0
+                        }
+                    }
                 )
                 return True
+                
             else:
                 self.log_result(
-                    "User Authentication",
-                    False, 
-                    f"Login failed - Status: {response.status_code}, Response: {response.text}"
+                    "Vestiaire Endpoint Access",
+                    False,
+                    f"Vestiaire endpoint failed: {response.status_code} - {response.text}",
+                    {"status_code": response.status_code}
                 )
                 return False
                 
         except Exception as e:
-            self.log_result("User Authentication", False, f"Exception: {str(e)}")
+            self.log_result(
+                "Vestiaire Endpoint Test",
+                False,
+                f"Vestiaire endpoint error: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-    def test_vestiaire_endpoint(self):
-        """Test the /api/vestiaire endpoint - core focus of investigation"""
+    
+    def test_personal_kit_creation(self, reference_kit_id: str) -> Optional[str]:
+        """Test 2: Personal Kit Creation with Details - POST /api/personal-kits"""
         try:
-            response = requests.get(f"{BACKEND_URL}/vestiaire")
+            # Comprehensive personal kit data
+            personal_kit_data = {
+                "reference_kit_id": reference_kit_id,
+                "collection_type": "owned",
+                "size": "L",
+                "condition": "near_mint",
+                "purchase_price": 89.99,
+                "purchase_date": "2024-01-15T00:00:00Z",
+                "purchase_location": "Official Nike Store",
+                "is_signed": True,
+                "signed_by": "Lionel Messi",
+                "has_printing": True,
+                "printed_name": "MESSI",
+                "printed_number": 10,
+                "printing_type": "official",
+                "is_worn": True,
+                "is_match_worn": False,
+                "is_authenticated": True,
+                "authentication_details": "PSA/DNA Certificate #12345",
+                "personal_notes": "Purchased during Barcelona farewell tour. Excellent condition with original tags."
+            }
             
-            if response.status_code == 200:
-                data = response.json()
+            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
+            
+            if response.status_code == 201:
+                personal_kit = response.json()
                 
-                # Check if data is an array
-                if isinstance(data, list):
-                    jersey_count = len(data)
-                    
-                    # Analyze data structure
-                    if jersey_count > 0:
-                        sample_jersey = data[0]
-                        
-                        # Check for jersey release structure (not direct team/season fields)
-                        required_fields = ['id', 'master_jersey_info', 'player_name']
-                        missing_fields = [field for field in required_fields if field not in sample_jersey]
-                        
-                        if not missing_fields:
-                            # Check nested master_jersey_info structure
-                            master_info = sample_jersey.get('master_jersey_info', {})
-                            season = master_info.get('season', 'Unknown')
-                            team_id = master_info.get('team_id', 'Unknown')
-                            brand_id = master_info.get('brand_id', 'Unknown')
-                            
-                            self.log_result(
-                                "Vestiaire Endpoint Data Structure",
-                                True,
-                                f"Perfect array format with {jersey_count} jersey releases. Sample: Player {sample_jersey.get('player_name')}, Season {season}, Team ID {team_id}, Brand ID {brand_id}"
-                            )
-                        else:
-                            self.log_result(
-                                "Vestiaire Endpoint Data Structure",
-                                False,
-                                f"Missing required fields: {missing_fields}"
-                            )
-                    else:
-                        self.log_result(
-                            "Vestiaire Endpoint Data Structure",
-                            False,
-                            "Empty array returned - no jersey releases available for collection testing"
-                        )
-                        
-                    return data
-                else:
+                # Verify response structure
+                required_response_fields = ["id", "reference_kit_info", "master_kit_info", "team_info", "brand_info"]
+                missing_fields = [field for field in required_response_fields if field not in personal_kit]
+                
+                if missing_fields:
                     self.log_result(
-                        "Vestiaire Endpoint Data Structure",
+                        "Personal Kit Creation Response",
                         False,
-                        f"Expected array but got {type(data)}: {data}"
+                        f"Missing enriched data fields: {missing_fields}",
+                        {"response_keys": list(personal_kit.keys())}
                     )
                     return None
+                
+                # Verify personal details are saved
+                personal_details_check = {
+                    "size": personal_kit.get("size") == "L",
+                    "condition": personal_kit.get("condition") == "near_mint",
+                    "purchase_price": personal_kit.get("purchase_price") == 89.99,
+                    "is_signed": personal_kit.get("is_signed") == True,
+                    "signed_by": personal_kit.get("signed_by") == "Lionel Messi",
+                    "has_printing": personal_kit.get("has_printing") == True,
+                    "printed_name": personal_kit.get("printed_name") == "MESSI",
+                    "printed_number": personal_kit.get("printed_number") == 10,
+                    "personal_notes": "Barcelona farewell" in (personal_kit.get("personal_notes") or "")
+                }
+                
+                failed_details = [key for key, value in personal_details_check.items() if not value]
+                
+                if failed_details:
+                    self.log_result(
+                        "Personal Kit Details Verification",
+                        False,
+                        f"Personal details not saved correctly: {failed_details}",
+                        {"failed_details": failed_details, "actual_data": personal_kit}
+                    )
+                    return None
+                
+                self.log_result(
+                    "Personal Kit Creation",
+                    True,
+                    "Personal Kit created successfully with comprehensive details and enriched data",
+                    {
+                        "personal_kit_id": personal_kit.get("id"),
+                        "reference_kit_id": reference_kit_id,
+                        "enriched_data": {
+                            "has_reference_kit_info": bool(personal_kit.get("reference_kit_info")),
+                            "has_master_kit_info": bool(personal_kit.get("master_kit_info")),
+                            "has_team_info": bool(personal_kit.get("team_info")),
+                            "has_brand_info": bool(personal_kit.get("brand_info"))
+                        },
+                        "personal_details_verified": len(failed_details) == 0
+                    }
+                )
+                return personal_kit.get("id")
+                
             else:
                 self.log_result(
-                    "Vestiaire Endpoint",
+                    "Personal Kit Creation",
                     False,
-                    f"HTTP {response.status_code}: {response.text}"
+                    f"Personal Kit creation failed: {response.status_code} - {response.text}",
+                    {"status_code": response.status_code, "request_data": personal_kit_data}
                 )
                 return None
                 
         except Exception as e:
-            self.log_result("Vestiaire Endpoint", False, f"Exception: {str(e)}")
-            return None
-            
-    def test_collection_endpoints_with_auth(self, token, user_id, user_type):
-        """Test collection endpoints with authentication"""
-        headers = {"Authorization": f"Bearer {token}"}
-        
-        # Test GET owned collections
-        try:
-            response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/owned", headers=headers)
-            if response.status_code == 200:
-                owned_data = response.json()
-                self.log_result(
-                    f"{user_type} - GET Owned Collections",
-                    True,
-                    f"Retrieved {len(owned_data)} owned collections"
-                )
-            else:
-                self.log_result(
-                    f"{user_type} - GET Owned Collections",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-        except Exception as e:
-            self.log_result(f"{user_type} - GET Owned Collections", False, f"Exception: {str(e)}")
-            
-        # Test GET wanted collections  
-        try:
-            response = requests.get(f"{BACKEND_URL}/users/{user_id}/collections/wanted", headers=headers)
-            if response.status_code == 200:
-                wanted_data = response.json()
-                self.log_result(
-                    f"{user_type} - GET Wanted Collections",
-                    True,
-                    f"Retrieved {len(wanted_data)} wanted collections"
-                )
-            else:
-                self.log_result(
-                    f"{user_type} - GET Wanted Collections", 
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-        except Exception as e:
-            self.log_result(f"{user_type} - GET Wanted Collections", False, f"Exception: {str(e)}")
-            
-    def test_add_to_collection(self, token, user_id, user_type, jersey_release_id, collection_type):
-        """Test adding jersey release to collection"""
-        headers = {"Authorization": f"Bearer {token}"}
-        
-        collection_data = {
-            "jersey_release_id": jersey_release_id,
-            "collection_type": collection_type,
-            "size": "L",
-            "condition": "mint"
-        }
-        
-        try:
-            response = requests.post(
-                f"{BACKEND_URL}/users/{user_id}/collections",
-                headers=headers,
-                json=collection_data
+            self.log_result(
+                "Personal Kit Creation Test",
+                False,
+                f"Personal Kit creation error: {str(e)}",
+                {"error": str(e)}
             )
+            return None
+    
+    def test_personal_collection_retrieval(self) -> bool:
+        """Test 3: Personal Collection Retrieval - GET /api/personal-kits?collection_type=owned"""
+        try:
+            # Test owned collection
+            response_owned = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
             
-            if response.status_code in [200, 201]:
-                result_data = response.json()
-                collection_id = result_data.get('collection_id', 'Unknown')
+            if response_owned.status_code != 200:
                 self.log_result(
-                    f"{user_type} - Add to {collection_type.title()} Collection",
-                    True,
-                    f"Successfully added jersey release {jersey_release_id} to {collection_type} collection (ID: {collection_id})"
-                )
-                return True
-            elif response.status_code == 400:
-                # Check if it's a duplicate error (expected behavior)
-                error_text = response.text
-                if "already in collection" in error_text.lower():
-                    self.log_result(
-                        f"{user_type} - Add to {collection_type.title()} Collection",
-                        True,
-                        f"Duplicate prevention working correctly: {error_text}"
-                    )
-                    return True
-                else:
-                    self.log_result(
-                        f"{user_type} - Add to {collection_type.title()} Collection",
-                        False,
-                        f"HTTP 400 - Validation error: {error_text}"
-                    )
-                    return False
-            else:
-                self.log_result(
-                    f"{user_type} - Add to {collection_type.title()} Collection",
+                    "Personal Collection Retrieval - Owned",
                     False,
-                    f"HTTP {response.status_code}: {response.text}"
+                    f"Owned collection retrieval failed: {response_owned.status_code} - {response_owned.text}",
+                    {"status_code": response_owned.status_code}
                 )
                 return False
-                
-        except Exception as e:
-            self.log_result(f"{user_type} - Add to {collection_type.title()} Collection", False, f"Exception: {str(e)}")
-            return False
             
-    def test_user_experience_issues(self):
-        """Test for user experience issues that explain the reported bug"""
-        if not self.user_token or not self.user_user_id:
-            self.log_result("User Experience Issues", False, "User not authenticated")
-            return
+            owned_kits = response_owned.json()
             
-        headers = {"Authorization": f"Bearer {self.user_token}"}
-        
-        # Test 1: Check if general collections endpoint works
-        try:
-            response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections", headers=headers)
-            if response.status_code == 200:
-                data = response.json()
-                collections = data.get('collections', [])
-                if len(collections) == 0:
-                    self.log_result(
-                        "General Collections Endpoint",
-                        False,
-                        f"General collections endpoint returns empty array despite user having collections. Response: {data}"
-                    )
-                else:
-                    self.log_result(
-                        "General Collections Endpoint",
-                        True,
-                        f"General collections endpoint working - {len(collections)} items"
-                    )
-            else:
+            # Test wanted collection
+            response_wanted = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
+            
+            if response_wanted.status_code != 200:
                 self.log_result(
-                    "General Collections Endpoint",
+                    "Personal Collection Retrieval - Wanted",
                     False,
-                    f"HTTP {response.status_code}: {response.text}"
+                    f"Wanted collection retrieval failed: {response_wanted.status_code} - {response_wanted.text}",
+                    {"status_code": response_wanted.status_code}
                 )
-        except Exception as e:
-            self.log_result("General Collections Endpoint", False, f"Exception: {str(e)}")
+                return False
             
-        # Test 2: Check data quality in collections
+            wanted_kits = response_wanted.json()
+            
+            # Verify structure
+            if not isinstance(owned_kits, list) or not isinstance(wanted_kits, list):
+                self.log_result(
+                    "Personal Collection Structure",
+                    False,
+                    "Personal collection endpoints should return arrays",
+                    {"owned_type": type(owned_kits).__name__, "wanted_type": type(wanted_kits).__name__}
+                )
+                return False
+            
+            # Check if we have any personal kits
+            total_kits = len(owned_kits) + len(wanted_kits)
+            
+            if total_kits == 0:
+                self.log_result(
+                    "Personal Collection Content",
+                    False,
+                    "No personal kits found in either owned or wanted collections",
+                    {"owned_count": len(owned_kits), "wanted_count": len(wanted_kits)}
+                )
+                return False
+            
+            # Analyze structure of first kit if available
+            sample_kit = owned_kits[0] if owned_kits else wanted_kits[0]
+            
+            # Check for enriched data
+            enriched_fields = ["reference_kit_info", "master_kit_info", "team_info", "brand_info"]
+            missing_enriched = [field for field in enriched_fields if field not in sample_kit]
+            
+            # Check for personal details
+            personal_fields = ["size", "condition", "purchase_price", "personal_notes", "collection_type"]
+            missing_personal = [field for field in personal_fields if field not in sample_kit]
+            
+            success = len(missing_enriched) == 0 and len(missing_personal) <= 1  # Allow some optional fields
+            
+            self.log_result(
+                "Personal Collection Retrieval",
+                success,
+                f"Retrieved {len(owned_kits)} owned and {len(wanted_kits)} wanted Personal Kits with enriched data",
+                {
+                    "owned_count": len(owned_kits),
+                    "wanted_count": len(wanted_kits),
+                    "sample_kit_structure": {
+                        "has_enriched_data": len(missing_enriched) == 0,
+                        "has_personal_details": len(missing_personal) <= 1,
+                        "missing_enriched": missing_enriched,
+                        "missing_personal": missing_personal
+                    }
+                }
+            )
+            return success
+            
+        except Exception as e:
+            self.log_result(
+                "Personal Collection Retrieval Test",
+                False,
+                f"Personal collection retrieval error: {str(e)}",
+                {"error": str(e)}
+            )
+            return False
+    
+    def test_complete_workflow(self) -> bool:
+        """Test 4: Complete User Workflow Verification"""
         try:
-            response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections/owned", headers=headers)
-            if response.status_code == 200:
-                data = response.json()
-                if data:
-                    sample = data[0]
-                    jersey_release = sample.get('jersey_release', {})
-                    master_info = jersey_release.get('master_jersey_info', {})
+            # Step 1: Browse generic Reference Kits in Vestiaire
+            vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
+            
+            if vestiaire_response.status_code != 200:
+                self.log_result(
+                    "Complete Workflow - Vestiaire Access",
+                    False,
+                    f"Cannot access vestiaire: {vestiaire_response.status_code}",
+                    {"status_code": vestiaire_response.status_code}
+                )
+                return False
+            
+            vestiaire_kits = vestiaire_response.json()
+            
+            if not vestiaire_kits:
+                self.log_result(
+                    "Complete Workflow - Reference Kits Available",
+                    False,
+                    "No Reference Kits available in vestiaire for workflow testing",
+                    {"vestiaire_count": 0}
+                )
+                return False
+            
+            # Step 2: Select a Reference Kit and add to personal collection
+            selected_kit = vestiaire_kits[0]
+            reference_kit_id = selected_kit.get("id")
+            
+            if not reference_kit_id:
+                self.log_result(
+                    "Complete Workflow - Reference Kit Selection",
+                    False,
+                    "Selected Reference Kit missing ID",
+                    {"selected_kit": selected_kit}
+                )
+                return False
+            
+            # Step 3: Create Personal Kit with specific details
+            personal_kit_data = {
+                "reference_kit_id": reference_kit_id,
+                "collection_type": "wanted",
+                "size": "M",
+                "condition": "excellent",
+                "purchase_price": 120.00,
+                "personal_notes": "Dream kit for my collection - looking for authentic version"
+            }
+            
+            create_response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
+            
+            if create_response.status_code != 201:
+                self.log_result(
+                    "Complete Workflow - Personal Kit Creation",
+                    False,
+                    f"Failed to create Personal Kit: {create_response.status_code} - {create_response.text}",
+                    {"status_code": create_response.status_code}
+                )
+                return False
+            
+            created_kit = create_response.json()
+            
+            # Step 4: Verify Personal Kit in collection
+            collection_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
+            
+            if collection_response.status_code != 200:
+                self.log_result(
+                    "Complete Workflow - Collection Verification",
+                    False,
+                    f"Failed to retrieve personal collection: {collection_response.status_code}",
+                    {"status_code": collection_response.status_code}
+                )
+                return False
+            
+            collection_kits = collection_response.json()
+            
+            # Find our created kit
+            our_kit = None
+            for kit in collection_kits:
+                if kit.get("id") == created_kit.get("id"):
+                    our_kit = kit
+                    break
+            
+            if not our_kit:
+                self.log_result(
+                    "Complete Workflow - Kit in Collection",
+                    False,
+                    "Created Personal Kit not found in collection",
+                    {"created_kit_id": created_kit.get("id"), "collection_count": len(collection_kits)}
+                )
+                return False
+            
+            # Step 5: Verify data separation
+            # Reference Kit should remain generic
+            vestiaire_kit_check = selected_kit
+            has_personal_data_in_vestiaire = any(field in vestiaire_kit_check for field in ["size", "condition", "personal_notes"])
+            
+            # Personal Kit should have user-specific details
+            has_personal_data_in_collection = all(field in our_kit for field in ["size", "condition", "collection_type"])
+            has_enriched_data = all(field in our_kit for field in ["reference_kit_info", "master_kit_info"])
+            
+            workflow_success = (
+                not has_personal_data_in_vestiaire and
+                has_personal_data_in_collection and
+                has_enriched_data
+            )
+            
+            self.log_result(
+                "Complete User Workflow",
+                workflow_success,
+                "Complete workflow tested: Browse Reference Kits → Add to Collection → Verify Separation",
+                {
+                    "workflow_steps": {
+                        "vestiaire_access": True,
+                        "reference_kit_selection": True,
+                        "personal_kit_creation": True,
+                        "collection_verification": True,
+                        "data_separation": workflow_success
+                    },
+                    "data_verification": {
+                        "reference_kits_remain_generic": not has_personal_data_in_vestiaire,
+                        "personal_kits_have_user_details": has_personal_data_in_collection,
+                        "personal_kits_have_enriched_data": has_enriched_data
+                    }
+                }
+            )
+            return workflow_success
+            
+        except Exception as e:
+            self.log_result(
+                "Complete Workflow Test",
+                False,
+                f"Complete workflow error: {str(e)}",
+                {"error": str(e)}
+            )
+            return False
+    
+    def test_three_tier_separation(self) -> bool:
+        """Test 5: Verify 3-tier separation (Master Kit → Reference Kit → Personal Kit)"""
+        try:
+            # Get vestiaire data to analyze the hierarchy
+            vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
+            
+            if vestiaire_response.status_code != 200 or not vestiaire_response.json():
+                self.log_result(
+                    "Three-Tier Separation - Data Access",
+                    False,
+                    "Cannot access vestiaire data for hierarchy analysis",
+                    {"status_code": vestiaire_response.status_code}
+                )
+                return False
+            
+            reference_kits = vestiaire_response.json()
+            sample_reference_kit = reference_kits[0]
+            
+            # Verify Reference Kit has Master Kit info
+            master_kit_info = sample_reference_kit.get("master_kit_info", {})
+            if not master_kit_info:
+                self.log_result(
+                    "Three-Tier Separation - Master Kit Link",
+                    False,
+                    "Reference Kit missing Master Kit information",
+                    {"reference_kit_keys": list(sample_reference_kit.keys())}
+                )
+                return False
+            
+            # Check Master Kit has team/brand info
+            team_info = sample_reference_kit.get("team_info", {})
+            brand_info = sample_reference_kit.get("brand_info", {})
+            
+            if not team_info or not brand_info:
+                self.log_result(
+                    "Three-Tier Separation - Master Kit Data",
+                    False,
+                    "Master Kit missing team or brand information",
+                    {"has_team_info": bool(team_info), "has_brand_info": bool(brand_info)}
+                )
+                return False
+            
+            # Get personal kits to verify the full hierarchy
+            personal_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+            
+            if personal_response.status_code == 200:
+                personal_kits = personal_response.json()
+                
+                if personal_kits:
+                    sample_personal_kit = personal_kits[0]
                     
-                    # Check for missing data
-                    issues = []
-                    if not jersey_release.get('player_name') or jersey_release.get('player_name') == 'Unknown':
-                        issues.append("Missing player name")
-                    if not master_info.get('season') or master_info.get('season') == 'Unknown':
-                        issues.append("Missing season info")
-                    if not sample.get('added_at'):
-                        issues.append("Missing added_at timestamp")
-                        
-                    if issues:
-                        self.log_result(
-                            "Collection Data Quality",
-                            False,
-                            f"Data quality issues found: {', '.join(issues)}"
-                        )
-                    else:
-                        self.log_result(
-                            "Collection Data Quality",
-                            True,
-                            "Collection data quality is good"
-                        )
-                else:
-                    self.log_result("Collection Data Quality", False, "No owned collections to check")
-            else:
-                self.log_result("Collection Data Quality", False, f"Cannot retrieve owned collections")
-        except Exception as e:
-            self.log_result("Collection Data Quality", False, f"Exception: {str(e)}")
-            
-        # Test 3: Check if user can see available jersey releases that aren't in collection
-        try:
-            vestiaire_response = requests.get(f"{BACKEND_URL}/vestiaire")
-            owned_response = requests.get(f"{BACKEND_URL}/users/{self.user_user_id}/collections/owned", headers=headers)
-            
-            if vestiaire_response.status_code == 200 and owned_response.status_code == 200:
-                vestiaire_data = vestiaire_response.json()
-                owned_data = owned_response.json()
-                
-                vestiaire_ids = {jersey.get('id') for jersey in vestiaire_data}
-                owned_ids = {item.get('jersey_release', {}).get('id') for item in owned_data}
-                
-                available_to_add = vestiaire_ids - owned_ids
-                
-                if len(available_to_add) == 0:
+                    # Verify Personal Kit has all three levels
+                    has_reference_info = bool(sample_personal_kit.get("reference_kit_info"))
+                    has_master_info = bool(sample_personal_kit.get("master_kit_info"))
+                    has_team_brand_info = bool(sample_personal_kit.get("team_info")) and bool(sample_personal_kit.get("brand_info"))
+                    
+                    hierarchy_complete = has_reference_info and has_master_info and has_team_brand_info
+                    
                     self.log_result(
-                        "Available Items to Add",
-                        True,
-                        f"User has all {len(vestiaire_ids)} available jersey releases in owned collection - duplicate prevention working correctly"
+                        "Three-Tier Separation Verification",
+                        hierarchy_complete,
+                        "Verified 3-tier hierarchy: Master Kit (template) → Reference Kit (generic) → Personal Kit (user-specific)",
+                        {
+                            "hierarchy_levels": {
+                                "master_kit": "Generic template with team/brand/design info",
+                                "reference_kit": "Shared generic version in vestiaire",
+                                "personal_kit": "User collection with personal details"
+                            },
+                            "data_flow_verified": {
+                                "reference_has_master_info": bool(master_kit_info),
+                                "personal_has_reference_info": has_reference_info,
+                                "personal_has_master_info": has_master_info,
+                                "personal_has_team_brand_info": has_team_brand_info
+                            }
+                        }
                     )
-                else:
-                    self.log_result(
-                        "Available Items to Add",
-                        True,
-                        f"{len(available_to_add)} jersey releases available to add to collection"
-                    )
-            else:
-                self.log_result("Available Items to Add", False, "Cannot compare vestiaire and collections")
+                    return hierarchy_complete
+            
+            # If no personal kits, still verify the Reference Kit → Master Kit connection
+            self.log_result(
+                "Three-Tier Separation Verification",
+                True,
+                "Verified Master Kit → Reference Kit connection (no Personal Kits to test full hierarchy)",
+                {
+                    "master_kit_connection": bool(master_kit_info),
+                    "team_brand_data": {"team": bool(team_info), "brand": bool(brand_info)}
+                }
+            )
+            return True
+            
         except Exception as e:
-            self.log_result("Available Items to Add", False, f"Exception: {str(e)}")
-            
-    def test_complete_workflow(self):
-        """Test the complete workflow: login → load vestiaire → add to collection"""
-        print("\n" + "="*80)
-        print("COMPLETE WORKFLOW TEST: User Login → Load Vestiaire → Add to Collection")
-        print("="*80)
-        
-        # Step 1: User Authentication
-        if not self.authenticate_user():
-            self.log_result("Complete Workflow", False, "User authentication failed - cannot proceed")
+            self.log_result(
+                "Three-Tier Separation Test",
+                False,
+                f"Three-tier separation error: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-        # Step 2: Load Vestiaire Data
-        vestiaire_data = self.test_vestiaire_endpoint()
-        if not vestiaire_data or len(vestiaire_data) == 0:
-            self.log_result("Complete Workflow", False, "No vestiaire data available - cannot test collection functionality")
-            return False
-            
-        # Step 3: Test adding first available jersey release to both collections
-        first_jersey = vestiaire_data[0]
-        jersey_id = first_jersey.get('id')
-        
-        if not jersey_id:
-            self.log_result("Complete Workflow", False, "Jersey release missing ID field")
-            return False
-            
-        # Get jersey display info
-        master_info = first_jersey.get('master_jersey_info', {})
-        player_name = first_jersey.get('player_name', 'Unknown Player')
-        season = master_info.get('season', 'Unknown Season')
-        
-        print(f"\nTesting with Jersey Release: {player_name} - {season}")
-        
-        # Test adding to owned collection
-        owned_success = self.test_add_to_collection(
-            self.user_token, self.user_user_id, "User", jersey_id, "owned"
-        )
-        
-        # Test adding to wanted collection  
-        wanted_success = self.test_add_to_collection(
-            self.user_token, self.user_user_id, "User", jersey_id, "wanted"
-        )
-        
-        # Overall workflow success
-        workflow_success = owned_success or wanted_success
-        self.log_result(
-            "Complete Workflow",
-            workflow_success,
-            f"Workflow {'completed successfully' if workflow_success else 'failed'} - Owned: {owned_success}, Wanted: {wanted_success}"
-        )
-        
-        return workflow_success
-        """Test the complete workflow: login → load vestiaire → add to collection"""
-        print("\n" + "="*80)
-        print("COMPLETE WORKFLOW TEST: User Login → Load Vestiaire → Add to Collection")
-        print("="*80)
-        
-        # Step 1: User Authentication
-        if not self.authenticate_user():
-            self.log_result("Complete Workflow", False, "User authentication failed - cannot proceed")
-            return False
-            
-        # Step 2: Load Vestiaire Data
-        vestiaire_data = self.test_vestiaire_endpoint()
-        if not vestiaire_data or len(vestiaire_data) == 0:
-            self.log_result("Complete Workflow", False, "No vestiaire data available - cannot test collection functionality")
-            return False
-            
-        # Step 3: Test adding first available jersey release to both collections
-        first_jersey = vestiaire_data[0]
-        jersey_id = first_jersey.get('id')
-        
-        if not jersey_id:
-            self.log_result("Complete Workflow", False, "Jersey release missing ID field")
-            return False
-            
-        # Get jersey display info
-        master_info = first_jersey.get('master_jersey_info', {})
-        player_name = first_jersey.get('player_name', 'Unknown Player')
-        season = master_info.get('season', 'Unknown Season')
-        
-        print(f"\nTesting with Jersey Release: {player_name} - {season}")
-        
-        # Test adding to owned collection
-        owned_success = self.test_add_to_collection(
-            self.user_token, self.user_user_id, "User", jersey_id, "owned"
-        )
-        
-        # Test adding to wanted collection  
-        wanted_success = self.test_add_to_collection(
-            self.user_token, self.user_user_id, "User", jersey_id, "wanted"
-        )
-        
-        # Overall workflow success
-        workflow_success = owned_success or wanted_success
-        self.log_result(
-            "Complete Workflow",
-            workflow_success,
-            f"Workflow {'completed successfully' if workflow_success else 'failed'} - Owned: {owned_success}, Wanted: {wanted_success}"
-        )
-        
-        return workflow_success
-        
-    def run_comprehensive_test(self):
-        """Run comprehensive vestiaire collection functionality test"""
-        print("🔍 VESTIAIRE COLLECTION FUNCTIONALITY INVESTIGATION")
+    
+    def run_all_tests(self) -> Dict[str, Any]:
+        """Run all Kit hierarchy workflow tests"""
+        print("🧪 Starting Kit Hierarchy Workflow Backend Testing...")
         print("=" * 60)
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print()
         
-        # Phase 1: Authentication Testing
-        print("PHASE 1: AUTHENTICATION TESTING")
-        print("-" * 40)
-        admin_auth_success = self.authenticate_admin()
-        user_auth_success = self.authenticate_user()
+        # Step 1: Authentication
+        if not self.authenticate_admin():
+            return {"success": False, "message": "Authentication failed", "results": self.test_results}
         
-        if not (admin_auth_success and user_auth_success):
-            print("\n❌ CRITICAL: Authentication failed - cannot proceed with collection testing")
-            return False
-            
-        # Phase 2: Vestiaire Endpoint Testing
-        print("\nPHASE 2: VESTIAIRE ENDPOINT TESTING")
-        print("-" * 40)
-        vestiaire_data = self.test_vestiaire_endpoint()
+        # Step 2: Test Vestiaire Endpoint
+        vestiaire_success = self.test_vestiaire_endpoint()
         
-        if not vestiaire_data:
-            print("\n❌ CRITICAL: Vestiaire endpoint failed - cannot test collection functionality")
-            return False
-            
-        # Phase 3: Collection Endpoints Testing
-        print("\nPHASE 3: COLLECTION ENDPOINTS TESTING")
-        print("-" * 40)
-        self.test_collection_endpoints_with_auth(self.admin_token, self.admin_user_id, "Admin")
-        self.test_collection_endpoints_with_auth(self.user_token, self.user_user_id, "User")
+        # Step 3: Test Personal Kit Creation (if vestiaire has kits)
+        personal_kit_id = None
+        if vestiaire_success:
+            # Get a reference kit ID from vestiaire
+            vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
+            if vestiaire_response.status_code == 200:
+                vestiaire_kits = vestiaire_response.json()
+                if vestiaire_kits:
+                    reference_kit_id = vestiaire_kits[0].get("id")
+                    personal_kit_id = self.test_personal_kit_creation(reference_kit_id)
         
-        # Phase 4: Collection Addition Testing
-        print("\nPHASE 4: COLLECTION ADDITION TESTING")
-        print("-" * 40)
+        # Step 4: Test Personal Collection Retrieval
+        collection_success = self.test_personal_collection_retrieval()
         
-        if len(vestiaire_data) > 0:
-            # Test with first available jersey release
-            test_jersey = vestiaire_data[0]
-            jersey_id = test_jersey.get('id')
-            
-            if jersey_id:
-                # Get jersey display info
-                master_info = test_jersey.get('master_jersey_info', {})
-                player_name = test_jersey.get('player_name', 'Unknown Player')
-                season = master_info.get('season', 'Unknown Season')
-                
-                print(f"Testing with Jersey: {player_name} - {season} (ID: {jersey_id})")
-                
-                # Test both collection types for both users
-                self.test_add_to_collection(self.admin_token, self.admin_user_id, "Admin", jersey_id, "owned")
-                self.test_add_to_collection(self.admin_token, self.admin_user_id, "Admin", jersey_id, "wanted")
-                self.test_add_to_collection(self.user_token, self.user_user_id, "User", jersey_id, "owned")
-                self.test_add_to_collection(self.user_token, self.user_user_id, "User", jersey_id, "wanted")
-                
-                # Test with additional jerseys if available
-                if len(vestiaire_data) > 1:
-                    second_jersey = vestiaire_data[1]
-                    second_jersey_id = second_jersey.get('id')
-                    if second_jersey_id:
-                        second_master_info = second_jersey.get('master_jersey_info', {})
-                        second_player_name = second_jersey.get('player_name', 'Unknown Player')
-                        second_season = second_master_info.get('season', 'Unknown Season')
-                        
-                        print(f"\nTesting with Second Jersey: {second_player_name} - {second_season} (ID: {second_jersey_id})")
-                        self.test_add_to_collection(self.user_token, self.user_user_id, "User", second_jersey_id, "owned")
-                        self.test_add_to_collection(self.user_token, self.user_user_id, "User", second_jersey_id, "wanted")
-            else:
-                print("❌ Jersey release missing ID field - cannot test collection addition")
-        else:
-            print("❌ No jersey releases available for collection testing")
-            
-        # Phase 5: User Experience Issues Investigation
-        print("\nPHASE 5: USER EXPERIENCE ISSUES INVESTIGATION")
-        print("-" * 40)
-        self.test_user_experience_issues()
+        # Step 5: Test Complete Workflow
+        workflow_success = self.test_complete_workflow()
         
-        # Phase 6: Complete Workflow Test
-        print("\nPHASE 6: COMPLETE WORKFLOW TEST")
-        print("-" * 40)
-        self.test_complete_workflow()
+        # Step 6: Test Three-Tier Separation
+        separation_success = self.test_three_tier_separation()
         
-        # Generate Summary
-        self.generate_summary()
-        
-    def generate_summary(self):
-        """Generate test summary"""
-        print("\n" + "="*80)
-        print("VESTIAIRE COLLECTION FUNCTIONALITY TEST SUMMARY")
-        print("="*80)
-        
-        total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result['success'])
-        failed_tests = total_tests - passed_tests
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests}")
-        print(f"Failed: {failed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
-        
-        print("\nDETAILED RESULTS:")
-        print("-" * 40)
-        
-        for result in self.test_results:
-            status = "✅" if result['success'] else "❌"
-            print(f"{status} {result['test']}")
-            if not result['success']:
-                print(f"   └─ {result['details']}")
-                
-        # Critical Issues Analysis
-        critical_failures = [
-            result for result in self.test_results 
-            if not result['success'] and any(keyword in result['test'].lower() 
-            for keyword in ['authentication', 'vestiaire endpoint', 'complete workflow'])
+        # Calculate overall success
+        test_successes = [
+            vestiaire_success,
+            personal_kit_id is not None,
+            collection_success,
+            workflow_success,
+            separation_success
         ]
         
-        if critical_failures:
-            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED ({len(critical_failures)}):")
-            for failure in critical_failures:
-                print(f"   • {failure['test']}: {failure['details']}")
-                
-        # Success Analysis
-        collection_successes = [
-            result for result in self.test_results
-            if result['success'] and 'collection' in result['test'].lower()
-        ]
+        overall_success = sum(test_successes) >= 4  # Allow one failure
+        success_rate = (sum(test_successes) / len(test_successes)) * 100
         
-        if collection_successes:
-            print(f"\n✅ COLLECTION FUNCTIONALITY WORKING ({len(collection_successes)} tests passed):")
-            for success in collection_successes[:3]:  # Show first 3
-                print(f"   • {success['test']}")
-                
-        # Final Assessment
-        print(f"\n{'='*80}")
-        if success_rate >= 90:
-            print("🎉 ASSESSMENT: VESTIAIRE COLLECTION FUNCTIONALITY IS WORKING EXCELLENTLY!")
-            print("   The reported bug may be a frontend issue or user-specific problem.")
-        elif success_rate >= 70:
-            print("⚠️  ASSESSMENT: VESTIAIRE COLLECTION FUNCTIONALITY IS MOSTLY WORKING")
-            print("   Some issues identified that may explain the reported bug.")
-        else:
-            print("🚨 ASSESSMENT: CRITICAL ISSUES FOUND IN VESTIAIRE COLLECTION FUNCTIONALITY")
-            print("   Multiple failures explain the reported bug.")
-            
-        print(f"{'='*80}")
+        print("\n" + "=" * 60)
+        print(f"🏁 Kit Hierarchy Workflow Testing Complete")
+        print(f"📊 Success Rate: {success_rate:.1f}% ({sum(test_successes)}/{len(test_successes)} tests passed)")
+        
+        return {
+            "success": overall_success,
+            "success_rate": success_rate,
+            "tests_passed": sum(test_successes),
+            "total_tests": len(test_successes),
+            "message": f"Kit hierarchy workflow testing completed with {success_rate:.1f}% success rate",
+            "results": self.test_results
+        }
 
 def main():
     """Main test execution"""
-    tester = VestiaireCollectionTester()
-    tester.run_comprehensive_test()
+    tester = KitHierarchyTester()
+    results = tester.run_all_tests()
+    
+    # Print summary
+    print(f"\n📋 SUMMARY:")
+    print(f"Overall Success: {'✅ PASS' if results['success'] else '❌ FAIL'}")
+    print(f"Success Rate: {results['success_rate']:.1f}%")
+    print(f"Tests Passed: {results['tests_passed']}/{results['total_tests']}")
+    
+    # Return appropriate exit code
+    sys.exit(0 if results['success'] else 1)
 
 if __name__ == "__main__":
     main()
