@@ -616,6 +616,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         isOpen={showReleaseDetailModal}
         onClose={() => setShowReleaseDetailModal(false)}
       />
+
+      {/* Create Kit Release Modal */}
+      {showCreateModal && <CreateKitReleaseModal />}
     </div>
   );
 };
