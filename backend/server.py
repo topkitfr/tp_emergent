@@ -11413,7 +11413,7 @@ async def add_kit_to_collection(
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Error adding kit to collection")
 
-@api_router.get("/personal-kits", response_model=List[PersonalKitResponse])  
+@api_router.get("/personal-kits")  
 async def get_user_collection(
     collection_type: Optional[str] = None,  # "owned", "wanted"
     current_user: dict = Depends(get_current_user)
@@ -11427,64 +11427,54 @@ async def get_user_collection(
         if collection_type:
             filter_query["collection_type"] = collection_type
         
-        # Aggregation pipeline for enriched data
-        pipeline = [
-            {"$match": filter_query},
-            {"$sort": {"added_to_collection_at": -1}},
-            {
-                "$lookup": {
-                    "from": "reference_kits",
-                    "localField": "reference_kit_id",
-                    "foreignField": "id",
-                    "as": "reference_kit_info"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "master_kits", 
-                    "localField": "reference_kit_info.master_kit_id",
-                    "foreignField": "id",
-                    "as": "master_kit_info"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "teams",
-                    "localField": "master_kit_info.team_id",
-                    "foreignField": "id",
-                    "as": "team_info"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "brands",
-                    "localField": "master_kit_info.brand_id", 
-                    "foreignField": "id",
-                    "as": "brand_info"
-                }
-            }
-        ]
-        
-        personal_kits = await db.personal_kits.aggregate(pipeline).to_list(1000)
+        # Get personal kits and manually enrich them
+        personal_kits = await db.personal_kits.find(filter_query).sort("added_to_collection_at", -1).to_list(1000)
         
         # Convert to response format
         result = []
         for kit in personal_kits:
             kit.pop('_id', None)
             
-            response = PersonalKitResponse(
+            # Get reference kit
+            reference_kit = await db.reference_kits.find_one({"id": kit.get("reference_kit_id")})
+            if reference_kit:
+                reference_kit.pop('_id', None)
+            
+            # Get master kit
+            master_kit = None
+            if reference_kit:
+                master_kit = await db.master_kits.find_one({"id": reference_kit.get("master_kit_id")})
+                if master_kit:
+                    master_kit.pop('_id', None)
+            
+            # Get team and brand
+            team = None
+            brand = None
+            if master_kit:
+                team = await db.teams.find_one({"id": master_kit.get("team_id")})
+                if team:
+                    team.pop('_id', None)
+                    
+                brand = await db.brands.find_one({"id": master_kit.get("brand_id")})
+                if brand:
+                    brand.pop('_id', None)
+            
+            # Create enriched response
+            response = {
                 **kit,
-                reference_kit_info=kit['reference_kit_info'][0] if kit['reference_kit_info'] else {},
-                master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
-                team_info=kit['team_info'][0] if kit['team_info'] else {},
-                brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
-            )
+                "reference_kit_info": reference_kit or {},
+                "master_kit_info": master_kit or {},
+                "team_info": team or {},
+                "brand_info": brand or {}
+            }
             result.append(response)
         
         return result
         
     except Exception as e:
         logger.error(f"Get personal kits error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Error fetching personal kits")
 
 @api_router.put("/personal-kits/{kit_id}", response_model=PersonalKitResponse)
