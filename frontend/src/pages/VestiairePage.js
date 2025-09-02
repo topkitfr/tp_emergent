@@ -266,16 +266,24 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             {user && (
               <>
                 <button
-                  onClick={() => addToCollection(release.id, 'owned')}
+                  onClick={() => {
+                    setSelectedReferenceKit(release);
+                    setSelectedCollectionType('owned');
+                    setShowPersonalDetailsModal(true);
+                  }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Owned
+                  Add to Owned
                 </button>
                 <button
-                  onClick={() => addToCollection(release.id, 'wanted')}
+                  onClick={() => {
+                    setSelectedReferenceKit(release);
+                    setSelectedCollectionType('wanted');
+                    setShowPersonalDetailsModal(true);
+                  }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Wanted
+                  Add to Wanted
                 </button>
               </>
             )}
