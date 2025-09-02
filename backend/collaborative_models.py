@@ -594,6 +594,7 @@ class ReferenceKitResponse(BaseModel):
     """API Response for Reference Kit with enriched data"""
     # Reference Kit Data
     id: str
+    master_kit_id: str  # Foreign key to Master Kit
     available_sizes: List[str]
     available_prints: List[Dict[str, Any]]
     original_retail_price: Optional[float]
