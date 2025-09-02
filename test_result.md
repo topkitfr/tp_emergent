@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "I would like us to have detailed views of the pending contributions/improvements, especially for team sheets. Previously, we had a detailed layout with a Before/After comparison. The current version is far too minimalistic. I can't even tell what was modified or proposed, or by whom. This is too limited to meaningfully contribute to voting and approving changes to references."
+## user_problem_statement: "We need to start over with a clean database, just like on the deployed site. Can you do that even for the preview? Complete wipe, just keep the Admin user account and the user (topkitfr@gmail.com/steinmetzlivio@gmail.com)"
 
 ## backend:
   - task: "Enhanced Contribution Detail Endpoint"
