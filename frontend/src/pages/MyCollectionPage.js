@@ -348,7 +348,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center space-x-2">
                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                      {item.jersey_release?.topkit_reference || 'No Ref'}
+                      {item.reference_kit_info?.topkit_reference || 'No Ref'}
                     </span>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       item.collection_type === 'owned' 
@@ -360,26 +360,36 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                   </div>
                   
                   <h3 className="font-semibold text-gray-900">
-                    {item.jersey_release?.player_name || item.master_jersey?.team_info?.name || 'Unknown Kit'}
+                    {item.printed_name || item.team_info?.name || 'Unknown Kit'}
                   </h3>
                   
                   <div className="text-sm text-gray-600 space-y-1">
-                    <div>Team: {item.master_jersey?.team_info?.name || 'Unknown'}</div>
-                    <div>Season: {item.master_jersey?.season || 'Unknown'}</div>
+                    <div>Team: {item.team_info?.name || 'Unknown'}</div>
+                    <div>Season: {item.master_kit_info?.season || 'Unknown'}</div>
                     {item.size && <div>Size: {item.size}</div>}
                     {item.condition && <div>Condition: {item.condition}</div>}
+                    {item.is_signed && <div>✍️ Signed {item.signed_by ? `by ${item.signed_by}` : ''}</div>}
+                    {item.has_printing && item.printed_name && (
+                      <div>👕 Printed: {item.printed_name} {item.printed_number ? `#${item.printed_number}` : ''}</div>
+                    )}
                   </div>
 
                   {/* Pricing Information */}
                   <div className="border-t pt-3 mt-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Retail Price:</span>
-                      <span className="font-medium">€{item.jersey_release?.retail_price || 'N/A'}</span>
+                      <span className="text-gray-600">Original Price:</span>
+                      <span className="font-medium">€{item.reference_kit_info?.original_retail_price || 'N/A'}</span>
                     </div>
                     {item.purchase_price && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Paid:</span>
                         <span className="font-medium">€{item.purchase_price}</span>
+                      </div>
+                    )}
+                    {item.reference_kit_info?.current_market_estimate && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Market Estimate:</span>
+                        <span className="font-medium text-blue-600">€{item.reference_kit_info.current_market_estimate}</span>
                       </div>
                     )}
                   </div>
