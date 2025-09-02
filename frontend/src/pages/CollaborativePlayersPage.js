@@ -467,7 +467,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 type="submit"
