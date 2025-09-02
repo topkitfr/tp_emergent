@@ -25,17 +25,15 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   const [players, setPlayers] = useState([]); // For player dropdown
   const [playerNumbers, setPlayerNumbers] = useState([]); // For player number dropdown based on selected player
   const [personalDetails, setPersonalDetails] = useState({
-    size: '',
-    condition: 'good',
-    purchase_price: '',
-    purchase_date: '',
-    is_signed: false,
-    signed_by: '',
-    has_printing: false,
-    printed_name: '',
-    printed_number: '',
-    is_worn: false,
-    personal_notes: ''
+    // Form Collection Kit fields according to specifications
+    price_buy: '', // Price (buy)
+    price_value: '', // Price Value
+    player_name: '', // Player name* (Required - Dropdown from database)
+    player_number: '', // Player number* (Required - Dropdown based on player)
+    condition: 'good', // State (condition)
+    info: '', // Info+ (free text)
+    // Keep size for practical collection management
+    size: ''
   });
 
   const addToCollection = async (referenceKitId, collectionType) => {
