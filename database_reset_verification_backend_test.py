@@ -284,13 +284,13 @@ class DatabaseResetVerificationTester:
                         self.log_result(
                             "User Profile Access", 
                             True, 
-                            f"User profile accessible - Email: {data.get('email')}, Name: {data.get('name')}"
+                            f"User profile accessible - Email: {user_data.get('email')}, Name: {user_data.get('name')}"
                         )
                     else:
                         self.log_result(
                             "User Profile Access", 
                             False, 
-                            f"User profile data mismatch - Expected: {USER_CREDENTIALS['email']}, Got: {data.get('email')}"
+                            f"User profile data mismatch - Expected: {USER_CREDENTIALS['email']}, Got: {user_data.get('email')}"
                         )
                 else:
                     self.log_result(
