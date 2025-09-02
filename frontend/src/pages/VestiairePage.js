@@ -323,7 +323,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             description: '',
             release_type: 'official'
           });
-          loadVestiaire(); // Refresh the list
+          loadKitStore(); // Refresh the list
         } else {
           const errorData = await response.json();
           alert(`Error: ${errorData.detail || 'Failed to create kit release'}`);
