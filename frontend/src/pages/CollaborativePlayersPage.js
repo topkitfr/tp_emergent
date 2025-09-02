@@ -274,7 +274,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <h3 className="text-lg font-bold mb-4">Créer un nouveau joueur</h3>
+          <h3 className="text-lg font-bold mb-4">Create New Player</h3>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
