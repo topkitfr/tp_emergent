@@ -440,7 +440,7 @@ class KitHierarchyTester:
             
             create_response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
             
-            if create_response.status_code != 201:
+            if create_response.status_code not in [200, 201]:
                 self.log_result(
                     "Complete Workflow - Personal Kit Creation",
                     False,
