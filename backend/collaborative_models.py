@@ -161,44 +161,60 @@ class Competition(BaseModel):
     topkit_reference: str  # TK-COMP-000001
 
 # ================================
-# CONCEPT MASTER JERSEY vs RELEASE
+# NEW KIT HIERARCHY SYSTEM
 # ================================
 
-class MasterJersey(BaseModel):
-    """Master Jersey - Design unique (ex: PSG 2022-23 'Jordan')"""
+class KitType(str, Enum):
+    HOME = "home"
+    AWAY = "away"
+    THIRD = "third"
+    FOURTH = "fourth"
+    GOALKEEPER = "goalkeeper"
+    SPECIAL = "special"
+
+class KitModel(str, Enum):
+    REPLICA = "replica"
+    AUTHENTIC = "authentic"
+
+class KitCondition(str, Enum):
+    MINT = "mint"
+    NEAR_MINT = "near_mint"
+    EXCELLENT = "excellent"
+    GOOD = "good"
+    FAIR = "fair"
+    POOR = "poor"
+
+class MasterKit(BaseModel):
+    """Master Kit - Template level with design information"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
-    # Relations vers entités
-    team_id: str  # Référence vers Team
-    brand_id: str  # Référence vers Brand
-    competition_id: Optional[str] = None  # Référence vers Competition
-    
-    # Informations design
+    # Basic Kit Info
+    team_id: str  # Reference to Team
+    brand_id: str  # Reference to Brand
     season: str  # "2022-23"
-    jersey_type: str  # "home", "away", "third", "goalkeeper", "training", "special"
-    design_name: Optional[str] = None  # "Jordan Collection"
+    kit_type: KitType  # home/away/third/fourth/goalkeeper/special
+    model: KitModel  # replica/authentic
     
-    # Caractéristiques visuelles
+    # Competition Details
+    competition_id: Optional[str] = None  # Reference to Competition
+    competition_badges: List[str] = []  # Competition-specific badges/patches
+    competition_details: Optional[Dict[str, Any]] = None  # Special competition info
+    
+    # Design Information
+    design_name: Optional[str] = None  # "Jordan Collection", "Centenario"
     primary_color: str
     secondary_colors: List[str] = []
     pattern_description: Optional[str] = None
-    special_features: List[str] = []
     
-    # Technologies et matériaux
-    fabric_technology: Optional[str] = None
-    fabric_composition: Optional[str] = None
-    
-    # Sponsors et badges
+    # Sponsor & Branding
     main_sponsor: Optional[str] = None
-    sleeve_sponsors: List[str] = []
-    competition_badges: List[str] = []
+    sponsor_placement: Optional[str] = None
     
-    # Images de référence (photos officielles)
-    reference_images: List[str] = []
+    # Media
     main_image_url: Optional[str] = None
-    secondary_images: List[str] = []
+    reference_images: List[str] = []
     
-    # Métadonnées collaboratives
+    # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
@@ -211,87 +227,101 @@ class MasterJersey(BaseModel):
     
     topkit_reference: str  # TK-MASTER-000001
     
-    # Statistiques
-    total_releases: int = 0  # Nombre de JerseyRelease liés
-    total_collectors: int = 0  # Nombre d'utilisateurs possédant ce design
+    # Statistics
+    total_reference_kits: int = 0
+    total_collectors: int = 0
 
-class JerseyRelease(BaseModel):
-    """Jersey Release - Version physique spécifique d'un MasterJersey"""
+class ReferenceKit(BaseModel):
+    """Reference Kit - Generic version users can add to their collections"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
-    # Référence vers le Master Jersey
-    master_jersey_id: str
+    # Master Kit Reference
+    master_kit_id: str
     
-    # Informations version spécifique
-    release_type: str  # "player_version", "fan_version", "authentic", "replica"
-    size_range: List[str] = []  # ["XS", "S", "M", "L", "XL", "XXL"]
+    # Available Variations
+    available_sizes: List[str] = []  # ["XS", "S", "M", "L", "XL", "XXL"]
+    available_prints: List[Dict[str, Any]] = []  # [{"player_name": "Messi", "number": 10, "player_id": "123"}]
     
-    # Personnalisation
-    player_name: Optional[str] = None
-    player_number: Optional[int] = None
-    player_id: Optional[str] = None  # Référence vers Player
+    # Pricing Information
+    original_retail_price: Optional[float] = None
+    current_market_estimate: Optional[float] = None
+    price_range_min: Optional[float] = None
+    price_range_max: Optional[float] = None
     
-    # Informations commerciales
-    retail_price: Optional[float] = None
+    # Availability
     release_date: Optional[datetime] = None
-    discontinuation_date: Optional[datetime] = None
-    production_quantity: Optional[int] = None
+    discontinued_date: Optional[datetime] = None
+    is_limited_edition: bool = False
+    production_run: Optional[int] = None  # Total pieces produced
     
-    # Codes et références
-    sku_code: Optional[str] = None
-    manufacturer_code: Optional[str] = None
-    barcode: Optional[str] = None
+    # Reference Information
+    official_product_code: Optional[str] = None  # Brand's SKU
+    retailer_links: List[Dict[str, str]] = []  # [{"retailer": "Nike", "url": "..."}]
     
-    # Différences par rapport au Master Jersey
-    variant_notes: Optional[str] = None
-    differences_from_master: List[str] = []
-    
-    # Images spécifiques à cette version
-    product_images: List[str] = []
-    
-    # Métadonnées collaboratives
+    # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
-    verified_at: Optional[datetime] = None
-    verified_by: Optional[str] = None
     
-    modification_count: int = 0
-    last_modified_at: Optional[datetime] = None
-    last_modified_by: Optional[str] = None
+    topkit_reference: str  # TK-REF-000001
     
-    topkit_reference: str  # TK-RELEASE-000001
+    # Statistics
+    total_in_collections: int = 0  # How many users have this in their collection
+    total_for_sale: int = 0
 
-class JerseyReleaseValuation(BaseModel):
-    """Évaluation d'un Jersey Release"""
+class PersonalKit(BaseModel):
+    """Personal Kit - User's specific kit in their collection with personalization"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    jersey_release_id: str
     
-    # Prix et estimations
-    retail_price: Optional[float] = None
-    current_market_value: Optional[float] = None
-    estimated_min: Optional[float] = None
-    estimated_max: Optional[float] = None
-    
-    # Facteurs d'évaluation
-    rarity_score: int = 5  # 1-10
-    condition_multiplier: float = 1.0
-    player_popularity_bonus: float = 1.0
-    
-    # Métadonnées
-    last_evaluated_at: datetime = Field(default_factory=datetime.utcnow)
-    evaluation_confidence: float = 0.7
-
-class UserJerseyCollection(BaseModel):
-    """Maillot dans la collection utilisateur"""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    # Owner & Reference
     user_id: str
-    jersey_release_id: str
+    reference_kit_id: str
+    
+    # Physical Details
     size: str
-    condition: str  # "mint", "excellent", "good", "fair", "poor"
+    condition: KitCondition
+    
+    # Purchase Information
     purchase_price: Optional[float] = None
-    estimated_value: Optional[float] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    purchase_date: Optional[datetime] = None
+    purchase_location: Optional[str] = None  # Store, online, etc.
+    
+    # Personalization
+    is_worn: bool = False
+    is_signed: bool = False
+    signed_by: Optional[str] = None  # Player name or person who signed
+    
+    # Printing Details
+    has_printing: bool = False
+    printed_name: Optional[str] = None
+    printed_number: Optional[int] = None
+    printing_type: Optional[str] = None  # "official", "custom", "heat_press", etc.
+    
+    # Special Attributes
+    is_match_worn: bool = False
+    match_details: Optional[str] = None  # Which match, date, etc.
+    is_authenticated: bool = False
+    authentication_details: Optional[str] = None
+    
+    # Custom Notes
+    personal_notes: Optional[str] = None
+    acquisition_story: Optional[str] = None
+    
+    # Collection Status
+    collection_type: str = "owned"  # "owned", "wanted"
+    is_for_sale: bool = False
+    asking_price: Optional[float] = None
+    
+    # Photos (user's own photos)
+    personal_photos: List[str] = []
+    
+    # Metadata
+    added_to_collection_at: datetime = Field(default_factory=datetime.utcnow)
+    last_updated_at: Optional[datetime] = None
+    
+    # Valuation
+    estimated_current_value: Optional[float] = None
+    last_valuation_date: Optional[datetime] = None
 
 # ================================
 # SYSTÈME COLLABORATIF
