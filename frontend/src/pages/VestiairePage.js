@@ -277,6 +277,211 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     );
   };
 
+  // Create Kit Release Modal Component
+  const CreateKitReleaseModal = () => {
+    const [formData, setFormData] = useState({
+      master_jersey_id: '',
+      player_name: '',
+      size: '',
+      condition: 'good',
+      retail_price: '',
+      description: '',
+      release_type: 'official'
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      if (!formData.master_jersey_id || !formData.retail_price) {
+        alert('Master Kit and Retail Price are required');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`${API}/api/jersey-releases`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          alert('Kit Release created successfully!');
+          setShowCreateModal(false);
+          setFormData({
+            master_jersey_id: '',
+            player_name: '',
+            size: '',
+            condition: 'good',
+            retail_price: '',
+            description: '',
+            release_type: 'official'
+          });
+          loadVestiaire(); // Refresh the list
+        } else {
+          const errorData = await response.json();
+          alert(`Error: ${errorData.detail || 'Failed to create kit release'}`);
+        }
+      } catch (error) {
+        console.error('Error creating kit release:', error);
+        alert('Error creating kit release');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900">Add New Kit Release</h2>
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Master Kit ID *
+              </label>
+              <input
+                type="text"
+                value={formData.master_jersey_id}
+                onChange={(e) => setFormData(prev => ({...prev, master_jersey_id: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter Master Kit ID"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                You can find this ID on the Master Kit's detail page
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Player Name
+              </label>
+              <input
+                type="text"
+                value={formData.player_name}
+                onChange={(e) => setFormData(prev => ({...prev, player_name: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter player name (optional)"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Size
+                </label>
+                <select
+                  value={formData.size}
+                  onChange={(e) => setFormData(prev => ({...prev, size: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select size</option>
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Condition
+                </label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => setFormData(prev => ({...prev, condition: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="mint">Mint</option>
+                  <option value="near_mint">Near Mint</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                  <option value="poor">Poor</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Retail Price (€) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.retail_price}
+                onChange={(e) => setFormData(prev => ({...prev, retail_price: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="99.99"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Release Type
+              </label>
+              <select
+                value={formData.release_type}
+                onChange={(e) => setFormData(prev => ({...prev, release_type: e.target.value}))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="official">Official Release</option>
+                <option value="limited">Limited Edition</option>
+                <option value="player_issue">Player Issue</option>
+                <option value="match_worn">Match Worn</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+                rows="3"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                placeholder="Additional details about this kit release..."
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Creating...' : 'Create Kit Release'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
