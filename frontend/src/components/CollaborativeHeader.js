@@ -187,7 +187,7 @@ const CollaborativeHeader = ({
                 onClick={onLogin}
                 className="bg-black hover:bg-gray-800 text-white px-3 lg:px-4 py-2 rounded-full text-sm font-medium transition-colors"
               >
-                <span className="hidden sm:inline">Se connecter</span>
+                <span className="hidden sm:inline">Sign In</span>
                 <span className="sm:hidden">Login</span>
               </button>
             )}
