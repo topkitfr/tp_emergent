@@ -1084,26 +1084,73 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               )}
 
               <div className="space-y-4">
+                {/* Price (buy) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Size *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (buy)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={personalDetails.price_buy}
+                    onChange={(e) => setPersonalDetails({...personalDetails, price_buy: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="99.99"
+                  />
+                </div>
+
+                {/* Price Value */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Value</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={personalDetails.price_value}
+                    onChange={(e) => setPersonalDetails({...personalDetails, price_value: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="120.00"
+                  />
+                </div>
+
+                {/* Player Name* (Required - Dropdown from database) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Player Name *</label>
                   <select
-                    value={personalDetails.size}
-                    onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
+                    value={personalDetails.player_name}
+                    onChange={(e) => handlePlayerChange(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="">Select your size</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
+                    <option value="">Select a player</option>
+                    {players.map(player => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
+                {/* Player Number* (Required - Dropdown based on selected player) */}
+                {personalDetails.player_name && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Player Number *</label>
+                    <select
+                      value={personalDetails.player_number}
+                      onChange={(e) => setPersonalDetails({...personalDetails, player_number: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select a number</option>
+                      {playerNumbers.map(number => (
+                        <option key={number} value={number}>
+                          {number}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* State (condition) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State (Condition)</label>
                   <select
                     value={personalDetails.condition}
                     onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
@@ -1117,115 +1164,33 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   </select>
                 </div>
 
+                {/* Size (kept for practical collection management) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price You Paid (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={personalDetails.purchase_price}
-                    onChange={(e) => setPersonalDetails({...personalDetails, purchase_price: e.target.value})}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                  <select
+                    value={personalDetails.size}
+                    onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="How much did you pay?"
-                  />
+                  >
+                    <option value="">Select size</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                  </select>
                 </div>
 
+                {/* Info+ (free text) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
-                  <input
-                    type="date"
-                    value={personalDetails.purchase_date}
-                    onChange={(e) => setPersonalDetails({...personalDetails, purchase_date: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="is_worn"
-                      checked={personalDetails.is_worn}
-                      onChange={(e) => setPersonalDetails({...personalDetails, is_worn: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="is_worn" className="ml-2 text-sm text-gray-700">
-                      Worn
-                    </label>
-                  </div>
-
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="is_signed"
-                      checked={personalDetails.is_signed}
-                      onChange={(e) => setPersonalDetails({...personalDetails, is_signed: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="is_signed" className="ml-2 text-sm text-gray-700">
-                      Signed
-                    </label>
-                  </div>
-
-                  {personalDetails.is_signed && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
-                      <input
-                        type="text"
-                        value={personalDetails.signed_by}
-                        onChange={(e) => setPersonalDetails({...personalDetails, signed_by: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                        placeholder="Player name or person who signed"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="has_printing"
-                      checked={personalDetails.has_printing}
-                      onChange={(e) => setPersonalDetails({...personalDetails, has_printing: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="has_printing" className="ml-2 text-sm text-gray-700">
-                      Has Player Print
-                    </label>
-                  </div>
-
-                  {personalDetails.has_printing && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
-                        <input
-                          type="text"
-                          value={personalDetails.printed_name}
-                          onChange={(e) => setPersonalDetails({...personalDetails, printed_name: e.target.value})}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                          placeholder="Player name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
-                        <input
-                          type="number"
-                          value={personalDetails.printed_number}
-                          onChange={(e) => setPersonalDetails({...personalDetails, printed_number: e.target.value})}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                          placeholder="10"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Personal Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Info+</label>
                   <textarea
-                    value={personalDetails.personal_notes}
-                    onChange={(e) => setPersonalDetails({...personalDetails, personal_notes: e.target.value})}
+                    value={personalDetails.info}
+                    onChange={(e) => setPersonalDetails({...personalDetails, info: e.target.value})}
                     rows="3"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Any special notes about this kit..."
+                    placeholder="Additional information about this kit..."
                   />
                 </div>
               </div>
