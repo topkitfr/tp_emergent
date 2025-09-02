@@ -450,30 +450,82 @@ class CompetitionCreate(BaseModel):
     logo_url: Optional[str] = None
     secondary_images: List[str] = []
 
-class MasterJerseyCreate(BaseModel):
+# ================================
+# CREATE CLASSES FOR NEW HIERARCHY
+# ================================
+
+class MasterKitCreate(BaseModel):
     team_id: str
     brand_id: str
     season: str
-    jersey_type: str
+    kit_type: KitType
+    model: KitModel
+    competition_id: Optional[str] = None
+    competition_badges: List[str] = []
     design_name: Optional[str] = None
     primary_color: str
     secondary_colors: List[str] = []
     pattern_description: Optional[str] = None
     main_sponsor: Optional[str] = None
-    competition_id: Optional[str] = None
+    sponsor_placement: Optional[str] = None
     main_image_url: Optional[str] = None
-    secondary_images: List[str] = []
+    reference_images: List[str] = []
 
-class JerseyReleaseCreate(BaseModel):
-    master_jersey_id: str
-    release_type: str
-    size_range: List[str] = []
-    player_name: Optional[str] = None
-    player_number: Optional[int] = None
-    player_id: Optional[str] = None
-    retail_price: Optional[float] = None
-    sku_code: Optional[str] = None
-    product_images: List[str] = []
+class ReferenceKitCreate(BaseModel):
+    master_kit_id: str
+    available_sizes: List[str] = []
+    available_prints: List[Dict[str, Any]] = []
+    original_retail_price: Optional[float] = None
+    current_market_estimate: Optional[float] = None
+    price_range_min: Optional[float] = None
+    price_range_max: Optional[float] = None
+    release_date: Optional[datetime] = None
+    is_limited_edition: bool = False
+    production_run: Optional[int] = None
+    official_product_code: Optional[str] = None
+
+class PersonalKitCreate(BaseModel):
+    reference_kit_id: str
+    size: str
+    condition: KitCondition = KitCondition.GOOD
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[datetime] = None
+    purchase_location: Optional[str] = None
+    is_worn: bool = False
+    is_signed: bool = False
+    signed_by: Optional[str] = None
+    has_printing: bool = False
+    printed_name: Optional[str] = None
+    printed_number: Optional[int] = None
+    printing_type: Optional[str] = None
+    is_match_worn: bool = False
+    match_details: Optional[str] = None
+    is_authenticated: bool = False
+    authentication_details: Optional[str] = None
+    personal_notes: Optional[str] = None
+    collection_type: str = "owned"
+
+class PersonalKitUpdate(BaseModel):
+    size: Optional[str] = None
+    condition: Optional[KitCondition] = None
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[datetime] = None
+    purchase_location: Optional[str] = None
+    is_worn: Optional[bool] = None
+    is_signed: Optional[bool] = None
+    signed_by: Optional[str] = None
+    has_printing: Optional[bool] = None
+    printed_name: Optional[str] = None
+    printed_number: Optional[int] = None
+    printing_type: Optional[str] = None
+    is_match_worn: Optional[bool] = None
+    match_details: Optional[str] = None
+    is_authenticated: Optional[bool] = None
+    authentication_details: Optional[str] = None
+    personal_notes: Optional[str] = None
+    acquisition_story: Optional[str] = None
+    is_for_sale: Optional[bool] = None
+    asking_price: Optional[float] = None
 
 # ================================
 # MODÈLES DE RÉPONSE
