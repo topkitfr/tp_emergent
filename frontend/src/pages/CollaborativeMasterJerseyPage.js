@@ -281,23 +281,18 @@ const CollaborativeMasterJerseyPage = ({
       }
 
       try {
-        // Préparer les données avec les images en base64
-        const jerseyData = { ...formData };
+        // Préparer les données selon le modèle MasterJerseyCreate
+        const jerseyData = {
+          team_id: formData.team_id,
+          brand_id: formData.brand_id,
+          season: formData.season,
+          jersey_type: formData.jersey_type,
+          model: formData.model,
+          primary_color: formData.primary_color,
+          secondary_colors: formData.secondary_colors
+        };
 
-        // Ajouter l'image principale si présente
-        if (imageFiles.main_image) {
-          const mainImageBase64 = await convertFileToBase64(imageFiles.main_image);
-          jerseyData.main_image_url = mainImageBase64;
-        }
-
-        // Ajouter les images secondaires si présentes
-        if (imageFiles.secondary_photos.length > 0) {
-          const secondaryImagesBase64 = await Promise.all(
-            imageFiles.secondary_photos.map(file => convertFileToBase64(file))
-          );
-          jerseyData.secondary_images = secondaryImagesBase64;
-        }
-
+        console.log('Sending Master Jersey data:', jerseyData);
         handleCreateMasterJersey(jerseyData);
       } catch (error) {
         console.error('Erreur lors de la création:', error);
