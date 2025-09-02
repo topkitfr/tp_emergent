@@ -90,17 +90,13 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         setSelectedReferenceKit(null);
         setSelectedCollectionType('');
         setPersonalDetails({
-          size: '',
+          price_buy: '',
+          price_value: '',
+          player_name: '',
+          player_number: '',
           condition: 'good',
-          purchase_price: '',
-          purchase_date: '',
-          is_signed: false,
-          signed_by: '',
-          has_printing: false,
-          printed_name: '',
-          printed_number: '',
-          is_worn: false,
-          personal_notes: ''
+          info: '',
+          size: ''
         });
         
         loadKitStore(); // Refresh list
