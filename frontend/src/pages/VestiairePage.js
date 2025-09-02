@@ -180,6 +180,18 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         console.error('Error loading player numbers:', error);
         // Default numbers if error
         setPlayerNumbers(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30']);
+  // Load players for dropdown
+  const loadPlayers = async () => {
+    try {
+      const response = await fetch(`${API}/api/players`);
+      if (response.ok) {
+        const playersData = await response.json();
+        setPlayers(playersData);
+      }
+    } catch (error) {
+      console.error('Error loading players:', error);
+    }
+  };
       }
     } else {
       setPlayerNumbers([]);
