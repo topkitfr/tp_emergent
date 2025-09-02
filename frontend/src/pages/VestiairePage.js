@@ -534,18 +534,48 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     const handleSubmit = async (e) => {
       e.preventDefault();
       
-      if (!formData.master_kit_id || !formData.original_retail_price) {
-        alert('Master Kit ID and Original Retail Price are required');
+      // Updated validation for Release Form Kit
+      if (!formData.master_kit_id || !formData.league_competition || !formData.model || !formData.main_photo) {
+        alert('Master Kit, League/Competition, Model, and Main Photo are required');
         return;
       }
 
       setLoading(true);
       try {
+        // Convert photos to base64 for submission
+        const convertToBase64 = (file) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        };
+
+        let mainPhotoBase64 = '';
+        if (formData.main_photo) {
+          mainPhotoBase64 = await convertToBase64(formData.main_photo);
+        }
+
+        let secondaryPhotosBase64 = [];
+        for (const photo of formData.secondary_photos) {
+          const base64 = await convertToBase64(photo);
+          secondaryPhotosBase64.push(base64);
+        }
+
         const submitData = {
-          ...formData,
+          master_kit_id: formData.master_kit_id,
+          league_competition: formData.league_competition,
+          model: formData.model,
+          available_sizes: formData.available_sizes,
           original_retail_price: parseFloat(formData.original_retail_price) || null,
           current_market_estimate: parseFloat(formData.current_market_estimate) || null,
-          production_run: parseInt(formData.production_run) || null
+          is_limited_edition: formData.is_limited_edition,
+          production_run: parseInt(formData.production_run) || null,
+          official_product_code: formData.official_product_code, // SKU Code
+          barcode: formData.barcode,
+          main_photo: mainPhotoBase64,
+          secondary_photos: secondaryPhotosBase64
         };
 
         const response = await fetch(`${API}/api/reference-kits`, {
@@ -560,15 +590,23 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         if (response.ok) {
           alert('Reference Kit created successfully!');
           setShowCreateModal(false);
+          // Reset form
           setFormData({
             master_kit_id: '',
+            league_competition: '',
+            model: 'replica',
             available_sizes: [],
             original_retail_price: '',
             current_market_estimate: '',
             is_limited_edition: false,
             production_run: '',
-            official_product_code: ''
+            official_product_code: '',
+            barcode: '',
+            main_photo: null,
+            secondary_photos: []
           });
+          setMainPhotoPreview('');
+          setSecondaryPhotoPreviews([]);
           loadKitStore(); // Refresh the list
         } else {
           const errorData = await response.json();
