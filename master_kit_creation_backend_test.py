@@ -217,16 +217,19 @@ class MasterKitCreationTester:
             test_team = self.available_teams[0]
             test_brand = self.available_brands[0]
             
-            # Create test master jersey data
+            # Create test master jersey data - use a unique season to avoid duplicates
+            current_year = datetime.now().year
+            test_season = f"{current_year}-{str(current_year + 1)[-2:]}"
+            
             master_jersey_data = {
                 "team_id": test_team["id"],
                 "brand_id": test_brand["id"],
-                "season": "2024-25",
-                "jersey_type": "home",
+                "season": test_season,
+                "jersey_type": "away",  # Use away to avoid conflicts with existing home jerseys
                 "model": "authentic",
-                "primary_color": "Blue",
-                "secondary_colors": ["Red"],
-                "description": f"Test Master Jersey for {test_team.get('name')} - {test_brand.get('name')} Home Kit 2024-25"
+                "primary_color": "White",
+                "secondary_colors": ["Blue"],
+                "description": f"Test Master Jersey for {test_team.get('name')} - {test_brand.get('name')} Away Kit {test_season}"
             }
             
             response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
