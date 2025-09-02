@@ -109,7 +109,7 @@ class AuthPersonalKitTester:
                 return False
             
             # Test token by making an authenticated request
-            response = self.session.get(f"{BACKEND_URL}/users/me")
+            response = self.session.get(f"{BACKEND_URL}/users/profile/public-info")
             
             if response.status_code == 200:
                 user_data = response.json()
