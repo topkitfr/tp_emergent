@@ -108,18 +108,18 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les dernières contributions Section */}
+      {/* Latest contributions Section */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Les dernières contributions à la base 🔥
+              Latest database contributions 🔥
             </h2>
             <button
               onClick={() => onViewChange('teams')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Voir les contributions
+              View contributions
             </button>
           </div>
           
@@ -145,9 +145,9 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   </div>
                   <div className="flex-2">
                     <h3 className="font-semibold text-gray-900 mb-1">{team.name}</h3>
-                    <p className="text-sm text-gray-500 mb-2">Nouvelle équipe documentée</p>
+                    <p className="text-sm text-gray-500 mb-2">New team documented</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      <span className="text-green-600">+5 maillots référencés</span>
+                      <span className="text-green-600">+5 kits referenced</span>
                     </p>
                   </div>
                 </div>
@@ -157,16 +157,16 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Maillots rares et recherchés */}
+      {/* Rare and sought-after kits */}
       <div className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Maillots rares et recherchés</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Rare and sought-after kits</h2>
             <button
               onClick={() => onViewChange('master-jerseys')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Voir plus de maillots rares
+              View more rare kits
             </button>
           </div>
           
@@ -193,7 +193,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                     </h3>
                     <div className="flex items-baseline space-x-2">
                       <span className="text-lg font-bold text-gray-900">{rareValue}€</span>
-                      <span className="text-xs text-orange-600">Estimation</span>
+                      <span className="text-xs text-orange-600">Estimate</span>
                     </div>
                   </div>
                 </div>
@@ -203,11 +203,11 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les dernières documentations */}
+      {/* Latest documentation */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-            Les dernières documentations 📋
+            Latest documentation 📋
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -225,7 +225,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                     {jersey.team_info?.name || 'Unknown team'} {jersey.season}
                   </h3>
                   <p className="text-sm text-green-600">
-                    <span className="text-lg font-bold">Documenté ✓</span>
+                    <span className="text-lg font-bold">Documented ✓</span>
                   </p>
                 </div>
               </div>
@@ -234,11 +234,11 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Les marques du moment */}
+      {/* Trending brands */}
       <div className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-            Les marques du moment
+            Trending brands
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -253,7 +253,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">{brand.name}</h3>
                 <button className="text-sm text-gray-600 hover:text-black transition-colors">
-                  Voir les maillots
+                  View kits
                 </button>
               </div>
             ))}
@@ -269,25 +269,25 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
           </div>
           
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Sois le premier informé des dernières documentations et estimations exclusives
+            Be the first to know about the latest documentation and exclusive valuations
           </h2>
           <p className="text-lg opacity-90 mb-8">
-            Rejoins notre newsletter pour recevoir les nouveaux maillots documentés, les estimations de valeurs et les infos exclusives de la communauté TopKit.
+            Join our newsletter to receive newly documented kits, value estimates and exclusive info from the TopKit community.
           </p>
           
           <div className="flex flex-col sm:flex-row max-w-md mx-auto gap-4">
             <input
               type="email"
-              placeholder="Adresse e-mail"
+              placeholder="Email address"
               className="flex-1 px-4 py-3 rounded-full text-black focus:outline-none focus:ring-2 focus:ring-white"
             />
             <button className="bg-white text-black px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors">
-              S'abonner
+              Subscribe
             </button>
           </div>
           
           <p className="text-sm opacity-70 mt-4">
-            En cliquant sur "S'abonner", tu acceptes les conditions générales de TopKit
+            By clicking "Subscribe", you accept TopKit's terms and conditions
           </p>
         </div>
       </div>
@@ -296,14 +296,14 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
       <div className="py-8 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Estimez votre collection de maillots avec TopKit
+            Value your football kit collection with TopKit
           </h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Avec TopKit, découvrez la valeur réelle de votre collection de maillots de football grâce à notre base de données collaborative ! 
-            Explorez les estimations de milliers de maillots référencés par la communauté, des classiques vintage aux dernières sorties. 
-            TopKit, c'est la base de données collaborative la plus complète au monde sur le football avec des expertises pointues sur chaque maillot. 
-            Documentez vos propres maillots, contribuez aux estimations et rejoignez une communauté passionnée qui préserve l'histoire du football à travers ses maillots. 
-            Restez informé des nouvelles documentations et des estimations mises à jour par notre communauté d'experts.
+            With TopKit, discover the real value of your football kit collection thanks to our collaborative database! 
+            Explore the valuations of thousands of kits referenced by the community, from vintage classics to the latest releases. 
+            TopKit is the world's most complete collaborative database on football with expert knowledge on every kit. 
+            Document your own kits, contribute to valuations and join a passionate community that preserves football history through its kits. 
+            Stay informed about new documentation and updated valuations from our expert community.
           </p>
         </div>
       </div>
