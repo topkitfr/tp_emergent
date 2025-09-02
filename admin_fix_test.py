@@ -6,7 +6,7 @@ Test to verify admin endpoint issue and create a fix
 import requests
 import json
 
-BACKEND_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

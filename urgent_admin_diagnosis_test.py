@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration from .env files
-BACKEND_URL = "https://kit-hierarchy.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 
 # Possible passwords to test
