@@ -385,16 +385,10 @@ const CollaborativeProfilePage = ({ user, API }) => {
                 
                 {activeTab === 'settings' && (
                   <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
-                    <p className="text-gray-600 mb-6">
-                      This section will allow you to modify your preferences and settings
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Settings</h3>
+                    <p className="text-gray-600">
+                      Settings panel is opening...
                     </p>
-                    <button
-                      onClick={() => setShowSettingsModal(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                    >
-                      Open Settings
-                    </button>
                   </div>
                 )}
               </div>
