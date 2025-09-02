@@ -42,7 +42,7 @@ const JerseyDetailModal = ({ jersey, isOpen, onClose, context = 'explorer', onAc
               onClick={() => onAction?.('addToCollection', jersey)}
               className="flex-1 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             >
-              📚 Ajouter à ma collection
+              📚 Add to my collection
             </button>
           </div>
         );
