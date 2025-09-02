@@ -11113,21 +11113,26 @@ async def get_master_kits(
         for kit in master_kits:
             kit.pop('_id', None)
             
+            # Extract enriched data separately
+            team_info = kit.pop('team_info', [])
+            brand_info = kit.pop('brand_info', [])
+            competition_info = kit.pop('competition_info', [])
+            
             # Clean ObjectId fields from nested data
-            team_info = kit['team_info'][0] if kit['team_info'] else {}
-            brand_info = kit['brand_info'][0] if kit['brand_info'] else {}
-            competition_info = kit['competition_info'][0] if kit['competition_info'] else {}
+            team_data = team_info[0] if team_info else {}
+            brand_data = brand_info[0] if brand_info else {}
+            competition_data = competition_info[0] if competition_info else {}
             
             # Remove MongoDB ObjectId fields
-            team_info.pop('_id', None)
-            brand_info.pop('_id', None)
-            competition_info.pop('_id', None)
+            team_data.pop('_id', None)
+            brand_data.pop('_id', None)
+            competition_data.pop('_id', None)
             
             response = MasterKitResponse(
                 **kit,
-                team_info=team_info,
-                brand_info=brand_info,
-                competition_info=competition_info or {}
+                team_info=team_data,
+                brand_info=brand_data,
+                competition_info=competition_data or {}
             )
             result.append(response)
         
