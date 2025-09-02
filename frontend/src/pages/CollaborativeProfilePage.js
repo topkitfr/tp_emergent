@@ -516,16 +516,6 @@ const CollaborativeProfilePage = ({ user, API }) => {
         )}
       </div>
 
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <UserSettingsPanel
-          isOpen={showSettingsModal}
-          onClose={handleSettingsClose}
-          user={user}
-          onUpdate={handleProfileUpdate}
-        />
-      )}
-
       {/* Profile Picture Modal */}
       {showProfilePictureModal && (
         <ProfilePictureModal
