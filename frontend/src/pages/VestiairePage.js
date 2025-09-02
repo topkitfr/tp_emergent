@@ -18,35 +18,90 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   }, []);
 
   // Define addToCollection function for new Personal Kit API
+  // States for personal details modal when adding to collection
+  const [showPersonalDetailsModal, setShowPersonalDetailsModal] = useState(false);
+  const [selectedReferenceKit, setSelectedReferenceKit] = useState(null);
+  const [selectedCollectionType, setSelectedCollectionType] = useState('');
+  const [personalDetails, setPersonalDetails] = useState({
+    size: '',
+    condition: 'good',
+    purchase_price: '',
+    purchase_date: '',
+    is_signed: false,
+    signed_by: '',
+    has_printing: false,
+    printed_name: '',
+    printed_number: '',
+    is_worn: false,
+    personal_notes: ''
+  });
+
   const addToCollection = async (referenceKitId, collectionType) => {
     if (!user) {
       alert('You must be signed in to add items to your collection');
       return;
     }
 
+    // Find the reference kit details
+    const referenceKit = referenceKits.find(kit => kit.id === referenceKitId);
+    if (!referenceKit) {
+      alert('Reference kit not found');
+      return;
+    }
+
+    // Show personal details modal instead of directly creating
+    setSelectedReferenceKit(referenceKit);
+    setSelectedCollectionType(collectionType);
+    setShowPersonalDetailsModal(true);
+  };
+
+  const handlePersonalDetailsSubmit = async () => {
+    if (!selectedReferenceKit || !selectedCollectionType) return;
+
     try {
-      console.log(`🔄 Adding Reference Kit ${referenceKitId} to ${collectionType} collection for user ${user.id}`);
+      console.log(`🔄 Adding Reference Kit ${selectedReferenceKit.id} to ${selectedCollectionType} collection with personal details`);
       
+      const personalKitData = {
+        reference_kit_id: selectedReferenceKit.id,
+        collection_type: selectedCollectionType,
+        ...personalDetails,
+        purchase_price: personalDetails.purchase_price ? parseFloat(personalDetails.purchase_price) : null,
+        printed_number: personalDetails.printed_number ? parseInt(personalDetails.printed_number) : null
+      };
+
       const response = await fetch(`${API}/api/personal-kits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({
-          reference_kit_id: referenceKitId,
-          collection_type: collectionType,
-          condition: 'good',  // Default condition
-          size: '',  // User can edit later
-        })
+        body: JSON.stringify(personalKitData)
       });
 
       const responseData = await response.json();
-      console.log(`📥 Add to collection response:`, responseData);
 
       if (response.ok) {
-        console.log(`✅ Successfully added to ${collectionType} collection`);
-        alert(`Kit added to ${collectionType === 'owned' ? 'owned' : 'wanted'} collection!`);
+        console.log(`✅ Successfully added to ${selectedCollectionType} collection with personal details`);
+        alert(`Kit added to ${selectedCollectionType === 'owned' ? 'owned' : 'wanted'} collection!`);
+        
+        // Reset modal state
+        setShowPersonalDetailsModal(false);
+        setSelectedReferenceKit(null);
+        setSelectedCollectionType('');
+        setPersonalDetails({
+          size: '',
+          condition: 'good',
+          purchase_price: '',
+          purchase_date: '',
+          is_signed: false,
+          signed_by: '',
+          has_printing: false,
+          printed_name: '',
+          printed_number: '',
+          is_worn: false,
+          personal_notes: ''
+        });
+        
         loadKitStore(); // Refresh list
       } else {
         console.error(`❌ Failed to add to collection: ${response.status}`);
