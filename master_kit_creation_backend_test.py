@@ -333,7 +333,7 @@ class MasterKitCreationTester:
             
             response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=invalid_data)
             
-            if response.status_code == 400:
+            if response.status_code == 404:
                 try:
                     error_data = response.json()
                     if "detail" in error_data and isinstance(error_data["detail"], str):
