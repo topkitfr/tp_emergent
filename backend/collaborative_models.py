@@ -563,9 +563,12 @@ class MasterKitResponse(BaseModel):
     """API Response for Master Kit with enriched data"""
     # Master Kit Data
     id: str
+    team_id: str  # Foreign key to Team
+    brand_id: str  # Foreign key to Brand
     season: str
     kit_type: KitType
     model: KitModel
+    competition_id: Optional[str] = None  # Foreign key to Competition
     design_name: Optional[str]
     primary_color: str
     secondary_colors: List[str]
