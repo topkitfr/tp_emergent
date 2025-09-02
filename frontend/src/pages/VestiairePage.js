@@ -574,11 +574,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              👕 Le Vestiaire
+              👕 Kit Store
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Découvrez toutes les versions physiques disponibles des maillots référencés.
-              Ajoutez-les à votre collection et suivez leur valeur !
+              Discover all available physical versions of referenced kits.
+              Add them to your collection and track their value!
             </p>
           </div>
 
