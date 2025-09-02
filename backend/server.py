@@ -11661,6 +11661,7 @@ async def get_kit_store(
         ref_kit_filter = {}
         if master_kit_ids:
             ref_kit_filter["master_kit_id"] = {"$in": master_kit_ids}
+        # If no specific master kit IDs, don't filter by master_kit_id (show all reference kits)
         
         # Get reference kits with enriched data
         pipeline = [
