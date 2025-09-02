@@ -740,17 +740,32 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Official Product Code
-              </label>
-              <input
-                type="text"
-                value={formData.official_product_code}
-                onChange={(e) => setFormData(prev => ({...prev, official_product_code: e.target.value}))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Brand SKU or product code"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SKU Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.official_product_code}
+                  onChange={(e) => setFormData(prev => ({...prev, official_product_code: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="FN2345-413"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barcoding
+                </label>
+                <input
+                  type="text"
+                  value={formData.barcode}
+                  onChange={(e) => setFormData(prev => ({...prev, barcode: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="1234567890123"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
