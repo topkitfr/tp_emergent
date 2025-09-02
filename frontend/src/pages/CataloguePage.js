@@ -21,38 +21,38 @@ const CataloguePage = ({
   const tabs = [
     { 
       id: 'teams', 
-      label: 'Équipes', 
+      label: 'Teams', 
       icon: '⚽', 
       count: teams?.length || 0,
-      description: 'Clubs et équipes nationales'
+      description: 'Clubs and national teams'
     },
     { 
       id: 'brands', 
-      label: 'Marques', 
+      label: 'Brands', 
       icon: '👕', 
       count: brands?.length || 0,
-      description: 'Fabricants de maillots'
+      description: 'Kit manufacturers'
     },
     { 
       id: 'players', 
-      label: 'Joueurs', 
+      label: 'Players', 
       icon: '👤', 
       count: players?.length || 0,
-      description: 'Joueurs professionnels'
+      description: 'Professional players'
     },
     { 
       id: 'competitions', 
-      label: 'Ligues', 
+      label: 'Leagues', 
       icon: '🏆', 
       count: competitions?.length || 0,
-      description: 'Championnats et coupes'
+      description: 'Championships and cups'
     },
     { 
       id: 'master-jerseys', 
-      label: 'Master Jerseys', 
+      label: 'Master Kits', 
       icon: '📋', 
       count: masterJerseys?.length || 0,
-      description: 'Designs de maillots'
+      description: 'Kit designs'
     }
   ];
 
@@ -88,11 +88,11 @@ const CataloguePage = ({
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              📚 Catalogue TopKit
+              📚 TopKit Catalogue
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Explorez notre base de données collaborative complète : 
-              équipes, marques, joueurs, ligues et designs de maillots documentés par la communauté
+              Explore our complete collaborative database: 
+              teams, brands, players, leagues and kit designs documented by the community
             </p>
           </div>
 
@@ -124,9 +124,9 @@ const CataloguePage = ({
                 }`}
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg">{tab.icon}</span>
+                  <span>{tab.icon}</span>
                   <span>{tab.label}</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
+                  <span className="bg-gray-100 text-gray-700 px-2 py-1 text-xs rounded-full">
                     {tab.count}
                   </span>
                 </div>
@@ -136,29 +136,10 @@ const CataloguePage = ({
         </div>
       </div>
 
-      {/* Active Tab Content */}
-      <div className="min-h-screen">
+      {/* Tab Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {renderActiveTabContent()}
       </div>
-
-      {/* Floating Info */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <div className="bg-blue-600 text-white p-4 rounded-lg shadow-lg max-w-xs">
-          <div className="flex items-start space-x-3">
-            <span className="text-2xl">{tabs.find(t => t.id === activeTab)?.icon}</span>
-            <div>
-              <div className="font-semibold">{tabs.find(t => t.id === activeTab)?.label}</div>
-              <div className="text-sm opacity-90">
-                {tabs.find(t => t.id === activeTab)?.description}
-              </div>
-              <div className="text-xs opacity-75 mt-1">
-                {tabs.find(t => t.id === activeTab)?.count} entrées documentées
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 };
