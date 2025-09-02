@@ -491,14 +491,93 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                 />
               </div>
 
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_worn"
+                    checked={editFormData.is_worn}
+                    onChange={(e) => setEditFormData({...editFormData, is_worn: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="is_worn" className="ml-2 text-sm text-gray-700">
+                    Worn
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_signed"
+                    checked={editFormData.is_signed}
+                    onChange={(e) => setEditFormData({...editFormData, is_signed: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="is_signed" className="ml-2 text-sm text-gray-700">
+                    Signed
+                  </label>
+                </div>
+
+                {editFormData.is_signed && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
+                    <input
+                      type="text"
+                      value={editFormData.signed_by}
+                      onChange={(e) => setEditFormData({...editFormData, signed_by: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Player name or person who signed"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="has_printing"
+                    checked={editFormData.has_printing}
+                    onChange={(e) => setEditFormData({...editFormData, has_printing: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="has_printing" className="ml-2 text-sm text-gray-700">
+                    Has Player Print
+                  </label>
+                </div>
+
+                {editFormData.has_printing && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                      <input
+                        type="text"
+                        value={editFormData.printed_name}
+                        onChange={(e) => setEditFormData({...editFormData, printed_name: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Player name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
+                      <input
+                        type="number"
+                        value={editFormData.printed_number}
+                        onChange={(e) => setEditFormData({...editFormData, printed_number: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        placeholder="10"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Personal Notes</label>
                 <textarea
-                  value={editFormData.notes}
-                  onChange={(e) => setEditFormData({...editFormData, notes: e.target.value})}
+                  value={editFormData.personal_notes}
+                  onChange={(e) => setEditFormData({...editFormData, personal_notes: e.target.value})}
                   rows="3"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Add any notes about this kit..."
+                  placeholder="Add any personal notes about this kit..."
                 />
               </div>
             </div>
