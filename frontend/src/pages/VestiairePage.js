@@ -568,8 +568,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           league_competition: formData.league_competition,
           model: formData.model,
           available_sizes: formData.available_sizes,
-          original_retail_price: parseFloat(formData.original_retail_price) || null,
-          current_market_estimate: parseFloat(formData.current_market_estimate) || null,
           is_limited_edition: formData.is_limited_edition,
           production_run: parseInt(formData.production_run) || null,
           official_product_code: formData.official_product_code, // SKU Code
