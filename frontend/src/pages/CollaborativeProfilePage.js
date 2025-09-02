@@ -63,9 +63,17 @@ const CollaborativeProfilePage = ({ user, API }) => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
-  const handleProfileUpdate = (updatedProfile) => {
-    setUserProfile(updatedProfile);
-    // Update user context if needed
+  // Auto-open settings modal when settings tab is selected
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      setShowSettingsModal(true);
+    }
+  }, [activeTab]);
+
+  // Handle settings modal close - switch back to overview tab
+  const handleSettingsClose = () => {
+    setShowSettingsModal(false);
+    setActiveTab('overview');
   };
 
   if (!user) {
