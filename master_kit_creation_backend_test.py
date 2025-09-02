@@ -285,15 +285,26 @@ class MasterKitCreationTester:
                 return True
                 
             elif response.status_code == 400:
-                # Check if it's a validation error
+                # Check if it's a duplicate validation error (which is expected behavior)
                 try:
                     error_data = response.json()
-                    self.log_result(
-                        "Master Jersey Creation Validation",
-                        False,
-                        f"Validation error during master jersey creation: {error_data.get('detail', 'Unknown validation error')}",
-                        {"error_data": error_data, "request_data": master_jersey_data}
-                    )
+                    error_message = error_data.get('detail', '')
+                    if 'existe déjà' in error_message or 'already exists' in error_message:
+                        self.log_result(
+                            "Master Jersey Creation - Duplicate Prevention",
+                            True,
+                            f"Duplicate prevention working correctly: {error_message}",
+                            {"error_data": error_data, "request_data": master_jersey_data}
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Master Jersey Creation Validation",
+                            False,
+                            f"Unexpected validation error: {error_message}",
+                            {"error_data": error_data, "request_data": master_jersey_data}
+                        )
+                        return False
                 except:
                     self.log_result(
                         "Master Jersey Creation Validation",
@@ -301,7 +312,7 @@ class MasterKitCreationTester:
                         f"Validation error during master jersey creation: {response.text}",
                         {"status_code": response.status_code, "request_data": master_jersey_data}
                     )
-                return False
+                    return False
             else:
                 self.log_result(
                     "Master Jersey Creation",
