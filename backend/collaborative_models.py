@@ -555,12 +555,17 @@ class TeamResponse(BaseModel):
     created_at: datetime
     modification_count: int
 
-class MasterJerseyResponse(BaseModel):
-    """Réponse API enrichie pour MasterJersey"""
-    # Données MasterJersey
+# ================================
+# RESPONSE MODELS FOR NEW HIERARCHY  
+# ================================
+
+class MasterKitResponse(BaseModel):
+    """API Response for Master Kit with enriched data"""
+    # Master Kit Data
     id: str
     season: str
-    jersey_type: str
+    kit_type: KitType
+    model: KitModel
     design_name: Optional[str]
     primary_color: str
     secondary_colors: List[str]
@@ -569,19 +574,76 @@ class MasterJerseyResponse(BaseModel):
     topkit_reference: str
     verified_level: VerificationLevel
     
-    # Données enrichies
-    team_info: Dict[str, Any]  # Données Team
-    brand_info: Dict[str, Any]  # Données Brand
-    competition_info: Optional[Dict[str, Any]] = None
+    # Enriched Data
+    team_info: Dict[str, Any]  # Team data
+    brand_info: Dict[str, Any]  # Brand data
+    competition_info: Optional[Dict[str, Any]] = None  # Competition data
     
-    # Statistiques
-    releases_count: int = 0  # Renamed from total_releases to avoid conflict
-    collectors_count: int = 0  # Renamed from total_collectors to avoid conflict
-    estimated_value_range: Optional[Dict[str, float]] = None
+    # Statistics
+    total_reference_kits: int
+    total_collectors: int
     
-    # Métadonnées
+    # Metadata
     created_at: datetime
     modification_count: int
+
+class ReferenceKitResponse(BaseModel):
+    """API Response for Reference Kit with enriched data"""
+    # Reference Kit Data
+    id: str
+    available_sizes: List[str]
+    available_prints: List[Dict[str, Any]]
+    original_retail_price: Optional[float]
+    current_market_estimate: Optional[float]
+    price_range_min: Optional[float]
+    price_range_max: Optional[float]
+    is_limited_edition: bool
+    topkit_reference: str
+    verified_level: VerificationLevel
+    
+    # Enriched Data
+    master_kit_info: Dict[str, Any]  # Master Kit data
+    team_info: Dict[str, Any]  # Team data
+    brand_info: Dict[str, Any]  # Brand data
+    
+    # Statistics  
+    total_in_collections: int
+    total_for_sale: int
+    
+    # Metadata
+    created_at: datetime
+
+class PersonalKitResponse(BaseModel):
+    """API Response for Personal Kit with enriched data"""
+    # Personal Kit Data
+    id: str
+    size: str
+    condition: KitCondition
+    purchase_price: Optional[float]
+    purchase_date: Optional[datetime]
+    is_worn: bool
+    is_signed: bool
+    signed_by: Optional[str]
+    has_printing: bool
+    printed_name: Optional[str]
+    printed_number: Optional[int]
+    is_match_worn: bool
+    is_authenticated: bool
+    personal_notes: Optional[str]
+    collection_type: str
+    is_for_sale: bool
+    asking_price: Optional[float]
+    estimated_current_value: Optional[float]
+    
+    # Enriched Data
+    reference_kit_info: Dict[str, Any]  # Reference Kit data
+    master_kit_info: Dict[str, Any]  # Master Kit data
+    team_info: Dict[str, Any]  # Team data
+    brand_info: Dict[str, Any]  # Brand data
+    
+    # Metadata
+    added_to_collection_at: datetime
+    last_updated_at: Optional[datetime]
 
 # ================================
 # SYSTÈME DE CONTRIBUTION COLLABORATIF
