@@ -389,6 +389,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     const [selectedTeam, setSelectedTeam] = useState('');
     const [masterKitsForTeam, setMasterKitsForTeam] = useState([]);
     const [loadingMasterKits, setLoadingMasterKits] = useState(false);
+    const [competitions, setCompetitions] = useState([]); // New state for competitions
+    const [mainPhotoPreview, setMainPhotoPreview] = useState(''); // Preview for main photo
+    const [secondaryPhotoPreviews, setSecondaryPhotoPreviews] = useState([]); // Previews for secondary photos
 
     // Load teams when modal opens
     useEffect(() => {
