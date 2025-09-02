@@ -19,7 +19,6 @@ const CollaborativeProfilePage = ({ user, API }) => {
     website: ''
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
-  const [showProfilePictureModal, setShowProfilePictureModal] = useState(false);
 
   // Load user profile data
   useEffect(() => {
