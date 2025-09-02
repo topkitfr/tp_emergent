@@ -586,15 +586,15 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             </div>
             <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {Array.isArray(referenceKits) && referenceKits.length > 0 ? Math.round(referenceKits.reduce((sum, r) => sum + (r.estimated_value || 0), 0) / referenceKits.length) : 0}€
+                {Array.isArray(referenceKits) && referenceKits.length > 0 ? Math.round(referenceKits.reduce((sum, r) => sum + (r.current_market_estimate || r.original_retail_price || 0), 0) / referenceKits.length) : 0}€
               </div>
               <div className="text-sm text-green-700">Average Estimated Price</div>
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {Array.isArray(referenceKits) ? new Set(referenceKits.map(r => r.player_name).filter(Boolean)).size : 0}
+                {Array.isArray(referenceKits) ? referenceKits.reduce((sum, r) => sum + (r.total_in_collections || 0), 0) : 0}
               </div>
-              <div className="text-sm text-purple-700">Different Players</div>
+              <div className="text-sm text-purple-700">Total Collections</div>
             </div>
           </div>
         </div>
