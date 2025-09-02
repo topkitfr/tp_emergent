@@ -416,8 +416,28 @@ class KitHierarchyTester:
                 return False
             
             # Step 2: Select a Reference Kit and add to personal collection
-            selected_kit = vestiaire_kits[0]
-            reference_kit_id = selected_kit.get("id")
+            # Try to find a kit that's not already in the user's collection
+            selected_kit = None
+            reference_kit_id = None
+            
+            for kit in vestiaire_kits:
+                kit_id = kit.get("id")
+                if kit_id:
+                    # Check if this kit is already in user's collection
+                    check_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
+                    if check_response.status_code == 200:
+                        existing_kits = check_response.json()
+                        existing_kit_ids = [k.get("reference_kit_id") for k in existing_kits]
+                        
+                        if kit_id not in existing_kit_ids:
+                            selected_kit = kit
+                            reference_kit_id = kit_id
+                            break
+            
+            # If all kits are already in collection, use the first one and expect duplicate error
+            if not selected_kit:
+                selected_kit = vestiaire_kits[0]
+                reference_kit_id = selected_kit.get("id")
             
             if not reference_kit_id:
                 self.log_result(
