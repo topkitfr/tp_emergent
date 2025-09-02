@@ -253,7 +253,7 @@ const CollaborativeHeader = ({
                       }}
                       className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
                     >
-                      Déconnexion
+                      Sign Out
                     </button>
                   </>
                 )}
