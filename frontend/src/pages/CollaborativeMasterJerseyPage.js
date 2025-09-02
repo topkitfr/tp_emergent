@@ -256,142 +256,69 @@ const CollaborativeMasterJerseyPage = ({
           <h3 className="text-lg font-bold mb-4">Créer un nouveau Master Jersey</h3>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Équipe *
-                </label>
-                <select
-                  value={formData.team_id}
-                  onChange={(e) => setFormData({...formData, team_id: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Sélectionner une équipe</option>
-                  {(teams || []).map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Marque *
-                </label>
-                <select
-                  value={formData.brand_id}
-                  onChange={(e) => setFormData({...formData, brand_id: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Sélectionner une marque</option>
-                  {(brands || []).map(brand => (
-                    <option key={brand.id} value={brand.id}>{brand.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Saison *
-                </label>
-                <input
-                  type="text"
-                  value={formData.season}
-                  onChange={(e) => setFormData({...formData, season: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: 2024-25"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type de maillot
-                </label>
-                <select
-                  value={formData.jersey_type}
-                  onChange={(e) => setFormData({...formData, jersey_type: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="home">Domicile</option>
-                  <option value="away">Extérieur</option>
-                  <option value="third">Troisième</option>
-                  <option value="goalkeeper">Gardien</option>
-                  <option value="training">Entraînement</option>
-                  <option value="special">Spécial</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Modèle *
-                </label>
-                <select
-                  value={formData.model}
-                  onChange={(e) => setFormData({...formData, model: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="authentic">Authentique</option>
-                  <option value="replica">Réplique</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Équipe *
+              </label>
+              <select
+                value={formData.team_id}
+                onChange={(e) => setFormData({...formData, team_id: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Sélectionner une équipe</option>
+                {(teams || []).map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Couleur principale *
+                Type *
+              </label>
+              <select
+                value={formData.jersey_type}
+                onChange={(e) => setFormData({...formData, jersey_type: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="home">Home</option>
+                <option value="away">Away</option>
+                <option value="third">Third</option>
+                <option value="fourth">Fourth</option>
+                <option value="goalkeeper">GK1</option>
+                <option value="special">GK2</option>
+                <option value="special">Special</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Couleurs *
               </label>
               <input
                 type="text"
-                value={formData.primary_color}
-                onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
+                value={formData.colors}
+                onChange={(e) => setFormData({...formData, colors: e.target.value})}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ex: blue, red, white"
+                placeholder="Ex: Blue, White, Red"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Couleurs secondaires
+                Pattern
               </label>
-              <div className="flex space-x-2 mb-2">
-                <input
-                  type="text"
-                  value={newColor}
-                  onChange={(e) => setNewColor(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: white, gold"
-                />
-                <button
-                  type="button"
-                  onClick={addColor}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  +
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.secondary_colors.map((color, index) => (
-                  <span
-                    key={index}
-                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
-                  >
-                    {color}
-                    <button
-                      type="button"
-                      onClick={() => removeColor(color)}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
+              <textarea
+                value={formData.pattern}
+                onChange={(e) => setFormData({...formData, pattern: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows="3"
+                placeholder="Description du motif, design, rayures..."
+              />
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
