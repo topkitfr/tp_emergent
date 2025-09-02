@@ -519,7 +519,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
               type="text"
               value={filters.search}
               onChange={(e) => setFilters({...filters, search: e.target.value})}
-              placeholder="Nom du joueur..."
+              placeholder="Player name..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
