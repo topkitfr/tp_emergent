@@ -11120,10 +11120,15 @@ async def get_master_kits(
         for kit in master_kits:
             kit.pop('_id', None)
             
-            # Extract enriched data separately
-            team_info = kit.pop('team_info', [])
-            brand_info = kit.pop('brand_info', [])
-            competition_info = kit.pop('competition_info', [])
+            # Extract enriched data separately WITHOUT removing original fields
+            team_info = kit.get('team_info', [])
+            brand_info = kit.get('brand_info', [])
+            competition_info = kit.get('competition_info', [])
+            
+            # Remove the lookup arrays from the main object (but keep original foreign key fields)
+            kit.pop('team_info', None)
+            kit.pop('brand_info', None)  
+            kit.pop('competition_info', None)
             
             # Clean ObjectId fields from nested data
             team_data = team_info[0] if team_info else {}
