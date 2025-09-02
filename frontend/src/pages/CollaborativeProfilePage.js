@@ -76,6 +76,11 @@ const CollaborativeProfilePage = ({ user, API }) => {
     setActiveTab('overview');
   };
 
+  const handleProfileUpdate = (updatedProfile) => {
+    setUserProfile(updatedProfile);
+    // Update user context if needed
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
