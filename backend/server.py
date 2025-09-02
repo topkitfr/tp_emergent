@@ -11032,12 +11032,18 @@ async def create_master_kit(
         # Insert into database
         await db.master_kits.insert_one(master_kit.dict())
         
+        # Clean the response data to remove MongoDB ObjectId fields
+        team.pop('_id', None)
+        brand.pop('_id', None)
+        if competition:
+            competition.pop('_id', None)
+        
         # Return enriched response
         return MasterKitResponse(
             **master_kit.dict(),
-            team_info=team,
-            brand_info=brand,
-            competition_info=competition
+            team_info=team or {},
+            brand_info=brand or {},
+            competition_info=competition or {}
         )
         
     except HTTPException:
