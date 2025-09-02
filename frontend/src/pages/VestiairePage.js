@@ -103,11 +103,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
   };
 
-  // Jersey Release Card Component
+  // Reference Kit Card Component
   const JerseyReleaseCard = ({ release }) => {
-    const masterJerseyInfo = release.master_jersey_info || {};
-    const teamInfo = masterJerseyInfo.team_info || {};
-    const brandInfo = masterJerseyInfo.brand_info || {};
+    const masterKitInfo = release.master_kit_info || {};
+    const teamInfo = release.team_info || {};
+    const brandInfo = release.brand_info || {};
     
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200">
@@ -119,38 +119,51 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                   {release.topkit_reference || 'No Ref'}
                 </span>
-                {release.condition && (
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                    {release.condition}
+                {release.is_limited_edition && (
+                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">
+                    Limited Edition
                   </span>
                 )}
               </div>
               
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                {teamInfo.name || 'Unknown Team'} - {masterJerseyInfo.season || 'Unknown Season'}
+                {teamInfo.name || 'Unknown Team'} - {masterKitInfo.season || 'Unknown Season'}
               </h3>
               
               <div className="text-sm text-gray-600 space-y-1">
-                {release.player_name && (
-                  <div>Player: {release.player_name}</div>
-                )}
-                <div>Kit Type: {masterJerseyInfo.jersey_type || 'Unknown'}</div>
+                <div>Kit Type: {masterKitInfo.kit_type || 'Unknown'}</div>
+                <div>Model: {masterKitInfo.model || 'Unknown'}</div>
                 <div>Brand: {brandInfo.name || 'Unknown'}</div>
+                {release.available_sizes && release.available_sizes.length > 0 && (
+                  <div>Sizes: {release.available_sizes.join(', ')}</div>
+                )}
               </div>
             </div>
             
             <div className="text-right">
               <div className="text-lg font-bold text-green-600">
-                €{release.retail_price || 'N/A'}
+                €{release.original_retail_price || 'N/A'}
               </div>
-              <div className="text-sm text-gray-500">Retail Price</div>
+              <div className="text-sm text-gray-500">Original Price</div>
+              {release.current_market_estimate && (
+                <div className="text-sm text-blue-600 mt-1">
+                  Est. €{release.current_market_estimate}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Description */}
-          {release.description && (
+          {/* Collection Statistics */}
+          {(release.total_in_collections > 0 || release.total_for_sale > 0) && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700">{release.description}</p>
+              <div className="text-sm text-gray-700 space-y-1">
+                {release.total_in_collections > 0 && (
+                  <div>👥 {release.total_in_collections} collectors own this</div>
+                )}
+                {release.total_for_sale > 0 && (
+                  <div>🏪 {release.total_for_sale} available for sale</div>
+                )}
+              </div>
             </div>
           )}
 
