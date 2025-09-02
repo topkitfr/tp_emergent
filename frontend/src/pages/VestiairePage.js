@@ -22,6 +22,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   const [showPersonalDetailsModal, setShowPersonalDetailsModal] = useState(false);
   const [selectedReferenceKit, setSelectedReferenceKit] = useState(null);
   const [selectedCollectionType, setSelectedCollectionType] = useState('');
+  const [players, setPlayers] = useState([]); // For player dropdown
+  const [playerNumbers, setPlayerNumbers] = useState([]); // For player number dropdown based on selected player
   const [personalDetails, setPersonalDetails] = useState({
     size: '',
     condition: 'good',
