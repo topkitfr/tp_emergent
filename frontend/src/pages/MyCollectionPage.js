@@ -167,7 +167,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     if (!editingItem) return;
 
     try {
-      const response = await fetch(`${API}/api/users/${user.id}/collections/${editingItem.id}`, {
+      const response = await fetch(`${API}/api/personal-kits/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -180,22 +180,22 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         await loadCollections(); // Reload collections
         setEditingItem(null);
         setEditFormData({});
-        alert('Item updated successfully!');
+        alert('Personal kit updated successfully!');
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.detail || 'Failed to update item'}`);
+        alert(`Error: ${errorData.detail || 'Failed to update personal kit'}`);
       }
     } catch (error) {
-      console.error('Error updating item:', error);
-      alert('Error updating item');
+      console.error('Error updating personal kit:', error);
+      alert('Error updating personal kit');
     }
   };
 
   const handleDeleteItem = async (itemId) => {
-    if (!confirm('Are you sure you want to remove this item from your collection?')) return;
+    if (!confirm('Are you sure you want to remove this kit from your collection?')) return;
 
     try {
-      const response = await fetch(`${API}/api/users/${user.id}/collections/${itemId}`, {
+      const response = await fetch(`${API}/api/personal-kits/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -204,14 +204,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
       if (response.ok) {
         await loadCollections(); // Reload collections
-        alert('Item removed from collection!');
+        alert('Personal kit removed from collection!');
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.detail || 'Failed to remove item'}`);
+        alert(`Error: ${errorData.detail || 'Failed to remove personal kit'}`);
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Error removing item');
+      console.error('Error deleting personal kit:', error);
+      alert('Error removing personal kit');
     }
   };
 
