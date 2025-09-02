@@ -50,243 +50,162 @@ const CollaborativeProfilePage = ({ user, API }) => {
         setUserStats(statsData);
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const tabs = [
-    { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
+    { id: 'overview', label: 'Overview', icon: '👤' },
     { id: 'contributions', label: 'Contributions', icon: '📝' },
-    { id: 'activity', label: 'Activité', icon: '📈' },
-    { id: 'settings', label: 'Paramètres', icon: '⚙️' }
+    { id: 'activity', label: 'Activity', icon: '📈' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
+
+  const handleProfileUpdate = (updatedProfile) => {
+    setUserProfile(updatedProfile);
+    // Update user context if needed
+  };
 
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">🔒</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Connexion requise</h3>
-          <p className="text-gray-600">
-            Vous devez être connecté pour accéder à votre profil
-          </p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Sign In Required</h1>
+          <p className="text-gray-600">You need to sign in to view your profile.</p>
         </div>
       </div>
     );
   }
 
-  const OverviewTab = () => (
-    <div className="space-y-8">
-      
-      {/* Profile Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-start space-x-6">
-          {/* Clickable Profile Picture */}
-          <button
-            onClick={() => setShowProfilePictureModal(true)}
-            className="w-24 h-24 rounded-full overflow-hidden hover:ring-4 hover:ring-blue-500 hover:ring-opacity-30 transition-all cursor-pointer group relative"
-            title="Changer la photo de profil"
-          >
-            {publicInfo?.profile_picture_url ? (
-              <img 
-                src={`${API}/${publicInfo.profile_picture_url}`}
-                alt="Profile"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div 
-              className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors" 
-              style={{display: publicInfo?.profile_picture_url ? 'none' : 'flex'}}
-            >
-              <span className="text-3xl font-bold text-white">
-                {user.name?.charAt(0).toUpperCase() || 'U'}
-              </span>
-            </div>
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all">
-              <div className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">
-                📷
-              </div>
-            </div>
-          </button>
-          
-          <div className="flex-1">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h1>
-                <p className="text-gray-600 mb-2">{user.email}</p>
-                
-                {/* Public Bio */}
-                {publicInfo?.bio && (
-                  <p className="text-gray-700 mb-4 italic">"{publicInfo.bio}"</p>
-                )}
-                
-                {/* Public Info Display */}
-                <div className="space-y-2 mb-4">
-                  {publicInfo?.favorite_club_name && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">Club préféré:</span>
-                      <span className="text-sm font-medium text-blue-600">⚽ {publicInfo.favorite_club_name}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center space-x-4">
-                    {publicInfo?.instagram_username && (
-                      <a 
-                        href={`https://instagram.com/${publicInfo.instagram_username}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-sm text-pink-600 hover:text-pink-700"
-                      >
-                        <span>📷</span>
-                        <span>@{publicInfo.instagram_username}</span>
-                      </a>
-                    )}
-                    
-                    {publicInfo?.twitter_username && (
-                      <a 
-                        href={`https://x.com/${publicInfo.twitter_username}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-sm text-blue-500 hover:text-blue-600"
-                      >
-                        <span>🐦</span>
-                        <span>@{publicInfo.twitter_username}</span>
-                      </a>
-                    )}
-                    
-                    {publicInfo?.website && (
-                      <a 
-                        href={publicInfo.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-700"
-                      >
-                        <span>🌐</span>
-                        <span>Site web</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Rôle:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  user.role === 'admin' 
-                    ? 'bg-red-100 text-red-800' 
-                    : user.role === 'moderator'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {user.role === 'admin' ? 'Administrateur' : 
-                   user.role === 'moderator' ? 'Modérateur' : 'Utilisateur'}
-                </span>
-              </div>
-              
-              {user.verified_level && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Statut:</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                    ✓ Vérifié
-                  </span>
+  // User Info Card Component
+  const UserInfoCard = () => {
+    const memberSinceDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown';
+    
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-start space-x-4">
+          {/* Profile Picture */}
+          <div className="flex-shrink-0">
+            <div className="relative">
+              {user.profile_picture_url ? (
+                <img 
+                  src={`${API}/${user.profile_picture_url}`}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-bold text-gray-600">
+                  {user.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
+              
+              <button
+                onClick={() => setShowProfilePictureModal(true)}
+                className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          {/* User Details */}
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                <p className="text-gray-600 mb-2">{user.email}</p>
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span>Member since {memberSinceDate}</span>
+                  {user.role === 'admin' && (
+                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                      Admin
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold text-blue-600">
-                {userStats?.teams_created || 0}
-              </div>
-              <div className="text-sm text-gray-600">Équipes créées</div>
-            </div>
-            <div className="text-2xl">⚽</div>
+  // Stats Cards Component
+  const StatsCards = () => {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-blue-600">
+            {userStats?.collections_count || 0}
           </div>
+          <div className="text-sm text-gray-600">Collections</div>
         </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {userStats?.brands_created || 0}
-              </div>
-              <div className="text-sm text-gray-600">Marques créées</div>
-            </div>
-            <div className="text-2xl">👕</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold text-purple-600">
-                {userStats?.players_created || 0}
-              </div>
-              <div className="text-sm text-gray-600">Joueurs créés</div>
-            </div>
-            <div className="text-2xl">👤</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold text-orange-600">
-                {userStats?.master_jerseys_created || 0}
-              </div>
-              <div className="text-sm text-gray-600">Maillots créés</div>
-            </div>
-            <div className="text-2xl">📋</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Contribution Quality */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">Qualité des contributions</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-green-600">
+            {userStats?.contributions_count || 0}
+          </div>
+          <div className="text-sm text-gray-600">Contributions</div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600">
+            {userStats?.votes_count || 0}
+          </div>
+          <div className="text-sm text-gray-600">Votes Cast</div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600">
+            {userStats?.jerseys_added || 0}
+          </div>
+          <div className="text-sm text-gray-600">Kits Created</div>
+        </div>
+      </div>
+    );
+  };
+
+  // Contribution Quality Component
+  const ContributionQuality = () => {
+    if (!userStats || (userStats.contributions_approved + userStats.contributions_rejected) === 0) {
+      return null;
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Contribution Quality</h2>
+        
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <div className="text-xl font-bold text-green-600">
               {userStats?.contributions_approved || 0}
             </div>
-            <div className="text-sm text-gray-600">Contributions approuvées</div>
+            <div className="text-sm text-gray-600">Approved Contributions</div>
           </div>
           
-          <div className="text-center">
-            <div className="text-3xl font-bold text-orange-600 mb-2">
+          <div className="text-center p-3 bg-yellow-50 rounded-lg">
+            <div className="text-xl font-bold text-yellow-600">
               {userStats?.contributions_pending || 0}
             </div>
-            <div className="text-sm text-gray-600">En attente de révision</div>
+            <div className="text-sm text-gray-600">Pending</div>
           </div>
           
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600 mb-2">
+          <div className="text-center p-3 bg-red-50 rounded-lg">
+            <div className="text-xl font-bold text-red-600">
               {userStats?.contributions_rejected || 0}
             </div>
-            <div className="text-sm text-gray-600">Contributions rejetées</div>
+            <div className="text-sm text-gray-600">Rejected Contributions</div>
           </div>
         </div>
-
-        {/* Approval Rate */}
+        
         {userStats && (userStats.contributions_approved + userStats.contributions_rejected) > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Taux d'approbation</span>
+              <span className="text-sm text-gray-600">Approval Rate</span>
               <span className="text-sm font-medium">
                 {Math.round(
                   (userStats.contributions_approved / 
@@ -296,7 +215,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
-                className="bg-green-600 h-2 rounded-full"
+                className="bg-green-500 h-2 rounded-full transition-all duration-300"
                 style={{
                   width: `${Math.round(
                     (userStats.contributions_approved / 
@@ -308,171 +227,187 @@ const CollaborativeProfilePage = ({ user, API }) => {
           </div>
         )}
       </div>
+    );
+  };
 
-      {/* Badges & Achievements */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">Badges & Réalisations</h2>
+  // Badges & Achievements Component
+  const BadgesAchievements = () => {
+    const badges = [];
+    
+    // Add badges based on achievements
+    if (userStats?.contributions_approved >= 1) {
+      badges.push({
+        title: 'First Contribution',
+        description: 'Made your first contribution',
+        icon: '🌟',
+        color: 'bg-blue-100 text-blue-800'
+      });
+    }
+    
+    if (userStats?.contributions_approved >= 5) {
+      badges.push({
+        title: 'Contributor',
+        description: '5+ approved contributions',
+        icon: '📝',
+        color: 'bg-green-100 text-green-800'
+      });
+    }
+    
+    if (userStats?.contributions_approved >= 10) {
+      badges.push({
+        title: 'Expert Contributor',
+        description: '10+ approved contributions',
+        icon: '🏆',
+        color: 'bg-purple-100 text-purple-800'
+      });
+    }
+    
+    if (userStats?.votes_count >= 20) {
+      badges.push({
+        title: 'Active Voter',
+        description: '20+ votes cast',
+        icon: '🗳️',
+        color: 'bg-yellow-100 text-yellow-800'
+      });
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold mb-4">Badges & Achievements</h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {userStats?.teams_created >= 1 && (
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl mb-2">⚽</div>
-              <div className="text-xs font-medium text-blue-800">Premier pas</div>
-              <div className="text-xs text-blue-600">Première équipe créée</div>
-            </div>
-          )}
-
-          {userStats?.teams_created >= 5 && (
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl mb-2">🏟️</div>
-              <div className="text-xs font-medium text-blue-800">Architecte</div>
-              <div className="text-xs text-blue-600">5+ équipes créées</div>
-            </div>
-          )}
-
-          {userStats?.contributions_approved >= 10 && (
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl mb-2">✅</div>
-              <div className="text-xs font-medium text-green-800">Contributeur fiable</div>
-              <div className="text-xs text-green-600">10+ contributions approuvées</div>
-            </div>
-          )}
-
-          {userStats?.master_jerseys_created >= 1 && (
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl mb-2">👕</div>
-              <div className="text-xs font-medium text-orange-800">Designer</div>
-              <div className="text-xs text-orange-600">Premier maillot créé</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-    </div>
-  );
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mon Profil Collaborateur</h1>
-        <p className="text-gray-600">
-          Gérez votre profil et consultez vos contributions à TopKit
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-8">
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-0">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
+        {badges.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">
+            Start contributing to earn your first badge!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {badges.map((badge, index) => (
+              <div key={index} className={`p-3 rounded-lg ${badge.color}`}>
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">{badge.icon}</span>
+                  <div>
+                    <h4 className="font-medium">{badge.title}</h4>
+                    <p className="text-sm opacity-75">{badge.description}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
+        )}
+      </div>
+    );
+  };
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Chargement du profil...</span>
-            </div>
-          ) : (
-            <>
-              {activeTab === 'overview' && <OverviewTab />}
-              
-              {activeTab === 'contributions' && (
-                <div className="text-center py-12">
-                  <div className="text-4xl mb-4">📝</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Mes Contributions</h3>
-                  <p className="text-gray-600">
-                    Cette section affichera l'historique détaillé de vos contributions
-                  </p>
-                </div>
-              )}
-              
-              {activeTab === 'activity' && (
-                <div className="text-center py-12">
-                  <div className="text-4xl mb-4">📈</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Activité Récente</h3>
-                  <p className="text-gray-600">
-                    Cette section affichera votre activité récente sur la plateforme
-                  </p>
-                </div>
-              )}
-              
-              {activeTab === 'settings' && (
-                <div className="text-center py-12">
-                  <div className="text-4xl mb-4">⚙️</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Paramètres du Compte</h3>
-                  <p className="text-gray-600 mb-6">
-                    Cette section permettra de modifier vos préférences et paramètres
-                  </p>
-                  <button
-                    onClick={() => setShowSettingsModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Ouvrir les paramètres
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Contributor Profile</h1>
+          <p className="text-gray-600">
+            Manage your profile and view your contributions to TopKit
+          </p>
         </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* User Info Card */}
+            <UserInfoCard />
+            
+            {/* Stats Cards */}
+            <StatsCards />
+            
+            {/* Tabs Navigation */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="border-b border-gray-200">
+                <div className="flex space-x-0">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                        activeTab === tab.id
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="mr-2">{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {activeTab === 'overview' && (
+                  <div className="space-y-6">
+                    <ContributionQuality />
+                    <BadgesAchievements />
+                  </div>
+                )}
+                
+                {activeTab === 'contributions' && (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">My Contributions</h3>
+                    <p className="text-gray-600">
+                      This section will display the detailed history of your contributions
+                    </p>
+                  </div>
+                )}
+                
+                {activeTab === 'activity' && (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Recent Activity</h3>
+                    <p className="text-gray-600">
+                      This section will display your recent activity on the platform
+                    </p>
+                  </div>
+                )}
+                
+                {activeTab === 'settings' && (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+                    <p className="text-gray-600 mb-6">
+                      This section will allow you to modify your preferences and settings
+                    </p>
+                    <button
+                      onClick={() => setShowSettingsModal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    >
+                      Open Settings
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <UserSettingsPanel
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          user={user}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
 
       {/* Profile Picture Modal */}
       {showProfilePictureModal && (
         <ProfilePictureModal
-          user={{...user, profile_picture_url: publicInfo?.profile_picture_url}}
+          user={user}
           onClose={() => setShowProfilePictureModal(false)}
-          onUpdate={() => {
-            loadUserProfile();
-            // Also update the user in parent component if needed
-          }}
+          onUpdate={handleProfileUpdate}
         />
       )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Paramètres du Compte</h2>
-              <button
-                onClick={() => setShowSettingsModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6">
-              <UserSettingsPanel
-                user={user}
-                onUpdate={() => {
-                  loadUserProfile();
-                  // Also update the user in parent component if needed
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
