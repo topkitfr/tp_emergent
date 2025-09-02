@@ -410,11 +410,104 @@ const CollaborativeProfilePage = ({ user, API }) => {
                 )}
                 
                 {activeTab === 'settings' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Settings</h3>
-                    <p className="text-gray-600">
-                      Settings panel is opening...
-                    </p>
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+                    
+                    <form onSubmit={handleSettingsUpdate} className="space-y-6">
+                      {/* Basic Information */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name
+                          </label>
+                          <input
+                            type="text"
+                            value={settingsData.name}
+                            onChange={(e) => setSettingsData(prev => ({...prev, name: e.target.value}))}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            value={settingsData.email}
+                            onChange={(e) => setSettingsData(prev => ({...prev, email: e.target.value}))}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bio */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Bio
+                        </label>
+                        <textarea
+                          value={settingsData.bio}
+                          onChange={(e) => setSettingsData(prev => ({...prev, bio: e.target.value}))}
+                          rows="3"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="Tell us about yourself..."
+                        />
+                      </div>
+
+                      {/* Social Links */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Instagram Username
+                          </label>
+                          <input
+                            type="text"
+                            value={settingsData.instagram_username}
+                            onChange={(e) => setSettingsData(prev => ({...prev, instagram_username: e.target.value}))}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="@username"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Twitter Username
+                          </label>
+                          <input
+                            type="text"
+                            value={settingsData.twitter_username}
+                            onChange={(e) => setSettingsData(prev => ({...prev, twitter_username: e.target.value}))}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="@username"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Website
+                        </label>
+                        <input
+                          type="url"
+                          value={settingsData.website}
+                          onChange={(e) => setSettingsData(prev => ({...prev, website: e.target.value}))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="https://yourwebsite.com"
+                        />
+                      </div>
+
+                      {/* Save Button */}
+                      <div className="flex justify-end pt-4 border-t border-gray-200">
+                        <button
+                          type="submit"
+                          disabled={settingsLoading}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                        >
+                          {settingsLoading ? 'Saving...' : 'Save Changes'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 )}
               </div>
