@@ -4,10 +4,10 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
   
   // Statistics
   const stats = [
-    { label: 'Équipes', value: teams?.length || 0, icon: '⚽', color: 'text-gray-900' },
-    { label: 'Marques', value: brands?.length || 0, icon: '👕', color: 'text-gray-900' },
-    { label: 'Joueurs', value: players?.length || 0, icon: '👤', color: 'text-gray-900' },
-    { label: 'Maillots', value: masterJerseys?.length || 0, icon: '📋', color: 'text-gray-900' }
+    { label: 'Teams', value: teams?.length || 0, icon: '⚽', color: 'text-gray-900' },
+    { label: 'Brands', value: brands?.length || 0, icon: '👕', color: 'text-gray-900' },
+    { label: 'Players', value: players?.length || 0, icon: '👤', color: 'text-gray-900' },
+    { label: 'Kits', value: masterJerseys?.length || 0, icon: '📋', color: 'text-gray-900' }
   ];
 
   const recentTeams = teams?.slice(0, 6) || [];
