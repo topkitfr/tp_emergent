@@ -26,13 +26,13 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Estimez votre collection<br />
-            <span className="text-gray-600">de maillots de football</span>
+            Value your collection<br />
+            <span className="text-gray-600">of football kits</span>
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Découvrez la valeur de vos maillots avec TopKit, 
-            la base de données collaborative la plus complète du monde sur le football
+            Discover the value of your kits with TopKit, 
+            the world's most complete collaborative database on football
           </p>
           
           {/* CTA Buttons - TopKit Focus - Removed Documenter button */}
