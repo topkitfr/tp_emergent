@@ -474,6 +474,63 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       }
     };
 
+    // Photo handling functions
+    const handleMainPhotoUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Photo is too large. Maximum size is 5MB');
+          return;
+        }
+        
+        setFormData(prev => ({ ...prev, main_photo: file }));
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => setMainPhotoPreview(e.target.result);
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleSecondaryPhotosUpload = (event) => {
+      const files = Array.from(event.target.files);
+      const maxFiles = 3; // back, left sleeve, right sleeve
+      
+      if (formData.secondary_photos.length + files.length > maxFiles) {
+        alert(`You can only upload up to ${maxFiles} secondary photos`);
+        return;
+      }
+      
+      files.forEach(file => {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`Photo ${file.name} is too large. Maximum size is 5MB`);
+          return;
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          secondary_photos: [...prev.secondary_photos, file]
+        }));
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setSecondaryPhotoPreviews(prev => [...prev, e.target.result]);
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    const removeSecondaryPhoto = (index) => {
+      setFormData(prev => ({
+        ...prev,
+        secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
+      }));
+      setSecondaryPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e) => {
       e.preventDefault();
       
