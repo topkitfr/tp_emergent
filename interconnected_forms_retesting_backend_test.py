@@ -538,37 +538,50 @@ class InterconnectedFormsRetester:
             response = self.session.get(f"{BACKEND_URL}/form-dependencies/federations")
             
             if response.status_code == 200:
-                federations = response.json()
+                data = response.json()
                 
-                if isinstance(federations, list) and len(federations) > 0:
-                    federation_names = [fed.get('name', '').upper() for fed in federations if isinstance(fed, dict)]
+                # The response is a dict with 'federations' array and 'total'
+                if isinstance(data, dict) and 'federations' in data:
+                    federations = data.get('federations', [])
+                    total = data.get('total', 0)
                     
-                    # Check for expected federations
-                    expected_federations = ['UEFA', 'FIFA', 'CONMEBOL', 'CAF', 'CONCACAF']
-                    found_federations = []
-                    
-                    for expected in expected_federations:
-                        if any(expected in name for name in federation_names):
-                            found_federations.append(expected)
-                    
-                    self.log_result(
-                        "Federations Endpoint", 
-                        True, 
-                        f"Successfully retrieved {len(federations)} federations, found {len(found_federations)}/{len(expected_federations)} expected federations",
-                        {
-                            "total_federations": len(federations),
-                            "federation_names": federation_names,
-                            "expected_found": found_federations,
-                            "expected_missing": [f for f in expected_federations if f not in found_federations]
-                        }
-                    )
-                    return True
+                    if isinstance(federations, list) and len(federations) > 0:
+                        federation_names = [fed.upper() for fed in federations]
+                        
+                        # Check for expected federations
+                        expected_federations = ['UEFA', 'FIFA', 'CONMEBOL', 'CAF', 'CONCACAF']
+                        found_federations = []
+                        
+                        for expected in expected_federations:
+                            if expected in federation_names:
+                                found_federations.append(expected)
+                        
+                        self.log_result(
+                            "Federations Endpoint", 
+                            True, 
+                            f"Successfully retrieved {total} federations, found {len(found_federations)}/{len(expected_federations)} expected federations",
+                            {
+                                "total_federations": total,
+                                "federation_names": federation_names,
+                                "expected_found": found_federations,
+                                "expected_missing": [f for f in expected_federations if f not in found_federations]
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Federations Endpoint", 
+                            False, 
+                            f"Invalid federations array: expected list with items, got {type(federations)} with {len(federations) if isinstance(federations, list) else 'N/A'} items",
+                            {"response_data": data}
+                        )
+                        return False
                 else:
                     self.log_result(
                         "Federations Endpoint", 
                         False, 
-                        f"Invalid response: expected list of federations, got {type(federations)}",
-                        {"response_data": federations}
+                        f"Invalid response: expected dict with 'federations', got {type(data)}",
+                        {"response_data": data}
                     )
                     return False
             else:
