@@ -419,8 +419,18 @@ class CleanDatabaseInterconnectedFormsTester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if we have competition types
-                if isinstance(data, list) and len(data) > 0:
+                # Handle the actual response structure
+                if isinstance(data, dict) and 'competition_types' in data:
+                    competition_types = data['competition_types']
+                    total_competitions = data.get('total_competitions', 0)
+                    
+                    self.log_result(
+                        "Competitions by Type Structure", 
+                        total_competitions >= 6, 
+                        f"Found {len(competition_types)} competition types with {total_competitions} total competitions",
+                        {"competition_types": list(competition_types.keys())}
+                    )
+                elif isinstance(data, list) and len(data) > 0:
                     total_competitions = sum(len(group.get('competitions', [])) for group in data)
                     
                     self.log_result(
