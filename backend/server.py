@@ -9796,7 +9796,7 @@ async def create_competition(
     competition_data: CompetitionCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create new competition"""
+    """Create new competition - Updated for interconnected forms"""
     competition = Competition(
         **competition_data.dict(),
         created_by=current_user["id"],
@@ -9809,7 +9809,7 @@ async def create_competition(
         current_user["id"],
         "competition_created",
         competition.id,
-        {"competition_name": competition.name, "reference": competition.topkit_reference}
+        {"competition_name": competition.competition_name, "reference": competition.topkit_reference}
     )
     
     return competition.dict()
