@@ -163,19 +163,23 @@ class InterconnectedFormsRetester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if response has proper structure with missing_data and suggested_actions
-                if isinstance(data, dict) and 'missing_data' in data and 'suggested_actions' in data:
+                # Check if response has proper structure - the actual structure has nested missing_data
+                if isinstance(data, dict) and 'missing_data' in data and 'has_missing' in data:
                     missing_data = data.get('missing_data', {})
-                    suggested_actions = data.get('suggested_actions', [])
+                    has_missing = data.get('has_missing', False)
+                    
+                    # The missing_data should contain suggested_actions inside it
+                    suggested_actions = missing_data.get('suggested_actions', [])
                     
                     self.log_result(
                         "Check Missing Data Endpoint - Fixed Response Structure", 
                         True, 
-                        f"Successfully retrieved missing data analysis with {len(suggested_actions)} suggested actions",
+                        f"Successfully retrieved missing data analysis. Has missing: {has_missing}, Suggested actions: {len(suggested_actions)}",
                         {
+                            "has_missing": has_missing,
                             "missing_data_fields": list(missing_data.keys()) if isinstance(missing_data, dict) else "Not dict",
                             "suggested_actions_count": len(suggested_actions),
-                            "sample_response": data
+                            "response_structure": data
                         }
                     )
                     return True
@@ -183,7 +187,7 @@ class InterconnectedFormsRetester:
                     self.log_result(
                         "Check Missing Data Endpoint - Fixed Response Structure", 
                         False, 
-                        f"Invalid response structure: missing 'missing_data' or 'suggested_actions' fields",
+                        f"Invalid response structure: missing 'missing_data' or 'has_missing' fields",
                         {"response_data": data}
                     )
                     return False
