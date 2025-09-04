@@ -443,13 +443,16 @@ class PlayerCreate(BaseModel):
     position: Optional[str] = None
 
 class CompetitionCreate(BaseModel):
-    name: str
+    competition_name: str  # Main display name
     official_name: Optional[str] = None
-    common_names: List[str] = []
-    competition_type: str
+    alternative_names: List[str] = []
+    type: str  # Competition type from CSV structure
+    confederations_federations: List[str] = []  # ["UEFA"], ["FIFA"], etc.
     country: Optional[str] = None
     level: Optional[int] = None
-    logo_url: Optional[str] = None
+    year_created: Optional[int] = None
+    logo: Optional[str] = None  # Logo file path/URL
+    trophy_photo: Optional[str] = None  # Trophy image file path/URL
     secondary_images: List[str] = []
 
 # ================================
