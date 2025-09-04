@@ -643,7 +643,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           master_kit_id: formData.master_kit_id,
           league_competition: formData.league_competition,
           model: formData.model,
-          available_sizes: formData.available_sizes,
           is_limited_edition: formData.is_limited_edition,
           production_run: parseInt(formData.production_run) || null,
           official_product_code: formData.official_product_code, // SKU Code
