@@ -9757,24 +9757,32 @@ async def create_player(
 async def get_competitions(
     search: Optional[str] = None,
     country: Optional[str] = None,
-    competition_type: Optional[str] = None,
+    type: Optional[str] = None,
+    confederation: Optional[str] = None,
+    level: Optional[int] = None,
     limit: int = 1000
 ):
-    """Get competitions with optional filters"""
+    """Get competitions with optional filters - Updated for interconnected forms"""
     query = {}
     
     if search:
         query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
+            {"competition_name": {"$regex": search, "$options": "i"}},
             {"official_name": {"$regex": search, "$options": "i"}},
-            {"common_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+            {"alternative_names": {"$elemMatch": {"$regex": search, "$options": "i"}}}
         ]
     
     if country:
         query["country"] = country
         
-    if competition_type:
-        query["competition_type"] = competition_type
+    if type:
+        query["type"] = type
+    
+    if confederation:
+        query["confederations_federations"] = {"$in": [confederation]}
+    
+    if level is not None:
+        query["level"] = level
     
     competitions = await db.competitions.find(query).limit(limit).to_list(length=None)
     
