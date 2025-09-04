@@ -9545,22 +9545,196 @@ async def get_team(team_id: str):
     
     team.pop('_id', None)
     
-    # Enrichir avec données
+    # Enrich with data
     jerseys_count = await db.master_jerseys.count_documents({"team_id": team_id})
     
-    league_info = None
-    if team.get("league_id"):
-        league = await db.competitions.find_one({"id": team["league_id"]})
-        if league:
-            league.pop('_id', None)
-            league_info = {"id": league["id"], "name": league["name"]}
+    competition_info = None
+    if team.get("primary_competition_id"):
+        competition = await db.competitions.find_one({"id": team["primary_competition_id"]})
+        if competition:
+            competition.pop('_id', None)
+            competition_info = {
+                "id": competition["id"], 
+                "competition_name": competition["competition_name"],
+                "type": competition["type"]
+            }
     
     return TeamResponse(
         **team,
-        league_info=league_info,
+        league_info=competition_info,
         master_jerseys_count=jerseys_count,
         total_collectors=0
     )
+
+# ================================
+# INTERCONNECTED FORM ENDPOINTS
+# ================================
+
+@api_router.get("/form-dependencies/competitions-by-type")
+async def get_competitions_by_type():
+    """Get competitions grouped by type for interconnected forms"""
+    try:
+        # Get all competitions grouped by type
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$type",
+                    "competitions": {
+                        "$push": {
+                            "id": "$id",
+                            "competition_name": "$competition_name",
+                            "country": "$country",
+                            "level": "$level",
+                            "confederations_federations": "$confederations_federations"
+                        }
+                    }
+                }
+            },
+            {"$sort": {"_id": 1}}
+        ]
+        
+        result = await db.competitions.aggregate(pipeline).to_list(length=None)
+        
+        # Transform into more usable format
+        competition_types = {}
+        for item in result:
+            competition_types[item["_id"]] = item["competitions"]
+        
+        return {
+            "competition_types": competition_types,
+            "total_competitions": await db.competitions.count_documents({})
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting competitions by type: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des compétitions")
+
+@api_router.get("/form-dependencies/teams-by-competition/{competition_id}")
+async def get_teams_by_competition(competition_id: str):
+    """Get teams that participate in a specific competition"""
+    try:
+        # Find teams that have this competition as primary or in current competitions
+        teams = await db.teams.find({
+            "$or": [
+                {"primary_competition_id": competition_id},
+                {"current_competitions": {"$in": [competition_id]}}
+            ]
+        }).to_list(length=None)
+        
+        # Remove MongoDB ObjectId
+        for team in teams:
+            team.pop('_id', None)
+        
+        return {
+            "teams": teams,
+            "competition_id": competition_id,
+            "total_teams": len(teams)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting teams by competition: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des équipes")
+
+@api_router.get("/form-dependencies/master-kits-by-team/{team_id}")
+async def get_master_kits_by_team(team_id: str):
+    """Get master kits for a specific team"""
+    try:
+        master_kits = await db.master_kits.find({"team_id": team_id}).to_list(length=None)
+        
+        # Remove MongoDB ObjectId and enrich with team info
+        for kit in master_kits:
+            kit.pop('_id', None)
+        
+        return {
+            "master_kits": master_kits,
+            "team_id": team_id,
+            "total_kits": len(master_kits)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting master kits by team: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des kits")
+
+@api_router.post("/form-dependencies/check-missing-data")
+async def check_missing_form_data(request: dict):
+    """Check what data is missing for interconnected forms and suggest what to add"""
+    try:
+        missing_data = {
+            "competitions": [],
+            "teams": [],
+            "brands": [],
+            "suggested_actions": []
+        }
+        
+        # Check if requested competition exists
+        if "competition_name" in request:
+            comp = await db.competitions.find_one({
+                "competition_name": {"$regex": f"^{request['competition_name']}$", "$options": "i"}
+            })
+            if not comp:
+                missing_data["competitions"].append(request["competition_name"])
+                missing_data["suggested_actions"].append({
+                    "action": "add_competition",
+                    "description": f"Ajouter la compétition '{request['competition_name']}'",
+                    "redirect_url": "/competitions/add",
+                    "form_data": {"competition_name": request["competition_name"]}
+                })
+        
+        # Check if requested team exists
+        if "team_name" in request:
+            team = await db.teams.find_one({
+                "name": {"$regex": f"^{request['team_name']}$", "$options": "i"}
+            })
+            if not team:
+                missing_data["teams"].append(request["team_name"])
+                missing_data["suggested_actions"].append({
+                    "action": "add_team",
+                    "description": f"Ajouter l'équipe '{request['team_name']}'",
+                    "redirect_url": "/teams/add",
+                    "form_data": {"name": request["team_name"]}
+                })
+        
+        # Check if requested brand exists
+        if "brand_name" in request:
+            brand = await db.brands.find_one({
+                "name": {"$regex": f"^{request['brand_name']}$", "$options": "i"}
+            })
+            if not brand:
+                missing_data["brands"].append(request["brand_name"])
+                missing_data["suggested_actions"].append({
+                    "action": "add_brand",
+                    "description": f"Ajouter la marque '{request['brand_name']}'",
+                    "redirect_url": "/brands/add",
+                    "form_data": {"name": request["brand_name"]}
+                })
+        
+        return missing_data
+        
+    except Exception as e:
+        logger.error(f"Error checking missing data: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la vérification des données")
+
+@api_router.get("/form-dependencies/federations")
+async def get_federations():
+    """Get all unique federations/confederations for competition forms"""
+    try:
+        pipeline = [
+            {"$unwind": "$confederations_federations"},
+            {"$group": {"_id": "$confederations_federations"}},
+            {"$sort": {"_id": 1}}
+        ]
+        
+        result = await db.competitions.aggregate(pipeline).to_list(length=None)
+        federations = [item["_id"] for item in result]
+        
+        return {
+            "federations": federations,
+            "total": len(federations)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting federations: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des fédérations")
 
 @api_router.put("/teams/{team_id}", response_model=TeamResponse)
 async def update_team(
