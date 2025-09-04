@@ -609,7 +609,14 @@ class CleanDatabaseInterconnectedFormsTester:
                 teams_response = self.session.get(f"{BACKEND_URL}/form-dependencies/teams-by-competition/{self.ligue1_id}")
                 
                 if teams_response.status_code == 200:
-                    teams = teams_response.json()
+                    data = teams_response.json()
+                    
+                    # Handle the actual response structure
+                    if isinstance(data, dict) and 'teams' in data:
+                        teams = data['teams']
+                    else:
+                        teams = data if isinstance(data, list) else []
+                    
                     psg_found = any(team.get('id') == self.psg_id for team in teams)
                     
                     if psg_found:
@@ -661,7 +668,14 @@ class CleanDatabaseInterconnectedFormsTester:
                 teams_response = self.session.get(f"{BACKEND_URL}/form-dependencies/teams-by-competition/{self.la_liga_id}")
                 
                 if teams_response.status_code == 200:
-                    teams = teams_response.json()
+                    data = teams_response.json()
+                    
+                    # Handle the actual response structure
+                    if isinstance(data, dict) and 'teams' in data:
+                        teams = data['teams']
+                    else:
+                        teams = data if isinstance(data, list) else []
+                    
                     barcelona_found = any(team.get('id') == self.barcelona_id for team in teams)
                     
                     if barcelona_found:
