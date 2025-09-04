@@ -3314,10 +3314,13 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Add New Reference Kit Form - Club Dropdown Bug Fix"
+    - "Authentication System - Email Field Input Capture Bug"
     - "Detailed Routes Backend Testing - COMPLETED"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Add New Reference Kit Form - Club Dropdown Bug Fix"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "authentication_first"
 
 agent_communication:
   - agent: "main"
