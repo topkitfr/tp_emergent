@@ -321,7 +321,10 @@ class InterconnectedFormsRetester:
                         response = self.session.get(f"{BACKEND_URL}/form-dependencies/teams-by-competition/{comp_id}")
                         
                         if response.status_code == 200:
-                            teams = response.json()
+                            data = response.json()
+                            # The response should have 'teams' array and other metadata
+                            teams = data.get('teams', []) if isinstance(data, dict) else []
+                            
                             test_results.append({
                                 "competition": comp_name,
                                 "competition_id": comp_id,
@@ -332,7 +335,7 @@ class InterconnectedFormsRetester:
                             # Check for specific teams mentioned in review request
                             team_names = [team.get('name', '').lower() for team in teams]
                             found_teams = []
-                            for target_team in ['psg', 'paris saint-germain', 'barcelona', 'manchester united']:
+                            for target_team in ['psg', 'paris saint-germain', 'barcelona', 'manchester united', 'lyon', 'olympique lyonnais']:
                                 if any(target_team in name for name in team_names):
                                     found_teams.append(target_team)
                             
