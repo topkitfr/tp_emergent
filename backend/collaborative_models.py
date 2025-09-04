@@ -427,7 +427,8 @@ class TeamCreate(BaseModel):
     country: str
     city: Optional[str] = None
     founded_year: Optional[int] = None
-    league_id: Optional[str] = None
+    current_competitions: List[str] = []  # List of competition IDs
+    primary_competition_id: Optional[str] = None  # Main competition
     colors: List[str] = []
     
 class BrandCreate(BaseModel):
