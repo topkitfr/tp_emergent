@@ -85,13 +85,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
     if (!actualEmail || !actualPassword) {
       console.error('❌ Missing required fields - Email or password empty');
-      setError('The name is required for registration');
+      setError('Email and password are required');
       return;
     }
     
     if (!isLogin && !actualName) {
       console.error('❌ Missing name for registration');
-      setError('The name is required for registration');
+      setError('Name is required for registration');
       return;
     }
 
