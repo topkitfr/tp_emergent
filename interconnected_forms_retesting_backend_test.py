@@ -402,10 +402,11 @@ class InterconnectedFormsRetester:
                 return False
             
             comp_types_data = comp_types_response.json()
+            competition_types = comp_types_data.get('competition_types', {})
             
             # Step 2: Find Ligue 1 and La Liga competitions
             target_workflows = [
-                {"type": "National league", "target_competitions": ["ligue 1"], "target_teams": ["psg", "lyon"]},
+                {"type": "National league", "target_competitions": ["ligue 1"], "target_teams": ["psg", "paris saint-germain", "lyon", "olympique lyonnais"]},
                 {"type": "National league", "target_competitions": ["la liga"], "target_teams": ["barcelona"]}
             ]
             
@@ -413,24 +414,20 @@ class InterconnectedFormsRetester:
                 workflow_result = {"workflow_type": workflow["type"], "steps": []}
                 
                 # Find competitions of this type
-                type_group = None
-                for group in comp_types_data:
-                    if isinstance(group, dict) and group.get('_id') == workflow["type"]:
-                        type_group = group
-                        break
+                type_competitions = competition_types.get(workflow["type"], [])
                 
-                if not type_group:
+                if not type_competitions:
                     workflow_result["steps"].append({
                         "step": "find_competition_type",
                         "success": False,
-                        "message": f"Competition type '{workflow['type']}' not found"
+                        "message": f"Competition type '{workflow['type']}' not found or empty"
                     })
                     workflow_results.append(workflow_result)
                     continue
                 
                 # Find target competition
                 target_competition = None
-                for comp in type_group.get('competitions', []):
+                for comp in type_competitions:
                     comp_name = comp.get('competition_name', '').lower()
                     if any(target in comp_name for target in workflow["target_competitions"]):
                         target_competition = comp
@@ -457,7 +454,8 @@ class InterconnectedFormsRetester:
                 teams_response = self.session.get(f"{BACKEND_URL}/form-dependencies/teams-by-competition/{comp_id}")
                 
                 if teams_response.status_code == 200:
-                    teams = teams_response.json()
+                    teams_data = teams_response.json()
+                    teams = teams_data.get('teams', []) if isinstance(teams_data, dict) else []
                     
                     # Look for target teams
                     found_teams = []
