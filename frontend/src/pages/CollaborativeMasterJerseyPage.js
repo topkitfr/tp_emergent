@@ -91,7 +91,27 @@ const CollaborativeMasterJerseyPage = ({
       } else {
         const error = await response.json();
         console.error('API Error Response:', error);
-        const errorMessage = error.detail || error.message || JSON.stringify(error);
+        
+        // Handle different error response formats
+        let errorMessage = 'Une erreur est survenue';
+        
+        if (error.detail) {
+          // FastAPI validation error
+          if (typeof error.detail === 'string') {
+            errorMessage = error.detail;
+          } else if (Array.isArray(error.detail)) {
+            // Pydantic validation errors
+            errorMessage = error.detail.map(err => err.msg || err.message).join(', ');
+          } else if (typeof error.detail === 'object') {
+            errorMessage = JSON.stringify(error.detail);
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
+        console.error('Processed error message:', errorMessage);
         alert(`❌ Erreur: ${errorMessage}`);
       }
     } catch (error) {
