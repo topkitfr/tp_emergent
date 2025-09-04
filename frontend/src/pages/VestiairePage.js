@@ -722,7 +722,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Step 1: Select Club/Team */}
+            {/* 1. Select Club */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Club *
@@ -740,13 +740,187 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   </option>
                 ))}
               </select>
+              {teams.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Loading clubs...
+                </p>
+              )}
             </div>
 
-            {/* Step 2: Select Master Kit (only shown after team selection) */}
+            {/* 2. League/Competition (show after club selection) */}
             {selectedTeam && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Master Kit *
+                  League/Competition *
+                </label>
+                <select
+                  value={formData.league_competition}
+                  onChange={(e) => setFormData(prev => ({...prev, league_competition: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Choose a league/competition...</option>
+                  {competitions.map(comp => (
+                    <option key={comp.id} value={comp.id}>
+                      {comp.competition_name || comp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* 3. Model */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Model *
+                </label>
+                <select
+                  value={formData.model}
+                  onChange={(e) => setFormData(prev => ({...prev, model: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Choose model type...</option>
+                  <option value="replica">Replica</option>
+                  <option value="authentic">Authentic</option>
+                </select>
+              </div>
+            )}
+
+            {/* 4. Limited Edition */}
+            {selectedTeam && (
+              <div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="limited_edition"
+                    checked={formData.is_limited_edition}
+                    onChange={(e) => setFormData(prev => ({...prev, is_limited_edition: e.target.checked}))}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="limited_edition" className="ml-2 text-sm text-gray-700">
+                    Limited Edition
+                  </label>
+                </div>
+                
+                {/* Conditional field for number of units */}
+                {formData.is_limited_edition && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Number of Units *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.production_run}
+                      onChange={(e) => setFormData(prev => ({...prev, production_run: e.target.value}))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter number of units produced"
+                      required={formData.is_limited_edition}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 5. SKU Code */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SKU Code
+                </label>
+                <input
+                  type="text"
+                  value={formData.official_product_code}
+                  onChange={(e) => setFormData(prev => ({...prev, official_product_code: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., FN2345-413"
+                />
+              </div>
+            )}
+
+            {/* 6. Barcode */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barcode
+                </label>
+                <input
+                  type="text"
+                  value={formData.barcode}
+                  onChange={(e) => setFormData(prev => ({...prev, barcode: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 1234567890123"
+                />
+              </div>
+            )}
+
+            {/* 7. Main Photo */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Main Photo (Front View) *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMainPhotoUpload}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                {mainPhotoPreview && (
+                  <div className="mt-2">
+                    <img 
+                      src={mainPhotoPreview} 
+                      alt="Main Photo Preview" 
+                      className="w-32 h-32 object-cover rounded border"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 8. Secondary Photos */}
+            {selectedTeam && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Secondary Photos (Back, Left Sleeve, Right Sleeve)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleSecondaryPhotosUpload}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+                {secondaryPhotoPreviews.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {secondaryPhotoPreviews.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img 
+                          src={preview} 
+                          alt={`Secondary Photo ${index + 1}`} 
+                          className="w-24 h-24 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeSecondaryPhoto(index)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hidden Master Kit Selection (will be created automatically based on club selection) */}
+            {selectedTeam && (
+              <div className="hidden">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Master Kit Selection (Auto-selected)
                 </label>
                 {loadingMasterKits ? (
                   <div className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-500">
@@ -757,9 +931,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                     value={formData.master_kit_id}
                     onChange={(e) => setFormData(prev => ({...prev, master_kit_id: e.target.value}))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    required
                   >
-                    <option value="">Choose a master kit...</option>
+                    <option value="">Auto-select master kit...</option>
                     {masterKitsForTeam.map(kit => (
                       <option key={kit.id} value={kit.id}>
                         {kit.season} {kit.kit_type} - {kit.design_name || `${kit.kit_type} Kit`}
@@ -774,177 +947,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 )}
               </div>
             )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Available Sizes
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => handleSizeToggle(size)}
-                    className={`px-3 py-2 text-sm rounded border transition-colors ${
-                      formData.available_sizes.includes(size)
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SKU Code
-                </label>
-                <input
-                  type="text"
-                  value={formData.official_product_code}
-                  onChange={(e) => setFormData(prev => ({...prev, official_product_code: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="FN2345-413"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Barcoding
-                </label>
-                <input
-                  type="text"
-                  value={formData.barcode}
-                  onChange={(e) => setFormData(prev => ({...prev, barcode: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="1234567890123"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="limited_edition"
-                  checked={formData.is_limited_edition}
-                  onChange={(e) => setFormData(prev => ({...prev, is_limited_edition: e.target.checked}))}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="limited_edition" className="ml-2 text-sm text-gray-700">
-                  Limited Edition
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Production Run
-                </label>
-                <input
-                  type="number"
-                  value={formData.production_run}
-                  onChange={(e) => setFormData(prev => ({...prev, production_run: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Total pieces"
-                />
-              </div>
-            </div>
-
-            {/* League/Competition - Required Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                League/Competition *
-              </label>
-              <select
-                value={formData.league_competition}
-                onChange={(e) => setFormData(prev => ({...prev, league_competition: e.target.value}))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Choose a league/competition...</option>
-                {competitions.map(comp => (
-                  <option key={comp.id} value={comp.id}>
-                    {comp.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Model - Required Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Model *
-              </label>
-              <select
-                value={formData.model}
-                onChange={(e) => setFormData(prev => ({...prev, model: e.target.value}))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="replica">Replica</option>
-                <option value="authentic">Authentic</option>
-              </select>
-            </div>
-
-            {/* Main Photo - Required Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Main Photo (Front View) *
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleMainPhotoUpload}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              {mainPhotoPreview && (
-                <div className="mt-2">
-                  <img 
-                    src={mainPhotoPreview} 
-                    alt="Main Photo Preview" 
-                    className="w-32 h-32 object-cover rounded border"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Secondary Photos - Optional */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Secondary Photos (Back, Left Sleeve, Right Sleeve)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleSecondaryPhotosUpload}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              />
-              {secondaryPhotoPreviews.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {secondaryPhotoPreviews.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={preview} 
-                        alt={`Secondary Photo ${index + 1}`} 
-                        className="w-24 h-24 object-cover rounded border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSecondaryPhoto(index)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <button
