@@ -606,19 +606,17 @@ class InterconnectedFormsRetester:
             
             if comp_types_response.status_code == 200:
                 comp_types_data = comp_types_response.json()
+                competition_types = comp_types_data.get('competition_types', {})
                 
                 expected_types = ['National league', 'Continental competition', 'International competition']
-                found_types = []
-                
-                for group in comp_types_data:
-                    if isinstance(group, dict) and '_id' in group:
-                        found_types.append(group['_id'])
+                found_types = list(competition_types.keys())
                 
                 validation_results.append({
                     "test": "competition_types_grouping",
                     "success": len(found_types) > 0,
                     "found_types": found_types,
-                    "expected_types": expected_types
+                    "expected_types": expected_types,
+                    "matches_expected": any(t in found_types for t in expected_types)
                 })
             else:
                 validation_results.append({
@@ -635,7 +633,9 @@ class InterconnectedFormsRetester:
                 
                 teams_with_relationships = 0
                 for team in teams:
-                    if team.get('current_competitions') or team.get('primary_competition_id'):
+                    if (team.get('league_info') or 
+                        team.get('current_competitions') or 
+                        team.get('primary_competition_id')):
                         teams_with_relationships += 1
                 
                 validation_results.append({
