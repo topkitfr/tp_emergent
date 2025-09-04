@@ -440,16 +440,18 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
     // Load teams when modal opens
     useEffect(() => {
-      if (teams.length === 0) {
-        loadTeams();
+      if (showCreateModal) {
+        if (teams.length === 0) {
+          loadTeams();
+        }
+        if (competitions.length === 0) {
+          loadCompetitions();
+        }
+        if (players.length === 0) {
+          loadPlayers();
+        }
       }
-      if (competitions.length === 0) {
-        loadCompetitions();
-      }
-      if (players.length === 0) {
-        loadPlayers();
-      }
-    }, []);
+    }, [showCreateModal]);
 
     const loadTeams = async () => {
       try {
