@@ -419,15 +419,14 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   const CreateKitReleaseModal = () => {
     const [formData, setFormData] = useState({
       master_kit_id: '',
-      league_competition: '', // New field for League/Competition
-      model: 'replica', // New required field (Replica/Authentic)
-      available_sizes: [],
+      league_competition: '', // League/Competition field
+      model: 'replica', // Model field (Replica/Authentic)
       is_limited_edition: false,
       production_run: '',
-      official_product_code: '', // This becomes SKU Code
-      barcode: '', // New field for Barcoding
-      main_photo: null, // New required field for Main Photo
-      secondary_photos: [] // New field for Secondary Photos
+      official_product_code: '', // SKU Code
+      barcode: '', // Barcode field
+      main_photo: null, // Main Photo (required)
+      secondary_photos: [] // Secondary Photos
     });
     const [loading, setLoading] = useState(false);
     const [teams, setTeams] = useState([]);
