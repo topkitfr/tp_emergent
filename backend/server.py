@@ -9575,34 +9575,30 @@ async def get_competitions_by_type():
     """Get competitions grouped by type for interconnected forms"""
     try:
         # Get all competitions grouped by type
-        pipeline = [
-            {
-                "$group": {
-                    "_id": "$type",
-                    "competitions": {
-                        "$push": {
-                            "id": "$id",
-                            "competition_name": "$competition_name",
-                            "country": "$country",
-                            "level": "$level",
-                            "confederations_federations": "$confederations_federations"
-                        }
-                    }
-                }
-            },
-            {"$sort": {"_id": 1}}
-        ]
+        competitions = await db.competitions.find({}).to_list(length=None)
         
-        result = await db.competitions.aggregate(pipeline).to_list(length=None)
+        # Remove MongoDB ObjectId
+        for comp in competitions:
+            comp.pop('_id', None)
         
-        # Transform into more usable format
+        # Group by type
         competition_types = {}
-        for item in result:
-            competition_types[item["_id"]] = item["competitions"]
+        for comp in competitions:
+            comp_type = comp.get("type", "Unknown")
+            if comp_type not in competition_types:
+                competition_types[comp_type] = []
+            
+            competition_types[comp_type].append({
+                "id": comp["id"],
+                "competition_name": comp["competition_name"],
+                "country": comp.get("country"),
+                "level": comp.get("level"),
+                "confederations_federations": comp.get("confederations_federations", [])
+            })
         
         return {
             "competition_types": competition_types,
-            "total_competitions": await db.competitions.count_documents({})
+            "total_competitions": len(competitions)
         }
         
     except Exception as e:
