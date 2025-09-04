@@ -9704,7 +9704,10 @@ async def check_missing_form_data(request: dict):
                     "form_data": {"name": request["brand_name"]}
                 })
         
-        return missing_data
+        return {
+            "missing_data": missing_data,
+            "has_missing": len(missing_data["competitions"]) > 0 or len(missing_data["teams"]) > 0 or len(missing_data["brands"]) > 0
+        }
         
     except Exception as e:
         logger.error(f"Error checking missing data: {e}")
