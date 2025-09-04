@@ -208,7 +208,9 @@ class CleanDatabaseInterconnectedFormsTester:
                         self.barcelona_id = team.get('id')
                     
                     # Check if team has competition relationships
-                    if team.get('primary_competition_id') or team.get('current_competitions'):
+                    if (team.get('primary_competition_id') or 
+                        team.get('current_competitions') or 
+                        team.get('league_info')):
                         teams_with_competitions += 1
                 
                 self.log_result(
