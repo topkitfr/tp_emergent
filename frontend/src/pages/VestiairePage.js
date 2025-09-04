@@ -551,21 +551,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       }
     };
 
-    const handleSizeToggle = (size) => {
-      const sizes = formData.available_sizes || [];
-      if (sizes.includes(size)) {
-        setFormData(prev => ({
-          ...prev,
-          available_sizes: sizes.filter(s => s !== size)
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          available_sizes: [...sizes, size]
-        }));
-      }
-    };
-
     // Photo handling functions
     const handleMainPhotoUpload = (event) => {
       const file = event.target.files[0];
