@@ -26,7 +26,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {

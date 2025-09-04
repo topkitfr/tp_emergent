@@ -21,7 +21,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"

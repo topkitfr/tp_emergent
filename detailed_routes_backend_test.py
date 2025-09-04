@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Configuration des URLs
-BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
 
 class TopKitDetailedRoutesTester:
     def __init__(self):

@@ -12,7 +12,7 @@ import json
 import sys
 
 # Configuration
-BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {

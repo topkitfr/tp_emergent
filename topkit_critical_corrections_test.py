@@ -15,7 +15,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BASE_URL = "https://football-vestiary.preview.emergentagent.com/api"
 
 class TopKitCriticalTester:
     def __init__(self):

@@ -26,7 +26,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://kit-hierarchy-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
 
 class TopKitFriendsMessagingTester:
     def __init__(self):
