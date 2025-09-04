@@ -116,7 +116,8 @@ const CollaborativeMasterJerseyPage = ({
       }
     } catch (error) {
       console.error('Error creating master jersey:', error);
-      alert('❌ Erreur lors de la création du maillot');
+      const errorMessage = error.message || 'Erreur de connexion ou problème technique';
+      alert(`❌ Erreur lors de la création du maillot: ${errorMessage}`);
     }
     setLoading(false);
   };
