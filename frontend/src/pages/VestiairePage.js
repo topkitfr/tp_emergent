@@ -668,7 +668,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             master_kit_id: '',
             league_competition: '',
             model: 'replica',
-            available_sizes: [],
             is_limited_edition: false,
             production_run: '',
             official_product_code: '',
