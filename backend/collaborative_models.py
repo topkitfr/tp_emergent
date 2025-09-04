@@ -126,28 +126,30 @@ class Player(BaseModel):
     topkit_reference: str  # TK-PLAYER-000001
 
 class Competition(BaseModel):
-    """Entité Competition/Event (Championnats, coupes, événements)"""
+    """Entité Competition/Event (Championnats, coupes, événements) - Updated to match CSV structure"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str  # "Ligue 1"
+    competition_name: str  # "Ligue 1" - main display name
     official_name: Optional[str] = None  # "Ligue 1 Uber Eats"
-    common_names: List[str] = []
+    alternative_names: List[str] = []  # ["L1", "French Championship"]
     
-    # Type et informations
-    competition_type: str  # "domestic_league", "cup", "international", "friendly"
-    country: Optional[str] = None
-    level: Optional[int] = None  # 1 pour première division
+    # Competition classification matching CSV structure
+    type: str  # "National league", "Continental competition", "International competition", "Intercontinental competition", "National cup", "Continental super cup"
+    confederations_federations: List[str] = []  # ["UEFA"], ["FIFA"], ["CONMEBOL"], ["UEFA", "CONMEBOL"]
+    country: Optional[str] = None  # France, Spain, etc. (None for international)
+    level: Optional[int] = None  # 1 pour première division, 2 pour deuxième, etc.
     
-    # Dates et récurrence
-    start_year: Optional[int] = None
-    is_recurring: bool = True  # False pour événements uniques
+    # Historical information
+    year_created: Optional[int] = None  # Year when competition was created
+    is_recurring: bool = True  # False for one-off events
     current_season: Optional[str] = None
     
-    # Logo et couleurs
-    logo_url: Optional[str] = None
+    # Media and branding
+    logo: Optional[str] = None  # Logo file path/URL
+    trophy_photo: Optional[str] = None  # Trophy image file path/URL
     secondary_images: List[str] = []
     primary_color: Optional[str] = None
     
-    # Métadonnées collaboratives
+    # Metadata for collaborative system
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
