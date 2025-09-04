@@ -9442,11 +9442,11 @@ async def get_teams_dropdown():
 async def get_teams(
     search: Optional[str] = None,
     country: Optional[str] = None,
-    league_id: Optional[str] = None,
+    competition_id: Optional[str] = None,
     verified_only: bool = False,
     limit: int = 1000
 ):
-    """Get teams with optional filters"""
+    """Get teams with optional filters - Updated for interconnected forms"""
     query = {}
     
     if search:
@@ -9459,35 +9459,42 @@ async def get_teams(
     if country:
         query["country"] = country
         
-    if league_id:
-        query["league_id"] = league_id
+    if competition_id:
+        query["$or"] = [
+            {"primary_competition_id": competition_id},
+            {"current_competitions": {"$in": [competition_id]}}
+        ]
         
     if verified_only:
         query["verified_level"] = {"$ne": "unverified"}
     
     teams = await db.teams.find(query).limit(limit).to_list(length=None)
     
-    # Enrichir avec données supplémentaires
+    # Enrich with additional data
     enriched_teams = []
     for team in teams:
         team.pop('_id', None)
         
-        # Compter les master jerseys
+        # Count master jerseys
         jerseys_count = await db.master_jerseys.count_documents({"team_id": team["id"]})
         
-        # Info ligue si disponible
-        league_info = None
-        if team.get("league_id"):
-            league = await db.competitions.find_one({"id": team["league_id"]})
-            if league:
-                league.pop('_id', None)
-                league_info = {"id": league["id"], "name": league["name"]}
+        # Get primary competition info if available
+        competition_info = None
+        if team.get("primary_competition_id"):
+            competition = await db.competitions.find_one({"id": team["primary_competition_id"]})
+            if competition:
+                competition.pop('_id', None)
+                competition_info = {
+                    "id": competition["id"], 
+                    "competition_name": competition["competition_name"],
+                    "type": competition["type"]
+                }
         
         enriched_team = TeamResponse(
             **team,
-            league_info=league_info,
+            league_info=competition_info,  # Using existing field name for compatibility
             master_jerseys_count=jerseys_count,
-            total_collectors=0  # TODO: calculer depuis collections
+            total_collectors=0  # TODO: calculate from collections
         )
         enriched_teams.append(enriched_team)
     
