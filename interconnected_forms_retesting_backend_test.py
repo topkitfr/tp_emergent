@@ -213,19 +213,22 @@ class InterconnectedFormsRetester:
                 all_teams = response.json()
                 self.teams_data = all_teams
                 
-                # Look for teams with competition relationships
+                # Look for teams with league_info (which contains competition relationships)
                 teams_with_competitions = []
                 for team in all_teams:
-                    if team.get('current_competitions') or team.get('primary_competition_id'):
+                    if team.get('league_info') or team.get('current_competitions') or team.get('primary_competition_id'):
                         teams_with_competitions.append(team)
                 
                 # Test filtering by competition_id if we have teams with competitions
                 if teams_with_competitions:
-                    # Try to get a competition ID from the first team
+                    # Try to get a competition ID from the first team with league_info
                     test_team = teams_with_competitions[0]
-                    competition_id = test_team.get('primary_competition_id') or (
-                        test_team.get('current_competitions', [{}])[0].get('competition_id') if test_team.get('current_competitions') else None
-                    )
+                    competition_id = None
+                    
+                    if test_team.get('league_info'):
+                        competition_id = test_team['league_info'].get('id')
+                    elif test_team.get('primary_competition_id'):
+                        competition_id = test_team.get('primary_competition_id')
                     
                     if competition_id:
                         # Test filtering
