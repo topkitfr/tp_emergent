@@ -14,23 +14,44 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "We need to start over with a clean database, just like on the deployed site. Can you do that even for the preview? Complete wipe, just keep the Admin user account and the user (topkitfr@gmail.com/steinmetzlivio@gmail.com)"
+## user_problem_statement: "We need to revise the structure of the 'ligue' form, which should actually be renamed 'competition' as it was before. I'm attaching a CSV file that defines the fields to include in the form and the necessary database references. Everything must be interconnected. For example, when I create a 'team' using the 'Add New Team' form, I should see a field that dynamically displays the available federation, league, etc. options—do you understand what I mean? All forms need to be linked to make filling out information easier and more accurate for users. It should be guided, and if users can't find their criteria (e.g., their league), there should be a prompt or message encouraging them to add the missing information to the database."
 
-## backend:
-  - task: "Complete Database Reset with User Preservation"
+backend:
+  - task: "Interconnected Forms System - Competition Model Update"
     implemented: true
     working: true
-    file: "MongoDB Operations"
+    file: "collaborative_models.py"
     stuck_count: 0
     priority: "critical"
     needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
-        - comment: "Successfully performed complete database wipe while preserving only 2 essential user accounts (topkitfr@gmail.com - Admin, steinmetzlivio@gmail.com - User). All collections dropped and database reset to clean state identical to fresh deployment."
+        - comment: "Updated Competition model to match CSV structure with fields: competition_name, official_name, alternative_names, type, confederations_federations, country, level, year_created, logo, trophy_photo. Updated associated CompetitionCreate model and Team model to support current_competitions and primary_competition_id for interconnected relationships."
+
+  - task: "Competition Database Population"
+    implemented: true
+    working: true
+    file: "populate_competitions.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
         - working: true
-        - agent: "testing"
-        - comment: "Database reset verification COMPLETE - 100% SUCCESS RATE! Authentication system working perfectly for both preserved accounts, all entity collections properly empty (Teams, Brands, Players, Competitions, Master Jerseys, Jersey Releases, Jerseys, Contributions: 0 items each), site mode correctly set to 'public', core API endpoints functional with empty arrays as expected, clean database state achieved identical to fresh deployment with only 2 essential users preserved."
+        - agent: "main"
+        - comment: "Successfully populated database with 20 competitions from CSV data including major leagues (Ligue 1, Premier League, La Liga, Serie A, Bundesliga), continental competitions (UEFA Champions League, Europa League), and international competitions (FIFA World Cup, European Championship). All competitions have proper TopKit references (TK-COMP-000001 to TK-COMP-000020)."
+
+  - task: "Interconnected Form API Endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Updated competition and team endpoints to support interconnected forms. Added new endpoints: /form-dependencies/competitions-by-type, /form-dependencies/teams-by-competition/{id}, /form-dependencies/master-kits-by-team/{id}, /form-dependencies/check-missing-data, /form-dependencies/federations. These endpoints support dynamic dropdowns and guided navigation when users need to add missing data."
 
 ## frontend:
   - task: "Enhanced ContributionDetailModal"
