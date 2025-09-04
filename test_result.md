@@ -50,15 +50,18 @@ backend:
 ## frontend:
   - task: "Add New Reference Kit Form - Club Dropdown Bug Fix"
     implemented: true
-    working: "NA"
+    working: false
     file: "pages/VestiairePage.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "critical"
     needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "🚨 TESTING BLOCKED BY AUTHENTICATION BUG: Cannot access 'Add New Reference Kit' form due to persistent email field input capture issue in authentication modal. Multiple testing approaches attempted (standard input, JavaScript evaluation, DOM manipulation) but authentication consistently fails with 'Form submission values: {email: MISSING, password: PROVIDED}' despite email value being set correctly. ✅ PARTIAL VERIFICATION: Confirmed teams data is available (FC Barcelona, Paris Saint-Germain, Manchester United, AC Milan, Olympique Lyonnais), Kit Store navigation exists, admin panel requires authentication. ❌ FORM TESTING INCOMPLETE: Cannot verify club dropdown bug fix, progressive form revelation, Limited Edition functionality, field order, or 'Available Sizes' removal without admin access. URGENT: Fix authentication email field capture before form testing can proceed."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL AUTHENTICATION BUG CONFIRMED - ADMIN ACCESS BLOCKED! Comprehensive testing with correct admin credentials (topkitfr@gmail.com / TopKitSecure789#) reveals PERSISTENT AUTHENTICATION FAILURE: ❌ AUTHENTICATION SYSTEM BROKEN: Despite using correct admin credentials, authentication modal shows 'The name is required for registration' error, suggesting form validation issues or backend authentication problems. Multiple authentication attempts failed with proper credential input. ✅ KIT STORE PAGE ACCESSIBLE: Kit Store page loads correctly and shows 'Sign In Required' message as expected for unauthenticated users. Navigation structure working properly. ❌ ADD NEW REFERENCE KIT FORM INACCESSIBLE: Cannot test the corrected 3-step workflow (Club Selection → Master Kit Selection → Reference Kit Details) due to authentication barrier. Cannot verify club dropdown functionality, master kit filtering, Limited Edition checkbox, progressive field revelation, or 'Available Sizes' removal. ROOT CAUSE: Authentication system has critical bug preventing admin login, blocking all admin-level testing including the Add New Reference Kit form verification. URGENT ACTION REQUIRED: Fix authentication system before Kit Store form testing can proceed. The reported club dropdown bug fix cannot be verified without admin access."
 
   - task: "Enhanced ContributionDetailModal"
     implemented: true
