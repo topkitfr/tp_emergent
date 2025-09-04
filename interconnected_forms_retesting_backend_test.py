@@ -108,25 +108,24 @@ class InterconnectedFormsRetester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if response has proper structure
-                if isinstance(data, list) and len(data) > 0:
-                    # Check if competitions are grouped by type
-                    competition_types = set()
-                    total_competitions = 0
+                # Check if response has proper structure - should be dict with competition_types
+                if isinstance(data, dict) and 'competition_types' in data:
+                    competition_types_data = data['competition_types']
+                    total_competitions = data.get('total_competitions', 0)
                     
-                    for type_group in data:
-                        if isinstance(type_group, dict) and '_id' in type_group and 'competitions' in type_group:
-                            competition_types.add(type_group['_id'])
-                            total_competitions += len(type_group['competitions'])
+                    # Check if competitions are grouped by type
+                    competition_types = list(competition_types_data.keys())
+                    calculated_total = sum(len(competitions) for competitions in competition_types_data.values())
                     
                     self.log_result(
                         "Competitions By Type Endpoint - Fixed Aggregation", 
                         True, 
                         f"Successfully retrieved {len(competition_types)} competition types with {total_competitions} total competitions",
                         {
-                            "competition_types": list(competition_types),
+                            "competition_types": competition_types,
                             "total_competitions": total_competitions,
-                            "sample_structure": data[0] if data else None
+                            "calculated_total": calculated_total,
+                            "sample_types": list(competition_types_data.keys())[:3]
                         }
                     )
                     return True
@@ -134,7 +133,7 @@ class InterconnectedFormsRetester:
                     self.log_result(
                         "Competitions By Type Endpoint - Fixed Aggregation", 
                         False, 
-                        f"Invalid response structure: expected list with grouped competitions, got: {type(data)}",
+                        f"Invalid response structure: expected dict with 'competition_types', got: {type(data)}",
                         {"response_data": data}
                     )
                     return False
