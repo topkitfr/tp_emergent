@@ -33,35 +33,39 @@ class EntityType(str, Enum):
 # ================================
 
 class Team(BaseModel):
-    """Entité Team/Club avec informations détaillées"""
+    """Entité Team/Club avec informations détaillées - Updated for interconnected forms"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str  # "Paris Saint-Germain"
     short_name: Optional[str] = None  # "PSG"
     common_names: List[str] = []  # ["PSG", "Paris SG", "Paris Saint-Germain"]
     
-    # Informations club
+    # Club information with competition references
     founded_year: Optional[int] = None
     country: str  # France
     city: Optional[str] = None  # Paris
-    league_id: Optional[str] = None  # Référence vers Competition
     
-    # Média
+    # Competition relationships - can reference multiple competitions
+    current_competitions: List[str] = []  # List of competition IDs team currently participates in
+    primary_competition_id: Optional[str] = None  # Main competition (e.g., domestic league)
+    competition_history: List[Dict[str, Any]] = []  # Historical participation
+    
+    # Media
     logo_url: Optional[str] = None
     colors: List[str] = []  # ["navy", "red", "white"]
     
-    # Métadonnées collaboratives
+    # Collaborative metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str  # User ID
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
     verified_at: Optional[datetime] = None
     verified_by: Optional[str] = None
     
-    # Historique modifications
+    # History tracking
     modification_count: int = 0
     last_modified_at: Optional[datetime] = None
     last_modified_by: Optional[str] = None
     
-    # Références et identifiants externes
+    # External references
     external_ids: Dict[str, str] = {}  # {"fifa": "123", "transfermarkt": "456"}
     topkit_reference: str  # TK-TEAM-000001
 
