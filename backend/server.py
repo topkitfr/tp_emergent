@@ -10000,12 +10000,15 @@ async def create_competition(
     competition_data: CompetitionCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create new competition - Updated for interconnected forms"""
-    competition = Competition(
-        **competition_data.dict(),
-        created_by=current_user["id"],
-        topkit_reference=await generate_reference("competition")
-    )
+    """Create new competition - Updated for interconnected forms with auto-approval"""
+    competition_dict = competition_data.dict()
+    competition_dict["created_by"] = current_user["id"]
+    competition_dict["topkit_reference"] = await generate_reference("competition")
+    
+    # Apply auto-approval for testing
+    competition_dict = enable_auto_approval_for_testing(competition_dict, current_user["id"])
+    
+    competition = Competition(**competition_dict)
     
     await db.competitions.insert_one(competition.dict())
     
