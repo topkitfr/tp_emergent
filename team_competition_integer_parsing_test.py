@@ -189,8 +189,12 @@ class TeamCompetitionIntegerParsingTester:
         # Create test image
         test_image = self.create_test_image_base64()
         
+        # Use microseconds for uniqueness
+        import time
+        unique_id = str(int(time.time() * 1000000))[-8:]
+        
         competition_data = {
-            "competition_name": f"Test Competition Logo {datetime.now().strftime('%H%M%S')}",
+            "competition_name": f"Test Competition Logo {unique_id}",
             "type": "National league",
             "country": "France",
             "level": 1,
@@ -229,8 +233,12 @@ class TeamCompetitionIntegerParsingTester:
         test_image1 = self.create_test_image_base64()
         test_image2 = self.create_test_image_base64()
         
+        # Use microseconds for uniqueness
+        import time
+        unique_id = str(int(time.time() * 1000000))[-8:]
+        
         competition_data = {
-            "competition_name": f"Test Competition Secondary {datetime.now().strftime('%H%M%S')}",
+            "competition_name": f"Test Competition Secondary {unique_id}",
             "type": "Continental competition",
             "country": "Spain",
             "level": 1,
