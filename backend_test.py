@@ -458,7 +458,7 @@ class FormCreationTester:
         print("Test: Personal kit update with all fields")
         update_data = {
             "size": "XL",
-            "condition": "very_good",
+            "condition": "excellent",  # Fixed: use valid enum value
             "purchase_price": 95.00,
             "price_value": 130.00,           # Updated field
             "acquisition_story": "Updated: Bought from official store during Champions League final - amazing experience!", # Updated field
