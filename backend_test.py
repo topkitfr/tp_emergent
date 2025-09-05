@@ -401,12 +401,16 @@ class FormCreationTester:
         print("\n🔍 Testing Personal Kit data retrieval...")
         
         try:
+            # Try both owned and wanted collections
             response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+            if response.status_code != 200:
+                response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
+            
             print(f"   Status: {response.status_code}")
             
             if response.status_code == 200:
                 kits = response.json()
-                print(f"   Found {len(kits)} owned kits")
+                print(f"   Found {len(kits)} kits")
                 
                 # Find our created kit
                 created_kit = None
