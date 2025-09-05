@@ -292,6 +292,10 @@ const AdminDashboard = ({ user, API }) => {
           dashboardData={dashboardData}
           API={API}
           user={user}
+          systemSettings={systemSettings}
+          updateSystemSettings={updateSystemSettings}
+          settingsLoading={settingsLoading}
+          loading={loading}
         />
       </div>
     </div>
