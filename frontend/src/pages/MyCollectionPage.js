@@ -218,10 +218,9 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         
         // Printing Details - Map to backend field names
         has_printing: editFormData.has_printing,
-        is_custom_printing: editFormData.is_custom_printing,
         printed_name: editFormData.player_name || null, // Map player_name back to printed_name
         printed_number: parseInt(editFormData.player_number) || null, // Map player_number back to printed_number
-        custom_print_text: editFormData.custom_print_text || null,
+        printing_type: editFormData.is_custom_printing ? 'custom' : 'player',
         
         // Physical Details
         is_worn: editFormData.is_worn,
