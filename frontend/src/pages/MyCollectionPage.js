@@ -155,17 +155,44 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const handleEditItem = (item) => {
     setEditingItem(item);
     setEditFormData({
+      // Basic fields
       size: item.size || '',
       condition: item.condition || 'good',
-      purchase_price: item.purchase_price || '',
+      
+      // Purchase Information - Match creation form field names
+      price_buy: item.purchase_price || item.price_buy || '', // Map purchase_price to price_buy
+      price_value: item.price_value || '', // Current value estimate
       purchase_date: item.purchase_date || '',
-      personal_notes: item.personal_notes || '',
+      purchase_location: item.purchase_location || '',
+      
+      // Personal Notes - Map personal_notes to info to match creation form
+      info: item.personal_notes || item.info || '', // Map personal_notes to info
+      
+      // Printing Details - Match creation form structure
+      has_printing: item.has_printing || false,
+      is_custom_printing: item.is_custom_printing || false,
+      player_name: item.printed_name || item.player_name || '', // Map printed_name to player_name
+      player_number: item.printed_number || item.player_number || '', // Map printed_number to player_number
+      custom_print_text: item.custom_print_text || '',
+      
+      // Physical Details
+      is_worn: item.is_worn || false,
       is_signed: item.is_signed || false,
       signed_by: item.signed_by || '',
-      has_printing: item.has_printing || false,
-      printed_name: item.printed_name || '',
-      printed_number: item.printed_number || '',
-      is_worn: item.is_worn || false
+      
+      // Special Attributes  
+      is_match_worn: item.is_match_worn || false,
+      match_details: item.match_details || '',
+      is_authenticated: item.is_authenticated || false,
+      authentication_details: item.authentication_details || '',
+      
+      // Collection Management
+      times_worn: item.times_worn || 0,
+      acquisition_story: item.acquisition_story || '',
+      
+      // Marketplace
+      for_sale: item.is_for_sale || item.for_sale || false,
+      asking_price: item.asking_price || ''
     });
   };
 
