@@ -276,7 +276,7 @@ class ReferenceKit(BaseModel):
     total_for_sale: int = 0
 
 class PersonalKit(BaseModel):
-    """Personal Kit - User's specific kit in their collection with personalization"""
+    """Personal Kit - User's specific kit in their OWNED collection with personalization"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
     # Owner & Reference
@@ -313,10 +313,36 @@ class PersonalKit(BaseModel):
     personal_notes: Optional[str] = None
     acquisition_story: Optional[str] = None
     
-    # Collection Status
-    collection_type: str = "owned"  # "owned", "wanted"
+    # Collection Status - REMOVED collection_type, PersonalKit is ONLY for owned items
     is_for_sale: bool = False
     asking_price: Optional[float] = None
+    
+    # Metadata
+    added_to_collection_at: datetime = Field(default_factory=datetime.utcnow)
+    last_updated_at: Optional[datetime] = None
+    
+    # Statistics
+    estimated_current_value: Optional[float] = None
+    times_worn: int = 0
+
+class WantedKit(BaseModel):
+    """Wanted Kit - Simple reference to a kit the user wants (remains as Reference Kit)"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Owner & Reference - MINIMAL DATA ONLY
+    user_id: str
+    reference_kit_id: str
+    
+    # Optional preference (but kit remains a Reference Kit)
+    preferred_size: Optional[str] = None  # User's preferred size, but not required
+    max_price_willing_to_pay: Optional[float] = None  # Optional price limit
+    notes: Optional[str] = None  # Optional notes like "looking for authentic version"
+    
+    # Metadata
+    added_to_wanted_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Priority
+    priority: str = "medium"  # "low", "medium", "high"
     
     # Photos (user's own photos)
     personal_photos: List[str] = []
