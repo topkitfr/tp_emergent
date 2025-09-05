@@ -5,6 +5,14 @@ const AdminDashboard = ({ user, API }) => {
   const [dashboardData, setDashboardData] = useState({});
   const [loading, setLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // System settings state
+  const [systemSettings, setSystemSettings] = useState({
+    auto_approval_enabled: true,
+    admin_notifications: true,
+    community_voting_enabled: true
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   // Admin modules avec leurs configurations
   const adminModules = [
