@@ -1205,21 +1205,44 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   </div>
                 </div>
 
-                {/* State (condition) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition Details</label>
-                  <select
-                    value={personalDetails.condition}
-                    onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="mint">Mint - New with tags, perfect condition</option>
-                    <option value="near_mint">Near Mint - Like new, minor wear</option>
-                    <option value="excellent">Excellent - Very good condition, light wear</option>
-                    <option value="good">Good - Normal wear, all functional</option>
-                    <option value="fair">Fair - Noticeable wear, still wearable</option>
-                    <option value="poor">Poor - Heavy wear, damage visible</option>
-                  </select>
+                {/* Physical Details */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">👕 Physical Details</h3>
+                  
+                  {/* Size */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                    <select
+                      value={personalDetails.size}
+                      onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select size</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                      <option value="XXL">XXL</option>
+                    </select>
+                  </div>
+
+                  {/* Condition Details */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition Details</label>
+                    <select
+                      value={personalDetails.condition}
+                      onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="mint">Mint - New with tags, perfect condition</option>
+                      <option value="near_mint">Near Mint - Like new, minor wear</option>
+                      <option value="excellent">Excellent - Very good condition, light wear</option>
+                      <option value="good">Good - Normal wear, all functional</option>
+                      <option value="fair">Fair - Noticeable wear, still wearable</option>
+                      <option value="poor">Poor - Heavy wear, damage visible</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Printing (Flocking) Section */}
