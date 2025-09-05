@@ -397,7 +397,13 @@ const ModuleContent = ({ activeModule, dashboardData, API, user }) => {
   
   switch (activeModule) {
     case 'overview':
-      return <OverviewModule dashboardData={dashboardData} />;
+      return <OverviewModule 
+        dashboardData={dashboardData} 
+        systemSettings={systemSettings}
+        updateSystemSettings={updateSystemSettings}
+        settingsLoading={settingsLoading}
+        loading={loading}
+      />;
     case 'users':
       return <UsersModule API={API} />;
     case 'moderation':
@@ -421,7 +427,13 @@ const ModuleContent = ({ activeModule, dashboardData, API, user }) => {
     case 'campaigns':
       return <CampaignManagerModule API={API} />;
     default:
-      return <OverviewModule dashboardData={dashboardData} />;
+      return <OverviewModule 
+        dashboardData={dashboardData} 
+        systemSettings={systemSettings}
+        updateSystemSettings={updateSystemSettings}
+        settingsLoading={settingsLoading}
+        loading={loading}
+      />;
   }
 };
 
