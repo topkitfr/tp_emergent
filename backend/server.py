@@ -9865,11 +9865,14 @@ async def create_brand(
     if existing:
         raise HTTPException(status_code=400, detail="Une marque avec ce nom existe déjà")
     
-    brand = Brand(
-        **brand_data.dict(),
-        created_by=current_user["id"],
-        topkit_reference=await generate_reference("brand")
-    )
+    brand_dict = brand_data.dict()
+    brand_dict["created_by"] = current_user["id"]
+    brand_dict["topkit_reference"] = await generate_reference("brand")
+    
+    # Apply auto-approval for testing
+    brand_dict = enable_auto_approval_for_testing(brand_dict, current_user["id"])
+    
+    brand = Brand(**brand_dict)
     
     await db.brands.insert_one(brand.dict())
     
