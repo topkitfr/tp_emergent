@@ -420,7 +420,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteItem(item.id)}
+                    onClick={() => handleDeleteItem(item)}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
                   >
                     Remove
