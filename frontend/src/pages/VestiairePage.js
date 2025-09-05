@@ -35,9 +35,25 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     info: '', // Info+ (free text)
     // Keep size for practical collection management
     size: '',
-    // New enhancements requested by user
+    // Printing/Flocking Details
     has_printing: false, // Whether the kit has printing (flocking)
     is_custom_printing: false, // Custom printing checkbox
+    custom_print_text: '', // Custom print text
+    // Physical Condition & Usage
+    is_worn: false, // Whether the kit has been worn
+    is_signed: false, // Whether the kit is signed
+    signed_by: '', // Who signed the kit
+    // Special Attributes
+    is_match_worn: false, // Match worn status
+    match_details: '', // Match details
+    is_authenticated: false, // Authentication status
+    authentication_details: '', // Authentication details
+    // Purchase Details
+    purchase_date: '', // Purchase date
+    purchase_location: '', // Where it was purchased
+    acquisition_story: '', // Story of how it was acquired
+    times_worn: 0, // How many times worn
+    // Marketplace
     for_sale: false // Option to list for sale on marketplace (coming soon)
   });
 
