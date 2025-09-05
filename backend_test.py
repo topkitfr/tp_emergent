@@ -1,882 +1,476 @@
 #!/usr/bin/env python3
 """
-3-Tier Kit Hierarchy Form System Comprehensive Testing
-Testing the complete Kit Hierarchy workflow as specified in the review request:
-1. Master Kit Addition Form (Design Template) - POST /api/master-jerseys or POST /api/master-kits
-2. Release Form Kit (Reference Kit - Commercial Version) - POST /api/reference-kits  
-3. Form Collection Kit (Personal Kit - Personal Collection) - POST /api/personal-kits
-4. Workflow Integration and API Data Consistency
-5. Authentication with admin credentials (topkitfr@gmail.com/TopKitSecure789#)
+TopKit Want List Architecture Testing
+=====================================
+
+Testing the critical architectural fix for want list functionality:
+1. New Data Model: WantedKit model for want list (minimal data)
+2. Separate Collections: personal_kits (owned only) and wanted_kits (wanted only)
+3. New Endpoints: /api/wanted-kits POST/GET for wanted list, /api/personal-kits only for owned
+4. Reference Kit Preservation: Wanted kits remain as Reference Kits with minimal wanted preferences
+5. Two-Way Relationship: Adding to owned should remove from wanted list
+
+Authentication: steinmetzlivio@gmail.com / T0p_Mdp_1288*
 """
 
 import requests
 import json
 import sys
-import base64
 from datetime import datetime
-from typing import Dict, Any, List, Optional
 
 # Configuration
 BACKEND_URL = "https://jersey-archive.preview.emergentagent.com/api"
+TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
+TEST_USER_PASSWORD = "T0p_Mdp_1288*"
 
-# Test credentials
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "TopKitSecure789#"
-
-class KitHierarchyComprehensiveTester:
+class WantListArchitectureTest:
     def __init__(self):
         self.session = requests.Session()
-        self.admin_token = None
-        self.admin_user_id = None
+        self.user_token = None
+        self.user_id = None
         self.test_results = []
-        self.created_master_kit_id = None
-        self.created_reference_kit_id = None
-        self.created_personal_kit_id = None
         
-    def log_result(self, test_name: str, success: bool, message: str, details: Dict = None):
+    def log_test(self, test_name, success, details=""):
         """Log test result"""
-        result = {
-            "test": test_name,
-            "success": success,
-            "message": message,
-            "details": details or {},
-            "timestamp": datetime.now().isoformat()
-        }
-        self.test_results.append(result)
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name} - {message}")
-        if details and len(str(details)) < 500:  # Only print short details
-            print(f"   Details: {json.dumps(details, indent=2)}")
+        self.test_results.append({
+            'test': test_name,
+            'success': success,
+            'details': details
+        })
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        print()
     
-    def authenticate_admin(self) -> bool:
-        """Authenticate admin user"""
+    def authenticate_user(self):
+        """Authenticate test user"""
+        print("🔐 AUTHENTICATING USER...")
         try:
             response = self.session.post(f"{BACKEND_URL}/auth/login", json={
-                "email": ADMIN_EMAIL,
-                "password": ADMIN_PASSWORD
+                "email": TEST_USER_EMAIL,
+                "password": TEST_USER_PASSWORD
             })
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get("token")
-                user_data = data.get("user", {})
-                self.admin_user_id = user_data.get("id")
+                self.user_token = data.get('token')
+                user_data = data.get('user', {})
+                self.user_id = user_data.get('id')
                 
-                # Set authorization header
+                # Set authorization header for future requests
                 self.session.headers.update({
-                    "Authorization": f"Bearer {self.admin_token}"
+                    'Authorization': f'Bearer {self.user_token}'
                 })
                 
-                self.log_result(
-                    "Admin Authentication",
-                    True,
-                    f"Admin authenticated successfully: {user_data.get('name')} ({user_data.get('role')})",
-                    {"user_id": self.admin_user_id, "email": ADMIN_EMAIL}
-                )
+                self.log_test("User Authentication", True, 
+                    f"User: {user_data.get('name')} (ID: {self.user_id})")
                 return True
             else:
-                self.log_result(
-                    "Admin Authentication",
-                    False,
-                    f"Authentication failed: {response.status_code} - {response.text}",
-                    {"status_code": response.status_code}
-                )
+                self.log_test("User Authentication", False, 
+                    f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result(
-                "Admin Authentication",
-                False,
-                f"Authentication error: {str(e)}",
-                {"error": str(e)}
-            )
+            self.log_test("User Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def get_teams_and_brands(self) -> tuple[List[Dict], List[Dict]]:
-        """Get available teams and brands for kit creation"""
+    def get_vestiaire_kits(self):
+        """Get available Reference Kits from vestiaire"""
+        print("🏪 GETTING VESTIAIRE REFERENCE KITS...")
         try:
-            # Get teams
-            teams_response = self.session.get(f"{BACKEND_URL}/teams")
-            brands_response = self.session.get(f"{BACKEND_URL}/brands")
+            response = self.session.get(f"{BACKEND_URL}/vestiaire")
             
-            teams = []
-            brands = []
-            
-            if teams_response.status_code == 200:
-                teams = teams_response.json()
-            
-            if brands_response.status_code == 200:
-                brands = brands_response.json()
-            
-            self.log_result(
-                "Data Foundation Check",
-                len(teams) > 0 and len(brands) > 0,
-                f"Found {len(teams)} teams and {len(brands)} brands available",
-                {"teams_count": len(teams), "brands_count": len(brands)}
-            )
-            
-            return teams, brands
-            
-        except Exception as e:
-            self.log_result(
-                "Data Foundation Check",
-                False,
-                f"Error getting teams/brands: {str(e)}",
-                {"error": str(e)}
-            )
-            return [], []
-    
-    def test_master_kit_creation(self, teams: List[Dict], brands: List[Dict]) -> Optional[str]:
-        """Test 1: Master Kit Addition Form (Design Template)"""
-        try:
-            if not teams or not brands:
-                self.log_result(
-                    "Master Kit Creation - Prerequisites",
-                    False,
-                    "No teams or brands available for Master Kit creation",
-                    {"teams_count": len(teams), "brands_count": len(brands)}
-                )
-                return None
-            
-            # Select first available team and brand
-            team = teams[0]
-            brand = brands[0]
-            
-            # Test both legacy and new endpoints
-            endpoints_to_test = [
-                {"url": f"{BACKEND_URL}/master-jerseys", "name": "Legacy Master Jersey"},
-                {"url": f"{BACKEND_URL}/master-kits", "name": "New Master Kit"}
-            ]
-            
-            for endpoint_info in endpoints_to_test:
-                # Create Master Kit data
-                master_kit_data = {
-                    "team_id": team.get("id"),
-                    "brand_id": brand.get("id"),
-                    "season": "2024-25",
-                    "jersey_type": "home",
-                    "model": "authentic",
-                    "primary_color": "Blue",
-                    "secondary_colors": ["Red", "Yellow"],
-                    "pattern": "Stripes",
-                    "description": f"Test Master Kit created for {team.get('name')} by {brand.get('name')}"
-                }
-                
-                response = self.session.post(endpoint_info["url"], json=master_kit_data)
-                
-                if response.status_code in [200, 201]:
-                    created_kit = response.json()
-                    master_kit_id = created_kit.get("id")
-                    
-                    # Verify required fields are saved
-                    required_fields = ["team_id", "brand_id", "season", "jersey_type"]
-                    missing_fields = [field for field in required_fields if not created_kit.get(field)]
-                    
-                    if missing_fields:
-                        self.log_result(
-                            f"Master Kit Creation - {endpoint_info['name']} Data Integrity",
-                            False,
-                            f"Missing required fields in response: {missing_fields}",
-                            {"missing_fields": missing_fields}
-                        )
-                        continue
-                    
-                    # Verify relationships are properly saved
-                    team_saved = created_kit.get("team_id") == team.get("id")
-                    brand_saved = created_kit.get("brand_id") == brand.get("id")
-                    
-                    if not (team_saved and brand_saved):
-                        self.log_result(
-                            f"Master Kit Creation - {endpoint_info['name']} Relationships",
-                            False,
-                            "Team or Brand relationships not saved properly",
-                            {
-                                "expected_team_id": team.get("id"),
-                                "saved_team_id": created_kit.get("team_id"),
-                                "expected_brand_id": brand.get("id"),
-                                "saved_brand_id": created_kit.get("brand_id")
-                            }
-                        )
-                        continue
-                    
-                    self.log_result(
-                        f"Master Kit Creation - {endpoint_info['name']}",
-                        True,
-                        f"Master Kit created successfully with proper relationships",
-                        {
-                            "master_kit_id": master_kit_id,
-                            "topkit_reference": created_kit.get("topkit_reference"),
-                            "team": team.get("name"),
-                            "brand": brand.get("name"),
-                            "season": created_kit.get("season"),
-                            "jersey_type": created_kit.get("jersey_type")
-                        }
-                    )
-                    
-                    # Store the first successful creation for later tests
-                    if not self.created_master_kit_id:
-                        self.created_master_kit_id = master_kit_id
-                    
-                    return master_kit_id
-                    
-                elif response.status_code == 400 and "existe déjà" in response.text:
-                    # Duplicate - this is acceptable, endpoint is working
-                    self.log_result(
-                        f"Master Kit Creation - {endpoint_info['name']}",
-                        True,
-                        "Master Kit endpoint working (duplicate prevention active)",
-                        {"status": "duplicate_prevention_working"}
-                    )
-                    
-                    # Try to find existing master kit for this team/brand
-                    existing_response = self.session.get(f"{BACKEND_URL}/master-kits?team_id={team.get('id')}")
-                    if existing_response.status_code == 200:
-                        existing_kits = existing_response.json()
-                        if existing_kits:
-                            existing_kit_id = existing_kits[0].get("id")
-                            if not self.created_master_kit_id:
-                                self.created_master_kit_id = existing_kit_id
-                            return existing_kit_id
-                    
+            if response.status_code == 200:
+                kits = response.json()
+                if len(kits) > 0:
+                    self.log_test("Vestiaire Reference Kits Available", True, 
+                        f"Found {len(kits)} Reference Kits available")
+                    return kits
                 else:
-                    self.log_result(
-                        f"Master Kit Creation - {endpoint_info['name']}",
-                        False,
-                        f"Master Kit creation failed: {response.status_code} - {response.text}",
-                        {"status_code": response.status_code, "endpoint": endpoint_info["url"]}
-                    )
-            
-            return None
-            
+                    self.log_test("Vestiaire Reference Kits Available", False, 
+                        "No Reference Kits found in vestiaire")
+                    return []
+            else:
+                self.log_test("Vestiaire Reference Kits Available", False, 
+                    f"HTTP {response.status_code}: {response.text}")
+                return []
+                
         except Exception as e:
-            self.log_result(
-                "Master Kit Creation Test",
-                False,
-                f"Master Kit creation error: {str(e)}",
-                {"error": str(e)}
-            )
-            return None
+            self.log_test("Vestiaire Reference Kits Available", False, f"Exception: {str(e)}")
+            return []
     
-    def test_reference_kit_creation(self, master_kit_id: str) -> Optional[str]:
-        """Test 2: Release Form Kit (Reference Kit - Commercial Version)"""
+    def test_add_to_wanted_minimal_data(self, reference_kit_id):
+        """Test 1: Add to Wanted List with minimal data (should remain Reference Kit)"""
+        print("🎯 TEST 1: ADD TO WANTED LIST - MINIMAL DATA...")
         try:
-            if not master_kit_id:
-                self.log_result(
-                    "Reference Kit Creation - Prerequisites",
-                    False,
-                    "No Master Kit ID available for Reference Kit creation",
-                    {"master_kit_id": master_kit_id}
-                )
-                return None
-            
-            # Get competitions for reference kit
-            competitions_response = self.session.get(f"{BACKEND_URL}/competitions")
-            competitions = []
-            if competitions_response.status_code == 200:
-                competitions = competitions_response.json()
-            
-            if not competitions:
-                self.log_result(
-                    "Reference Kit Creation - Competitions",
-                    False,
-                    "No competitions available for Reference Kit creation",
-                    {"competitions_count": 0}
-                )
-                return None
-            
-            competition = competitions[0]
-            
-            # Create sample image data (base64 encoded 1x1 pixel PNG)
-            sample_image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-            
-            # Create Reference Kit data
-            reference_kit_data = {
-                "master_kit_id": master_kit_id,
-                "competition_id": competition.get("id"),
-                "model": "replica",
-                "main_photo": sample_image_base64,
-                "secondary_photos": [sample_image_base64],
-                "sku_code": f"TEST-REF-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                "barcode": f"123456789{datetime.now().strftime('%H%M%S')}",
-                "original_retail_price": 89.99,
-                "available_sizes": ["S", "M", "L", "XL"],
-                "description": "Test Reference Kit for comprehensive testing"
+            wanted_data = {
+                "reference_kit_id": reference_kit_id,
+                "preferred_size": "L",  # Optional preference
+                "notes": "Looking for authentic version"  # Optional notes
             }
             
-            response = self.session.post(f"{BACKEND_URL}/reference-kits", json=reference_kit_data)
+            response = self.session.post(f"{BACKEND_URL}/wanted-kits", json=wanted_data)
             
-            if response.status_code in [200, 201]:
-                created_kit = response.json()
-                reference_kit_id = created_kit.get("id")
+            if response.status_code == 201:
+                data = response.json()
                 
-                # Verify required fields
-                required_fields = ["master_kit_id", "competition_id", "model", "main_photo"]
-                missing_fields = [field for field in required_fields if not created_kit.get(field)]
+                # Verify minimal data structure
+                required_fields = ['id', 'user_id', 'reference_kit_id', 'added_to_wanted_at']
+                missing_fields = [field for field in required_fields if field not in data]
                 
-                if missing_fields:
-                    self.log_result(
-                        "Reference Kit Creation - Data Integrity",
-                        False,
-                        f"Missing required fields in response: {missing_fields}",
-                        {"missing_fields": missing_fields}
-                    )
-                    return None
-                
-                # Verify Master Kit relationship
-                master_kit_saved = created_kit.get("master_kit_id") == master_kit_id
-                
-                if not master_kit_saved:
-                    self.log_result(
-                        "Reference Kit Creation - Master Kit Relationship",
-                        False,
-                        "Master Kit relationship not saved properly",
-                        {
-                            "expected_master_kit_id": master_kit_id,
-                            "saved_master_kit_id": created_kit.get("master_kit_id")
-                        }
-                    )
-                    return None
-                
-                # Verify photo upload functionality
-                main_photo_saved = bool(created_kit.get("main_photo"))
-                
-                self.log_result(
-                    "Reference Kit Creation",
-                    True,
-                    "Reference Kit created successfully with photo upload and Master Kit relationship",
-                    {
-                        "reference_kit_id": reference_kit_id,
-                        "topkit_reference": created_kit.get("topkit_reference"),
-                        "master_kit_id": master_kit_id,
-                        "competition": competition.get("name"),
-                        "model": created_kit.get("model"),
-                        "main_photo_uploaded": main_photo_saved,
-                        "sku_code": created_kit.get("sku_code")
-                    }
-                )
-                
-                self.created_reference_kit_id = reference_kit_id
-                return reference_kit_id
-                
-            elif response.status_code == 400 and "existe déjà" in response.text:
-                # Duplicate - try to find existing reference kit
-                self.log_result(
-                    "Reference Kit Creation",
-                    True,
-                    "Reference Kit endpoint working (duplicate prevention active)",
-                    {"status": "duplicate_prevention_working"}
-                )
-                
-                # Try to get existing reference kits
-                vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
-                if vestiaire_response.status_code == 200:
-                    vestiaire_kits = vestiaire_response.json()
-                    if vestiaire_kits:
-                        existing_kit_id = vestiaire_kits[0].get("id")
-                        self.created_reference_kit_id = existing_kit_id
-                        return existing_kit_id
-                
-                return "existing_kit"
-                
-            else:
-                self.log_result(
-                    "Reference Kit Creation",
-                    False,
-                    f"Reference Kit creation failed: {response.status_code} - {response.text}",
-                    {"status_code": response.status_code}
-                )
-                return None
-                
-        except Exception as e:
-            self.log_result(
-                "Reference Kit Creation Test",
-                False,
-                f"Reference Kit creation error: {str(e)}",
-                {"error": str(e)}
-            )
-            return None
-    
-    def test_personal_kit_creation(self, reference_kit_id: str) -> Optional[str]:
-        """Test 3: Form Collection Kit (Personal Kit - Personal Collection)"""
-        try:
-            if not reference_kit_id or reference_kit_id == "existing_kit":
-                # Try to get a reference kit from vestiaire
-                vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
-                if vestiaire_response.status_code == 200:
-                    vestiaire_kits = vestiaire_response.json()
-                    if vestiaire_kits:
-                        reference_kit_id = vestiaire_kits[0].get("id")
+                if not missing_fields:
+                    # Verify it's minimal (no PersonalKit fields)
+                    personal_kit_fields = ['size', 'condition', 'purchase_price', 'is_signed', 'has_printing']
+                    found_personal_fields = [field for field in personal_kit_fields if field in data]
+                    
+                    if not found_personal_fields:
+                        self.log_test("Add to Wanted - Minimal Data", True, 
+                            f"WantedKit created with minimal data. ID: {data.get('id')}")
+                        return data.get('id')
                     else:
-                        self.log_result(
-                            "Personal Kit Creation - Prerequisites",
-                            False,
-                            "No Reference Kit available for Personal Kit creation",
-                            {"vestiaire_count": 0}
-                        )
+                        self.log_test("Add to Wanted - Minimal Data", False, 
+                            f"WantedKit contains PersonalKit fields: {found_personal_fields}")
                         return None
                 else:
-                    self.log_result(
-                        "Personal Kit Creation - Prerequisites",
-                        False,
-                        "Cannot access vestiaire to get Reference Kit",
-                        {"vestiaire_status": vestiaire_response.status_code}
-                    )
+                    self.log_test("Add to Wanted - Minimal Data", False, 
+                        f"Missing required fields: {missing_fields}")
                     return None
-            
-            # Test player dropdown functionality
-            players_response = self.session.get(f"{BACKEND_URL}/players")
-            players = []
-            if players_response.status_code == 200:
-                players = players_response.json()
-            
-            # Select player if available, otherwise use custom data
-            selected_player = None
-            player_name = "Lionel Messi"
-            player_number = 10
-            
-            if players:
-                selected_player = players[0]
-                player_name = selected_player.get("name", "Test Player")
-                
-                # Test player numbers functionality
-                if selected_player:
-                    player_numbers_response = self.session.get(f"{BACKEND_URL}/players/{selected_player.get('id')}/numbers")
-                    if player_numbers_response.status_code == 200:
-                        numbers_data = player_numbers_response.json()
-                        if numbers_data and isinstance(numbers_data, list) and numbers_data:
-                            player_number = numbers_data[0]
-            
-            # Create Personal Kit data with comprehensive details
-            personal_kit_data = {
-                "reference_kit_id": reference_kit_id,
-                "collection_type": "owned",
-                "price_buy": 120.00,  # Price paid
-                "price_value": 150.00,  # Estimated value
-                "player_name": player_name,
-                "player_number": player_number,
-                "state": "excellent",  # Condition
-                "info_plus": "Authentic jersey with original tags, purchased from official store",
-                "size": "L",
-                # Additional personal details
-                "purchase_date": "2024-01-15T00:00:00Z",
-                "purchase_location": "Official Store",
-                "is_signed": True,
-                "signed_by": player_name,
-                "has_printing": True,
-                "printed_name": player_name.upper(),
-                "printed_number": player_number,
-                "is_worn": False,
-                "personal_notes": "Perfect condition, dream addition to collection"
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
-            
-            if response.status_code in [200, 201]:
-                created_kit = response.json()
-                personal_kit_id = created_kit.get("id")
-                
-                # Verify required fields
-                required_fields = ["reference_kit_id", "collection_type", "size", "state"]
-                missing_fields = [field for field in required_fields if field not in created_kit]
-                
-                # Verify personal details are saved
-                personal_details_check = {
-                    "price_buy_saved": created_kit.get("price_buy") or created_kit.get("purchase_price"),
-                    "price_value_saved": created_kit.get("price_value"),
-                    "player_name_saved": created_kit.get("player_name") == player_name,
-                    "player_number_saved": created_kit.get("player_number") == player_number,
-                    "size_saved": created_kit.get("size") == "L",
-                    "condition_saved": created_kit.get("state") == "excellent" or created_kit.get("condition") == "excellent"
-                }
-                
-                # Verify data enrichment (Reference Kit, Master Kit, Team, Brand info)
-                enrichment_check = {
-                    "has_reference_kit_info": bool(created_kit.get("reference_kit_info")),
-                    "has_master_kit_info": bool(created_kit.get("master_kit_info")),
-                    "has_team_info": bool(created_kit.get("team_info")),
-                    "has_brand_info": bool(created_kit.get("brand_info"))
-                }
-                
-                personal_details_ok = sum(personal_details_check.values()) >= 4  # Allow some flexibility
-                enrichment_ok = sum(enrichment_check.values()) >= 3  # Require most enrichment
-                
-                success = len(missing_fields) == 0 and personal_details_ok and enrichment_ok
-                
-                self.log_result(
-                    "Personal Kit Creation",
-                    success,
-                    "Personal Kit created with comprehensive details and data enrichment",
-                    {
-                        "personal_kit_id": personal_kit_id,
-                        "reference_kit_id": reference_kit_id,
-                        "player_info": {"name": player_name, "number": player_number},
-                        "personal_details_verified": personal_details_ok,
-                        "data_enrichment_verified": enrichment_ok,
-                        "missing_required_fields": missing_fields
-                    }
-                )
-                
-                if success:
-                    self.created_personal_kit_id = personal_kit_id
-                    return personal_kit_id
-                else:
-                    return None
-                
-            elif response.status_code == 400 and "already in" in response.text:
-                # Kit already exists - this is acceptable
-                self.log_result(
-                    "Personal Kit Creation",
-                    True,
-                    "Personal Kit endpoint working (duplicate prevention active)",
-                    {"status": "duplicate_prevention_working", "reference_kit_id": reference_kit_id}
-                )
-                return "existing_kit"
-                
             else:
-                self.log_result(
-                    "Personal Kit Creation",
-                    False,
-                    f"Personal Kit creation failed: {response.status_code} - {response.text}",
-                    {"status_code": response.status_code}
-                )
+                self.log_test("Add to Wanted - Minimal Data", False, 
+                    f"HTTP {response.status_code}: {response.text}")
                 return None
                 
         except Exception as e:
-            self.log_result(
-                "Personal Kit Creation Test",
-                False,
-                f"Personal Kit creation error: {str(e)}",
-                {"error": str(e)}
-            )
+            self.log_test("Add to Wanted - Minimal Data", False, f"Exception: {str(e)}")
             return None
     
-    def test_workflow_integration(self) -> bool:
-        """Test 4: Workflow Integration - Master Kit → Reference Kit → Personal Kit"""
+    def test_verify_reference_kit_status(self, reference_kit_id):
+        """Test 2: Verify wanted kit remains as Reference Kit (no conversion to PersonalKit)"""
+        print("🔍 TEST 2: VERIFY REFERENCE KIT STATUS...")
         try:
-            # Verify the complete data flow and relationships
+            # Get wanted kits
+            response = self.session.get(f"{BACKEND_URL}/wanted-kits")
             
-            # Step 1: Verify Master Kit exists and has proper data
-            if not self.created_master_kit_id:
-                self.log_result(
-                    "Workflow Integration - Master Kit Check",
-                    False,
-                    "No Master Kit created in previous tests",
-                    {"master_kit_id": self.created_master_kit_id}
-                )
-                return False
-            
-            # Step 2: Verify Reference Kit links to Master Kit
-            vestiaire_response = self.session.get(f"{BACKEND_URL}/vestiaire")
-            if vestiaire_response.status_code != 200:
-                self.log_result(
-                    "Workflow Integration - Vestiaire Access",
-                    False,
-                    f"Cannot access vestiaire: {vestiaire_response.status_code}",
-                    {"status_code": vestiaire_response.status_code}
-                )
-                return False
-            
-            vestiaire_kits = vestiaire_response.json()
-            if not vestiaire_kits:
-                self.log_result(
-                    "Workflow Integration - Reference Kits Available",
-                    False,
-                    "No Reference Kits available in vestiaire",
-                    {"vestiaire_count": 0}
-                )
-                return False
-            
-            # Find a reference kit that links to our master kit or any master kit
-            reference_kit_with_master = None
-            for kit in vestiaire_kits:
-                if kit.get("master_kit_info") and kit.get("team_info") and kit.get("brand_info"):
-                    reference_kit_with_master = kit
-                    break
-            
-            if not reference_kit_with_master:
-                self.log_result(
-                    "Workflow Integration - Master Kit Linkage",
-                    False,
-                    "No Reference Kit found with proper Master Kit linkage",
-                    {"vestiaire_kits_checked": len(vestiaire_kits)}
-                )
-                return False
-            
-            # Step 3: Verify Personal Kit links to Reference Kit and Master Kit
-            personal_kits_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            if personal_kits_response.status_code != 200:
-                self.log_result(
-                    "Workflow Integration - Personal Kits Access",
-                    False,
-                    f"Cannot access personal kits: {personal_kits_response.status_code}",
-                    {"status_code": personal_kits_response.status_code}
-                )
-                return False
-            
-            personal_kits = personal_kits_response.json()
-            
-            # Check if we have personal kits with full hierarchy
-            personal_kit_with_hierarchy = None
-            for kit in personal_kits:
-                if (kit.get("reference_kit_info") and 
-                    kit.get("master_kit_info") and 
-                    kit.get("team_info") and 
-                    kit.get("brand_info")):
-                    personal_kit_with_hierarchy = kit
-                    break
-            
-            # Step 4: Verify data integrity across the hierarchy
-            hierarchy_verified = False
-            
-            if personal_kit_with_hierarchy:
-                # Full hierarchy verification
-                master_info = personal_kit_with_hierarchy.get("master_kit_info", {})
-                reference_info = personal_kit_with_hierarchy.get("reference_kit_info", {})
-                team_info = personal_kit_with_hierarchy.get("team_info", {})
-                brand_info = personal_kit_with_hierarchy.get("brand_info", {})
+            if response.status_code == 200:
+                wanted_kits = response.json()
                 
-                hierarchy_verified = all([
-                    bool(master_info),
-                    bool(reference_info),
-                    bool(team_info),
-                    bool(brand_info)
-                ])
+                # Find our kit in wanted list
+                target_kit = None
+                for kit in wanted_kits:
+                    if kit.get('reference_kit_id') == reference_kit_id:
+                        target_kit = kit
+                        break
                 
-                self.log_result(
-                    "Workflow Integration",
-                    hierarchy_verified,
-                    "Complete 3-tier hierarchy verified with data integrity",
-                    {
-                        "hierarchy_levels": {
-                            "master_kit": bool(master_info),
-                            "reference_kit": bool(reference_info),
-                            "team_info": bool(team_info),
-                            "brand_info": bool(brand_info)
-                        },
-                        "data_flow": "Master Kit → Reference Kit → Personal Kit",
-                        "personal_kit_id": personal_kit_with_hierarchy.get("id")
-                    }
-                )
-            else:
-                # Partial verification - at least Reference Kit → Master Kit works
-                master_info = reference_kit_with_master.get("master_kit_info", {})
-                team_info = reference_kit_with_master.get("team_info", {})
-                brand_info = reference_kit_with_master.get("brand_info", {})
-                
-                partial_hierarchy = all([bool(master_info), bool(team_info), bool(brand_info)])
-                
-                self.log_result(
-                    "Workflow Integration",
-                    partial_hierarchy,
-                    "Partial hierarchy verified: Master Kit → Reference Kit (no Personal Kits to test full chain)",
-                    {
-                        "hierarchy_levels": {
-                            "master_kit_to_reference": bool(master_info),
-                            "team_info": bool(team_info),
-                            "brand_info": bool(brand_info)
-                        },
-                        "data_flow": "Master Kit → Reference Kit",
-                        "reference_kit_id": reference_kit_with_master.get("id")
-                    }
-                )
-                hierarchy_verified = partial_hierarchy
-            
-            return hierarchy_verified
-            
-        except Exception as e:
-            self.log_result(
-                "Workflow Integration Test",
-                False,
-                f"Workflow integration error: {str(e)}",
-                {"error": str(e)}
-            )
-            return False
-    
-    def test_api_data_consistency(self) -> bool:
-        """Test 5: API Data Consistency and Error Handling"""
-        try:
-            # Test all required endpoints exist and respond correctly
-            endpoints_to_test = [
-                {"url": f"{BACKEND_URL}/teams", "name": "Teams Endpoint"},
-                {"url": f"{BACKEND_URL}/brands", "name": "Brands Endpoint"},
-                {"url": f"{BACKEND_URL}/competitions", "name": "Competitions Endpoint"},
-                {"url": f"{BACKEND_URL}/players", "name": "Players Endpoint"},
-                {"url": f"{BACKEND_URL}/vestiaire", "name": "Vestiaire Endpoint"},
-                {"url": f"{BACKEND_URL}/master-kits", "name": "Master Kits Endpoint"},
-                {"url": f"{BACKEND_URL}/reference-kits", "name": "Reference Kits Endpoint"},
-                {"url": f"{BACKEND_URL}/personal-kits?collection_type=owned", "name": "Personal Kits Owned"},
-                {"url": f"{BACKEND_URL}/personal-kits?collection_type=wanted", "name": "Personal Kits Wanted"}
-            ]
-            
-            endpoint_results = {}
-            
-            for endpoint in endpoints_to_test:
-                try:
-                    response = self.session.get(endpoint["url"])
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        endpoint_results[endpoint["name"]] = {
-                            "status": "success",
-                            "status_code": 200,
-                            "data_type": type(data).__name__,
-                            "count": len(data) if isinstance(data, list) else 1
-                        }
-                    else:
-                        endpoint_results[endpoint["name"]] = {
-                            "status": "error",
-                            "status_code": response.status_code,
-                            "error": response.text[:100]
-                        }
+                if target_kit:
+                    # Verify it's still a Reference Kit (has reference_kit_info)
+                    if 'reference_kit_info' in target_kit:
+                        # Verify no PersonalKit conversion
+                        personal_fields = ['size', 'condition', 'purchase_price', 'is_signed']
+                        found_personal = [f for f in personal_fields if f in target_kit and target_kit[f] is not None]
                         
-                except Exception as e:
-                    endpoint_results[endpoint["name"]] = {
-                        "status": "exception",
-                        "error": str(e)[:100]
-                    }
-            
-            # Count successful endpoints
-            successful_endpoints = sum(1 for result in endpoint_results.values() if result.get("status") == "success")
-            total_endpoints = len(endpoints_to_test)
-            
-            # Test error handling with invalid data
-            error_handling_tests = []
-            
-            # Test invalid Master Kit creation
-            try:
-                invalid_master_response = self.session.post(f"{BACKEND_URL}/master-kits", json={
-                    "team_id": "invalid_id",
-                    "brand_id": "invalid_id"
-                })
-                error_handling_tests.append({
-                    "test": "Invalid Master Kit",
-                    "expected_error": True,
-                    "got_error": invalid_master_response.status_code >= 400,
-                    "status_code": invalid_master_response.status_code
-                })
-            except:
-                pass
-            
-            # Test invalid Reference Kit creation
-            try:
-                invalid_reference_response = self.session.post(f"{BACKEND_URL}/reference-kits", json={
-                    "master_kit_id": "invalid_id"
-                })
-                error_handling_tests.append({
-                    "test": "Invalid Reference Kit",
-                    "expected_error": True,
-                    "got_error": invalid_reference_response.status_code >= 400,
-                    "status_code": invalid_reference_response.status_code
-                })
-            except:
-                pass
-            
-            # Calculate success rate
-            success_rate = (successful_endpoints / total_endpoints) * 100
-            error_handling_ok = all(test.get("got_error", False) for test in error_handling_tests)
-            
-            overall_success = success_rate >= 80 and error_handling_ok
-            
-            self.log_result(
-                "API Data Consistency",
-                overall_success,
-                f"API consistency check: {successful_endpoints}/{total_endpoints} endpoints working ({success_rate:.1f}%)",
-                {
-                    "endpoint_results": endpoint_results,
-                    "error_handling_tests": error_handling_tests,
-                    "success_rate": success_rate,
-                    "error_handling_working": error_handling_ok
-                }
-            )
-            
-            return overall_success
-            
+                        if not found_personal:
+                            self.log_test("Reference Kit Status Preserved", True, 
+                                f"Kit remains as Reference Kit with enriched data")
+                            return True
+                        else:
+                            self.log_test("Reference Kit Status Preserved", False, 
+                                f"Kit converted to PersonalKit with fields: {found_personal}")
+                            return False
+                    else:
+                        self.log_test("Reference Kit Status Preserved", False, 
+                            "Missing reference_kit_info enrichment")
+                        return False
+                else:
+                    self.log_test("Reference Kit Status Preserved", False, 
+                        "Kit not found in wanted list")
+                    return False
+            else:
+                self.log_test("Reference Kit Status Preserved", False, 
+                    f"HTTP {response.status_code}: {response.text}")
+                return False
+                
         except Exception as e:
-            self.log_result(
-                "API Data Consistency Test",
-                False,
-                f"API consistency test error: {str(e)}",
-                {"error": str(e)}
-            )
+            self.log_test("Reference Kit Status Preserved", False, f"Exception: {str(e)}")
             return False
     
-    def run_comprehensive_tests(self) -> Dict[str, Any]:
-        """Run all comprehensive Kit Hierarchy tests"""
-        print("🧪 Starting 3-Tier Kit Hierarchy Comprehensive Testing...")
-        print("=" * 70)
+    def test_add_to_owned_detailed(self, reference_kit_id):
+        """Test 3: Add to Owned Collection with detailed PersonalKit data"""
+        print("📦 TEST 3: ADD TO OWNED COLLECTION - DETAILED DATA...")
+        try:
+            owned_data = {
+                "reference_kit_id": reference_kit_id,
+                "size": "L",
+                "condition": "excellent",
+                "purchase_price": 89.99,
+                "purchase_location": "Official Nike Store",
+                "is_signed": False,
+                "has_printing": True,
+                "printed_name": "MESSI",
+                "printed_number": 10,
+                "personal_notes": "Bought for collection, never worn"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=owned_data)
+            
+            if response.status_code == 201:
+                data = response.json()
+                
+                # Verify detailed PersonalKit fields
+                required_fields = ['id', 'user_id', 'reference_kit_id', 'size', 'condition']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    # Verify enriched data
+                    enriched_fields = ['reference_kit_info', 'master_kit_info', 'team_info', 'brand_info']
+                    found_enriched = [field for field in enriched_fields if field in data]
+                    
+                    if len(found_enriched) >= 2:  # At least reference_kit_info and one other
+                        self.log_test("Add to Owned - Detailed Data", True, 
+                            f"PersonalKit created with detailed data and enrichment. ID: {data.get('id')}")
+                        return data.get('id')
+                    else:
+                        self.log_test("Add to Owned - Detailed Data", False, 
+                            f"Missing enriched data. Found: {found_enriched}")
+                        return None
+                else:
+                    self.log_test("Add to Owned - Detailed Data", False, 
+                        f"Missing required fields: {missing_fields}")
+                    return None
+            else:
+                self.log_test("Add to Owned - Detailed Data", False, 
+                    f"HTTP {response.status_code}: {response.text}")
+                return None
+                
+        except Exception as e:
+            self.log_test("Add to Owned - Detailed Data", False, f"Exception: {str(e)}")
+            return None
+    
+    def test_two_way_relationship(self, reference_kit_id):
+        """Test 4: Verify two-way relationship (adding to owned removes from wanted)"""
+        print("🔄 TEST 4: TWO-WAY RELATIONSHIP LOGIC...")
+        try:
+            # Check wanted list - should be empty or not contain our kit
+            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            
+            if wanted_response.status_code == 200:
+                wanted_kits = wanted_response.json()
+                
+                # Check if kit is still in wanted list
+                kit_in_wanted = any(kit.get('reference_kit_id') == reference_kit_id for kit in wanted_kits)
+                
+                if not kit_in_wanted:
+                    # Check owned list - should contain our kit
+                    owned_response = self.session.get(f"{BACKEND_URL}/personal-kits")
+                    
+                    if owned_response.status_code == 200:
+                        owned_kits = owned_response.json()
+                        
+                        kit_in_owned = any(kit.get('reference_kit_id') == reference_kit_id for kit in owned_kits)
+                        
+                        if kit_in_owned:
+                            self.log_test("Two-Way Relationship Logic", True, 
+                                "Kit automatically removed from wanted when added to owned")
+                            return True
+                        else:
+                            self.log_test("Two-Way Relationship Logic", False, 
+                                "Kit not found in owned collection")
+                            return False
+                    else:
+                        self.log_test("Two-Way Relationship Logic", False, 
+                            f"Error getting owned collection: HTTP {owned_response.status_code}")
+                        return False
+                else:
+                    self.log_test("Two-Way Relationship Logic", False, 
+                        "Kit still in wanted list after adding to owned")
+                    return False
+            else:
+                self.log_test("Two-Way Relationship Logic", False, 
+                    f"Error getting wanted list: HTTP {wanted_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Two-Way Relationship Logic", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_separate_retrieval(self):
+        """Test 5: Test separate retrieval of wanted vs owned collections"""
+        print("📊 TEST 5: SEPARATE COLLECTION RETRIEVAL...")
+        try:
+            # Get wanted kits
+            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits")
+            
+            if wanted_response.status_code == 200 and owned_response.status_code == 200:
+                wanted_kits = wanted_response.json()
+                owned_kits = owned_response.json()
+                
+                # Verify different data structures
+                wanted_success = True
+                owned_success = True
+                
+                # Check wanted kits have minimal structure
+                if wanted_kits:
+                    sample_wanted = wanted_kits[0]
+                    personal_fields = ['size', 'condition', 'purchase_price']
+                    found_personal = [f for f in personal_fields if f in sample_wanted and sample_wanted[f] is not None]
+                    if found_personal:
+                        wanted_success = False
+                
+                # Check owned kits have detailed structure
+                if owned_kits:
+                    sample_owned = owned_kits[0]
+                    required_personal = ['size', 'condition']
+                    missing_personal = [f for f in required_personal if f not in sample_owned]
+                    if missing_personal:
+                        owned_success = False
+                
+                if wanted_success and owned_success:
+                    self.log_test("Separate Collection Retrieval", True, 
+                        f"Wanted: {len(wanted_kits)} kits (minimal), Owned: {len(owned_kits)} kits (detailed)")
+                    return True
+                else:
+                    issues = []
+                    if not wanted_success:
+                        issues.append("Wanted kits have PersonalKit fields")
+                    if not owned_success:
+                        issues.append("Owned kits missing PersonalKit fields")
+                    
+                    self.log_test("Separate Collection Retrieval", False, 
+                        f"Issues: {', '.join(issues)}")
+                    return False
+            else:
+                self.log_test("Separate Collection Retrieval", False, 
+                    f"API errors - Wanted: {wanted_response.status_code}, Owned: {owned_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Separate Collection Retrieval", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_endpoint_separation(self):
+        """Test 6: Verify endpoint separation (/api/wanted-kits vs /api/personal-kits)"""
+        print("🔗 TEST 6: ENDPOINT SEPARATION VERIFICATION...")
+        try:
+            # Test wanted-kits endpoint
+            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            
+            # Test personal-kits endpoint  
+            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits")
+            
+            if wanted_response.status_code == 200 and owned_response.status_code == 200:
+                # Verify they return different data structures
+                wanted_data = wanted_response.json()
+                owned_data = owned_response.json()
+                
+                # Check response headers for different endpoints
+                wanted_url = wanted_response.url
+                owned_url = owned_response.url
+                
+                if "wanted-kits" in wanted_url and "personal-kits" in owned_url:
+                    self.log_test("Endpoint Separation", True, 
+                        "Separate endpoints working correctly")
+                    return True
+                else:
+                    self.log_test("Endpoint Separation", False, 
+                        f"URL mismatch - Wanted: {wanted_url}, Owned: {owned_url}")
+                    return False
+            else:
+                self.log_test("Endpoint Separation", False, 
+                    f"Endpoint errors - Wanted: {wanted_response.status_code}, Owned: {owned_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Endpoint Separation", False, f"Exception: {str(e)}")
+            return False
+    
+    def run_comprehensive_test(self):
+        """Run comprehensive want list architecture test"""
+        print("🚀 STARTING WANT LIST ARCHITECTURE TESTING...")
+        print("=" * 60)
         
         # Step 1: Authentication
-        if not self.authenticate_admin():
-            return {"success": False, "message": "Authentication failed", "results": self.test_results}
+        if not self.authenticate_user():
+            print("❌ Authentication failed. Cannot proceed with testing.")
+            return False
         
-        # Step 2: Get foundation data
-        teams, brands = self.get_teams_and_brands()
+        # Step 2: Get available Reference Kits
+        available_kits = self.get_vestiaire_kits()
+        if not available_kits:
+            print("❌ No Reference Kits available. Cannot proceed with testing.")
+            return False
         
-        # Step 3: Test Master Kit Creation (Design Template)
-        master_kit_id = self.test_master_kit_creation(teams, brands)
+        # Use first available kit for testing
+        test_kit = available_kits[0]
+        reference_kit_id = test_kit.get('id')
+        kit_name = f"{test_kit.get('team_info', {}).get('name', 'Unknown')} {test_kit.get('master_kit_info', {}).get('season', 'Unknown')}"
         
-        # Step 4: Test Reference Kit Creation (Commercial Version)
-        reference_kit_id = self.test_reference_kit_creation(master_kit_id)
+        print(f"🎯 Testing with Reference Kit: {kit_name} (ID: {reference_kit_id})")
+        print()
         
-        # Step 5: Test Personal Kit Creation (Personal Collection)
-        personal_kit_id = self.test_personal_kit_creation(reference_kit_id)
+        # Step 3: Test Add to Wanted (minimal data)
+        wanted_kit_id = self.test_add_to_wanted_minimal_data(reference_kit_id)
+        if not wanted_kit_id:
+            print("❌ Add to Wanted failed. Cannot proceed with remaining tests.")
+            return False
         
-        # Step 6: Test Workflow Integration
-        workflow_success = self.test_workflow_integration()
+        # Step 4: Verify Reference Kit status
+        if not self.test_verify_reference_kit_status(reference_kit_id):
+            print("⚠️ Reference Kit status verification failed.")
         
-        # Step 7: Test API Data Consistency
-        api_consistency = self.test_api_data_consistency()
+        # Step 5: Test Add to Owned (detailed data)
+        owned_kit_id = self.test_add_to_owned_detailed(reference_kit_id)
+        if not owned_kit_id:
+            print("❌ Add to Owned failed. Cannot test two-way relationship.")
+        else:
+            # Step 6: Test Two-Way Relationship
+            self.test_two_way_relationship(reference_kit_id)
         
-        # Calculate overall success
-        test_successes = [
-            bool(master_kit_id),
-            bool(reference_kit_id),
-            bool(personal_kit_id),
-            workflow_success,
-            api_consistency
-        ]
+        # Step 7: Test Separate Retrieval
+        self.test_separate_retrieval()
         
-        overall_success = sum(test_successes) >= 4  # Allow one failure
-        success_rate = (sum(test_successes) / len(test_successes)) * 100
+        # Step 8: Test Endpoint Separation
+        self.test_endpoint_separation()
         
-        print("\n" + "=" * 70)
-        print(f"🏁 3-Tier Kit Hierarchy Comprehensive Testing Complete")
-        print(f"📊 Success Rate: {success_rate:.1f}% ({sum(test_successes)}/{len(test_successes)} tests passed)")
+        # Summary
+        print("=" * 60)
+        print("📊 TEST SUMMARY:")
+        print("=" * 60)
         
-        return {
-            "success": overall_success,
-            "success_rate": success_rate,
-            "tests_passed": sum(test_successes),
-            "total_tests": len(test_successes),
-            "message": f"3-tier Kit Hierarchy testing completed with {success_rate:.1f}% success rate",
-            "results": self.test_results,
-            "created_entities": {
-                "master_kit_id": self.created_master_kit_id,
-                "reference_kit_id": self.created_reference_kit_id,
-                "personal_kit_id": self.created_personal_kit_id
-            }
-        }
+        passed_tests = sum(1 for result in self.test_results if result['success'])
+        total_tests = len(self.test_results)
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        for result in self.test_results:
+            status = "✅ PASS" if result['success'] else "❌ FAIL"
+            print(f"{status}: {result['test']}")
+        
+        print()
+        print(f"🎯 OVERALL SUCCESS RATE: {success_rate:.1f}% ({passed_tests}/{total_tests} tests passed)")
+        
+        if success_rate >= 80:
+            print("🎉 WANT LIST ARCHITECTURE IS WORKING EXCELLENTLY!")
+            return True
+        elif success_rate >= 60:
+            print("⚠️ WANT LIST ARCHITECTURE HAS MINOR ISSUES")
+            return False
+        else:
+            print("❌ WANT LIST ARCHITECTURE HAS MAJOR ISSUES")
+            return False
 
 def main():
     """Main test execution"""
-    tester = KitHierarchyComprehensiveTester()
-    results = tester.run_comprehensive_tests()
+    print("TopKit Want List Architecture Testing")
+    print("====================================")
+    print()
     
-    # Print summary
-    print(f"\n📋 COMPREHENSIVE TEST SUMMARY:")
-    print(f"Overall Success: {'✅ PASS' if results['success'] else '❌ FAIL'}")
-    print(f"Success Rate: {results['success_rate']:.1f}%")
-    print(f"Tests Passed: {results['tests_passed']}/{results['total_tests']}")
+    tester = WantListArchitectureTest()
+    success = tester.run_comprehensive_test()
     
-    if results.get("created_entities"):
-        entities = results["created_entities"]
-        print(f"\n🔗 Created Entities:")
-        print(f"Master Kit ID: {entities.get('master_kit_id', 'None')}")
-        print(f"Reference Kit ID: {entities.get('reference_kit_id', 'None')}")
-        print(f"Personal Kit ID: {entities.get('personal_kit_id', 'None')}")
-    
-    # Return appropriate exit code
-    sys.exit(0 if results['success'] else 1)
+    if success:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
