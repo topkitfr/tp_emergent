@@ -1352,23 +1352,6 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   )}
                 </div>
 
-                {/* Size (kept for practical collection management) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
-                  <select
-                    value={personalDetails.size}
-                    onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select size</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
-                </div>
 
                 {/* Info+ (free text) */}
                 <div>
