@@ -404,19 +404,28 @@ class WantListArchitectureTest:
             if owned_response.status_code == 200:
                 owned_kits = owned_response.json()
                 owned_kit_ids = [kit.get('reference_kit_id') for kit in owned_kits]
+                print(f"   Found {len(owned_kits)} kits in owned collection")
             
             if wanted_response.status_code == 200:
                 wanted_kits = wanted_response.json()
                 wanted_kit_ids = [kit.get('reference_kit_id') for kit in wanted_kits]
+                print(f"   Found {len(wanted_kits)} kits in wanted collection")
             
             # Find a kit not in either collection
             for kit in available_kits:
                 kit_id = kit.get('id')
                 if kit_id not in owned_kit_ids and kit_id not in wanted_kit_ids:
+                    print(f"   Found available kit: {kit.get('team_info', {}).get('name', 'Unknown')}")
                     return kit
             
-            # If all kits are in collections, use the first one and clean it up
+            # If all kits are in collections, try to use the second kit if available
+            if len(available_kits) > 1:
+                print(f"   Using second available kit as fallback")
+                return available_kits[1]
+            
+            # Last resort: use first kit and we'll handle the error
             if available_kits:
+                print(f"   Using first kit as last resort")
                 return available_kits[0]
             
             return None
