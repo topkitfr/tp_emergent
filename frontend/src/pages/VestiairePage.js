@@ -34,7 +34,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     condition: 'good', // State (condition)
     info: '', // Info+ (free text)
     // Keep size for practical collection management
-    size: ''
+    size: '',
+    // New enhancements requested by user
+    has_printing: false, // Whether the kit has printing (flocking)
+    is_custom_printing: false, // Custom printing checkbox
+    for_sale: false // Option to list for sale on marketplace (coming soon)
   });
 
   const addToCollection = async (referenceKitId, collectionType) => {
