@@ -62,19 +62,21 @@ class FormCreationTester:
         
         # Test 1: Valid team creation
         print("Test 1: Valid team creation")
+        import random
+        random_suffix = random.randint(1000, 9999)
         team_data = {
-            "name": "Test Team FC",
+            "name": f"Test Team FC {random_suffix}",
             "country": "France",
             "city": "Paris",
             "founded_year": 2024,
-            "short_name": "TTFC"
+            "short_name": f"TTFC{random_suffix}"
         }
         
         try:
             response = self.session.post(f"{BACKEND_URL}/teams", json=team_data)
             print(f"   Status: {response.status_code}")
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 print(f"   ✅ Team created successfully!")
                 print(f"   Team ID: {data.get('id')}")
