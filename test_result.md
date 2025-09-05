@@ -69,11 +69,14 @@ backend:
     file: "components/ContributionDetailModal.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "Enhanced modal component with comprehensive before/after comparisons, field-level voting, image galleries, and contributor analytics. Already exists and enhanced with detailed view capabilities."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ COMPREHENSIVE FORM COMPARISON TESTING COMPLETE - CRITICAL ISSUE IDENTIFIED! Extensive testing of creation vs edit forms across all entity types reveals MAJOR INCONSISTENCY: ✅ CREATION FORMS WORKING PERFECTLY (100%): Teams (11 fields: Team Name*, Short Name, Country*, City, Founded Year, Team Colors with +/- functionality), Brands (9 fields: Nom de la marque*, Nom officiel, Pays, Année de fondation, Site web, Noms alternatifs with +/- functionality), Players (10 fields: Player Name*, Nom complet, Nationalité, Position dropdown, Date de naissance, Noms alternatifs), Competitions (12 fields: Nom de la ligue*, Nom officiel, Type de ligue* dropdown, Pays, Niveau, Noms alternatifs), Master Jerseys (7 fields: Équipe*, Marque*, Saison*, Type*, Modèle*, Couleurs*, Pattern) ❌ CRITICAL TEAMS EDIT FORM BUG: Teams 'Améliorer cette fiche' form shows JavaScript error '(formData[field.key] || []).map is not a function' and displays 0 fields instead of expected 11 fields, complete form failure preventing any team profile improvements ✅ OTHER EDIT FORMS WORKING: Brands edit form displays correctly with all expected fields (Nom de la marque*, Nom officiel, Pays, Année de fondation, Site web, Noms alternatifs with +/- functionality) and proper 'Contribution Details' section. CONCLUSION: Teams edit form has critical JavaScript error preventing functionality, while other entity edit forms work correctly and match their creation counterparts. Teams form requires immediate bug fix for array field handling."
         
   - task: "ContributionDetailPage"
     implemented: true
