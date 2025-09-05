@@ -11900,11 +11900,11 @@ async def update_personal_kit(
         raise HTTPException(status_code=500, detail="Error updating personal kit")
 
 @api_router.delete("/personal-kits/{kit_id}")
-async def remove_kit_from_collection(
+async def remove_kit_from_owned_collection(
     kit_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Remove kit from user's collection (only owner can remove)"""
+    """Remove kit from user's OWNED collection (only owner can remove)"""
     try:
         user_id = current_user['id']
         
@@ -11917,13 +11917,39 @@ async def remove_kit_from_collection(
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Personal kit not found or not owned by you")
         
-        return {"message": "Kit removed from collection successfully"}
+        return {"message": "Kit removed from owned collection successfully"}
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Personal kit removal error: {e}")
-        raise HTTPException(status_code=500, detail="Error removing kit from collection")
+        raise HTTPException(status_code=500, detail="Error removing kit from owned collection")
+
+@api_router.delete("/wanted-kits/{kit_id}")
+async def remove_kit_from_wanted_list(
+    kit_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove kit from user's WANTED list (only owner can remove)"""
+    try:
+        user_id = current_user['id']
+        
+        # Verify ownership and delete
+        result = await db.wanted_kits.delete_one({
+            "id": kit_id,
+            "user_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Wanted kit not found or not owned by you")
+        
+        return {"message": "Kit removed from wanted list successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Wanted kit removal error: {e}")
+        raise HTTPException(status_code=500, detail="Error removing kit from wanted list")
 
 # Helper function for enriched personal kit data
 async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
