@@ -204,7 +204,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
     return fieldNames[field] || field;
   };
 
-  const getFieldsForEntityType = () => {
+  const getFieldsForEntityType = (entityType) => {
     switch (entityType) {
       case 'team':
         return [
