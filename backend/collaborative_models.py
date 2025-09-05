@@ -315,7 +315,7 @@ class PersonalKit(BaseModel):
     acquisition_story: Optional[str] = None
     
     # Collection Status - REMOVED collection_type, PersonalKit is ONLY for owned items
-    is_for_sale: bool = False
+    for_sale: bool = False
     asking_price: Optional[float] = None
     
     # Metadata
