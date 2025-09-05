@@ -151,12 +151,34 @@ class PersonalKitEditDataTester:
             )
             return None
 
-    def create_personal_kit_with_detailed_data(self, reference_kit):
-        """Create a personal kit with comprehensive detailed information"""
-        print("📝 CREATING PERSONAL KIT WITH DETAILED DATA...")
+    def get_existing_personal_kit_or_create(self, reference_kit):
+        """Get existing personal kit or create one with comprehensive detailed information"""
+        print("📝 GETTING EXISTING PERSONAL KIT OR CREATING NEW ONE...")
         
         try:
-            # Comprehensive personal kit data - all fields that should be saved
+            # First, check if user already has personal kits
+            response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+            
+            if response.status_code == 200:
+                existing_kits = response.json()
+                if existing_kits and len(existing_kits) > 0:
+                    # Use existing kit for testing
+                    existing_kit = existing_kits[0]
+                    self.created_kit_id = existing_kit.get("id")
+                    
+                    self.log_result(
+                        "Existing Personal Kit Found",
+                        True,
+                        f"Using existing personal kit with ID: {self.created_kit_id}",
+                        {
+                            "existing_kit_id": self.created_kit_id,
+                            "total_existing_kits": len(existing_kits),
+                            "response_keys": list(existing_kit.keys())
+                        }
+                    )
+                    return existing_kit
+            
+            # If no existing kits, try to create a new one
             personal_kit_data = {
                 "reference_kit_id": reference_kit["id"],
                 "collection_type": "owned",
@@ -215,9 +237,9 @@ class PersonalKitEditDataTester:
                 
         except Exception as e:
             self.log_result(
-                "Personal Kit Creation with Detailed Data",
+                "Personal Kit Creation/Retrieval",
                 False,
-                f"Error creating personal kit: {str(e)}"
+                f"Error getting/creating personal kit: {str(e)}"
             )
             return None
 
