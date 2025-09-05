@@ -140,11 +140,28 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       
       const personalKitData = {
         reference_kit_id: selectedReferenceKit.id,
-        collection_type: selectedCollectionType,
-        ...personalDetails,
-        price_buy: personalDetails.price_buy ? parseFloat(personalDetails.price_buy) : null,
+        // Map frontend fields to backend PersonalKitCreate model fields
+        size: personalDetails.size,
+        condition: personalDetails.condition,
+        purchase_price: personalDetails.price_buy ? parseFloat(personalDetails.price_buy) : null,
         price_value: personalDetails.price_value ? parseFloat(personalDetails.price_value) : null,
-        player_number: personalDetails.player_number ? parseInt(personalDetails.player_number) : null
+        purchase_date: personalDetails.purchase_date || null,
+        purchase_location: personalDetails.purchase_location || null,
+        is_worn: personalDetails.is_worn,
+        is_signed: personalDetails.is_signed,
+        signed_by: personalDetails.signed_by || null,
+        has_printing: personalDetails.has_printing,
+        printed_name: personalDetails.player_name || null, // Map player_name to printed_name
+        printed_number: personalDetails.player_number ? parseInt(personalDetails.player_number) : null,
+        printing_type: personalDetails.is_custom_printing ? 'custom' : 'player',
+        is_match_worn: personalDetails.is_match_worn,
+        match_details: personalDetails.match_details || null,
+        is_authenticated: personalDetails.is_authenticated,
+        authentication_details: personalDetails.authentication_details || null,
+        personal_notes: personalDetails.info || null, // Map info to personal_notes
+        acquisition_story: personalDetails.acquisition_story || null,
+        times_worn: personalDetails.times_worn || 0,
+        for_sale: personalDetails.for_sale || false
       };
 
       const response = await fetch(`${API}/api/personal-kits`, {
