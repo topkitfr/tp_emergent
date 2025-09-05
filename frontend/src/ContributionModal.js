@@ -51,6 +51,8 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       setDescription('');
       setSourceUrls(['']);
       setChanges([]);
+      setNewColor('');
+      setNewName('');
       
       // Reset image states
       setImageFiles({
