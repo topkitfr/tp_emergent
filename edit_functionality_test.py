@@ -238,7 +238,7 @@ class EditFunctionalityTester:
             
             update_data = {
                 "size": kit_data.get("size", "M"),
-                "condition": "excellent" if original_condition != "excellent" else "very_good",
+                "condition": "excellent" if original_condition != "excellent" else "good",
                 "purchase_price": 150.0,
                 "is_signed": False,
                 "has_printing": True,
