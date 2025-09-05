@@ -458,7 +458,7 @@ class FormCreationTester:
                     
                     # Check all the new and fixed fields
                     fields_to_check = [
-                        'price_value', 'acquisition_story', 'times_worn', 'for_sale',
+                        'price_value', 'acquisition_story', 'times_worn', 'is_for_sale',
                         'printed_name', 'printed_number', 'personal_notes', 'printing_type'
                     ]
                     
