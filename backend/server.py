@@ -11600,11 +11600,11 @@ async def get_reference_kits(
 # ================================
 
 @api_router.post("/personal-kits")
-async def add_kit_to_collection(
+async def add_kit_to_owned_collection(
     kit_data: PersonalKitCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Add a Reference Kit to user's personal collection with personalization"""
+    """Add a Reference Kit to user's OWNED collection with detailed personalization"""
     try:
         user_id = current_user['id']
         
@@ -11614,32 +11614,28 @@ async def add_kit_to_collection(
             raise HTTPException(status_code=404, detail="Reference kit not found")
         reference_kit.pop('_id', None)
         
-        # Check if user already has this kit in their collection
-        existing = await db.personal_kits.find_one({
+        # Check if user already has this kit in their owned collection
+        existing_owned = await db.personal_kits.find_one({
             "user_id": user_id,
-            "reference_kit_id": kit_data.reference_kit_id,
-            "collection_type": kit_data.collection_type
+            "reference_kit_id": kit_data.reference_kit_id
         })
-        if existing:
-            raise HTTPException(status_code=400, detail="Kit already in your collection")
+        if existing_owned:
+            raise HTTPException(status_code=400, detail="Kit already in your owned collection")
         
         # Smart two-way relationship: If adding to "owned", remove from "wanted"
-        if kit_data.collection_type == "owned":
-            existing_wanted = await db.personal_kits.find_one({
+        existing_wanted = await db.wanted_kits.find_one({
+            "user_id": user_id,
+            "reference_kit_id": kit_data.reference_kit_id
+        })
+        if existing_wanted:
+            # Remove from wanted list since user now owns it
+            await db.wanted_kits.delete_one({
                 "user_id": user_id,
-                "reference_kit_id": kit_data.reference_kit_id,
-                "collection_type": "wanted"
+                "reference_kit_id": kit_data.reference_kit_id
             })
-            if existing_wanted:
-                # Remove from wanted list since user now owns it
-                await db.personal_kits.delete_one({
-                    "user_id": user_id,
-                    "reference_kit_id": kit_data.reference_kit_id,
-                    "collection_type": "wanted"
-                })
-                logger.info(f"Automatically removed kit {kit_data.reference_kit_id} from user {user_id} wanted list (now owned)")
+            logger.info(f"Automatically removed kit {kit_data.reference_kit_id} from user {user_id} wanted list (now owned)")
         
-        # Create Personal Kit
+        # Create Personal Kit (ONLY for owned items)
         personal_kit = PersonalKit(
             **kit_data.dict(),
             user_id=user_id
@@ -11661,7 +11657,7 @@ async def add_kit_to_collection(
         if brand:
             brand.pop('_id', None)
         
-        # Return enriched response without Pydantic validation
+        # Return enriched response
         response = {
             **personal_kit.dict(),
             "reference_kit_info": reference_kit,
@@ -11678,7 +11674,79 @@ async def add_kit_to_collection(
         logger.error(f"Personal kit creation error: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail="Error adding kit to collection")
+        raise HTTPException(status_code=500, detail="Error adding kit to owned collection")
+
+@api_router.post("/wanted-kits")
+async def add_kit_to_wanted_list(
+    kit_data: WantedKitCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a Reference Kit to user's WANTED list (remains as Reference Kit)"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate reference kit exists
+        reference_kit = await db.reference_kits.find_one({"id": kit_data.reference_kit_id})
+        if not reference_kit:
+            raise HTTPException(status_code=404, detail="Reference kit not found")
+        reference_kit.pop('_id', None)
+        
+        # Check if user already has this kit in their wanted list
+        existing_wanted = await db.wanted_kits.find_one({
+            "user_id": user_id,
+            "reference_kit_id": kit_data.reference_kit_id
+        })
+        if existing_wanted:
+            raise HTTPException(status_code=400, detail="Kit already in your wanted list")
+        
+        # Check if user already owns this kit
+        existing_owned = await db.personal_kits.find_one({
+            "user_id": user_id,
+            "reference_kit_id": kit_data.reference_kit_id
+        })
+        if existing_owned:
+            raise HTTPException(status_code=400, detail="You already own this kit")
+        
+        # Create Wanted Kit (simple reference, kit remains Reference Kit)
+        wanted_kit = WantedKit(
+            **kit_data.dict(),
+            user_id=user_id
+        )
+        
+        # Insert into database
+        await db.wanted_kits.insert_one(wanted_kit.dict())
+        
+        # Get enriched data for response (but kit remains a Reference Kit)
+        master_kit = await db.master_kits.find_one({"id": reference_kit["master_kit_id"]})
+        if master_kit:
+            master_kit.pop('_id', None)
+        
+        team = await db.teams.find_one({"id": master_kit["team_id"]}) if master_kit else None
+        if team:
+            team.pop('_id', None)
+            
+        brand = await db.brands.find_one({"id": master_kit["brand_id"]}) if master_kit else None
+        if brand:
+            brand.pop('_id', None)
+        
+        # Return response - kit remains a Reference Kit with minimal wanted info
+        response = {
+            **wanted_kit.dict(),
+            "reference_kit_info": reference_kit,
+            "master_kit_info": master_kit or {},
+            "team_info": team or {},
+            "brand_info": brand or {}
+        }
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Wanted kit creation error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Error adding kit to wanted list")
 
 @api_router.get("/personal-kits")  
 async def get_user_collection(
