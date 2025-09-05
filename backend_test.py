@@ -326,14 +326,33 @@ class FormCreationTester:
             print("   ❌ No reference kits available for testing")
             return None
         
-        reference_kit_id = reference_kits[0].get('id')
-        print(f"   Using Reference Kit ID: {reference_kit_id}")
+        # Try different reference kits to avoid duplicates
+        reference_kit_id = None
+        for kit in reference_kits:
+            kit_id = kit.get('id')
+            # Check if this kit is already in collection
+            check_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+            if check_response.status_code == 200:
+                existing_kits = check_response.json()
+                kit_exists = any(existing_kit.get('reference_kit_id') == kit_id for existing_kit in existing_kits)
+                if not kit_exists:
+                    reference_kit_id = kit_id
+                    break
+        
+        if not reference_kit_id:
+            # Use the last kit and try with wanted collection instead
+            reference_kit_id = reference_kits[-1].get('id')
+            collection_type = "wanted"
+            print(f"   Using Reference Kit ID: {reference_kit_id} (wanted collection)")
+        else:
+            collection_type = "owned"
+            print(f"   Using Reference Kit ID: {reference_kit_id} (owned collection)")
         
         # Test personal kit creation with all new fields
         print("Test: Personal kit creation with all fields")
         personal_kit_data = {
             "reference_kit_id": reference_kit_id,
-            "collection_type": "owned",
+            "collection_type": collection_type,
             "size": "L",
             "condition": "mint",
             "purchase_price": 89.99,
