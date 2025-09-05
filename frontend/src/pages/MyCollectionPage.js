@@ -238,7 +238,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         times_worn: parseInt(editFormData.times_worn) || 0,
         
         // Marketplace
-        is_for_sale: editFormData.for_sale,
+        for_sale: editFormData.for_sale,
         asking_price: parseFloat(editFormData.asking_price) || null
       };
 
