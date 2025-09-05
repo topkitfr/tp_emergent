@@ -101,7 +101,10 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           player_number: '',
           condition: 'good',
           info: '',
-          size: ''
+          size: '',
+          has_printing: false,
+          is_custom_printing: false,
+          for_sale: false
         });
         
         loadKitStore(); // Refresh list
