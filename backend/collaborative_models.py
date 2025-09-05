@@ -289,6 +289,7 @@ class PersonalKit(BaseModel):
     
     # Purchase Information
     purchase_price: Optional[float] = None
+    price_value: Optional[float] = None  # Current value estimate
     purchase_date: Optional[datetime] = None
     purchase_location: Optional[str] = None  # Store, online, etc.
     
