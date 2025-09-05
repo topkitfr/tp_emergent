@@ -384,6 +384,68 @@ class WantListArchitectureTest:
             self.log_test("Endpoint Separation", False, f"Exception: {str(e)}")
             return False
     
+    def find_available_test_kit(self, available_kits):
+        """Find a kit that's not already in user's collection"""
+        print("🔍 FINDING AVAILABLE TEST KIT...")
+        try:
+            # Get current collections
+            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits")
+            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            
+            owned_kit_ids = []
+            wanted_kit_ids = []
+            
+            if owned_response.status_code == 200:
+                owned_kits = owned_response.json()
+                owned_kit_ids = [kit.get('reference_kit_id') for kit in owned_kits]
+            
+            if wanted_response.status_code == 200:
+                wanted_kits = wanted_response.json()
+                wanted_kit_ids = [kit.get('reference_kit_id') for kit in wanted_kits]
+            
+            # Find a kit not in either collection
+            for kit in available_kits:
+                kit_id = kit.get('id')
+                if kit_id not in owned_kit_ids and kit_id not in wanted_kit_ids:
+                    return kit
+            
+            # If all kits are in collections, use the first one and clean it up
+            if available_kits:
+                return available_kits[0]
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error finding available kit: {e}")
+            return available_kits[0] if available_kits else None
+    
+    def cleanup_existing_collections(self, reference_kit_id):
+        """Clean up existing collections for the test kit"""
+        print("🧹 CLEANING UP EXISTING COLLECTIONS...")
+        try:
+            # Try to remove from owned collection
+            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits")
+            if owned_response.status_code == 200:
+                owned_kits = owned_response.json()
+                for kit in owned_kits:
+                    if kit.get('reference_kit_id') == reference_kit_id:
+                        kit_id = kit.get('id')
+                        delete_response = self.session.delete(f"{BACKEND_URL}/personal-kits/{kit_id}")
+                        print(f"   Removed from owned collection: {delete_response.status_code}")
+            
+            # Try to remove from wanted collection
+            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            if wanted_response.status_code == 200:
+                wanted_kits = wanted_response.json()
+                for kit in wanted_kits:
+                    if kit.get('reference_kit_id') == reference_kit_id:
+                        kit_id = kit.get('id')
+                        delete_response = self.session.delete(f"{BACKEND_URL}/wanted-kits/{kit_id}")
+                        print(f"   Removed from wanted collection: {delete_response.status_code}")
+                        
+        except Exception as e:
+            print(f"   Cleanup error: {e}")
+
     def run_comprehensive_test(self):
         """Run comprehensive want list architecture test"""
         print("🚀 STARTING WANT LIST ARCHITECTURE TESTING...")
@@ -400,12 +462,19 @@ class WantListArchitectureTest:
             print("❌ No Reference Kits available. Cannot proceed with testing.")
             return False
         
-        # Use first available kit for testing
-        test_kit = available_kits[0]
+        # Step 3: Find an available test kit
+        test_kit = self.find_available_test_kit(available_kits)
+        if not test_kit:
+            print("❌ No available test kit found. Cannot proceed with testing.")
+            return False
+            
         reference_kit_id = test_kit.get('id')
         kit_name = f"{test_kit.get('team_info', {}).get('name', 'Unknown')} {test_kit.get('master_kit_info', {}).get('season', 'Unknown')}"
         
         print(f"🎯 Testing with Reference Kit: {kit_name} (ID: {reference_kit_id})")
+        
+        # Step 4: Clean up any existing collections for this kit
+        self.cleanup_existing_collections(reference_kit_id)
         print()
         
         # Step 3: Test Add to Wanted (minimal data)
