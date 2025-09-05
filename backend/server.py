@@ -9533,11 +9533,14 @@ async def create_team(
         raise HTTPException(status_code=400, detail="Une équipe avec ce nom existe déjà")
     
     # Créer Team
-    team = Team(
-        **team_data.dict(),
-        created_by=current_user["id"],
-        topkit_reference=await generate_reference("team")
-    )
+    team_dict = team_data.dict()
+    team_dict["created_by"] = current_user["id"]
+    team_dict["topkit_reference"] = await generate_reference("team")
+    
+    # Apply auto-approval for testing
+    team_dict = enable_auto_approval_for_testing(team_dict, current_user["id"])
+    
+    team = Team(**team_dict)
     
     await db.teams.insert_one(team.dict())
     
