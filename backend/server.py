@@ -11993,8 +11993,7 @@ async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
                 "reference_kit_info": {"$arrayElemAt": ["$reference_kit_info", 0]},
                 "master_kit_info": {"$arrayElemAt": ["$master_kit_info", 0]},
                 "team_info": {"$arrayElemAt": ["$team_info", 0]},
-                "brand_info": {"$arrayElemAt": ["$brand_info", 0]},
-                "collection_type": "owned"
+                "brand_info": {"$arrayElemAt": ["$brand_info", 0]}
             }
         }
     ]
