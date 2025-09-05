@@ -407,37 +407,104 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                   >
                     <option value="">Select {field.label.toLowerCase()}</option>
                     {Array.isArray(field.options) ? field.options.map(option => (
-                      <option key={option} value={option}>
-                        {field.key === 'model' ? (option === 'authentic' ? 'Authentique' : 'Réplique') : 
-                         field.key === 'jersey_type' ? (
-                           option === 'home' ? 'Home' :
-                           option === 'away' ? 'Away' :
-                           option === 'third' ? 'Third' :
-                           option === 'fourth' ? 'Fourth' :
-                           option === 'goalkeeper' ? 'GK' :
-                           option === 'special' ? 'Special' : 'Other'
-                         ) : option}
+                      <option key={typeof option === 'object' ? option.value : option} value={typeof option === 'object' ? option.value : option}>
+                        {typeof option === 'object' ? option.label : option}
                       </option>
                     )) : null}
                   </select>
-                ) : field.type === 'multiselect' ? (
+                ) : field.type === 'color_list' ? (
                   <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={Array.isArray(formData[field.key]) ? formData[field.key].join(', ') : formData[field.key] || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        [field.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                      }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                      placeholder={field.placeholder || `Enter ${field.label.toLowerCase()} (comma separated)`}
-                      required={field.required}
-                    />
-                    {field.key === 'confederations_federations' && (
-                      <div className="text-xs text-gray-500">
-                        Available: UEFA, FIFA, CONMEBOL, CAF, CONCACAF, AFC, OFC
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newColor || ''}
+                        onChange={(e) => setNewColor(e.target.value)}
+                        placeholder={field.placeholder || "Enter color (e.g., Red, Blue, #FF0000)"}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newColor && !(formData[field.key] || []).includes(newColor)) {
+                            setFormData(prev => ({
+                              ...prev,
+                              [field.key]: [...(prev[field.key] || []), newColor]
+                            }));
+                            setNewColor('');
+                          }
+                        }}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(formData[field.key] || []).map((color, index) => (
+                        <span
+                          key={index}
+                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
+                        >
+                          {color}
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              [field.key]: prev[field.key].filter(c => c !== color)
+                            }))}
+                            className="ml-2 text-red-500 hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : field.type === 'name_list' ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newName || ''}
+                        onChange={(e) => setNewName(e.target.value)}
+                        placeholder={field.placeholder || "Enter name"}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newName && !(formData[field.key] || []).includes(newName)) {
+                            setFormData(prev => ({
+                              ...prev,
+                              [field.key]: [...(prev[field.key] || []), newName]
+                            }));
+                            setNewName('');
+                          }
+                        }}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(formData[field.key] || []).map((name, index) => (
+                        <span
+                          key={index}
+                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
+                        >
+                          {name}
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              [field.key]: prev[field.key].filter(n => n !== name)
+                            }))}
+                            className="ml-2 text-red-500 hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : field.type === 'textarea' ? (
                   <textarea
