@@ -179,11 +179,12 @@ class EnhancedTwoWayCollectionTester:
     def test_add_to_wanted_simple(self, reference_kit_id: str) -> Optional[str]:
         """Test 1: Add to Wanted - Simple, no detailed form"""
         try:
-            # Simple wanted collection data (minimal fields)
+            # Simple wanted collection data (minimal required fields only)
             wanted_data = {
                 "reference_kit_id": reference_kit_id,
-                "collection_type": "wanted"
-                # No detailed fields - should be simple
+                "collection_type": "wanted",
+                "size": "M"  # Required field but minimal for wanted
+                # No other detailed fields - should be simple
             }
             
             response = self.session.post(f"{BACKEND_URL}/personal-kits", json=wanted_data)
