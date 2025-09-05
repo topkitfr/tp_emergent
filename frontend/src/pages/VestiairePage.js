@@ -54,10 +54,50 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       return;
     }
 
-    // Show personal details modal instead of directly creating
-    setSelectedReferenceKit(referenceKit);
-    setSelectedCollectionType(collectionType);
-    setShowPersonalDetailsModal(true);
+    if (collectionType === 'wanted') {
+      // For "wanted" items, add directly without detailed form
+      await addToWantedDirectly(referenceKit);
+    } else {
+      // For "owned" items, show detailed personal details modal
+      setSelectedReferenceKit(referenceKit);
+      setSelectedCollectionType(collectionType);
+      setShowPersonalDetailsModal(true);
+    }
+  };
+
+  const addToWantedDirectly = async (referenceKit) => {
+    try {
+      console.log(`🔄 Adding Reference Kit ${referenceKit.id} to wanted collection (no details needed)`);
+      
+      const personalKitData = {
+        reference_kit_id: referenceKit.id,
+        collection_type: 'wanted'
+        // No other details needed for wanted items
+      };
+
+      const response = await fetch(`${API}/api/personal-kits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(personalKitData)
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        console.log(`✅ Successfully added to wanted collection`);
+        alert(`Kit added to your want list! 🎯`);
+        loadKitStore(); // Refresh list
+      } else {
+        console.error(`❌ Failed to add to wanted collection: ${response.status}`);
+        alert(`Error: ${responseData.detail || 'Failed to add to want list'}`);
+      }
+    } catch (error) {
+      console.error('Error adding to wanted collection:', error);
+      alert('Error adding to want list');
+    }
   };
 
   const handlePersonalDetailsSubmit = async () => {
