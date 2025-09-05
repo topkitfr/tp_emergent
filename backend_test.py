@@ -327,12 +327,16 @@ Dashboard Statistics Retrieved:
         """Create a test team to verify auto-approval behavior"""
         print(f"🏆 CREATING TEST TEAM (Auto-approval: {auto_approval_enabled})...")
         
+        # Use microseconds to ensure unique names
+        import time
+        unique_suffix = f"{datetime.now().strftime('%H%M%S')}{int(time.time() * 1000000) % 1000000}"
+        
         test_team_data = {
-            "name": f"Test Team Auto-Approval {datetime.now().strftime('%H%M%S')}",
+            "name": f"Test Team Auto-Approval {unique_suffix}",
             "country": "France",
             "city": "Test City",
             "founded_year": 2024,
-            "short_name": "TTA"
+            "short_name": f"TTA{unique_suffix[:4]}"
         }
         
         try:
@@ -343,9 +347,11 @@ Dashboard Statistics Retrieved:
                 team_id = team_data.get("id")
                 verified_level = team_data.get("verified_level")
                 
+                # Handle case insensitive comparison
                 expected_status = "COMMUNITY_VERIFIED" if auto_approval_enabled else "PENDING"
+                verified_level_upper = verified_level.upper() if verified_level else None
                 
-                if verified_level == expected_status:
+                if verified_level_upper == expected_status:
                     self.log_test(
                         f"Team Creation (Auto-approval: {auto_approval_enabled})",
                         True,
