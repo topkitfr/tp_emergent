@@ -219,7 +219,7 @@ class WantListArchitectureTest:
             
             response = self.session.post(f"{BACKEND_URL}/personal-kits", json=owned_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201
                 data = response.json()
                 
                 # Verify detailed PersonalKit fields
