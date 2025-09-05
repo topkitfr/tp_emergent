@@ -21,14 +21,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       setLoading(true);
       console.log('🔄 Loading personal kit collections for user:', user.id);
 
-      // Load both owned and wanted personal kits using the new API
+      // Load both owned and wanted collections using the new separate endpoints
       const [ownedResponse, wantedResponse] = await Promise.all([
-        fetch(`${API}/api/personal-kits?collection_type=owned`, {
+        fetch(`${API}/api/personal-kits`, {  // OWNED collection (PersonalKits)
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${API}/api/personal-kits?collection_type=wanted`, {
+        fetch(`${API}/api/wanted-kits`, {    // WANTED collection (WantedKits - Reference Kits)
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
