@@ -58,6 +58,13 @@ from collaborative_models import (
 # AUTO-APPROVAL SYSTEM FOR TESTING
 # ================================
 
+# Global system settings
+system_settings = {
+    "auto_approval_enabled": True,  # Default to true for testing
+    "admin_notifications": True,
+    "community_voting_enabled": True
+}
+
 def enable_auto_approval_for_testing(entity_data: dict, user_id: str) -> dict:
     """
     Auto-approve entities for testing purposes.
