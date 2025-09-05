@@ -559,8 +559,11 @@ class PersonalKitUpdate(BaseModel):
     size: Optional[str] = None
     condition: Optional[KitCondition] = None
     purchase_price: Optional[float] = None
+    price_value: Optional[float] = None
     purchase_date: Optional[datetime] = None
     purchase_location: Optional[str] = None
+    acquisition_story: Optional[str] = None
+    times_worn: Optional[int] = None
     is_worn: Optional[bool] = None
     is_signed: Optional[bool] = None
     signed_by: Optional[str] = None
@@ -573,8 +576,7 @@ class PersonalKitUpdate(BaseModel):
     is_authenticated: Optional[bool] = None
     authentication_details: Optional[str] = None
     personal_notes: Optional[str] = None
-    acquisition_story: Optional[str] = None
-    is_for_sale: Optional[bool] = None
+    for_sale: Optional[bool] = None  # Fixed to match PersonalKit model
     asking_price: Optional[float] = None
 
 # ================================
