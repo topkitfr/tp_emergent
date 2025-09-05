@@ -397,7 +397,7 @@ const getModuleStatusColor = (status) => {
 };
 
 // Component for rendering different module contents
-const ModuleContent = ({ activeModule, dashboardData, API, user }) => {
+const ModuleContent = ({ activeModule, dashboardData, API, user, systemSettings, updateSystemSettings, settingsLoading, loading }) => {
   
   switch (activeModule) {
     case 'overview':
