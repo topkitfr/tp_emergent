@@ -11987,6 +11987,15 @@ async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
                 "foreignField": "id", 
                 "as": "brand_info"
             }
+        },
+        {
+            "$addFields": {
+                "reference_kit_info": {"$arrayElemAt": ["$reference_kit_info", 0]},
+                "master_kit_info": {"$arrayElemAt": ["$master_kit_info", 0]},
+                "team_info": {"$arrayElemAt": ["$team_info", 0]},
+                "brand_info": {"$arrayElemAt": ["$brand_info", 0]},
+                "collection_type": "owned"
+            }
         }
     ]
     
@@ -11997,8 +12006,12 @@ async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
     kit = result[0]
     kit.pop('_id', None)
     
-    # The aggregation pipeline already includes the enriched data
-    # Just return the PersonalKitResponse with the complete data
+    # Clean up any remaining _id fields in nested objects
+    for field in ['reference_kit_info', 'master_kit_info', 'team_info', 'brand_info']:
+        if kit.get(field) and isinstance(kit[field], dict):
+            kit[field].pop('_id', None)
+    
+    # The aggregation pipeline now properly formats the data
     return PersonalKitResponse(**kit)
 
 # ================================
