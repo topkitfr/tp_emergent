@@ -129,12 +129,14 @@ class FormCreationTester:
         
         # Test valid competition creation with corrected field mapping
         print("Test: Valid competition creation")
+        import random
+        random_suffix = random.randint(1000, 9999)
         competition_data = {
-            "competition_name": "Test League 2024",  # Fixed: name → competition_name
+            "competition_name": f"Test League {random_suffix}",  # Fixed: name → competition_name
             "type": "National league",               # Fixed: competition_type → type
             "country": "France",
             "level": 1,
-            "confederations_federations": "UEFA"
+            "confederations_federations": ["UEFA"]  # Fixed: should be a list
         }
         
         try:
