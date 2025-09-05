@@ -1708,6 +1708,70 @@ async def get_pending_approvals(current_user: dict = Depends(get_current_user)):
         logger.error(f"Admin pending approvals error: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving pending approvals")
 
+@api_router.put("/admin/approve/{item_type}/{item_id}")
+async def approve_item(
+    item_type: str,
+    item_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Approve pending items (teams, competitions, contributions)"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        if item_type == "team":
+            result = await db.teams.update_one(
+                {"id": item_id},
+                {
+                    "$set": {
+                        "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                        "verified_at": datetime.utcnow(),
+                        "verified_by": current_user["id"]
+                    }
+                }
+            )
+        elif item_type == "competition":
+            result = await db.competitions.update_one(
+                {"id": item_id},
+                {
+                    "$set": {
+                        "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                        "verified_at": datetime.utcnow(),
+                        "verified_by": current_user["id"]
+                    }
+                }
+            )
+        elif item_type == "contribution":
+            result = await db.contributions.update_one(
+                {"id": item_id},
+                {
+                    "$set": {
+                        "status": "APPROVED",
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+        else:
+            raise HTTPException(status_code=400, detail="Invalid item type")
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Item not found")
+        
+        await log_user_activity(
+            current_user["id"],
+            f"{item_type}_approved",
+            item_id,
+            {"approved_by": current_user["id"]}
+        )
+        
+        return {"message": f"{item_type.capitalize()} approved successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin approval error: {e}")
+        raise HTTPException(status_code=500, detail="Error approving item")
+
     return {"message": "Settings updated successfully", "settings": system_settings}
 
 # Authentication endpoints
