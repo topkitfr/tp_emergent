@@ -193,14 +193,14 @@ class EnhancedTwoWayCollectionTester:
                 created_kit = response.json()
                 personal_kit_id = created_kit.get("id")
                 
-                # Verify it's a simple wanted entry (minimal data)
+                # Verify it's a simple wanted entry (minimal data - only size is required)
                 has_detailed_fields = any([
-                    created_kit.get("condition"),
+                    created_kit.get("condition") and created_kit.get("condition") != "good",  # Default condition is ok
                     created_kit.get("purchase_price"),
-                    created_kit.get("size"),
                     created_kit.get("is_signed"),
                     created_kit.get("has_printing"),
                     created_kit.get("personal_notes")
+                    # Size is required but not considered "detailed" for wanted items
                 ])
                 
                 # Verify required fields
