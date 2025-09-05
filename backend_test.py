@@ -326,27 +326,60 @@ class FormCreationTester:
             print("   ❌ No reference kits available for testing")
             return None
         
-        # Try different reference kits to avoid duplicates
+        # Check existing collections to find available kit
         reference_kit_id = None
+        collection_type = "owned"
+        
+        # Get existing owned and wanted collections
+        owned_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+        wanted_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
+        
+        existing_owned_kit_ids = []
+        existing_wanted_kit_ids = []
+        
+        if owned_response.status_code == 200:
+            existing_owned_kit_ids = [kit.get('reference_kit_id') for kit in owned_response.json()]
+        
+        if wanted_response.status_code == 200:
+            existing_wanted_kit_ids = [kit.get('reference_kit_id') for kit in wanted_response.json()]
+        
+        print(f"   Existing owned kits: {len(existing_owned_kit_ids)}")
+        print(f"   Existing wanted kits: {len(existing_wanted_kit_ids)}")
+        
+        # Find a kit that's not in either collection
         for kit in reference_kits:
             kit_id = kit.get('id')
-            # Check if this kit is already in collection
-            check_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            if check_response.status_code == 200:
-                existing_kits = check_response.json()
-                kit_exists = any(existing_kit.get('reference_kit_id') == kit_id for existing_kit in existing_kits)
-                if not kit_exists:
+            if kit_id not in existing_owned_kit_ids and kit_id not in existing_wanted_kit_ids:
+                reference_kit_id = kit_id
+                collection_type = "owned"
+                break
+        
+        # If all kits are in owned, try wanted collection
+        if not reference_kit_id:
+            for kit in reference_kits:
+                kit_id = kit.get('id')
+                if kit_id not in existing_wanted_kit_ids:
                     reference_kit_id = kit_id
+                    collection_type = "wanted"
                     break
         
+        # If still no kit found, delete one from owned to make space for testing
+        if not reference_kit_id and existing_owned_kit_ids:
+            # Get the first owned kit to delete
+            owned_kits = owned_response.json()
+            if owned_kits:
+                kit_to_delete = owned_kits[0]
+                delete_response = self.session.delete(f"{BACKEND_URL}/personal-kits/{kit_to_delete.get('id')}")
+                if delete_response.status_code in [200, 204]:
+                    reference_kit_id = kit_to_delete.get('reference_kit_id')
+                    collection_type = "owned"
+                    print(f"   Deleted existing kit to make space for testing")
+        
         if not reference_kit_id:
-            # Use the last kit and try with wanted collection instead
-            reference_kit_id = reference_kits[-1].get('id')
-            collection_type = "wanted"
-            print(f"   Using Reference Kit ID: {reference_kit_id} (wanted collection)")
-        else:
+            reference_kit_id = reference_kits[0].get('id')
             collection_type = "owned"
-            print(f"   Using Reference Kit ID: {reference_kit_id} (owned collection)")
+        
+        print(f"   Using Reference Kit ID: {reference_kit_id} ({collection_type} collection)")
         
         # Test personal kit creation with all new fields
         print("Test: Personal kit creation with all fields")
