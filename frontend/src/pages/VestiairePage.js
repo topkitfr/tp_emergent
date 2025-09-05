@@ -1160,58 +1160,128 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   />
                 </div>
 
-                {/* Player Name* (Required - Dropdown from database) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Player Name *</label>
-                  <select
-                    value={personalDetails.player_name}
-                    onChange={(e) => handlePlayerChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select a player</option>
-                    {players.map(player => (
-                      <option key={player.id} value={player.id}>
-                        {player.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Player Number* (Required - Dropdown based on selected player) */}
-                {personalDetails.player_name && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Player Number *</label>
-                    <select
-                      value={personalDetails.player_number}
-                      onChange={(e) => setPersonalDetails({...personalDetails, player_number: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select a number</option>
-                      {playerNumbers.map(number => (
-                        <option key={number} value={number}>
-                          {number}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
                 {/* State (condition) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State (Condition)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Condition Details</label>
                   <select
                     value={personalDetails.condition}
                     onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="mint">Mint</option>
-                    <option value="near_mint">Near Mint</option>
-                    <option value="good">Good</option>
-                    <option value="fair">Fair</option>
-                    <option value="poor">Poor</option>
+                    <option value="mint">Mint - New with tags, perfect condition</option>
+                    <option value="near_mint">Near Mint - Like new, minor wear</option>
+                    <option value="excellent">Excellent - Very good condition, light wear</option>
+                    <option value="good">Good - Normal wear, all functional</option>
+                    <option value="fair">Fair - Noticeable wear, still wearable</option>
+                    <option value="poor">Poor - Heavy wear, damage visible</option>
                   </select>
+                </div>
+
+                {/* Printing (Flocking) Section */}
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Printing (Flocking)</h3>
+                  
+                  {/* Has Printing Toggle */}
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      id="has_printing"
+                      checked={personalDetails.has_printing}
+                      onChange={(e) => setPersonalDetails({
+                        ...personalDetails, 
+                        has_printing: e.target.checked,
+                        // Reset printing fields if unchecked
+                        player_name: e.target.checked ? personalDetails.player_name : '',
+                        player_number: e.target.checked ? personalDetails.player_number : '',
+                        is_custom_printing: false
+                      })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="has_printing" className="ml-2 block text-sm text-gray-900">
+                      This kit has printing/flocking
+                    </label>
+                  </div>
+
+                  {/* Printing Fields - Only show if has_printing is true */}
+                  {personalDetails.has_printing && (
+                    <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                      {/* Custom Printing Checkbox */}
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="is_custom_printing"
+                          checked={personalDetails.is_custom_printing}
+                          onChange={(e) => setPersonalDetails({
+                            ...personalDetails, 
+                            is_custom_printing: e.target.checked,
+                            // Reset player fields if custom printing is selected
+                            player_name: e.target.checked ? '' : personalDetails.player_name,
+                            player_number: e.target.checked ? '' : personalDetails.player_number
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="is_custom_printing" className="ml-2 block text-sm text-gray-900">
+                          Custom Printing (non-player name/number)
+                        </label>
+                      </div>
+
+                      {/* Player Name Dropdown - Only show if NOT custom printing */}
+                      {!personalDetails.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Player Name * {personalDetails.has_printing && !personalDetails.is_custom_printing ? '(Required)' : ''}
+                          </label>
+                          <select
+                            value={personalDetails.player_name}
+                            onChange={(e) => handlePlayerChange(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            required={personalDetails.has_printing && !personalDetails.is_custom_printing}
+                          >
+                            <option value="">Select a player</option>
+                            {players.map(player => (
+                              <option key={player.id} value={player.id}>
+                                {player.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {/* Player Number Dropdown - Only show if player is selected and NOT custom printing */}
+                      {personalDetails.player_name && !personalDetails.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Player Number *</label>
+                          <select
+                            value={personalDetails.player_number}
+                            onChange={(e) => setPersonalDetails({...personalDetails, player_number: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            required
+                          >
+                            <option value="">Select a number</option>
+                            {playerNumbers.map(number => (
+                              <option key={number} value={number}>
+                                {number}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {/* Custom Printing Text - Only show if custom printing is selected */}
+                      {personalDetails.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Custom Print Text</label>
+                          <input
+                            type="text"
+                            value={personalDetails.custom_print_text || ''}
+                            onChange={(e) => setPersonalDetails({...personalDetails, custom_print_text: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Your Name, Custom Text, etc."
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Size (kept for practical collection management) */}
