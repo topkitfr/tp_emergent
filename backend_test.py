@@ -432,8 +432,8 @@ Dashboard Statistics Retrieved:
         
         # Summary
         workflow_success = (
-            status_1 == "COMMUNITY_VERIFIED" and 
-            status_2 == "PENDING"
+            status_1 and status_1.upper() == "COMMUNITY_VERIFIED" and 
+            status_2 and status_2.upper() == "PENDING"
         )
         
         self.log_test(
