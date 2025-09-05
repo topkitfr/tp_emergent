@@ -521,6 +521,7 @@ class ReferenceKitCreate(BaseModel):
     official_product_code: Optional[str] = None
 
 class PersonalKitCreate(BaseModel):
+    """Create Personal Kit - ONLY for OWNED items with detailed information"""
     reference_kit_id: str
     size: str
     condition: KitCondition = KitCondition.GOOD
@@ -539,7 +540,15 @@ class PersonalKitCreate(BaseModel):
     is_authenticated: bool = False
     authentication_details: Optional[str] = None
     personal_notes: Optional[str] = None
-    collection_type: str = "owned"
+    # Removed collection_type - PersonalKit is ONLY for owned items
+
+class WantedKitCreate(BaseModel):
+    """Create Wanted Kit - Simple reference to a Reference Kit the user wants"""
+    reference_kit_id: str
+    preferred_size: Optional[str] = None  # Optional preferred size
+    max_price_willing_to_pay: Optional[float] = None  # Optional price limit
+    notes: Optional[str] = None  # Optional notes
+    priority: str = "medium"  # "low", "medium", "high"
 
 class PersonalKitUpdate(BaseModel):
     size: Optional[str] = None
