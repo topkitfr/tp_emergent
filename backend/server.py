@@ -9933,11 +9933,14 @@ async def create_player(
     if existing:
         raise HTTPException(status_code=400, detail="Un joueur avec ce nom existe déjà")
     
-    player = Player(
-        **player_data.dict(),
-        created_by=current_user["id"],
-        topkit_reference=await generate_reference("player")
-    )
+    player_dict = player_data.dict()
+    player_dict["created_by"] = current_user["id"]
+    player_dict["topkit_reference"] = await generate_reference("player")
+    
+    # Apply auto-approval for testing
+    player_dict = enable_auto_approval_for_testing(player_dict, current_user["id"])
+    
+    player = Player(**player_dict)
     
     await db.players.insert_one(player.dict())
     
