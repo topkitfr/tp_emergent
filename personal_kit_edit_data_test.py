@@ -463,8 +463,8 @@ class PersonalKitEditDataTester:
             print("❌ No reference kits available. Cannot proceed with tests.")
             return False
         
-        # Step 3: Create personal kit with detailed data
-        created_kit = self.create_personal_kit_with_detailed_data(reference_kit)
+        # Step 3: Get existing personal kit or create new one
+        created_kit = self.get_existing_personal_kit_or_create(reference_kit)
         if not created_kit:
             print("❌ Failed to create personal kit. Cannot proceed with tests.")
             return False
