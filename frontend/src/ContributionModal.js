@@ -387,10 +387,39 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                     required={field.required}
                   >
                     <option value="">Select {field.label.toLowerCase()}</option>
-                    {field.options?.map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
+                    {Array.isArray(field.options) ? field.options.map(option => (
+                      <option key={option} value={option}>
+                        {field.key === 'model' ? (option === 'authentic' ? 'Authentique' : 'Réplique') : 
+                         field.key === 'jersey_type' ? (
+                           option === 'home' ? 'Home' :
+                           option === 'away' ? 'Away' :
+                           option === 'third' ? 'Third' :
+                           option === 'fourth' ? 'Fourth' :
+                           option === 'goalkeeper' ? 'GK' :
+                           option === 'special' ? 'Special' : 'Other'
+                         ) : option}
+                      </option>
+                    )) : null}
                   </select>
+                ) : field.type === 'multiselect' ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={Array.isArray(formData[field.key]) ? formData[field.key].join(', ') : formData[field.key] || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [field.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                      }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder={field.placeholder || `Enter ${field.label.toLowerCase()} (comma separated)`}
+                      required={field.required}
+                    />
+                    {field.key === 'confederations_federations' && (
+                      <div className="text-xs text-gray-500">
+                        Available: UEFA, FIFA, CONMEBOL, CAF, CONCACAF, AFC, OFC
+                      </div>
+                    )}
+                  </div>
                 ) : field.type === 'textarea' ? (
                   <textarea
                     value={formData[field.key] || ''}
