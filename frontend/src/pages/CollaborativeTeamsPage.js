@@ -66,7 +66,23 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         alert('Team created successfully!');
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.detail}`);
+        console.error('Team creation error:', errorData);
+        
+        // Better error handling to avoid [object Object] display
+        let errorMessage = 'Failed to create team';
+        if (errorData && typeof errorData === 'object') {
+          if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              // Handle Pydantic validation errors
+              errorMessage = errorData.detail.map(err => err.msg || err.message || 'Validation error').join(', ');
+            }
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        }
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error creating team:', error);
