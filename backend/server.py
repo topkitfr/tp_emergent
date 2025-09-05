@@ -11997,13 +11997,9 @@ async def get_enriched_personal_kit(kit_id: str) -> PersonalKitResponse:
     kit = result[0]
     kit.pop('_id', None)
     
-    return PersonalKitResponse(
-        **kit,
-        reference_kit_info=kit['reference_kit_info'][0] if kit['reference_kit_info'] else {},
-        master_kit_info=kit['master_kit_info'][0] if kit['master_kit_info'] else {},
-        team_info=kit['team_info'][0] if kit['team_info'] else {},
-        brand_info=kit['brand_info'][0] if kit['brand_info'] else {}
-    )
+    # The aggregation pipeline already includes the enriched data
+    # Just return the PersonalKitResponse with the complete data
+    return PersonalKitResponse(**kit)
 
 # ================================
 # KIT STORE ENDPOINT (VESTIAIRE) - SHOWS REFERENCE KITS
