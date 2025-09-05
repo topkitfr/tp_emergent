@@ -304,8 +304,12 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         return;
       }
 
-      // Convert files to base64 if present
-      let teamDataWithImages = { ...formData };
+      // Convert files to base64 if present and prepare data with proper types
+      let teamDataWithImages = { 
+        ...formData,
+        // Convert founded_year to integer if provided
+        founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
+      };
       
       if (imageFiles.logo) {
         const logoReader = new FileReader();
