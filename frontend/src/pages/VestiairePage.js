@@ -164,11 +164,27 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         loadKitStore(); // Refresh list
       } else {
         console.error(`❌ Failed to add to collection: ${response.status}`);
-        alert(`Error: ${responseData.detail || 'Failed to add to collection'}`);
+        console.error('Error details:', responseData);
+        
+        // Better error handling to avoid [object Object] display
+        let errorMessage = 'Failed to add to collection';
+        if (responseData && typeof responseData === 'object') {
+          if (responseData.detail) {
+            if (typeof responseData.detail === 'string') {
+              errorMessage = responseData.detail;
+            } else if (Array.isArray(responseData.detail)) {
+              // Handle Pydantic validation errors
+              errorMessage = responseData.detail.map(err => err.msg || err.message || 'Validation error').join(', ');
+            }
+          } else if (responseData.message) {
+            errorMessage = responseData.message;
+          }
+        }
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error adding to collection:', error);
-      alert('Error adding to collection');
+      alert('Error adding to collection. Please try again.');
     }
   };
 
