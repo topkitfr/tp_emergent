@@ -67,31 +67,33 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
   const addToWantedDirectly = async (referenceKit) => {
     try {
-      console.log(`🔄 Adding Reference Kit ${referenceKit.id} to wanted collection (no details needed)`);
+      console.log(`🔄 Adding Reference Kit ${referenceKit.id} to wanted list (remains as Reference Kit)`);
       
-      const personalKitData = {
+      const wantedKitData = {
         reference_kit_id: referenceKit.id,
-        collection_type: 'wanted',
-        size: 'Any' // Required field for backend validation, but not meaningful for wanted items
+        preferred_size: null, // Optional - user can specify later
+        max_price_willing_to_pay: null, // Optional - user can specify later
+        notes: null, // Optional notes
+        priority: "medium" // Default priority
       };
 
-      const response = await fetch(`${API}/api/personal-kits`, {
+      const response = await fetch(`${API}/api/wanted-kits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
         },
-        body: JSON.stringify(personalKitData)
+        body: JSON.stringify(wantedKitData)
       });
 
       const responseData = await response.json();
 
       if (response.ok) {
-        console.log(`✅ Successfully added to wanted collection`);
-        alert(`Kit added to your want list! 🎯`);
+        console.log(`✅ Successfully added to wanted list (kit remains Reference Kit)`);
+        alert(`Kit added to your want list! 🎯\n\nThe kit remains a Reference Kit - no personal details needed.`);
         loadKitStore(); // Refresh list
       } else {
-        console.error(`❌ Failed to add to wanted collection: ${response.status}`);
+        console.error(`❌ Failed to add to wanted list: ${response.status}`);
         console.error('Error details:', responseData);
         
         // Better error handling to avoid [object Object] display
@@ -109,7 +111,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
-      console.error('Error adding to wanted collection:', error);
+      console.error('Error adding to wanted list:', error);
       alert('Error adding to want list. Please try again.');
     }
   };
