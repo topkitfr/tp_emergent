@@ -287,12 +287,21 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
       }
 
       try {
-        // Préparer les données avec les images en base64
+        // Map frontend form fields to backend model fields
         const competitionData = {
           ...formData,
+          competition_name: formData.name, // Map name to competition_name
+          type: formData.competition_type, // Map competition_type to type
+          alternative_names: formData.common_names, // Map common_names to alternative_names
           level: formData.level ? parseInt(formData.level) : null,
-          start_year: formData.start_year ? parseInt(formData.start_year) : null
+          year_created: formData.start_year ? parseInt(formData.start_year) : null
         };
+
+        // Remove frontend-only fields
+        delete competitionData.name;
+        delete competitionData.competition_type;
+        delete competitionData.common_names;
+        delete competitionData.start_year;
 
         // Ajouter le logo si présent
         if (imageFiles.logo) {
