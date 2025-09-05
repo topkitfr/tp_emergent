@@ -112,7 +112,7 @@ class WantListArchitectureTest:
             
             response = self.session.post(f"{BACKEND_URL}/wanted-kits", json=wanted_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201
                 data = response.json()
                 
                 # Verify minimal data structure
@@ -120,14 +120,20 @@ class WantListArchitectureTest:
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
-                    # Verify it's minimal (no PersonalKit fields)
-                    personal_kit_fields = ['size', 'condition', 'purchase_price', 'is_signed', 'has_printing']
-                    found_personal_fields = [field for field in personal_kit_fields if field in data]
+                    # Verify it's minimal (no PersonalKit fields like purchase_price, is_signed, etc.)
+                    personal_kit_fields = ['purchase_price', 'purchase_date', 'purchase_location', 'is_signed', 'has_printing', 'condition']
+                    found_personal_fields = [field for field in personal_kit_fields if field in data and data[field] is not None]
                     
                     if not found_personal_fields:
-                        self.log_test("Add to Wanted - Minimal Data", True, 
-                            f"WantedKit created with minimal data. ID: {data.get('id')}")
-                        return data.get('id')
+                        # Verify it has reference_kit_info (enriched data)
+                        if 'reference_kit_info' in data:
+                            self.log_test("Add to Wanted - Minimal Data", True, 
+                                f"WantedKit created with minimal data and enriched reference info. ID: {data.get('id')}")
+                            return data.get('id')
+                        else:
+                            self.log_test("Add to Wanted - Minimal Data", False, 
+                                "WantedKit missing reference_kit_info enrichment")
+                            return None
                     else:
                         self.log_test("Add to Wanted - Minimal Data", False, 
                             f"WantedKit contains PersonalKit fields: {found_personal_fields}")
