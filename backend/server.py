@@ -54,6 +54,21 @@ from collaborative_models import (
     MasterKitResponse, ReferenceKitResponse, PersonalKitResponse
 )
 
+# ================================
+# AUTO-APPROVAL SYSTEM FOR TESTING
+# ================================
+
+def enable_auto_approval_for_testing(entity_data: dict, user_id: str) -> dict:
+    """
+    Auto-approve entities for testing purposes.
+    This function automatically sets entities to COMMUNITY_VERIFIED status
+    to bypass manual validation during development and testing.
+    """
+    entity_data["verified_level"] = VerificationLevel.COMMUNITY_VERIFIED
+    entity_data["verified_at"] = datetime.utcnow()
+    entity_data["verified_by"] = user_id
+    return entity_data
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
