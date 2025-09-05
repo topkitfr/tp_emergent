@@ -11392,11 +11392,35 @@ async def get_master_kit(kit_id: str):
         kit = result[0]
         kit.pop('_id', None)
         
-        return MasterKitResponse(
+        # Extract enriched data separately
+        team_info = kit.pop('team_info', [])
+        brand_info = kit.pop('brand_info', [])
+        competition_info = kit.pop('competition_info', [])
+        
+        # Clean ObjectId fields from nested data
+        team_data = team_info[0] if team_info else {}
+        brand_data = brand_info[0] if brand_info else {}
+        competition_data = competition_info[0] if competition_info else {}
+        
+        # Remove MongoDB ObjectId fields
+        team_data.pop('_id', None)
+        brand_data.pop('_id', None)
+        competition_data.pop('_id', None)
+        
+        # Provide default values for missing fields
+        kit_data = {
             **kit,
-            team_info=kit['team_info'][0] if kit['team_info'] else {},
-            brand_info=kit['brand_info'][0] if kit['brand_info'] else {},
-            competition_info=kit['competition_info'][0] if kit['competition_info'] else None
+            "main_sponsor": kit.get("main_sponsor", ""),
+            "reference_images": kit.get("reference_images", []),
+            "total_reference_kits": kit.get("total_reference_kits", 0),
+            "total_collectors": kit.get("total_collectors", 0)
+        }
+        
+        return MasterKitResponse(
+            **kit_data,
+            team_info=team_data,
+            brand_info=brand_data,
+            competition_info=competition_data or {}
         )
         
     except HTTPException:
