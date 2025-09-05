@@ -200,22 +200,68 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     if (!editingItem) return;
 
     try {
+      // Map frontend form fields to backend field names
+      const backendData = {
+        // Basic fields
+        size: editFormData.size,
+        condition: editFormData.condition,
+        
+        // Purchase Information - Map to backend field names
+        purchase_price: parseFloat(editFormData.price_buy) || null,
+        price_value: parseFloat(editFormData.price_value) || null,
+        purchase_date: editFormData.purchase_date || null,
+        purchase_location: editFormData.purchase_location || null,
+        
+        // Personal Notes - Map info back to personal_notes for backend
+        personal_notes: editFormData.info || null,
+        acquisition_story: editFormData.acquisition_story || null,
+        
+        // Printing Details - Map to backend field names
+        has_printing: editFormData.has_printing,
+        is_custom_printing: editFormData.is_custom_printing,
+        printed_name: editFormData.player_name || null, // Map player_name back to printed_name
+        printed_number: parseInt(editFormData.player_number) || null, // Map player_number back to printed_number
+        custom_print_text: editFormData.custom_print_text || null,
+        
+        // Physical Details
+        is_worn: editFormData.is_worn,
+        is_signed: editFormData.is_signed,
+        signed_by: editFormData.signed_by || null,
+        
+        // Special Attributes
+        is_match_worn: editFormData.is_match_worn,
+        match_details: editFormData.match_details || null,
+        is_authenticated: editFormData.is_authenticated,
+        authentication_details: editFormData.authentication_details || null,
+        
+        // Collection Management
+        times_worn: parseInt(editFormData.times_worn) || 0,
+        
+        // Marketplace
+        is_for_sale: editFormData.for_sale,
+        asking_price: parseFloat(editFormData.asking_price) || null
+      };
+
+      console.log('🔄 Updating personal kit with data:', backendData);
+
       const response = await fetch(`${API}/api/personal-kits/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
         },
-        body: JSON.stringify(editFormData)
+        body: JSON.stringify(backendData)
       });
 
       if (response.ok) {
+        console.log('✅ Personal kit updated successfully');
         await loadCollections(); // Reload collections
         setEditingItem(null);
         setEditFormData({});
         alert('Personal kit updated successfully!');
       } else {
         const errorData = await response.json();
+        console.error('❌ Update failed:', errorData);
         alert(`Error: ${errorData.detail || 'Failed to update personal kit'}`);
       }
     } catch (error) {
