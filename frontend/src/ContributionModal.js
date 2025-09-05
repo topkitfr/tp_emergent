@@ -204,11 +204,12 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         return [
           { key: 'name', label: 'Team Name', type: 'text', required: true },
           { key: 'short_name', label: 'Short Name', type: 'text' },
+          { key: 'country', label: 'Country', type: 'text', required: true },
           { key: 'city', label: 'City', type: 'text' },
-          { key: 'country', label: 'Country', type: 'text' },
           { key: 'founded_year', label: 'Founded Year', type: 'number' },
-          { key: 'colors', label: 'Colors (comma separated)', type: 'text' },
-          { key: 'logo_url', label: 'Logo URL', type: 'url' }
+          { key: 'colors', label: 'Team Colors (comma separated)', type: 'text', placeholder: 'e.g., Red, Blue, White' },
+          { key: 'primary_competition_id', label: 'Primary Competition', type: 'select', options: 'competitions' },
+          { key: 'current_competitions', label: 'Current Competitions', type: 'multiselect', options: 'competitions' }
         ];
       case 'brand':
         return [
