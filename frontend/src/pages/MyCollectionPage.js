@@ -197,11 +197,21 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     }
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (!confirm('Are you sure you want to remove this kit from your collection?')) return;
+  const handleDeleteItem = async (item) => {
+    // Determine if this is an owned item (PersonalKit) or wanted item (WantedKit)
+    const isOwnedItem = activeTab === 'owned';
+    const itemType = isOwnedItem ? 'owned collection' : 'want list';
+    const confirmMessage = `Are you sure you want to remove this kit from your ${itemType}?`;
+    
+    if (!confirm(confirmMessage)) return;
 
     try {
-      const response = await fetch(`${API}/api/personal-kits/${itemId}`, {
+      // Use different endpoints for owned vs wanted items
+      const endpoint = isOwnedItem 
+        ? `${API}/api/personal-kits/${item.id}`  // Delete PersonalKit
+        : `${API}/api/wanted-kits/${item.id}`;   // Delete WantedKit
+      
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -210,14 +220,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
       if (response.ok) {
         await loadCollections(); // Reload collections
-        alert('Personal kit removed from collection!');
+        alert(`Kit removed from ${itemType}!`);
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.detail || 'Failed to remove personal kit'}`);
+        alert(`Error: ${errorData.detail || `Failed to remove from ${itemType}`}`);
       }
     } catch (error) {
-      console.error('Error deleting personal kit:', error);
-      alert('Error removing personal kit');
+      console.error(`Error deleting from ${itemType}:`, error);
+      alert(`Error removing from ${itemType}`);
     }
   };
 
