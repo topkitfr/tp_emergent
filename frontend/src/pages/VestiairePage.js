@@ -1354,20 +1354,20 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
 
                 {/* Info+ (free text) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Info+</label>
+                <div className="border-b border-gray-200 pb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">📝 Additional Notes</label>
                   <textarea
                     value={personalDetails.info}
                     onChange={(e) => setPersonalDetails({...personalDetails, info: e.target.value})}
                     rows="3"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Additional information about this kit..."
+                    placeholder="Additional information about this kit (purchase story, wear occasions, etc.)"
                   />
                 </div>
 
                 {/* Marketplace Option - Coming Soon */}
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Marketplace Options</h3>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">🏪 Marketplace Options</h3>
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -1401,9 +1401,9 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                     !personalDetails.is_custom_printing && 
                     (!personalDetails.player_name || !personalDetails.player_number)
                   }
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  Add to {selectedCollectionType === 'owned' ? 'Owned' : 'Wanted'} Collection
+                  ✅ Add to Owned Collection
                 </button>
               </div>
             </div>
