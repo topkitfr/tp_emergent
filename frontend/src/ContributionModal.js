@@ -20,6 +20,10 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
     primary_photo: '',
     secondary_photos: []
   });
+  
+  // State for new field types
+  const [newColor, setNewColor] = useState('');
+  const [newName, setNewName] = useState('');
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
