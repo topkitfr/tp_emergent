@@ -1345,7 +1345,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 </button>
                 <button
                   onClick={handlePersonalDetailsSubmit}
-                  disabled={!personalDetails.player_name || !personalDetails.player_number}
+                  disabled={
+                    personalDetails.has_printing && 
+                    !personalDetails.is_custom_printing && 
+                    (!personalDetails.player_name || !personalDetails.player_number)
+                  }
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   Add to {selectedCollectionType === 'owned' ? 'Owned' : 'Wanted'} Collection
