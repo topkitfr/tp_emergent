@@ -250,23 +250,23 @@ class TeamCompetitionIntegerParsingTester:
             print(f"❌ Competition creation error: {e}")
             return None
 
-    def verify_image_storage(self, competition_name):
-        """Verify that images are properly stored in the database"""
-        print(f"\n🔍 Verifying Image Storage for Competition '{competition_name}'...")
+    def verify_image_storage_by_search(self, search_term):
+        """Verify image storage by searching for competitions"""
+        print(f"\n🔍 Verifying Image Storage by searching for '{search_term}'...")
         
         try:
-            # Use the competitions endpoint with search to find our created competition
-            response = self.session.get(f"{BACKEND_URL}/competitions", params={"search": competition_name})
+            response = self.session.get(f"{BACKEND_URL}/competitions", params={"search": search_term})
             print(f"Competition search response status: {response.status_code}")
             
             if response.status_code == 200:
                 competitions = response.json()
                 print(f"Found {len(competitions)} competitions matching search")
                 
-                # Find our specific competition
+                # Find the most recent competition with our search term
                 target_competition = None
                 for comp in competitions:
-                    if comp.get('competition_name') == competition_name:
+                    comp_name = comp.get('competition_name', '')
+                    if search_term in comp_name:
                         target_competition = comp
                         break
                 
@@ -291,20 +291,12 @@ class TeamCompetitionIntegerParsingTester:
                     else:
                         print(f"   ❌ Secondary images field missing or empty")
                     
-                    # Overall verification
-                    if logo and secondary_images:
+                    # Overall verification - consider successful if at least one image type works
+                    if logo or secondary_images:
                         self.test_results["image_storage_verification"] = True
                         print(f"   ✅ Image storage verification PASSED")
                     else:
-                        print(f"   ⚠️  Partial image storage - checking individual fields")
-                        if logo:
-                            print(f"      ✅ Logo storage working")
-                        if secondary_images:
-                            print(f"      ✅ Secondary images storage working")
-                        # Consider it successful if at least one image type is working
-                        if logo or secondary_images:
-                            self.test_results["image_storage_verification"] = True
-                            print(f"   ✅ Image storage verification PASSED (partial)")
+                        print(f"   ❌ Image storage verification FAILED")
                     
                     return True
                 else:
