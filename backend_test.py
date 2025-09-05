@@ -477,28 +477,28 @@ class WantListArchitectureTest:
         self.cleanup_existing_collections(reference_kit_id)
         print()
         
-        # Step 3: Test Add to Wanted (minimal data)
+        # Step 5: Test Add to Wanted (minimal data)
         wanted_kit_id = self.test_add_to_wanted_minimal_data(reference_kit_id)
         if not wanted_kit_id:
             print("❌ Add to Wanted failed. Cannot proceed with remaining tests.")
             return False
         
-        # Step 4: Verify Reference Kit status
+        # Step 6: Verify Reference Kit status
         if not self.test_verify_reference_kit_status(reference_kit_id):
             print("⚠️ Reference Kit status verification failed.")
         
-        # Step 5: Test Add to Owned (detailed data)
+        # Step 7: Test Add to Owned (detailed data)
         owned_kit_id = self.test_add_to_owned_detailed(reference_kit_id)
         if not owned_kit_id:
             print("❌ Add to Owned failed. Cannot test two-way relationship.")
         else:
-            # Step 6: Test Two-Way Relationship
+            # Step 8: Test Two-Way Relationship
             self.test_two_way_relationship(reference_kit_id)
         
-        # Step 7: Test Separate Retrieval
+        # Step 9: Test Separate Retrieval
         self.test_separate_retrieval()
         
-        # Step 8: Test Endpoint Separation
+        # Step 10: Test Endpoint Separation
         self.test_endpoint_separation()
         
         # Summary
