@@ -1534,6 +1534,180 @@ async def update_admin_settings(
         {"updated_settings": settings}
     )
     
+@api_router.get("/admin/dashboard-stats")
+async def get_admin_dashboard_stats(current_user: dict = Depends(get_current_user)):
+    """Get comprehensive dashboard statistics for admin overview"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        # Users statistics
+        total_users = await db.users.count_documents({})
+        active_users_30d = await db.users.count_documents({
+            "last_active": {"$gte": datetime.utcnow() - timedelta(days=30)}
+        })
+        
+        # Content statistics
+        total_teams = await db.teams.count_documents({})
+        total_competitions = await db.competitions.count_documents({})
+        total_brands = await db.brands.count_documents({})
+        total_master_jerseys = await db.master_jerseys.count_documents({})
+        total_reference_kits = await db.reference_kits.count_documents({})
+        total_personal_kits = await db.personal_kits.count_documents({})
+        total_wanted_kits = await db.wanted_kits.count_documents({})
+        
+        # Moderation statistics
+        pending_contributions = await db.contributions.count_documents({
+            "status": "PENDING"
+        })
+        total_contributions = await db.contributions.count_documents({})
+        approved_contributions = await db.contributions.count_documents({
+            "status": "APPROVED"
+        })
+        
+        # System health
+        system_status = {
+            "auto_approval": system_settings.get("auto_approval_enabled", True),
+            "community_voting": system_settings.get("community_voting_enabled", True),
+            "admin_notifications": system_settings.get("admin_notifications", True)
+        }
+        
+        return {
+            "users": {
+                "total": total_users,
+                "active_30d": active_users_30d,
+                "growth_rate": "N/A"  # Could calculate if needed
+            },
+            "content": {
+                "teams": total_teams,
+                "competitions": total_competitions,
+                "brands": total_brands,
+                "master_jerseys": total_master_jerseys,
+                "reference_kits": total_reference_kits,
+                "personal_kits": total_personal_kits,
+                "wanted_kits": total_wanted_kits
+            },
+            "moderation": {
+                "pending_contributions": pending_contributions,
+                "total_contributions": total_contributions,
+                "approved_contributions": approved_contributions,
+                "approval_rate": round((approved_contributions / total_contributions * 100) if total_contributions > 0 else 0, 1)
+            },
+            "system": system_status
+        }
+        
+    except Exception as e:
+        logger.error(f"Admin dashboard stats error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving dashboard statistics")
+
+@api_router.get("/admin/users")
+async def get_admin_users(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get users for admin management with pagination and search"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        skip = (page - 1) * limit
+        query = {}
+        
+        if search:
+            query["$or"] = [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"email": {"$regex": search, "$options": "i"}}
+            ]
+        
+        users = await db.users.find(query).skip(skip).limit(limit).to_list(None)
+        total_users = await db.users.count_documents(query)
+        
+        # Remove sensitive information
+        for user in users:
+            user.pop('_id', None)
+            user.pop('password_hash', None)
+            user.pop('two_factor_secret', None)
+        
+        return {
+            "users": users,
+            "total": total_users,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total_users + limit - 1) // limit
+        }
+        
+    except Exception as e:
+        logger.error(f"Admin users error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving users")
+
+@api_router.get("/admin/pending-approvals")
+async def get_pending_approvals(current_user: dict = Depends(get_current_user)):
+    """Get all pending items requiring admin approval"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        pending_items = []
+        
+        # Get pending teams
+        pending_teams = await db.teams.find({
+            "verified_level": "PENDING"
+        }).to_list(None)
+        
+        for team in pending_teams:
+            team.pop('_id', None)
+            pending_items.append({
+                "id": team["id"],
+                "type": "team",
+                "name": team["name"],
+                "created_at": team.get("created_at"),
+                "created_by": team.get("created_by"),
+                "data": team
+            })
+        
+        # Get pending competitions
+        pending_competitions = await db.competitions.find({
+            "verified_level": "PENDING"
+        }).to_list(None)
+        
+        for comp in pending_competitions:
+            comp.pop('_id', None)
+            pending_items.append({
+                "id": comp["id"],
+                "type": "competition",
+                "name": comp["competition_name"],
+                "created_at": comp.get("created_at"),
+                "created_by": comp.get("created_by"),
+                "data": comp
+            })
+        
+        # Get pending contributions
+        pending_contributions = await db.contributions.find({
+            "status": "PENDING"
+        }).to_list(None)
+        
+        for contrib in pending_contributions:
+            contrib.pop('_id', None)
+            pending_items.append({
+                "id": contrib["id"],
+                "type": "contribution",
+                "name": contrib.get("entity_name", "Unknown"),
+                "created_at": contrib.get("created_at"),
+                "created_by": contrib.get("user_id"),
+                "data": contrib
+            })
+        
+        # Sort by creation date (newest first)
+        pending_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        
+        return pending_items
+        
+    except Exception as e:
+        logger.error(f"Admin pending approvals error: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving pending approvals")
+
     return {"message": "Settings updated successfully", "settings": system_settings}
 
 # Authentication endpoints
