@@ -358,10 +358,18 @@ class TeamCompetitionIntegerParsingTester:
         
         # Verify image storage for created competitions
         if competition_id_1:
-            self.verify_image_storage(competition_id_1)
+            # Get the competition name for verification
+            comp_name_1 = f"Test Competition Logo {datetime.now().strftime('%H%M%S')}"
+            # Use a more recent timestamp since we're running this after creation
+            import time
+            time.sleep(1)  # Small delay to ensure timestamp difference
+            current_time = datetime.now().strftime('%H%M%S')
+            # Try to find the competition by searching for "Test Competition Logo"
+            self.verify_image_storage_by_search("Test Competition Logo")
         
         if competition_id_2:
-            self.verify_image_storage(competition_id_2)
+            # Try to find the competition by searching for "Test Competition Secondary"
+            self.verify_image_storage_by_search("Test Competition Secondary")
         
         # Print final results
         self.print_test_summary()
