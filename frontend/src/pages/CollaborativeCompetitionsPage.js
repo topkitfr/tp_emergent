@@ -306,7 +306,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
         // Ajouter le logo si présent
         if (imageFiles.logo) {
           const logoBase64 = await convertFileToBase64(imageFiles.logo);
-          competitionData.logo_url = logoBase64;
+          competitionData.logo = logoBase64; // Fixed: use 'logo' not 'logo_url'
         }
 
         // Ajouter les images secondaires si présentes
