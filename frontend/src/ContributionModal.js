@@ -27,27 +27,24 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
+  // Initialize form data when entity or entityType changes
   useEffect(() => {
-    if (isOpen && entity) {
-      // Initialize form with current data
-      const initialData = {
-        name: entity.name || '',
-        short_name: entity.short_name || '',
-        city: entity.city || '',
-        country: entity.country || '',
-        founded_year: entity.founded_year || '',
-        colors: Array.isArray(entity.colors) ? entity.colors.join(', ') : '',
-        logo_url: entity.logo_url || '',
-        official_name: entity.official_name || '',
-        competition_type: entity.competition_type || '',
-        level: entity.level || '',
-        website: entity.website || '',
-        // Other fields based on entity type...
-      };
+    if (entity && entityType) {
+      const fields = getFieldsForEntityType(entityType);
+      const initialFormData = {};
       
-      setOriginalData(initialData);
-      setFormData(initialData);
-      setTitle('');
+      // Initialize form data based on entity data and field types
+      fields.forEach(field => {
+        if (field.type === 'color_list' || field.type === 'name_list') {
+          // Initialize array fields as arrays
+          initialFormData[field.key] = entity[field.key] || [];
+        } else {
+          // Initialize other fields normally
+          initialFormData[field.key] = entity[field.key] || '';
+        }
+      });
+      
+      setFormData(initialFormData);
       setDescription('');
       setSourceUrls(['']);
       setChanges([]);
@@ -56,17 +53,15 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       
       // Reset image states
       setImageFiles({
-        logo: null,
         primary_photo: null,
         secondary_photos: []
       });
       setImagePreviews({
-        logo: '',
         primary_photo: '',
         secondary_photos: []
       });
     }
-  }, [isOpen, entity]);
+  }, [entity, entityType]);
 
   // Detect changes between original and current form data
   useEffect(() => {
