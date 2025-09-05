@@ -442,115 +442,159 @@ const ModuleContent = ({ activeModule, dashboardData, API, user, systemSettings,
 };
 
 // Overview Module - Dashboard Principal
-const OverviewModule = ({ dashboardData }) => (
+const OverviewModule = ({ dashboardData, systemSettings, updateSystemSettings, settingsLoading, loading }) => (
   <div className="space-y-6">
-    
-    {/* Metrics Grid - Design Standard */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      
-      {/* Users Metric */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-blue-700">Utilisateurs Totaux</p>
-            <p className="text-2xl font-bold text-blue-900">{dashboardData.users?.total || 1247}</p>
-            <p className="text-sm text-blue-600 mt-1">+{dashboardData.users?.new_today || 23} aujourd'hui</p>
-          </div>
-          <div className="text-3xl">👥</div>
-        </div>
-      </div>
+    <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-bold text-gray-900">📊 Dashboard Principal</h2>
+      <div className="text-sm text-gray-500">Temps réel</div>
+    </div>
 
-      {/* Contributions Metric */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+    {/* System Settings Toggle */}
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold mb-4">⚙️ Paramètres Système</h3>
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-green-700">Contributions</p>
-            <p className="text-2xl font-bold text-green-900">{dashboardData.contributions?.approved || 156}</p>
-            <p className="text-sm text-orange-600 mt-1">{dashboardData.contributions?.pending || 23} en attente</p>
-          </div>
-          <div className="text-3xl">✏️</div>
-        </div>
-      </div>
-
-      {/* Entities Metric */}
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-purple-700">Entités Totales</p>
-            <p className="text-2xl font-bold text-purple-900">
-              {(dashboardData.entities?.teams || 348) + (dashboardData.entities?.brands || 12) + (dashboardData.entities?.players || 1)}
+            <span className="font-medium">Auto-Approval Mode</span>
+            <p className="text-sm text-gray-600">
+              {systemSettings.auto_approval_enabled 
+                ? "✅ Activated - New entities appear directly in catalogue" 
+                : "🔄 Disabled - New entities require manual approval"}
             </p>
-            <p className="text-sm text-purple-600 mt-1">Teams, Brands, Players</p>
           </div>
-          <div className="text-3xl">🏆</div>
+          <button
+            onClick={() => updateSystemSettings({
+              auto_approval_enabled: !systemSettings.auto_approval_enabled
+            })}
+            disabled={settingsLoading}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              systemSettings.auto_approval_enabled ? 'bg-green-600' : 'bg-gray-300'
+            } ${settingsLoading ? 'opacity-50' : ''}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                systemSettings.auto_approval_enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
-      </div>
-
-      {/* System Health */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-green-700">Santé Système</p>
-            <p className="text-2xl font-bold text-green-900">{dashboardData.system?.uptime || '99.9%'}</p>
-            <p className="text-sm text-green-600 mt-1">Uptime</p>
+            <span className="font-medium">Community Voting</span>
+            <p className="text-sm text-gray-600">Enable community voting on contributions</p>
           </div>
-          <div className="text-3xl">⚡</div>
+          <button
+            onClick={() => updateSystemSettings({
+              community_voting_enabled: !systemSettings.community_voting_enabled
+            })}
+            disabled={settingsLoading}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              systemSettings.community_voting_enabled ? 'bg-blue-600' : 'bg-gray-300'
+            } ${settingsLoading ? 'opacity-50' : ''}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                systemSettings.community_voting_enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </div>
     </div>
 
-    {/* Quick Actions - Design Standard */}
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+    {/* Dashboard Statistics */}
+    {loading ? (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading dashboard statistics...</p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Users Stats */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100">Total Users</p>
+              <p className="text-3xl font-bold">{dashboardData.users?.total || 0}</p>
+              <p className="text-blue-100 text-sm">Active: {dashboardData.users?.active_30d || 0}</p>
+            </div>
+            <div className="text-4xl opacity-80">👥</div>
+          </div>
+        </div>
+
+        {/* Content Stats */}
+        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100">Total Content</p>
+              <p className="text-3xl font-bold">
+                {(dashboardData.content?.teams || 0) + 
+                 (dashboardData.content?.competitions || 0) + 
+                 (dashboardData.content?.brands || 0)}
+              </p>
+              <p className="text-green-100 text-sm">Teams: {dashboardData.content?.teams || 0}</p>
+            </div>
+            <div className="text-4xl opacity-80">🏆</div>
+          </div>
+        </div>
+
+        {/* Collections Stats */}
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-100">Collections</p>
+              <p className="text-3xl font-bold">
+                {(dashboardData.content?.personal_kits || 0) + (dashboardData.content?.wanted_kits || 0)}
+              </p>
+              <p className="text-purple-100 text-sm">Personal: {dashboardData.content?.personal_kits || 0}</p>
+            </div>
+            <div className="text-4xl opacity-80">👕</div>
+          </div>
+        </div>
+
+        {/* Moderation Stats */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100">Pending Review</p>
+              <p className="text-3xl font-bold">{dashboardData.moderation?.pending_contributions || 0}</p>
+              <p className="text-orange-100 text-sm">
+                Rate: {dashboardData.moderation?.approval_rate || 0}%
+              </p>
+            </div>
+            <div className="text-4xl opacity-80">🔍</div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* System Status */}
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold mb-4">System Status</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button className="bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg p-4 text-left transition-colors">
-          <div className="text-green-600 text-2xl mb-2">✅</div>
-          <h4 className="font-medium text-green-900 mb-1">Approuver Tout</h4>
-          <p className="text-sm text-green-700">Approuver toutes les contributions en attente</p>
-        </button>
-        <button className="bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-4 text-left transition-colors">
-          <div className="text-blue-600 text-2xl mb-2">💾</div>
-          <h4 className="font-medium text-blue-900 mb-1">Export Backup</h4>
-          <p className="text-sm text-blue-700">Télécharger sauvegarde complète</p>
-        </button>
-        <button className="bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg p-4 text-left transition-colors">
-          <div className="text-orange-600 text-2xl mb-2">🔧</div>
-          <h4 className="font-medium text-orange-900 mb-1">Mode Maintenance</h4>
-          <p className="text-sm text-orange-700">Activer maintenance planifiée</p>
-        </button>
-      </div>
-    </div>
-
-    {/* Recent Activity - Design Standard */}
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité Récente</h3>
-      <div className="space-y-3">
-        <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-            <span className="text-green-600 text-sm">✓</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Contribution approuvée</p>
-            <p className="text-xs text-gray-500">FC Barcelona logo - Il y a 2 minutes</p>
-          </div>
+        <div className="text-center">
+          <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${
+            systemSettings.auto_approval_enabled ? 'bg-green-500' : 'bg-orange-500'
+          }`}></div>
+          <p className="text-sm font-medium">Auto Approval</p>
+          <p className="text-xs text-gray-600">
+            {systemSettings.auto_approval_enabled ? 'Active' : 'Manual'}
+          </p>
         </div>
-        <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-sm">👤</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Nouvel utilisateur inscrit</p>
-            <p className="text-xs text-gray-500">user@example.com - Il y a 5 minutes</p>
-          </div>
+        <div className="text-center">
+          <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${
+            systemSettings.community_voting_enabled ? 'bg-green-500' : 'bg-gray-400'
+          }`}></div>
+          <p className="text-sm font-medium">Community Voting</p>
+          <p className="text-xs text-gray-600">
+            {systemSettings.community_voting_enabled ? 'Enabled' : 'Disabled'}
+          </p>
         </div>
-        <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-            <span className="text-orange-600 text-sm">⚠️</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Contribution signalée</p>
-            <p className="text-xs text-gray-500">Nike brand modification - Il y a 10 minutes</p>
-          </div>
+        <div className="text-center">
+          <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-2"></div>
+          <p className="text-sm font-medium">System Health</p>
+          <p className="text-xs text-gray-600">Operational</p>
         </div>
       </div>
     </div>
