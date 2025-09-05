@@ -219,8 +219,11 @@ const CollaborativeMasterJerseyPage = ({
   const CreateMasterJerseyModal = () => {
     const [formData, setFormData] = useState({
       team_id: '',
+      brand_id: '',
+      season: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2), // Default to current season
       jersey_type: 'home',
-      colors: '', // Changed from primary_color to colors
+      model: 'authentic',
+      colors: '',
       pattern: ''
     });
 
