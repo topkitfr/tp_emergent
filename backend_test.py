@@ -404,6 +404,9 @@ Dashboard Statistics Retrieved:
         manual_approval_settings["auto_approval_enabled"] = False
         
         if self.test_admin_settings_update(manual_approval_settings):
+            # Add small delay to ensure different timestamp
+            import time
+            time.sleep(1)
             team_id_2, status_2 = self.create_test_team(False)
         
         # Test 3: Verify pending items and approve manually
