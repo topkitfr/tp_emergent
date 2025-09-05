@@ -29,7 +29,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
 
   // Initialize form data when entity or entityType changes
   useEffect(() => {
-    if (entity && entityType) {
+    if (isOpen && entity && entityType) {
       const fields = getFieldsForEntityType(entityType);
       const initialFormData = {};
       
@@ -44,6 +44,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         }
       });
       
+      setOriginalData(initialFormData);
       setFormData(initialFormData);
       setDescription('');
       setSourceUrls(['']);
@@ -53,15 +54,17 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
       
       // Reset image states
       setImageFiles({
+        logo: null,
         primary_photo: null,
         secondary_photos: []
       });
       setImagePreviews({
+        logo: '',
         primary_photo: '',
         secondary_photos: []
       });
     }
-  }, [entity, entityType]);
+  }, [isOpen, entity, entityType]);
 
   // Detect changes between original and current form data
   useEffect(() => {
