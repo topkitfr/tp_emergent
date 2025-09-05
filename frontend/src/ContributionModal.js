@@ -229,11 +229,14 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         ];
       case 'competition':
         return [
-          { key: 'name', label: 'Competition Name', type: 'text', required: true },
+          { key: 'competition_name', label: 'Competition Name', type: 'text', required: true },
           { key: 'official_name', label: 'Official Name', type: 'text' },
-          { key: 'competition_type', label: 'Type', type: 'select', options: ['League', 'Cup', 'International'] },
+          { key: 'alternative_names', label: 'Alternative Names (comma separated)', type: 'text' },
+          { key: 'type', label: 'Type', type: 'select', required: true, options: ['National league', 'Continental competition', 'International competition', 'Intercontinental competition', 'National cup', 'Continental super cup'] },
+          { key: 'confederations_federations', label: 'Confederations/Federations', type: 'multiselect', options: ['UEFA', 'FIFA', 'CONMEBOL', 'CAF', 'CONCACAF', 'AFC', 'OFC'] },
+          { key: 'country', label: 'Country', type: 'text' },
           { key: 'level', label: 'Level', type: 'number' },
-          { key: 'country', label: 'Country', type: 'text' }
+          { key: 'year_created', label: 'Year Created', type: 'number' }
         ];
       case 'master_jersey':
         return [
