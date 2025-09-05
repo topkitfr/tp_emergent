@@ -413,17 +413,24 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEditItem(item)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
-                  >
-                    Edit
-                  </button>
+                  {/* Edit button ONLY for owned items (PersonalKits) */}
+                  {activeTab === 'owned' && (
+                    <button
+                      onClick={() => handleEditItem(item)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                      title="Edit personal kit details"
+                    >
+                      Edit Details
+                    </button>
+                  )}
+                  
+                  {/* Remove button for both owned and wanted items */}
                   <button
                     onClick={() => handleDeleteItem(item)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                    className={`${activeTab === 'owned' ? 'flex-1' : 'w-full'} bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors`}
+                    title={`Remove from ${activeTab === 'owned' ? 'owned collection' : 'want list'}`}
                   >
-                    Remove
+                    {activeTab === 'owned' ? 'Remove from Collection' : 'Remove from Want List'}
                   </button>
                 </div>
               </div>
