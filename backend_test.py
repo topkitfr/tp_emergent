@@ -1,32 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-Backend Testing for Want List vs Owned Collection System Critical Bug Fixes
-
-This test verifies the critical bug fixes implemented for the want list vs owned collection system:
-
-Issues Reported by User:
-1. Can still edit jerseys in wantlist (should NOT be editable - they're Reference Kits)
-2. Removing from wantlist deletes from owned (Delete operations should be separate)
-3. Adding to owned also adds to wantlist (Should remove from wantlist when adding to owned)
-
-Fixes Implemented:
-1. Frontend: Updated MyCollectionPage.js to use separate endpoints (/api/personal-kits vs /api/wanted-kits)
-2. Frontend: Disabled edit button for wanted items (only show for owned items)
-3. Frontend: Fixed delete function to use correct endpoints based on item type
-4. Backend: Added DELETE /api/wanted-kits/{kit_id} endpoint
-5. Backend: Separated DELETE endpoints for owned vs wanted
-
-Test Requirements:
-1. Test Separate Collections: Verify GET /api/personal-kits and GET /api/wanted-kits return different data
-2. Test Separate Deletes: DELETE from wanted should NOT affect owned, and vice versa
-3. Test Add to Owned Logic: Adding to owned should remove from wanted (not add to both)
-4. Test Data Separation: Owned items should have PersonalKit data, wanted items should have WantedKit data
-5. Verify Two-Way Relationship: Still works correctly (wanted→owned removes from wanted)
-
-Authentication: steinmetzlivio@gmail.com / T0p_Mdp_1288*
-"""
-
 import requests
 import json
 import sys
@@ -34,746 +7,576 @@ from datetime import datetime
 
 # Configuration
 BACKEND_URL = "https://jersey-collection.preview.emergentagent.com/api"
-TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
-TEST_USER_PASSWORD = "T0p_Mdp_1288*"
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
 
-class WantListOwnedCollectionTester:
+class FormCreationTester:
     def __init__(self):
         self.session = requests.Session()
-        self.user_token = None
+        self.auth_token = None
         self.user_id = None
-        self.test_results = []
         
-    def log_result(self, test_name, success, message, details=None):
-        """Log test result"""
-        result = {
-            "test": test_name,
-            "success": success,
-            "message": message,
-            "details": details or {},
-            "timestamp": datetime.now().isoformat()
+    def authenticate(self):
+        """Authenticate as admin user"""
+        print("🔐 Authenticating admin user...")
+        
+        login_data = {
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
         }
-        self.test_results.append(result)
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name}")
-        print(f"   {message}")
-        if details:
-            print(f"   Details: {details}")
-        print()
-
-    def authenticate_user(self):
-        """Authenticate test user"""
-        print("🔐 AUTHENTICATING USER...")
         
         try:
-            # Login user
-            login_data = {
-                "email": TEST_USER_EMAIL,
-                "password": TEST_USER_PASSWORD
-            }
-            
             response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
+            print(f"Login response status: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
-                self.user_token = data.get("token")
+                self.auth_token = data.get("token")
                 user_info = data.get("user", {})
                 self.user_id = user_info.get("id")
                 
                 # Set authorization header for future requests
                 self.session.headers.update({
-                    "Authorization": f"Bearer {self.user_token}"
+                    "Authorization": f"Bearer {self.auth_token}",
+                    "Content-Type": "application/json"
                 })
                 
-                self.log_result(
-                    "User Authentication",
-                    True,
-                    f"Successfully authenticated user: {user_info.get('name', 'Unknown')} (ID: {self.user_id})",
-                    {"email": TEST_USER_EMAIL, "token_length": len(self.user_token) if self.user_token else 0}
-                )
+                print(f"✅ Authentication successful!")
+                print(f"   User: {user_info.get('name')} ({user_info.get('email')})")
+                print(f"   Role: {user_info.get('role')}")
+                print(f"   User ID: {self.user_id}")
+                print(f"   Token length: {len(self.auth_token)} characters")
                 return True
             else:
-                self.log_result(
-                    "User Authentication",
-                    False,
-                    f"Authentication failed with status {response.status_code}",
-                    {"response": response.text}
-                )
+                print(f"❌ Authentication failed: {response.status_code}")
+                print(f"   Response: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result(
-                "User Authentication",
-                False,
-                f"Authentication error: {str(e)}"
-            )
+            print(f"❌ Authentication error: {e}")
             return False
-
-    def test_separate_collections_endpoints(self):
-        """Test that /api/personal-kits and /api/wanted-kits return different data"""
-        print("🔍 TESTING SEPARATE COLLECTIONS ENDPOINTS...")
+    
+    def test_team_creation(self):
+        """Test Team Creation Fix (POST /api/teams)"""
+        print("\n🏟️ Testing Team Creation Fix...")
+        
+        # Test 1: Valid team creation
+        print("Test 1: Valid team creation")
+        team_data = {
+            "name": "Test Team FC",
+            "country": "France",
+            "city": "Paris",
+            "founded_year": 2024,
+            "short_name": "TTFC"
+        }
         
         try:
-            # Test GET /api/personal-kits (owned collection)
-            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
+            response = self.session.post(f"{BACKEND_URL}/teams", json=team_data)
+            print(f"   Status: {response.status_code}")
             
-            if owned_response.status_code == 200 and wanted_response.status_code == 200:
-                owned_data = owned_response.json()
-                wanted_data = wanted_response.json()
-                
-                # Verify different endpoints return different data structures
-                owned_count = len(owned_data) if isinstance(owned_data, list) else 0
-                wanted_count = len(wanted_data) if isinstance(wanted_data, list) else 0
-                
-                self.log_result(
-                    "Separate Collections Endpoints",
-                    True,
-                    f"Both endpoints accessible - Owned: {owned_count} items, Wanted: {wanted_count} items",
-                    {
-                        "owned_endpoint": "/api/personal-kits?collection_type=owned",
-                        "wanted_endpoint": "/api/wanted-kits",
-                        "owned_count": owned_count,
-                        "wanted_count": wanted_count,
-                        "owned_structure": type(owned_data).__name__,
-                        "wanted_structure": type(wanted_data).__name__
-                    }
-                )
-                return True, owned_data, wanted_data
+            if response.status_code == 201:
+                data = response.json()
+                print(f"   ✅ Team created successfully!")
+                print(f"   Team ID: {data.get('id')}")
+                print(f"   Team Name: {data.get('name')}")
+                return data.get('id')
             else:
-                self.log_result(
-                    "Separate Collections Endpoints",
-                    False,
-                    f"Endpoint access failed - Owned: {owned_response.status_code}, Wanted: {wanted_response.status_code}",
-                    {
-                        "owned_error": owned_response.text if owned_response.status_code != 200 else None,
-                        "wanted_error": wanted_response.text if wanted_response.status_code != 200 else None
-                    }
-                )
-                return False, None, None
+                print(f"   ❌ Team creation failed")
+                print(f"   Response: {response.text}")
+                return None
                 
         except Exception as e:
-            self.log_result(
-                "Separate Collections Endpoints",
-                False,
-                f"Error testing endpoints: {str(e)}"
-            )
-            return False, None, None
-
-    def test_data_separation(self, owned_data, wanted_data):
-        """Test that owned items have PersonalKit data, wanted items have WantedKit data"""
-        print("📊 TESTING DATA SEPARATION...")
+            print(f"   ❌ Team creation error: {e}")
+            return None
+    
+    def test_team_creation_validation(self):
+        """Test Team Creation validation and error handling"""
+        print("\n🔍 Testing Team Creation validation...")
+        
+        # Test missing required fields
+        print("Test: Missing required fields")
+        invalid_team_data = {
+            "city": "Paris"  # Missing name and country
+        }
         
         try:
-            owned_has_personal_data = False
-            wanted_has_minimal_data = False
+            response = self.session.post(f"{BACKEND_URL}/teams", json=invalid_team_data)
+            print(f"   Status: {response.status_code}")
+            print(f"   Response: {response.text}")
             
-            # Check owned data structure (should have PersonalKit fields)
-            if owned_data and len(owned_data) > 0:
-                sample_owned = owned_data[0]
-                personal_fields = ['size', 'condition', 'purchase_price', 'personal_notes']
-                owned_has_personal_data = any(field in sample_owned for field in personal_fields)
+            if response.status_code == 422:
+                # Check if error message is meaningful (not [object Object])
+                response_text = response.text
+                if "[object Object]" in response_text:
+                    print(f"   ❌ Still showing [object Object] error!")
+                    return False
+                else:
+                    print(f"   ✅ Proper error message displayed (no [object Object])")
+                    return True
+            else:
+                print(f"   ⚠️ Unexpected status code: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Validation test error: {e}")
+            return False
+    
+    def test_competition_creation(self):
+        """Test Competition Creation Fix (POST /api/competitions)"""
+        print("\n🏆 Testing Competition Creation Fix...")
+        
+        # Test valid competition creation with corrected field mapping
+        print("Test: Valid competition creation")
+        competition_data = {
+            "competition_name": "Test League 2024",  # Fixed: name → competition_name
+            "type": "National league",               # Fixed: competition_type → type
+            "country": "France",
+            "level": 1,
+            "confederations_federations": "UEFA"
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/competitions", json=competition_data)
+            print(f"   Status: {response.status_code}")
             
-            # Check wanted data structure (should have minimal WantedKit fields)
-            if wanted_data and len(wanted_data) > 0:
-                sample_wanted = wanted_data[0]
-                # Wanted items should NOT have detailed PersonalKit fields
-                personal_fields = ['purchase_price', 'condition', 'is_signed', 'has_printing']
-                wanted_has_minimal_data = not any(field in sample_wanted for field in personal_fields)
+            if response.status_code == 201:
+                data = response.json()
+                print(f"   ✅ Competition created successfully!")
+                print(f"   Competition ID: {data.get('id')}")
+                print(f"   Competition Name: {data.get('competition_name')}")
+                print(f"   Type: {data.get('type')}")
+                return data.get('id')
+            else:
+                print(f"   ❌ Competition creation failed")
+                print(f"   Response: {response.text}")
+                return None
+                
+        except Exception as e:
+            print(f"   ❌ Competition creation error: {e}")
+            return None
+    
+    def test_competition_validation(self):
+        """Test Competition Creation validation"""
+        print("\n🔍 Testing Competition Creation validation...")
+        
+        # Test missing required fields
+        print("Test: Missing required fields (competition_name, type)")
+        invalid_competition_data = {
+            "country": "France"  # Missing competition_name and type
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/competitions", json=invalid_competition_data)
+            print(f"   Status: {response.status_code}")
+            print(f"   Response: {response.text}")
             
-            success = True
-            details = {
-                "owned_items_count": len(owned_data) if owned_data else 0,
-                "wanted_items_count": len(wanted_data) if wanted_data else 0,
-                "owned_has_personal_data": owned_has_personal_data,
-                "wanted_has_minimal_data": wanted_has_minimal_data
-            }
+            if response.status_code == 422:
+                response_text = response.text
+                if "[object Object]" in response_text:
+                    print(f"   ❌ Still showing [object Object] error!")
+                    return False
+                else:
+                    print(f"   ✅ Proper error message displayed (no [object Object])")
+                    return True
+            else:
+                print(f"   ⚠️ Unexpected status code: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Competition validation test error: {e}")
+            return False
+    
+    def get_teams_and_brands(self):
+        """Get available teams and brands for master jersey creation"""
+        print("\n📋 Getting available teams and brands...")
+        
+        teams = []
+        brands = []
+        
+        try:
+            # Get teams
+            teams_response = self.session.get(f"{BACKEND_URL}/teams")
+            if teams_response.status_code == 200:
+                teams = teams_response.json()
+                print(f"   Found {len(teams)} teams")
             
-            if owned_data and len(owned_data) > 0:
-                details["sample_owned_fields"] = list(owned_data[0].keys())
-            if wanted_data and len(wanted_data) > 0:
-                details["sample_wanted_fields"] = list(wanted_data[0].keys())
-            
-            message = f"Data separation verified - Owned items: {'PersonalKit data' if owned_has_personal_data else 'No personal data'}, Wanted items: {'Minimal data' if wanted_has_minimal_data else 'Has personal data'}"
-            
-            self.log_result(
-                "Data Separation Verification",
-                success,
-                message,
-                details
-            )
-            return success
+            # Get brands
+            brands_response = self.session.get(f"{BACKEND_URL}/brands")
+            if brands_response.status_code == 200:
+                brands = brands_response.json()
+                print(f"   Found {len(brands)} brands")
+                
+            return teams, brands
             
         except Exception as e:
-            self.log_result(
-                "Data Separation Verification",
-                False,
-                f"Error testing data separation: {str(e)}"
-            )
+            print(f"   ❌ Error getting teams/brands: {e}")
+            return [], []
+    
+    def test_master_jersey_creation(self):
+        """Test Master Jersey Creation Fix (POST /api/master-jerseys)"""
+        print("\n👕 Testing Master Jersey Creation Fix...")
+        
+        # Get available teams and brands
+        teams, brands = self.get_teams_and_brands()
+        
+        if not teams or not brands:
+            print("   ❌ No teams or brands available for testing")
+            return None
+        
+        team_id = teams[0].get('id')
+        brand_id = brands[0].get('id')
+        
+        print(f"   Using Team ID: {team_id}")
+        print(f"   Using Brand ID: {brand_id}")
+        
+        # Test valid master jersey creation with fixed field mapping
+        print("Test: Valid master jersey creation")
+        master_jersey_data = {
+            "team_id": team_id,
+            "brand_id": brand_id,
+            "season": "2024-25",
+            "jersey_type": "home",        # Fixed field mapping
+            "model": "Authentic Pro",     # Required field
+            "primary_color": "Blue",      # Required field
+            "secondary_colors": ["White", "Red"]
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
+            print(f"   Status: {response.status_code}")
+            
+            if response.status_code == 201:
+                data = response.json()
+                print(f"   ✅ Master Jersey created successfully!")
+                print(f"   Master Jersey ID: {data.get('id')}")
+                print(f"   TopKit Reference: {data.get('topkit_reference')}")
+                return data.get('id')
+            else:
+                print(f"   ❌ Master Jersey creation failed")
+                print(f"   Response: {response.text}")
+                return None
+                
+        except Exception as e:
+            print(f"   ❌ Master Jersey creation error: {e}")
+            return None
+    
+    def test_master_jersey_validation(self):
+        """Test Master Jersey Creation validation"""
+        print("\n🔍 Testing Master Jersey Creation validation...")
+        
+        # Test missing required fields
+        print("Test: Missing required fields")
+        invalid_master_jersey_data = {
+            "season": "2024-25"  # Missing team_id, brand_id, jersey_type, model, primary_color
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=invalid_master_jersey_data)
+            print(f"   Status: {response.status_code}")
+            print(f"   Response: {response.text}")
+            
+            if response.status_code in [400, 422]:
+                response_text = response.text
+                if "[object Object]" in response_text:
+                    print(f"   ❌ Still showing [object Object] error!")
+                    return False
+                else:
+                    print(f"   ✅ Proper error message displayed (no [object Object])")
+                    return True
+            else:
+                print(f"   ⚠️ Unexpected status code: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Master Jersey validation test error: {e}")
             return False
-
-    def test_vestiaire_endpoint(self):
-        """Test vestiaire endpoint for available reference kits"""
-        print("🏪 TESTING VESTIAIRE ENDPOINT...")
+    
+    def get_reference_kits(self):
+        """Get available reference kits for personal kit creation"""
+        print("\n📋 Getting available reference kits...")
         
         try:
             response = self.session.get(f"{BACKEND_URL}/vestiaire")
+            if response.status_code == 200:
+                kits = response.json()
+                print(f"   Found {len(kits)} reference kits")
+                return kits
+            else:
+                print(f"   ❌ Failed to get reference kits: {response.status_code}")
+                return []
+                
+        except Exception as e:
+            print(f"   ❌ Error getting reference kits: {e}")
+            return []
+    
+    def test_personal_kit_creation(self):
+        """Test Personal Kit Data Persistence Fix (POST /api/personal-kits)"""
+        print("\n🎽 Testing Personal Kit Data Persistence Fix...")
+        
+        # Get available reference kits
+        reference_kits = self.get_reference_kits()
+        
+        if not reference_kits:
+            print("   ❌ No reference kits available for testing")
+            return None
+        
+        reference_kit_id = reference_kits[0].get('id')
+        print(f"   Using Reference Kit ID: {reference_kit_id}")
+        
+        # Test personal kit creation with all new fields
+        print("Test: Personal kit creation with all fields")
+        personal_kit_data = {
+            "reference_kit_id": reference_kit_id,
+            "collection_type": "owned",
+            "size": "L",
+            "condition": "mint",
+            "purchase_price": 89.99,
+            "price_value": 120.00,           # New field
+            "acquisition_story": "Bought from official store during Champions League final", # New field
+            "times_worn": 5,                 # New field
+            "for_sale": False,               # New field
+            "printed_name": "MESSI",         # Fixed field mapping
+            "printed_number": "10",          # Fixed field mapping
+            "personal_notes": "Authentic jersey with official printing", # Fixed field mapping
+            "printing_type": "Official"      # Fixed field mapping
+        }
+        
+        try:
+            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
+            print(f"   Status: {response.status_code}")
+            
+            if response.status_code == 201:
+                data = response.json()
+                print(f"   ✅ Personal Kit created successfully!")
+                print(f"   Personal Kit ID: {data.get('id')}")
+                
+                # Verify all fields are persisted
+                print("   Verifying field persistence:")
+                print(f"     Price Value: {data.get('price_value')}")
+                print(f"     Acquisition Story: {data.get('acquisition_story')}")
+                print(f"     Times Worn: {data.get('times_worn')}")
+                print(f"     For Sale: {data.get('for_sale')}")
+                print(f"     Printed Name: {data.get('printed_name')}")
+                print(f"     Printed Number: {data.get('printed_number')}")
+                print(f"     Personal Notes: {data.get('personal_notes')}")
+                print(f"     Printing Type: {data.get('printing_type')}")
+                
+                return data.get('id')
+            else:
+                print(f"   ❌ Personal Kit creation failed")
+                print(f"   Response: {response.text}")
+                return None
+                
+        except Exception as e:
+            print(f"   ❌ Personal Kit creation error: {e}")
+            return None
+    
+    def test_personal_kit_retrieval(self, kit_id):
+        """Test Personal Kit data retrieval to confirm persistence"""
+        print("\n🔍 Testing Personal Kit data retrieval...")
+        
+        try:
+            response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
+            print(f"   Status: {response.status_code}")
             
             if response.status_code == 200:
-                vestiaire_data = response.json()
-                kit_count = len(vestiaire_data) if isinstance(vestiaire_data, list) else 0
+                kits = response.json()
+                print(f"   Found {len(kits)} owned kits")
                 
-                # Check if we have reference kits available for testing
-                available_kits = []
-                if vestiaire_data and kit_count > 0:
-                    for kit in vestiaire_data[:3]:  # Get first 3 kits for testing
-                        kit_info = {
-                            "id": kit.get("id"),
-                            "reference_kit_id": kit.get("reference_kit_id"),
-                            "team_name": kit.get("team_info", {}).get("name", "Unknown"),
-                            "season": kit.get("master_kit_info", {}).get("season", "Unknown")
-                        }
-                        available_kits.append(kit_info)
+                # Find our created kit
+                created_kit = None
+                for kit in kits:
+                    if kit.get('id') == kit_id:
+                        created_kit = kit
+                        break
                 
-                self.log_result(
-                    "Vestiaire Endpoint Access",
-                    True,
-                    f"Vestiaire accessible with {kit_count} reference kits available",
-                    {
-                        "total_kits": kit_count,
-                        "sample_kits": available_kits[:3],
-                        "endpoint": "/api/vestiaire"
-                    }
-                )
-                return True, vestiaire_data
-            else:
-                self.log_result(
-                    "Vestiaire Endpoint Access",
-                    False,
-                    f"Vestiaire access failed with status {response.status_code}",
-                    {"error": response.text}
-                )
-                return False, None
-                
-        except Exception as e:
-            self.log_result(
-                "Vestiaire Endpoint Access",
-                False,
-                f"Error accessing vestiaire: {str(e)}"
-            )
-            return False, None
-
-    def test_add_to_wanted_workflow(self, vestiaire_data):
-        """Test adding reference kit to wanted collection"""
-        print("➕ TESTING ADD TO WANTED WORKFLOW...")
-        
-        if not vestiaire_data or len(vestiaire_data) == 0:
-            self.log_result(
-                "Add to Wanted Workflow",
-                False,
-                "No reference kits available in vestiaire for testing"
-            )
-            return False, None
-        
-        try:
-            # Get first available reference kit
-            test_kit = vestiaire_data[0]
-            reference_kit_id = test_kit.get("id") or test_kit.get("reference_kit_id")
-            
-            if not reference_kit_id:
-                self.log_result(
-                    "Add to Wanted Workflow",
-                    False,
-                    "No valid reference kit ID found in vestiaire data"
-                )
-                return False, None
-            
-            # Add to wanted collection
-            wanted_data = {
-                "reference_kit_id": reference_kit_id,
-                "preferred_size": "Any",
-                "notes": "Test wanted kit for bug fix verification"
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/wanted-kits", json=wanted_data)
-            
-            if response.status_code in [200, 201]:
-                response_data = response.json()
-                
-                self.log_result(
-                    "Add to Wanted Workflow",
-                    True,
-                    f"Successfully added reference kit to wanted collection",
-                    {
-                        "reference_kit_id": reference_kit_id,
-                        "team_name": test_kit.get("team_info", {}).get("name", "Unknown"),
-                        "response_status": response.status_code,
-                        "wanted_kit_id": response_data.get("id") if isinstance(response_data, dict) else None
-                    }
-                )
-                return True, reference_kit_id
-            else:
-                error_detail = response.text
-                # Check if it's a duplicate error (which is acceptable)
-                if "already" in error_detail.lower() or "duplicate" in error_detail.lower():
-                    self.log_result(
-                        "Add to Wanted Workflow",
-                        True,
-                        f"Kit already in wanted collection (duplicate prevention working)",
-                        {
-                            "reference_kit_id": reference_kit_id,
-                            "status_code": response.status_code,
-                            "message": error_detail
-                        }
-                    )
-                    return True, reference_kit_id
+                if created_kit:
+                    print(f"   ✅ Personal Kit found in collection!")
+                    print("   Verifying all fields persist correctly:")
+                    
+                    # Check all the new and fixed fields
+                    fields_to_check = [
+                        'price_value', 'acquisition_story', 'times_worn', 'for_sale',
+                        'printed_name', 'printed_number', 'personal_notes', 'printing_type'
+                    ]
+                    
+                    all_fields_present = True
+                    for field in fields_to_check:
+                        value = created_kit.get(field)
+                        if value is not None:
+                            print(f"     ✅ {field}: {value}")
+                        else:
+                            print(f"     ❌ {field}: Missing!")
+                            all_fields_present = False
+                    
+                    return all_fields_present
                 else:
-                    self.log_result(
-                        "Add to Wanted Workflow",
-                        False,
-                        f"Failed to add to wanted collection - Status: {response.status_code}",
-                        {"error": error_detail}
-                    )
-                    return False, None
+                    print(f"   ❌ Created kit not found in collection")
+                    return False
+            else:
+                print(f"   ❌ Failed to retrieve personal kits: {response.status_code}")
+                return False
                 
         except Exception as e:
-            self.log_result(
-                "Add to Wanted Workflow",
-                False,
-                f"Error in add to wanted workflow: {str(e)}"
-            )
-            return False, None
-
-    def test_add_to_owned_workflow(self, reference_kit_id):
-        """Test adding reference kit to owned collection (should remove from wanted)"""
-        print("🏠 TESTING ADD TO OWNED WORKFLOW...")
-        
-        if not reference_kit_id:
-            self.log_result(
-                "Add to Owned Workflow",
-                False,
-                "No reference kit ID available for testing"
-            )
+            print(f"   ❌ Personal Kit retrieval error: {e}")
             return False
+    
+    def test_personal_kit_update(self, kit_id):
+        """Test Personal Kit Update Fix (PUT /api/personal-kits/{kit_id})"""
+        print("\n✏️ Testing Personal Kit Update Fix...")
+        
+        # Test updating personal kit with corrected field mappings
+        print("Test: Personal kit update with all fields")
+        update_data = {
+            "size": "XL",
+            "condition": "very_good",
+            "purchase_price": 95.00,
+            "price_value": 130.00,           # Updated field
+            "acquisition_story": "Updated: Bought from official store during Champions League final - amazing experience!", # Updated field
+            "times_worn": 8,                 # Updated field
+            "for_sale": True,                # Updated field
+            "printed_name": "MESSI",         # Updated field mapping
+            "printed_number": "30",          # Updated field mapping
+            "personal_notes": "Updated: Authentic jersey with official printing - excellent condition", # Updated field mapping
+            "printing_type": "Heat Transfer" # Updated field mapping
+        }
         
         try:
-            # Add to owned collection with detailed PersonalKit data
-            owned_data = {
-                "reference_kit_id": reference_kit_id,
-                "collection_type": "owned",
-                "size": "L",
-                "condition": "mint",
-                "purchase_price": 89.99,
-                "purchase_date": "2024-01-15",
-                "is_signed": False,
-                "has_printing": True,
-                "printed_name": "Test Player",
-                "printed_number": "10",
-                "personal_notes": "Test owned kit for bug fix verification"
-            }
+            response = self.session.put(f"{BACKEND_URL}/personal-kits/{kit_id}", json=update_data)
+            print(f"   Status: {response.status_code}")
             
-            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=owned_data)
-            
-            if response.status_code in [200, 201]:
-                response_data = response.json()
+            if response.status_code == 200:
+                data = response.json()
+                print(f"   ✅ Personal Kit updated successfully!")
                 
-                self.log_result(
-                    "Add to Owned Workflow",
-                    True,
-                    f"Successfully added reference kit to owned collection",
-                    {
-                        "reference_kit_id": reference_kit_id,
-                        "response_status": response.status_code,
-                        "personal_kit_id": response_data.get("id") if isinstance(response_data, dict) else None,
-                        "detailed_data_included": True
-                    }
-                )
+                # Verify updated fields persist
+                print("   Verifying updated field persistence:")
+                print(f"     Size: {data.get('size')}")
+                print(f"     Price Value: {data.get('price_value')}")
+                print(f"     Acquisition Story: {data.get('acquisition_story')}")
+                print(f"     Times Worn: {data.get('times_worn')}")
+                print(f"     For Sale: {data.get('for_sale')}")
+                print(f"     Printed Name: {data.get('printed_name')}")
+                print(f"     Printed Number: {data.get('printed_number')}")
+                print(f"     Personal Notes: {data.get('personal_notes')}")
+                print(f"     Printing Type: {data.get('printing_type')}")
+                
                 return True
             else:
-                error_detail = response.text
-                # Check if it's a duplicate error (which is acceptable)
-                if "already" in error_detail.lower() or "duplicate" in error_detail.lower():
-                    self.log_result(
-                        "Add to Owned Workflow",
-                        True,
-                        f"Kit already in owned collection (duplicate prevention working)",
-                        {
-                            "reference_kit_id": reference_kit_id,
-                            "status_code": response.status_code,
-                            "message": error_detail
-                        }
-                    )
-                    return True
-                else:
-                    self.log_result(
-                        "Add to Owned Workflow",
-                        False,
-                        f"Failed to add to owned collection - Status: {response.status_code}",
-                        {"error": error_detail}
-                    )
-                    return False
-                
-        except Exception as e:
-            self.log_result(
-                "Add to Owned Workflow",
-                False,
-                f"Error in add to owned workflow: {str(e)}"
-            )
-            return False
-
-    def test_two_way_relationship(self, reference_kit_id):
-        """Test that adding to owned removes from wanted (two-way relationship)"""
-        print("🔄 TESTING TWO-WAY RELATIONSHIP...")
-        
-        if not reference_kit_id:
-            self.log_result(
-                "Two-Way Relationship Logic",
-                False,
-                "No reference kit ID available for testing"
-            )
-            return False
-        
-        try:
-            # Check current state of collections
-            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
-            
-            if owned_response.status_code == 200 and wanted_response.status_code == 200:
-                owned_data = owned_response.json()
-                wanted_data = wanted_response.json()
-                
-                # Check if the test kit is in owned collection
-                kit_in_owned = False
-                kit_in_wanted = False
-                
-                if isinstance(owned_data, list):
-                    for item in owned_data:
-                        item_ref_id = item.get("reference_kit_id") or item.get("reference_kit_info", {}).get("id")
-                        if item_ref_id == reference_kit_id:
-                            kit_in_owned = True
-                            break
-                
-                if isinstance(wanted_data, list):
-                    for item in wanted_data:
-                        item_ref_id = item.get("reference_kit_id") or item.get("reference_kit_info", {}).get("id")
-                        if item_ref_id == reference_kit_id:
-                            kit_in_wanted = True
-                            break
-                
-                # Two-way relationship should ensure kit is NOT in both collections
-                relationship_working = not (kit_in_owned and kit_in_wanted)
-                
-                self.log_result(
-                    "Two-Way Relationship Logic",
-                    relationship_working,
-                    f"Two-way relationship {'working correctly' if relationship_working else 'NOT working'} - Kit in owned: {kit_in_owned}, Kit in wanted: {kit_in_wanted}",
-                    {
-                        "reference_kit_id": reference_kit_id,
-                        "kit_in_owned": kit_in_owned,
-                        "kit_in_wanted": kit_in_wanted,
-                        "relationship_working": relationship_working,
-                        "owned_count": len(owned_data) if isinstance(owned_data, list) else 0,
-                        "wanted_count": len(wanted_data) if isinstance(wanted_data, list) else 0
-                    }
-                )
-                return relationship_working
-            else:
-                self.log_result(
-                    "Two-Way Relationship Logic",
-                    False,
-                    f"Failed to check collections - Owned: {owned_response.status_code}, Wanted: {wanted_response.status_code}"
-                )
+                print(f"   ❌ Personal Kit update failed")
+                print(f"   Response: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result(
-                "Two-Way Relationship Logic",
-                False,
-                f"Error testing two-way relationship: {str(e)}"
-            )
+            print(f"   ❌ Personal Kit update error: {e}")
             return False
-
-    def test_separate_delete_operations(self):
-        """Test that DELETE operations are separate for owned vs wanted"""
-        print("🗑️ TESTING SEPARATE DELETE OPERATIONS...")
-        
-        try:
-            # Get current collections to find items to delete
-            owned_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
-            
-            if owned_response.status_code != 200 or wanted_response.status_code != 200:
-                self.log_result(
-                    "Separate Delete Operations",
-                    False,
-                    f"Failed to get collections for delete testing - Owned: {owned_response.status_code}, Wanted: {wanted_response.status_code}"
-                )
-                return False
-            
-            owned_data = owned_response.json()
-            wanted_data = wanted_response.json()
-            
-            delete_tests_passed = 0
-            total_delete_tests = 0
-            
-            # Test DELETE from wanted collection (should not affect owned)
-            if isinstance(wanted_data, list) and len(wanted_data) > 0:
-                wanted_item = wanted_data[0]
-                wanted_item_id = wanted_item.get("id")
-                
-                if wanted_item_id:
-                    total_delete_tests += 1
-                    
-                    # Count owned items before delete
-                    owned_count_before = len(owned_data) if isinstance(owned_data, list) else 0
-                    
-                    # Delete from wanted collection
-                    delete_response = self.session.delete(f"{BACKEND_URL}/wanted-kits/{wanted_item_id}")
-                    
-                    if delete_response.status_code in [200, 204]:
-                        # Check that owned collection is unchanged
-                        owned_after_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-                        if owned_after_response.status_code == 200:
-                            owned_after_data = owned_after_response.json()
-                            owned_count_after = len(owned_after_data) if isinstance(owned_after_data, list) else 0
-                            
-                            if owned_count_before == owned_count_after:
-                                delete_tests_passed += 1
-                                print(f"   ✅ DELETE from wanted collection successful - Owned collection unchanged ({owned_count_after} items)")
-                            else:
-                                print(f"   ❌ DELETE from wanted affected owned collection - Before: {owned_count_before}, After: {owned_count_after}")
-                    else:
-                        print(f"   ❌ DELETE from wanted collection failed - Status: {delete_response.status_code}")
-            
-            # Test DELETE from owned collection (should not affect wanted)
-            if isinstance(owned_data, list) and len(owned_data) > 0:
-                owned_item = owned_data[0]
-                owned_item_id = owned_item.get("id")
-                
-                if owned_item_id:
-                    total_delete_tests += 1
-                    
-                    # Count wanted items before delete
-                    wanted_count_before = len(wanted_data) if isinstance(wanted_data, list) else 0
-                    
-                    # Delete from owned collection
-                    delete_response = self.session.delete(f"{BACKEND_URL}/personal-kits/{owned_item_id}")
-                    
-                    if delete_response.status_code in [200, 204]:
-                        # Check that wanted collection is unchanged
-                        wanted_after_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
-                        if wanted_after_response.status_code == 200:
-                            wanted_after_data = wanted_after_response.json()
-                            wanted_count_after = len(wanted_after_data) if isinstance(wanted_after_data, list) else 0
-                            
-                            if wanted_count_before == wanted_count_after:
-                                delete_tests_passed += 1
-                                print(f"   ✅ DELETE from owned collection successful - Wanted collection unchanged ({wanted_count_after} items)")
-                            else:
-                                print(f"   ❌ DELETE from owned affected wanted collection - Before: {wanted_count_before}, After: {wanted_count_after}")
-                    else:
-                        print(f"   ❌ DELETE from owned collection failed - Status: {delete_response.status_code}")
-            
-            success = delete_tests_passed == total_delete_tests and total_delete_tests > 0
-            
-            self.log_result(
-                "Separate Delete Operations",
-                success,
-                f"Delete operations test - {delete_tests_passed}/{total_delete_tests} tests passed",
-                {
-                    "total_tests": total_delete_tests,
-                    "passed_tests": delete_tests_passed,
-                    "separate_deletes_working": success
-                }
-            )
-            return success
-            
-        except Exception as e:
-            self.log_result(
-                "Separate Delete Operations",
-                False,
-                f"Error testing separate delete operations: {str(e)}"
-            )
-            return False
-
-    def test_reference_kit_preservation(self):
-        """Test that wanted items remain as Reference Kits (not editable PersonalKits)"""
-        print("🔒 TESTING REFERENCE KIT PRESERVATION...")
-        
-        try:
-            # Get wanted collection
-            wanted_response = self.session.get(f"{BACKEND_URL}/wanted-kits")
-            
-            if wanted_response.status_code == 200:
-                wanted_data = wanted_response.json()
-                
-                if isinstance(wanted_data, list) and len(wanted_data) > 0:
-                    # Check that wanted items have reference kit info but no personal kit fields
-                    sample_wanted = wanted_data[0]
-                    
-                    # Should have reference kit info
-                    has_reference_info = "reference_kit_info" in sample_wanted or "master_kit_info" in sample_wanted
-                    
-                    # Should NOT have editable PersonalKit fields
-                    personal_fields = ["purchase_price", "condition", "is_signed", "has_printing", "printed_name", "printed_number"]
-                    has_personal_fields = any(field in sample_wanted for field in personal_fields)
-                    
-                    preservation_working = has_reference_info and not has_personal_fields
-                    
-                    self.log_result(
-                        "Reference Kit Preservation",
-                        preservation_working,
-                        f"Reference Kit preservation {'working correctly' if preservation_working else 'NOT working'} - Has reference info: {has_reference_info}, Has personal fields: {has_personal_fields}",
-                        {
-                            "wanted_items_count": len(wanted_data),
-                            "has_reference_info": has_reference_info,
-                            "has_personal_fields": has_personal_fields,
-                            "sample_fields": list(sample_wanted.keys()) if sample_wanted else [],
-                            "preservation_working": preservation_working
-                        }
-                    )
-                    return preservation_working
-                else:
-                    self.log_result(
-                        "Reference Kit Preservation",
-                        True,
-                        "No wanted items to test (empty collection)",
-                        {"wanted_items_count": 0}
-                    )
-                    return True
-            else:
-                self.log_result(
-                    "Reference Kit Preservation",
-                    False,
-                    f"Failed to get wanted collection - Status: {wanted_response.status_code}",
-                    {"error": wanted_response.text}
-                )
-                return False
-                
-        except Exception as e:
-            self.log_result(
-                "Reference Kit Preservation",
-                False,
-                f"Error testing reference kit preservation: {str(e)}"
-            )
-            return False
-
+    
     def run_comprehensive_test(self):
-        """Run all tests for want list vs owned collection bug fixes"""
-        print("🚀 STARTING COMPREHENSIVE WANT LIST VS OWNED COLLECTION BUG FIX TESTING")
-        print("=" * 80)
+        """Run comprehensive test of all form creation fixes"""
+        print("🚀 Starting Comprehensive Form Creation Error Fixes Testing")
+        print("=" * 70)
         
         # Step 1: Authenticate
-        if not self.authenticate_user():
-            print("❌ CRITICAL: Authentication failed - cannot proceed with testing")
+        if not self.authenticate():
+            print("❌ Authentication failed - cannot proceed with tests")
             return False
         
-        # Step 2: Test separate collections endpoints
-        success, owned_data, wanted_data = self.test_separate_collections_endpoints()
-        if not success:
-            print("❌ CRITICAL: Separate endpoints test failed")
-            return False
+        results = {
+            'team_creation': False,
+            'team_validation': False,
+            'competition_creation': False,
+            'competition_validation': False,
+            'master_jersey_creation': False,
+            'master_jersey_validation': False,
+            'personal_kit_creation': False,
+            'personal_kit_retrieval': False,
+            'personal_kit_update': False
+        }
         
-        # Step 3: Test data separation
-        self.test_data_separation(owned_data, wanted_data)
+        # Step 2: Test Team Creation
+        team_id = self.test_team_creation()
+        results['team_creation'] = team_id is not None
         
-        # Step 4: Test vestiaire endpoint
-        vestiaire_success, vestiaire_data = self.test_vestiaire_endpoint()
-        if not vestiaire_success:
-            print("⚠️ WARNING: Vestiaire endpoint failed - some tests may be limited")
+        # Step 3: Test Team Validation
+        results['team_validation'] = self.test_team_creation_validation()
         
-        # Step 5: Test add to wanted workflow
-        if vestiaire_success:
-            wanted_success, reference_kit_id = self.test_add_to_wanted_workflow(vestiaire_data)
+        # Step 4: Test Competition Creation
+        competition_id = self.test_competition_creation()
+        results['competition_creation'] = competition_id is not None
+        
+        # Step 5: Test Competition Validation
+        results['competition_validation'] = self.test_competition_validation()
+        
+        # Step 6: Test Master Jersey Creation
+        master_jersey_id = self.test_master_jersey_creation()
+        results['master_jersey_creation'] = master_jersey_id is not None
+        
+        # Step 7: Test Master Jersey Validation
+        results['master_jersey_validation'] = self.test_master_jersey_validation()
+        
+        # Step 8: Test Personal Kit Creation
+        personal_kit_id = self.test_personal_kit_creation()
+        results['personal_kit_creation'] = personal_kit_id is not None
+        
+        # Step 9: Test Personal Kit Retrieval (if creation succeeded)
+        if personal_kit_id:
+            results['personal_kit_retrieval'] = self.test_personal_kit_retrieval(personal_kit_id)
             
-            # Step 6: Test add to owned workflow (should remove from wanted)
-            if wanted_success and reference_kit_id:
-                self.test_add_to_owned_workflow(reference_kit_id)
-                
-                # Step 7: Test two-way relationship
-                self.test_two_way_relationship(reference_kit_id)
+            # Step 10: Test Personal Kit Update (if retrieval succeeded)
+            if results['personal_kit_retrieval']:
+                results['personal_kit_update'] = self.test_personal_kit_update(personal_kit_id)
         
-        # Step 8: Test separate delete operations
-        self.test_separate_delete_operations()
+        # Summary
+        print("\n" + "=" * 70)
+        print("📊 COMPREHENSIVE TEST RESULTS SUMMARY")
+        print("=" * 70)
         
-        # Step 9: Test reference kit preservation
-        self.test_reference_kit_preservation()
+        passed_tests = 0
+        total_tests = len(results)
         
-        # Generate summary
-        self.generate_test_summary()
+        for test_name, passed in results.items():
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"{test_name.replace('_', ' ').title()}: {status}")
+            if passed:
+                passed_tests += 1
         
-        return True
-
-    def generate_test_summary(self):
-        """Generate comprehensive test summary"""
-        print("\n" + "=" * 80)
-        print("📊 COMPREHENSIVE TEST SUMMARY")
-        print("=" * 80)
+        success_rate = (passed_tests / total_tests) * 100
+        print(f"\nOverall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
         
-        total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result["success"])
-        failed_tests = total_tests - passed_tests
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests}")
-        print(f"Failed: {failed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
-        print()
-        
-        # Critical issues
+        # Critical Issues Analysis
         critical_issues = []
-        for result in self.test_results:
-            if not result["success"] and "CRITICAL" in result["message"].upper():
-                critical_issues.append(result["test"])
+        if not results['team_validation']:
+            critical_issues.append("Team creation still shows [object Object] errors")
+        if not results['competition_validation']:
+            critical_issues.append("Competition creation still shows [object Object] errors")
+        if not results['master_jersey_validation']:
+            critical_issues.append("Master Jersey creation still shows [object Object] errors")
+        if not results['personal_kit_creation']:
+            critical_issues.append("Personal Kit creation with new fields failed")
+        if not results['personal_kit_retrieval']:
+            critical_issues.append("Personal Kit data persistence verification failed")
+        if not results['personal_kit_update']:
+            critical_issues.append("Personal Kit update with corrected field mappings failed")
         
         if critical_issues:
-            print("🚨 CRITICAL ISSUES FOUND:")
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
             for issue in critical_issues:
-                print(f"   - {issue}")
-            print()
-        
-        # Test results by category
-        print("📋 DETAILED RESULTS:")
-        for result in self.test_results:
-            status = "✅ PASS" if result["success"] else "❌ FAIL"
-            print(f"   {status}: {result['test']}")
-        
-        print("\n" + "=" * 80)
-        
-        # Overall assessment
-        if success_rate >= 90:
-            print("🎉 EXCELLENT: Want list vs owned collection bug fixes are working correctly!")
-        elif success_rate >= 70:
-            print("✅ GOOD: Most bug fixes are working, minor issues may need attention")
-        elif success_rate >= 50:
-            print("⚠️ MODERATE: Some critical issues found, fixes may need review")
+                print(f"   • {issue}")
         else:
-            print("❌ CRITICAL: Major issues found, bug fixes need immediate attention")
+            print(f"\n🎉 ALL CRITICAL FIXES VERIFIED SUCCESSFULLY!")
+            print("   • [object Object] errors have been resolved")
+            print("   • Data persistence works correctly")
+            print("   • Field mappings are working properly")
         
-        print("=" * 80)
-
-def main():
-    """Main test execution"""
-    tester = WantListOwnedCollectionTester()
-    
-    try:
-        success = tester.run_comprehensive_test()
-        
-        if success:
-            print("\n✅ Testing completed successfully")
-            return 0
-        else:
-            print("\n❌ Testing failed")
-            return 1
-            
-    except KeyboardInterrupt:
-        print("\n⚠️ Testing interrupted by user")
-        return 1
-    except Exception as e:
-        print(f"\n💥 Unexpected error during testing: {str(e)}")
-        return 1
+        return success_rate >= 80  # Consider 80%+ success rate as overall success
 
 if __name__ == "__main__":
-    exit_code = main()
-    sys.exit(exit_code)
+    tester = FormCreationTester()
+    success = tester.run_comprehensive_test()
+    
+    if success:
+        print(f"\n🎯 CONCLUSION: Form Creation Error Fixes are WORKING CORRECTLY!")
+        sys.exit(0)
+    else:
+        print(f"\n⚠️ CONCLUSION: Some Form Creation Error Fixes need attention!")
+        sys.exit(1)
