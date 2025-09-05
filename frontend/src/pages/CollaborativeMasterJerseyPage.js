@@ -230,8 +230,8 @@ const CollaborativeMasterJerseyPage = ({
 
     const handleSubmit = async (e) => {
       e.preventDefault();
-      if (!formData.team_id || !formData.jersey_type || !formData.colors) {
-        alert('L\'équipe, le type et les couleurs sont obligatoires');
+      if (!formData.team_id || !formData.brand_id || !formData.season || !formData.jersey_type || !formData.model || !formData.colors) {
+        alert('Tous les champs marqués * sont obligatoires');
         return;
       }
 
