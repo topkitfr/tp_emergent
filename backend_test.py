@@ -392,7 +392,7 @@ class FormCreationTester:
             "price_value": 120.00,           # New field
             "acquisition_story": "Bought from official store during Champions League final", # New field
             "times_worn": 5,                 # New field
-            "for_sale": False,               # New field
+            "is_for_sale": False,            # Fixed: correct field name
             "printed_name": "MESSI",         # Fixed field mapping
             "printed_number": "10",          # Fixed field mapping
             "personal_notes": "Authentic jersey with official printing", # Fixed field mapping
