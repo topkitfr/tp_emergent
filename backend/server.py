@@ -1496,6 +1496,39 @@ async def get_current_user_admin(credentials: HTTPAuthorizationCredentials = Dep
     
     return user
 
+# Admin Settings Endpoints
+@api_router.get("/admin/settings")
+async def get_admin_settings(current_user: dict = Depends(get_current_user)):
+    """Get system settings for admin dashboard"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    return system_settings
+
+@api_router.put("/admin/settings")
+async def update_admin_settings(
+    settings: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update system settings"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Update allowed settings
+    allowed_settings = ["auto_approval_enabled", "admin_notifications", "community_voting_enabled"]
+    for key, value in settings.items():
+        if key in allowed_settings:
+            system_settings[key] = value
+    
+    await log_user_activity(
+        current_user["id"],
+        "admin_settings_updated",
+        None,
+        {"updated_settings": settings}
+    )
+    
+    return {"message": "Settings updated successfully", "settings": system_settings}
+
 # Authentication endpoints
 @api_router.post("/auth/register")
 async def register(user_data: UserRegister, request: Request):
