@@ -1147,12 +1147,12 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       {/* Create Kit Release Modal */}
       {showCreateModal && <CreateKitReleaseModal />}
 
-      {/* Personal Details Modal - When Adding to Collection */}
-      {showPersonalDetailsModal && (
+      {/* Personal Details Modal - Only for "Owned" Collection (Detailed Info) */}
+      {showPersonalDetailsModal && selectedCollectionType === 'owned' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Add Personal Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Add to Owned Collection</h2>
               <button
                 onClick={() => setShowPersonalDetailsModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -1168,36 +1168,41 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                     {selectedReferenceKit.team_info?.name || 'Unknown Team'} - {selectedReferenceKit.master_kit_info?.season || 'Unknown Season'}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Adding to: <span className="font-medium">{selectedCollectionType === 'owned' ? 'Owned Collection' : 'Wanted List'}</span>
+                    Adding detailed information for your <span className="font-medium text-green-600">owned collection</span>
                   </p>
                 </div>
               )}
 
               <div className="space-y-4">
-                {/* Price (buy) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (buy)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={personalDetails.price_buy}
-                    onChange={(e) => setPersonalDetails({...personalDetails, price_buy: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="99.99"
-                  />
-                </div>
+                {/* Price Information */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">💰 Purchase Information</h3>
+                  
+                  {/* Price (buy) */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={personalDetails.price_buy}
+                      onChange={(e) => setPersonalDetails({...personalDetails, price_buy: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="99.99"
+                    />
+                  </div>
 
-                {/* Price Value */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Value</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={personalDetails.price_value}
-                    onChange={(e) => setPersonalDetails({...personalDetails, price_value: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="120.00"
-                  />
+                  {/* Price Value */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Value Estimate</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={personalDetails.price_value}
+                      onChange={(e) => setPersonalDetails({...personalDetails, price_value: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="120.00"
+                    />
+                  </div>
                 </div>
 
                 {/* State (condition) */}
