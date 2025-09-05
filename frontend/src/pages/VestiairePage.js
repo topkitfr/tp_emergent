@@ -71,8 +71,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       
       const personalKitData = {
         reference_kit_id: referenceKit.id,
-        collection_type: 'wanted'
-        // No other details needed for wanted items
+        collection_type: 'wanted',
+        size: 'Any' // Required field for backend validation, but not meaningful for wanted items
       };
 
       const response = await fetch(`${API}/api/personal-kits`, {
@@ -92,11 +92,25 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         loadKitStore(); // Refresh list
       } else {
         console.error(`❌ Failed to add to wanted collection: ${response.status}`);
-        alert(`Error: ${responseData.detail || 'Failed to add to want list'}`);
+        console.error('Error details:', responseData);
+        
+        // Better error handling to avoid [object Object] display
+        let errorMessage = 'Failed to add to want list';
+        if (responseData && typeof responseData === 'object') {
+          if (responseData.detail) {
+            errorMessage = responseData.detail;
+          } else if (responseData.message) {
+            errorMessage = responseData.message;
+          } else if (Array.isArray(responseData.detail)) {
+            // Handle Pydantic validation errors
+            errorMessage = responseData.detail.map(err => err.msg || err.message).join(', ');
+          }
+        }
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error adding to wanted collection:', error);
-      alert('Error adding to want list');
+      alert('Error adding to want list. Please try again.');
     }
   };
 
