@@ -23,7 +23,7 @@ from datetime import datetime
 import sys
 
 # Configuration - Using production URL from frontend/.env
-BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-archive.preview.emergentagent.com/api"
 
 # Test credentials from review request (updated from test_result.md history)
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"

@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://football-vestiary.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-archive.preview.emergentagent.com/api"
 
 class ExtendedAuthTester:
     def __init__(self):

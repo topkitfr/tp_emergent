@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-vestiary.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-archive.preview.emergentagent.com/api"
 
 # Test credentials as specified in review request
 TEST_USER = {
