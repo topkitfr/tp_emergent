@@ -90,26 +90,78 @@ const AdminDashboard = ({ user, API }) => {
     }
   ];
 
-  // Charger les données du dashboard
+  // Load system settings on component mount
   useEffect(() => {
+    loadSystemSettings();
     loadDashboardData();
-  }, []);
+  }, [activeModule]);
+
+  const loadSystemSettings = async () => {
+    try {
+      const response = await fetch(`${API}/api/admin/settings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const settings = await response.json();
+        setSystemSettings(settings);
+      }
+    } catch (error) {
+      console.error('Error loading system settings:', error);
+    }
+  };
+
+  const updateSystemSettings = async (newSettings) => {
+    setSettingsLoading(true);
+    try {
+      const response = await fetch(`${API}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newSettings)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setSystemSettings(result.settings);
+        alert('Settings updated successfully!');
+      } else {
+        alert('Failed to update settings');
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      alert('Error updating settings');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
 
   const loadDashboardData = async () => {
-    setLoading(true);
-    try {
-      // Simuler le chargement des métriques admin
-      const mockData = {
-        users: { total: 1247, active: 856, new_today: 23 },
-        contributions: { pending: 23, approved: 156, rejected: 12 },
-        entities: { teams: 348, brands: 67, players: 89, competitions: 29 },
-        system: { uptime: '99.9%', performance: 'excellent', alerts: 2 }
-      };
-      setDashboardData(mockData);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+    if (activeModule === 'overview') {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API}/api/admin/dashboard-stats`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data);
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(false);
   };
 
   // Check if user is admin (topkitfr@gmail.com)
