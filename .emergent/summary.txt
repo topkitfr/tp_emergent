@@ -1,128 +1,65 @@
 <analysis>
-The previous AI engineer made initial progress on a 3-tier kit creation system (Master, Reference, Personal Kit) and addressed an Invalid token error. My analysis of the subsequent trajectory reveals a comprehensive effort to refine this system, focusing on data interconnectivity and UI/UX consistency. This involved integrating external competition data from a CSV, overhauling backend endpoints to support dynamic, linked forms, and extensive frontend refactoring in  and .
-
-Major challenges included a recurring  error, persistent frontend authentication issues, and a critical requirement for Améliorer cette fiche (Improve this record) forms to precisely mirror their corresponding creation forms. The AI systematically tackled these by enhancing error display, debugging authentication, implementing a full database reset, and repeatedly refactoring  to match the user's explicit sequential workflow (Club → Master Kit → Reference Kit details). Most recently,  was revamped to ensure edit forms' consistency across all entity types, including complex field types, and a JavaScript array initialization bug was resolved.
+The AI engineer systematically addressed critical issues within a 3-tier kit creation and management system. Initially, it implemented auto-approval for new entities and began refining the Personal Kit workflow. Recurring  errors and frontend authentication problems were persistent challenges. A major architectural change was enacted to separate Owned and Wanted collections into distinct  and  models and API endpoints, establishing a two-way relationship for collection management. Subsequent efforts focused on ensuring perfect consistency between Personal Kit creation and edit forms across  and , including adding comprehensive  and purchase details. The trajectory concludes with the resolution of several bugs related to form disparity, data persistence, and deletion logic, with backend testing confirming the fixes.
 </analysis>
 
 <product_requirements>
-The core problem is to provide an efficient and robust system for managing football jersey collections with an appealing interface, supporting a collaborative platform for enthusiasts.
+The core problem involves establishing an efficient, collaborative platform for managing football jersey collections, guided by a 3-tier hierarchy:
+1.  **Master Kit**: Generic design template for jerseys.
+2.  **Reference Kit**: Specific commercial version derived from a Master Kit, added to Le Vestiaire via a 3-step sequential workflow: Select Club → Select Master Kit → Fill Reference Kit details.
+3.  **Personal Kit**: User-specific details for an owned jersey, including condition, price, printing (player/custom), marketplace option, signed/worn status (e.g., , , , ), and purchase information (e.g., , ).
 
-**Overarching Requirement**: Implement a 3-tier Kit Information Hierarchy:
-1.  **Master Kit**: Generic design template (Type, Model, Competition, badges). Now explicitly includes Team, Type, Colors, Pattern, Season, Brand, and Model.
-2.  **Reference Kit**: Specific commercial version derived from Master Kit, added to shared database (Le Vestiaire). Requires a 3-step workflow: 1) Select Club, 2) Select Master Kit (filtered by club), 3) Fill Reference Kit details (League/Competition, Model, Limited Edition, SKU, Barcode, Photos). Available Sizes field must be removed.
-3.  **Personal Kit**: User-specific details (Size, Condition, Price, Worn/Signed/Printed status, Notes), editable only by owner, added to personal collection.
-
-**Key Requirements Met & Updated (during this trajectory)**:
-*   **Interconnected Forms**: All forms (creation and Améliorer cette fiche / edit) must be interconnected, allowing dynamic filtering (e.g., clubs filter master kits). Users should be prompted to add missing data (e.g., competitions) if not found. Ligue was formally renamed Competition.
-*   **Améliorer cette fiche Forms Consistency**: Edit forms for Teams, Brands, Players, Leagues, and Master Jerseys must be *identical* in structure and fields to their respective *creation forms*, with the sole addition of a Contribution Details section for change logging.
-*   **Enhanced Error Handling**: Replaced generic  messages with specific, user-friendly error feedback.
-*   **Dynamic UI Elements**: Sequential dropdowns for League/Competition and Team/Master Kits, and dynamic player dropdowns were implemented and refined.
-*   **Database Management**: Comprehensive database reset and rebuild capabilities were implemented for testing and data integrity.
+**Key Requirements & Updates:**
+*   **Interconnected Forms**: Dynamic filtering (e.g., clubs filter master kits).
+*   **Form Consistency**: Améliorer cette fiche (edit) forms must be *identical* in structure and fields to their corresponding creation forms for all entities, particularly Personal Kits.
+*   **Error Handling**: Replace generic  errors with specific, user-friendly messages.
+*   **Auto-Approval**: New entity additions (teams, brands, players, leagues, master kits) should be automatically approved for testing.
+*   **Add to Wanted Feature**: A simple, minimal-detail workflow to add a Reference Kit to a want list.
+*   **Owned vs. Wanted Distinction**: Owned items are detailed s; Wanted items are simple s (Reference Kits). Must enforce a two-way relationship (owning removes from wanted), non-editable wanted items, and independent delete operations.
 </product_requirements>
 
 <key_technical_concepts>
--   **React/FastAPI/MongoDB Stack**: Core full-stack development.
--   **Pydantic Models**: Backend data validation and serialization.
--   **React Hooks**: Frontend state management (, ).
--   **Dynamic Form Rendering**: Adapting  to display varying fields.
--   **Database Seeding**: Python scripts (, , ).
--   **Environment Variables**: Configuration management.
--   **Base64 Image Encoding**: For photo uploads.
+-   **React/FastAPI/MongoDB Stack**: Primary development technologies.
+-   **Pydantic Models**: Backend data validation and serialization, including UUIDs for IDs.
+-   **React Hooks**: Frontend state management.
+-   **Dynamic Form Rendering**: Adapting UI based on entity type and collection status.
+-   **Database Management**: Python utility scripts for seeding and reset.
 </key_technical_concepts>
 
 <code_architecture>
 
-├── backend/
-│   ├── requirements.txt
-│   ├── server.py
-│   ├── .env
-│   ├── models/
-│   │   └── collaborative_models.py
-│   ├── email_service.py
-│   ├── email_service_marketing.py
-│   ├── email_service_community.py
-│   └── email_service_extended.py
-├── frontend/
-│   ├── package.json
-│   ├── .env
-│   └── src/
-│       ├── App.js
-│       ├── AuthModal.js
-│       ├── CollaborativeApp.js
-│       ├── ContributionModal.js
-│       ├── components/
-│       │   └── CollaborativeHeader.js
-│       │   └── ContributionDetailModal.js
-│       ├── pages/
-│       │   ├── AdminDashboard.js
-│       │   ├── CollaborativeBrandsPage.js
-│       │   ├── CollaborativeCompetitionsPage.js
-│       │   ├── CollaborativeMasterJerseyPage.js
-│       │   ├── CollaborativePlayersPage.js
-│       │   ├── CollaborativeTeamsPage.js
-│       │   ├── TeamDetailPage.js
-│       │   ├── BrandDetailPage.js
-│       │   ├── CompetitionDetailPage.js
-│       │   ├── PlayerDetailPage.js
-│       │   ├── MasterJerseyDetailPage.js
-│       │   ├── PasswordResetPage.js
-│       │   ├── UserSettingsPanel.js
-│       │   ├── TwoFactorAuthSetup.js
-│       │   ├── EmailVerificationPage.js
-│       │   ├── CollaborativeProfilePage.js
-│       │   ├── PublicCollectionsPage.js
-│       │   ├── MyCollectionPage.js
-│       │   ├── UnifiedContributionsPage.js
-│       │   ├── VestiairePage.js
-│       │   ├── ContributionDetailPage.js
-│       │   ├── CataloguePage.js
-│       │   └── CollaborativeHomepage.js
-│       ├── PendingContributions.js
-│       ├── ProfilePictureModal.js
-│       └── utils/
-│           └── tokenManager.js
-├── apply_approved_images.py
-├── cleanup_test_data.py
-├── debug_image_data.py
-├── inspect_contributions.py
-├── update_modals_images.py
-├── complete_modals_update.py
-├── fix_hardcoded_urls.py (DELETED)
-├── populate_competitions.py (NEW)
-├── add_sample_teams.py (NEW)
-├── update_team_competitions.py (NEW)
-└── database_reset_and_rebuild.py (NEW)
 
 -   ****:
-    -   **Summary**: Main FastAPI application managing API endpoints.
-    -   **Changes Made**: Updated competition and team endpoints (, , , , ) to support new competition models and interconnected data. Added new endpoints (, , ) for dynamic form filtering. Ensured proper model imports (, ).
+    -   **Summary**: Manages API endpoints for data operations.
+    -   **Changes Made**:
+        -   Implemented  function; updated creation endpoints (, , , , ) to auto-verify new entities.
+        -   Refactored  and  into distinct owned and wanted endpoints.
+        -   Added  and .
+        -   Introduced logic to automatically remove items from  collection when added to .
+        -   Added  endpoint.
+        -   Fixed critical bug in  (used for edit forms) by correcting MongoDB aggregation and  argument passing.
+
 -   ****:
-    -   **Summary**: Defines Pydantic models for MongoDB documents.
-    -   **Changes Made**: Modified  model to include  and . Enhanced  model with  and .
+    -   **Summary**: Defines Pydantic models for database entities.
+    -   **Changes Made**:
+        -   Introduced new Pydantic models:  and  for managing minimal data in the wanted list.
+        -   Updated  and  to include comprehensive fields for owned items (e.g., , , , , , , etc.) and ensure strict separation from .
+
 -   ****:
-    -   **Summary**: Frontend page for Master Kit creation.
-    -   **Changes Made**: Improved error handling in  to display specific messages instead of . Integrated new fields (, , ) into the form's state, submission logic, and JSX.
+    -   **Summary**: Handles Reference Kit creation and Personal Kit addition/editing.
+    -   **Changes Made**:
+        -   Enhanced error handling to show specific messages.
+        -   Updated Personal Kit creation form ( state and UI) to include , , , , , , , , , , , , .
+        -   Modified  to use  and send a dummy  to prevent backend validation errors.
+        -   Adjusted button  handlers to correctly differentiate Add to Owned (detailed modal) from Add to Wanted (direct action).
+
 -   ****:
-    -   **Summary**: Handles Reference Kit creation and Personal Kit additions.
-    -   **Changes Made**: Refactored the Add New Reference Kit form: corrected  call, removed Available Sizes field, reordered existing fields, and implemented the sequential Club -> Master Kit -> Reference Kit details workflow.
--   ****:
-    -   **Summary**: Manages user authentication.
-    -   **Changes Made**: Corrected error message display for login attempts to avoid showing The name is required for registration during login.
--   ****:
-    -   **Summary**: A generic modal component for editing various entity types (Améliorer cette fiche).
-    -   **Changes Made**: Extensively refactored  to dynamically render forms that precisely match the field structure of corresponding creation forms (Teams, Brands, Players, Competitions, Master Jerseys). Added support for , , dynamic options, and  attributes. Implemented and reset state for dynamic input fields (, ). Fixed a critical JavaScript bug where array fields were not initialized, causing  errors.
--   ****:
-    -   **Summary**: Utility script to populate the  collection from .
-    -   **Changes Made**: New file created.
--   ****:
-    -   **Summary**: Utility script to add sample teams with competition relationships.
-    -   **Changes Made**: New file created.
--   ****:
-    -   **Summary**: Utility script to update existing team records with competition IDs.
-    -   **Changes Made**: New file created.
--   ****:
-    -   **Summary**: Script to perform a full database wipe and re-seed with clean, interconnected test data, including user accounts.
-    -   **Changes Made**: New file created.
+    -   **Summary**: Displays user's collections and manages item actions.
+    -   **Changes Made**:
+        -   Updated  to use new  and  endpoints.
+        -   Fixed  to use specific  endpoints for owned/wanted items.
+        -   Conditionally rendered Edit button to appear only for owned items.
+        -   Completely replaced the edit modal section to be *identical* in structure, fields, layout, and conditional logic to the updated Personal Kit creation form in . This included matching all  and purchase detail fields and ensuring data persistence.
+
 </code_architecture>
 
 <pending_tasks>
@@ -132,11 +69,17 @@ The core problem is to provide an efficient and robust system for managing footb
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer successfully resolved a critical JavaScript bug in the Améliorer cette fiche (edit) forms, specifically for the Teams entity. The error, , occurred because array-based fields (like  and ) within the  were not being correctly initialized as empty arrays in the  state when an entity was loaded for editing.
+Immediately prior to this summary, the AI engineer successfully resolved a critical user-reported issue: the Personal Kit creation form in the Kit Store and the edit form in My Collection were not identical, and data entered during creation was not appearing in the edit form.
 
-The fix involved updating the  to ensure that  arrays for these field types are always initialized as empty, preventing the JavaScript runtime error. This was a direct continuation of the larger task to make all Améliorer cette fiche forms perfectly identical to their corresponding creation forms, a requirement reinforced by the user. The latest backend testing confirmed this specific bug fix was COMPLETELY RESOLVED.
+This was addressed by:
+1.  **Backend Fix**: A critical bug in 's  was fixed. This function, responsible for retrieving detailed Personal Kit data for editing, was passing duplicate keyword arguments to the  model, causing 500 errors and empty forms. The MongoDB aggregation pipeline was refined to correctly format data and eliminate redundant arguments.
+2.  **Frontend Form Alignment**:
+    *   The  state and the UI of the Personal Kit creation form in  were updated to include all missing fields as per user requests: , , , ,  (for worn status), and comprehensive purchase details like , , , , .
+    *   The entire edit modal section in  was then completely redesigned and replaced to be *identical* in structure, fields, layout, and conditional logic to this updated creation form in . This ensured all entered information persisted correctly from creation through storage, retrieval, and display in the edit form.
+
+Backend testing confirmed the complete resolution of the data persistence and form consistency issues, with all fields saving and displaying correctly.
 </current_work>
 
 <optional_next_step>
-The next step is to perform comprehensive frontend testing for all Améliorer cette fiche forms across Brands, Players, Leagues, and Master Jerseys, to verify they precisely match their creation forms and function correctly.
+Conduct comprehensive frontend testing to verify the identical nature and correct data persistence of the Personal Kit creation and edit forms.
 </optional_next_step>

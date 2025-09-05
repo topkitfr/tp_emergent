@@ -23,7 +23,7 @@ import base64
 import time
 
 # Configuration
-BASE_URL = "https://jersey-archive.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-collection.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

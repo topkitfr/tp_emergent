@@ -26,7 +26,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://jersey-archive.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-collection.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {
