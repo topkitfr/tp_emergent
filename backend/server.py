@@ -11329,8 +11329,17 @@ async def get_master_kits(
             brand_data.pop('_id', None)
             competition_data.pop('_id', None)
             
-            response = MasterKitResponse(
+            # Provide default values for missing fields
+            kit_data = {
                 **kit,
+                "main_sponsor": kit.get("main_sponsor", ""),
+                "reference_images": kit.get("reference_images", []),
+                "total_reference_kits": kit.get("total_reference_kits", 0),
+                "total_collectors": kit.get("total_collectors", 0)
+            }
+            
+            response = MasterKitResponse(
+                **kit_data,
                 team_info=team_data,
                 brand_info=brand_data,
                 competition_info=competition_data or {}
