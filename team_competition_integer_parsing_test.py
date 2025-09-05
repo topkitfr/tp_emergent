@@ -71,12 +71,16 @@ class TeamCompetitionIntegerParsingTester:
         """Test team creation with founded_year as integer"""
         print("\n🏆 Testing Team Creation with Founded Year (Integer)...")
         
+        # Use microseconds for uniqueness
+        import time
+        unique_id = str(int(time.time() * 1000000))[-8:]
+        
         team_data = {
-            "name": f"Test Team Founded Year {datetime.now().strftime('%H%M%S')}",
+            "name": f"Test Team Founded Year {unique_id}",
             "country": "France",
             "city": "Paris",
             "founded_year": 1900,  # Integer value
-            "short_name": "TTFY"
+            "short_name": f"TTFY{unique_id[-4:]}"
         }
         
         try:
@@ -104,12 +108,16 @@ class TeamCompetitionIntegerParsingTester:
         """Test team creation with empty/null founded_year"""
         print("\n🏆 Testing Team Creation with Empty Founded Year...")
         
+        # Use microseconds for uniqueness
+        import time
+        unique_id = str(int(time.time() * 1000000))[-8:]
+        
         team_data = {
-            "name": f"Test Team Empty Founded {datetime.now().strftime('%H%M%S')}",
+            "name": f"Test Team Empty Founded {unique_id}",
             "country": "Spain",
             "city": "Madrid",
             "founded_year": None,  # Null value
-            "short_name": "TTEF"
+            "short_name": f"TTEF{unique_id[-4:]}"
         }
         
         try:
@@ -137,8 +145,12 @@ class TeamCompetitionIntegerParsingTester:
         """Test team creation with only required fields"""
         print("\n🏆 Testing Team Creation with Required Fields Only...")
         
+        # Use microseconds for uniqueness
+        import time
+        unique_id = str(int(time.time() * 1000000))[-8:]
+        
         team_data = {
-            "name": f"Test Team Required {datetime.now().strftime('%H%M%S')}",
+            "name": f"Test Team Required {unique_id}",
             "country": "Italy"
             # Only name and country - testing minimal required fields
         }
