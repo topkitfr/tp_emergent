@@ -531,12 +531,12 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Modal - IDENTICAL to Creation Form */}
       {editingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Edit Kit Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Edit Kit Details</h2>
               <button
                 onClick={() => setEditingItem(null)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -545,165 +545,324 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
-                <select
-                  value={editFormData.size || ''}
-                  onChange={(e) => setEditFormData({...editFormData, size: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select size</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                </select>
+            <div className="p-6">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900">
+                  {editingItem.team_info?.name || 'Unknown Team'} - {editingItem.master_kit_info?.season || 'Unknown Season'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Editing details for your <span className="font-medium text-green-600">owned collection</span>
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-                <select
-                  value={editFormData.condition}
-                  onChange={(e) => setEditFormData({...editFormData, condition: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="mint">Mint</option>
-                  <option value="near_mint">Near Mint</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                  <option value="poor">Poor</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price (€)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={editFormData.purchase_price}
-                  onChange={(e) => setEditFormData({...editFormData, purchase_price: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter purchase price"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
-                <input
-                  type="date"
-                  value={editFormData.purchase_date}
-                  onChange={(e) => setEditFormData({...editFormData, purchase_date: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_worn"
-                    checked={editFormData.is_worn}
-                    onChange={(e) => setEditFormData({...editFormData, is_worn: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="is_worn" className="ml-2 text-sm text-gray-700">
-                    Worn
-                  </label>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_signed"
-                    checked={editFormData.is_signed}
-                    onChange={(e) => setEditFormData({...editFormData, is_signed: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="is_signed" className="ml-2 text-sm text-gray-700">
-                    Signed
-                  </label>
-                </div>
-
-                {editFormData.is_signed && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
+              <div className="space-y-4">
+                {/* Price Information */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">💰 Purchase Information</h3>
+                  
+                  {/* Price (buy) */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price</label>
                     <input
-                      type="text"
-                      value={editFormData.signed_by}
-                      onChange={(e) => setEditFormData({...editFormData, signed_by: e.target.value})}
+                      type="number"
+                      step="0.01"
+                      value={editFormData.price_buy || ''}
+                      onChange={(e) => setEditFormData({...editFormData, price_buy: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                      placeholder="Player name or person who signed"
+                      placeholder="99.99"
                     />
                   </div>
-                )}
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="has_printing"
-                    checked={editFormData.has_printing}
-                    onChange={(e) => setEditFormData({...editFormData, has_printing: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="has_printing" className="ml-2 text-sm text-gray-700">
-                    Has Player Print
-                  </label>
+                  {/* Price Value */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Value Estimate</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.price_value || ''}
+                      onChange={(e) => setEditFormData({...editFormData, price_value: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="120.00"
+                    />
+                  </div>
+
+                  {/* Purchase Date */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+                    <input
+                      type="date"
+                      value={editFormData.purchase_date || ''}
+                      onChange={(e) => setEditFormData({...editFormData, purchase_date: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Purchase Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Location</label>
+                    <input
+                      type="text"
+                      value={editFormData.purchase_location || ''}
+                      onChange={(e) => setEditFormData({...editFormData, purchase_location: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Official club store, online retailer, etc."
+                    />
+                  </div>
                 </div>
 
-                {editFormData.has_printing && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
-                      <input
-                        type="text"
-                        value={editFormData.printed_name}
-                        onChange={(e) => setEditFormData({...editFormData, printed_name: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                        placeholder="Player name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Number</label>
-                      <input
-                        type="number"
-                        value={editFormData.printed_number}
-                        onChange={(e) => setEditFormData({...editFormData, printed_number: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                        placeholder="10"
-                      />
-                    </div>
+                {/* Physical Details */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">👕 Physical Details</h3>
+                  
+                  {/* Size */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                    <select
+                      value={editFormData.size || ''}
+                      onChange={(e) => setEditFormData({...editFormData, size: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select size</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                      <option value="XXL">XXL</option>
+                    </select>
                   </div>
-                )}
+
+                  {/* Condition Details */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition Details</label>
+                    <select
+                      value={editFormData.condition || 'good'}
+                      onChange={(e) => setEditFormData({...editFormData, condition: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="mint">Mint - New with tags, perfect condition</option>
+                      <option value="near_mint">Near Mint - Like new, minor wear</option>
+                      <option value="excellent">Excellent - Very good condition, light wear</option>
+                      <option value="good">Good - Normal wear, all functional</option>
+                      <option value="fair">Fair - Noticeable wear, still wearable</option>
+                      <option value="poor">Poor - Heavy wear, damage visible</option>
+                    </select>
+                  </div>
+
+                  {/* Usage Status Checkboxes */}
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="edit_is_worn"
+                        checked={editFormData.is_worn || false}
+                        onChange={(e) => setEditFormData({...editFormData, is_worn: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="edit_is_worn" className="ml-2 block text-sm text-gray-900">
+                        I have worn this kit
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="edit_is_signed"
+                        checked={editFormData.is_signed || false}
+                        onChange={(e) => setEditFormData({...editFormData, is_signed: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="edit_is_signed" className="ml-2 block text-sm text-gray-900">
+                        This kit is signed
+                      </label>
+                    </div>
+
+                    {/* Signed by field - Only show if is_signed is true */}
+                    {editFormData.is_signed && (
+                      <div className="ml-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
+                        <input
+                          type="text"
+                          value={editFormData.signed_by || ''}
+                          onChange={(e) => setEditFormData({...editFormData, signed_by: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="Player name or person who signed"
+                        />
+                      </div>
+                    )}
+
+                    {/* Additional Usage Details */}
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="edit_is_match_worn"
+                        checked={editFormData.is_match_worn || false}
+                        onChange={(e) => setEditFormData({...editFormData, is_match_worn: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="edit_is_match_worn" className="ml-2 block text-sm text-gray-900">
+                        Match worn (actual game use)
+                      </label>
+                    </div>
+
+                    {editFormData.is_match_worn && (
+                      <div className="ml-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Match details</label>
+                        <input
+                          type="text"
+                          value={editFormData.match_details || ''}
+                          onChange={(e) => setEditFormData({...editFormData, match_details: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Champions League Final 2023, vs Barcelona"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Printing (Flocking) Section */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Printing (Flocking)</h3>
+                  
+                  {/* Has Printing Toggle */}
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      id="edit_has_printing"
+                      checked={editFormData.has_printing || false}
+                      onChange={(e) => setEditFormData({
+                        ...editFormData, 
+                        has_printing: e.target.checked,
+                        // Reset printing fields if unchecked
+                        player_name: e.target.checked ? editFormData.player_name : '',
+                        player_number: e.target.checked ? editFormData.player_number : '',
+                        is_custom_printing: false
+                      })}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="edit_has_printing" className="ml-2 block text-sm text-gray-900">
+                      This kit has printing/flocking
+                    </label>
+                  </div>
+
+                  {/* Printing Fields - Only show if has_printing is true */}
+                  {editFormData.has_printing && (
+                    <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                      {/* Custom Printing Checkbox */}
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="edit_is_custom_printing"
+                          checked={editFormData.is_custom_printing || false}
+                          onChange={(e) => setEditFormData({
+                            ...editFormData, 
+                            is_custom_printing: e.target.checked,
+                            // Reset player fields if custom printing is selected
+                            player_name: e.target.checked ? '' : editFormData.player_name,
+                            player_number: e.target.checked ? '' : editFormData.player_number
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="edit_is_custom_printing" className="ml-2 block text-sm text-gray-900">
+                          Custom Printing (non-player name/number)
+                        </label>
+                      </div>
+
+                      {/* Player Name Input - Only show if NOT custom printing */}
+                      {!editFormData.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Player Name {editFormData.has_printing && !editFormData.is_custom_printing ? '(Required)' : ''}
+                          </label>
+                          <input
+                            type="text"
+                            value={editFormData.player_name || ''}
+                            onChange={(e) => setEditFormData({...editFormData, player_name: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter player name"
+                          />
+                        </div>
+                      )}
+
+                      {/* Player Number Input - Only show if player name exists and NOT custom printing */}
+                      {editFormData.player_name && !editFormData.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Player Number</label>
+                          <input
+                            type="number"
+                            value={editFormData.player_number || ''}
+                            onChange={(e) => setEditFormData({...editFormData, player_number: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter player number"
+                          />
+                        </div>
+                      )}
+
+                      {/* Custom Printing Text - Only show if custom printing is selected */}
+                      {editFormData.is_custom_printing && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Custom Print Text</label>
+                          <input
+                            type="text"
+                            value={editFormData.custom_print_text || ''}
+                            onChange={(e) => setEditFormData({...editFormData, custom_print_text: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Your Name, Custom Text, etc."
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Additional Notes */}
+                <div className="border-b border-gray-200 pb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">📝 Additional Notes</label>
+                  <textarea
+                    value={editFormData.info || ''}
+                    onChange={(e) => setEditFormData({...editFormData, info: e.target.value})}
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Additional information about this kit (purchase story, wear occasions, etc.)"
+                  />
+                </div>
+
+                {/* Marketplace Options */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">🏪 Marketplace Options</h3>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="edit_for_sale"
+                      checked={editFormData.for_sale || false}
+                      onChange={(e) => setEditFormData({...editFormData, for_sale: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      disabled
+                    />
+                    <label htmlFor="edit_for_sale" className="ml-2 block text-sm text-gray-500">
+                      List for sale on marketplace (Coming Soon)
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    This feature will be available soon. You'll be able to list your kits for sale to other collectors.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Personal Notes</label>
-                <textarea
-                  value={editFormData.personal_notes}
-                  onChange={(e) => setEditFormData({...editFormData, personal_notes: e.target.value})}
-                  rows="3"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Add any personal notes about this kit..."
-                />
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  ✅ Update Kit Details
+                </button>
               </div>
-            </div>
-
-            <div className="flex space-x-3 p-6 border-t border-gray-200">
-              <button
-                onClick={() => setEditingItem(null)}
-                className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Save Changes
-              </button>
             </div>
           </div>
         </div>
