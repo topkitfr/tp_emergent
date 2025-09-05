@@ -236,10 +236,13 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
         ];
       case 'master_jersey':
         return [
-          { key: 'season', label: 'Season', type: 'text', required: true },
-          { key: 'jersey_type', label: 'Kit Type', type: 'select', options: ['home', 'away', 'third', 'goalkeeper'] },
-          { key: 'colors', label: 'Colors (comma separated)', type: 'text' },
-          { key: 'description', label: 'Description', type: 'textarea' }
+          { key: 'team_id', label: 'Équipe', type: 'select', required: true, options: 'teams' },
+          { key: 'brand_id', label: 'Marque', type: 'select', required: true, options: 'brands' },
+          { key: 'season', label: 'Saison', type: 'text', required: true, placeholder: '2024-25' },
+          { key: 'jersey_type', label: 'Type', type: 'select', required: true, options: ['home', 'away', 'third', 'fourth', 'goalkeeper', 'special', 'other'] },
+          { key: 'model', label: 'Modèle', type: 'select', required: true, options: ['authentic', 'replica'] },
+          { key: 'colors', label: 'Couleurs', type: 'text', required: true, placeholder: 'Ex: Blue, White, Red' },
+          { key: 'pattern', label: 'Pattern', type: 'textarea', placeholder: 'Description du motif, design, rayures...' }
         ];
       default:
         return [];
