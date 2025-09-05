@@ -70,8 +70,24 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
         setShowCreateModal(false);
         onDataUpdate(); // Refresh data
       } else {
-        const error = await response.json();
-        alert(`❌ Erreur: ${error.detail}`);
+        const errorData = await response.json();
+        console.error('Competition creation error:', errorData);
+        
+        // Better error handling to avoid [object Object] display
+        let errorMessage = 'Failed to create competition';
+        if (errorData && typeof errorData === 'object') {
+          if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              // Handle Pydantic validation errors
+              errorMessage = errorData.detail.map(err => err.msg || err.message || 'Validation error').join(', ');
+            }
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        }
+        alert(`❌ Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error creating competition:', error);
