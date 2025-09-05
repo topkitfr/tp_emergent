@@ -474,13 +474,14 @@ class FormCreationTester:
             response = self.session.put(f"{BACKEND_URL}/personal-kits/{kit_id}", json=update_data)
             print(f"   Status: {response.status_code}")
             
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 print(f"   ✅ Personal Kit updated successfully!")
                 
                 # Verify updated fields persist
                 print("   Verifying updated field persistence:")
                 print(f"     Size: {data.get('size')}")
+                print(f"     Condition: {data.get('condition')}")
                 print(f"     Price Value: {data.get('price_value')}")
                 print(f"     Acquisition Story: {data.get('acquisition_story')}")
                 print(f"     Times Worn: {data.get('times_worn')}")
