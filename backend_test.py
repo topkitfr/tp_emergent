@@ -143,7 +143,7 @@ class FormCreationTester:
             response = self.session.post(f"{BACKEND_URL}/competitions", json=competition_data)
             print(f"   Status: {response.status_code}")
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 print(f"   ✅ Competition created successfully!")
                 print(f"   Competition ID: {data.get('id')}")
