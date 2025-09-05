@@ -282,6 +282,37 @@ const CollaborativeMasterJerseyPage = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Marque *
+              </label>
+              <select
+                value={formData.brand_id}
+                onChange={(e) => setFormData({...formData, brand_id: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Sélectionner une marque</option>
+                {(brands || []).map(brand => (
+                  <option key={brand.id} value={brand.id}>{brand.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Saison *
+              </label>
+              <input
+                type="text"
+                value={formData.season}
+                onChange={(e) => setFormData({...formData, season: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="2024-25"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Type *
               </label>
               <select
