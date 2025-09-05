@@ -156,47 +156,53 @@ class EditFunctionalityTester:
             )
             return False, None
 
-    def test_individual_kit_retrieval(self):
-        """Test GET /api/personal-kits/{kit_id} - should return 200 instead of 500"""
-        print("🔍 TESTING INDIVIDUAL KIT RETRIEVAL...")
+    def test_edit_endpoint_availability(self):
+        """Test that PUT /api/personal-kits/{kit_id} endpoint is available and doesn't return 500"""
+        print("🔍 TESTING EDIT ENDPOINT AVAILABILITY...")
         
         if not self.test_kit_id:
             self.log_result(
-                "Individual Kit Retrieval",
+                "Edit Endpoint Availability",
                 False,
                 "No test kit ID available for testing"
             )
             return False
         
         try:
-            # Test GET /api/personal-kits/{kit_id}
-            response = self.session.get(f"{BACKEND_URL}/personal-kits/{self.test_kit_id}")
+            # Test PUT /api/personal-kits/{kit_id} with minimal update to check if endpoint works
+            # This tests the get_enriched_personal_kit function that was fixed
+            minimal_update = {
+                "personal_notes": "Test endpoint availability"
+            }
+            
+            response = self.session.put(f"{BACKEND_URL}/personal-kits/{self.test_kit_id}", json=minimal_update)
             
             if response.status_code == 200:
                 kit_data = response.json()
                 
-                # Verify the response structure
+                # Verify the response structure - this tests the fixed get_enriched_personal_kit function
                 expected_fields = ["id", "reference_kit_info", "master_kit_info", "team_info", "brand_info"]
                 present_fields = [field for field in expected_fields if field in kit_data]
                 
                 self.log_result(
-                    "Individual Kit Retrieval",
+                    "Edit Endpoint Availability",
                     True,
-                    f"Successfully retrieved kit {self.test_kit_id} with status 200 (previously returned 500)",
+                    f"PUT endpoint working correctly - returns 200 instead of 500 (bug fixed!)",
                     {
                         "kit_id": self.test_kit_id,
                         "response_status": response.status_code,
                         "expected_fields_present": present_fields,
                         "total_fields": len(kit_data.keys()),
-                        "enriched_data_available": all(field in kit_data for field in ["reference_kit_info", "master_kit_info"])
+                        "enriched_data_available": all(field in kit_data for field in ["reference_kit_info", "master_kit_info"]),
+                        "fix_verified": "get_enriched_personal_kit function working without duplicate keyword arguments"
                     }
                 )
                 return True, kit_data
             else:
                 self.log_result(
-                    "Individual Kit Retrieval",
+                    "Edit Endpoint Availability",
                     False,
-                    f"Kit retrieval failed with status {response.status_code} (expected 200)",
+                    f"PUT endpoint failed with status {response.status_code} (bug may still exist)",
                     {
                         "kit_id": self.test_kit_id,
                         "response_status": response.status_code,
@@ -207,9 +213,9 @@ class EditFunctionalityTester:
                 
         except Exception as e:
             self.log_result(
-                "Individual Kit Retrieval",
+                "Edit Endpoint Availability",
                 False,
-                f"Error retrieving kit: {str(e)}"
+                f"Error testing PUT endpoint: {str(e)}"
             )
             return False, None
 
