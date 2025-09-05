@@ -206,23 +206,42 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     if (!confirm(confirmMessage)) return;
 
     try {
+      console.log(`🗑️ Attempting to delete item:`, {
+        item_id: item.id,
+        item_type: itemType,
+        active_tab: activeTab,
+        is_owned: isOwnedItem,
+        user_token_length: user.token ? user.token.length : 'no token'
+      });
+      
       // Use different endpoints for owned vs wanted items
       const endpoint = isOwnedItem 
         ? `${API}/api/personal-kits/${item.id}`  // Delete PersonalKit
         : `${API}/api/wanted-kits/${item.id}`;   // Delete WantedKit
       
+      console.log(`🎯 DELETE endpoint: ${endpoint}`);
+      
       const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log(`📥 DELETE response:`, {
+        status: response.status,
+        ok: response.ok,
+        endpoint: endpoint
+      });
+
       if (response.ok) {
+        console.log(`✅ Successfully deleted from ${itemType}`);
         await loadCollections(); // Reload collections
         alert(`Kit removed from ${itemType}!`);
       } else {
         const errorData = await response.json();
+        console.error(`❌ Delete failed:`, errorData);
         alert(`Error: ${errorData.detail || `Failed to remove from ${itemType}`}`);
       }
     } catch (error) {
