@@ -526,8 +526,11 @@ class PersonalKitCreate(BaseModel):
     size: str
     condition: KitCondition = KitCondition.GOOD
     purchase_price: Optional[float] = None
+    price_value: Optional[float] = None  # Current value estimate
     purchase_date: Optional[datetime] = None
     purchase_location: Optional[str] = None
+    acquisition_story: Optional[str] = None  # Story of how it was acquired
+    times_worn: Optional[int] = 0  # How many times worn
     is_worn: bool = False
     is_signed: bool = False
     signed_by: Optional[str] = None
@@ -540,6 +543,7 @@ class PersonalKitCreate(BaseModel):
     is_authenticated: bool = False
     authentication_details: Optional[str] = None
     personal_notes: Optional[str] = None
+    for_sale: bool = False  # Marketplace option
     # Removed collection_type - PersonalKit is ONLY for owned items
 
 class WantedKitCreate(BaseModel):
