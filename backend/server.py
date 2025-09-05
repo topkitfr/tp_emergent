@@ -49,8 +49,8 @@ from collaborative_models import (
     ContributionVote, ContributorStats, ContributionResponse, ContributionCreateRequest, VoteRequest,
     ContributionAction, ContributionStatus, VoteType, EntityType, VerificationLevel,
     # New Kit Hierarchy Models
-    MasterKit, ReferenceKit, PersonalKit, KitType,
-    MasterKitCreate, ReferenceKitCreate, PersonalKitCreate, PersonalKitUpdate,
+    MasterKit, ReferenceKit, PersonalKit, WantedKit, KitType,
+    MasterKitCreate, ReferenceKitCreate, PersonalKitCreate, WantedKitCreate, PersonalKitUpdate,
     MasterKitResponse, ReferenceKitResponse, PersonalKitResponse
 )
 
