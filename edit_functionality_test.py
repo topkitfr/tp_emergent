@@ -293,7 +293,7 @@ class EditFunctionalityTester:
             return False, None
 
     def test_data_persistence(self):
-        """Test that updated data persists correctly"""
+        """Test that updated data persists correctly by checking the collection"""
         print("🔍 TESTING DATA PERSISTENCE...")
         
         if not self.test_kit_id:
@@ -305,44 +305,64 @@ class EditFunctionalityTester:
             return False
         
         try:
-            # Retrieve the kit again to verify persistence
-            response = self.session.get(f"{BACKEND_URL}/personal-kits/{self.test_kit_id}")
+            # Retrieve the kit through the collection endpoint to verify persistence
+            response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
             
             if response.status_code == 200:
-                kit_data = response.json()
+                kits = response.json()
                 
-                # Check that all expected fields are present and properly formatted
-                required_fields = ["id", "size", "condition", "personal_notes", "reference_kit_info", "master_kit_info"]
-                present_fields = [field for field in required_fields if field in kit_data and kit_data[field] is not None]
+                # Find our test kit in the collection
+                test_kit = None
+                for kit in kits:
+                    if kit.get("id") == self.test_kit_id:
+                        test_kit = kit
+                        break
                 
-                # Check for enriched data structure
-                has_enriched_data = (
-                    "reference_kit_info" in kit_data and 
-                    "master_kit_info" in kit_data and
-                    isinstance(kit_data.get("reference_kit_info"), dict) and
-                    isinstance(kit_data.get("master_kit_info"), dict)
-                )
-                
-                self.log_result(
-                    "Data Persistence",
-                    True,
-                    f"Data persisted correctly with {len(present_fields)}/{len(required_fields)} required fields",
-                    {
-                        "kit_id": self.test_kit_id,
-                        "required_fields_present": present_fields,
-                        "has_enriched_data": has_enriched_data,
-                        "personal_notes": kit_data.get("personal_notes", ""),
-                        "condition": kit_data.get("condition", ""),
-                        "reference_kit_available": "reference_kit_info" in kit_data,
-                        "master_kit_available": "master_kit_info" in kit_data
-                    }
-                )
-                return True
+                if test_kit:
+                    # Check that all expected fields are present and properly formatted
+                    required_fields = ["id", "size", "condition", "personal_notes", "reference_kit_info", "master_kit_info"]
+                    present_fields = [field for field in required_fields if field in test_kit and test_kit[field] is not None]
+                    
+                    # Check for enriched data structure
+                    has_enriched_data = (
+                        "reference_kit_info" in test_kit and 
+                        "master_kit_info" in test_kit and
+                        isinstance(test_kit.get("reference_kit_info"), dict) and
+                        isinstance(test_kit.get("master_kit_info"), dict)
+                    )
+                    
+                    # Check if our test update persisted
+                    notes_contain_test = "Test at" in test_kit.get("personal_notes", "")
+                    
+                    self.log_result(
+                        "Data Persistence",
+                        True,
+                        f"Data persisted correctly with {len(present_fields)}/{len(required_fields)} required fields",
+                        {
+                            "kit_id": self.test_kit_id,
+                            "required_fields_present": present_fields,
+                            "has_enriched_data": has_enriched_data,
+                            "personal_notes": test_kit.get("personal_notes", ""),
+                            "condition": test_kit.get("condition", ""),
+                            "test_update_persisted": notes_contain_test,
+                            "reference_kit_available": "reference_kit_info" in test_kit,
+                            "master_kit_available": "master_kit_info" in test_kit
+                        }
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "Data Persistence",
+                        False,
+                        f"Test kit {self.test_kit_id} not found in collection",
+                        {"total_kits_in_collection": len(kits)}
+                    )
+                    return False
             else:
                 self.log_result(
                     "Data Persistence",
                     False,
-                    f"Failed to retrieve kit for persistence check with status {response.status_code}",
+                    f"Failed to retrieve collection for persistence check with status {response.status_code}",
                     {"response": response.text}
                 )
                 return False
