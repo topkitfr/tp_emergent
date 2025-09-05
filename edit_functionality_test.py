@@ -368,10 +368,10 @@ class EditFunctionalityTester:
         if not success:
             workflow_success = False
         
-        # Step 2: Test individual kit retrieval
+        # Step 2: Test edit endpoint availability (this tests the fixed get_enriched_personal_kit function)
         if success:
-            success, retrieved_kit = self.test_individual_kit_retrieval()
-            workflow_steps.append(("Retrieve for Editing", success))
+            success, retrieved_kit = self.test_edit_endpoint_availability()
+            workflow_steps.append(("Test Edit Endpoint (Bug Fix)", success))
             if not success:
                 workflow_success = False
         
