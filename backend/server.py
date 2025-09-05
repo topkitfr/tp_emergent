@@ -67,13 +67,20 @@ system_settings = {
 
 def enable_auto_approval_for_testing(entity_data: dict, user_id: str) -> dict:
     """
-    Auto-approve entities for testing purposes.
-    This function automatically sets entities to COMMUNITY_VERIFIED status
-    to bypass manual validation during development and testing.
+    Conditionally auto-approve entities based on system settings.
+    This function checks the system settings to determine if entities
+    should be automatically approved or require manual review.
     """
-    entity_data["verified_level"] = VerificationLevel.COMMUNITY_VERIFIED
-    entity_data["verified_at"] = datetime.utcnow()
-    entity_data["verified_by"] = user_id
+    if system_settings.get("auto_approval_enabled", False):
+        entity_data["verified_level"] = VerificationLevel.COMMUNITY_VERIFIED
+        entity_data["verified_at"] = datetime.utcnow()
+        entity_data["verified_by"] = user_id
+    else:
+        # Set to pending status for manual review
+        entity_data["verified_level"] = VerificationLevel.PENDING
+        entity_data["verified_at"] = None
+        entity_data["verified_by"] = None
+    
     return entity_data
 
 ROOT_DIR = Path(__file__).parent
