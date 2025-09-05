@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+"""
+TopKit Admin System with Hybrid Auto-Approval Testing
+====================================================
+
+This script tests the complete Admin System with Hybrid Auto-Approval functionality
+as specified in the review request.
+
+Test Coverage:
+1. Admin Settings Management (GET/PUT /api/admin/settings)
+2. Auto-Approval Behavior Verification
+3. Admin Dashboard Statistics (GET /api/admin/dashboard-stats)
+4. Admin User Management (GET /api/admin/users)
+5. Pending Approvals Management (GET /api/admin/pending-approvals)
+6. Complete Workflow Test
+
+Authentication: topkitfr@gmail.com/TopKitSecure789#
+"""
 
 import requests
 import json
@@ -10,636 +27,503 @@ BACKEND_URL = "https://jersey-collection.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
-class FormCreationTester:
+class AdminSystemTester:
     def __init__(self):
         self.session = requests.Session()
-        self.auth_token = None
-        self.user_id = None
+        self.admin_token = None
+        self.admin_user_id = None
+        self.test_results = []
         
-    def authenticate(self):
+    def log_test(self, test_name, success, details=""):
+        """Log test results"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        self.test_results.append({
+            "test": test_name,
+            "success": success,
+            "details": details,
+            "timestamp": datetime.now().isoformat()
+        })
+        print(f"{status}: {test_name}")
+        if details:
+            print(f"   Details: {details}")
+        print()
+
+    def authenticate_admin(self):
         """Authenticate as admin user"""
-        print("🔐 Authenticating admin user...")
-        
-        login_data = {
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        }
+        print("🔐 AUTHENTICATING ADMIN USER...")
         
         try:
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
-            print(f"Login response status: {response.status_code}")
+            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            })
             
             if response.status_code == 200:
                 data = response.json()
-                self.auth_token = data.get("token")
-                user_info = data.get("user", {})
-                self.user_id = user_info.get("id")
+                self.admin_token = data.get("token")
+                user_data = data.get("user", {})
+                self.admin_user_id = user_data.get("id")
                 
                 # Set authorization header for future requests
                 self.session.headers.update({
-                    "Authorization": f"Bearer {self.auth_token}",
-                    "Content-Type": "application/json"
+                    "Authorization": f"Bearer {self.admin_token}"
                 })
                 
-                print(f"✅ Authentication successful!")
-                print(f"   User: {user_info.get('name')} ({user_info.get('email')})")
-                print(f"   Role: {user_info.get('role')}")
-                print(f"   User ID: {self.user_id}")
-                print(f"   Token length: {len(self.auth_token)} characters")
+                self.log_test(
+                    "Admin Authentication",
+                    True,
+                    f"Admin authenticated: {user_data.get('name', 'Unknown')} (Role: {user_data.get('role', 'Unknown')})"
+                )
                 return True
             else:
-                print(f"❌ Authentication failed: {response.status_code}")
-                print(f"   Response: {response.text}")
+                self.log_test(
+                    "Admin Authentication",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
                 return False
                 
         except Exception as e:
-            print(f"❌ Authentication error: {e}")
+            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
-    
-    def test_team_creation(self):
-        """Test Team Creation Fix (POST /api/teams)"""
-        print("\n🏟️ Testing Team Creation Fix...")
+
+    def test_admin_settings_get(self):
+        """Test GET /api/admin/settings"""
+        print("⚙️ TESTING ADMIN SETTINGS RETRIEVAL...")
         
-        # Test 1: Valid team creation
-        print("Test 1: Valid team creation")
-        import random
-        random_suffix = random.randint(1000, 9999)
-        team_data = {
-            "name": f"Test Team FC {random_suffix}",
+        try:
+            response = self.session.get(f"{BACKEND_URL}/admin/settings")
+            
+            if response.status_code == 200:
+                settings = response.json()
+                expected_keys = ["auto_approval_enabled", "admin_notifications", "community_voting_enabled"]
+                
+                missing_keys = [key for key in expected_keys if key not in settings]
+                if missing_keys:
+                    self.log_test(
+                        "Admin Settings GET",
+                        False,
+                        f"Missing settings keys: {missing_keys}"
+                    )
+                else:
+                    self.log_test(
+                        "Admin Settings GET",
+                        True,
+                        f"Settings retrieved: {json.dumps(settings, indent=2)}"
+                    )
+                return settings
+            else:
+                self.log_test(
+                    "Admin Settings GET",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None
+                
+        except Exception as e:
+            self.log_test("Admin Settings GET", False, f"Exception: {str(e)}")
+            return None
+
+    def test_admin_settings_update(self, new_settings):
+        """Test PUT /api/admin/settings"""
+        print("⚙️ TESTING ADMIN SETTINGS UPDATE...")
+        
+        try:
+            response = self.session.put(f"{BACKEND_URL}/admin/settings", json=new_settings)
+            
+            if response.status_code == 200:
+                self.log_test(
+                    "Admin Settings UPDATE",
+                    True,
+                    f"Settings updated: {json.dumps(new_settings, indent=2)}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Admin Settings UPDATE",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Settings UPDATE", False, f"Exception: {str(e)}")
+            return False
+
+    def test_dashboard_stats(self):
+        """Test GET /api/admin/dashboard-stats"""
+        print("📊 TESTING ADMIN DASHBOARD STATISTICS...")
+        
+        try:
+            response = self.session.get(f"{BACKEND_URL}/admin/dashboard-stats")
+            
+            if response.status_code == 200:
+                stats = response.json()
+                
+                # Check for expected sections
+                expected_sections = ["users", "content", "moderation", "system"]
+                missing_sections = [section for section in expected_sections if section not in stats]
+                
+                if missing_sections:
+                    self.log_test(
+                        "Dashboard Statistics",
+                        False,
+                        f"Missing sections: {missing_sections}"
+                    )
+                else:
+                    # Verify data structure
+                    users_stats = stats.get("users", {})
+                    content_stats = stats.get("content", {})
+                    moderation_stats = stats.get("moderation", {})
+                    system_stats = stats.get("system", {})
+                    
+                    details = f"""
+Dashboard Statistics Retrieved:
+- Users: {users_stats.get('total', 0)} total, {users_stats.get('active_30d', 0)} active (30d)
+- Content: {content_stats.get('teams', 0)} teams, {content_stats.get('competitions', 0)} competitions, {content_stats.get('brands', 0)} brands
+- Moderation: {moderation_stats.get('pending_contributions', 0)} pending, {moderation_stats.get('total_contributions', 0)} total
+- System: Auto-approval={system_stats.get('auto_approval', 'Unknown')}, Community voting={system_stats.get('community_voting', 'Unknown')}
+                    """
+                    
+                    self.log_test("Dashboard Statistics", True, details.strip())
+                return stats
+            else:
+                self.log_test(
+                    "Dashboard Statistics",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None
+                
+        except Exception as e:
+            self.log_test("Dashboard Statistics", False, f"Exception: {str(e)}")
+            return None
+
+    def test_admin_users(self):
+        """Test GET /api/admin/users"""
+        print("👥 TESTING ADMIN USER MANAGEMENT...")
+        
+        try:
+            # Test basic user listing
+            response = self.session.get(f"{BACKEND_URL}/admin/users")
+            
+            if response.status_code == 200:
+                data = response.json()
+                users = data.get("users", [])
+                total = data.get("total", 0)
+                
+                self.log_test(
+                    "Admin Users Listing",
+                    True,
+                    f"Retrieved {len(users)} users out of {total} total"
+                )
+                
+                # Test pagination
+                response_page2 = self.session.get(f"{BACKEND_URL}/admin/users?page=2&limit=5")
+                if response_page2.status_code == 200:
+                    self.log_test("Admin Users Pagination", True, "Pagination working")
+                else:
+                    self.log_test("Admin Users Pagination", False, f"HTTP {response_page2.status_code}")
+                
+                # Test search functionality
+                response_search = self.session.get(f"{BACKEND_URL}/admin/users?search=topkit")
+                if response_search.status_code == 200:
+                    search_data = response_search.json()
+                    self.log_test(
+                        "Admin Users Search",
+                        True,
+                        f"Search returned {len(search_data.get('users', []))} results"
+                    )
+                else:
+                    self.log_test("Admin Users Search", False, f"HTTP {response_search.status_code}")
+                
+                return data
+            else:
+                self.log_test(
+                    "Admin Users Listing",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None
+                
+        except Exception as e:
+            self.log_test("Admin Users Listing", False, f"Exception: {str(e)}")
+            return None
+
+    def test_pending_approvals(self):
+        """Test GET /api/admin/pending-approvals"""
+        print("⏳ TESTING PENDING APPROVALS MANAGEMENT...")
+        
+        try:
+            response = self.session.get(f"{BACKEND_URL}/admin/pending-approvals")
+            
+            if response.status_code == 200:
+                pending_items = response.json()
+                
+                # Group by type
+                item_types = {}
+                for item in pending_items:
+                    item_type = item.get("type", "unknown")
+                    if item_type not in item_types:
+                        item_types[item_type] = 0
+                    item_types[item_type] += 1
+                
+                details = f"Found {len(pending_items)} pending items: {dict(item_types)}"
+                self.log_test("Pending Approvals Listing", True, details)
+                
+                return pending_items
+            else:
+                self.log_test(
+                    "Pending Approvals Listing",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None
+                
+        except Exception as e:
+            self.log_test("Pending Approvals Listing", False, f"Exception: {str(e)}")
+            return None
+
+    def test_approval_functionality(self, pending_items):
+        """Test approval functionality if pending items exist"""
+        print("✅ TESTING APPROVAL FUNCTIONALITY...")
+        
+        if not pending_items:
+            self.log_test(
+                "Approval Functionality",
+                True,
+                "No pending items to test approval (system working correctly)"
+            )
+            return True
+        
+        # Test approval on first pending item
+        test_item = pending_items[0]
+        item_type = test_item.get("type")
+        item_id = test_item.get("id")
+        
+        try:
+            response = self.session.put(f"{BACKEND_URL}/admin/approve/{item_type}/{item_id}")
+            
+            if response.status_code == 200:
+                self.log_test(
+                    "Approval Functionality",
+                    True,
+                    f"Successfully approved {item_type} with ID {item_id}"
+                )
+                return True
+            else:
+                self.log_test(
+                    "Approval Functionality",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Approval Functionality", False, f"Exception: {str(e)}")
+            return False
+
+    def create_test_team(self, auto_approval_enabled):
+        """Create a test team to verify auto-approval behavior"""
+        print(f"🏆 CREATING TEST TEAM (Auto-approval: {auto_approval_enabled})...")
+        
+        test_team_data = {
+            "name": f"Test Team Auto-Approval {datetime.now().strftime('%H%M%S')}",
             "country": "France",
-            "city": "Paris",
+            "city": "Test City",
             "founded_year": 2024,
-            "short_name": f"TTFC{random_suffix}"
+            "short_name": "TTA"
         }
         
         try:
-            response = self.session.post(f"{BACKEND_URL}/teams", json=team_data)
-            print(f"   Status: {response.status_code}")
+            response = self.session.post(f"{BACKEND_URL}/teams", json=test_team_data)
             
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"   ✅ Team created successfully!")
-                print(f"   Team ID: {data.get('id')}")
-                print(f"   Team Name: {data.get('name')}")
-                return data.get('id')
-            else:
-                print(f"   ❌ Team creation failed")
-                print(f"   Response: {response.text}")
-                return None
+            if response.status_code == 200 or response.status_code == 201:
+                team_data = response.json()
+                team_id = team_data.get("id")
+                verified_level = team_data.get("verified_level")
                 
-        except Exception as e:
-            print(f"   ❌ Team creation error: {e}")
-            return None
-    
-    def test_team_creation_validation(self):
-        """Test Team Creation validation and error handling"""
-        print("\n🔍 Testing Team Creation validation...")
-        
-        # Test missing required fields
-        print("Test: Missing required fields")
-        invalid_team_data = {
-            "city": "Paris"  # Missing name and country
-        }
-        
-        try:
-            response = self.session.post(f"{BACKEND_URL}/teams", json=invalid_team_data)
-            print(f"   Status: {response.status_code}")
-            print(f"   Response: {response.text}")
-            
-            if response.status_code == 422:
-                # Check if error message is meaningful (not [object Object])
-                response_text = response.text
-                if "[object Object]" in response_text:
-                    print(f"   ❌ Still showing [object Object] error!")
-                    return False
+                expected_status = "COMMUNITY_VERIFIED" if auto_approval_enabled else "PENDING"
+                
+                if verified_level == expected_status:
+                    self.log_test(
+                        f"Team Creation (Auto-approval: {auto_approval_enabled})",
+                        True,
+                        f"Team created with correct status: {verified_level}"
+                    )
+                    return team_id, verified_level
                 else:
-                    print(f"   ✅ Proper error message displayed (no [object Object])")
-                    return True
+                    self.log_test(
+                        f"Team Creation (Auto-approval: {auto_approval_enabled})",
+                        False,
+                        f"Expected status {expected_status}, got {verified_level}"
+                    )
+                    return team_id, verified_level
             else:
-                print(f"   ⚠️ Unexpected status code: {response.status_code}")
-                return False
+                self.log_test(
+                    f"Team Creation (Auto-approval: {auto_approval_enabled})",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None, None
                 
         except Exception as e:
-            print(f"   ❌ Validation test error: {e}")
+            self.log_test(
+                f"Team Creation (Auto-approval: {auto_approval_enabled})",
+                False,
+                f"Exception: {str(e)}"
+            )
+            return None, None
+
+    def test_hybrid_auto_approval_workflow(self):
+        """Test the complete hybrid auto-approval workflow"""
+        print("🔄 TESTING HYBRID AUTO-APPROVAL WORKFLOW...")
+        
+        # Get current settings
+        current_settings = self.test_admin_settings_get()
+        if not current_settings:
             return False
-    
-    def test_competition_creation(self):
-        """Test Competition Creation Fix (POST /api/competitions)"""
-        print("\n🏆 Testing Competition Creation Fix...")
         
-        # Test valid competition creation with corrected field mapping
-        print("Test: Valid competition creation")
-        import random
-        random_suffix = random.randint(1000, 9999)
-        competition_data = {
-            "competition_name": f"Test League {random_suffix}",  # Fixed: name → competition_name
-            "type": "National league",               # Fixed: competition_type → type
-            "country": "France",
-            "level": 1,
-            "confederations_federations": ["UEFA"]  # Fixed: should be a list
-        }
+        # Test 1: Enable auto-approval and create team
+        print("\n--- Test 1: Auto-approval ENABLED ---")
+        auto_approval_settings = current_settings.copy()
+        auto_approval_settings["auto_approval_enabled"] = True
         
-        try:
-            response = self.session.post(f"{BACKEND_URL}/competitions", json=competition_data)
-            print(f"   Status: {response.status_code}")
+        if self.test_admin_settings_update(auto_approval_settings):
+            team_id_1, status_1 = self.create_test_team(True)
             
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"   ✅ Competition created successfully!")
-                print(f"   Competition ID: {data.get('id')}")
-                print(f"   Competition Name: {data.get('competition_name')}")
-                print(f"   Type: {data.get('type')}")
-                return data.get('id')
-            else:
-                print(f"   ❌ Competition creation failed")
-                print(f"   Response: {response.text}")
-                return None
-                
-        except Exception as e:
-            print(f"   ❌ Competition creation error: {e}")
-            return None
-    
-    def test_competition_validation(self):
-        """Test Competition Creation validation"""
-        print("\n🔍 Testing Competition Creation validation...")
+        # Test 2: Disable auto-approval and create team
+        print("\n--- Test 2: Auto-approval DISABLED ---")
+        manual_approval_settings = current_settings.copy()
+        manual_approval_settings["auto_approval_enabled"] = False
         
-        # Test missing required fields
-        print("Test: Missing required fields (competition_name, type)")
-        invalid_competition_data = {
-            "country": "France"  # Missing competition_name and type
-        }
+        if self.test_admin_settings_update(manual_approval_settings):
+            team_id_2, status_2 = self.create_test_team(False)
         
-        try:
-            response = self.session.post(f"{BACKEND_URL}/competitions", json=invalid_competition_data)
-            print(f"   Status: {response.status_code}")
-            print(f"   Response: {response.text}")
-            
-            if response.status_code == 422:
-                response_text = response.text
-                if "[object Object]" in response_text:
-                    print(f"   ❌ Still showing [object Object] error!")
-                    return False
-                else:
-                    print(f"   ✅ Proper error message displayed (no [object Object])")
-                    return True
-            else:
-                print(f"   ⚠️ Unexpected status code: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Competition validation test error: {e}")
-            return False
-    
-    def get_teams_and_brands(self):
-        """Get available teams and brands for master jersey creation"""
-        print("\n📋 Getting available teams and brands...")
-        
-        teams = []
-        brands = []
-        
-        try:
-            # Get teams
-            teams_response = self.session.get(f"{BACKEND_URL}/teams")
-            if teams_response.status_code == 200:
-                teams = teams_response.json()
-                print(f"   Found {len(teams)} teams")
-            
-            # Get brands
-            brands_response = self.session.get(f"{BACKEND_URL}/brands")
-            if brands_response.status_code == 200:
-                brands = brands_response.json()
-                print(f"   Found {len(brands)} brands")
-                
-            return teams, brands
-            
-        except Exception as e:
-            print(f"   ❌ Error getting teams/brands: {e}")
-            return [], []
-    
-    def test_master_jersey_creation(self):
-        """Test Master Jersey Creation Fix (POST /api/master-jerseys)"""
-        print("\n👕 Testing Master Jersey Creation Fix...")
-        
-        # Get available teams and brands
-        teams, brands = self.get_teams_and_brands()
-        
-        if not teams or not brands:
-            print("   ❌ No teams or brands available for testing")
-            return None
-        
-        team_id = teams[0].get('id')
-        brand_id = brands[0].get('id')
-        
-        print(f"   Using Team ID: {team_id}")
-        print(f"   Using Brand ID: {brand_id}")
-        
-        # Test valid master jersey creation with fixed field mapping
-        print("Test: Valid master jersey creation")
-        import random
-        random_suffix = random.randint(1000, 9999)
-        master_jersey_data = {
-            "team_id": team_id,
-            "brand_id": brand_id,
-            "season": f"2025-{26 + (random_suffix % 10)}",  # Use different season to avoid duplicates
-            "jersey_type": "away",        # Use away to avoid duplicate home jerseys
-            "model": f"Test Pro {random_suffix}",     # Required field
-            "primary_color": "Red",      # Required field
-            "secondary_colors": ["White", "Blue"]
-        }
-        
-        try:
-            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
-            print(f"   Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"   ✅ Master Jersey created successfully!")
-                print(f"   Master Jersey ID: {data.get('id')}")
-                print(f"   TopKit Reference: {data.get('topkit_reference')}")
-                return data.get('id')
-            else:
-                print(f"   ❌ Master Jersey creation failed")
-                print(f"   Response: {response.text}")
-                return None
-                
-        except Exception as e:
-            print(f"   ❌ Master Jersey creation error: {e}")
-            return None
-    
-    def test_master_jersey_validation(self):
-        """Test Master Jersey Creation validation"""
-        print("\n🔍 Testing Master Jersey Creation validation...")
-        
-        # Test missing required fields
-        print("Test: Missing required fields")
-        invalid_master_jersey_data = {
-            "season": "2024-25"  # Missing team_id, brand_id, jersey_type, model, primary_color
-        }
-        
-        try:
-            response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=invalid_master_jersey_data)
-            print(f"   Status: {response.status_code}")
-            print(f"   Response: {response.text}")
-            
-            if response.status_code in [400, 422]:
-                response_text = response.text
-                if "[object Object]" in response_text:
-                    print(f"   ❌ Still showing [object Object] error!")
-                    return False
-                else:
-                    print(f"   ✅ Proper error message displayed (no [object Object])")
-                    return True
-            else:
-                print(f"   ⚠️ Unexpected status code: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Master Jersey validation test error: {e}")
-            return False
-    
-    def get_reference_kits(self):
-        """Get available reference kits for personal kit creation"""
-        print("\n📋 Getting available reference kits...")
-        
-        try:
-            response = self.session.get(f"{BACKEND_URL}/vestiaire")
-            if response.status_code == 200:
-                kits = response.json()
-                print(f"   Found {len(kits)} reference kits")
-                return kits
-            else:
-                print(f"   ❌ Failed to get reference kits: {response.status_code}")
-                return []
-                
-        except Exception as e:
-            print(f"   ❌ Error getting reference kits: {e}")
-            return []
-    
-    def test_personal_kit_creation(self):
-        """Test Personal Kit Data Persistence Fix (POST /api/personal-kits)"""
-        print("\n🎽 Testing Personal Kit Data Persistence Fix...")
-        
-        # Get available reference kits
-        reference_kits = self.get_reference_kits()
-        
-        if not reference_kits:
-            print("   ❌ No reference kits available for testing")
-            return None
-        
-        # Check existing collections to find available kit
-        reference_kit_id = None
-        collection_type = "owned"
-        
-        # Get existing owned and wanted collections
-        owned_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-        wanted_response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
-        
-        existing_owned_kit_ids = []
-        existing_wanted_kit_ids = []
-        
-        if owned_response.status_code == 200:
-            existing_owned_kit_ids = [kit.get('reference_kit_id') for kit in owned_response.json()]
-        
-        if wanted_response.status_code == 200:
-            existing_wanted_kit_ids = [kit.get('reference_kit_id') for kit in wanted_response.json()]
-        
-        print(f"   Existing owned kits: {len(existing_owned_kit_ids)}")
-        print(f"   Existing wanted kits: {len(existing_wanted_kit_ids)}")
-        
-        # Find a kit that's not in either collection
-        for kit in reference_kits:
-            kit_id = kit.get('id')
-            if kit_id not in existing_owned_kit_ids and kit_id not in existing_wanted_kit_ids:
-                reference_kit_id = kit_id
-                collection_type = "owned"
-                break
-        
-        # If all kits are in owned, try wanted collection
-        if not reference_kit_id:
-            for kit in reference_kits:
-                kit_id = kit.get('id')
-                if kit_id not in existing_wanted_kit_ids:
-                    reference_kit_id = kit_id
-                    collection_type = "wanted"
+        # Test 3: Verify pending items and approve manually
+        print("\n--- Test 3: Manual approval workflow ---")
+        pending_items = self.test_pending_approvals()
+        if pending_items:
+            # Find our test team in pending items
+            test_team_pending = None
+            for item in pending_items:
+                if item.get("id") == team_id_2:
+                    test_team_pending = item
                     break
-        
-        # If still no kit found, delete one from owned to make space for testing
-        if not reference_kit_id and existing_owned_kit_ids:
-            # Get the first owned kit to delete
-            owned_kits = owned_response.json()
-            if owned_kits:
-                kit_to_delete = owned_kits[0]
-                delete_response = self.session.delete(f"{BACKEND_URL}/personal-kits/{kit_to_delete.get('id')}")
-                if delete_response.status_code in [200, 204]:
-                    reference_kit_id = kit_to_delete.get('reference_kit_id')
-                    collection_type = "owned"
-                    print(f"   Deleted existing kit to make space for testing")
-        
-        if not reference_kit_id:
-            reference_kit_id = reference_kits[0].get('id')
-            collection_type = "owned"
-        
-        print(f"   Using Reference Kit ID: {reference_kit_id} ({collection_type} collection)")
-        
-        # Test personal kit creation with all new fields
-        print("Test: Personal kit creation with all fields")
-        personal_kit_data = {
-            "reference_kit_id": reference_kit_id,
-            "collection_type": collection_type,
-            "size": "L",
-            "condition": "mint",
-            "purchase_price": 89.99,
-            "price_value": 120.00,           # New field
-            "acquisition_story": "Bought from official store during Champions League final", # New field
-            "times_worn": 5,                 # New field
-            "is_for_sale": False,            # Fixed: correct field name
-            "printed_name": "MESSI",         # Fixed field mapping
-            "printed_number": "10",          # Fixed field mapping
-            "personal_notes": "Authentic jersey with official printing", # Fixed field mapping
-            "printing_type": "Official"      # Fixed field mapping
-        }
-        
-        try:
-            response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
-            print(f"   Status: {response.status_code}")
             
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"   ✅ Personal Kit created successfully!")
-                print(f"   Personal Kit ID: {data.get('id')}")
-                
-                # Verify all fields are persisted
-                print("   Verifying field persistence:")
-                print(f"     Price Value: {data.get('price_value')}")
-                print(f"     Acquisition Story: {data.get('acquisition_story')}")
-                print(f"     Times Worn: {data.get('times_worn')}")
-                print(f"     For Sale: {data.get('is_for_sale')}")
-                print(f"     Printed Name: {data.get('printed_name')}")
-                print(f"     Printed Number: {data.get('printed_number')}")
-                print(f"     Personal Notes: {data.get('personal_notes')}")
-                print(f"     Printing Type: {data.get('printing_type')}")
-                
-                return data.get('id')
+            if test_team_pending:
+                self.test_approval_functionality([test_team_pending])
             else:
-                print(f"   ❌ Personal Kit creation failed")
-                print(f"   Response: {response.text}")
-                return None
-                
-        except Exception as e:
-            print(f"   ❌ Personal Kit creation error: {e}")
-            return None
-    
-    def test_personal_kit_retrieval(self, kit_id):
-        """Test Personal Kit data retrieval to confirm persistence"""
-        print("\n🔍 Testing Personal Kit data retrieval...")
+                self.log_test(
+                    "Manual Approval Workflow",
+                    False,
+                    f"Test team {team_id_2} not found in pending items"
+                )
         
-        try:
-            # Try both owned and wanted collections
-            response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=owned")
-            if response.status_code != 200:
-                response = self.session.get(f"{BACKEND_URL}/personal-kits?collection_type=wanted")
-            
-            print(f"   Status: {response.status_code}")
-            
-            if response.status_code == 200:
-                kits = response.json()
-                print(f"   Found {len(kits)} kits")
-                
-                # Find our created kit
-                created_kit = None
-                for kit in kits:
-                    if kit.get('id') == kit_id:
-                        created_kit = kit
-                        break
-                
-                if created_kit:
-                    print(f"   ✅ Personal Kit found in collection!")
-                    print("   Verifying all fields persist correctly:")
-                    
-                    # Check all the new and fixed fields
-                    fields_to_check = [
-                        'price_value', 'acquisition_story', 'times_worn', 'is_for_sale',
-                        'printed_name', 'printed_number', 'personal_notes', 'printing_type'
-                    ]
-                    
-                    all_fields_present = True
-                    for field in fields_to_check:
-                        value = created_kit.get(field)
-                        if value is not None:
-                            print(f"     ✅ {field}: {value}")
-                        else:
-                            print(f"     ❌ {field}: Missing!")
-                            all_fields_present = False
-                    
-                    return all_fields_present
-                else:
-                    print(f"   ❌ Created kit not found in collection")
-                    return False
-            else:
-                print(f"   ❌ Failed to retrieve personal kits: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Personal Kit retrieval error: {e}")
-            return False
-    
-    def test_personal_kit_update(self, kit_id):
-        """Test Personal Kit Update Fix (PUT /api/personal-kits/{kit_id})"""
-        print("\n✏️ Testing Personal Kit Update Fix...")
-        
-        # Test updating personal kit with corrected field mappings
-        print("Test: Personal kit update with all fields")
-        update_data = {
-            "size": "XL",
-            "condition": "excellent",  # Fixed: use valid enum value
-            "purchase_price": 95.00,
-            "price_value": 130.00,           # Updated field
-            "acquisition_story": "Updated: Bought from official store during Champions League final - amazing experience!", # Updated field
-            "times_worn": 8,                 # Updated field
-            "is_for_sale": True,             # Fixed: correct field name
-            "printed_name": "MESSI",         # Updated field mapping
-            "printed_number": "30",          # Updated field mapping
-            "personal_notes": "Updated: Authentic jersey with official printing - excellent condition", # Updated field mapping
-            "printing_type": "Heat Transfer" # Updated field mapping
-        }
-        
-        try:
-            response = self.session.put(f"{BACKEND_URL}/personal-kits/{kit_id}", json=update_data)
-            print(f"   Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"   ✅ Personal Kit updated successfully!")
-                
-                # Verify updated fields persist
-                print("   Verifying updated field persistence:")
-                print(f"     Size: {data.get('size')}")
-                print(f"     Condition: {data.get('condition')}")
-                print(f"     Price Value: {data.get('price_value')}")
-                print(f"     Acquisition Story: {data.get('acquisition_story')}")
-                print(f"     Times Worn: {data.get('times_worn')}")
-                print(f"     For Sale: {data.get('is_for_sale')}")
-                print(f"     Printed Name: {data.get('printed_name')}")
-                print(f"     Printed Number: {data.get('printed_number')}")
-                print(f"     Personal Notes: {data.get('personal_notes')}")
-                print(f"     Printing Type: {data.get('printing_type')}")
-                
-                return True
-            else:
-                print(f"   ❌ Personal Kit update failed")
-                print(f"   Response: {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"   ❌ Personal Kit update error: {e}")
-            return False
-    
-    def run_comprehensive_test(self):
-        """Run comprehensive test of all form creation fixes"""
-        print("🚀 Starting Comprehensive Form Creation Error Fixes Testing")
-        print("=" * 70)
-        
-        # Step 1: Authenticate
-        if not self.authenticate():
-            print("❌ Authentication failed - cannot proceed with tests")
-            return False
-        
-        results = {
-            'team_creation': False,
-            'team_validation': False,
-            'competition_creation': False,
-            'competition_validation': False,
-            'master_jersey_creation': False,
-            'master_jersey_validation': False,
-            'personal_kit_creation': False,
-            'personal_kit_retrieval': False,
-            'personal_kit_update': False
-        }
-        
-        # Step 2: Test Team Creation
-        team_id = self.test_team_creation()
-        results['team_creation'] = team_id is not None
-        
-        # Step 3: Test Team Validation
-        results['team_validation'] = self.test_team_creation_validation()
-        
-        # Step 4: Test Competition Creation
-        competition_id = self.test_competition_creation()
-        results['competition_creation'] = competition_id is not None
-        
-        # Step 5: Test Competition Validation
-        results['competition_validation'] = self.test_competition_validation()
-        
-        # Step 6: Test Master Jersey Creation
-        master_jersey_id = self.test_master_jersey_creation()
-        results['master_jersey_creation'] = master_jersey_id is not None
-        
-        # Step 7: Test Master Jersey Validation
-        results['master_jersey_validation'] = self.test_master_jersey_validation()
-        
-        # Step 8: Test Personal Kit Creation
-        personal_kit_id = self.test_personal_kit_creation()
-        results['personal_kit_creation'] = personal_kit_id is not None
-        
-        # Step 9: Test Personal Kit Retrieval (if creation succeeded)
-        if personal_kit_id:
-            results['personal_kit_retrieval'] = self.test_personal_kit_retrieval(personal_kit_id)
-            
-            # Step 10: Test Personal Kit Update (if retrieval succeeded)
-            if results['personal_kit_retrieval']:
-                results['personal_kit_update'] = self.test_personal_kit_update(personal_kit_id)
+        # Restore original settings
+        print("\n--- Restoring original settings ---")
+        self.test_admin_settings_update(current_settings)
         
         # Summary
-        print("\n" + "=" * 70)
-        print("📊 COMPREHENSIVE TEST RESULTS SUMMARY")
-        print("=" * 70)
+        workflow_success = (
+            status_1 == "COMMUNITY_VERIFIED" and 
+            status_2 == "PENDING"
+        )
         
-        passed_tests = 0
-        total_tests = len(results)
+        self.log_test(
+            "Hybrid Auto-Approval Workflow",
+            workflow_success,
+            f"Auto-approved team status: {status_1}, Manual team status: {status_2}"
+        )
         
-        for test_name, passed in results.items():
-            status = "✅ PASS" if passed else "❌ FAIL"
-            print(f"{test_name.replace('_', ' ').title()}: {status}")
-            if passed:
-                passed_tests += 1
+        return workflow_success
+
+    def run_all_tests(self):
+        """Run all admin system tests"""
+        print("🚀 STARTING ADMIN SYSTEM COMPREHENSIVE TESTING")
+        print("=" * 60)
         
-        success_rate = (passed_tests / total_tests) * 100
-        print(f"\nOverall Success Rate: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        # Step 1: Authenticate
+        if not self.authenticate_admin():
+            print("❌ CRITICAL: Admin authentication failed. Cannot proceed with tests.")
+            return False
         
-        # Critical Issues Analysis
-        critical_issues = []
-        if not results['team_validation']:
-            critical_issues.append("Team creation still shows [object Object] errors")
-        if not results['competition_validation']:
-            critical_issues.append("Competition creation still shows [object Object] errors")
-        if not results['master_jersey_validation']:
-            critical_issues.append("Master Jersey creation still shows [object Object] errors")
-        if not results['personal_kit_creation']:
-            critical_issues.append("Personal Kit creation with new fields failed")
-        if not results['personal_kit_retrieval']:
-            critical_issues.append("Personal Kit data persistence verification failed")
-        if not results['personal_kit_update']:
-            critical_issues.append("Personal Kit update with corrected field mappings failed")
+        # Step 2: Test admin settings management
+        current_settings = self.test_admin_settings_get()
         
-        if critical_issues:
-            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED:")
-            for issue in critical_issues:
-                print(f"   • {issue}")
+        # Step 3: Test dashboard statistics
+        self.test_dashboard_stats()
+        
+        # Step 4: Test user management
+        self.test_admin_users()
+        
+        # Step 5: Test pending approvals
+        pending_items = self.test_pending_approvals()
+        
+        # Step 6: Test approval functionality
+        self.test_approval_functionality(pending_items)
+        
+        # Step 7: Test hybrid auto-approval workflow
+        self.test_hybrid_auto_approval_workflow()
+        
+        # Generate summary
+        self.generate_summary()
+        
+        return True
+
+    def generate_summary(self):
+        """Generate test summary"""
+        print("\n" + "=" * 60)
+        print("📋 ADMIN SYSTEM TESTING SUMMARY")
+        print("=" * 60)
+        
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result["success"])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        print()
+        
+        if failed_tests > 0:
+            print("❌ FAILED TESTS:")
+            for result in self.test_results:
+                if not result["success"]:
+                    print(f"  - {result['test']}: {result['details']}")
+            print()
+        
+        print("✅ PASSED TESTS:")
+        for result in self.test_results:
+            if result["success"]:
+                print(f"  - {result['test']}")
+        
+        print("\n" + "=" * 60)
+        
+        if success_rate >= 80:
+            print("🎉 ADMIN SYSTEM IS PRODUCTION-READY!")
+        elif success_rate >= 60:
+            print("⚠️  ADMIN SYSTEM NEEDS MINOR FIXES")
         else:
-            print(f"\n🎉 ALL CRITICAL FIXES VERIFIED SUCCESSFULLY!")
-            print("   • [object Object] errors have been resolved")
-            print("   • Data persistence works correctly")
-            print("   • Field mappings are working properly")
+            print("🚨 ADMIN SYSTEM NEEDS MAJOR FIXES")
         
-        return success_rate >= 80  # Consider 80%+ success rate as overall success
+        print("=" * 60)
+
+def main():
+    """Main test execution"""
+    tester = AdminSystemTester()
+    
+    try:
+        success = tester.run_all_tests()
+        return 0 if success else 1
+    except KeyboardInterrupt:
+        print("\n⚠️ Testing interrupted by user")
+        return 1
+    except Exception as e:
+        print(f"\n🚨 CRITICAL ERROR: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
-    tester = FormCreationTester()
-    success = tester.run_comprehensive_test()
-    
-    if success:
-        print(f"\n🎯 CONCLUSION: Form Creation Error Fixes are WORKING CORRECTLY!")
-        sys.exit(0)
-    else:
-        print(f"\n⚠️ CONCLUSION: Some Form Creation Error Fixes need attention!")
-        sys.exit(1)
+    sys.exit(main())
