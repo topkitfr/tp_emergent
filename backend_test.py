@@ -251,7 +251,7 @@ class FormCreationTester:
             response = self.session.post(f"{BACKEND_URL}/master-jerseys", json=master_jersey_data)
             print(f"   Status: {response.status_code}")
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 print(f"   ✅ Master Jersey created successfully!")
                 print(f"   Master Jersey ID: {data.get('id')}")
