@@ -11623,6 +11623,22 @@ async def add_kit_to_collection(
         if existing:
             raise HTTPException(status_code=400, detail="Kit already in your collection")
         
+        # Smart two-way relationship: If adding to "owned", remove from "wanted"
+        if kit_data.collection_type == "owned":
+            existing_wanted = await db.personal_kits.find_one({
+                "user_id": user_id,
+                "reference_kit_id": kit_data.reference_kit_id,
+                "collection_type": "wanted"
+            })
+            if existing_wanted:
+                # Remove from wanted list since user now owns it
+                await db.personal_kits.delete_one({
+                    "user_id": user_id,
+                    "reference_kit_id": kit_data.reference_kit_id,
+                    "collection_type": "wanted"
+                })
+                logger.info(f"Automatically removed kit {kit_data.reference_kit_id} from user {user_id} wanted list (now owned)")
+        
         # Create Personal Kit
         personal_kit = PersonalKit(
             **kit_data.dict(),
