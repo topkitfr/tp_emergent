@@ -236,16 +236,15 @@ const CollaborativeMasterJerseyPage = ({
       }
 
       try {
-        // Préparer les données selon le nouveau modèle Master Kit
+        // Prepare data according to the Master Kit model
         const masterKitData = {
           team_id: formData.team_id,
-          kit_type: formData.jersey_type, // Map jersey_type to kit_type for new system
-          primary_color: formData.colors, // Map colors to primary_color for backend
-          pattern_description: formData.pattern,
-          // Default values for required backend fields
-          brand_id: brands[0]?.id || '', // Use first available brand as default
-          season: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1).toString().slice(-2),
-          model: 'authentic' // Default model
+          brand_id: formData.brand_id,
+          season: formData.season,
+          kit_type: formData.jersey_type,
+          model: formData.model,
+          primary_color: formData.colors,
+          pattern_description: formData.pattern
         };
 
         console.log('Sending Master Kit data:', masterKitData);
