@@ -674,18 +674,24 @@ class PersonalKitResponse(BaseModel):
     size: str
     condition: KitCondition
     purchase_price: Optional[float]
+    price_value: Optional[float]  # Current value estimate
     purchase_date: Optional[datetime]
+    purchase_location: Optional[str]
+    acquisition_story: Optional[str]
+    times_worn: int
     is_worn: bool
     is_signed: bool
     signed_by: Optional[str]
     has_printing: bool
     printed_name: Optional[str]
     printed_number: Optional[int]
+    printing_type: Optional[str]
     is_match_worn: bool
+    match_details: Optional[str]
     is_authenticated: bool
+    authentication_details: Optional[str]
     personal_notes: Optional[str]
-    collection_type: str
-    is_for_sale: bool
+    for_sale: bool  # Fixed to match PersonalKit model
     asking_price: Optional[float]
     estimated_current_value: Optional[float]
     
