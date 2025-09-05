@@ -176,6 +176,18 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
           size: '',
           has_printing: false,
           is_custom_printing: false,
+          custom_print_text: '',
+          is_worn: false,
+          is_signed: false,
+          signed_by: '',
+          is_match_worn: false,
+          match_details: '',
+          is_authenticated: false,
+          authentication_details: '',
+          purchase_date: '',
+          purchase_location: '',
+          acquisition_story: '',
+          times_worn: 0,
           for_sale: false
         });
         
