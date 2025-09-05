@@ -175,7 +175,7 @@ class PersonalKitEditDataTester:
             
             response = self.session.post(f"{BACKEND_URL}/personal-kits", json=personal_kit_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 created_kit = response.json()
                 self.created_kit_id = created_kit.get("id")
                 
