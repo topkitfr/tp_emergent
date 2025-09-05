@@ -429,7 +429,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                     }))}
                     rows="3"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                     required={field.required}
                   />
                 ) : (
@@ -441,7 +441,7 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                       [field.key]: e.target.value
                     }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                     required={field.required}
                   />
                 )}
