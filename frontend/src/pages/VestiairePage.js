@@ -1270,7 +1270,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                   </div>
 
                   {/* Condition Details */}
-                  <div>
+                  <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Condition Details</label>
                     <select
                       value={personalDetails.condition}
@@ -1284,6 +1284,76 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                       <option value="fair">Fair - Noticeable wear, still wearable</option>
                       <option value="poor">Poor - Heavy wear, damage visible</option>
                     </select>
+                  </div>
+
+                  {/* Usage Status Checkboxes */}
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_worn"
+                        checked={personalDetails.is_worn}
+                        onChange={(e) => setPersonalDetails({...personalDetails, is_worn: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="is_worn" className="ml-2 block text-sm text-gray-900">
+                        I have worn this kit
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_signed"
+                        checked={personalDetails.is_signed}
+                        onChange={(e) => setPersonalDetails({...personalDetails, is_signed: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="is_signed" className="ml-2 block text-sm text-gray-900">
+                        This kit is signed
+                      </label>
+                    </div>
+
+                    {/* Signed by field - Only show if is_signed is true */}
+                    {personalDetails.is_signed && (
+                      <div className="ml-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Signed by</label>
+                        <input
+                          type="text"
+                          value={personalDetails.signed_by}
+                          onChange={(e) => setPersonalDetails({...personalDetails, signed_by: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="Player name or person who signed"
+                        />
+                      </div>
+                    )}
+
+                    {/* Additional Usage Details */}
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_match_worn"
+                        checked={personalDetails.is_match_worn}
+                        onChange={(e) => setPersonalDetails({...personalDetails, is_match_worn: e.target.checked})}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="is_match_worn" className="ml-2 block text-sm text-gray-900">
+                        Match worn (actual game use)
+                      </label>
+                    </div>
+
+                    {personalDetails.is_match_worn && (
+                      <div className="ml-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Match details</label>
+                        <input
+                          type="text"
+                          value={personalDetails.match_details}
+                          onChange={(e) => setPersonalDetails({...personalDetails, match_details: e.target.value})}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Champions League Final 2023, vs Barcelona"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
