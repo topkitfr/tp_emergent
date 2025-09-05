@@ -11233,15 +11233,18 @@ async def create_master_kit(
         logger.info(f"Creating Master Kit with data: {kit_data.dict()}")
         logger.info(f"User ID: {user_id}, Reference: {reference}")
         
-        # Create Master Kit
-        master_kit = MasterKit(
-            **kit_data.dict(),
-            created_by=user_id,
-            topkit_reference=reference
-        )
+        # Create Master Kit with auto-approval
+        master_kit_dict = kit_data.dict()
+        master_kit_dict["created_by"] = user_id
+        master_kit_dict["topkit_reference"] = reference
+        
+        # Apply auto-approval for testing
+        master_kit_dict = enable_auto_approval_for_testing(master_kit_dict, user_id)
+        
+        master_kit = MasterKit(**master_kit_dict)
         
         # Debug the created object
-        logger.info(f"Created Master Kit object: {master_kit.dict()}")
+        logger.info(f"Created Master Kit object with auto-approval: {master_kit.dict()}")
         
         # Insert into database
         await db.master_kits.insert_one(master_kit.dict())
