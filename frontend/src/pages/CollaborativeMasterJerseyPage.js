@@ -236,19 +236,19 @@ const CollaborativeMasterJerseyPage = ({
       }
 
       try {
-        // Prepare data according to the Master Kit model
-        const masterKitData = {
+        // Prepare data according to the MasterJerseyCreate model
+        const masterJerseyData = {
           team_id: formData.team_id,
           brand_id: formData.brand_id,
           season: formData.season,
-          kit_type: formData.jersey_type,
+          jersey_type: formData.jersey_type,
           model: formData.model,
           primary_color: formData.colors,
-          pattern_description: formData.pattern
+          secondary_colors: [] // Default empty array
         };
 
-        console.log('Sending Master Kit data:', masterKitData);
-        handleCreateMasterJersey(masterKitData);
+        console.log('Sending Master Jersey data:', masterJerseyData);
+        handleCreateMasterJersey(masterJerseyData);
       } catch (error) {
         console.error('Erreur lors de la création:', error);
         alert('Erreur lors de la création du Master Kit');
