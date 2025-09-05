@@ -235,14 +235,16 @@ class FormCreationTester:
         
         # Test valid master jersey creation with fixed field mapping
         print("Test: Valid master jersey creation")
+        import random
+        random_suffix = random.randint(1000, 9999)
         master_jersey_data = {
             "team_id": team_id,
             "brand_id": brand_id,
-            "season": "2024-25",
-            "jersey_type": "home",        # Fixed field mapping
-            "model": "Authentic Pro",     # Required field
-            "primary_color": "Blue",      # Required field
-            "secondary_colors": ["White", "Red"]
+            "season": f"2025-{26 + (random_suffix % 10)}",  # Use different season to avoid duplicates
+            "jersey_type": "away",        # Use away to avoid duplicate home jerseys
+            "model": f"Test Pro {random_suffix}",     # Required field
+            "primary_color": "Red",      # Required field
+            "secondary_colors": ["White", "Blue"]
         }
         
         try:
