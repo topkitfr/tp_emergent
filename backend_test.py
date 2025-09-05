@@ -518,7 +518,7 @@ class FormCreationTester:
                 print(f"     Price Value: {data.get('price_value')}")
                 print(f"     Acquisition Story: {data.get('acquisition_story')}")
                 print(f"     Times Worn: {data.get('times_worn')}")
-                print(f"     For Sale: {data.get('for_sale')}")
+                print(f"     For Sale: {data.get('is_for_sale')}")
                 print(f"     Printed Name: {data.get('printed_name')}")
                 print(f"     Printed Number: {data.get('printed_number')}")
                 print(f"     Personal Notes: {data.get('personal_notes')}")
