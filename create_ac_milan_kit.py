@@ -159,7 +159,7 @@ class ACMilanKitCreator:
             "team_id": self.team_id,
             "brand_id": self.brand_id,
             "season": "2025-26",
-            "kit_type": "home",
+            "jersey_type": "home",
             "design_name": "Home Kit",
             "model": "Authentic",
             "primary_color": "#cc0000",  # AC Milan red
