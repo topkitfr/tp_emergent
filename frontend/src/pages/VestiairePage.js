@@ -448,11 +448,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
               <div className="space-y-3">
                 <h3 className="font-semibold text-lg text-gray-900">Pricing</h3>
-                <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Original Retail Price:</span> €{release.original_retail_price || 'N/A'}</div>
-                  <div><span className="font-medium">Current Market Estimate:</span> €{release.current_market_estimate || 'N/A'}</div>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div><span className="font-medium text-gray-900">Original Retail Price:</span> €{release.original_retail_price || 'N/A'}</div>
+                  <div><span className="font-medium text-gray-900">Current Market Estimate:</span> €{release.current_market_estimate || 'N/A'}</div>
                   {release.price_range_min && release.price_range_max && (
-                    <div><span className="font-medium">Price Range:</span> €{release.price_range_min} - €{release.price_range_max}</div>
+                    <div><span className="font-medium text-gray-900">Price Range:</span> €{release.price_range_min} - €{release.price_range_max}</div>
                   )}
                 </div>
               </div>
