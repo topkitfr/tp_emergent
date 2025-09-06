@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "We need to revise the structure of the 'ligue' form, which should actually be renamed 'competition' as it was before. I'm attaching a CSV file that defines the fields to include in the form and the necessary database references. Everything must be interconnected. For example, when I create a 'team' using the 'Add New Team' form, I should see a field that dynamically displays the available federation, league, etc. options—do you understand what I mean? All forms need to be linked to make filling out information easier and more accurate for users. It should be guided, and if users can't find their criteria (e.g., their league), there should be a prompt or message encouraging them to add the missing information to the database. Issue: The form isn't working properly. When I try to select a club, none of the clubs from the database appear in the dropdown menu. Suggestion: Should we start fresh with a clean database for clubs and master kits, and recreate them using the updated forms?"
+## user_problem_statement: "Before testing anything, I want the database cleared for teams/brands/players/competitions/master kits. I want to start from scratch. I will test everything myself. And just so you know, even without running any tests, I noticed that the "Reference Kit Detail" window has white text on a white background. fix this and clear the database"
 
 backend:
   - task: "DELETE Functionality Critical Bug Investigation"
