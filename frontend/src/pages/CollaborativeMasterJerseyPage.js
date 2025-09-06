@@ -295,7 +295,7 @@ const CollaborativeMasterJerseyPage = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Marque *
+                Marque <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.brand_id}
