@@ -36,10 +36,10 @@ async def clear_database():
                 count = await db[collection_name].count_documents({})
                 print(f"   📊 {collection_name}: {count} documents")
             
-            # Clear the collections if this is the right database
-            if input(f"\nClear all collections in database '{db_name}'? (y/N): ").lower() == 'y':
-                await clear_collections(db, collections)
-                break
+            # Clear the collections automatically for testing purposes
+            print(f"\n🧹 Auto-clearing all collections in database '{db_name}'...")
+            await clear_collections(db, collections)
+            break
         else:
             print(f"📁 {db_name}: No collections found")
     
