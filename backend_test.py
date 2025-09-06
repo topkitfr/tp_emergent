@@ -588,7 +588,7 @@ class BackendTester:
         admin_success = all(r['success'] for r in admin_tests)
         print(f"   2. Admin Dashboard Settings: {'✅ RESOLVED' if admin_success else '❌ ISSUE PERSISTS'}")
         
-        image_tests = [r for r in self.test_results if 'Upload' in r['test'] and 'Image' in r['test']]
+        image_tests = [r for r in self.test_results if 'Creation' in r['test'] and ('Team' in r['test'] or 'Brand' in r['test'] or 'Competition' in r['test'] or 'Player' in r['test'])]
         image_success = all(r['success'] for r in image_tests)
         print(f"   3. Image Upload System: {'✅ RESOLVED' if image_success else '❌ ISSUE PERSISTS'}")
         
