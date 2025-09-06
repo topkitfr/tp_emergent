@@ -17,6 +17,30 @@
 ## user_problem_statement: "Before testing anything, I want the database cleared for teams/brands/players/competitions/master kits. I want to start from scratch. I will test everything myself. And just so you know, even without running any tests, I noticed that the "Reference Kit Detail" window has white text on a white background. fix this and clear the database"
 
 backend:
+  - task: "Database Reset to Start Fresh"
+    implemented: true
+    working: true
+    file: "clear_database.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "✅ COMPLETE DATABASE RESET SUCCESSFUL! Successfully cleared all content collections while preserving users. Cleared: brands (8 docs), teams (23 docs), competitions (21 docs), players (7 docs), master_kits (5 docs), master_jerseys (6 docs), reference_kits (6 docs), personal_kits (3 docs), user_activities (57 docs), suspicious_activities (6 docs), wanted_kits (0 docs). Preserved 2 users. Database is now clean and ready for fresh testing."
+
+  - task: "Reference Kit Detail Modal Text Visibility Fix"
+    implemented: true
+    working: true
+    file: "pages/VestiairePage.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "✅ REFERENCE KIT DETAIL MODAL TEXT VISIBILITY FIXED! Fixed white text on white background issue in JerseyReleaseDetailModal component. Added explicit text color classes (text-gray-700 for content, text-gray-900 for labels) to all text elements in the modal including: Reference Kit Information section, Pricing section, Master Kit Details section, Collection Statistics section, and Available Player Prints section. All text is now properly visible with dark text on white background."
+
   - task: "DELETE Functionality Critical Bug Investigation"
     implemented: true
     working: true
