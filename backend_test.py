@@ -86,7 +86,7 @@ class BackendTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.user_token = data.get('access_token')
+                self.user_token = data.get('token')
                 self.user_user_id = data.get('user', {}).get('id')
                 self.log_result(
                     "User Authentication", 
