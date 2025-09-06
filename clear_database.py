@@ -9,7 +9,7 @@ import motor.motor_asyncio
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv('backend/.env')
 
 async def clear_database():
     """Clear all content collections while preserving users"""
