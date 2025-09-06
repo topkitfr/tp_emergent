@@ -68,7 +68,7 @@ class TeamContributionsTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('access_token') or data.get('token')
+                self.admin_token = data.get('token')
                 user_data = data.get('user', {})
                 self.admin_user_id = user_data.get('id')
                 self.log_result(
