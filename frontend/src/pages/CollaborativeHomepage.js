@@ -292,8 +292,19 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 className="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer group text-center"
                 onClick={() => onViewChange('brands')}
               >
-                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <span className="text-2xl">👕</span>
+                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm overflow-hidden">
+                  {brand.logo_url ? (
+                    <img 
+                      src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `/api/${brand.logo_url}`}
+                      alt={brand.name}
+                      className="w-full h-full object-contain p-2"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className="text-2xl" style={{display: brand.logo_url ? 'none' : 'flex'}}>👕</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">{brand.name}</h3>
                 <button className="text-sm text-gray-600 hover:text-black transition-colors">
