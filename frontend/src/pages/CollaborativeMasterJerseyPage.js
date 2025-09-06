@@ -374,6 +374,41 @@ const CollaborativeMasterJerseyPage = ({
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Photo principale (face uniquement) *
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    // Convert to base64
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      setFormData({...formData, main_image_url: e.target.result});
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                required
+              />
+              {formData.main_image_url && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.main_image_url} 
+                    alt="Aperçu" 
+                    className="w-24 h-24 object-cover rounded-lg border"
+                  />
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Image de face du maillot uniquement. Formats acceptés: JPG, PNG (max 5MB)
+              </p>
+            </div>
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
