@@ -389,7 +389,7 @@ const CollaborativeMasterJerseyPage = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Photo principale (face uniquement) *
+                Photo principale (face uniquement) <span className="text-red-500">*</span>
               </label>
               <input
                 type="file"
@@ -397,6 +397,11 @@ const CollaborativeMasterJerseyPage = ({
                 onChange={(e) => {
                   const file = e.target.files[0];
                   if (file) {
+                    // Check file size (max 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert('La taille de l\'image ne doit pas dépasser 5MB');
+                      return;
+                    }
                     // Convert to base64
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -412,13 +417,14 @@ const CollaborativeMasterJerseyPage = ({
                 <div className="mt-2">
                   <img 
                     src={formData.main_image_url} 
-                    alt="Aperçu" 
+                    alt="Aperçu de la photo principale" 
                     className="w-24 h-24 object-cover rounded-lg border"
                   />
+                  <p className="text-xs text-green-600 mt-1">✓ Image chargée avec succès</p>
                 </div>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                Image de face du maillot uniquement. Formats acceptés: JPG, PNG (max 5MB)
+                <strong>Image de face du maillot uniquement.</strong> Formats acceptés: JPG, PNG (max 5MB). Les photos secondaires ne sont pas autorisées pour les Master Kits.
               </p>
             </div>
 
