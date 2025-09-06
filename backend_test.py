@@ -367,7 +367,8 @@ class BackendTester:
                         "brand_id": brands[0].get('id'),
                         "season": "2024-25",
                         "jersey_type": "home",
-                        "model": "Test Kit for Image",
+                        "kit_type": "jersey",
+                        "model": "authentic",
                         "primary_color": "red"
                     }
                     
