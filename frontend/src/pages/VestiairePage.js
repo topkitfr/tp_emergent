@@ -880,8 +880,10 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                       type="button"
                       className="text-blue-600 hover:text-blue-800 underline mt-1"
                       onClick={() => {
-                        // TODO: Navigate to Master Kit creation or show modal
-                        alert('Navigate to Master Kit creation - TODO: implement navigation');
+                        setShowCreateModal(false);
+                        if (onDataUpdate) {
+                          onDataUpdate('master-jerseys'); // Navigate to master jersey creation
+                        }
                       }}
                     >
                       → Create Master Kit for this club
