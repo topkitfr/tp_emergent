@@ -224,7 +224,8 @@ const CollaborativeMasterJerseyPage = ({
       jersey_type: 'home',
       model: 'authentic',
       colors: '',
-      pattern: ''
+      pattern: '',
+      main_image_url: ''
     });
 
 
