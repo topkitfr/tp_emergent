@@ -60,5 +60,20 @@ async def clear_database():
     finally:
         client.close()
 
+async def clear_collections(db, collections):
+    """Clear all collections in the database"""
+    print("🗑️  Clearing database collections...")
+    
+    for collection_name in collections:
+        if collection_name != 'users':  # Preserve users
+            try:
+                result = await db[collection_name].delete_many({})
+                print(f"   ✅ Cleared {collection_name}: {result.deleted_count} documents deleted")
+            except Exception as e:
+                print(f"   ⚠️  {collection_name}: {e}")
+        else:
+            count = await db[collection_name].count_documents({})
+            print(f"   🔒 Preserved {collection_name}: {count} users kept")
+
 if __name__ == "__main__":
     asyncio.run(clear_database())
