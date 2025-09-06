@@ -191,7 +191,8 @@ class BackendTester:
                     "brand_id": brand_id,
                     "season": "2024-25",
                     "jersey_type": "home",
-                    "model": "Test Master Kit",
+                    "kit_type": "jersey",
+                    "model": "authentic",
                     "primary_color": "blue",
                     "secondary_colors": ["white"]
                 }
