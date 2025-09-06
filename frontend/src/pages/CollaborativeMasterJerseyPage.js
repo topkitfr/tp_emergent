@@ -245,7 +245,8 @@ const CollaborativeMasterJerseyPage = ({
           jersey_type: formData.jersey_type,
           model: formData.model,
           primary_color: formData.colors,
-          secondary_colors: [] // Default empty array
+          secondary_colors: [], // Default empty array
+          main_image_url: formData.main_image_url
         };
 
         console.log('Sending Master Jersey data:', masterJerseyData);
