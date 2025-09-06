@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-collection.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-hub.preview.emergentagent.com/api"
 
 # Credentials admin
 ADMIN_EMAIL = "topkitfr@gmail.com"

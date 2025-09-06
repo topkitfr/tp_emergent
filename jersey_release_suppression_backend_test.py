@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-collection.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-hub.preview.emergentagent.com/api"
 
 # Admin credentials for cleanup operations
 ADMIN_CREDENTIALS = {

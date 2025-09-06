@@ -29,7 +29,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://jersey-collection.preview.emergentagent.com/api"
+BASE_URL = "https://kit-collection-hub.preview.emergentagent.com/api"
 
 # Test credentials - using working admin account
 TEST_USER_EMAIL = "topkitfr@gmail.com"
