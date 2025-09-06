@@ -191,7 +191,7 @@ class BackendTester:
                     "brand_id": brand_id,
                     "season": "2024-25",
                     "jersey_type": "home",
-                    "kit_type": "jersey",
+                    "kit_type": "home",
                     "model": "authentic",
                     "primary_color": "blue",
                     "secondary_colors": ["white"]
