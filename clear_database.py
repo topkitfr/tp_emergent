@@ -44,39 +44,7 @@ async def clear_database():
             print(f"📁 {db_name}: No collections found")
     
     try:
-        # Collections to clear
-        collections_to_clear = [
-            'teams',
-            'brands', 
-            'players',
-            'competitions',
-            'master_kits',
-            'master_jerseys',  # Both naming conventions
-            'reference_kits',
-            'jersey_releases',  # Alternative naming
-            'personal_kits',
-            'contributions',
-            'pending_approvals'
-        ]
-        
-        print("🗑️  Clearing database collections...")
-        
-        for collection_name in collections_to_clear:
-            try:
-                result = await db[collection_name].delete_many({})
-                print(f"   ✅ Cleared {collection_name}: {result.deleted_count} documents deleted")
-            except Exception as e:
-                print(f"   ⚠️  {collection_name}: {e}")
-        
-        # Verify users are preserved
-        user_count = await db.users.count_documents({})
-        print(f"\n✅ Database cleared successfully!")
-        print(f"📊 Users preserved: {user_count}")
-        
-        # Show remaining collections
-        collections = await db.list_collection_names()
-        print(f"📁 Remaining collections: {collections}")
-        
+        pass
     except Exception as e:
         print(f"❌ Error clearing database: {e}")
     finally:
