@@ -9906,12 +9906,44 @@ async def create_team(
     
     await db.teams.insert_one(team.dict())
     
+    # Auto-create a contribution entry for the new team so it appears in contributions page
+    contribution_data = {
+        "id": str(uuid.uuid4()),
+        "title": f"New team: {team.name}",
+        "description": f"Team {team.name} has been created and added to the database.",
+        "entity_type": "team",
+        "entity_id": team.id,
+        "contributed_by": current_user["id"],
+        "status": "approved",  # Auto-approve since the team is already created
+        "changes": [
+            {
+                "field": "name",
+                "old_value": "",
+                "new_value": team.name,
+                "field_type": "text"
+            }
+        ],
+        "source_urls": [],
+        "created_at": datetime.now(),
+        "updated_at": datetime.now(),
+        "approved_at": datetime.now(),
+        "approved_by": current_user["id"],
+        "votes": [],
+        "metadata": {
+            "auto_created": True,
+            "team_creation": True
+        }
+    }
+    
+    # Insert the contribution
+    await db.contributions.insert_one(contribution_data)
+    
     # Log activity
     await log_user_activity(
         current_user["id"], 
         "team_created", 
         team.id,
-        {"team_name": team.name, "reference": team.topkit_reference}
+        {"team_name": team.name, "reference": team.topkit_reference, "auto_contribution_created": True}
     )
     
     return TeamResponse(**team.dict(), league_info=None, master_jerseys_count=0, total_collectors=0)
