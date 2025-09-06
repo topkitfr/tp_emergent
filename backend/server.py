@@ -2850,6 +2850,83 @@ async def get_profile_picture(user_id: str):
     except Exception as e:
         logger.error(f"Get profile picture error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération de l'image")
+@api_router.post("/upload/image")
+async def upload_image(
+    file: UploadFile = File(...),
+    entity_type: str = Form(...),  # team, brand, player, competition, master_jersey
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload image for any entity type (teams, brands, players, competitions, master jerseys)"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate entity type
+        allowed_entity_types = ['team', 'brand', 'player', 'competition', 'master_jersey']
+        if entity_type not in allowed_entity_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Type d'entité non autorisé. Utilisez: {', '.join(allowed_entity_types)}"
+            )
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400, 
+                detail="Type de fichier non autorisé. Utilisez JPG, PNG ou WebP."
+            )
+        
+        # Validate file size (max 10MB for entity images)
+        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="Le fichier est trop volumineux. Taille maximale : 10MB."
+            )
+        
+        # Reset file position
+        await file.seek(0)
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path(f"uploads/{entity_type}s")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1].lower()
+        if file_extension not in ['jpg', 'jpeg', 'png', 'webp']:
+            file_extension = 'jpg'
+        
+        unique_filename = f"{entity_type}_{uuid.uuid4().hex[:8]}_{int(datetime.now().timestamp())}.{file_extension}"
+        file_path = upload_dir / unique_filename
+        
+        # Save file
+        with open(file_path, 'wb') as f:
+            await file.seek(0)
+            f.write(await file.read())
+        
+        # Generate URL
+        image_url = f"uploads/{entity_type}s/{unique_filename}"
+        
+        # Log activity
+        await log_user_activity(user_id, f"{entity_type}_image_uploaded", None, {
+            "filename": unique_filename,
+            "file_size": len(file_content),
+            "entity_type": entity_type
+        })
+        
+        return {
+            "message": "Image téléchargée avec succès",
+            "image_url": image_url,
+            "filename": unique_filename,
+            "entity_type": entity_type
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Image upload error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
 
 @api_router.put("/users/profile/public-info")
 async def update_public_profile_info(
