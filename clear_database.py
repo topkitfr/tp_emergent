@@ -19,7 +19,29 @@ async def clear_database():
         return
     
     client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
-    db = client.football_jersey_collection
+    
+    # First, check all databases
+    db_names = await client.list_database_names()
+    print(f"🗂️  Available databases: {db_names}")
+    
+    # Try both possible database names
+    for db_name in ['topkit', 'football_jersey_collection']:
+        db = client[db_name]
+        collections = await db.list_collection_names()
+        if collections:
+            print(f"📁 Collections in {db_name}: {collections}")
+            
+            # Count documents in each collection
+            for collection_name in collections:
+                count = await db[collection_name].count_documents({})
+                print(f"   📊 {collection_name}: {count} documents")
+            
+            # Clear the collections if this is the right database
+            if input(f"\nClear all collections in database '{db_name}'? (y/N): ").lower() == 'y':
+                await clear_collections(db, collections)
+                break
+        else:
+            print(f"📁 {db_name}: No collections found")
     
     try:
         # Collections to clear
