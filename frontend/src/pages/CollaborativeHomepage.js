@@ -250,8 +250,19 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100"
                 onClick={() => onViewChange('master-jerseys')}
               >
-                <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                  <span className="text-4xl">👕</span>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {jersey.main_image_url ? (
+                    <img 
+                      src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+                      alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className="text-4xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
                 </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
