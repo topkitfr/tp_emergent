@@ -662,8 +662,19 @@ const CollaborativeMasterJerseyPage = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Image Preview */}
-              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                <span className="text-8xl">👕</span>
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                {selectedJersey.main_image_url ? (
+                  <img 
+                    src={selectedJersey.main_image_url.startsWith('data:') || selectedJersey.main_image_url.startsWith('http') ? selectedJersey.main_image_url : `/api/${selectedJersey.main_image_url}`}
+                    alt={`${selectedJersey.team_info?.name} ${selectedJersey.season}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <span className="text-8xl" style={{display: selectedJersey.main_image_url ? 'none' : 'flex'}}>👕</span>
               </div>
 
               {/* Details */}
