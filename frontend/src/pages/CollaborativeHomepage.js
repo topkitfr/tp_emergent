@@ -154,8 +154,19 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
               >
                 <div className="flex items-center p-6">
                   <div className="flex-shrink-0 mr-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">⚽</span>
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                      {team.logo_url ? (
+                        <img 
+                          src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') ? team.logo_url : `/api/${team.logo_url}`}
+                          alt={team.name}
+                          className="w-full h-full object-contain p-2"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <span className="text-2xl" style={{display: team.logo_url ? 'none' : 'flex'}}>⚽</span>
                     </div>
                   </div>
                   <div className="flex-1">
