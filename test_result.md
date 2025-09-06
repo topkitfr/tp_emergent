@@ -194,27 +194,25 @@ backend:
 ##         -agent: "main"  # or "testing" or "user"
 ##         -comment: "Detailed comment about status"
 ##
-## metadata:
-##   created_by: "main_agent"
-##   version: "1.0"
-##   test_sequence: 0
-##   run_ui: false
-##
-## test_plan:
-##   current_focus:
-##     - "Account Creation Workflow - Email + Password Registration" 
-##     - "Reference Creation System - Teams/Brands/Players/Competitions/Master Jerseys with Image Uploads"
-##     - "Reference Editing System - Field Updates + Photo Upload with Test.jpg"
-##     - "Voting System - Community Voting for Reference Improvements"
-##     - "Automatic Approval System - 3 Vote Threshold Validation"
-##     - "Jersey Release Management - Creation, Voting, Approval Workflow"
-##     - "Collection Management - Add Jersey Releases to Personal Collection"
-##     - "Wishlist System - Add Jersey Releases to Wishlist"
-##     - "Notifications System - Vote Results and Approval Notifications"
-##     - "Edge Case Testing - Invalid File Formats and Size Constraints"
-##   stuck_tasks: []
-##   test_all: true
-##   test_priority: "workflow_complete"
+#metadata:
+  created_by: "main_agent"
+  version: "2.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "UI/UX Comprehensive Audit with Critical Bug Fixes"
+    - "Reference Kit Creation System - Master Kit Dropdown Population Issue"
+    - "Master Kit Creation Navigation - Fix TODO Implementation Issue"
+    - "Admin Dashboard Validation System - Error Updating Settings Fix"
+    - "Image Upload System - Complete Testing Across All Categories"
+    - "Icon Replacement System - Replace Default Icons with Uploaded Images"
+    - "Rename Leagues to Competition - System-wide Update"
+    - "AC Milan Kit Creation Test - Complete Image Upload Workflow"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "critical_bugs_first"
 ##
 backend:
   - task: "Admin System with Hybrid Auto-Approval Testing"
