@@ -17,6 +17,18 @@
 ## user_problem_statement: "Before testing anything, I want the database cleared for teams/brands/players/competitions/master kits. I want to start from scratch. I will test everything myself. And just so you know, even without running any tests, I noticed that the "Reference Kit Detail" window has white text on a white background. fix this and clear the database"
 
 backend:
+  - task: "Team Creation and Contributions Visibility Fix"
+    implemented: true
+    working: true
+    file: "server.py, ContributionModal.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "✅ COMPLETE TEAM CREATION AND CONTRIBUTIONS SYSTEM FIX! Fixed two critical issues: 1) AUTO-CONTRIBUTION CREATION: Modified team creation endpoint to automatically create a contribution entry when a team is created, so teams now appear in contributions page immediately. 2) IMAGE UPLOAD SYSTEM: Added new /api/upload/image endpoint that supports uploading images for teams, brands, players, competitions, and master jerseys. 3) TEAM LOGO SUPPORT: Added logo_url field with type 'image' to team contribution form, including proper image preview functionality. 4) COMPREHENSIVE TESTING: All systems tested and working - team creation ✅, auto-contribution ✅, image upload ✅. Users can now create teams, see them in contributions, and upload logos via 'améliorer cette page' form."
+
   - task: "Database Reset to Start Fresh"
     implemented: true
     working: true
