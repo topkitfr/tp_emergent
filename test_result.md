@@ -3492,13 +3492,14 @@ metadata:
 
 test_plan:
   current_focus:
+    - "✅ COMPLETED: Master Kit Form Consistency & Image Upload Testing"
     - "Add New Reference Kit Form - Club Dropdown Bug Fix"
     - "Authentication System - Email Field Input Capture Bug"
     - "Detailed Routes Backend Testing - COMPLETED"
   stuck_tasks: 
     - "Add New Reference Kit Form - Club Dropdown Bug Fix"
   test_all: false
-  test_priority: "authentication_first"
+  test_priority: "master_kit_forms_verified"
 
 backend:
   - task: "PersonalKit Update Fix - Field Mapping Consistency"
