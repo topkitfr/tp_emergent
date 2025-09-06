@@ -511,6 +511,33 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                       ))}
                     </div>
                   </div>
+                ) : field.type === 'image' ? (
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleImageUpload(file, field.key);
+                          setFormData(prev => ({
+                            ...prev,
+                            [field.key]: file.name
+                          }));
+                        }
+                      }}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    />
+                    {imagePreviews[field.key] && (
+                      <div className="mt-2">
+                        <img 
+                          src={imagePreviews[field.key]} 
+                          alt="Preview" 
+                          className="max-w-xs max-h-32 object-contain border rounded"
+                        />
+                      </div>
+                    )}
+                  </div>
                 ) : field.type === 'textarea' ? (
                   <textarea
                     value={formData[field.key] || ''}
