@@ -1,51 +1,53 @@
 #!/usr/bin/env python3
 """
-TopKit Admin System with Hybrid Auto-Approval Testing
-====================================================
+COMPREHENSIVE BACKEND TESTING - CRITICAL ISSUES INVESTIGATION
+Testing all critical backend issues reported in the review request:
 
-This script tests the complete Admin System with Hybrid Auto-Approval functionality
-as specified in the review request.
+1. Reference Kit Creation Issue - Master Kits not appearing in dropdown
+2. Admin Dashboard Validation System - "Error updating settings" message  
+3. Image Upload System Testing across all categories
+4. Navigation Implementation - Master Kit creation navigation
 
-Test Coverage:
-1. Admin Settings Management (GET/PUT /api/admin/settings)
-2. Auto-Approval Behavior Verification
-3. Admin Dashboard Statistics (GET /api/admin/dashboard-stats)
-4. Admin User Management (GET /api/admin/users)
-5. Pending Approvals Management (GET /api/admin/pending-approvals)
-6. Complete Workflow Test
-
-Authentication: topkitfr@gmail.com/TopKitSecure789#
+Authentication:
+- Admin: topkitfr@gmail.com / TopKitSecure789#
+- User: steinmetzlivio@gmail.com / T0p_Mdp_1288*
 """
 
 import requests
 import json
-import sys
+import os
+import base64
 from datetime import datetime
+import uuid
 
-# Configuration
-BACKEND_URL = "https://kit-collection-hub.preview.emergentagent.com/api"
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "TopKitSecure789#"
+# Get backend URL from environment
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://kit-collection-hub.preview.emergentagent.com')
+API_BASE = f"{BACKEND_URL}/api"
 
-class AdminSystemTester:
+class BackendTester:
     def __init__(self):
-        self.session = requests.Session()
         self.admin_token = None
+        self.user_token = None
         self.admin_user_id = None
+        self.user_user_id = None
         self.test_results = []
         
-    def log_test(self, test_name, success, details=""):
-        """Log test results"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        self.test_results.append({
+    def log_result(self, test_name, success, details="", error=""):
+        """Log test result"""
+        result = {
             "test": test_name,
             "success": success,
             "details": details,
+            "error": error,
             "timestamp": datetime.now().isoformat()
-        })
+        }
+        self.test_results.append(result)
+        status = "✅ PASS" if success else "❌ FAIL"
         print(f"{status}: {test_name}")
         if details:
             print(f"   Details: {details}")
+        if error:
+            print(f"   Error: {error}")
         print()
 
     def authenticate_admin(self):
