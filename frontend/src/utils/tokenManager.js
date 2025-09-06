@@ -20,7 +20,7 @@ class TokenManager {
 
   // Remove token from localStorage
   removeToken() {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   }
 
