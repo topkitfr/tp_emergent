@@ -151,8 +151,19 @@ const CollaborativeMasterJerseyPage = ({
       className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
       onClick={() => navigate(`/master-jerseys/${jersey.id}`)}
     >
-      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
-        <span className="text-4xl">👕</span>
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors overflow-hidden">
+        {jersey.main_image_url ? (
+          <img 
+            src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+            alt={`${jersey.team_info?.name} ${jersey.season}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <span className="text-4xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
         {jersey.verified_level !== 'unverified' && (
           <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
             ✓
