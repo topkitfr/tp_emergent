@@ -60,7 +60,7 @@ class BackendTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('access_token')
+                self.admin_token = data.get('token')
                 self.admin_user_id = data.get('user', {}).get('id')
                 self.log_result(
                     "Admin Authentication", 
