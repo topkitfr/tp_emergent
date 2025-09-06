@@ -438,11 +438,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <h3 className="font-semibold text-lg text-gray-900">Reference Kit Information</h3>
-                <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Reference:</span> {release.topkit_reference || 'No reference'}</div>
-                  <div><span className="font-medium">Available Sizes:</span> {release.available_sizes?.join(', ') || 'Not specified'}</div>
-                  <div><span className="font-medium">Limited Edition:</span> {release.is_limited_edition ? 'Yes' : 'No'}</div>
-                  <div><span className="font-medium">Verification:</span> {release.verified_level || 'Unverified'}</div>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div><span className="font-medium text-gray-900">Reference:</span> {release.topkit_reference || 'No reference'}</div>
+                  <div><span className="font-medium text-gray-900">Available Sizes:</span> {release.available_sizes?.join(', ') || 'Not specified'}</div>
+                  <div><span className="font-medium text-gray-900">Limited Edition:</span> {release.is_limited_edition ? 'Yes' : 'No'}</div>
+                  <div><span className="font-medium text-gray-900">Verification:</span> {release.verified_level || 'Unverified'}</div>
                 </div>
               </div>
 
