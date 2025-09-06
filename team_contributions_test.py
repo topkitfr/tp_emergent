@@ -199,7 +199,7 @@ class TeamContributionsTester:
                 contributions = response.json()
                 
                 # Look for team-related contributions
-                team_contributions = [c for c in contributions if c.get('entity_type') == 'TEAM']
+                team_contributions = [c for c in contributions if c.get('entity_type') == 'team']
                 
                 # Check if our created team appears in contributions
                 our_team_contribution = None
