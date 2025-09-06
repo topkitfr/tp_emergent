@@ -211,7 +211,8 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
           { key: 'country', label: 'Country', type: 'text', required: true },
           { key: 'city', label: 'City', type: 'text' },
           { key: 'founded_year', label: 'Founded Year', type: 'number' },
-          { key: 'colors', label: 'Team Colors', type: 'color_list', placeholder: 'Enter colors one by one' }
+          { key: 'colors', label: 'Team Colors', type: 'color_list', placeholder: 'Enter colors one by one' },
+          { key: 'logo_url', label: 'Team Logo', type: 'image', accept: 'image/*' }
         ];
 
       case 'brand':
