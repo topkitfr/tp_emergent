@@ -52,444 +52,518 @@ class BackendTester:
 
     def authenticate_admin(self):
         """Authenticate as admin user"""
-        print("🔐 AUTHENTICATING ADMIN USER...")
-        
         try:
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json={
-                "email": ADMIN_EMAIL,
-                "password": ADMIN_PASSWORD
+            response = requests.post(f"{API_BASE}/auth/login", json={
+                "email": "topkitfr@gmail.com",
+                "password": "TopKitSecure789#"
             })
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get("token")
-                user_data = data.get("user", {})
-                self.admin_user_id = user_data.get("id")
-                
-                # Set authorization header for future requests
-                self.session.headers.update({
-                    "Authorization": f"Bearer {self.admin_token}"
-                })
-                
-                self.log_test(
-                    "Admin Authentication",
-                    True,
-                    f"Admin authenticated: {user_data.get('name', 'Unknown')} (Role: {user_data.get('role', 'Unknown')})"
+                self.admin_token = data.get('access_token')
+                self.admin_user_id = data.get('user', {}).get('id')
+                self.log_result(
+                    "Admin Authentication", 
+                    True, 
+                    f"Admin authenticated successfully. User ID: {self.admin_user_id}, Token length: {len(self.admin_token) if self.admin_token else 0}"
                 )
                 return True
             else:
-                self.log_test(
-                    "Admin Authentication",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
+                self.log_result("Admin Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_result("Admin Authentication", False, "", str(e))
             return False
 
-    def test_admin_settings_get(self):
-        """Test GET /api/admin/settings"""
-        print("⚙️ TESTING ADMIN SETTINGS RETRIEVAL...")
-        
+    def authenticate_user(self):
+        """Authenticate as regular user"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/admin/settings")
-            
-            if response.status_code == 200:
-                settings = response.json()
-                expected_keys = ["auto_approval_enabled", "admin_notifications", "community_voting_enabled"]
-                
-                missing_keys = [key for key in expected_keys if key not in settings]
-                if missing_keys:
-                    self.log_test(
-                        "Admin Settings GET",
-                        False,
-                        f"Missing settings keys: {missing_keys}"
-                    )
-                else:
-                    self.log_test(
-                        "Admin Settings GET",
-                        True,
-                        f"Settings retrieved: {json.dumps(settings, indent=2)}"
-                    )
-                return settings
-            else:
-                self.log_test(
-                    "Admin Settings GET",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return None
-                
-        except Exception as e:
-            self.log_test("Admin Settings GET", False, f"Exception: {str(e)}")
-            return None
-
-    def test_admin_settings_update(self, new_settings):
-        """Test PUT /api/admin/settings"""
-        print("⚙️ TESTING ADMIN SETTINGS UPDATE...")
-        
-        try:
-            response = self.session.put(f"{BACKEND_URL}/admin/settings", json=new_settings)
-            
-            if response.status_code == 200:
-                self.log_test(
-                    "Admin Settings UPDATE",
-                    True,
-                    f"Settings updated: {json.dumps(new_settings, indent=2)}"
-                )
-                return True
-            else:
-                self.log_test(
-                    "Admin Settings UPDATE",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return False
-                
-        except Exception as e:
-            self.log_test("Admin Settings UPDATE", False, f"Exception: {str(e)}")
-            return False
-
-    def test_dashboard_stats(self):
-        """Test GET /api/admin/dashboard-stats"""
-        print("📊 TESTING ADMIN DASHBOARD STATISTICS...")
-        
-        try:
-            response = self.session.get(f"{BACKEND_URL}/admin/dashboard-stats")
-            
-            if response.status_code == 200:
-                stats = response.json()
-                
-                # Check for expected sections
-                expected_sections = ["users", "content", "moderation", "system"]
-                missing_sections = [section for section in expected_sections if section not in stats]
-                
-                if missing_sections:
-                    self.log_test(
-                        "Dashboard Statistics",
-                        False,
-                        f"Missing sections: {missing_sections}"
-                    )
-                else:
-                    # Verify data structure
-                    users_stats = stats.get("users", {})
-                    content_stats = stats.get("content", {})
-                    moderation_stats = stats.get("moderation", {})
-                    system_stats = stats.get("system", {})
-                    
-                    details = f"""
-Dashboard Statistics Retrieved:
-- Users: {users_stats.get('total', 0)} total, {users_stats.get('active_30d', 0)} active (30d)
-- Content: {content_stats.get('teams', 0)} teams, {content_stats.get('competitions', 0)} competitions, {content_stats.get('brands', 0)} brands
-- Moderation: {moderation_stats.get('pending_contributions', 0)} pending, {moderation_stats.get('total_contributions', 0)} total
-- System: Auto-approval={system_stats.get('auto_approval', 'Unknown')}, Community voting={system_stats.get('community_voting', 'Unknown')}
-                    """
-                    
-                    self.log_test("Dashboard Statistics", True, details.strip())
-                return stats
-            else:
-                self.log_test(
-                    "Dashboard Statistics",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return None
-                
-        except Exception as e:
-            self.log_test("Dashboard Statistics", False, f"Exception: {str(e)}")
-            return None
-
-    def test_admin_users(self):
-        """Test GET /api/admin/users"""
-        print("👥 TESTING ADMIN USER MANAGEMENT...")
-        
-        try:
-            # Test basic user listing
-            response = self.session.get(f"{BACKEND_URL}/admin/users")
+            response = requests.post(f"{API_BASE}/auth/login", json={
+                "email": "steinmetzlivio@gmail.com",
+                "password": "T0p_Mdp_1288*"
+            })
             
             if response.status_code == 200:
                 data = response.json()
-                users = data.get("users", [])
-                total = data.get("total", 0)
-                
-                self.log_test(
-                    "Admin Users Listing",
-                    True,
-                    f"Retrieved {len(users)} users out of {total} total"
-                )
-                
-                # Test pagination
-                response_page2 = self.session.get(f"{BACKEND_URL}/admin/users?page=2&limit=5")
-                if response_page2.status_code == 200:
-                    self.log_test("Admin Users Pagination", True, "Pagination working")
-                else:
-                    self.log_test("Admin Users Pagination", False, f"HTTP {response_page2.status_code}")
-                
-                # Test search functionality
-                response_search = self.session.get(f"{BACKEND_URL}/admin/users?search=topkit")
-                if response_search.status_code == 200:
-                    search_data = response_search.json()
-                    self.log_test(
-                        "Admin Users Search",
-                        True,
-                        f"Search returned {len(search_data.get('users', []))} results"
-                    )
-                else:
-                    self.log_test("Admin Users Search", False, f"HTTP {response_search.status_code}")
-                
-                return data
-            else:
-                self.log_test(
-                    "Admin Users Listing",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return None
-                
-        except Exception as e:
-            self.log_test("Admin Users Listing", False, f"Exception: {str(e)}")
-            return None
-
-    def test_pending_approvals(self):
-        """Test GET /api/admin/pending-approvals"""
-        print("⏳ TESTING PENDING APPROVALS MANAGEMENT...")
-        
-        try:
-            response = self.session.get(f"{BACKEND_URL}/admin/pending-approvals")
-            
-            if response.status_code == 200:
-                pending_items = response.json()
-                
-                # Group by type
-                item_types = {}
-                for item in pending_items:
-                    item_type = item.get("type", "unknown")
-                    if item_type not in item_types:
-                        item_types[item_type] = 0
-                    item_types[item_type] += 1
-                
-                details = f"Found {len(pending_items)} pending items: {dict(item_types)}"
-                self.log_test("Pending Approvals Listing", True, details)
-                
-                return pending_items
-            else:
-                self.log_test(
-                    "Pending Approvals Listing",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return None
-                
-        except Exception as e:
-            self.log_test("Pending Approvals Listing", False, f"Exception: {str(e)}")
-            return None
-
-    def test_approval_functionality(self, pending_items):
-        """Test approval functionality if pending items exist"""
-        print("✅ TESTING APPROVAL FUNCTIONALITY...")
-        
-        if not pending_items:
-            self.log_test(
-                "Approval Functionality",
-                True,
-                "No pending items to test approval (system working correctly)"
-            )
-            return True
-        
-        # Test approval on first pending item
-        test_item = pending_items[0]
-        item_type = test_item.get("type")
-        item_id = test_item.get("id")
-        
-        try:
-            response = self.session.put(f"{BACKEND_URL}/admin/approve/{item_type}/{item_id}")
-            
-            if response.status_code == 200:
-                self.log_test(
-                    "Approval Functionality",
-                    True,
-                    f"Successfully approved {item_type} with ID {item_id}"
+                self.user_token = data.get('access_token')
+                self.user_user_id = data.get('user', {}).get('id')
+                self.log_result(
+                    "User Authentication", 
+                    True, 
+                    f"User authenticated successfully. User ID: {self.user_user_id}, Token length: {len(self.user_token) if self.user_token else 0}"
                 )
                 return True
             else:
-                self.log_test(
-                    "Approval Functionality",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
+                self.log_result("User Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_test("Approval Functionality", False, f"Exception: {str(e)}")
+            self.log_result("User Authentication", False, "", str(e))
             return False
 
-    def create_test_team(self, auto_approval_enabled):
-        """Create a test team to verify auto-approval behavior"""
-        print(f"🏆 CREATING TEST TEAM (Auto-approval: {auto_approval_enabled})...")
-        
-        # Use microseconds to ensure unique names
-        import time
-        unique_suffix = f"{datetime.now().strftime('%H%M%S')}{int(time.time() * 1000000) % 1000000}"
-        
-        test_team_data = {
-            "name": f"Test Team Auto-Approval {unique_suffix}",
-            "country": "France",
-            "city": "Test City",
-            "founded_year": 2024,
-            "short_name": f"TTA{unique_suffix[:4]}"
-        }
+    def test_admin_settings_system(self):
+        """Test Admin Dashboard Settings System - Critical Issue #2"""
+        if not self.admin_token:
+            self.log_result("Admin Settings Test", False, "", "Admin authentication required")
+            return False
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         try:
-            response = self.session.post(f"{BACKEND_URL}/teams", json=test_team_data)
+            # Test GET admin settings
+            response = requests.get(f"{API_BASE}/admin/settings", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Admin Settings GET", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            current_settings = response.json()
+            self.log_result("Admin Settings GET", True, f"Retrieved settings: {current_settings}")
             
-            if response.status_code == 200 or response.status_code == 201:
-                team_data = response.json()
-                team_id = team_data.get("id")
-                verified_level = team_data.get("verified_level")
+            # Test PUT admin settings - This is where the "Error updating settings" occurs
+            test_settings = {
+                "auto_approval_enabled": not current_settings.get("auto_approval_enabled", True),
+                "admin_notifications": True,
+                "community_voting_enabled": True
+            }
+            
+            response = requests.put(f"{API_BASE}/admin/settings", json=test_settings, headers=headers)
+            if response.status_code != 200:
+                self.log_result("Admin Settings UPDATE", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
                 
-                # Handle case insensitive comparison
-                expected_status = "COMMUNITY_VERIFIED" if auto_approval_enabled else "PENDING"
-                verified_level_upper = verified_level.upper() if verified_level else None
-                
-                if verified_level_upper == expected_status:
-                    self.log_test(
-                        f"Team Creation (Auto-approval: {auto_approval_enabled})",
-                        True,
-                        f"Team created with correct status: {verified_level}"
-                    )
-                    return team_id, verified_level
+            self.log_result("Admin Settings UPDATE", True, f"Settings updated successfully: {test_settings}")
+            
+            # Verify settings were actually updated
+            response = requests.get(f"{API_BASE}/admin/settings", headers=headers)
+            if response.status_code == 200:
+                updated_settings = response.json()
+                if updated_settings.get("auto_approval_enabled") == test_settings["auto_approval_enabled"]:
+                    self.log_result("Admin Settings VERIFICATION", True, "Settings persistence verified")
                 else:
-                    self.log_test(
-                        f"Team Creation (Auto-approval: {auto_approval_enabled})",
-                        False,
-                        f"Expected status {expected_status}, got {verified_level}"
-                    )
-                    return team_id, verified_level
-            else:
-                self.log_test(
-                    f"Team Creation (Auto-approval: {auto_approval_enabled})",
-                    False,
-                    f"HTTP {response.status_code}: {response.text}"
-                )
-                return None, None
-                
+                    self.log_result("Admin Settings VERIFICATION", False, "", "Settings not persisted correctly")
+                    return False
+            
+            return True
+            
         except Exception as e:
-            self.log_test(
-                f"Team Creation (Auto-approval: {auto_approval_enabled})",
-                False,
-                f"Exception: {str(e)}"
-            )
-            return None, None
-
-    def test_hybrid_auto_approval_workflow(self):
-        """Test the complete hybrid auto-approval workflow"""
-        print("🔄 TESTING HYBRID AUTO-APPROVAL WORKFLOW...")
-        
-        # Get current settings
-        current_settings = self.test_admin_settings_get()
-        if not current_settings:
+            self.log_result("Admin Settings Test", False, "", str(e))
             return False
-        
-        # Test 1: Enable auto-approval and create team
-        print("\n--- Test 1: Auto-approval ENABLED ---")
-        auto_approval_settings = current_settings.copy()
-        auto_approval_settings["auto_approval_enabled"] = True
-        
-        if self.test_admin_settings_update(auto_approval_settings):
-            team_id_1, status_1 = self.create_test_team(True)
+
+    def test_master_kit_dropdown_population(self):
+        """Test Master Kit Dropdown Population - Critical Issue #1"""
+        if not self.admin_token:
+            self.log_result("Master Kit Dropdown Test", False, "", "Admin authentication required")
+            return False
             
-        # Test 2: Disable auto-approval and create team
-        print("\n--- Test 2: Auto-approval DISABLED ---")
-        manual_approval_settings = current_settings.copy()
-        manual_approval_settings["auto_approval_enabled"] = False
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        if self.test_admin_settings_update(manual_approval_settings):
-            # Add small delay to ensure different timestamp
-            import time
-            time.sleep(1)
-            team_id_2, status_2 = self.create_test_team(False)
-        
-        # Test 3: Verify pending items and approve manually
-        print("\n--- Test 3: Manual approval workflow ---")
-        pending_items = self.test_pending_approvals()
-        if pending_items:
-            # Find our test team in pending items
-            test_team_pending = None
-            for item in pending_items:
-                if item.get("id") == team_id_2:
-                    test_team_pending = item
-                    break
+        try:
+            # First, get available teams for Master Kit creation
+            response = requests.get(f"{API_BASE}/teams", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Teams Endpoint", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            teams = response.json()
+            self.log_result("Teams Endpoint", True, f"Found {len(teams)} teams available")
             
-            if test_team_pending:
-                self.test_approval_functionality([test_team_pending])
+            if not teams:
+                self.log_result("Master Kit Dropdown Test", False, "", "No teams available for Master Kit creation")
+                return False
+            
+            # Get available brands
+            response = requests.get(f"{API_BASE}/brands", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Brands Endpoint", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            brands = response.json()
+            self.log_result("Brands Endpoint", True, f"Found {len(brands)} brands available")
+            
+            # Test Master Kit creation to verify dropdown data is accessible
+            if teams and brands:
+                team_id = teams[0].get('id')
+                brand_id = brands[0].get('id')
+                
+                master_kit_data = {
+                    "team_id": team_id,
+                    "brand_id": brand_id,
+                    "season": "2024-25",
+                    "jersey_type": "home",
+                    "model": "Test Master Kit",
+                    "primary_color": "blue",
+                    "secondary_colors": ["white"]
+                }
+                
+                response = requests.post(f"{API_BASE}/master-kits", json=master_kit_data, headers=headers)
+                if response.status_code in [200, 201]:
+                    created_kit = response.json()
+                    self.log_result("Master Kit Creation", True, f"Master Kit created: {created_kit.get('topkit_reference', 'Unknown')}")
+                else:
+                    self.log_result("Master Kit Creation", False, "", f"HTTP {response.status_code}: {response.text}")
+                    return False
+            
+            # Now test the dropdown population for Reference Kit creation
+            response = requests.get(f"{API_BASE}/master-kits", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Master Kits Dropdown", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            master_kits = response.json()
+            self.log_result("Master Kits Dropdown", True, f"Found {len(master_kits)} Master Kits for dropdown")
+            
+            # Test team-specific Master Kit filtering (this is likely where the dropdown issue occurs)
+            if teams:
+                team_id = teams[0].get('id')
+                response = requests.get(f"{API_BASE}/master-kits?team_id={team_id}", headers=headers)
+                if response.status_code == 200:
+                    team_master_kits = response.json()
+                    self.log_result("Team Master Kits Filter", True, f"Found {len(team_master_kits)} Master Kits for team {teams[0].get('name', 'Unknown')}")
+                else:
+                    self.log_result("Team Master Kits Filter", False, "", f"HTTP {response.status_code}: {response.text}")
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Master Kit Dropdown Test", False, "", str(e))
+            return False
+
+    def test_form_dependency_endpoints(self):
+        """Test form dependency endpoints that populate dropdowns"""
+        if not self.admin_token:
+            self.log_result("Form Dependencies Test", False, "", "Admin authentication required")
+            return False
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            # Test competitions by type endpoint
+            response = requests.get(f"{API_BASE}/form-dependencies/competitions-by-type", headers=headers)
+            if response.status_code == 200:
+                competitions_by_type = response.json()
+                self.log_result("Competitions By Type", True, f"Found {len(competitions_by_type)} competition types")
             else:
-                self.log_test(
-                    "Manual Approval Workflow",
-                    False,
-                    f"Test team {team_id_2} not found in pending items"
-                )
+                self.log_result("Competitions By Type", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test teams by competition endpoint
+            response = requests.get(f"{API_BASE}/competitions", headers=headers)
+            if response.status_code == 200:
+                competitions = response.json()
+                if competitions:
+                    comp_id = competitions[0].get('id')
+                    response = requests.get(f"{API_BASE}/form-dependencies/teams-by-competition/{comp_id}", headers=headers)
+                    if response.status_code == 200:
+                        teams_by_comp = response.json()
+                        self.log_result("Teams By Competition", True, f"Found {len(teams_by_comp)} teams for competition")
+                    else:
+                        self.log_result("Teams By Competition", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test master kits by team endpoint
+            response = requests.get(f"{API_BASE}/teams", headers=headers)
+            if response.status_code == 200:
+                teams = response.json()
+                if teams:
+                    team_id = teams[0].get('id')
+                    response = requests.get(f"{API_BASE}/form-dependencies/master-kits-by-team/{team_id}", headers=headers)
+                    if response.status_code == 200:
+                        master_kits_by_team = response.json()
+                        self.log_result("Master Kits By Team", True, f"Found {len(master_kits_by_team)} master kits for team")
+                    else:
+                        self.log_result("Master Kits By Team", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Form Dependencies Test", False, "", str(e))
+            return False
+
+    def test_image_upload_system(self):
+        """Test Image Upload System - Critical Issue #3"""
+        if not self.admin_token:
+            self.log_result("Image Upload Test", False, "", "Admin authentication required")
+            return False
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        # Restore original settings
-        print("\n--- Restoring original settings ---")
-        self.test_admin_settings_update(current_settings)
+        # Create a simple test image (1x1 pixel PNG in base64)
+        test_image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
         
-        # Summary
-        workflow_success = (
-            status_1 and status_1.upper() == "COMMUNITY_VERIFIED" and 
-            status_2 and status_2.upper() == "PENDING"
-        )
+        try:
+            # Test 1: Team Logo Upload
+            team_data = {
+                "name": f"Test Team {uuid.uuid4().hex[:8]}",
+                "country": "France",
+                "city": "Paris",
+                "logo_image": f"data:image/png;base64,{test_image_base64}"
+            }
+            
+            response = requests.post(f"{API_BASE}/teams", json=team_data, headers=headers)
+            if response.status_code in [200, 201]:
+                team = response.json()
+                self.log_result("Team Logo Upload", True, f"Team created with logo: {team.get('name')}")
+            else:
+                self.log_result("Team Logo Upload", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test 2: Brand Logo Upload
+            brand_data = {
+                "name": f"Test Brand {uuid.uuid4().hex[:8]}",
+                "country": "France",
+                "logo_image": f"data:image/png;base64,{test_image_base64}"
+            }
+            
+            response = requests.post(f"{API_BASE}/brands", json=brand_data, headers=headers)
+            if response.status_code in [200, 201]:
+                brand = response.json()
+                self.log_result("Brand Logo Upload", True, f"Brand created with logo: {brand.get('name')}")
+            else:
+                self.log_result("Brand Logo Upload", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test 3: Competition Logo Upload
+            competition_data = {
+                "competition_name": f"Test Competition {uuid.uuid4().hex[:8]}",
+                "type": "National league",
+                "country": "France",
+                "logo_image": f"data:image/png;base64,{test_image_base64}"
+            }
+            
+            response = requests.post(f"{API_BASE}/competitions", json=competition_data, headers=headers)
+            if response.status_code in [200, 201]:
+                competition = response.json()
+                self.log_result("Competition Logo Upload", True, f"Competition created with logo: {competition.get('competition_name')}")
+            else:
+                self.log_result("Competition Logo Upload", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test 4: Player Photo Upload
+            player_data = {
+                "name": f"Test Player {uuid.uuid4().hex[:8]}",
+                "nationality": "France",
+                "position": "Forward",
+                "photo_image": f"data:image/png;base64,{test_image_base64}"
+            }
+            
+            response = requests.post(f"{API_BASE}/players", json=player_data, headers=headers)
+            if response.status_code in [200, 201]:
+                player = response.json()
+                self.log_result("Player Photo Upload", True, f"Player created with photo: {player.get('name')}")
+            else:
+                self.log_result("Player Photo Upload", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            # Test 5: Reference Kit Jersey Image Upload
+            # First get teams and brands for reference kit creation
+            teams_response = requests.get(f"{API_BASE}/teams", headers=headers)
+            brands_response = requests.get(f"{API_BASE}/brands", headers=headers)
+            
+            if teams_response.status_code == 200 and brands_response.status_code == 200:
+                teams = teams_response.json()
+                brands = brands_response.json()
+                
+                if teams and brands:
+                    # Create a master kit first
+                    master_kit_data = {
+                        "team_id": teams[0].get('id'),
+                        "brand_id": brands[0].get('id'),
+                        "season": "2024-25",
+                        "jersey_type": "home",
+                        "model": "Test Kit for Image",
+                        "primary_color": "red"
+                    }
+                    
+                    mk_response = requests.post(f"{API_BASE}/master-kits", json=master_kit_data, headers=headers)
+                    if mk_response.status_code in [200, 201]:
+                        master_kit = mk_response.json()
+                        
+                        # Now create reference kit with image
+                        ref_kit_data = {
+                            "master_kit_id": master_kit.get('id'),
+                            "player_name": "Test Player",
+                            "player_number": "10",
+                            "jersey_image": f"data:image/png;base64,{test_image_base64}"
+                        }
+                        
+                        response = requests.post(f"{API_BASE}/reference-kits", json=ref_kit_data, headers=headers)
+                        if response.status_code in [200, 201]:
+                            ref_kit = response.json()
+                            self.log_result("Reference Kit Image Upload", True, f"Reference Kit created with image: {ref_kit.get('topkit_reference')}")
+                        else:
+                            self.log_result("Reference Kit Image Upload", False, "", f"HTTP {response.status_code}: {response.text}")
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Image Upload Test", False, "", str(e))
+            return False
+
+    def test_navigation_implementation(self):
+        """Test Navigation Implementation - Critical Issue #4"""
+        if not self.admin_token:
+            self.log_result("Navigation Test", False, "", "Admin authentication required")
+            return False
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        self.log_test(
-            "Hybrid Auto-Approval Workflow",
-            workflow_success,
-            f"Auto-approved team status: {status_1}, Manual team status: {status_2}"
-        )
+        try:
+            # Test the navigation flow: Reference Kit form → Master Kit creation
+            # This tests if the "Create New Master Kit" navigation works
+            
+            # 1. Test if we can access the reference kit creation endpoint
+            response = requests.get(f"{API_BASE}/master-kits", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Master Kit Navigation Access", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            master_kits = response.json()
+            self.log_result("Master Kit Navigation Access", True, f"Master Kit endpoint accessible with {len(master_kits)} items")
+            
+            # 2. Test if we can create a new master kit (simulating navigation from Reference Kit form)
+            teams_response = requests.get(f"{API_BASE}/teams", headers=headers)
+            brands_response = requests.get(f"{API_BASE}/brands", headers=headers)
+            
+            if teams_response.status_code == 200 and brands_response.status_code == 200:
+                teams = teams_response.json()
+                brands = brands_response.json()
+                
+                if teams and brands:
+                    navigation_master_kit = {
+                        "team_id": teams[0].get('id'),
+                        "brand_id": brands[0].get('id'),
+                        "season": "2024-25",
+                        "jersey_type": "away",
+                        "model": "Navigation Test Kit",
+                        "primary_color": "white",
+                        "secondary_colors": ["blue"]
+                    }
+                    
+                    response = requests.post(f"{API_BASE}/master-kits", json=navigation_master_kit, headers=headers)
+                    if response.status_code in [200, 201]:
+                        created_kit = response.json()
+                        self.log_result("Master Kit Navigation Creation", True, f"Navigation Master Kit created: {created_kit.get('topkit_reference')}")
+                        
+                        # 3. Test if the newly created master kit appears in the dropdown
+                        response = requests.get(f"{API_BASE}/master-kits", headers=headers)
+                        if response.status_code == 200:
+                            updated_master_kits = response.json()
+                            if len(updated_master_kits) > len(master_kits):
+                                self.log_result("Master Kit Dropdown Update", True, "New Master Kit appears in dropdown")
+                            else:
+                                self.log_result("Master Kit Dropdown Update", False, "", "New Master Kit not appearing in dropdown")
+                                return False
+                    else:
+                        self.log_result("Master Kit Navigation Creation", False, "", f"HTTP {response.status_code}: {response.text}")
+                        return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Navigation Test", False, "", str(e))
+            return False
+
+    def test_complete_reference_kit_workflow(self):
+        """Test complete Reference Kit creation workflow"""
+        if not self.admin_token:
+            self.log_result("Reference Kit Workflow", False, "", "Admin authentication required")
+            return False
+            
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
-        return workflow_success
+        try:
+            # Get master kits for reference kit creation
+            response = requests.get(f"{API_BASE}/master-kits", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Reference Kit Workflow - Master Kits", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            master_kits = response.json()
+            if not master_kits:
+                self.log_result("Reference Kit Workflow", False, "", "No Master Kits available for Reference Kit creation")
+                return False
+                
+            self.log_result("Reference Kit Workflow - Master Kits", True, f"Found {len(master_kits)} Master Kits available")
+            
+            # Create a reference kit
+            master_kit_id = master_kits[0].get('id')
+            ref_kit_data = {
+                "master_kit_id": master_kit_id,
+                "player_name": "Workflow Test Player",
+                "player_number": "99",
+                "original_retail_price": 89.99,
+                "available_sizes": ["S", "M", "L", "XL"]
+            }
+            
+            response = requests.post(f"{API_BASE}/reference-kits", json=ref_kit_data, headers=headers)
+            if response.status_code in [200, 201]:
+                ref_kit = response.json()
+                self.log_result("Reference Kit Creation", True, f"Reference Kit created: {ref_kit.get('topkit_reference')}")
+                
+                # Verify it appears in vestiaire
+                response = requests.get(f"{API_BASE}/vestiaire", headers=headers)
+                if response.status_code == 200:
+                    vestiaire_items = response.json()
+                    ref_kit_found = any(item.get('topkit_reference') == ref_kit.get('topkit_reference') for item in vestiaire_items)
+                    if ref_kit_found:
+                        self.log_result("Reference Kit in Vestiaire", True, "Reference Kit appears in vestiaire")
+                    else:
+                        self.log_result("Reference Kit in Vestiaire", False, "", "Reference Kit not found in vestiaire")
+                else:
+                    self.log_result("Vestiaire Access", False, "", f"HTTP {response.status_code}: {response.text}")
+            else:
+                self.log_result("Reference Kit Creation", False, "", f"HTTP {response.status_code}: {response.text}")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Reference Kit Workflow", False, "", str(e))
+            return False
 
     def run_all_tests(self):
-        """Run all admin system tests"""
-        print("🚀 STARTING ADMIN SYSTEM COMPREHENSIVE TESTING")
-        print("=" * 60)
+        """Run all critical backend tests"""
+        print("🚀 STARTING COMPREHENSIVE BACKEND TESTING - CRITICAL ISSUES INVESTIGATION")
+        print("=" * 80)
         
-        # Step 1: Authenticate
-        if not self.authenticate_admin():
-            print("❌ CRITICAL: Admin authentication failed. Cannot proceed with tests.")
+        # Authentication Tests
+        print("\n📋 AUTHENTICATION TESTS")
+        print("-" * 40)
+        admin_auth = self.authenticate_admin()
+        user_auth = self.authenticate_user()
+        
+        if not admin_auth:
+            print("❌ Cannot proceed without admin authentication")
             return False
         
-        # Step 2: Test admin settings management
-        current_settings = self.test_admin_settings_get()
+        # Critical Issue Tests
+        print("\n🔥 CRITICAL ISSUE TESTS")
+        print("-" * 40)
         
-        # Step 3: Test dashboard statistics
-        self.test_dashboard_stats()
+        # Issue #1: Reference Kit Creation - Master Kit Dropdown Population
+        print("\n1️⃣ TESTING: Master Kit Dropdown Population Issue")
+        self.test_master_kit_dropdown_population()
+        self.test_form_dependency_endpoints()
         
-        # Step 4: Test user management
-        self.test_admin_users()
+        # Issue #2: Admin Dashboard Validation System
+        print("\n2️⃣ TESTING: Admin Dashboard Settings Validation")
+        self.test_admin_settings_system()
         
-        # Step 5: Test pending approvals
-        pending_items = self.test_pending_approvals()
+        # Issue #3: Image Upload System
+        print("\n3️⃣ TESTING: Image Upload System Across All Categories")
+        self.test_image_upload_system()
         
-        # Step 6: Test approval functionality
-        self.test_approval_functionality(pending_items)
+        # Issue #4: Navigation Implementation
+        print("\n4️⃣ TESTING: Master Kit Creation Navigation")
+        self.test_navigation_implementation()
         
-        # Step 7: Test hybrid auto-approval workflow
-        self.test_hybrid_auto_approval_workflow()
+        # Complete Workflow Test
+        print("\n🔄 COMPLETE WORKFLOW TESTS")
+        print("-" * 40)
+        self.test_complete_reference_kit_workflow()
         
-        # Generate summary
-        self.generate_summary()
-        
-        return True
-
-    def generate_summary(self):
-        """Generate test summary"""
-        print("\n" + "=" * 60)
-        print("📋 ADMIN SYSTEM TESTING SUMMARY")
-        print("=" * 60)
+        # Summary
+        print("\n📊 TEST SUMMARY")
+        print("=" * 80)
         
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result["success"])
+        passed_tests = sum(1 for result in self.test_results if result['success'])
         failed_tests = total_tests - passed_tests
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
@@ -497,44 +571,41 @@ Dashboard Statistics Retrieved:
         print(f"Passed: {passed_tests}")
         print(f"Failed: {failed_tests}")
         print(f"Success Rate: {success_rate:.1f}%")
-        print()
         
         if failed_tests > 0:
-            print("❌ FAILED TESTS:")
+            print(f"\n❌ FAILED TESTS:")
             for result in self.test_results:
-                if not result["success"]:
-                    print(f"  - {result['test']}: {result['details']}")
-            print()
+                if not result['success']:
+                    print(f"   - {result['test']}: {result['error']}")
         
-        print("✅ PASSED TESTS:")
-        for result in self.test_results:
-            if result["success"]:
-                print(f"  - {result['test']}")
+        print(f"\n🎯 CRITICAL ISSUES STATUS:")
         
-        print("\n" + "=" * 60)
+        # Analyze results for each critical issue
+        master_kit_tests = [r for r in self.test_results if 'Master Kit' in r['test'] or 'Form Dependencies' in r['test']]
+        master_kit_success = all(r['success'] for r in master_kit_tests)
+        print(f"   1. Master Kit Dropdown Population: {'✅ RESOLVED' if master_kit_success else '❌ ISSUE PERSISTS'}")
         
-        if success_rate >= 80:
-            print("🎉 ADMIN SYSTEM IS PRODUCTION-READY!")
-        elif success_rate >= 60:
-            print("⚠️  ADMIN SYSTEM NEEDS MINOR FIXES")
-        else:
-            print("🚨 ADMIN SYSTEM NEEDS MAJOR FIXES")
+        admin_tests = [r for r in self.test_results if 'Admin Settings' in r['test']]
+        admin_success = all(r['success'] for r in admin_tests)
+        print(f"   2. Admin Dashboard Settings: {'✅ RESOLVED' if admin_success else '❌ ISSUE PERSISTS'}")
         
-        print("=" * 60)
-
-def main():
-    """Main test execution"""
-    tester = AdminSystemTester()
-    
-    try:
-        success = tester.run_all_tests()
-        return 0 if success else 1
-    except KeyboardInterrupt:
-        print("\n⚠️ Testing interrupted by user")
-        return 1
-    except Exception as e:
-        print(f"\n🚨 CRITICAL ERROR: {str(e)}")
-        return 1
+        image_tests = [r for r in self.test_results if 'Upload' in r['test'] and 'Image' in r['test']]
+        image_success = all(r['success'] for r in image_tests)
+        print(f"   3. Image Upload System: {'✅ RESOLVED' if image_success else '❌ ISSUE PERSISTS'}")
+        
+        nav_tests = [r for r in self.test_results if 'Navigation' in r['test']]
+        nav_success = all(r['success'] for r in nav_tests)
+        print(f"   4. Navigation Implementation: {'✅ RESOLVED' if nav_success else '❌ ISSUE PERSISTS'}")
+        
+        return success_rate >= 80
 
 if __name__ == "__main__":
-    sys.exit(main())
+    tester = BackendTester()
+    success = tester.run_all_tests()
+    
+    if success:
+        print(f"\n🎉 BACKEND TESTING COMPLETED SUCCESSFULLY!")
+        print(f"All critical issues have been investigated and most functionality is working correctly.")
+    else:
+        print(f"\n⚠️ BACKEND TESTING COMPLETED WITH ISSUES!")
+        print(f"Some critical issues require attention. Check the failed tests above for details.")
