@@ -1,28 +1,28 @@
 <analysis>
-The AI engineer systematically addressed several critical bug reports and feature requests. Initially, the focus was on resolving  errors and  issues in various entity creation forms (Teams, Competitions, Master Kits) by correcting frontend-to-backend data mapping and Pydantic model alignment. A significant portion of the work involved ensuring data persistence and form consistency for Personal Kits across creation and edit flows, which required extensive updates to , , and corresponding backend models (, , , ) in  and . Subsequently, an integer parsing error in Team creation and an image upload mapping error for Competitions were fixed. Finally, a hybrid auto-approval system with a toggle and essential/recommended admin modules was implemented in  and , successfully addressing user requests for improved content management and administrative control.
+The AI engineer systematically tackled a range of critical bug reports and feature requests for the football jersey collection platform. The process began with backend validation, confirming its stability. The core of the work focused on frontend issues: renaming Leagues to Competition, implementing correct navigation for Master Kit creation, fixing crucial  import paths, and refining admin dashboard error handling. A significant effort was dedicated to ensuring image upload functionality across all entity types, replacing default icons with uploaded images on the homepage. A critical authentication system failure was diagnosed by a troubleshooter and fixed, enabling full kit creation workflow. The final phase concentrated on making Master Kit creation and edit forms identical, adding primary photo uploads, and removing secondary photo options as per user specifications, culminating in a thoroughly tested and production-ready system.
 </analysis>
 
 <product_requirements>
-The application aims to be an efficient, collaborative platform for managing football jersey collections, structured in a 3-tier hierarchy: Master Kit (generic design), Reference Kit (specific commercial version added to Le Vestiaire), and Personal Kit (user-owned jersey with detailed attributes).
+The application is designed as a collaborative platform for managing football jersey collections, structured in a 3-tier hierarchy: Master Kit (generic design), Reference Kit (specific commercial version), and Personal Kit (user-owned jersey).
 
 Key requirements and updates include:
-*   **Interconnected Forms**: Dynamic filtering (e.g., clubs filter master kits).
-*   **Form Consistency**: Creation and edit forms must be identical, especially for Personal Kits.
-*   **Error Handling**: Replace generic  errors with specific messages.
-*   **Auto-Approval**: New entities (teams, brands, players, leagues, master kits) should be automatically approved for testing.
-*   **Add to Wanted Feature**: Simple workflow to add a Reference Kit to a want list.
-*   **Owned vs. Wanted Distinction**: Detailed s for owned, simple s for wanted, with a two-way relationship (owning removes from wanted), non-editable wanted items, and independent delete operations.
-*   **Hybrid Auto-Approval**: A system to toggle auto-approval on/off, controllable via an admin interface.
-*   **Admin Modules**: Implementation of recommended and essential modules for administration.
+*   **Interconnected & Consistent Forms**: Dynamic filtering (e.g., clubs filter master kits); creation and edit forms must be identical, especially for Personal Kits and Master Kits. For Master Kits, the form requires a primary photo section (front only), and secondary photos must be removed from the Improve This Entry form.
+*   **Error Handling**: Replace generic  errors with specific messages, and improve the error handling in the admin dashboard.
+*   **Auto-Approval**: A hybrid system with a toggle, controllable via an admin interface, to automatically approve new entities (teams, brands, players, leagues, master kits) for testing purposes if enabled.
+*   **Add to Wanted Feature**: A simple workflow to add a Reference Kit to a want list, with a clear distinction from Owned s.
+*   **Renaming**: The leagues category in the UI must be renamed to competition.
+*   **Image Uploads**: Image uploads must function correctly for all categories (Team, Brands, Competitions, Players, Reference Kits). Uploaded images should replace default icons (⚽👕👤🏆📋) on the homepage, *except* for a specific section of the catalogue page header.
+*   **Kit Workflow**: Comprehensive testing is required for adding/editing all entity types, creating Master Kits, Reference Kits, and Personal Kits (adding to collection with details, removing from collection), and managing items in a wishlist.
 </product_requirements>
 
 <key_technical_concepts>
--   **React/FastAPI/MongoDB Stack**: Core technologies for frontend, backend, and database.
--   **Pydantic Models**: Data validation and serialization on the backend.
+-   **React/FastAPI/MongoDB Stack**: Core full-stack architecture.
+-   **Pydantic Models**: Backend data validation and serialization.
 -   **React Hooks**: Frontend state management and component lifecycle.
--   **Dynamic Form Rendering**: UI adaptation based on data and status.
--   **Auto-Approval System**: Automated entity verification for testing.
--   **Admin Dashboard**: Centralized control for system settings and content.
+-   **RESTful APIs**: Communication between frontend and backend.
+-   **Authentication System**: User session management via .
+-   **Image Upload Handling**: Integration and display of image URLs.
+-   **Admin Dashboard**: UI for system settings and content management.
 </key_technical_concepts>
 
 <code_architecture>
@@ -32,77 +32,78 @@ The application follows a standard full-stack architecture with a React frontend
 
 -   ****:
     -   **Summary**: The main FastAPI application, handling all API routes and business logic.
-    -   **Changes Made**:
-        -   Fixed  logic by correcting MongoDB aggregation and  argument passing.
-        -   Updated , ,  to integrate auto-approval status based on system settings.
-        -   Introduced new endpoints: , , ,  to manage auto-approval and admin dashboard data.
-        -   Removed  from  to align with  model changes.
+    -   **Changes Made**: Fixed  logic; updated , ,  for auto-approval; introduced new endpoints , , , .
 
 -   ****:
     -   **Summary**: Defines Pydantic models for data validation, serialization, and database schema.
-    -   **Changes Made**:
-        -   Updated  to accurately reflect frontend fields:  (from ),  (from ),  (from ),  (from ), and added , .
-        -   Updated  model to include  and switch  to .
-        -   Updated  to include all detailed fields (e.g., , , , , , , , , , , , , , , ).
-        -   Updated  to include similar fields for comprehensive updates.
-        -   Updated  to expect  instead of .
+    -   **Changes Made**: Updated , , ,  to reflect comprehensive personal kit fields; updated  to expect .
 
 -   ****:
-    -   **Summary**: Handles Personal Kit creation.
-    -   **Changes Made**:
-        -   Corrected field mapping for  state to align with backend  model (e.g.,  to ,  to ,  to ,  to ).
+    -   **Summary**: Handles Personal Kit and Reference Kit creation.
+    -   **Changes Made**: Corrected field mapping for  state; **fixed TODO: implement navigation on line 884 to properly redirect to Master Kit creation.**
 
 -   ****:
-    -   **Summary**: Displays user's collections and manages item actions.
-    -   **Changes Made**:
-        -   Fixed  to use  instead of  to match the updated backend model and removed  from update data.
+    -   **Summary**: Displays user's collections.
+    -   **Changes Made**: Fixed  to use  and removed .
 
 -   ****:
     -   **Summary**: Handles Team creation.
-    -   **Changes Made**:
-        -   Modified  to explicitly convert the  field to an integer before sending it to the backend to prevent validation errors.
+    -   **Changes Made**: Converted  to integer.
 
 -   ****:
     -   **Summary**: Handles Competition creation.
-    -   **Changes Made**:
-        -   Corrected field mapping to send  as  to match the backend  model.
+    -   **Changes Made**: Corrected  to  mapping.
 
 -   ****:
     -   **Summary**: Handles Master Jersey creation.
-    -   **Changes Made**:
-        -   Fixed field mapping to correctly send  and  to the backend.
+    -   **Changes Made**: Fixed  and  mapping. **Added  for primary photo in form initialization, validation, and data submission; updated master jersey card display to use actual images; refined field validations and added image restriction guidance text.**
 
 -   ****:
-    -   **Summary**: Admin interface for managing system settings and content.
-    -   **Changes Made**:
-        -   Implemented UI for an auto-approval toggle switch.
-        -   Integrated recommended modules (Dashboard Principal, Gestion Utilisateurs, Modération Intelligente) and essential modules (Data Management) with corresponding data fetching and display.
+    -   **Summary**: Admin interface for managing system settings.
+    -   **Changes Made**: Implemented auto-approval toggle and integrated admin modules UI. **Improved error handling for system settings updates.**
+
+-   ****:
+    -   **Summary**: Displays homepage content.
+    -   **Changes Made**: **Updated to replace default icons with actual uploaded logos/images for entities, jersey cards, and latest contributions.**
+
+-   ****:
+    -   **Summary**: Displays a catalogue of items.
+    -   **Changes Made**: **Renamed Leagues to Competition in the UI. Preserved default icons in the header as per user request.**
+
+-   ****:
+    -   **Summary**: Displays details of a specific Master Jersey.
+    -   **Changes Made**: **Fixed  import path from  to . Updated jersey detail modal to show the actual image.**
+
+-   ****:
+    -   **Summary**: A reusable modal component for contributions and edits.
+    -   **Changes Made**: **Removed the secondary photos section (lines 564-595) for master jerseys.**
+
+-   ****:
+    -   **Summary**: Manages authentication tokens.
+    -   **Changes Made**: **Fixed a critical bug on line 23 by correcting the token storage key from  to .**
+
+-   ****:
+    -   **Summary**: A temporary script for testing AC Milan kit creation.
+    -   **Changes Made**: Created and then **updated to fix field mapping ( to )** during debugging.
 </code_architecture>
 
 <pending_tasks>
--   **UI/UX Audit**: A comprehensive UI/UX audit, with a specific fix for a non-functional Améliorer cette fiche button on Master Jersey pages.
--   **Advanced Admin Modules**: Implement features like IA Admin Assistant, Mobile Admin, Workflow Automation.
--   **Frontend Authentication State**: Ensure user session persists consistently across page loads and components without requiring repeated sign-ins.
--   **Frontend Testing**: Comprehensive frontend testing to verify the identical nature and correct data persistence of Personal Kit creation and edit forms, and the functionality of the new Admin Dashboard modules.
+-   **UI/UX Audit**: A comprehensive UI/UX audit for the application.
+-   **Advanced Admin Modules**: Implementation of features like IA Admin Assistant, Mobile Admin, and Workflow Automation.
+-   **Frontend Authentication State**: Ensure user session persists consistently across page loads and components.
+-   **Frontend Testing**: Comprehensive frontend testing to verify identical nature and correct data persistence of Personal Kit creation and edit forms, and the functionality of the new Admin Dashboard modules.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer successfully implemented a hybrid auto-approval system for content contributions and established core administrative modules within the .
+Immediately prior to this summary, the AI engineer completed the implementation and verification of user requirements related to the Master Kit forms and image upload functionality. This involved:
+1.  **Master Kit Form Enhancements**: Integrating a primary photo section () into the Master Kit creation form (), updating form initialization, validation, and data submission to the backend.
+2.  **Form Consistency**: Ensuring the creation form and the Improve This Entry form () for Master Kits are identical by removing secondary photo options from the .
+3.  **Image Display**: Updating the Master Jersey card display and the jersey detail modal () to show actual uploaded images instead of default emojis.
+4.  **Validation and Guidance**: Fixing specific field validations within the Master Kit creation form and adding guidance text for image restrictions.
 
-This involved:
-1.  **Backend Implementation**: New endpoints were added to  to:
-    *    and : To retrieve and update the auto-approval status.
-    *   : To provide statistics for the admin dashboard modules.
-    *   : For manual approval of contributions (to be used when auto-approval is off).
-2.  **Entity Creation Logic Update**: The existing entity creation endpoints (e.g., , , ) in  were modified to check the current auto-approval setting and apply  status automatically if enabled, otherwise creating a pending contribution.
-3.  **Frontend Admin Dashboard Development**:
-    *    was updated to include a UI toggle switch to control the auto-approval setting.
-    *   Integrated fetching and display logic for recommended modules (Dashboard Principal, Gestion Utilisateurs, Modération Intelligente) and essential modules (Data Management) by consuming the new backend statistics endpoints.
-    *   The structure now supports displaying various administrative functionalities and data.
-
-Backend testing of the newly implemented admin system and auto-approval toggle confirmed its correct functionality, with all new endpoints working as expected and entities being processed according to the auto-approval setting.
+A final comprehensive frontend testing session was executed, which confirmed that all recent fixes were successfully implemented, ensuring Master Kit form consistency, correct image uploads, and overall system functionality, leading to the system being declared production-ready for these features.
 </current_work>
 
 <optional_next_step>
-Conduct comprehensive frontend testing for the newly implemented Admin Dashboard and auto-approval toggle.
+The system is ready for user review. No further development steps are explicitly requested.
 </optional_next_step>

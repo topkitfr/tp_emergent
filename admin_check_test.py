@@ -6,7 +6,7 @@ Admin Check - Verify pending jerseys and admin functionality
 import requests
 import json
 
-BASE_URL = "https://kit-collection-hub.preview.emergentagent.com/api"
+BASE_URL = "https://football-threads-10.preview.emergentagent.com/api"
 
 def authenticate_admin():
     """Authenticate as admin user"""
