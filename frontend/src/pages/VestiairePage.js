@@ -496,7 +496,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 <h3 className="font-semibold text-lg text-gray-900">Available Player Prints</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {release.available_prints.map((print, index) => (
-                    <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                    <div key={index} className="p-2 bg-gray-50 rounded text-sm text-gray-700">
                       {print.player_name} #{print.number}
                     </div>
                   ))}
