@@ -42,7 +42,7 @@ const CataloguePage = ({
     },
     { 
       id: 'competitions', 
-      label: 'Leagues', 
+      label: 'Competitions', 
       icon: '🏆', 
       count: competitions?.length || 0,
       description: 'Championships and cups'
