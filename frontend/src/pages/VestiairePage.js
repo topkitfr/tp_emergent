@@ -461,16 +461,16 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             {/* Master Kit Information */}
             <div className="space-y-3">
               <h3 className="font-semibold text-lg text-gray-900">Master Kit Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
                 <div className="space-y-2">
-                  <div><span className="font-medium">Team:</span> {teamInfo.name || 'Unknown'}</div>
-                  <div><span className="font-medium">Season:</span> {masterKitInfo.season || 'Unknown'}</div>
-                  <div><span className="font-medium">Kit Type:</span> {masterKitInfo.kit_type || 'Unknown'}</div>
+                  <div><span className="font-medium text-gray-900">Team:</span> {teamInfo.name || 'Unknown'}</div>
+                  <div><span className="font-medium text-gray-900">Season:</span> {masterKitInfo.season || 'Unknown'}</div>
+                  <div><span className="font-medium text-gray-900">Kit Type:</span> {masterKitInfo.kit_type || 'Unknown'}</div>
                 </div>
                 <div className="space-y-2">
-                  <div><span className="font-medium">Brand:</span> {brandInfo.name || 'Unknown'}</div>
-                  <div><span className="font-medium">Model:</span> {masterKitInfo.model || 'Unknown'}</div>
-                  <div><span className="font-medium">Master Kit Reference:</span> {masterKitInfo.topkit_reference || 'No reference'}</div>
+                  <div><span className="font-medium text-gray-900">Brand:</span> {brandInfo.name || 'Unknown'}</div>
+                  <div><span className="font-medium text-gray-900">Model:</span> {masterKitInfo.model || 'Unknown'}</div>
+                  <div><span className="font-medium text-gray-900">Master Kit Reference:</span> {masterKitInfo.topkit_reference || 'No reference'}</div>
                 </div>
               </div>
             </div>
