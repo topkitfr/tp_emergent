@@ -242,14 +242,15 @@ class TeamContributionsTester:
             
             # Create a contribution to update the team (simulate "améliorer cette page" form)
             contribution_data = {
-                "entity_type": "TEAM",
+                "entity_type": "team",
                 "entity_id": self.created_team_id,
-                "action": "UPDATE",
-                "proposed_changes": {
+                "action_type": "UPDATE",
+                "proposed_data": {
                     "name": f"Updated Test Team FC {datetime.now().strftime('%H%M%S')}",
                     "city": "Lyon",
-                    "team_colors": ["red", "blue", "white"]
+                    "colors": ["red", "blue", "white"]
                 },
+                "title": "Update team information and add logo",
                 "description": "Adding logo and updating team information via améliorer cette page form"
             }
             
