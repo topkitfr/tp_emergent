@@ -545,9 +545,11 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Images</h3>
             
-            {/* Logo Upload */}
+            {/* Main Photo Upload */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Logo/Main Photo</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {entityType === 'master_jersey' ? 'Photo principale (face uniquement)' : 'Logo/Main Photo'}
+              </label>
               <input
                 type="file"
                 accept="image/*"
@@ -559,39 +561,46 @@ const ContributionModal = ({ isOpen, onClose, entity, entityType, onContribution
                   <img src={imagePreviews.logo} alt="Logo preview" className="w-24 h-24 object-cover rounded-lg border" />
                 </div>
               )}
-            </div>
-
-            {/* Secondary Photos Upload */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Additional Photos</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                  Array.from(e.target.files).forEach(file => {
-                    handleImageUpload('secondary_photos', file);
-                  });
-                }}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              {imagePreviews.secondary_photos.length > 0 && (
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {imagePreviews.secondary_photos.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
-                      <button
-                        type="button"
-                        onClick={() => removeSecondaryPhoto(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              {entityType === 'master_jersey' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Image de face du maillot uniquement. Les photos secondaires ne sont pas autorisées pour les Master Kits.
+                </p>
               )}
             </div>
+
+            {/* Secondary Photos Upload - Only for non-master jersey entities */}
+            {entityType !== 'master_jersey' && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Additional Photos</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    Array.from(e.target.files).forEach(file => {
+                      handleImageUpload('secondary_photos', file);
+                    });
+                  }}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {imagePreviews.secondary_photos.length > 0 && (
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {imagePreviews.secondary_photos.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-16 object-cover rounded-lg border" />
+                        <button
+                          type="button"
+                          onClick={() => removeSecondaryPhoto(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Contribution Details */}
