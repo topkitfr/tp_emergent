@@ -478,7 +478,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             {/* Collection Statistics */}
             <div className="space-y-3">
               <h3 className="font-semibold text-lg text-gray-900">Collection Statistics</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{release.total_in_collections || 0}</div>
                   <div className="text-blue-700">Collectors</div>
