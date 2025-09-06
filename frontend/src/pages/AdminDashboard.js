@@ -131,7 +131,10 @@ const AdminDashboard = ({ user, API }) => {
         setSystemSettings(result.settings);
         alert('Settings updated successfully!');
       } else {
-        alert('Failed to update settings');
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.detail || errorData?.message || `HTTP ${response.status}: Settings update failed`;
+        console.error('Settings update error:', errorData);
+        alert(`Error updating settings: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error updating settings:', error);
