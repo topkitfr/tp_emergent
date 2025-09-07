@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ContributionModal from '../ContributionModal';
+import { uploadOptimizedImage, ImageUploadProgress, OptimizedImage } from '../utils/imageUpload';
 
 const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
   const navigate = useNavigate();
