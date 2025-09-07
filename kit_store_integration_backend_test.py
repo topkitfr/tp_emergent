@@ -398,7 +398,10 @@ class KitStoreIntegrationTester:
         # Step 6: Test Kit Store after integration
         final_kits = self.test_vestiaire_endpoint_after_integration()
         
-        # Step 7: Test direct reference kits access
+        # Step 7: Test data model consistency
+        self.test_data_model_consistency()
+        
+        # Step 8: Test direct reference kits access
         self.test_reference_kits_collection_direct()
         
         # Summary
