@@ -345,50 +345,25 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         return;
       }
 
-      // Convert files to base64 if present and prepare data with proper types
+      // Prepare team data with uploaded image URLs
       let teamDataWithImages = { 
         ...formData,
         // Convert founded_year to integer if provided
         founded_year: formData.founded_year ? parseInt(formData.founded_year) : null
       };
       
-      if (imageFiles.logo) {
-        const logoReader = new FileReader();
-        logoReader.onload = async () => {
-          teamDataWithImages.logo_base64 = logoReader.result;
-          
-          if (imageFiles.secondary_photos.length > 0) {
-            const photoPromises = imageFiles.secondary_photos.map(file => {
-              return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-              });
-            });
-            
-            const photosBase64 = await Promise.all(photoPromises);
-            teamDataWithImages.secondary_photos_base64 = photosBase64;
-          }
-          
-          handleCreateTeam(teamDataWithImages);
-        };
-        logoReader.readAsDataURL(imageFiles.logo);
-      } else {
-        if (imageFiles.secondary_photos.length > 0) {
-          const photoPromises = imageFiles.secondary_photos.map(file => {
-            return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.readAsDataURL(file);
-            });
-          });
-          
-          const photosBase64 = await Promise.all(photoPromises);
-          teamDataWithImages.secondary_photos_base64 = photosBase64;
-        }
-        
-        handleCreateTeam(teamDataWithImages);
+      // Use uploaded image URLs instead of base64
+      if (uploadedImages.logo) {
+        teamDataWithImages.logo_url = uploadedImages.logo.image_url;
+        teamDataWithImages.logo_variants = uploadedImages.logo.variants;
       }
+      
+      if (uploadedImages.secondary_photos.length > 0) {
+        teamDataWithImages.secondary_photos_urls = uploadedImages.secondary_photos.map(img => img.image_url);
+        teamDataWithImages.secondary_photos_variants = uploadedImages.secondary_photos.map(img => img.variants);
+      }
+      
+      handleCreateTeam(teamDataWithImages);
     };
 
     return (
