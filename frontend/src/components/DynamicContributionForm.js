@@ -184,90 +184,20 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
   };
 
   const renderField = (field) => {
-    const value = formData[field.key] || '';
-
-    switch (field.type) {
-      case 'text':
-      case 'url':
-        return (
-          <input
-            type={field.type}
-            value={value}
-            onChange={(e) => handleInputChange(field.key, e.target.value)}
-            placeholder={field.placeholder || ''}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            required={field.required}
-          />
-        );
-      
-      case 'number':
-        return (
-          <input
-            type="number"
-            value={value}
-            onChange={(e) => handleInputChange(field.key, parseInt(e.target.value) || '')}
-            placeholder={field.placeholder || ''}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            required={field.required}
-          />
-        );
-      
-      case 'date':
-        return (
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => handleInputChange(field.key, e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            required={field.required}
-          />
-        );
-      
-      case 'select':
-        return (
-          <select
-            value={value}
-            onChange={(e) => handleInputChange(field.key, e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            required={field.required}
-          >
-            <option value="">Select {field.label}</option>
-            {field.options?.map(option => (
-              <option key={option} value={option.toLowerCase()}>{option}</option>
-            ))}
-          </select>
-        );
-      
-      case 'checkbox':
-        return (
-          <input
-            type="checkbox"
-            checked={!!value}
-            onChange={(e) => handleInputChange(field.key, e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-          />
-        );
-      
-      case 'image':
-        return (
-          <div className="space-y-2">
-            <input
-              type="file"
-              accept="image/*"
-              multiple={!field.required}
-              onChange={(e) => handleImageUpload(e, field.key)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              required={field.required && images.filter(img => img.fieldKey === field.key).length === 0}
-            />
-            <p className="text-xs text-gray-500">
-              Max 5MB per image. {field.required ? 'Required.' : 'Optional.'}
-            </p>
-          </div>
-        );
-      
-      default:
-        return null;
-    }
+    return (
+      <UnifiedFieldRenderer
+        key={field.key}
+        field={field}
+        value={formData[field.key]}
+        onChange={handleInputChange}
+        teams={teams}
+        brands={brands}
+        competitions={competitions}
+        masterKits={masterJerseys}
+        onImageUpload={handleImageUpload}
+        API={process.env.REACT_APP_BACKEND_URL}
+      />
+    );
   };
 
   if (!isOpen) return null;
