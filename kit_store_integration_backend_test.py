@@ -107,24 +107,26 @@ class KitStoreIntegrationTester:
     def test_create_reference_kit_contribution(self):
         """Create a test reference kit via POST /api/contributions-v2/"""
         try:
-            # First get available teams and master kits for the contribution
+            # First get available teams and master jerseys for the contribution
             teams_response = self.session.get(f"{API_BASE}/teams")
-            master_kits_response = self.session.get(f"{API_BASE}/master-kits")
+            master_jerseys_response = self.session.get(f"{API_BASE}/master-jerseys")
             
-            if teams_response.status_code != 200 or master_kits_response.status_code != 200:
-                self.log_result("Reference Kit Contribution - Data Preparation", False, "", "Failed to get teams or master kits")
+            if teams_response.status_code != 200 or master_jerseys_response.status_code != 200:
+                self.log_result("Reference Kit Contribution - Data Preparation", False, "", "Failed to get teams or master jerseys")
                 return False
             
             teams = teams_response.json()
-            master_kits = master_kits_response.json()
+            master_jerseys = master_jerseys_response.json()
             
-            if not teams or not master_kits:
-                self.log_result("Reference Kit Contribution - Data Preparation", False, "", "No teams or master kits available")
+            if not teams or not master_jerseys:
+                self.log_result("Reference Kit Contribution - Data Preparation", False, "", f"No teams ({len(teams) if teams else 0}) or master jerseys ({len(master_jerseys) if master_jerseys else 0}) available")
                 return False
             
-            # Use first available team and master kit
+            # Use first available team and master jersey
             test_team = teams[0] if isinstance(teams, list) else teams.get('teams', [{}])[0]
-            test_master_kit = master_kits[0] if isinstance(master_kits, list) else master_kits.get('master_kits', [{}])[0]
+            test_master_jersey = master_jerseys[0] if isinstance(master_jerseys, list) else master_jerseys.get('master_jerseys', [{}])[0]
+            
+            self.log_result("Reference Kit Contribution - Data Preparation", True, f"Found {len(teams)} teams and {len(master_jerseys)} master jerseys. Using team: {test_team.get('name')}, master jersey: {test_master_jersey.get('topkit_reference')}")
             
             # Create reference kit contribution
             contribution_data = {
@@ -133,7 +135,7 @@ class KitStoreIntegrationTester:
                 "description": "Test reference kit for Kit Store integration testing",
                 "source_url": "https://test-source.com/reference-kit",
                 "fields": {
-                    "master_kit_id": test_master_kit.get('id'),
+                    "master_jersey_id": test_master_jersey.get('id'),
                     "team_id": test_team.get('id'),
                     "player_name": "Test Player",
                     "player_number": "10",
