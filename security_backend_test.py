@@ -23,7 +23,7 @@ import uuid
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://football-collab.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-hub-4.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "adminpass123"
 

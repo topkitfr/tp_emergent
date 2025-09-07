@@ -21,7 +21,7 @@ from datetime import datetime
 import os
 
 # Configuration
-BACKEND_URL = "https://football-collab.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-hub-4.preview.emergentagent.com/api"
 
 # Test credentials - using working alternative since steinmetzlivio@gmail.com is locked
 USER_CREDENTIALS = {
