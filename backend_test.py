@@ -115,7 +115,7 @@ class TopKitBackendTester:
         try:
             # Create a test contribution with unified form fields
             contribution_data = {
-                "entity_type": "TEAM",
+                "entity_type": "team",
                 "entity_id": None,  # New entity
                 "title": "Test Team Contribution - Backend Testing",
                 "description": "Testing unified form system with comprehensive team data",
