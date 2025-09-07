@@ -212,7 +212,8 @@ const ModerationDashboard = ({ user, API }) => {
             {[
               { id: 'overview', label: 'Overview', icon: TrendingUp },
               { id: 'pending', label: 'Pending Review', icon: Clock },
-              { id: 'analytics', label: 'Analytics', icon: FileText }
+              { id: 'analytics', label: 'Advanced Analytics', icon: BarChart3 },
+              { id: 'activity', label: 'Live Activity', icon: Users }
             ].map(tab => (
               <button
                 key={tab.id}
