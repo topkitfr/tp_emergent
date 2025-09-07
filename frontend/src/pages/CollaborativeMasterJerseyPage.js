@@ -21,6 +21,11 @@ const CollaborativeMasterJerseyPage = ({
     jersey_type: '',
     verified_only: false
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [showContributionModal, setShowContributionModal] = useState(false);
