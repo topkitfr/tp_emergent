@@ -13290,8 +13290,6 @@ uploads_dir.mkdir(exist_ok=True)
 (uploads_dir / "profile_pictures").mkdir(exist_ok=True)
 (uploads_dir / "contributions").mkdir(exist_ok=True)
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
