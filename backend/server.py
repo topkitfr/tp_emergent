@@ -2941,6 +2941,132 @@ async def upload_image(
         logger.error(f"Image upload error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
 
+# Custom image serving endpoint with caching headers
+@api_router.get("/serve-image/{entity_type}/{filename}")
+async def serve_optimized_image(
+    entity_type: str,
+    filename: str,
+    size: str = Query("medium", description="Image size variant (thumbnail, small, medium, large, original)"),
+    response: Response = None
+):
+    """Serve optimized images with proper caching headers"""
+    try:
+        # Validate entity type
+        allowed_entity_types = ['teams', 'brands', 'players', 'competitions', 'master_jerseys']
+        if f"{entity_type}s" not in allowed_entity_types and entity_type not in allowed_entity_types:
+            raise HTTPException(status_code=404, detail="Entity type not found")
+        
+        # Normalize entity type
+        if not entity_type.endswith('s'):
+            entity_type = f"{entity_type}s"
+        
+        # Validate size
+        valid_sizes = ['thumbnail', 'small', 'medium', 'large', 'original']
+        if size not in valid_sizes:
+            size = 'medium'
+        
+        # Get image variants
+        base_image_url = f"uploads/{entity_type}/{filename}"
+        variants = image_processor.get_image_variants(base_image_url)
+        
+        # Try to get requested size, fallback to available sizes
+        if size in variants:
+            image_path = Path(variants[size])
+        elif 'medium' in variants:
+            image_path = Path(variants['medium'])
+        elif 'original' in variants:
+            image_path = Path(variants['original'])
+        else:
+            # Fallback to original file path
+            image_path = Path(f"uploads/{entity_type}/{filename}")
+        
+        if not image_path.exists():
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        # Set caching headers
+        response.headers["Cache-Control"] = "public, max-age=31536000"  # 1 year
+        response.headers["ETag"] = f'"{hash(str(image_path.stat().st_mtime))}"'
+        response.headers["Last-Modified"] = datetime.fromtimestamp(
+            image_path.stat().st_mtime
+        ).strftime("%a, %d %b %Y %H:%M:%S GMT")
+        
+        # Determine content type from file extension
+        content_type_map = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg', 
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.bmp': 'image/bmp'
+        }
+        
+        content_type = content_type_map.get(image_path.suffix.lower(), 'image/jpeg')
+        
+        return FileResponse(
+            path=str(image_path),
+            media_type=content_type,
+            filename=image_path.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving image: {e}")
+        raise HTTPException(status_code=500, detail="Error serving image")
+
+# Enhanced image metadata endpoint
+@api_router.get("/image-info/{entity_type}/{filename}")
+async def get_image_info(
+    entity_type: str,
+    filename: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get comprehensive information about an uploaded image and its variants"""
+    try:
+        # Normalize entity type
+        if not entity_type.endswith('s'):
+            entity_type = f"{entity_type}s"
+        
+        base_image_url = f"uploads/{entity_type}/{filename}"
+        variants = image_processor.get_image_variants(base_image_url)
+        
+        if not variants:
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        # Get file info for each variant
+        variant_info = {}
+        total_size = 0
+        
+        for size_name, url in variants.items():
+            file_path = Path(url)
+            if file_path.exists():
+                stat = file_path.stat()
+                variant_info[size_name] = {
+                    "url": f"/api/serve-image/{entity_type.rstrip('s')}/{filename}?size={size_name}",
+                    "file_size": stat.st_size,
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "exists": True
+                }
+                total_size += stat.st_size
+            else:
+                variant_info[size_name] = {
+                    "url": url,
+                    "exists": False
+                }
+        
+        return {
+            "filename": filename,
+            "entity_type": entity_type,
+            "variants": variant_info,
+            "total_size": total_size,
+            "variant_count": len([v for v in variant_info.values() if v.get("exists", False)])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting image info: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving image information")
+
 @api_router.put("/users/profile/public-info")
 async def update_public_profile_info(
     profile_data: ProfileSettings,
