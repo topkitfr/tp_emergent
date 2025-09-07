@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing - Final Comprehensive Enhancement Project Validation
-Testing the complete TopKit enhancement system with all 4 phases implemented:
-1. Unified Form System with all entity types
-2. Integration Pipeline (Community DB → Voting → Moderation → Integration → Catalogue/Kit Store)
-3. Display APIs for all sections
-4. Complete Data Flow validation
-5. Authentication & Security testing
+TopKit Backend Testing - CRITICAL IMAGE DISPLAY BUG INVESTIGATION
+Testing image upload, storage, integration, and display functionality:
+1. Image Upload Process during contribution creation via Community DB
+2. Image Storage and association with entities
+3. Image Integration from approved contributions to main catalogue entities
+4. Image Retrieval and URL/path testing for entity detail pages
+5. Cross-Entity Testing for all entity types (teams, brands, players, competitions, kits)
 """
 
 import requests
