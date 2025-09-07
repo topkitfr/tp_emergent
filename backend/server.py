@@ -12820,7 +12820,7 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "authenticity_features": data.get('authenticity_features', [])
             }
             await db.reference_kits.insert_one(reference_kit_doc)
-            logger.info(f"Integrated reference kit: {data.get('model_name')} {data.get('release_type')} to Kit Store")
+            logger.info(f"Integrated reference kit: {data.get('model_name')} {data.get('release_type')} to Kit Store with {len(product_images)} images")
         
         # Mark contribution as integrated
         await db.contributions_v2.update_one(
@@ -12835,7 +12835,7 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
             }
         )
         
-        logger.info(f"Successfully integrated {entity_type} contribution {contribution_id} to catalogue")
+        logger.info(f"Successfully integrated {entity_type} contribution {contribution_id} to catalogue with image data")
         
     except Exception as e:
         logger.error(f"Error integrating contribution {contribution_id} to catalogue: {e}")
