@@ -66,6 +66,15 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
 
     setPreviewImages(prev => [...prev, ...newPreviews]);
     setImages(prev => [...prev, ...newImages]);
+    
+    // Also update formData to indicate that this required image field has a value
+    // This ensures validation passes for required image fields
+    if (fieldKey) {
+      setFormData(prev => ({
+        ...prev,
+        [fieldKey]: `image_uploaded_${Date.now()}` // Placeholder value to satisfy validation
+      }));
+    }
   };
 
   const removeImage = (index) => {
