@@ -760,14 +760,8 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
         </div>
       </div>
 
-      {/* Players Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPlayers.map(player => (
-          <PlayerCard key={player.id} player={player} />
-        ))}
-      </div>
-
-      {filteredPlayers.length === 0 && (
+      {/* Players Display with Pagination */}
+      {currentItems.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-4">👤</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun joueur trouvé</h3>
@@ -783,6 +777,90 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
             </button>
           )}
         </div>
+      ) : (
+        <>
+          {/* Grid View */}
+          {displayOptions.viewMode === 'grid' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentItems.map(player => (
+                <PlayerCard key={player.id} player={player} />
+              ))}
+            </div>
+          )}
+
+          {/* Thumbnail View */}
+          {displayOptions.viewMode === 'thumbnail' && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+              {currentItems.map(player => (
+                <PlayerThumbnail key={player.id} player={player} />
+              ))}
+            </div>
+          )}
+
+          {/* List View */}
+          {displayOptions.viewMode === 'list' && (
+            <div className="space-y-4">
+              {currentItems.map(player => (
+                <PlayerListItem key={player.id} player={player} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                Affichage {startIndex + 1} à {Math.min(endIndex, totalItems)} sur {totalItems} joueurs
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => goToPage(displayOptions.currentPage - 1)}
+                  disabled={displayOptions.currentPage === 1}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Précédent
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (displayOptions.currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (displayOptions.currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = displayOptions.currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        pageNum === displayOptions.currentPage
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => goToPage(displayOptions.currentPage + 1)}
+                  disabled={displayOptions.currentPage === totalPages}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Player Modal */}
