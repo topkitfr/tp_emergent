@@ -344,9 +344,10 @@ class LocalStorageOptimizationTester:
             upload_result = upload_response.json()
             
             # Extract filename from one of the uploaded variants
-            if 'thumbnail' in upload_result:
-                image_path = upload_result['thumbnail']
-                # Extract filename from path like "uploads/competitions/competition_abc123_1234567890_thumbnail.png"
+            variants_obj = upload_result.get('variants', {})
+            if 'thumbnail' in variants_obj:
+                image_path = variants_obj['thumbnail']
+                # Extract filename from path like "uploads/competitions/competition_abc123_1234567890_thumbnail.webp"
                 filename = image_path.split('/')[-1]
                 
                 # Test serving the image
