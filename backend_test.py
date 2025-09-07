@@ -576,7 +576,7 @@ class LocalStorageOptimizationTester:
         
         if not admin_auth:
             print("❌ Cannot proceed without admin authentication")
-            return
+            return 0
         
         # Core functionality tests
         tests = [
