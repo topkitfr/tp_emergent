@@ -12667,6 +12667,12 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
     try:
         entity_type = contribution.get('entity_type')
         data = contribution.get('data', {})
+        images = contribution.get('images', [])
+        
+        # Extract logo/image URL from contribution images (first image becomes logo)
+        logo_url = ""
+        if images and len(images) > 0:
+            logo_url = images[0].get('url', '') if isinstance(images[0], dict) else str(images[0])
         
         # Generate new entity ID
         entity_id = str(uuid.uuid4())
