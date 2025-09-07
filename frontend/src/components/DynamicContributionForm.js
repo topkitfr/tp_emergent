@@ -7,8 +7,6 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
   const [contributionType, setContributionType] = useState(selectedType || 'team');
   const [formData, setFormData] = useState({});
   const [images, setImages] = useState([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [sourceUrls, setSourceUrls] = useState(['']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
