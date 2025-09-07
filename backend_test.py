@@ -245,8 +245,11 @@ class LocalStorageOptimizationTester:
                     successful_formats.append(format_name)
                     
                     # Store for cleanup
-                    if 'original' in result:
-                        self.uploaded_images.append(result['original'])
+                    variants_obj = result.get('variants', {})
+                    if 'original' in variants_obj:
+                        self.uploaded_images.append(variants_obj['original'])
+                    elif result.get('image_url'):
+                        self.uploaded_images.append(result['image_url'])
                         
             except Exception as e:
                 print(f"Error testing {format_name} format: {e}")
