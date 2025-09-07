@@ -236,7 +236,8 @@ const AppContent = () => {
           <Route path="/collections" element={<PublicCollectionsPage {...commonProps} />} />
           <Route path="/my-collection" element={<MyCollectionPage {...commonProps} />} />
           <Route path="/contributions" element={<UnifiedContributionsPage {...commonProps} />} />
-          <Route path="/contributions-v2" element={<ContributionsV2Page {...commonProps} />} />
+          <Route path="/contributions-v2" element={<ContributionV2Page {...commonProps} />} />
+          <Route path="/moderation" element={<ModerationDashboard {...commonProps} />} />
           <Route path="/teams" element={<CollaborativeTeamsPage {...commonProps} />} />
           <Route path="/brands" element={<CollaborativeBrandsPage {...commonProps} />} />
           <Route path="/players" element={<CollaborativePlayersPage {...commonProps} />} />
