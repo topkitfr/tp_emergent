@@ -43,37 +43,6 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
     setFilteredBrands(filtered);
   }, [brands, filters]);
 
-  // Create new brand
-  const handleCreateBrand = async (brandData) => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API}/api/brands`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify(brandData)
-      });
-
-      if (response.ok) {
-        const newBrand = await response.json();
-        alert(`✅ Marque "${newBrand.name}" créée avec succès ! (${newBrand.topkit_reference})`);
-        setShowCreateModal(false);
-        onDataUpdate(); // Refresh data
-      } else {
-        const error = await response.json();
-        alert(`❌ Erreur: ${error.detail}`);
-      }
-    } catch (error) {
-      console.error('Error creating brand:', error);
-      alert('❌ Erreur lors de la création de la marque');
-    }
-    setLoading(false);
-  };
-
   const BrandCard = ({ brand }) => (
     <div 
       className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
