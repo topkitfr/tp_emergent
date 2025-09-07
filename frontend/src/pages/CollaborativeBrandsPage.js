@@ -494,23 +494,17 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
     <div className="max-w-7xl mx-auto px-4 py-8">
       
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Football Brands</h1>
-          <p className="text-gray-600">
-            Collaborative database of football kit manufacturers and brands
-          </p>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              👕 Brands
+            </h1>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Explore our collaborative database of brands. To add a new brand, use the Community DB.
+            </p>
+          </div>
         </div>
-        
-        {user && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center"
-          >
-            <span className="mr-2">➕</span>
-            Add Brand
-          </button>
-        )}
       </div>
 
       {/* Filters */}
