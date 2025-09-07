@@ -9888,8 +9888,7 @@ async def send_newsletter(
 # Mount static files to serve uploaded images
 # Mount static files for uploads under /api prefix for Kubernetes ingress compatibility
 from fastapi.staticfiles import StaticFiles
-api_router.mount("/uploads", StaticFiles(directory=ROOT_DIR / "uploads"), name="uploads_api")
-api_router.mount("/uploads", StaticFiles(directory="uploads"), name="uploads_api_local")
+api_router.mount("/uploads", StaticFiles(directory="uploads"), name="uploads_api")
 
 # Fonction utilitaire pour générer des références uniques
 async def generate_reference(entity_type: str) -> str:
