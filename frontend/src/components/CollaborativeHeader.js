@@ -159,15 +159,26 @@ const CollaborativeHeader = ({
                     </button>
                     
                     {user.role === 'admin' && (
-                      <button
-                        onClick={() => {
-                          onViewChange('admin');
-                          setShowUserMenu(false);
-                        }}
-                        className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Administration
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            onViewChange('admin');
+                            setShowUserMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Administration
+                        </button>
+                        <button
+                          onClick={() => {
+                            onViewChange('moderation');
+                            setShowUserMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          🛡️ Moderation Dashboard
+                        </button>
+                      </>
                     )}
                     
                     <hr className="my-2 border-gray-100" />
