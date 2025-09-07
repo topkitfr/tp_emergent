@@ -124,9 +124,9 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
           </div>
         )}
         
-        {player.position && (
-          <div className="absolute top-2 left-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-            ⚽ {player.position}
+        {player.nationality && (
+          <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+            🌍 {player.nationality}
           </div>
         )}
       </div>
@@ -138,17 +138,10 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
         </h3>
         
         <div className="space-y-1 text-xs text-gray-600 mb-3">
-          {player.full_name && player.full_name !== player.name && (
+          {player.position && (
             <div className="flex items-center">
-              <span className="mr-1">📋</span>
-              <span className="truncate">{player.full_name}</span>
-            </div>
-          )}
-          
-          {player.nationality && (
-            <div className="flex items-center">
-              <span className="mr-1">🌍</span>
-              <span>{player.nationality}</span>
+              <span className="mr-1">⚽</span>
+              <span>{player.position}</span>
             </div>
           )}
           
@@ -176,6 +169,111 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
           <div className="flex items-center space-x-2 text-gray-500">
             <span>{player.jerseys_count || 0} maillots</span>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Thumbnail version - smaller cards
+  const PlayerThumbnail = ({ player }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+      onClick={() => navigate(`/players/${player.id}`)}
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        {player.photo_url ? (
+          <img 
+            src={player.photo_url.startsWith('data:') || player.photo_url.startsWith('http') ? player.photo_url : `${API}/${player.photo_url}`}
+            alt={`${player.name} photo`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: player.photo_url ? 'none' : 'flex'}}>
+          👤
+        </div>
+        
+        {player.verified_level !== 'unverified' && (
+          <div className="absolute top-1 right-1 bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-medium">
+            ✓
+          </div>
+        )}
+      </div>
+      
+      <div className="p-2">
+        <h3 className="font-bold text-xs text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-1">
+          {player.name}
+        </h3>
+        <div className="text-xs text-gray-600 mb-1">
+          {player.position && <span>{player.position}</span>}
+        </div>
+        <div className="text-xs text-blue-600 font-mono truncate">{player.topkit_reference}</div>
+      </div>
+    </div>
+  );
+
+  // List version - horizontal layout
+  const PlayerListItem = ({ player }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group flex items-center space-x-4"
+      onClick={() => navigate(`/players/${player.id}`)}
+    >
+      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+        {player.photo_url ? (
+          <img 
+            src={player.photo_url.startsWith('data:') || player.photo_url.startsWith('http') ? player.photo_url : `${API}/${player.photo_url}`}
+            alt={`${player.name} photo`}
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: player.photo_url ? 'none' : 'flex'}}>
+          👤
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 truncate">
+            {player.name}
+          </h3>
+          {player.verified_level !== 'unverified' && (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+              ✓
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+          {player.nationality && (
+            <span className="flex items-center">
+              <span className="mr-1">🌍</span>
+              {player.nationality}
+            </span>
+          )}
+          {player.position && (
+            <span className="flex items-center">
+              <span className="mr-1">⚽</span>
+              {player.position}
+            </span>
+          )}
+          {player.birth_date && (
+            <span className="flex items-center">
+              <span className="mr-1">📅</span>
+              Né en {new Date(player.birth_date).getFullYear()}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-blue-600 font-mono text-sm">{player.topkit_reference}</span>
+          <span className="text-gray-500 text-sm">{player.jerseys_count || 0} maillots</span>
         </div>
       </div>
     </div>
