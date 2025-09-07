@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, ThumbsUp, ThumbsDown, Eye, Filter, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import DynamicContributionForm from '../components/DynamicContributionForm';
 
-const ContributionsV2Page = () => {
+const ContributionsV2Page = ({ user }) => {
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -26,8 +26,23 @@ const ContributionsV2Page = () => {
     fetchContributions();
   }, [filters]);
 
+  // Add effect to refetch when user changes
+  useEffect(() => {
+    if (user) {
+      fetchContributions();
+    }
+  }, [user]);
+
   const fetchContributions = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token available, skipping contributions fetch');
+        setContributions([]);
+        setLoading(false);
+        return;
+      }
+
       const queryParams = new URLSearchParams();
       if (filters.status) queryParams.append('status', filters.status);
       if (filters.entity_type) queryParams.append('entity_type', filters.entity_type);
@@ -38,16 +53,17 @@ const ContributionsV2Page = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/?${queryParams}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`✅ Fetched ${data.length} contributions`);
         setContributions(data);
       } else {
-        console.error('Failed to fetch contributions');
+        console.error('Failed to fetch contributions:', response.status);
         setContributions([]);
       }
     } catch (error) {
