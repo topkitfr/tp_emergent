@@ -42,54 +42,6 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     setFilteredTeams(filtered);
   }, [teams, filters]);
 
-  // Create new team
-  const handleCreateTeam = async (teamData) => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const response = await fetch(`${API}/api/teams`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify(teamData)
-      });
-
-      if (response.ok) {
-        const newTeam = await response.json();
-        setShowCreateModal(false);
-        onDataUpdate();
-        alert('Team created successfully!');
-      } else {
-        const errorData = await response.json();
-        console.error('Team creation error:', errorData);
-        
-        // Better error handling to avoid [object Object] display
-        let errorMessage = 'Failed to create team';
-        if (errorData && typeof errorData === 'object') {
-          if (errorData.detail) {
-            if (typeof errorData.detail === 'string') {
-              errorMessage = errorData.detail;
-            } else if (Array.isArray(errorData.detail)) {
-              // Handle Pydantic validation errors
-              errorMessage = errorData.detail.map(err => err.msg || err.message || 'Validation error').join(', ');
-            }
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        }
-        alert(`Error: ${errorMessage}`);
-      }
-    } catch (error) {
-      console.error('Error creating team:', error);
-      alert('Error creating team');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleTeamClick = (team) => {
     navigate(`/teams/${team.id}`);
   };
