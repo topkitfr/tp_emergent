@@ -26,7 +26,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
   const countries = [...new Set(competitions.map(comp => comp.country).filter(Boolean))];
   const competitionTypes = [...new Set(competitions.map(comp => comp.competition_type).filter(Boolean))];
 
-  // Apply filters
+  // Apply filters and pagination
   useEffect(() => {
     let filtered = [...competitions];
 
@@ -52,7 +52,21 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
     }
 
     setFilteredCompetitions(filtered);
+    // Reset to first page when filters change
+    setDisplayOptions(prev => ({ ...prev, currentPage: 1 }));
   }, [competitions, filters]);
+
+  // Calculate pagination
+  const totalItems = filteredCompetitions.length;
+  const totalPages = Math.ceil(totalItems / displayOptions.itemsPerPage);
+  const startIndex = (displayOptions.currentPage - 1) * displayOptions.itemsPerPage;
+  const endIndex = startIndex + displayOptions.itemsPerPage;
+  const currentItems = filteredCompetitions.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    setDisplayOptions(prev => ({ ...prev, currentPage: Math.max(1, Math.min(page, totalPages)) }));
+  };
 
   // Create new competition
   const handleCreateCompetition = async (competitionData) => {
