@@ -163,7 +163,7 @@ class TopKitBackendTester:
             
             # Test contribution with image
             contribution_data = {
-                "entity_type": "BRAND",
+                "entity_type": "brand",
                 "entity_id": None,
                 "title": "Test Brand Logo Upload",
                 "description": "Testing image upload functionality in unified form",
