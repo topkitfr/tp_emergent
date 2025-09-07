@@ -209,7 +209,7 @@ async def integrate_approved_contributions():
     
     # Show final statistics
     total_entities = {}
-    for entity_type in ['teams', 'brands', 'players', 'competitions', 'master_jerseys']:
+    for entity_type in ['teams', 'brands', 'players', 'competitions', 'master_jerseys', 'reference_kits']:
         count = await db[entity_type].count_documents({})
         total_entities[entity_type] = count
         print(f"📊 {entity_type.replace('_', ' ').title()}: {count} total")
