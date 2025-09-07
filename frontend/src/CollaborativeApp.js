@@ -245,13 +245,6 @@ const AppContent = () => {
           <Route path="/competitions/:competitionId" element={<CompetitionDetailPage {...commonProps} />} />
           <Route path="/players/:playerId" element={<PlayerDetailPage {...commonProps} />} />
           <Route path="/master-jerseys/:jerseyId" element={<MasterJerseyDetailPage {...commonProps} />} />
-          <Route path="/contributions/:contributionId" element={
-            <ContributionDetailPage 
-              {...commonProps} 
-              contributionId={window.location.pathname.split('/contributions/')[1]}
-              onNavigateBack={() => navigate('/contributions')}
-            />
-          } />
           <Route path="/contributions-v2/:contributionId" element={
             <ContributionDetailPage 
               {...commonProps} 
