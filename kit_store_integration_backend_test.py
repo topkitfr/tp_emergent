@@ -155,7 +155,7 @@ class KitStoreIntegrationTester:
                 self.log_result(
                     "Reference Kit Contribution Creation",
                     True,
-                    f"Reference kit contribution created successfully - ID: {self.created_contribution_id}, Entity: {contribution_data['entity_name']}"
+                    f"Reference kit contribution created successfully - ID: {self.created_contribution_id}, Title: {contribution_data['title']}"
                 )
                 return True
             else:
