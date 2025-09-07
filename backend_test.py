@@ -631,7 +631,10 @@ if __name__ == "__main__":
     success_rate = tester.run_comprehensive_tests()
     
     # Exit with appropriate code
-    exit(0 if success_rate >= 80 else 1)
+    if success_rate is not None:
+        exit(0 if success_rate >= 80 else 1)
+    else:
+        exit(1)
 """
 COMPREHENSIVE BACKEND TESTING - CRITICAL ISSUES INVESTIGATION
 Testing all critical backend issues reported in the review request:
