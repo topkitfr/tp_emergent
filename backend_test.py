@@ -265,7 +265,7 @@ class TopKitBackendTester:
                 )
                 
                 # Test downvote (should replace previous vote)
-                vote_data["vote_type"] = "DOWNVOTE"
+                vote_data["vote_type"] = "downvote"
                 response = self.session.post(f"{API_BASE}/contributions-v2/{contribution_id}/vote", json=vote_data)
                 
                 if response.status_code in [200, 201]:
