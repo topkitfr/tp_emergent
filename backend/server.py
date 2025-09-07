@@ -12993,6 +12993,164 @@ app.include_router(api_router)
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+@api_router.post("/contributions-v2/{contribution_id}/moderate")
+async def moderate_contribution_v2(
+    contribution_id: str,
+    moderation_data: ModerationRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Moderate a contribution (admin only)"""
+    try:
+        if current_user.get('role') != 'admin':
+            raise HTTPException(status_code=403, detail="Accès administrateur requis")
+        
+        user_id = current_user['id']
+        
+        # Get contribution
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution non trouvée")
+        
+        # Apply moderation action
+        new_status = contribution['status']
+        if moderation_data.action == ModerationAction.APPROVE:
+            new_status = ContributionStatusV2.APPROVED
+        elif moderation_data.action == ModerationAction.REJECT:
+            new_status = ContributionStatusV2.REJECTED
+        elif moderation_data.action == ModerationAction.REQUEST_REVISION:
+            new_status = ContributionStatusV2.NEEDS_REVISION
+        
+        # Add history entry
+        history_entry = ContributionHistoryEntry(
+            action=f"moderated_{moderation_data.action}",
+            user_id=user_id,
+            user_name=current_user.get('name', 'Admin'),
+            details={
+                "action": moderation_data.action,
+                "reason": moderation_data.reason,
+                "internal_notes": moderation_data.internal_notes
+            }
+        )
+        
+        # Update contribution
+        await db.contributions_v2.update_one(
+            {"id": contribution_id},
+            {
+                "$set": {
+                    "status": new_status,
+                    "reviewed_by": user_id,
+                    "reviewed_at": datetime.utcnow(),
+                    "review_comment": moderation_data.reason,
+                    "updated_at": datetime.utcnow()
+                },
+                "$push": {"history": history_entry.dict()}
+            }
+        )
+        
+        # Send notification to contributor if requested
+        if moderation_data.notify_contributor:
+            try:
+                await send_contribution_notification(
+                    contribution['created_by'],
+                    contribution_id,
+                    moderation_data.action,
+                    auto_action=False
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send notification: {e}")
+        
+        return {
+            "message": "Action de modération appliquée avec succès",
+            "status": new_status
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Moderate contribution error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la modération")
+
+@api_router.get("/contributions-v2/admin/moderation-stats", response_model=ModerationStats)
+async def get_moderation_stats_v2(current_user: dict = Depends(get_current_user)):
+    """Get moderation statistics for admin dashboard"""
+    try:
+        if current_user.get('role') != 'admin':
+            raise HTTPException(status_code=403, detail="Accès administrateur requis")
+        
+        # Get today's date range
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        tomorrow = today + timedelta(days=1)
+        
+        # Count contributions by status
+        pending_contributions = await db.contributions_v2.count_documents({
+            "status": ContributionStatusV2.PENDING_REVIEW
+        })
+        
+        approved_today = await db.contributions_v2.count_documents({
+            "status": ContributionStatusV2.APPROVED,
+            "updated_at": {"$gte": today, "$lt": tomorrow}
+        })
+        
+        rejected_today = await db.contributions_v2.count_documents({
+            "status": ContributionStatusV2.REJECTED,
+            "updated_at": {"$gte": today, "$lt": tomorrow}
+        })
+        
+        # Count votes today (simplified - would need better aggregation in production)
+        total_votes_today = 0
+        try:
+            pipeline = [
+                {"$match": {"history.timestamp": {"$gte": today, "$lt": tomorrow}}},
+                {"$unwind": "$history"},
+                {"$match": {
+                    "history.timestamp": {"$gte": today, "$lt": tomorrow},
+                    "history.action": "voted"
+                }},
+                {"$count": "total"}
+            ]
+            vote_result = await db.contributions_v2.aggregate(pipeline).to_list(1)
+            total_votes_today = vote_result[0]["total"] if vote_result else 0
+        except:
+            total_votes_today = 0
+        
+        auto_approved_today = await db.contributions_v2.count_documents({
+            "auto_approved": True,
+            "updated_at": {"$gte": today, "$lt": tomorrow}
+        })
+        
+        auto_rejected_today = await db.contributions_v2.count_documents({
+            "auto_rejected": True,
+            "updated_at": {"$gte": today, "$lt": tomorrow}
+        })
+        
+        # Count by entity type
+        contributions_by_type = {}
+        for entity_type in ContributionType:
+            count = await db.contributions_v2.count_documents({
+                "entity_type": entity_type
+            })
+            contributions_by_type[entity_type] = count
+        
+        # Top contributors (simplified for now)
+        top_contributors = []
+        
+        return ModerationStats(
+            pending_contributions=pending_contributions,
+            approved_today=approved_today,
+            rejected_today=rejected_today,
+            total_votes_today=total_votes_today,
+            auto_approved_today=auto_approved_today,
+            auto_rejected_today=auto_rejected_today,
+            contributions_by_type=contributions_by_type,
+            top_contributors=top_contributors
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get moderation stats error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des statistiques")
+
 # Mount static files
 uploads_dir = Path("uploads")
 uploads_dir.mkdir(exist_ok=True)
