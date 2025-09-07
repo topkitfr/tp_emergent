@@ -39,15 +39,19 @@ class ImageSystemTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.auth_token = data.get('access_token')
+                self.auth_token = data.get('access_token') or data.get('token')
                 self.user_data = data.get('user')
+                
+                if not self.auth_token:
+                    print(f"❌ No token in response: {data}")
+                    return False
                 
                 # Set authorization header for future requests
                 self.session.headers.update({
                     'Authorization': f'Bearer {self.auth_token}'
                 })
                 
-                print(f"✅ Authentication successful - User: {self.user_data.get('name')}")
+                print(f"✅ Authentication successful - User: {self.user_data.get('name') if self.user_data else 'Unknown'}")
                 print(f"   Token length: {len(self.auth_token)} characters")
                 return True
             else:
