@@ -13,69 +13,9 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
 
-  // Dynamic form configuration based on entity type (Discogs-style)
+  // Dynamic form configuration based on entity type (Unified version)
   const getFieldsForEntityType = (type) => {
-    switch (type) {
-      case 'team':
-        return [
-          { key: 'name', label: 'Team Name', type: 'text', required: true },
-          { key: 'short_name', label: 'Short Name', type: 'text' },
-          { key: 'country', label: 'Country', type: 'text', required: true },
-          { key: 'city', label: 'City', type: 'text' },
-          { key: 'founded_year', label: 'Founded Year', type: 'number' },
-          { key: 'colors', label: 'Team Colors', type: 'text', placeholder: 'e.g., Blue, White' },
-          { key: 'logo_url', label: 'Team Logo', type: 'image' }
-        ];
-      case 'brand':
-        return [
-          { key: 'name', label: 'Brand Name', type: 'text', required: true },
-          { key: 'country', label: 'Country of Origin', type: 'text', required: true },
-          { key: 'founded_year', label: 'Founded Year', type: 'number' },
-          { key: 'website', label: 'Official Website', type: 'url' },
-          { key: 'logo_url', label: 'Brand Logo', type: 'image' }
-        ];
-      case 'player':
-        return [
-          { key: 'name', label: 'Player Name', type: 'text', required: true },
-          { key: 'nationality', label: 'Nationality', type: 'text', required: true },
-          { key: 'birth_date', label: 'Birth Date', type: 'date' },
-          { key: 'position', label: 'Position', type: 'text' },
-          { key: 'current_team', label: 'Current Team', type: 'text' },
-          { key: 'jersey_number', label: 'Jersey Number', type: 'number' },
-          { key: 'photo_url', label: 'Player Photo', type: 'image' }
-        ];
-      case 'competition':
-        return [
-          { key: 'competition_name', label: 'Competition Name', type: 'text', required: true },
-          { key: 'competition_type', label: 'Type', type: 'select', options: ['League', 'Cup', 'International'] },
-          { key: 'country', label: 'Country', type: 'text', required: true },
-          { key: 'federation', label: 'Federation', type: 'text' },
-          { key: 'founded_year', label: 'Founded Year', type: 'number' },
-          { key: 'logo', label: 'Competition Logo', type: 'image' }
-        ];
-      case 'master_kit':
-        return [
-          { key: 'season', label: 'Season', type: 'text', required: true, placeholder: 'e.g., 2024-25' },
-          { key: 'jersey_type', label: 'Kit Type', type: 'select', options: ['Home', 'Away', 'Third', 'Goalkeeper', 'Training'], required: true },
-          { key: 'primary_color', label: 'Primary Color', type: 'text', required: true },
-          { key: 'secondary_colors', label: 'Secondary Colors', type: 'text', placeholder: 'e.g., White, Blue' },
-          { key: 'main_sponsor', label: 'Main Sponsor', type: 'text' },
-          { key: 'special_edition', label: 'Special Edition', type: 'checkbox' },
-          { key: 'main_image_url', label: 'Kit Photo (Front)', type: 'image', required: true }
-        ];
-      case 'reference_kit':
-        return [
-          { key: 'sku_code', label: 'SKU Code', type: 'text' },
-          { key: 'model_name', label: 'Model Name', type: 'text', required: true },
-          { key: 'release_type', label: 'Release Type', type: 'select', options: ['Replica', 'Authentic', 'Player Issue'] },
-          { key: 'original_retail_price', label: 'Original Retail Price (€)', type: 'number' },
-          { key: 'release_date', label: 'Release Date', type: 'date' },
-          { key: 'is_limited_edition', label: 'Limited Edition', type: 'checkbox' },
-          { key: 'product_images', label: 'Product Photos', type: 'image', required: true }
-        ];
-      default:
-        return [];
-    }
+    return getUnifiedFieldsForEntityType(type);
   };
 
   const requiresImages = (type) => {
