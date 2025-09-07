@@ -12655,6 +12655,109 @@ async def generate_topkit_reference(entity_type: str) -> str:
     prefix = entity_prefixes.get(entity_type, "TK-CONTRIB")
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
 
+async def integrate_approved_contribution_to_catalogue(contribution_id: str, contribution: dict, user_id: str):
+    """Integrate approved contribution data into the main catalogue"""
+    try:
+        entity_type = contribution.get('entity_type')
+        entity_data = contribution.get('entity_data', {})
+        
+        if entity_type == ContributionType.TEAM:
+            # Add to teams collection
+            team_data = {
+                "id": str(uuid.uuid4()),
+                "name": entity_data.get('name'),
+                "country": entity_data.get('country'),
+                "league": entity_data.get('league'),
+                "founded_year": entity_data.get('founded_year'),
+                "stadium": entity_data.get('stadium'),
+                "website": entity_data.get('website'),
+                "logo_url": entity_data.get('logo_url'),
+                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                "verified_at": datetime.utcnow(),
+                "verified_by": user_id,
+                "created_at": datetime.utcnow(),
+                "created_by": contribution.get('created_by'),
+                "source_contribution_id": contribution_id
+            }
+            await db.teams.insert_one(team_data)
+            
+        elif entity_type == ContributionType.BRAND:
+            # Add to brands collection
+            brand_data = {
+                "id": str(uuid.uuid4()),
+                "name": entity_data.get('name'),
+                "country": entity_data.get('country'),
+                "founded_year": entity_data.get('founded_year'),
+                "website": entity_data.get('website'),
+                "logo_url": entity_data.get('logo_url'),
+                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                "verified_at": datetime.utcnow(),
+                "verified_by": user_id,
+                "created_at": datetime.utcnow(),
+                "created_by": contribution.get('created_by'),
+                "source_contribution_id": contribution_id
+            }
+            await db.brands.insert_one(brand_data)
+            
+        elif entity_type == ContributionType.COMPETITION:
+            # Add to competitions collection
+            competition_data = {
+                "id": str(uuid.uuid4()),
+                "competition_name": entity_data.get('competition_name'),
+                "country": entity_data.get('country'),
+                "level": entity_data.get('level'),
+                "type": entity_data.get('type'),
+                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                "verified_at": datetime.utcnow(),
+                "verified_by": user_id,
+                "created_at": datetime.utcnow(),
+                "created_by": contribution.get('created_by'),
+                "source_contribution_id": contribution_id
+            }
+            await db.competitions.insert_one(competition_data)
+            
+        elif entity_type == ContributionType.MASTER_KIT:
+            # Add to master_kits collection
+            master_kit_data = {
+                "id": str(uuid.uuid4()),
+                "team_id": entity_data.get('team_id'),
+                "season": entity_data.get('season'),
+                "kit_type": entity_data.get('kit_type'),
+                "brand_id": entity_data.get('brand_id'),
+                "description": entity_data.get('description'),
+                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                "verified_at": datetime.utcnow(),
+                "verified_by": user_id,
+                "created_at": datetime.utcnow(),
+                "created_by": contribution.get('created_by'),
+                "source_contribution_id": contribution_id
+            }
+            await db.master_kits.insert_one(master_kit_data)
+            
+        elif entity_type == ContributionType.REFERENCE_KIT:
+            # Add to reference_kits collection
+            reference_kit_data = {
+                "id": str(uuid.uuid4()),
+                "master_kit_id": entity_data.get('master_kit_id'),
+                "size": entity_data.get('size'),
+                "condition": entity_data.get('condition'),
+                "authenticity": entity_data.get('authenticity'),
+                "special_features": entity_data.get('special_features', []),
+                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
+                "verified_at": datetime.utcnow(),
+                "verified_by": user_id,
+                "created_at": datetime.utcnow(),
+                "created_by": contribution.get('created_by'),
+                "source_contribution_id": contribution_id
+            }
+            await db.reference_kits.insert_one(reference_kit_data)
+            
+        logger.info(f"Successfully integrated {entity_type} contribution {contribution_id} to catalogue")
+        
+    except Exception as e:
+        logger.error(f"Error integrating contribution {contribution_id} to catalogue: {e}")
+        raise
+
 async def send_contribution_notification(user_id: str, contribution_id: str, action: str, auto_action: bool = False):
     """Send email notification for contribution updates"""
     try:
