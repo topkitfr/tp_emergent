@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-hub-4.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-hub-fixed.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_CREDENTIALS = {

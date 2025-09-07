@@ -12,8 +12,8 @@ import json
 from urllib.parse import urljoin
 
 # Configuration
-BACKEND_URL = "https://jersey-hub-4.preview.emergentagent.com/api"
-FRONTEND_URL = "https://jersey-hub-4.preview.emergentagent.com"
+BACKEND_URL = "https://jersey-hub-fixed.preview.emergentagent.com/api"
+FRONTEND_URL = "https://jersey-hub-fixed.preview.emergentagent.com"
 
 class ImageAccessibilityTester:
     def __init__(self):

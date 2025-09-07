@@ -13,7 +13,7 @@ from datetime import datetime
 import base64
 
 # Configuration des URLs
-BACKEND_URL = "https://jersey-hub-4.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-hub-fixed.preview.emergentagent.com/api"
 
 # Données d'authentification admin
 ADMIN_EMAIL = "topkitfr@gmail.com"
