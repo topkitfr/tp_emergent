@@ -10006,8 +10006,11 @@ async def get_teams(
                     "type": competition["type"]
                 }
         
+        # Remove league_info from team data to avoid conflict
+        team_data = {k: v for k, v in team.items() if k != 'league_info'}
+        
         enriched_team = TeamResponse(
-            **team,
+            **team_data,
             league_info=competition_info,  # Using existing field name for compatibility
             master_jerseys_count=jerseys_count,
             total_collectors=0  # TODO: calculate from collections
