@@ -38,11 +38,17 @@ const UnifiedFieldRenderer = ({
   };
 
   const handleImageChange = async (event) => {
+    if (!event.target || !event.target.files) {
+      console.error('No files in event target');
+      return;
+    }
+    
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
     if (onImageUpload) {
-      await onImageUpload(field.key, files, field.type === 'image_multiple');
+      // Call onImageUpload with the event and field key as expected by DynamicContributionForm
+      await onImageUpload(event, field.key);
     } else {
       // Fallback to base64 conversion for preview
       const file = files[0];
