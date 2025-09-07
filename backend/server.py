@@ -9886,9 +9886,7 @@ async def send_newsletter(
         raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de la newsletter")
 
 # Mount static files to serve uploaded images
-# Mount static files for uploads under /api prefix for Kubernetes ingress compatibility
-from fastapi.staticfiles import StaticFiles
-api_router.mount("/uploads", StaticFiles(directory="uploads"), name="uploads_api")
+# Static file serving is now handled via API endpoint below
 
 # Fonction utilitaire pour générer des références uniques
 async def generate_reference(entity_type: str) -> str:
