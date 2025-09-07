@@ -229,52 +229,83 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
 
     const [newColor, setNewColor] = useState('');
 
-    const handleImageUpload = (imageType, file) => {
+    const handleImageUpload = async (imageType, file) => {
       if (!file) return;
       
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
-        return;
-      }
-      
-      // Check size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must not exceed 5MB');
-        return;
-      }
-      
-      // Update files
-      if (imageType === 'secondary_photo') {
-        setImageFiles(prev => ({
-          ...prev,
-          secondary_photos: [...prev.secondary_photos, file]
-        }));
+      // Check file type and size validation is now handled by the upload utility
+      // Set upload progress tracking
+      setUploadProgress(prev => ({
+        ...prev,
+        [imageType]: { phase: 'preparing', progress: 0 }
+      }));
+
+      try {
+        // Upload using optimized backend
+        const result = await uploadOptimizedImage(
+          file, 
+          'team', 
+          true, // Generate variants
+          (progressInfo) => {
+            setUploadProgress(prev => ({
+              ...prev,
+              [imageType]: progressInfo
+            }));
+          }
+        );
+
+        if (result.success) {
+          // Store uploaded image reference
+          if (imageType === 'secondary_photo') {
+            setUploadedImages(prev => ({
+              ...prev,
+              secondary_photos: [...prev.secondary_photos, result.data]
+            }));
+          } else {
+            setUploadedImages(prev => ({
+              ...prev,
+              [imageType]: result.data
+            }));
+          }
+
+          // Keep preview for UI
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (imageType === 'secondary_photo') {
+              setImagePreviews(prev => ({
+                ...prev,
+                secondary_photos: [...prev.secondary_photos, e.target.result]
+              }));
+            } else {
+              setImagePreviews(prev => ({
+                ...prev,
+                [imageType]: e.target.result
+              }));
+            }
+          };
+          reader.readAsDataURL(file);
+
+          // Clear progress after successful upload
+          setTimeout(() => {
+            setUploadProgress(prev => {
+              const newProgress = { ...prev };
+              delete newProgress[imageType];
+              return newProgress;
+            });
+          }, 2000);
+
+        } else {
+          console.error('Upload failed:', result.error);
+          alert(`Upload failed: ${result.error}`);
+        }
+
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert(`Upload error: ${error.message}`);
         
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagePreviews(prev => ({
-            ...prev,
-            secondary_photos: [...prev.secondary_photos, e.target.result]
-          }));
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setImageFiles(prev => ({
+        setUploadProgress(prev => ({
           ...prev,
-          [imageType]: file
+          [imageType]: { phase: 'error', progress: 0, error: error.message }
         }));
-        
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagePreviews(prev => ({
-            ...prev,
-            [imageType]: e.target.result
-          }));
-        };
-        reader.readAsDataURL(file);
       }
     };
 
