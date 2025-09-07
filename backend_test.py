@@ -72,12 +72,12 @@ class LocalStorageOptimizationTester:
             response = requests.post(f"{BACKEND_URL}/auth/login", json=ADMIN_CREDENTIALS)
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get('access_token')
+                self.admin_token = data.get('token') or data.get('access_token')
                 if self.admin_token:
                     self.log_result("Admin Authentication", True, f"Admin authenticated successfully (Token: {len(self.admin_token)} chars)")
                     return True
                 else:
-                    self.log_result("Admin Authentication", False, "No access token in response")
+                    self.log_result("Admin Authentication", False, f"No token in response: {data}")
                     return False
             else:
                 self.log_result("Admin Authentication", False, f"HTTP {response.status_code}: {response.text}")
@@ -92,12 +92,12 @@ class LocalStorageOptimizationTester:
             response = requests.post(f"{BACKEND_URL}/auth/login", json=USER_CREDENTIALS)
             if response.status_code == 200:
                 data = response.json()
-                self.user_token = data.get('access_token')
+                self.user_token = data.get('token') or data.get('access_token')
                 if self.user_token:
                     self.log_result("User Authentication", True, f"User authenticated successfully (Token: {len(self.user_token)} chars)")
                     return True
                 else:
-                    self.log_result("User Authentication", False, "No access token in response")
+                    self.log_result("User Authentication", False, f"No token in response: {data}")
                     return False
             else:
                 self.log_result("User Authentication", False, f"HTTP {response.status_code}: {response.text}")
