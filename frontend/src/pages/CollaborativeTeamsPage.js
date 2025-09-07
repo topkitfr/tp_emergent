@@ -46,12 +46,6 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     navigate(`/teams/${team.id}`);
   };
 
-  const handleContributeClick = (team, e) => {
-    e.stopPropagation();
-    setSelectedTeamForContribution(team);
-    setShowContributionModal(true);
-  };
-
   // Team Card Component
   const TeamCard = ({ team }) => {
     return (
