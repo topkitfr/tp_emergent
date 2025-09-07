@@ -113,11 +113,31 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
     setIsSubmitting(true);
 
     try {
+      // Generate title automatically based on entity data
+      const generateTitle = () => {
+        switch (contributionType) {
+          case 'team':
+            return `New Team: ${formData.name || 'Unnamed Team'}`;
+          case 'brand':
+            return `New Brand: ${formData.name || 'Unnamed Brand'}`;
+          case 'player':
+            return `New Player: ${formData.name || 'Unnamed Player'}`;
+          case 'competition':
+            return `New Competition: ${formData.competition_name || formData.name || 'Unnamed Competition'}`;
+          case 'master_kit':
+            return `New Master Kit: ${formData.season || 'Unknown Season'} ${formData.jersey_type || 'Kit'}`;
+          case 'reference_kit':
+            return `New Reference Kit: ${formData.model_name || 'Unknown Model'}`;
+          default:
+            return `New ${contributionType.replace('_', ' ')} Contribution`;
+        }
+      };
+
       // First, create the contribution
       const contributionData = {
         entity_type: contributionType,
-        title,
-        description: description || '',
+        title: generateTitle(),
+        description: '',
         data: formData,
         source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
