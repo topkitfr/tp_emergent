@@ -92,13 +92,10 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
   };
 
   const validateForm = () => {
-    const fields = getFieldsForEntityType(contributionType);
-    const requiredFields = fields.filter(field => field.required);
+    const errors = validateEntityData(contributionType, formData);
     
-    for (const field of requiredFields) {
-      if (!formData[field.key] || formData[field.key].toString().trim() === '') {
-        return `${field.label} is required`;
-      }
+    if (errors.length > 0) {
+      return errors[0]; // Return first error
     }
 
     if (!title.trim()) {
