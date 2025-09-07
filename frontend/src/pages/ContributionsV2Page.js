@@ -398,6 +398,11 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
           fetchContributions(); // Refresh list after form closes
         }}
         selectedType={selectedType}
+        teams={teams}
+        brands={brands}
+        competitions={competitions}
+        masterJerseys={masterJerseys}
+        API={process.env.REACT_APP_BACKEND_URL}
       />
     </div>
   );
