@@ -78,8 +78,22 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
   };
 
   const removeImage = (index) => {
+    const removedImage = previewImages[index];
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
     setImages(prev => prev.filter((_, i) => i !== index));
+    
+    // If we removed an image, check if there are still images for this field
+    // If not, remove the placeholder value from formData
+    if (removedImage && removedImage.fieldKey) {
+      const remainingImagesForField = images.filter((img, i) => i !== index && img.fieldKey === removedImage.fieldKey);
+      if (remainingImagesForField.length === 0) {
+        setFormData(prev => {
+          const newFormData = { ...prev };
+          delete newFormData[removedImage.fieldKey];
+          return newFormData;
+        });
+      }
+    }
   };
 
   const handleSourceUrlChange = (index, value) => {
