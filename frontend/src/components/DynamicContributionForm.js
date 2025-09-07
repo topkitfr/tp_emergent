@@ -270,14 +270,7 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
 
           {/* Dynamic Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fields.map(field => (
-              <div key={field.key} className={field.type === 'image' ? 'md:col-span-2' : ''}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {field.label} {field.required && '*'}
-                </label>
-                {renderField(field)}
-              </div>
-            ))}
+            {fields.map(field => renderField(field))}
           </div>
 
           {/* Image Previews */}
