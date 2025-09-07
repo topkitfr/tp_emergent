@@ -51,7 +51,13 @@ from collaborative_models import (
     # New Kit Hierarchy Models
     MasterKit, ReferenceKit, PersonalKit, WantedKit, KitType,
     MasterKitCreate, ReferenceKitCreate, PersonalKitCreate, WantedKitCreate, PersonalKitUpdate,
-    MasterKitResponse, ReferenceKitResponse, PersonalKitResponse
+    MasterKitResponse, ReferenceKitResponse, PersonalKitResponse,
+    # Enhanced Contributions System V2 - Discogs Style
+    EnhancedContribution, ContributionCreateV2, ContributionUpdateV2,
+    ContributionVoteRequest, ContributionType, ContributionStatusV2,
+    VoteTypeV2, ContributionImage, ContributionVoteV2, ContributionHistoryEntry,
+    ContributionSummary, ContributionDetail, ModerationAction, ModerationRequest,
+    ModerationStats
 )
 
 # ================================
