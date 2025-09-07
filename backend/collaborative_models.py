@@ -970,3 +970,209 @@ class MasterJerseyResponse(BaseModel):
     team_info: Optional[Dict[str, Any]] = {}
     brand_info: Optional[Dict[str, Any]] = {}
     competition_info: Optional[Dict[str, Any]] = {}
+
+# ================================
+# ENHANCED CONTRIBUTIONS SYSTEM - DISCOGS STYLE
+# ================================
+
+class ContributionType(str, Enum):
+    """Types of entities that can be contributed to"""
+    TEAM = "team"
+    BRAND = "brand"
+    PLAYER = "player"
+    COMPETITION = "competition"
+    MASTER_KIT = "master_kit"
+    REFERENCE_KIT = "reference_kit"
+
+class ContributionStatusV2(str, Enum):
+    """Enhanced contribution status"""
+    DRAFT = "draft"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    NEEDS_REVISION = "needs_revision"
+
+class VoteTypeV2(str, Enum):
+    """Vote types for contributions"""
+    UPVOTE = "upvote"
+    DOWNVOTE = "downvote"
+
+class ContributionImage(BaseModel):
+    """Image associated with a contribution"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    url: str
+    filename: str
+    original_filename: str
+    file_size: int
+    mime_type: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    is_primary: bool = False
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    uploaded_by: str
+
+class ContributionVoteV2(BaseModel):
+    """Individual vote on a contribution"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    vote_type: VoteTypeV2
+    comment: Optional[str] = None
+    voted_at: datetime = Field(default_factory=datetime.utcnow)
+    # Field-specific votes for granular approval
+    field_votes: Dict[str, VoteTypeV2] = {}
+
+class ContributionHistoryEntry(BaseModel):
+    """History entry for contribution changes"""
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    action: str  # created, updated, approved, rejected, voted, etc.
+    user_id: str
+    user_name: Optional[str] = None
+    details: Dict[str, Any] = {}
+    changes: Optional[Dict[str, Any]] = None
+
+class EnhancedContribution(BaseModel):
+    """Enhanced Discogs-style contribution model"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Entity information
+    entity_type: ContributionType
+    entity_id: Optional[str] = None  # None for new entities
+    
+    # Dynamic data based on entity type
+    data: Dict[str, Any] = {}  # Flexible JSON data for any entity type
+    
+    # Images (required for kits, optional for others)
+    images: List[ContributionImage] = []
+    
+    # Status and workflow
+    status: ContributionStatusV2 = ContributionStatusV2.DRAFT
+    
+    # Voting
+    upvotes: int = 0
+    downvotes: int = 0
+    votes: List[ContributionVoteV2] = []
+    
+    # Review and moderation
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_comment: Optional[str] = None
+    
+    # History and audit trail
+    history: List[ContributionHistoryEntry] = []
+    
+    # Metadata
+    title: str
+    description: Optional[str] = None
+    source_urls: List[str] = []
+    
+    # Creator information
+    created_by: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Auto-approval tracking
+    auto_approved: bool = False
+    auto_rejected: bool = False
+    
+    # Reference
+    topkit_reference: str = Field(default="")
+
+class ContributionCreateV2(BaseModel):
+    """Request model for creating new contributions"""
+    entity_type: ContributionType
+    entity_id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    data: Dict[str, Any] = {}
+    source_urls: List[str] = []
+
+class ContributionUpdateV2(BaseModel):
+    """Request model for updating contributions"""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
+    source_urls: Optional[List[str]] = None
+    status: Optional[ContributionStatusV2] = None
+
+class ContributionVoteRequest(BaseModel):
+    """Request model for voting on contributions"""
+    vote_type: VoteTypeV2
+    comment: Optional[str] = None
+    field_votes: Dict[str, VoteTypeV2] = {}
+
+class ContributionImageUpload(BaseModel):
+    """Request model for uploading contribution images"""
+    is_primary: bool = False
+    caption: Optional[str] = None
+
+# Response models
+class ContributionSummary(BaseModel):
+    """Summary response for contribution listings"""
+    id: str
+    entity_type: ContributionType
+    title: str
+    status: ContributionStatusV2
+    upvotes: int
+    downvotes: int
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    images_count: int
+    topkit_reference: str
+
+class ContributionDetail(BaseModel):
+    """Detailed response for individual contributions"""
+    id: str
+    entity_type: ContributionType
+    entity_id: Optional[str]
+    title: str
+    description: Optional[str]
+    data: Dict[str, Any]
+    images: List[ContributionImage]
+    status: ContributionStatusV2
+    upvotes: int
+    downvotes: int
+    votes: List[ContributionVoteV2]
+    reviewed_by: Optional[str]
+    reviewed_at: Optional[datetime]
+    review_comment: Optional[str]
+    history: List[ContributionHistoryEntry]
+    source_urls: List[str]
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    auto_approved: bool
+    auto_rejected: bool
+    topkit_reference: str
+    # Additional computed fields
+    user_can_vote: bool = True
+    user_vote: Optional[VoteTypeV2] = None
+    requires_images: bool = False
+
+# Moderation models
+class ModerationAction(str, Enum):
+    """Available moderation actions"""
+    APPROVE = "approve"
+    REJECT = "reject"
+    REQUEST_REVISION = "request_revision"
+    DELETE = "delete"
+    FEATURE = "feature"
+    UNFAIR_VOTE = "unfair_vote"
+
+class ModerationRequest(BaseModel):
+    """Request for moderation actions"""
+    action: ModerationAction
+    reason: Optional[str] = None
+    internal_notes: Optional[str] = None
+    notify_contributor: bool = True
+
+class ModerationStats(BaseModel):
+    """Statistics for moderation dashboard"""
+    pending_contributions: int
+    approved_today: int
+    rejected_today: int
+    total_votes_today: int
+    auto_approved_today: int
+    auto_rejected_today: int
+    contributions_by_type: Dict[str, int]
+    top_contributors: List[Dict[str, Any]]
