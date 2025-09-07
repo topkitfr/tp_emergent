@@ -483,11 +483,11 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
               </div>
             </div>
 
-            {/* Image Upload Section */}
+            {/* Enhanced Image Upload Section */}
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
               <h4 className="font-medium text-gray-900 flex items-center gap-2">
                 📸 Team Images
-                <span className="text-xs text-gray-500 font-normal">(optional, max 5MB per image)</span>
+                <span className="text-xs text-gray-500 font-normal">(auto-optimized, max 15MB per image)</span>
               </h4>
               
               {/* Team Logo */}
@@ -510,6 +510,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                         onClick={() => {
                           setImageFiles(prev => ({ ...prev, logo: null }));
                           setImagePreviews(prev => ({ ...prev, logo: '' }));
+                          setUploadedImages(prev => ({ ...prev, logo: null }));
                         }}
                         className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
                       >
@@ -518,6 +519,23 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
                     </div>
                   )}
                 </div>
+                
+                {/* Upload Progress for Logo */}
+                {uploadProgress.logo && (
+                  <ImageUploadProgress
+                    progress={uploadProgress.logo.progress}
+                    phase={uploadProgress.logo.phase}
+                    error={uploadProgress.logo.error}
+                    metadata={uploadedImages.logo?.metadata}
+                  />
+                )}
+                
+                {/* Optimization Info */}
+                {uploadedImages.logo && !uploadProgress.logo && (
+                  <div className="mt-2 text-xs text-green-600 bg-green-50 p-2 rounded">
+                    ✅ Logo optimized! {uploadedImages.logo.variantsCount} variants created
+                  </div>
+                )}
               </div>
 
               {/* Secondary Images */}
