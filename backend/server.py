@@ -9888,6 +9888,34 @@ async def send_newsletter(
 # Mount static files to serve uploaded images
 # Static file serving is now handled via API endpoint below
 
+@api_router.get("/uploads/{file_path:path}")
+async def serve_uploaded_file(file_path: str):
+    """Serve uploaded files (images, documents) from the uploads directory"""
+    try:
+        # Security: Prevent path traversal attacks
+        if ".." in file_path or file_path.startswith("/"):
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Construct full file path
+        full_path = Path("uploads") / file_path
+        
+        # Check if file exists
+        if not full_path.exists() or not full_path.is_file():
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Return the file
+        return FileResponse(
+            path=str(full_path),
+            filename=full_path.name,
+            media_type="application/octet-stream"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving file {file_path}: {e}")
+        raise HTTPException(status_code=500, detail="Error serving file")
+
 # Fonction utilitaire pour générer des références uniques
 async def generate_reference(entity_type: str) -> str:
     """Generate unique reference for entities"""
