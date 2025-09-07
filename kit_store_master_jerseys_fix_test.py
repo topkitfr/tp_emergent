@@ -115,6 +115,16 @@ class KitStoreMasterJerseysTester:
                                 team_info = master_jersey['team_info']
                                 if 'name' in team_info:
                                     kit_details.append(f"Team: {team_info['name']}")
+                        elif 'master_kit_info' in kit:
+                            # Handle legacy field name (master_kit_info instead of master_jersey_info)
+                            master_jersey = kit['master_kit_info']
+                            if 'season' in master_jersey:
+                                kit_details.append(f"Season: {master_jersey['season']}")
+                            if 'jersey_type' in master_jersey:
+                                kit_details.append(f"Type: {master_jersey['jersey_type']}")
+                            if 'team_id' in master_jersey:
+                                kit_details.append(f"Team ID: {master_jersey['team_id']}")
+                            kit_details.append("(Using legacy master_kit_info field)")
                         
                         print(f"   Kit {i+1}: {', '.join(kit_details) if kit_details else 'Basic structure'}")
                     
