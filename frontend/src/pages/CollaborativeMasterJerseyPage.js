@@ -36,7 +36,7 @@ const CollaborativeMasterJerseyPage = ({
   const seasons = [...new Set((masterJerseys || []).map(jersey => jersey.season).filter(Boolean))];
   const jerseyTypes = [...new Set((masterJerseys || []).map(jersey => jersey.jersey_type).filter(Boolean))];
 
-  // Apply filters
+  // Apply filters and pagination
   useEffect(() => {
     let filtered = [...(masterJerseys || [])];
 
@@ -71,7 +71,21 @@ const CollaborativeMasterJerseyPage = ({
     }
 
     setFilteredJerseys(filtered);
+    // Reset to first page when filters change
+    setDisplayOptions(prev => ({ ...prev, currentPage: 1 }));
   }, [masterJerseys, filters]);
+
+  // Calculate pagination
+  const totalItems = filteredJerseys.length;
+  const totalPages = Math.ceil(totalItems / displayOptions.itemsPerPage);
+  const startIndex = (displayOptions.currentPage - 1) * displayOptions.itemsPerPage;
+  const endIndex = startIndex + displayOptions.itemsPerPage;
+  const currentItems = filteredJerseys.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    setDisplayOptions(prev => ({ ...prev, currentPage: Math.max(1, Math.min(page, totalPages)) }));
+  };
 
   // Create new master jersey
   const handleCreateMasterJersey = async (jerseyData) => {
