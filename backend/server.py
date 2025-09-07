@@ -13477,8 +13477,7 @@ async def get_moderation_stats_v2(current_user: dict = Depends(get_current_user)
 
 app.include_router(api_router)
 
-# Mount static files for uploads
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Static file serving is now handled under /api/uploads
 
 # Mount static files
 uploads_dir = Path("uploads")
