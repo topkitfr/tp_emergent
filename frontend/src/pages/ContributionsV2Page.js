@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, ThumbsUp, ThumbsDown, Eye, Filter, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import DynamicContributionForm from '../components/DynamicContributionForm';
 
-const ContributionsV2Page = ({ user }) => {
+const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [], masterJerseys = [] }) => {
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
