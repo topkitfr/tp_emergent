@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timedelta
+from image_processor import image_processor
 import requests
 import bcrypt
 import jwt
