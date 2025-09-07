@@ -24,8 +24,6 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
     setFormData({});
     setImages([]);
     setPreviewImages([]);
-    setTitle('');
-    setDescription('');
     setSourceUrls(['']);
   };
 
