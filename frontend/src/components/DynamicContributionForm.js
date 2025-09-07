@@ -235,11 +235,14 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
           {/* Entity Type Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contribution Type
+              Entity Type *
             </label>
             <select
               value={contributionType}
-              onChange={(e) => handleTypeChange(e.target.value)}
+              onChange={(e) => {
+                setContributionType(e.target.value);
+                resetForm();
+              }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
               <option value="team">Team</option>
@@ -249,35 +252,6 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
               <option value="master_kit">Master Kit</option>
               <option value="reference_kit">Reference Kit</option>
             </select>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={`Add new ${contributionType.replace('_', ' ')}`}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Additional information about this contribution..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
           </div>
 
           {/* Dynamic Fields */}
