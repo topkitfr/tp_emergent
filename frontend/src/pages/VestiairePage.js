@@ -1246,10 +1246,111 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             <p className="text-gray-600">No kit releases found.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {referenceKits.map((release) => (
-              <JerseyReleaseCard key={release.id} release={release} />
-            ))}
+          <div className={`${displayOptions.viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 
+                           displayOptions.viewMode === 'thumbnail' ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4' : 
+                           'space-y-4'}`}>
+            {referenceKits.map((release) => {
+              // Grid View (Default)
+              if (displayOptions.viewMode === 'grid') {
+                return <JerseyReleaseCard key={release.id} release={release} />;
+              }
+              
+              // Thumbnail View (Compact)
+              else if (displayOptions.viewMode === 'thumbnail') {
+                return (
+                  <div key={release.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                       onClick={() => {
+                         setSelectedReleaseForDetail(release);
+                         setShowReleaseDetailModal(true);
+                       }}>
+                    <div className="aspect-square bg-gray-100 flex items-center justify-center text-2xl">
+                      👕
+                    </div>
+                    <div className="p-2">
+                      <h4 className="font-medium text-xs text-gray-900 mb-1 line-clamp-1">
+                        {release.master_jersey_info?.team_info?.name || release.master_kit_info?.team_info?.name || 'Unknown Team'}
+                      </h4>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600 truncate">
+                          {release.master_jersey_info?.season || release.master_kit_info?.season || 'N/A'}
+                        </span>
+                        <span className="text-blue-600 font-semibold">
+                          €{release.original_retail_price || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              
+              // List View (Detailed)
+              else {
+                return (
+                  <div key={release.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-6">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
+                        👕
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-semibold text-gray-900 mb-1">
+                              {release.master_jersey_info?.team_info?.name || release.master_kit_info?.team_info?.name || 'Unknown Team'}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {release.master_jersey_info?.season || release.master_kit_info?.season || 'N/A'} • {release.master_jersey_info?.jersey_type || release.master_kit_info?.jersey_type || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-blue-600">
+                              €{release.original_retail_price || 'N/A'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {release.topkit_reference}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                          {release.model_name && <span>Model: {release.model_name}</span>}
+                          {release.release_type && <span>Type: {release.release_type}</span>}
+                          {release.is_limited_edition && <span className="text-orange-600 font-medium">Limited Edition</span>}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedReleaseForDetail(release);
+                                setShowReleaseDetailModal(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              View Details
+                            </button>
+                            {user && (
+                              <button
+                                onClick={() => {
+                                  setSelectedReferenceKit(release);
+                                  setSelectedCollectionType('personal');
+                                  setShowPersonalDetailsModal(true);
+                                }}
+                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                              >
+                                Add to Collection
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Created: {new Date(release.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            })}
           </div>
         )}
       </div>
