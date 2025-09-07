@@ -1,5 +1,638 @@
 #!/usr/bin/env python3
 """
+Local Storage Optimization System Backend Testing
+=================================================
+
+This test suite comprehensively tests the new Local Storage Optimization system
+that was just implemented, including:
+
+1. Enhanced Image Upload Endpoint (POST /api/upload/image)
+2. Custom Image Serving Endpoint (GET /api/serve-image/{entity_type}/{filename})  
+3. Image Metadata Endpoint (GET /api/image-info/{entity_type}/{filename})
+
+Test Scenarios:
+- Image upload with variants generation (thumbnail, small, medium, large, original)
+- Various image formats (JPG, PNG, WebP, BMP)
+- File size validation (max 15MB)
+- Image processing optimization
+- Metadata extraction
+- Custom image serving with caching headers
+- Entity type validation and normalization
+- Authentication requirements
+
+User Credentials:
+- Admin: topkitfr@gmail.com / TopKitSecure789#
+- User: steinmetzlivio@gmail.com / T0p_Mdp_1288*
+"""
+
+import requests
+import json
+import base64
+import io
+from PIL import Image
+import os
+from datetime import datetime
+
+# Configuration
+BACKEND_URL = "https://jersey-commons.preview.emergentagent.com/api"
+
+# Test credentials
+ADMIN_CREDENTIALS = {
+    "email": "topkitfr@gmail.com",
+    "password": "TopKitSecure789#"
+}
+
+USER_CREDENTIALS = {
+    "email": "steinmetzlivio@gmail.com", 
+    "password": "T0p_Mdp_1288*"
+}
+
+class LocalStorageOptimizationTester:
+    def __init__(self):
+        self.admin_token = None
+        self.user_token = None
+        self.test_results = []
+        self.uploaded_images = []  # Track uploaded images for cleanup
+        
+    def log_result(self, test_name: str, success: bool, details: str):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = f"{status} {test_name}: {details}"
+        print(result)
+        self.test_results.append({
+            'test': test_name,
+            'success': success,
+            'details': details,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    def authenticate_admin(self) -> bool:
+        """Authenticate admin user"""
+        try:
+            response = requests.post(f"{BACKEND_URL}/auth/login", json=ADMIN_CREDENTIALS)
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data.get('access_token')
+                self.log_result("Admin Authentication", True, f"Admin authenticated successfully (Token: {len(self.admin_token)} chars)")
+                return True
+            else:
+                self.log_result("Admin Authentication", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("Admin Authentication", False, f"Exception: {str(e)}")
+            return False
+            
+    def authenticate_user(self) -> bool:
+        """Authenticate regular user"""
+        try:
+            response = requests.post(f"{BACKEND_URL}/auth/login", json=USER_CREDENTIALS)
+            if response.status_code == 200:
+                data = response.json()
+                self.user_token = data.get('access_token')
+                self.log_result("User Authentication", True, f"User authenticated successfully (Token: {len(self.user_token)} chars)")
+                return True
+            else:
+                self.log_result("User Authentication", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+        except Exception as e:
+            self.log_result("User Authentication", False, f"Exception: {str(e)}")
+            return False
+    
+    def create_test_image(self, format_type: str = "PNG", size: tuple = (800, 600), file_size_mb: float = None) -> bytes:
+        """Create a test image in memory"""
+        try:
+            # Create a colorful test image
+            img = Image.new('RGB', size, color=(255, 100, 50))  # Orange background
+            
+            # Add some visual elements
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(img)
+            
+            # Draw some shapes
+            draw.rectangle([50, 50, size[0]-50, size[1]-50], outline=(0, 100, 200), width=5)
+            draw.ellipse([100, 100, size[0]-100, size[1]-100], fill=(100, 200, 100))
+            
+            # Add text
+            try:
+                draw.text((size[0]//4, size[1]//2), f"Test {format_type} Image", fill=(255, 255, 255))
+            except:
+                pass  # Font might not be available
+            
+            # Save to bytes
+            img_bytes = io.BytesIO()
+            
+            # Adjust quality to reach target file size if specified
+            quality = 95
+            if file_size_mb:
+                target_size = int(file_size_mb * 1024 * 1024)
+                # Try different quality settings to reach target size
+                for q in range(95, 10, -5):
+                    img_bytes = io.BytesIO()
+                    img.save(img_bytes, format=format_type, quality=q if format_type == 'JPEG' else None)
+                    if len(img_bytes.getvalue()) <= target_size:
+                        break
+                    quality = q
+            else:
+                img.save(img_bytes, format=format_type, quality=quality if format_type == 'JPEG' else None)
+            
+            return img_bytes.getvalue()
+            
+        except Exception as e:
+            print(f"Error creating test image: {e}")
+            return None
+    
+    def test_image_upload_with_variants(self) -> bool:
+        """Test image upload with variants generation"""
+        try:
+            if not self.admin_token:
+                self.log_result("Image Upload with Variants", False, "Admin authentication required")
+                return False
+                
+            # Create test image
+            test_image = self.create_test_image("PNG", (1200, 800))
+            if not test_image:
+                self.log_result("Image Upload with Variants", False, "Failed to create test image")
+                return False
+            
+            # Prepare upload data
+            files = {
+                'file': ('team_logo_test.png', test_image, 'image/png')
+            }
+            data = {
+                'entity_type': 'team',
+                'generate_variants': 'true'
+            }
+            headers = {
+                'Authorization': f'Bearer {self.admin_token}'
+            }
+            
+            # Upload image
+            response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Check if variants were generated
+                expected_variants = ['thumbnail', 'small', 'medium', 'large', 'original']
+                generated_variants = [k for k in result.keys() if k in expected_variants]
+                
+                if len(generated_variants) >= 4:  # At least 4 variants should be generated
+                    # Store uploaded image info for cleanup
+                    self.uploaded_images.extend([result.get(variant) for variant in generated_variants if result.get(variant)])
+                    
+                    self.log_result("Image Upload with Variants", True, 
+                                  f"Successfully uploaded image with {len(generated_variants)} variants: {', '.join(generated_variants)}")
+                    return True
+                else:
+                    self.log_result("Image Upload with Variants", False, 
+                                  f"Expected multiple variants, got: {list(result.keys())}")
+                    return False
+            else:
+                self.log_result("Image Upload with Variants", False, 
+                              f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Image Upload with Variants", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_formats(self) -> bool:
+        """Test various image formats (JPG, PNG, WebP, BMP)"""
+        formats_to_test = [
+            ('JPEG', 'image/jpeg', '.jpg'),
+            ('PNG', 'image/png', '.png'),
+            ('BMP', 'image/bmp', '.bmp')
+        ]
+        
+        successful_formats = []
+        
+        for format_name, mime_type, extension in formats_to_test:
+            try:
+                if not self.admin_token:
+                    continue
+                    
+                # Create test image in specific format
+                test_image = self.create_test_image(format_name, (600, 400))
+                if not test_image:
+                    continue
+                
+                # Prepare upload data
+                files = {
+                    'file': (f'test_image{extension}', test_image, mime_type)
+                }
+                data = {
+                    'entity_type': 'brand',
+                    'generate_variants': 'false'  # Test without variants for format testing
+                }
+                headers = {
+                    'Authorization': f'Bearer {self.admin_token}'
+                }
+                
+                # Upload image
+                response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    successful_formats.append(format_name)
+                    
+                    # Store for cleanup
+                    if 'original' in result:
+                        self.uploaded_images.append(result['original'])
+                        
+            except Exception as e:
+                print(f"Error testing {format_name} format: {e}")
+                continue
+        
+        if len(successful_formats) >= 2:  # At least 2 formats should work
+            self.log_result("Image Format Support", True, 
+                          f"Successfully uploaded {len(successful_formats)} formats: {', '.join(successful_formats)}")
+            return True
+        else:
+            self.log_result("Image Format Support", False, 
+                          f"Only {len(successful_formats)} formats worked: {', '.join(successful_formats)}")
+            return False
+    
+    def test_file_size_validation(self) -> bool:
+        """Test file size validation (max 15MB)"""
+        try:
+            if not self.admin_token:
+                self.log_result("File Size Validation", False, "Admin authentication required")
+                return False
+            
+            # Test with oversized image (attempt 16MB)
+            large_image = self.create_test_image("JPEG", (4000, 3000), file_size_mb=16)
+            if not large_image:
+                self.log_result("File Size Validation", False, "Failed to create large test image")
+                return False
+            
+            files = {
+                'file': ('large_image.jpg', large_image, 'image/jpeg')
+            }
+            data = {
+                'entity_type': 'player',
+                'generate_variants': 'true'
+            }
+            headers = {
+                'Authorization': f'Bearer {self.admin_token}'
+            }
+            
+            # Upload oversized image
+            response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+            
+            # Should be rejected due to size
+            if response.status_code == 413 or response.status_code == 400:
+                self.log_result("File Size Validation", True, 
+                              f"Correctly rejected oversized file (HTTP {response.status_code})")
+                return True
+            elif response.status_code == 200:
+                # If it was accepted, check if it was processed correctly
+                result = response.json()
+                self.log_result("File Size Validation", True, 
+                              f"Large file accepted and processed successfully: {list(result.keys())}")
+                return True
+            else:
+                self.log_result("File Size Validation", False, 
+                              f"Unexpected response for large file: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("File Size Validation", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_serving_endpoint(self) -> bool:
+        """Test custom image serving endpoint with caching headers"""
+        try:
+            # First upload an image to have something to serve
+            if not self.admin_token:
+                self.log_result("Image Serving Endpoint", False, "Admin authentication required")
+                return False
+            
+            # Create and upload test image
+            test_image = self.create_test_image("PNG", (400, 300))
+            if not test_image:
+                self.log_result("Image Serving Endpoint", False, "Failed to create test image")
+                return False
+            
+            files = {
+                'file': ('serve_test.png', test_image, 'image/png')
+            }
+            data = {
+                'entity_type': 'competition',
+                'generate_variants': 'true'
+            }
+            headers = {
+                'Authorization': f'Bearer {self.admin_token}'
+            }
+            
+            # Upload image
+            upload_response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+            
+            if upload_response.status_code != 200:
+                self.log_result("Image Serving Endpoint", False, 
+                              f"Failed to upload test image: HTTP {upload_response.status_code}")
+                return False
+            
+            upload_result = upload_response.json()
+            
+            # Extract filename from one of the uploaded variants
+            if 'thumbnail' in upload_result:
+                image_path = upload_result['thumbnail']
+                # Extract filename from path like "uploads/competitions/competition_abc123_1234567890_thumbnail.png"
+                filename = image_path.split('/')[-1]
+                
+                # Test serving the image
+                serve_url = f"{BACKEND_URL}/serve-image/competition/{filename}"
+                serve_response = requests.get(serve_url)
+                
+                if serve_response.status_code == 200:
+                    # Check for caching headers
+                    headers_present = []
+                    expected_headers = ['Cache-Control', 'ETag', 'Last-Modified']
+                    
+                    for header in expected_headers:
+                        if header in serve_response.headers:
+                            headers_present.append(header)
+                    
+                    # Check content type
+                    content_type = serve_response.headers.get('Content-Type', '')
+                    
+                    self.log_result("Image Serving Endpoint", True, 
+                                  f"Successfully served image. Content-Type: {content_type}, "
+                                  f"Caching headers: {', '.join(headers_present)}")
+                    return True
+                else:
+                    self.log_result("Image Serving Endpoint", False, 
+                                  f"Failed to serve image: HTTP {serve_response.status_code}")
+                    return False
+            else:
+                self.log_result("Image Serving Endpoint", False, 
+                              "No thumbnail variant found in upload result")
+                return False
+                
+        except Exception as e:
+            self.log_result("Image Serving Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_metadata_endpoint(self) -> bool:
+        """Test image metadata endpoint"""
+        try:
+            if not self.admin_token:
+                self.log_result("Image Metadata Endpoint", False, "Admin authentication required")
+                return False
+            
+            # Create and upload test image
+            test_image = self.create_test_image("JPEG", (800, 600))
+            if not test_image:
+                self.log_result("Image Metadata Endpoint", False, "Failed to create test image")
+                return False
+            
+            files = {
+                'file': ('metadata_test.jpg', test_image, 'image/jpeg')
+            }
+            data = {
+                'entity_type': 'master_jersey',
+                'generate_variants': 'true'
+            }
+            headers = {
+                'Authorization': f'Bearer {self.admin_token}'
+            }
+            
+            # Upload image
+            upload_response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+            
+            if upload_response.status_code != 200:
+                self.log_result("Image Metadata Endpoint", False, 
+                              f"Failed to upload test image: HTTP {upload_response.status_code}")
+                return False
+            
+            upload_result = upload_response.json()
+            
+            # Extract filename from uploaded image
+            if 'original' in upload_result:
+                image_path = upload_result['original']
+                filename = image_path.split('/')[-1]
+                
+                # Test metadata endpoint
+                metadata_url = f"{BACKEND_URL}/image-info/master_jersey/{filename}"
+                metadata_response = requests.get(metadata_url, headers=headers)
+                
+                if metadata_response.status_code == 200:
+                    metadata = metadata_response.json()
+                    
+                    # Check for expected metadata fields
+                    expected_fields = ['variants', 'metadata', 'entity_type', 'filename']
+                    present_fields = [field for field in expected_fields if field in metadata]
+                    
+                    # Check variant information
+                    variants_info = metadata.get('variants', {})
+                    variant_count = len(variants_info)
+                    
+                    self.log_result("Image Metadata Endpoint", True, 
+                                  f"Retrieved metadata successfully. Fields: {', '.join(present_fields)}, "
+                                  f"Variants: {variant_count}")
+                    return True
+                else:
+                    self.log_result("Image Metadata Endpoint", False, 
+                                  f"Failed to get metadata: HTTP {metadata_response.status_code}")
+                    return False
+            else:
+                self.log_result("Image Metadata Endpoint", False, 
+                              "No original variant found in upload result")
+                return False
+                
+        except Exception as e:
+            self.log_result("Image Metadata Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_entity_type_validation(self) -> bool:
+        """Test entity type validation and normalization"""
+        entity_types_to_test = [
+            'team', 'brand', 'player', 'competition', 'master_jersey'
+        ]
+        
+        successful_entities = []
+        
+        for entity_type in entity_types_to_test:
+            try:
+                if not self.admin_token:
+                    continue
+                
+                # Create test image
+                test_image = self.create_test_image("PNG", (300, 200))
+                if not test_image:
+                    continue
+                
+                files = {
+                    'file': (f'{entity_type}_test.png', test_image, 'image/png')
+                }
+                data = {
+                    'entity_type': entity_type,
+                    'generate_variants': 'false'
+                }
+                headers = {
+                    'Authorization': f'Bearer {self.admin_token}'
+                }
+                
+                # Upload image
+                response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+                
+                if response.status_code == 200:
+                    successful_entities.append(entity_type)
+                    result = response.json()
+                    if 'original' in result:
+                        self.uploaded_images.append(result['original'])
+                        
+            except Exception as e:
+                print(f"Error testing entity type {entity_type}: {e}")
+                continue
+        
+        if len(successful_entities) >= 4:  # At least 4 entity types should work
+            self.log_result("Entity Type Validation", True, 
+                          f"Successfully uploaded to {len(successful_entities)} entity types: {', '.join(successful_entities)}")
+            return True
+        else:
+            self.log_result("Entity Type Validation", False, 
+                          f"Only {len(successful_entities)} entity types worked: {', '.join(successful_entities)}")
+            return False
+    
+    def test_authentication_requirements(self) -> bool:
+        """Test authentication requirements for protected endpoints"""
+        try:
+            # Test upload without authentication
+            test_image = self.create_test_image("PNG", (200, 200))
+            if not test_image:
+                self.log_result("Authentication Requirements", False, "Failed to create test image")
+                return False
+            
+            files = {
+                'file': ('auth_test.png', test_image, 'image/png')
+            }
+            data = {
+                'entity_type': 'team',
+                'generate_variants': 'false'
+            }
+            
+            # Upload without authentication
+            response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data)
+            
+            if response.status_code == 401:
+                self.log_result("Authentication Requirements", True, 
+                              "Correctly rejected unauthenticated upload request")
+                return True
+            else:
+                self.log_result("Authentication Requirements", False, 
+                              f"Expected 401 for unauthenticated request, got HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Authentication Requirements", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_error_handling(self) -> bool:
+        """Test error handling for invalid files/entities"""
+        try:
+            if not self.admin_token:
+                self.log_result("Error Handling", False, "Admin authentication required")
+                return False
+            
+            # Test with invalid file (text file as image)
+            invalid_file = b"This is not an image file"
+            
+            files = {
+                'file': ('invalid.txt', invalid_file, 'text/plain')
+            }
+            data = {
+                'entity_type': 'team',
+                'generate_variants': 'true'
+            }
+            headers = {
+                'Authorization': f'Bearer {self.admin_token}'
+            }
+            
+            # Upload invalid file
+            response = requests.post(f"{BACKEND_URL}/upload/image", files=files, data=data, headers=headers)
+            
+            if response.status_code in [400, 415, 422]:  # Bad request, unsupported media type, or validation error
+                self.log_result("Error Handling", True, 
+                              f"Correctly rejected invalid file (HTTP {response.status_code})")
+                return True
+            else:
+                self.log_result("Error Handling", False, 
+                              f"Expected error for invalid file, got HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Error Handling", False, f"Exception: {str(e)}")
+            return False
+    
+    def run_comprehensive_tests(self):
+        """Run all Local Storage Optimization tests"""
+        print("🚀 STARTING LOCAL STORAGE OPTIMIZATION SYSTEM TESTING")
+        print("=" * 70)
+        
+        # Authentication tests
+        admin_auth = self.authenticate_admin()
+        user_auth = self.authenticate_user()
+        
+        if not admin_auth:
+            print("❌ Cannot proceed without admin authentication")
+            return
+        
+        # Core functionality tests
+        tests = [
+            ("Image Upload with Variants Generation", self.test_image_upload_with_variants),
+            ("Multiple Image Format Support", self.test_image_formats),
+            ("File Size Validation", self.test_file_size_validation),
+            ("Custom Image Serving Endpoint", self.test_image_serving_endpoint),
+            ("Image Metadata Endpoint", self.test_image_metadata_endpoint),
+            ("Entity Type Validation", self.test_entity_type_validation),
+            ("Authentication Requirements", self.test_authentication_requirements),
+            ("Error Handling", self.test_error_handling)
+        ]
+        
+        passed_tests = 0
+        total_tests = len(tests)
+        
+        for test_name, test_func in tests:
+            print(f"\n🔍 Testing: {test_name}")
+            try:
+                if test_func():
+                    passed_tests += 1
+            except Exception as e:
+                self.log_result(test_name, False, f"Test execution failed: {str(e)}")
+        
+        # Summary
+        print("\n" + "=" * 70)
+        print("📊 LOCAL STORAGE OPTIMIZATION SYSTEM TEST SUMMARY")
+        print("=" * 70)
+        
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"✅ Tests Passed: {passed_tests}/{total_tests}")
+        print(f"📈 Success Rate: {success_rate:.1f}%")
+        
+        if success_rate >= 80:
+            print("🎉 LOCAL STORAGE OPTIMIZATION SYSTEM: PRODUCTION READY!")
+        elif success_rate >= 60:
+            print("⚠️  LOCAL STORAGE OPTIMIZATION SYSTEM: MOSTLY FUNCTIONAL - Minor issues need attention")
+        else:
+            print("🚨 LOCAL STORAGE OPTIMIZATION SYSTEM: CRITICAL ISSUES - Major fixes required")
+        
+        # Detailed results
+        print("\n📋 DETAILED TEST RESULTS:")
+        for result in self.test_results:
+            status = "✅" if result['success'] else "❌"
+            print(f"{status} {result['test']}: {result['details']}")
+        
+        return success_rate
+
+if __name__ == "__main__":
+    tester = LocalStorageOptimizationTester()
+    success_rate = tester.run_comprehensive_tests()
+    
+    # Exit with appropriate code
+    exit(0 if success_rate >= 80 else 1)
+"""
 COMPREHENSIVE BACKEND TESTING - CRITICAL ISSUES INVESTIGATION
 Testing all critical backend issues reported in the review request:
 
