@@ -264,6 +264,13 @@ const AppContent = () => {
               onNavigateBack={() => navigate('/contributions')}
             />
           } />
+          <Route path="/contributions-v2/:contributionId" element={
+            <ContributionDetailPage 
+              {...commonProps} 
+              contributionId={window.location.pathname.split('/contributions-v2/')[1]}
+              onNavigateBack={() => navigate('/contributions-v2')}
+            />
+          } />
         </Routes>
       </div>
 
