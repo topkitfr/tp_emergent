@@ -1148,10 +1148,10 @@ class TopKitBackendTester:
         
         return True
 
-    def generate_final_summary(self):
-        """Generate comprehensive test summary for final validation"""
+    def generate_image_investigation_summary(self):
+        """Generate comprehensive summary focused on image display bug investigation"""
         print("\n" + "=" * 90)
-        print("📊 FINAL TOPKIT ENHANCEMENT PROJECT VALIDATION SUMMARY")
+        print("📊 CRITICAL IMAGE DISPLAY BUG INVESTIGATION SUMMARY")
         print("=" * 90)
         
         total_tests = len(self.test_results)
@@ -1164,26 +1164,75 @@ class TopKitBackendTester:
         print(f"Failed: {failed_tests}")
         print(f"Success Rate: {success_rate:.1f}%")
         
-        # Categorize results by phase
-        phases = {
-            "Unified Form System": ["Unified Form System", "Image Upload"],
-            "Integration Pipeline": ["Integration Pipeline", "Auto-Integration"],
-            "Display APIs": ["Display API"],
-            "Data Flow": ["Complete Data Flow", "Reference Kits"],
-            "Authentication & Security": ["Admin Authentication", "Authentication Required", "Admin Endpoint", "Voting System"]
+        # Categorize results by investigation area
+        investigations = {
+            "Target Team Entities": ["Target Team Entity", "Target Team Entities"],
+            "Image Upload Process": ["Image Upload Endpoint", "Image Upload"],
+            "Image Storage & Association": ["Contribution Image Association", "Image Storage"],
+            "Image Integration Workflow": ["Image Processing Workflow", "Image Integration"],
+            "Image File Accessibility": ["Image File Existence", "Image Accessibility"],
+            "Cross-Entity Image Support": ["Cross-Entity Image Support"],
+            "System Functionality": ["Admin Authentication", "GET /api/contributions", "Authentication Required"]
         }
         
-        print("\n📋 PHASE-BY-PHASE RESULTS:")
+        print("\n📋 INVESTIGATION RESULTS BY AREA:")
         print("-" * 50)
         
-        for phase_name, keywords in phases.items():
-            phase_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in keywords)]
-            if phase_tests:
-                phase_passed = sum(1 for r in phase_tests if r['success'])
-                phase_total = len(phase_tests)
-                phase_rate = (phase_passed / phase_total * 100) if phase_total > 0 else 0
-                status = "✅" if phase_rate >= 80 else "⚠️" if phase_rate >= 60 else "❌"
-                print(f"{status} {phase_name}: {phase_passed}/{phase_total} ({phase_rate:.1f}%)")
+        critical_issues = []
+        
+        for investigation_name, keywords in investigations.items():
+            investigation_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in keywords)]
+            if investigation_tests:
+                investigation_passed = sum(1 for r in investigation_tests if r['success'])
+                investigation_total = len(investigation_tests)
+                investigation_rate = (investigation_passed / investigation_total * 100) if investigation_total > 0 else 0
+                status = "✅" if investigation_rate >= 80 else "⚠️" if investigation_rate >= 60 else "❌"
+                print(f"{status} {investigation_name}: {investigation_passed}/{investigation_total} ({investigation_rate:.1f}%)")
+                
+                # Track critical issues
+                if investigation_rate < 80:
+                    failed_in_area = [r for r in investigation_tests if not r['success']]
+                    for failed_test in failed_in_area:
+                        critical_issues.append(f"{investigation_name}: {failed_test['test']} - {failed_test['error']}")
+        
+        # Root Cause Analysis
+        print(f"\n🔍 ROOT CAUSE ANALYSIS:")
+        print("-" * 50)
+        
+        if critical_issues:
+            print("❌ CRITICAL ISSUES IDENTIFIED:")
+            for issue in critical_issues:
+                print(f"  • {issue}")
+        else:
+            print("✅ No critical issues detected in image system")
+        
+        # Specific findings for the review request
+        print(f"\n📋 SPECIFIC FINDINGS FOR REVIEW REQUEST:")
+        print("-" * 50)
+        
+        # Check for target team entities
+        target_team_tests = [r for r in self.test_results if "Target Team Entity" in r['test']]
+        if target_team_tests:
+            target_found = any(r['success'] for r in target_team_tests)
+            print(f"  • Target Teams (TK-TEAM-4156DC3C, TK-TEAM-00BEEF9B): {'Found' if target_found else 'Not Found'}")
+        
+        # Check image upload functionality
+        upload_tests = [r for r in self.test_results if "Image Upload" in r['test']]
+        if upload_tests:
+            upload_working = any(r['success'] for r in upload_tests)
+            print(f"  • Image Upload Process: {'Working' if upload_working else 'Not Working'}")
+        
+        # Check image integration
+        integration_tests = [r for r in self.test_results if "Image Processing Workflow" in r['test']]
+        if integration_tests:
+            integration_working = any(r['success'] for r in integration_tests)
+            print(f"  • Image Integration to Catalogue: {'Working' if integration_working else 'Not Working'}")
+        
+        # Check cross-entity support
+        cross_entity_tests = [r for r in self.test_results if "Cross-Entity" in r['test']]
+        if cross_entity_tests:
+            cross_entity_working = any(r['success'] for r in cross_entity_tests)
+            print(f"  • Cross-Entity Image Support: {'Working' if cross_entity_working else 'Not Working'}")
         
         if failed_tests > 0:
             print(f"\n❌ FAILED TESTS ({failed_tests}):")
@@ -1196,48 +1245,63 @@ class TopKitBackendTester:
             if result['success']:
                 print(f"  - {result['test']}")
         
-        # Final assessment for production readiness
+        # Final assessment and recommendations
         print("\n" + "=" * 90)
-        print("🎯 PRODUCTION READINESS ASSESSMENT")
+        print("🎯 IMAGE DISPLAY BUG ASSESSMENT & RECOMMENDATIONS")
         print("=" * 90)
         
-        if success_rate >= 95:
-            print(f"🎉 EXCELLENT: TopKit enhancement system is PRODUCTION-READY with {success_rate:.1f}% success rate!")
-            print("   All 4 phases implemented successfully. System ready for deployment.")
-        elif success_rate >= 85:
-            print(f"✅ VERY GOOD: TopKit enhancement system is nearly production-ready with {success_rate:.1f}% success rate.")
-            print("   Minor issues detected but core functionality working excellently.")
-        elif success_rate >= 70:
-            print(f"⚠️ GOOD: TopKit enhancement system has good functionality with {success_rate:.1f}% success rate.")
-            print("   Some issues need attention before full production deployment.")
-        elif success_rate >= 50:
-            print(f"⚠️ PARTIAL: TopKit enhancement system has partial functionality ({success_rate:.1f}% success rate).")
-            print("   Significant issues need resolution before production.")
-        else:
-            print(f"❌ CRITICAL: TopKit enhancement system has major issues ({success_rate:.1f}% success rate).")
-            print("   System requires substantial fixes before production deployment.")
-        
-        # Key achievements summary
-        print(f"\n🏆 KEY ACHIEVEMENTS VERIFIED:")
-        key_achievements = [
-            "✅ Unified Form System supports all entity types (team, brand, player, competition, master_kit, reference_kit)",
-            "✅ Integration Pipeline auto-integrates approved contributions to main collections",
-            "✅ Display APIs provide proper data for Catalogue Teams, Brands, Kit Store, and Community DB",
-            "✅ Complete data flow from Community DB → Voting → Moderation → Integration → Catalogue/Kit Store",
-            "✅ Authentication & Security system working with admin credentials",
-            "✅ Reference kits appear in Kit Store as specified"
-        ]
-        
-        for achievement in key_achievements:
-            print(f"   {achievement}")
-        
-        print(f"\n📝 FINAL RECOMMENDATION:")
         if success_rate >= 90:
-            print("   ✅ APPROVE: System is ready for production deployment.")
-        elif success_rate >= 75:
-            print("   ⚠️ CONDITIONAL APPROVAL: Address minor issues then deploy.")
+            print(f"✅ EXCELLENT: Image system is working correctly with {success_rate:.1f}% success rate!")
+            print("   No critical image display bugs detected. System is functioning as expected.")
+        elif success_rate >= 70:
+            print(f"⚠️ PARTIAL ISSUES: Image system has some issues with {success_rate:.1f}% success rate.")
+            print("   Some image functionality working but issues need investigation.")
         else:
-            print("   ❌ REQUIRES WORK: Resolve critical issues before deployment.")
+            print(f"❌ CRITICAL ISSUES: Image system has major problems ({success_rate:.1f}% success rate).")
+            print("   Significant image display bugs confirmed. Immediate fixes required.")
+        
+        # Specific recommendations
+        print(f"\n📝 SPECIFIC RECOMMENDATIONS:")
+        
+        if len(critical_issues) == 0:
+            print("   ✅ No immediate fixes required - image system working correctly")
+        else:
+            print("   🔧 REQUIRED FIXES:")
+            
+            # Image upload issues
+            upload_failed = any("Image Upload" in issue for issue in critical_issues)
+            if upload_failed:
+                print("     • Fix image upload endpoint - ensure /api/upload/image or similar endpoint exists")
+                print("     • Verify image processing and storage functionality")
+            
+            # Image integration issues  
+            integration_failed = any("Image Processing Workflow" in issue or "Image Integration" in issue for issue in critical_issues)
+            if integration_failed:
+                print("     • Fix image integration from contributions to main catalogue entities")
+                print("     • Ensure approved contributions transfer image data properly")
+            
+            # Image accessibility issues
+            accessibility_failed = any("Image File Existence" in issue or "Image Accessibility" in issue for issue in critical_issues)
+            if accessibility_failed:
+                print("     • Fix image file storage and URL generation")
+                print("     • Ensure uploaded images are accessible via proper URLs")
+            
+            # Cross-entity issues
+            cross_entity_failed = any("Cross-Entity" in issue for issue in critical_issues)
+            if cross_entity_failed:
+                print("     • Implement consistent image support across all entity types")
+                print("     • Ensure teams, brands, players, competitions, kits all support images")
+        
+        print(f"\n🎯 NEXT STEPS:")
+        if success_rate >= 90:
+            print("   1. ✅ Image system is working correctly")
+            print("   2. 🔍 Investigate frontend display issues if images still not showing")
+            print("   3. 📱 Test image display on entity detail pages")
+        else:
+            print("   1. 🔧 Fix identified backend image issues")
+            print("   2. 🧪 Re-test image upload and integration workflow")
+            print("   3. 🔍 Verify image URLs and file accessibility")
+            print("   4. 📱 Test complete image workflow from upload to display")
 
     def generate_summary(self):
         """Legacy method - redirect to final summary"""
