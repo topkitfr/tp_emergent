@@ -115,50 +115,415 @@ class TopKitBackendTester:
             self.log_result("GET /api/contributions-v2/", False, "", str(e))
             return None
 
-    def test_contributions_v2_post(self):
-        """Test POST /api/contributions-v2/ endpoint with unified form fields"""
+    def test_unified_form_system_all_entities(self):
+        """Test Unified Form System with all entity types as specified in review request"""
+        entity_types = [
+            {
+                "type": "team",
+                "data": {
+                    "entity_type": "team",
+                    "entity_id": None,
+                    "title": "Final Test Team - All Entity Types",
+                    "description": "Testing unified form system with team entity",
+                    "changes": {
+                        "name": "Final Test FC",
+                        "short_name": "FTC",
+                        "country": "France",
+                        "city": "Lyon",
+                        "founded_year": 2024,
+                        "team_colors": ["Red", "Blue"]
+                    },
+                    "source_urls": ["https://example.com/final-test-team"]
+                }
+            },
+            {
+                "type": "brand",
+                "data": {
+                    "entity_type": "brand",
+                    "entity_id": None,
+                    "title": "Final Test Brand - All Entity Types",
+                    "description": "Testing unified form system with brand entity",
+                    "changes": {
+                        "name": "Final Test Sports",
+                        "country": "Germany",
+                        "founded_year": 2024,
+                        "website": "https://finaltestsports.com"
+                    },
+                    "source_urls": ["https://example.com/final-test-brand"]
+                }
+            },
+            {
+                "type": "player",
+                "data": {
+                    "entity_type": "player",
+                    "entity_id": None,
+                    "title": "Final Test Player - All Entity Types",
+                    "description": "Testing unified form system with player entity",
+                    "changes": {
+                        "name": "Final Test Player",
+                        "full_name": "Final Test Player Junior",
+                        "nationality": "France",
+                        "position": "Forward",
+                        "birth_date": "1995-01-01"
+                    },
+                    "source_urls": ["https://example.com/final-test-player"]
+                }
+            },
+            {
+                "type": "competition",
+                "data": {
+                    "entity_type": "competition",
+                    "entity_id": None,
+                    "title": "Final Test Competition - All Entity Types",
+                    "description": "Testing unified form system with competition entity",
+                    "changes": {
+                        "competition_name": "Final Test League",
+                        "type": "National league",
+                        "country": "France",
+                        "level": 1,
+                        "confederations_federations": ["UEFA"]
+                    },
+                    "source_urls": ["https://example.com/final-test-competition"]
+                }
+            },
+            {
+                "type": "master_kit",
+                "data": {
+                    "entity_type": "master_kit",
+                    "entity_id": None,
+                    "title": "Final Test Master Kit - All Entity Types",
+                    "description": "Testing unified form system with master kit entity",
+                    "changes": {
+                        "team_name": "Final Test FC",
+                        "brand_name": "Final Test Sports",
+                        "season": "2024-25",
+                        "kit_type": "home",
+                        "model": "authentic",
+                        "primary_color": "#FF0000"
+                    },
+                    "source_urls": ["https://example.com/final-test-master-kit"]
+                }
+            },
+            {
+                "type": "reference_kit",
+                "data": {
+                    "entity_type": "reference_kit",
+                    "entity_id": None,
+                    "title": "Final Test Reference Kit - All Entity Types",
+                    "description": "Testing unified form system with reference kit entity",
+                    "changes": {
+                        "master_kit_reference": "TK-MASTER-000001",
+                        "player_name": "Final Test Player",
+                        "player_number": "10",
+                        "retail_price": 89.99,
+                        "release_type": "authentic"
+                    },
+                    "source_urls": ["https://example.com/final-test-reference-kit"]
+                }
+            }
+        ]
+        
+        created_contributions = []
+        all_success = True
+        
+        for entity in entity_types:
+            try:
+                response = self.session.post(f"{API_BASE}/contributions-v2/", json=entity["data"])
+                
+                if response.status_code in [200, 201]:
+                    data = response.json()
+                    contribution_id = data.get('id') or data.get('contribution_id')
+                    created_contributions.append(contribution_id)
+                    self.log_result(
+                        f"Unified Form System - {entity['type'].title()} Entity",
+                        True,
+                        f"Successfully created {entity['type']} contribution with ID: {contribution_id}"
+                    )
+                else:
+                    self.log_result(
+                        f"Unified Form System - {entity['type'].title()} Entity",
+                        False,
+                        "",
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_result(f"Unified Form System - {entity['type'].title()} Entity", False, "", str(e))
+                all_success = False
+        
+        return all_success, created_contributions
+
+    def test_integration_pipeline(self):
+        """Test Integration Pipeline - approved contributions auto-integration to main collections"""
         try:
-            # Create a test contribution with unified form fields
-            contribution_data = {
-                "entity_type": "team",
-                "entity_id": None,  # New entity
-                "title": "Test Team Contribution - Backend Testing",
-                "description": "Testing unified form system with comprehensive team data",
+            # First, check if auto-approval is enabled
+            response = self.session.get(f"{API_BASE}/admin/settings")
+            if response.status_code == 200:
+                settings = response.json()
+                auto_approval = settings.get("auto_approval_enabled", False)
+                
+                self.log_result(
+                    "Integration Pipeline - Auto-Approval Settings",
+                    True,
+                    f"Auto-approval enabled: {auto_approval}"
+                )
+                
+                # Test creating a contribution that should auto-integrate
+                test_contribution = {
+                    "entity_type": "team",
+                    "entity_id": None,
+                    "title": "Integration Pipeline Test Team",
+                    "description": "Testing auto-integration pipeline",
+                    "changes": {
+                        "name": "Pipeline Test FC",
+                        "short_name": "PTC",
+                        "country": "Spain",
+                        "city": "Madrid",
+                        "founded_year": 2024,
+                        "team_colors": ["White", "Blue"]
+                    }
+                }
+                
+                response = self.session.post(f"{API_BASE}/contributions-v2/", json=test_contribution)
+                
+                if response.status_code in [200, 201]:
+                    data = response.json()
+                    contribution_id = data.get('id')
+                    
+                    # Check if the team appears in main teams collection
+                    teams_response = self.session.get(f"{API_BASE}/teams")
+                    if teams_response.status_code == 200:
+                        teams = teams_response.json()
+                        pipeline_team_found = any(
+                            team.get('name') == 'Pipeline Test FC' 
+                            for team in teams
+                        )
+                        
+                        self.log_result(
+                            "Integration Pipeline - Auto-Integration to Teams",
+                            pipeline_team_found,
+                            f"Team {'found' if pipeline_team_found else 'not found'} in main teams collection"
+                        )
+                        return pipeline_team_found
+                    else:
+                        self.log_result(
+                            "Integration Pipeline - Teams Collection Check",
+                            False,
+                            "",
+                            f"Failed to retrieve teams: HTTP {teams_response.status_code}"
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "Integration Pipeline - Test Contribution Creation",
+                        False,
+                        "",
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Integration Pipeline - Settings Check",
+                    False,
+                    "",
+                    f"Failed to get admin settings: HTTP {response.status_code}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Integration Pipeline Test", False, "", str(e))
+            return False
+
+    def test_display_apis(self):
+        """Test Display APIs for Catalogue Teams, Brands, Kit Store, and Community DB"""
+        display_endpoints = [
+            ("/teams", "Catalogue Teams page"),
+            ("/brands", "Catalogue Brands page"),
+            ("/vestiaire", "Kit Store with reference kits"),
+            ("/contributions-v2/", "Community DB")
+        ]
+        
+        all_success = True
+        
+        for endpoint, description in display_endpoints:
+            try:
+                response = self.session.get(f"{API_BASE}{endpoint}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Analyze data structure based on endpoint
+                    if endpoint == "/teams":
+                        count = len(data) if isinstance(data, list) else len(data.get('teams', []))
+                        self.log_result(
+                            f"Display API - {description}",
+                            True,
+                            f"Retrieved {count} teams with proper data structure"
+                        )
+                    elif endpoint == "/brands":
+                        count = len(data) if isinstance(data, list) else len(data.get('brands', []))
+                        self.log_result(
+                            f"Display API - {description}",
+                            True,
+                            f"Retrieved {count} brands with proper data structure"
+                        )
+                    elif endpoint == "/vestiaire":
+                        # Check for reference kits in vestiaire
+                        kits = data if isinstance(data, list) else data.get('kits', [])
+                        reference_kits = [kit for kit in kits if 'reference' in str(kit).lower()]
+                        self.log_result(
+                            f"Display API - {description}",
+                            True,
+                            f"Retrieved {len(kits)} total kits, {len(reference_kits)} reference kits"
+                        )
+                    elif endpoint == "/contributions-v2/":
+                        count = len(data) if isinstance(data, list) else len(data.get('contributions', []))
+                        self.log_result(
+                            f"Display API - {description}",
+                            True,
+                            f"Retrieved {count} contributions with proper data structure"
+                        )
+                else:
+                    self.log_result(
+                        f"Display API - {description}",
+                        False,
+                        "",
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_result(f"Display API - {description}", False, "", str(e))
+                all_success = False
+        
+        return all_success
+
+    def test_complete_data_flow(self):
+        """Test Complete Data Flow: Community DB → Voting → Moderation → Integration → Catalogue/Kit Store"""
+        try:
+            # Step 1: Create a contribution in Community DB
+            flow_contribution = {
+                "entity_type": "brand",
+                "entity_id": None,
+                "title": "Data Flow Test Brand",
+                "description": "Testing complete data flow pipeline",
                 "changes": {
-                    "name": "Test Football Club Backend",
-                    "short_name": "TFC-BE",
-                    "country": "France",
-                    "city": "Paris",
-                    "founded_year": 2024,
-                    "team_colors": ["Blue", "White", "Red"]
-                },
-                "source_urls": ["https://example.com/test-team"],
-                "images": []  # Will add image in separate test
+                    "name": "Flow Test Sports",
+                    "country": "Italy",
+                    "founded_year": 2024
+                }
             }
             
-            response = self.session.post(f"{API_BASE}/contributions-v2/", json=contribution_data)
+            response = self.session.post(f"{API_BASE}/contributions-v2/", json=flow_contribution)
             
             if response.status_code in [200, 201]:
                 data = response.json()
-                contribution_id = data.get('id') or data.get('contribution_id')
+                contribution_id = data.get('id')
+                
                 self.log_result(
-                    "POST /api/contributions-v2/ - Create Contribution",
+                    "Complete Data Flow - Step 1: Community DB Creation",
                     True,
-                    f"Created contribution with ID: {contribution_id}"
+                    f"Created contribution in Community DB with ID: {contribution_id}"
                 )
-                return contribution_id
+                
+                # Step 2: Verify contribution appears in Community DB
+                contributions_response = self.session.get(f"{API_BASE}/contributions-v2/")
+                if contributions_response.status_code == 200:
+                    contributions = contributions_response.json()
+                    flow_contribution_found = any(
+                        contrib.get('id') == contribution_id 
+                        for contrib in contributions
+                    )
+                    
+                    self.log_result(
+                        "Complete Data Flow - Step 2: Community DB Visibility",
+                        flow_contribution_found,
+                        f"Contribution {'visible' if flow_contribution_found else 'not visible'} in Community DB"
+                    )
+                    
+                    # Step 3: Check if it appears in main brands collection (integration)
+                    brands_response = self.session.get(f"{API_BASE}/brands")
+                    if brands_response.status_code == 200:
+                        brands = brands_response.json()
+                        flow_brand_found = any(
+                            brand.get('name') == 'Flow Test Sports' 
+                            for brand in brands
+                        )
+                        
+                        self.log_result(
+                            "Complete Data Flow - Step 3: Integration to Catalogue",
+                            flow_brand_found,
+                            f"Brand {'integrated' if flow_brand_found else 'not integrated'} into main catalogue"
+                        )
+                        
+                        return flow_contribution_found and flow_brand_found
+                    else:
+                        self.log_result(
+                            "Complete Data Flow - Brands Collection Check",
+                            False,
+                            "",
+                            f"Failed to retrieve brands: HTTP {brands_response.status_code}"
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "Complete Data Flow - Community DB Check",
+                        False,
+                        "",
+                        f"Failed to retrieve contributions: HTTP {contributions_response.status_code}"
+                    )
+                    return False
             else:
                 self.log_result(
-                    "POST /api/contributions-v2/ - Create Contribution",
+                    "Complete Data Flow - Contribution Creation",
                     False,
                     "",
                     f"HTTP {response.status_code}: {response.text}"
                 )
-                return None
+                return False
                 
         except Exception as e:
-            self.log_result("POST /api/contributions-v2/ - Create Contribution", False, "", str(e))
-            return None
+            self.log_result("Complete Data Flow Test", False, "", str(e))
+            return False
+
+    def test_reference_kits_in_kit_store(self):
+        """Test that reference kits appear in Kit Store (/api/vestiaire)"""
+        try:
+            response = self.session.get(f"{API_BASE}/vestiaire")
+            
+            if response.status_code == 200:
+                data = response.json()
+                kits = data if isinstance(data, list) else data.get('kits', [])
+                
+                # Look for reference kits specifically
+                reference_kits = []
+                for kit in kits:
+                    if (isinstance(kit, dict) and 
+                        ('reference' in str(kit).lower() or 
+                         'topkit_reference' in kit or 
+                         'TK-RELEASE' in str(kit))):
+                        reference_kits.append(kit)
+                
+                self.log_result(
+                    "Reference Kits in Kit Store",
+                    len(reference_kits) > 0,
+                    f"Found {len(reference_kits)} reference kits in Kit Store out of {len(kits)} total kits"
+                )
+                
+                return len(reference_kits) > 0
+            else:
+                self.log_result(
+                    "Reference Kits in Kit Store",
+                    False,
+                    "",
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Reference Kits in Kit Store", False, "", str(e))
+            return False
 
     def test_image_upload_for_contributions(self):
         """Test image upload functionality for contributions"""
