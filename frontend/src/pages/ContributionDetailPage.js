@@ -26,7 +26,7 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) =
       const token = localStorage.getItem('token');
       
       // Load contribution details
-      const contributionResponse = await fetch(`${API}/api/contributions/${contributionId}`, {
+      const contributionResponse = await fetch(`${API}/api/contributions-v2/${contributionId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
