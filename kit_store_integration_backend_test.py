@@ -134,14 +134,16 @@ class KitStoreIntegrationTester:
                 "title": f"Test Reference Kit - {datetime.now().strftime('%H:%M:%S')}",
                 "description": "Test reference kit for Kit Store integration testing",
                 "data": {
-                    "master_jersey_id": test_master_jersey.get('id'),
+                    "master_kit_id": test_master_jersey.get('id'),  # Using master_jersey as master_kit
                     "team_id": test_team.get('id'),
                     "player_name": "Test Player",
                     "player_number": "10",
                     "retail_price": 89.99,
                     "release_type": "authentic",
                     "size_range": ["S", "M", "L", "XL"],
-                    "availability_status": "available"
+                    "availability_status": "available",
+                    "model_name": f"Test Model {datetime.now().strftime('%H%M%S')}",
+                    "original_retail_price": 89.99
                 },
                 "source_urls": ["https://test-source.com/reference-kit"]
             }
