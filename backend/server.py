@@ -13121,11 +13121,6 @@ async def upload_contribution_image_v2(
         logger.error(f"Contribution image upload error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
 
-app.include_router(api_router)
-
-# Mount static files for uploads
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 @api_router.post("/contributions-v2/{contribution_id}/moderate")
 async def moderate_contribution_v2(
     contribution_id: str,
