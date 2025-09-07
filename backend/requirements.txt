@@ -32,3 +32,4 @@ sendgrid>=6.10.0
 pyotp>=2.8.0
 qrcode>=7.4.0
 Pillow>=10.0.0
+aiofiles>=23.0.0
