@@ -13278,6 +13278,14 @@ async def moderate_contribution_v2(
             }
         )
         
+        # Auto-integrate approved contributions to main catalogue
+        if new_status == ContributionStatusV2.APPROVED:
+            try:
+                await integrate_approved_contribution_to_catalogue(contribution_id, contribution, user_id)
+                logger.info(f"Successfully integrated approved contribution {contribution_id} to catalogue")
+            except Exception as e:
+                logger.warning(f"Failed to integrate contribution {contribution_id} to catalogue: {e}")
+        
         # Send notification to contributor if requested
         if moderation_data.notify_contributor:
             try:
