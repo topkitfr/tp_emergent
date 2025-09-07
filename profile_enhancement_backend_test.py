@@ -21,7 +21,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-catalog-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-collab.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
