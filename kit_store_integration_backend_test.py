@@ -131,10 +131,9 @@ class KitStoreIntegrationTester:
             # Create reference kit contribution
             contribution_data = {
                 "entity_type": "reference_kit",
-                "entity_name": f"Test Reference Kit - {datetime.now().strftime('%H:%M:%S')}",
+                "title": f"Test Reference Kit - {datetime.now().strftime('%H:%M:%S')}",
                 "description": "Test reference kit for Kit Store integration testing",
-                "source_url": "https://test-source.com/reference-kit",
-                "fields": {
+                "data": {
                     "master_jersey_id": test_master_jersey.get('id'),
                     "team_id": test_team.get('id'),
                     "player_name": "Test Player",
@@ -143,7 +142,8 @@ class KitStoreIntegrationTester:
                     "release_type": "authentic",
                     "size_range": ["S", "M", "L", "XL"],
                     "availability_status": "available"
-                }
+                },
+                "source_urls": ["https://test-source.com/reference-kit"]
             }
             
             response = self.session.post(f"{API_BASE}/contributions-v2/", json=contribution_data)
