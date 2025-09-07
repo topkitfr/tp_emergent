@@ -354,6 +354,49 @@ const ModerationDashboard = ({ user, API }) => {
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
+          <AdvancedAnalytics API={process.env.REACT_APP_BACKEND_URL} />
+        )}
+
+        {/* Activity Tab */}
+        {activeTab === 'activity' && (
+          <div className="space-y-6">
+            <ActivityFeed 
+              API={process.env.REACT_APP_BACKEND_URL} 
+              currentUser={user}
+              className="max-w-4xl mx-auto"
+            />
+            
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+              <h3 className="font-semibold text-green-900 mb-3">Real-Time Community Monitoring</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 animate-pulse"></div>
+                  <div>
+                    <p className="font-medium text-green-800">Live Activity Feed</p>
+                    <p className="text-green-700">Real-time updates every 30 seconds</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
+                  <div>
+                    <p className="font-medium text-blue-800">Community Pulse</p>
+                    <p className="text-blue-700">Track voting patterns and engagement</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5"></div>
+                  <div>
+                    <p className="font-medium text-purple-800">Quality Insights</p>
+                    <p className="text-purple-700">AI-powered content analysis</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Legacy Analytics Tab - now replaced with Advanced Analytics */}
+        {activeTab === 'legacy-analytics' && (
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Community Moderation Analytics</h3>
