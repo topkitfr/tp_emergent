@@ -12699,7 +12699,12 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
         # Extract logo/image URL from contribution images (first image becomes logo)
         logo_url = ""
         if images and len(images) > 0:
-            logo_url = images[0].get('url', '') if isinstance(images[0], dict) else str(images[0])
+            image_path = images[0].get('url', '') if isinstance(images[0], dict) else str(images[0])
+            # Ensure the URL includes the /api prefix for proper routing
+            if image_path and not image_path.startswith('http') and not image_path.startswith('data:'):
+                logo_url = f"api/{image_path}"
+            else:
+                logo_url = image_path
         
         # Generate new entity ID
         entity_id = str(uuid.uuid4())
