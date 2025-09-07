@@ -1,0 +1,362 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, ThumbsUp, ThumbsDown, Eye, Filter, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import DynamicContributionForm from '../components/DynamicContributionForm';
+
+const ContributionsV2Page = () => {
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [selectedType, setSelectedType] = useState(null);
+  const [filters, setFilters] = useState({
+    status: '',
+    entity_type: '',
+    page: 1
+  });
+  const [votingStates, setVotingStates] = useState({});
+
+  const statusColors = {
+    draft: 'bg-gray-100 text-gray-800',
+    pending_review: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    needs_revision: 'bg-orange-100 text-orange-800'
+  };
+
+  useEffect(() => {
+    fetchContributions();
+  }, [filters]);
+
+  const fetchContributions = async () => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.entity_type) queryParams.append('entity_type', filters.entity_type);
+      queryParams.append('page', filters.page);
+      queryParams.append('limit', '20');
+
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/?${queryParams}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setContributions(data);
+      } else {
+        console.error('Failed to fetch contributions');
+        setContributions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
+      setContributions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVote = async (contributionId, voteType) => {
+    setVotingStates(prev => ({ ...prev, [contributionId]: true }));
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/${contributionId}/vote`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            vote_type: voteType,
+            comment: '',
+            field_votes: {}
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update the contribution in the list
+        setContributions(prev => prev.map(contrib => 
+          contrib.id === contributionId 
+            ? { 
+                ...contrib, 
+                upvotes: result.upvotes, 
+                downvotes: result.downvotes,
+                status: result.status
+              }
+            : contrib
+        ));
+
+        if (result.auto_approved || result.auto_rejected) {
+          alert(`Contribution ${result.auto_approved ? 'auto-approved' : 'auto-rejected'} based on community votes!`);
+        }
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'Failed to vote');
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      alert('Error voting. Please try again.');
+    } finally {
+      setVotingStates(prev => ({ ...prev, [contributionId]: false }));
+    }
+  };
+
+  const handleNewContribution = (type = null) => {
+    setSelectedType(type);
+    setShowForm(true);
+  };
+
+  const formatEntityType = (type) => {
+    return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatStatus = (status) => {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getContributionPreview = (contribution) => {
+    const data = contribution.data || {};
+    const entityType = contribution.entity_type;
+
+    switch (entityType) {
+      case 'team':
+        return `${data.name || 'Unknown Team'} - ${data.country || 'Unknown Country'}`;
+      case 'brand':
+        return `${data.name || 'Unknown Brand'} - ${data.country || 'Unknown Country'}`;
+      case 'player':
+        return `${data.name || 'Unknown Player'} - ${data.nationality || 'Unknown Nationality'}`;
+      case 'competition':
+        return `${data.competition_name || 'Unknown Competition'} - ${data.country || 'Unknown Country'}`;
+      case 'master_kit':
+        return `${data.season || 'Unknown Season'} ${formatEntityType(data.jersey_type || 'unknown')} Kit`;
+      case 'reference_kit':
+        return `${data.model_name || 'Unknown Model'} - ${formatEntityType(data.release_type || 'unknown')}`;
+      default:
+        return 'Unknown Contribution';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading contributions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Community Contributions</h1>
+              <p className="text-gray-600 mt-1">
+                Discogs-style collaborative database. Submit, vote, and improve content together.
+              </p>
+            </div>
+            <button
+              onClick={() => handleNewContribution()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              New Contribution
+            </button>
+          </div>
+
+          {/* Quick Add Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { type: 'team', label: '⚽ Team', color: 'bg-green-50 text-green-700 hover:bg-green-100' },
+              { type: 'brand', label: '👕 Brand', color: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+              { type: 'player', label: '👤 Player', color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
+              { type: 'competition', label: '🏆 Competition', color: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
+              { type: 'master_kit', label: '👕 Master Kit', color: 'bg-red-50 text-red-700 hover:bg-red-100' },
+              { type: 'reference_kit', label: '📦 Reference Kit', color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' }
+            ].map(({ type, label, color }) => (
+              <button
+                key={type}
+                onClick={() => handleNewContribution(type)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium ${color} border border-transparent hover:border-gray-200`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
+                className="border border-gray-300 rounded px-3 py-1 text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="pending_review">Pending Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="needs_revision">Needs Revision</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select
+                value={filters.entity_type}
+                onChange={(e) => setFilters(prev => ({ ...prev, entity_type: e.target.value, page: 1 }))}
+                className="border border-gray-300 rounded px-3 py-1 text-sm"
+              >
+                <option value="">All Types</option>
+                <option value="team">Team</option>
+                <option value="brand">Brand</option>
+                <option value="player">Player</option>
+                <option value="competition">Competition</option>
+                <option value="master_kit">Master Kit</option>
+                <option value="reference_kit">Reference Kit</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Contributions List */}
+        <div className="space-y-4">
+          {contributions.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <ImageIcon className="w-12 h-12 mx-auto" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No contributions found</h3>
+              <p className="text-gray-600 mb-4">
+                Be the first to contribute to the community database!
+              </p>
+              <button
+                onClick={() => handleNewContribution()}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Create First Contribution
+              </button>
+            </div>
+          ) : (
+            contributions.map(contribution => (
+              <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-gray-900">{contribution.title}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[contribution.status] || statusColors.draft}`}>
+                        {formatStatus(contribution.status)}
+                      </span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                        {formatEntityType(contribution.entity_type)}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-2">
+                      {getContributionPreview(contribution)}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>Ref: {contribution.topkit_reference}</span>
+                      <span>Created: {new Date(contribution.created_at).toLocaleDateString()}</span>
+                      {contribution.images_count > 0 && (
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="w-3 h-3" />
+                          {contribution.images_count} image{contribution.images_count !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Voting */}
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      onClick={() => handleVote(contribution.id, 'upvote')}
+                      disabled={votingStates[contribution.id]}
+                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      {contribution.upvotes}
+                    </button>
+                    <button
+                      onClick={() => handleVote(contribution.id, 'downvote')}
+                      disabled={votingStates[contribution.id]}
+                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      {contribution.downvotes}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Voting Rules Info */}
+                {contribution.status === 'pending_review' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                    <p className="text-blue-800">
+                      <strong>Community Voting:</strong> 3 upvotes = auto-approved ✅ | 2 downvotes = auto-rejected ❌
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Voting Rules Explanation */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mt-8">
+          <h3 className="font-semibold text-blue-900 mb-3">How Community Voting Works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
+              <div>
+                <p className="font-medium text-green-800">Auto-Approval</p>
+                <p className="text-green-700">3 upvotes automatically approve a contribution</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
+              <div>
+                <p className="font-medium text-red-800">Auto-Rejection</p>
+                <p className="text-red-700">2 downvotes automatically reject a contribution</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-gray-500 rounded-full mt-1.5"></div>
+              <div>
+                <p className="font-medium text-gray-800">Visibility</p>
+                <p className="text-gray-700">Images visible to all logged-in users during review</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Contribution Form */}
+      <DynamicContributionForm 
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setSelectedType(null);
+          fetchContributions(); // Refresh list after form closes
+        }}
+        selectedType={selectedType}
+      />
+    </div>
+  );
+};
+
+export default ContributionsV2Page;
