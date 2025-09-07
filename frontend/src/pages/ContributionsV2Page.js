@@ -326,9 +326,11 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
         </div>
 
         {/* Contributions List */}
-        <div className="space-y-4">
+        <div className={`${displayOptions.viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 
+                         displayOptions.viewMode === 'thumbnail' ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4' : 
+                         'space-y-4'}`}>
           {contributions.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center ${displayOptions.viewMode !== 'list' ? 'col-span-full' : ''}`}>
               <div className="text-gray-400 mb-4">
                 <ImageIcon className="w-12 h-12 mx-auto" />
               </div>
@@ -344,65 +346,171 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
               </button>
             </div>
           ) : (
-            contributions.map(contribution => (
-              <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{contribution.title}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[contribution.status] || statusColors.draft}`}>
-                        {formatStatus(contribution.status)}
-                      </span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                        {formatEntityType(contribution.entity_type)}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-2">
-                      {getContributionPreview(contribution)}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>Ref: {contribution.topkit_reference}</span>
-                      <span>Created: {new Date(contribution.created_at).toLocaleDateString()}</span>
-                      {contribution.images_count > 0 && (
-                        <span className="flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" />
-                          {contribution.images_count} image{contribution.images_count !== 1 ? 's' : ''}
+            contributions.map(contribution => {
+              // Grid View (Default)
+              if (displayOptions.viewMode === 'grid') {
+                return (
+                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <h3 className="font-semibold text-gray-900 text-sm">{contribution.title}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[contribution.status] || statusColors.draft}`}>
+                            {formatStatus(contribution.status)}
+                          </span>
+                        </div>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium mb-2 inline-block">
+                          {formatEntityType(contribution.entity_type)}
                         </span>
-                      )}
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {getContributionPreview(contribution)}
+                        </p>
+                        <div className="flex flex-col gap-1 text-xs text-gray-500">
+                          <span>Ref: {contribution.topkit_reference}</span>
+                          <span>Created: {new Date(contribution.created_at).toLocaleDateString()}</span>
+                          {contribution.images_count > 0 && (
+                            <span className="flex items-center gap-1">
+                              <ImageIcon className="w-3 h-3" />
+                              {contribution.images_count} image{contribution.images_count !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Voting Section */}
+                    <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                      <button
+                        onClick={() => handleVote(contribution.id, 'upvote')}
+                        disabled={votingStates[contribution.id]?.loading}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-green-50 text-green-600"
+                      >
+                        <ThumbsUp className="w-4 h-4" />
+                        <span>{contribution.upvotes || 0}</span>
+                      </button>
+                      <button
+                        onClick={() => handleVote(contribution.id, 'downvote')}
+                        disabled={votingStates[contribution.id]?.loading}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-red-50 text-red-600"
+                      >
+                        <ThumbsDown className="w-4 h-4" />
+                        <span>{contribution.downvotes || 0}</span>
+                      </button>
+                      <div className="ml-auto">
+                        <button
+                          onClick={() => window.open(`/contributions-v2/${contribution.id}`, '_blank')}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-blue-50 text-blue-600"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Voting */}
-                  <div className="flex items-center gap-2 ml-4">
-                    <button
-                      onClick={() => handleVote(contribution.id, 'upvote')}
-                      disabled={votingStates[contribution.id]}
-                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                      {contribution.upvotes}
-                    </button>
-                    <button
-                      onClick={() => handleVote(contribution.id, 'downvote')}
-                      disabled={votingStates[contribution.id]}
-                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      <ThumbsDown className="w-4 h-4" />
-                      {contribution.downvotes}
-                    </button>
+                );
+              }
+              
+              // Thumbnail View (Images Only)
+              else if (displayOptions.viewMode === 'thumbnail') {
+                return (
+                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="aspect-square bg-gray-100 flex items-center justify-center text-2xl">
+                      {contribution.entity_type === 'team' && '⚽'}
+                      {contribution.entity_type === 'brand' && '👕'}
+                      {contribution.entity_type === 'player' && '👤'}
+                      {contribution.entity_type === 'competition' && '🏆'}
+                      {contribution.entity_type === 'master_kit' && '👕'}
+                      {contribution.entity_type === 'reference_kit' && '📦'}
+                    </div>
+                    <div className="p-2">
+                      <h4 className="font-medium text-xs text-gray-900 mb-1 line-clamp-1">{contribution.title}</h4>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`px-1 py-0.5 rounded text-xs ${statusColors[contribution.status] || statusColors.draft}`}>
+                          {formatStatus(contribution.status).substring(0, 3)}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <ThumbsUp className="w-3 h-3 text-green-600" />
+                          <span className="text-green-600">{contribution.upvotes || 0}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                );
+              }
+              
+              // List View (Detailed)
+              else {
+                return (
+                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-gray-900">{contribution.title}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[contribution.status] || statusColors.draft}`}>
+                            {formatStatus(contribution.status)}
+                          </span>
+                          <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                            {formatEntityType(contribution.entity_type)}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-2">
+                          {getContributionPreview(contribution)}
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Ref: {contribution.topkit_reference}</span>
+                          <span>Created: {new Date(contribution.created_at).toLocaleDateString()}</span>
+                          {contribution.images_count > 0 && (
+                            <span className="flex items-center gap-1">
+                              <ImageIcon className="w-3 h-3" />
+                              {contribution.images_count} image{contribution.images_count !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Voting Section */}
+                    <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => handleVote(contribution.id, 'upvote')}
+                        disabled={votingStates[contribution.id]?.loading}
+                        className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm hover:bg-green-50 text-green-600"
+                      >
+                        <ThumbsUp className="w-4 h-4" />
+                        <span>{contribution.upvotes || 0} upvotes</span>
+                      </button>
+                      <button
+                        onClick={() => handleVote(contribution.id, 'downvote')}
+                        disabled={votingStates[contribution.id]?.loading}
+                        className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm hover:bg-red-50 text-red-600"
+                      >
+                        <ThumbsDown className="w-4 h-4" />
+                        <span>{contribution.downvotes || 0} downvotes</span>
+                      </button>
+                      <div className="ml-auto">
+                        <button
+                          onClick={() => window.open(`/contributions-v2/${contribution.id}`, '_blank')}
+                          className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm hover:bg-blue-50 text-blue-600"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Details
+                          <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
 
-                {/* Voting Rules Info */}
-                {contribution.status === 'pending_review' && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                    <p className="text-blue-800">
-                      <strong>Community Voting:</strong> 3 upvotes = auto-approved ✅ | 2 downvotes = auto-rejected ❌
-                    </p>
+                    {/* Voting Rules Info */}
+                    {contribution.status === 'pending_review' && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm mt-4">
+                        <p className="text-blue-800">
+                          <strong>Community Voting:</strong> 3 upvotes = auto-approved ✅ | 2 downvotes = auto-rejected ❌
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
+                );
+              }
+            })
           )}
         </div>
 
