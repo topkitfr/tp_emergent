@@ -9,6 +9,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     season: '',
     kit_type: ''
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [showReleaseDetailModal, setShowReleaseDetailModal] = useState(false);
   const [selectedReleaseForDetail, setSelectedReleaseForDetail] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
