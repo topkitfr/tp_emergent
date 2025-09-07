@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ThumbsUp, ThumbsDown, Image as ImageIcon } from 'lucide-react';
+import { getUnifiedFieldsForEntityType, validateEntityData } from './UnifiedFieldDefinitions';
+import UnifiedFieldRenderer from './UnifiedFieldRenderer';
 
 const DynamicContributionForm = ({ isOpen, onClose, selectedType = null }) => {
   const [contributionType, setContributionType] = useState(selectedType || 'team');
