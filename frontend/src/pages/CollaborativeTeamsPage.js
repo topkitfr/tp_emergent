@@ -600,22 +600,16 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Football Teams</h1>
-              <p className="text-gray-600">
-                Collaborative database of football teams from around the world
-              </p>
-            </div>
-            {user && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-              >
-                Add Team
-              </button>
-            )}
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              ⚽ Teams
+            </h1>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Explore our collaborative database of teams. To add a new team, use the Community DB.
+            </p>
           </div>
+        </div>
+      </div>
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
