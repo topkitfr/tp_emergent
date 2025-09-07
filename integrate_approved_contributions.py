@@ -157,6 +157,34 @@ async def integrate_approved_contributions():
                 
                 result = await db.master_jerseys.insert_one(master_jersey_doc)
                 print(f"✅ Created master jersey: {data.get('season')} {data.get('jersey_type')} (ID: {entity_id})")
+                
+            elif entity_type == 'reference_kit':
+                # For reference kits, create in reference_kits collection for Kit Store
+                reference_kit_doc = {
+                    **common_fields,
+                    "master_kit_id": data.get('master_kit_id', ''),
+                    "model_name": data.get('model_name', ''),
+                    "release_type": data.get('release_type', 'replica'),
+                    "original_retail_price": data.get('original_retail_price', 0.0),
+                    "current_market_price": data.get('current_market_price', 0.0),
+                    "release_date": data.get('release_date', ''),
+                    "sku_code": data.get('sku_code', ''),
+                    "barcode": data.get('barcode', ''),
+                    "is_limited_edition": data.get('is_limited_edition', False),
+                    "production_run": data.get('production_run', None),
+                    "league_competition": data.get('league_competition', ''),
+                    "product_images": data.get('product_images', []),
+                    "main_photo": data.get('main_photo', ''),
+                    "secondary_photos": data.get('secondary_photos', []),
+                    "description": data.get('description', ''),
+                    "sizes_available": data.get('sizes_available', []),
+                    "material_composition": data.get('material_composition', ''),
+                    "care_instructions": data.get('care_instructions', ''),
+                    "authenticity_features": data.get('authenticity_features', [])
+                }
+                
+                result = await db.reference_kits.insert_one(reference_kit_doc)
+                print(f"✅ Created reference kit: {data.get('model_name')} {data.get('release_type')} (ID: {entity_id})")
             
             # Mark contribution as integrated
             await db.contributions_v2.update_one(
