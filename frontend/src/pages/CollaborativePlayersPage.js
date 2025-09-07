@@ -514,7 +514,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
       {/* Filters */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
         <h3 className="font-semibold mb-4">Filtres</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -569,7 +569,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
                 onChange={(e) => setFilters({...filters, verified_only: e.target.checked})}
                 className="mr-2"
               />
-              <span className="text-sm text-gray-700">Joueurs vérifiés uniquement</span>
+              <span className="text-sm text-gray-700">Vérifiés uniquement</span>
             </label>
           </div>
 
@@ -578,8 +578,47 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
               onClick={() => setFilters({ search: '', nationality: '', position: '', verified_only: false })}
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
-              Réinitialiser les filtres
+              Réinitialiser
             </button>
+          </div>
+
+          {/* Display Options */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Vue</label>
+            <div className="flex border border-gray-300 rounded">
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'grid' }))}
+                className={`px-3 py-1 text-sm ${displayOptions.viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                📊 Grid
+              </button>
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'thumbnail' }))}
+                className={`px-3 py-1 text-sm border-x border-gray-300 ${displayOptions.viewMode === 'thumbnail' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                🖼️ Thumb
+              </button>
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'list' }))}
+                className={`px-3 py-1 text-sm ${displayOptions.viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                📋 List
+              </button>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Par Page</label>
+            <select
+              value={displayOptions.itemsPerPage}
+              onChange={(e) => setDisplayOptions(prev => ({ ...prev, itemsPerPage: parseInt(e.target.value), currentPage: 1 }))}
+              className="border border-gray-300 rounded px-3 py-1 text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
           </div>
         </div>
       </div>
