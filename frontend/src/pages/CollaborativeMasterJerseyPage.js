@@ -246,6 +246,104 @@ const CollaborativeMasterJerseyPage = ({
     </div>
   );
 
+  // Thumbnail version - smaller cards
+  const MasterJerseyThumbnail = ({ jersey }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+      onClick={() => navigate(`/master-jerseys/${jersey.id}`)}
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors overflow-hidden">
+        {jersey.main_image_url ? (
+          <img 
+            src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+            alt={`${jersey.team_info?.name} ${jersey.season}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <span className="text-2xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
+        {jersey.verified_level !== 'unverified' && (
+          <div className="absolute top-1 right-1 bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-medium">
+            ✓
+          </div>
+        )}
+      </div>
+      
+      <div className="p-2">
+        <h3 className="font-bold text-xs text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-1">
+          {jersey.team_info?.name || 'Équipe inconnue'}
+        </h3>
+        <div className="text-xs text-gray-600 mb-1">
+          <span>📅 {jersey.season}</span>
+        </div>
+        <div className="text-xs text-blue-600 font-mono truncate">{jersey.topkit_reference}</div>
+      </div>
+    </div>
+  );
+
+  // List version - horizontal layout
+  const MasterJerseyListItem = ({ jersey }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group flex items-center space-x-4"
+      onClick={() => navigate(`/master-jerseys/${jersey.id}`)}
+    >
+      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors overflow-hidden">
+        {jersey.main_image_url ? (
+          <img 
+            src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+            alt={`${jersey.team_info?.name} ${jersey.season}`}
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <span className="text-2xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 truncate">
+            {jersey.team_info?.name || 'Équipe inconnue'}
+          </h3>
+          {jersey.verified_level !== 'unverified' && (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+              ✓
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+          <span className="flex items-center">
+            <span className="mr-1">📅</span>
+            {jersey.season}
+          </span>
+          <span className="flex items-center">
+            <span className="mr-1">{getJerseyTypeIcon(jersey.jersey_type)}</span>
+            {getJerseyTypeLabel(jersey.jersey_type)}
+          </span>
+          <span className="flex items-center">
+            <span className="mr-1">👕</span>
+            {jersey.brand_info?.name || 'Marque inconnue'}
+          </span>
+        </div>
+        
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-blue-600 font-mono text-sm">{jersey.topkit_reference}</span>
+          <div className="flex items-center space-x-2 text-gray-500 text-sm">
+            <span>{jersey.releases_count || 0} versions</span>
+            <span>•</span>
+            <span>{jersey.collectors_count || 0} collectionneurs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const CreateMasterJerseyModal = () => {
     const [formData, setFormData] = useState({
       team_id: '',
