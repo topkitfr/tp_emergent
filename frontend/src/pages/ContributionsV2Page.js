@@ -12,6 +12,11 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
     entity_type: '',
     page: 1
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [votingStates, setVotingStates] = useState({});
 
   const statusColors = {
