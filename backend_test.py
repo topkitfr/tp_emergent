@@ -180,20 +180,21 @@ class LocalStorageOptimizationTester:
             if response.status_code == 200:
                 result = response.json()
                 
-                # Check if variants were generated
+                # Check if variants were generated (they're in a nested 'variants' object)
+                variants_obj = result.get('variants', {})
                 expected_variants = ['thumbnail', 'small', 'medium', 'large', 'original']
-                generated_variants = [k for k in result.keys() if k in expected_variants]
+                generated_variants = [k for k in variants_obj.keys() if k in expected_variants]
                 
                 if len(generated_variants) >= 4:  # At least 4 variants should be generated
                     # Store uploaded image info for cleanup
-                    self.uploaded_images.extend([result.get(variant) for variant in generated_variants if result.get(variant)])
+                    self.uploaded_images.extend([variants_obj.get(variant) for variant in generated_variants if variants_obj.get(variant)])
                     
                     self.log_result("Image Upload with Variants", True, 
                                   f"Successfully uploaded image with {len(generated_variants)} variants: {', '.join(generated_variants)}")
                     return True
                 else:
                     self.log_result("Image Upload with Variants", False, 
-                                  f"Expected multiple variants, got: {list(result.keys())}")
+                                  f"Expected multiple variants, got: {list(variants_obj.keys())}")
                     return False
             else:
                 self.log_result("Image Upload with Variants", False, 
