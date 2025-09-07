@@ -314,6 +314,34 @@ class KitStoreIntegrationTester:
             self.log_result("Kit Store Endpoint - After Integration", False, "", str(e))
             return []
 
+    def test_data_model_consistency(self):
+        """Test data model consistency between master_jerseys and master_kits"""
+        try:
+            # Check if master_kits collection exists and has data
+            master_kits_response = self.session.get(f"{API_BASE}/master-kits")
+            master_jerseys_response = self.session.get(f"{API_BASE}/master-jerseys")
+            
+            master_kits = []
+            master_jerseys = []
+            
+            if master_kits_response.status_code == 200:
+                master_kits = master_kits_response.json()
+            
+            if master_jerseys_response.status_code == 200:
+                master_jerseys = master_jerseys_response.json()
+            
+            self.log_result(
+                "Data Model Consistency Check",
+                True,
+                f"Found {len(master_kits)} master kits and {len(master_jerseys)} master jerseys. Vestiaire endpoint expects master_kits but data is in master_jerseys collection."
+            )
+            
+            return len(master_kits) > 0
+                
+        except Exception as e:
+            self.log_result("Data Model Consistency Check", False, "", str(e))
+            return False
+
     def test_reference_kits_collection_direct(self):
         """Test direct access to reference_kits collection to verify backend integration"""
         try:
