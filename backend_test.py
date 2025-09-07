@@ -818,7 +818,7 @@ class TopKitBackendTester:
         voting_success = self.test_voting_system(created_contributions[0] if created_contributions else None)
         
         # Test authentication requirements
-        auth_success = self._authentication_requirements()
+        auth_success = self.test_authentication_requirements()
         
         # Test admin-specific endpoints
         admin_success = self.test_admin_specific_endpoints()
