@@ -59,9 +59,7 @@ const AppContent = () => {
     if (path === '/explore') return 'explore';
     if (path === '/catalogue') return 'catalogue';
     if (path === '/vestiaire') return 'vestiaire';
-    if (path === '/collections') return 'collections';
     if (path === '/my-collection') return 'my-collection';
-    if (path === '/contributions') return 'contributions';
     if (path === '/contributions-v2') return 'contributions-v2';
     if (path === '/moderation') return 'moderation';
     if (path === '/teams') return 'teams';
