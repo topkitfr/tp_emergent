@@ -190,6 +190,8 @@ const AppContent = () => {
       'collections': '/collections',
       'my-collection': '/my-collection',
       'contributions': '/contributions',
+      'contributions-v2': '/contributions-v2',
+      'moderation': '/moderation',
       'teams': '/teams',
       'brands': '/brands',
       'players': '/players',
