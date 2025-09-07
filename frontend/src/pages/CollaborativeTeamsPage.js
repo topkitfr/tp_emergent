@@ -273,19 +273,21 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
 
 
       {/* Contribution Modal */}
-      {showContributionModal && selectedTeamForContribution && (
+      {showContributionModal && (
         <ContributionModal
           isOpen={showContributionModal}
           onClose={() => {
             setShowContributionModal(false);
             setSelectedTeamForContribution(null);
           }}
-          entity={selectedTeamForContribution}
+          selectedEntity={selectedTeamForContribution}
           entityType="team"
-          onContributionCreated={() => {
+          user={user}
+          API={API}
+          onDataUpdate={() => {
+            onDataUpdate();
             setShowContributionModal(false);
             setSelectedTeamForContribution(null);
-            onDataUpdate();
           }}
         />
       )}
