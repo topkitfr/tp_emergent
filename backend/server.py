@@ -9886,8 +9886,10 @@ async def send_newsletter(
         raise HTTPException(status_code=500, detail="Erreur lors de l'envoi de la newsletter")
 
 # Mount static files to serve uploaded images
-app.mount("/images", StaticFiles(directory=ROOT_DIR / "uploads" / "jerseys"), name="images")
-app.mount("/uploads", StaticFiles(directory=ROOT_DIR / "uploads"), name="uploads")
+# Mount static files for uploads under /api prefix for Kubernetes ingress compatibility
+from fastapi.staticfiles import StaticFiles
+api_router.mount("/uploads", StaticFiles(directory=ROOT_DIR / "uploads"), name="uploads_api")
+api_router.mount("/uploads", StaticFiles(directory="uploads"), name="uploads_api_local")
 
 # Fonction utilitaire pour générer des références uniques
 async def generate_reference(entity_type: str) -> str:
