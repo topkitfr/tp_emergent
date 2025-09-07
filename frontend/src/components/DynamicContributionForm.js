@@ -94,10 +94,6 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
       return errors[0]; // Return first error
     }
 
-    if (!title.trim()) {
-      return 'Title is required';
-    }
-
     if (requiresImages(contributionType) && images.length === 0) {
       return 'At least one image is required for this entity type';
     }
