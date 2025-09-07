@@ -846,7 +846,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{filteredCompetitions.length}</div>
+          <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
           <div className="text-sm text-blue-700">Ligues trouvées</div>
         </div>
         
