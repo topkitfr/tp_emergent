@@ -12700,14 +12700,14 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "official_name": data.get('official_name', ''),
                 "alternative_names": data.get('alternative_names', []),
                 "colors": data.get('colors', []),
-                "logo_url": data.get('logo_url', ''),
+                "logo_url": logo_url or data.get('logo_url', ''),  # Use image from contribution
                 "stadium": data.get('stadium', ''),
                 "league_info": data.get('league_info', {}),
                 "current_competitions": data.get('current_competitions', []),
                 "primary_competition_id": data.get('primary_competition_id', '')
             }
             await db.teams.insert_one(team_doc)
-            logger.info(f"Integrated team: {data.get('name')} to catalogue")
+            logger.info(f"Integrated team: {data.get('name')} to catalogue with logo: {logo_url}")
                 
         elif entity_type == 'brand':
             brand_doc = {
@@ -12718,11 +12718,11 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "founded_year": data.get('founded_year'),
                 "website": data.get('website', ''),
                 "alternative_names": data.get('alternative_names', []),
-                "logo_url": data.get('logo_url', ''),
+                "logo_url": logo_url or data.get('logo_url', ''),  # Use image from contribution
                 "description": data.get('description', '')
             }
             await db.brands.insert_one(brand_doc)
-            logger.info(f"Integrated brand: {data.get('name')} to catalogue")
+            logger.info(f"Integrated brand: {data.get('name')} to catalogue with logo: {logo_url}")
                 
         elif entity_type == 'player':
             player_doc = {
@@ -12739,10 +12739,10 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "weight": data.get('weight', ''),
                 "foot": data.get('foot', ''),
                 "market_value": data.get('market_value', ''),
-                "profile_picture_url": data.get('profile_picture_url', '')
+                "profile_picture_url": logo_url or data.get('profile_picture_url', '')  # Use image from contribution
             }
             await db.players.insert_one(player_doc)
-            logger.info(f"Integrated player: {data.get('name')} to catalogue")
+            logger.info(f"Integrated player: {data.get('name')} to catalogue with photo: {logo_url}")
                 
         elif entity_type == 'competition':
             competition_doc = {
@@ -12756,10 +12756,10 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "alternative_names": data.get('alternative_names', []),
                 "season_format": data.get('season_format', ''),
                 "current_season": data.get('current_season', ''),
-                "logo_url": data.get('logo_url', '')
+                "logo_url": logo_url or data.get('logo_url', '')  # Use image from contribution
             }
             await db.competitions.insert_one(competition_doc)
-            logger.info(f"Integrated competition: {data.get('competition_name')} to catalogue")
+            logger.info(f"Integrated competition: {data.get('competition_name')} to catalogue with logo: {logo_url}")
                 
         elif entity_type == 'master_kit':
             master_jersey_doc = {
@@ -12772,7 +12772,7 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "primary_color": data.get('primary_color', ''),
                 "secondary_colors": data.get('secondary_colors', []),
                 "pattern": data.get('pattern', ''),
-                "main_image_url": data.get('main_image_url', ''),
+                "main_image_url": logo_url or data.get('main_image_url', ''),  # Use image from contribution
                 "additional_images": data.get('additional_images', []),
                 "description": data.get('description', ''),
                 "material": data.get('material', ''),
@@ -12781,9 +12781,22 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "discontinued_date": data.get('discontinued_date', '')
             }
             await db.master_jerseys.insert_one(master_jersey_doc)
-            logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue")
+            logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue with image: {logo_url}")
             
         elif entity_type == 'reference_kit':
+            # For reference kits, extract multiple images
+            product_images = []
+            main_photo = logo_url
+            secondary_photos = []
+            
+            for i, img in enumerate(images):
+                img_url = img.get('url', '') if isinstance(img, dict) else str(img)
+                if i == 0:
+                    main_photo = img_url
+                else:
+                    secondary_photos.append(img_url)
+                product_images.append(img_url)
+            
             reference_kit_doc = {
                 **common_fields,
                 "master_kit_id": data.get('master_kit_id', ''),
@@ -12797,9 +12810,9 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "is_limited_edition": data.get('is_limited_edition', False),
                 "production_run": data.get('production_run', None),
                 "league_competition": data.get('league_competition', ''),
-                "product_images": data.get('product_images', []),
-                "main_photo": data.get('main_photo', ''),
-                "secondary_photos": data.get('secondary_photos', []),
+                "product_images": product_images,  # All images from contribution
+                "main_photo": main_photo,  # Primary image from contribution
+                "secondary_photos": secondary_photos,  # Additional images from contribution
                 "description": data.get('description', ''),
                 "sizes_available": data.get('sizes_available', []),
                 "material_composition": data.get('material_composition', ''),
