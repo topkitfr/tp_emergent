@@ -23,7 +23,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
   const nationalities = [...new Set(players.map(player => player.nationality).filter(Boolean))];
   const positions = [...new Set(players.map(player => player.position).filter(Boolean))];
 
-  // Apply filters
+  // Apply filters and pagination
   useEffect(() => {
     let filtered = [...players];
 
@@ -49,7 +49,21 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
     }
 
     setFilteredPlayers(filtered);
+    // Reset to first page when filters change
+    setDisplayOptions(prev => ({ ...prev, currentPage: 1 }));
   }, [players, filters]);
+
+  // Calculate pagination
+  const totalItems = filteredPlayers.length;
+  const totalPages = Math.ceil(totalItems / displayOptions.itemsPerPage);
+  const startIndex = (displayOptions.currentPage - 1) * displayOptions.itemsPerPage;
+  const endIndex = startIndex + displayOptions.itemsPerPage;
+  const currentItems = filteredPlayers.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    setDisplayOptions(prev => ({ ...prev, currentPage: Math.max(1, Math.min(page, totalPages)) }));
+  };
 
   // Create new player
   const handleCreatePlayer = async (playerData) => {
