@@ -493,8 +493,11 @@ class LocalStorageOptimizationTester:
                 if response.status_code == 200:
                     successful_entities.append(entity_type)
                     result = response.json()
-                    if 'original' in result:
-                        self.uploaded_images.append(result['original'])
+                    variants_obj = result.get('variants', {})
+                    if 'original' in variants_obj:
+                        self.uploaded_images.append(variants_obj['original'])
+                    elif result.get('image_url'):
+                        self.uploaded_images.append(result['image_url'])
                         
             except Exception as e:
                 print(f"Error testing entity type {entity_type}: {e}")
