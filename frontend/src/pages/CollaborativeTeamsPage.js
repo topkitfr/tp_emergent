@@ -611,6 +611,9 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         </div>
       </div>
 
+      {/* Filters and Statistics */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
