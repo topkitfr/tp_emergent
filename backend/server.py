@@ -12504,6 +12504,485 @@ async def get_kit_store(
         raise HTTPException(status_code=500, detail="Error fetching kit store")
 
 
+# ================================
+# ENHANCED CONTRIBUTIONS SYSTEM V2 - DISCOGS STYLE
+# ================================
+
+async def generate_topkit_reference(entity_type: str) -> str:
+    """Generate TopKit reference for contributions"""
+    entity_prefixes = {
+        ContributionType.TEAM: "TK-TEAM",
+        ContributionType.BRAND: "TK-BRAND", 
+        ContributionType.PLAYER: "TK-PLAYER",
+        ContributionType.COMPETITION: "TK-COMP",
+        ContributionType.MASTER_KIT: "TK-MKIT",
+        ContributionType.REFERENCE_KIT: "TK-RKIT"
+    }
+    
+    prefix = entity_prefixes.get(entity_type, "TK-CONTRIB")
+    return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+
+async def send_contribution_notification(user_id: str, contribution_id: str, action: str, auto_action: bool = False):
+    """Send email notification for contribution updates"""
+    try:
+        # Get user email
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            return
+        
+        # Get contribution details
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
+        if not contribution:
+            return
+        
+        subject = f"TopKit - Contribution {action.title()}"
+        
+        if auto_action:
+            message = f"""
+            Your contribution "{contribution['title']}" has been automatically {action} by the community!
+            
+            Contribution Reference: {contribution['topkit_reference']}
+            Entity Type: {contribution['entity_type'].replace('_', ' ').title()}
+            Votes: {contribution['upvotes']} upvotes, {contribution['downvotes']} downvotes
+            
+            Thank you for contributing to the TopKit community database!
+            """
+        else:
+            message = f"""
+            Your contribution "{contribution['title']}" has been {action} by an administrator.
+            
+            Contribution Reference: {contribution['topkit_reference']}
+            Entity Type: {contribution['entity_type'].replace('_', ' ').title()}
+            
+            Thank you for contributing to the TopKit community database!
+            """
+        
+        # Use existing Gmail service to send notification
+        await gmail_service.send_email(
+            to_email=user['email'],
+            subject=subject,
+            body=message
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to send contribution notification: {e}")
+
+@api_router.post("/contributions-v2/", response_model=ContributionDetail)
+async def create_contribution_v2(
+    contribution_data: ContributionCreateV2,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new Discogs-style contribution"""
+    try:
+        user_id = current_user['id']
+        
+        # Validate entity type and data requirements
+        requires_images = contribution_data.entity_type in [ContributionType.MASTER_KIT, ContributionType.REFERENCE_KIT]
+        
+        # Generate TopKit reference
+        topkit_reference = await generate_topkit_reference(contribution_data.entity_type)
+        
+        # Create contribution
+        contribution = EnhancedContribution(
+            entity_type=contribution_data.entity_type,
+            entity_id=contribution_data.entity_id,
+            title=contribution_data.title,
+            description=contribution_data.description,
+            data=contribution_data.data,
+            source_urls=contribution_data.source_urls,
+            created_by=user_id,
+            status=ContributionStatusV2.PENDING_REVIEW,
+            topkit_reference=topkit_reference
+        )
+        
+        # Add initial history entry
+        history_entry = ContributionHistoryEntry(
+            action="created",
+            user_id=user_id,
+            user_name=current_user.get('name', 'Unknown'),
+            details={
+                "entity_type": contribution_data.entity_type,
+                "title": contribution_data.title
+            }
+        )
+        contribution.history.append(history_entry)
+        
+        # Insert into database
+        await db.contributions_v2.insert_one(contribution.dict())
+        
+        # Log activity
+        await log_user_activity(user_id, "contribution_created_v2", contribution.id, {
+            "entity_type": contribution_data.entity_type,
+            "title": contribution_data.title,
+            "topkit_reference": topkit_reference
+        })
+        
+        # Convert to response format
+        return ContributionDetail(
+            **contribution.dict(), 
+            user_can_vote=False,
+            user_vote=None,
+            requires_images=requires_images
+        )
+        
+    except Exception as e:
+        logger.error(f"Create contribution error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la création de la contribution")
+
+@api_router.get("/contributions-v2/", response_model=List[ContributionSummary])
+async def list_contributions_v2(
+    status: Optional[ContributionStatusV2] = None,
+    entity_type: Optional[ContributionType] = None,
+    page: int = 1,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user)
+):
+    """List contributions with filtering and pagination"""
+    try:
+        user_id = current_user['id']
+        
+        # Build query
+        query = {}
+        if status:
+            query["status"] = status
+        if entity_type:
+            query["entity_type"] = entity_type
+        
+        # For non-admin users, show approved contributions + their own contributions
+        if current_user.get('role') != 'admin':
+            query["$or"] = [
+                {"status": ContributionStatusV2.APPROVED},
+                {"created_by": user_id},
+                {"status": {"$in": [ContributionStatusV2.PENDING_REVIEW, ContributionStatusV2.NEEDS_REVISION]}}
+            ]
+        
+        # Get contributions with pagination
+        skip = (page - 1) * limit
+        contributions = await db.contributions_v2.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(None)
+        
+        # Convert to summary format
+        summaries = []
+        for contrib in contributions:
+            contrib.pop('_id', None)
+            summary = ContributionSummary(
+                id=contrib['id'],
+                entity_type=contrib['entity_type'],
+                title=contrib['title'],
+                status=contrib['status'],
+                upvotes=contrib['upvotes'],
+                downvotes=contrib['downvotes'],
+                created_by=contrib['created_by'],
+                created_at=contrib['created_at'],
+                updated_at=contrib['updated_at'],
+                images_count=len(contrib.get('images', [])),
+                topkit_reference=contrib['topkit_reference']
+            )
+            summaries.append(summary)
+        
+        return summaries
+        
+    except Exception as e:
+        logger.error(f"List contributions error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des contributions")
+
+@api_router.get("/contributions-v2/{contribution_id}", response_model=ContributionDetail)
+async def get_contribution_v2(
+    contribution_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get detailed contribution information"""
+    try:
+        user_id = current_user['id']
+        
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution non trouvée")
+        
+        # Check visibility permissions (Discogs-style: visible to logged-in users during review)
+        if (contribution['status'] == ContributionStatusV2.DRAFT and 
+            contribution['created_by'] != user_id and 
+            current_user.get('role') != 'admin'):
+            raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à voir cette contribution")
+        
+        contribution.pop('_id', None)
+        
+        # Check if user can vote (not the creator)
+        user_can_vote = contribution['created_by'] != user_id
+        
+        # Check if user already voted
+        user_vote = None
+        for vote in contribution.get('votes', []):
+            if vote['user_id'] == user_id:
+                user_vote = vote['vote_type']
+                break
+        
+        # Check if images are required
+        requires_images = contribution['entity_type'] in [ContributionType.MASTER_KIT, ContributionType.REFERENCE_KIT]
+        
+        return ContributionDetail(
+            **contribution,
+            user_can_vote=user_can_vote,
+            user_vote=user_vote,
+            requires_images=requires_images
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get contribution error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération de la contribution")
+
+@api_router.post("/contributions-v2/{contribution_id}/vote")
+async def vote_on_contribution_v2(
+    contribution_id: str,
+    vote_data: ContributionVoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Vote on a contribution (Discogs-style voting: 3 upvotes = auto-approve, 2 downvotes = auto-reject)"""
+    try:
+        user_id = current_user['id']
+        
+        # Get contribution
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution non trouvée")
+        
+        # Check if user can vote (not the creator)
+        if contribution['created_by'] == user_id:
+            raise HTTPException(status_code=403, detail="Vous ne pouvez pas voter sur votre propre contribution")
+        
+        # Check if contribution is in votable status
+        if contribution['status'] not in [ContributionStatusV2.PENDING_REVIEW, ContributionStatusV2.NEEDS_REVISION]:
+            raise HTTPException(status_code=400, detail="Cette contribution n'est pas ouverte au vote")
+        
+        # Check if user already voted
+        existing_vote_index = None
+        for i, vote in enumerate(contribution.get('votes', [])):
+            if vote['user_id'] == user_id:
+                existing_vote_index = i
+                break
+        
+        # Create new vote
+        new_vote = ContributionVoteV2(
+            user_id=user_id,
+            vote_type=vote_data.vote_type,
+            comment=vote_data.comment,
+            field_votes=vote_data.field_votes
+        )
+        
+        # Update vote counts
+        upvotes = contribution.get('upvotes', 0)
+        downvotes = contribution.get('downvotes', 0)
+        
+        if existing_vote_index is not None:
+            # Remove old vote count
+            old_vote = contribution['votes'][existing_vote_index]
+            if old_vote['vote_type'] == VoteTypeV2.UPVOTE:
+                upvotes -= 1
+            else:
+                downvotes -= 1
+            
+            # Replace existing vote
+            contribution['votes'][existing_vote_index] = new_vote.dict()
+        else:
+            # Add new vote
+            if 'votes' not in contribution:
+                contribution['votes'] = []
+            contribution['votes'].append(new_vote.dict())
+        
+        # Add new vote count
+        if vote_data.vote_type == VoteTypeV2.UPVOTE:
+            upvotes += 1
+        else:
+            downvotes += 1
+        
+        # Check for auto-approval/rejection (Discogs style: 3 upvotes = approve, 2 downvotes = reject)
+        auto_approved = False
+        auto_rejected = False
+        new_status = contribution['status']
+        
+        if upvotes >= 3 and contribution['status'] == ContributionStatusV2.PENDING_REVIEW:
+            new_status = ContributionStatusV2.APPROVED
+            auto_approved = True
+        elif downvotes >= 2 and contribution['status'] in [ContributionStatusV2.PENDING_REVIEW, ContributionStatusV2.NEEDS_REVISION]:
+            new_status = ContributionStatusV2.REJECTED
+            auto_rejected = True
+        
+        # Add history entry
+        history_entry = ContributionHistoryEntry(
+            action="voted",
+            user_id=user_id,
+            user_name=current_user.get('name', 'Unknown'),
+            details={
+                "vote_type": vote_data.vote_type,
+                "upvotes": upvotes,
+                "downvotes": downvotes,
+                "auto_approved": auto_approved,
+                "auto_rejected": auto_rejected
+            }
+        )
+        
+        # Update contribution
+        await db.contributions_v2.update_one(
+            {"id": contribution_id},
+            {
+                "$set": {
+                    "votes": contribution['votes'],
+                    "upvotes": upvotes,
+                    "downvotes": downvotes,
+                    "status": new_status,
+                    "auto_approved": auto_approved,
+                    "auto_rejected": auto_rejected,
+                    "updated_at": datetime.utcnow()
+                },
+                "$push": {"history": history_entry.dict()}
+            }
+        )
+        
+        # Send email notifications for auto-approval/rejection
+        if auto_approved or auto_rejected:
+            try:
+                await send_contribution_notification(
+                    contribution['created_by'],
+                    contribution_id,
+                    "approved" if auto_approved else "rejected",
+                    auto_action=True
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send notification: {e}")
+        
+        return {
+            "message": "Vote enregistré avec succès",
+            "upvotes": upvotes,
+            "downvotes": downvotes,
+            "status": new_status,
+            "auto_approved": auto_approved,
+            "auto_rejected": auto_rejected
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Vote on contribution error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du vote")
+
+@api_router.post("/contributions-v2/{contribution_id}/images")
+async def upload_contribution_image_v2(
+    contribution_id: str,
+    file: UploadFile = File(...),
+    is_primary: bool = Form(False),
+    caption: str = Form(""),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload image for a contribution"""
+    try:
+        user_id = current_user['id']
+        
+        # Get contribution and verify ownership
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution non trouvée")
+        
+        # Check if user can upload (owner or admin)
+        if contribution['created_by'] != user_id and current_user.get('role') != 'admin':
+            raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à modifier cette contribution")
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400, 
+                detail="Type de fichier non autorisé. Utilisez JPG, PNG ou WebP."
+            )
+        
+        # Validate file size (max 5MB for contributions)
+        max_size = 5 * 1024 * 1024  # 5MB in bytes
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="Le fichier est trop volumineux. Taille maximale : 5MB."
+            )
+        
+        # Reset file position
+        await file.seek(0)
+        
+        # Create contributions directory if it doesn't exist
+        upload_dir = Path(f"uploads/contributions/{contribution_id}")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1].lower()
+        if file_extension not in ['jpg', 'jpeg', 'png', 'webp']:
+            file_extension = 'jpg'
+        
+        unique_filename = f"{uuid.uuid4().hex[:8]}_{int(datetime.utcnow().timestamp())}.{file_extension}"
+        file_path = upload_dir / unique_filename
+        
+        # Save file
+        with open(file_path, 'wb') as f:
+            await file.seek(0)
+            f.write(await file.read())
+        
+        # Get image dimensions (optional, requires PIL)
+        width, height = None, None
+        try:
+            from PIL import Image
+            with Image.open(file_path) as img:
+                width, height = img.size
+        except:
+            pass  # Skip if PIL not available
+        
+        # Create image record
+        image_data = ContributionImage(
+            url=f"uploads/contributions/{contribution_id}/{unique_filename}",
+            filename=unique_filename,
+            original_filename=file.filename,
+            file_size=len(file_content),
+            mime_type=file.content_type,
+            width=width,
+            height=height,
+            is_primary=is_primary,
+            uploaded_by=user_id
+        )
+        
+        # Update contribution with new image
+        await db.contributions_v2.update_one(
+            {"id": contribution_id},
+            {
+                "$push": {"images": image_data.dict()},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        # Add to history
+        history_entry = ContributionHistoryEntry(
+            action="image_uploaded",
+            user_id=user_id,
+            user_name=current_user.get('name', 'Unknown'),
+            details={
+                "filename": unique_filename,
+                "is_primary": is_primary,
+                "file_size": len(file_content)
+            }
+        )
+        
+        await db.contributions_v2.update_one(
+            {"id": contribution_id},
+            {"$push": {"history": history_entry.dict()}}
+        )
+        
+        return {
+            "message": "Image téléchargée avec succès",
+            "image": image_data.dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Contribution image upload error: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
+
 app.include_router(api_router)
 
 # Mount static files for uploads
