@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../App';
 import ContributionModal from '../ContributionModal';
+import { uploadOptimizedImage, ImageUploadProgress, OptimizedImage } from '../utils/imageUpload';
 
 const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   const navigate = useNavigate();
