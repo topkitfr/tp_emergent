@@ -525,22 +525,284 @@ class TopKitBackendTester:
             self.log_result("Reference Kits in Kit Store", False, "", str(e))
             return False
 
-    def test_image_upload_for_contributions(self):
-        """Test image upload functionality for contributions"""
+    def test_specific_team_entities_image_data(self):
+        """Test specific team entities mentioned in review request for image data"""
+        target_teams = ["TK-TEAM-4156DC3C", "TK-TEAM-00BEEF9B"]
+        
         try:
-            # Create a simple test image (1x1 pixel PNG in base64)
+            # Get all teams to search for target entities
+            response = self.session.get(f"{API_BASE}/teams")
+            
+            if response.status_code == 200:
+                teams = response.json()
+                found_teams = []
+                
+                for team in teams:
+                    team_ref = team.get('topkit_reference', '')
+                    if team_ref in target_teams:
+                        found_teams.append(team)
+                        
+                        # Check for image-related fields
+                        image_fields = ['logo_url', 'image_url', 'photo_url', 'images']
+                        has_images = any(team.get(field) for field in image_fields)
+                        
+                        self.log_result(
+                            f"Target Team Entity - {team_ref}",
+                            True,
+                            f"Found team '{team.get('name', 'Unknown')}' - Has images: {has_images}"
+                        )
+                
+                if not found_teams:
+                    self.log_result(
+                        "Target Team Entities Search",
+                        False,
+                        "",
+                        f"Target teams {target_teams} not found in database"
+                    )
+                    return False
+                
+                return len(found_teams) > 0
+            else:
+                self.log_result(
+                    "Target Team Entities Search",
+                    False,
+                    "",
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Target Team Entities Search", False, "", str(e))
+            return False
+
+    def test_contribution_image_association(self):
+        """Test if contribution records have associated images"""
+        try:
+            response = self.session.get(f"{API_BASE}/contributions-v2/")
+            
+            if response.status_code == 200:
+                contributions = response.json()
+                contributions_with_images = 0
+                total_contributions = len(contributions) if isinstance(contributions, list) else 0
+                
+                for contrib in contributions:
+                    # Check for image-related fields in contributions
+                    image_fields = ['images', 'image_urls', 'photos', 'logo_url']
+                    has_images = any(contrib.get(field) for field in image_fields)
+                    
+                    if has_images:
+                        contributions_with_images += 1
+                
+                self.log_result(
+                    "Contribution Image Association",
+                    True,
+                    f"Found {contributions_with_images}/{total_contributions} contributions with image data"
+                )
+                
+                return contributions_with_images > 0
+            else:
+                self.log_result(
+                    "Contribution Image Association",
+                    False,
+                    "",
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Contribution Image Association", False, "", str(e))
+            return False
+
+    def test_image_upload_endpoint(self):
+        """Test dedicated image upload endpoint"""
+        try:
+            # Test if image upload endpoint exists
             test_image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
             
-            # Test contribution with image
+            # Try different possible image upload endpoints
+            upload_endpoints = [
+                "/upload/image",
+                "/api/upload/image", 
+                "/images/upload",
+                "/contributions-v2/upload-image"
+            ]
+            
+            for endpoint in upload_endpoints:
+                try:
+                    # Test multipart form upload
+                    files = {'image': ('test.png', base64.b64decode(test_image_base64), 'image/png')}
+                    data = {'entity_type': 'team', 'entity_id': 'test-id'}
+                    
+                    response = self.session.post(f"{BACKEND_URL}{endpoint}", files=files, data=data)
+                    
+                    if response.status_code in [200, 201]:
+                        self.log_result(
+                            f"Image Upload Endpoint - {endpoint}",
+                            True,
+                            f"Successfully uploaded image via {endpoint}"
+                        )
+                        return True
+                    elif response.status_code != 404:
+                        self.log_result(
+                            f"Image Upload Endpoint - {endpoint}",
+                            False,
+                            "",
+                            f"HTTP {response.status_code}: {response.text}"
+                        )
+                except Exception as e:
+                    # Skip 404s and connection errors for non-existent endpoints
+                    if "404" not in str(e):
+                        self.log_result(f"Image Upload Endpoint - {endpoint}", False, "", str(e))
+            
+            self.log_result(
+                "Image Upload Endpoints",
+                False,
+                "",
+                "No working image upload endpoint found"
+            )
+            return False
+                
+        except Exception as e:
+            self.log_result("Image Upload Endpoint Test", False, "", str(e))
+            return False
+
+    def test_image_file_existence_and_accessibility(self):
+        """Test image file existence and accessibility"""
+        try:
+            # Get teams and check for image URLs
+            response = self.session.get(f"{API_BASE}/teams")
+            
+            if response.status_code == 200:
+                teams = response.json()
+                image_urls_found = []
+                accessible_images = 0
+                
+                for team in teams:
+                    # Check various image field names
+                    image_fields = ['logo_url', 'image_url', 'photo_url', 'images']
+                    for field in image_fields:
+                        image_url = team.get(field)
+                        if image_url:
+                            image_urls_found.append(image_url)
+                            
+                            # Test if image URL is accessible
+                            try:
+                                if image_url.startswith('http'):
+                                    img_response = requests.get(image_url, timeout=5)
+                                    if img_response.status_code == 200:
+                                        accessible_images += 1
+                                elif image_url.startswith('/'):
+                                    # Test relative URL
+                                    full_url = f"{BACKEND_URL}{image_url}"
+                                    img_response = requests.get(full_url, timeout=5)
+                                    if img_response.status_code == 200:
+                                        accessible_images += 1
+                            except:
+                                pass  # Image not accessible
+                
+                self.log_result(
+                    "Image File Existence and Accessibility",
+                    len(image_urls_found) > 0,
+                    f"Found {len(image_urls_found)} image URLs, {accessible_images} accessible"
+                )
+                
+                return len(image_urls_found) > 0
+            else:
+                self.log_result(
+                    "Image File Existence Check",
+                    False,
+                    "",
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Image File Existence Check", False, "", str(e))
+            return False
+
+    def test_cross_entity_image_support(self):
+        """Test image support across all entity types"""
+        entity_endpoints = [
+            ("/teams", "teams"),
+            ("/brands", "brands"), 
+            ("/players", "players"),
+            ("/competitions", "competitions"),
+            ("/master-jerseys", "master_jerseys")
+        ]
+        
+        results = {}
+        
+        for endpoint, entity_type in entity_endpoints:
+            try:
+                response = self.session.get(f"{API_BASE}{endpoint}")
+                
+                if response.status_code == 200:
+                    entities = response.json()
+                    entities_with_images = 0
+                    total_entities = len(entities) if isinstance(entities, list) else 0
+                    
+                    for entity in entities:
+                        # Check for image-related fields
+                        image_fields = ['logo_url', 'image_url', 'photo_url', 'images', 'picture_url']
+                        has_images = any(entity.get(field) for field in image_fields)
+                        
+                        if has_images:
+                            entities_with_images += 1
+                    
+                    results[entity_type] = {
+                        'total': total_entities,
+                        'with_images': entities_with_images,
+                        'success': True
+                    }
+                    
+                    self.log_result(
+                        f"Cross-Entity Image Support - {entity_type.title()}",
+                        True,
+                        f"{entities_with_images}/{total_entities} {entity_type} have image data"
+                    )
+                else:
+                    results[entity_type] = {'success': False, 'error': f"HTTP {response.status_code}"}
+                    self.log_result(
+                        f"Cross-Entity Image Support - {entity_type.title()}",
+                        False,
+                        "",
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+                    
+            except Exception as e:
+                results[entity_type] = {'success': False, 'error': str(e)}
+                self.log_result(f"Cross-Entity Image Support - {entity_type.title()}", False, "", str(e))
+        
+        # Summary
+        successful_entities = sum(1 for r in results.values() if r.get('success', False))
+        total_entities_tested = len(entity_endpoints)
+        
+        self.log_result(
+            "Cross-Entity Image Support Summary",
+            successful_entities == total_entities_tested,
+            f"Image support tested across {successful_entities}/{total_entities_tested} entity types"
+        )
+        
+        return successful_entities > 0
+
+    def test_image_processing_workflow(self):
+        """Test complete image processing and integration workflow"""
+        try:
+            # Step 1: Create contribution with image
+            test_image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+            
             contribution_data = {
-                "entity_type": "brand",
+                "entity_type": "team",
                 "entity_id": None,
-                "title": "Test Brand Logo Upload",
-                "description": "Testing image upload functionality in unified form",
+                "title": "Image Processing Workflow Test Team",
+                "description": "Testing complete image processing workflow",
                 "changes": {
-                    "name": "Test Brand Backend",
+                    "name": "Image Test FC",
+                    "short_name": "ITC",
                     "country": "France",
-                    "founded_year": 2024
+                    "city": "Paris",
+                    "founded_year": 2024,
+                    "team_colors": ["Blue", "White"]
                 },
                 "images": [
                     {
@@ -551,29 +813,91 @@ class TopKitBackendTester:
                 ]
             }
             
+            # Create contribution
             response = self.session.post(f"{API_BASE}/contributions-v2/", json=contribution_data)
             
             if response.status_code in [200, 201]:
                 data = response.json()
-                contribution_id = data.get('id') or data.get('contribution_id')
+                contribution_id = data.get('id')
+                
                 self.log_result(
-                    "Image Upload for Contributions",
+                    "Image Processing Workflow - Step 1: Contribution Creation",
                     True,
-                    f"Successfully uploaded image with contribution ID: {contribution_id}"
+                    f"Created contribution with image, ID: {contribution_id}"
                 )
-                return contribution_id
+                
+                # Step 2: Check if contribution has image data
+                contrib_response = self.session.get(f"{API_BASE}/contributions-v2/")
+                if contrib_response.status_code == 200:
+                    contributions = contrib_response.json()
+                    target_contrib = next((c for c in contributions if c.get('id') == contribution_id), None)
+                    
+                    if target_contrib:
+                        has_image_data = any(target_contrib.get(field) for field in ['images', 'image_urls', 'logo_url'])
+                        self.log_result(
+                            "Image Processing Workflow - Step 2: Image Data in Contribution",
+                            has_image_data,
+                            f"Contribution {'has' if has_image_data else 'missing'} image data"
+                        )
+                        
+                        # Step 3: Check if team appears in main catalogue with image
+                        teams_response = self.session.get(f"{API_BASE}/teams")
+                        if teams_response.status_code == 200:
+                            teams = teams_response.json()
+                            target_team = next((t for t in teams if t.get('name') == 'Image Test FC'), None)
+                            
+                            if target_team:
+                                team_has_image = any(target_team.get(field) for field in ['logo_url', 'image_url', 'photo_url'])
+                                self.log_result(
+                                    "Image Processing Workflow - Step 3: Image Integration to Catalogue",
+                                    team_has_image,
+                                    f"Team in catalogue {'has' if team_has_image else 'missing'} image data"
+                                )
+                                return team_has_image
+                            else:
+                                self.log_result(
+                                    "Image Processing Workflow - Step 3: Team Integration",
+                                    False,
+                                    "",
+                                    "Team not found in main catalogue"
+                                )
+                                return False
+                        else:
+                            self.log_result(
+                                "Image Processing Workflow - Teams Check",
+                                False,
+                                "",
+                                f"Failed to get teams: HTTP {teams_response.status_code}"
+                            )
+                            return False
+                    else:
+                        self.log_result(
+                            "Image Processing Workflow - Contribution Retrieval",
+                            False,
+                            "",
+                            "Created contribution not found in contributions list"
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "Image Processing Workflow - Contributions Check",
+                        False,
+                        "",
+                        f"Failed to get contributions: HTTP {contrib_response.status_code}"
+                    )
+                    return False
             else:
                 self.log_result(
-                    "Image Upload for Contributions",
+                    "Image Processing Workflow - Contribution Creation",
                     False,
                     "",
                     f"HTTP {response.status_code}: {response.text}"
                 )
-                return None
+                return False
                 
         except Exception as e:
-            self.log_result("Image Upload for Contributions", False, "", str(e))
-            return None
+            self.log_result("Image Processing Workflow Test", False, "", str(e))
+            return False
 
     def test_form_dependency_endpoints(self):
         """Test form dependency endpoints for unified forms"""
