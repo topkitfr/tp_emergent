@@ -10,6 +10,11 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
     position: '',
     verified_only: false
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [loading, setLoading] = useState(false);
