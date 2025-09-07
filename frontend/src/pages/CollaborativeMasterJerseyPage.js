@@ -735,7 +735,7 @@ const CollaborativeMasterJerseyPage = ({
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{filteredJerseys.length}</div>
+          <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
           <div className="text-sm text-blue-700">Master Jerseys trouvés</div>
         </div>
         
@@ -759,14 +759,8 @@ const CollaborativeMasterJerseyPage = ({
         </div>
       </div>
 
-      {/* Master Jerseys Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        {filteredJerseys.map(jersey => (
-          <MasterJerseyCard key={jersey.id} jersey={jersey} />
-        ))}
-      </div>
-
-      {filteredJerseys.length === 0 && (
+      {/* Master Jerseys Display with Pagination */}
+      {currentItems.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-4">👕</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun Master Jersey trouvé</h3>
@@ -782,6 +776,90 @@ const CollaborativeMasterJerseyPage = ({
             </button>
           )}
         </div>
+      ) : (
+        <>
+          {/* Grid View */}
+          {displayOptions.viewMode === 'grid' && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              {currentItems.map(jersey => (
+                <MasterJerseyCard key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          )}
+
+          {/* Thumbnail View */}
+          {displayOptions.viewMode === 'thumbnail' && (
+            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
+              {currentItems.map(jersey => (
+                <MasterJerseyThumbnail key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          )}
+
+          {/* List View */}
+          {displayOptions.viewMode === 'list' && (
+            <div className="space-y-4">
+              {currentItems.map(jersey => (
+                <MasterJerseyListItem key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                Affichage {startIndex + 1} à {Math.min(endIndex, totalItems)} sur {totalItems} Master Jerseys
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => goToPage(displayOptions.currentPage - 1)}
+                  disabled={displayOptions.currentPage === 1}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Précédent
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (displayOptions.currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (displayOptions.currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = displayOptions.currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        pageNum === displayOptions.currentPage
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => goToPage(displayOptions.currentPage + 1)}
+                  disabled={displayOptions.currentPage === totalPages}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Master Jersey Modal */}
