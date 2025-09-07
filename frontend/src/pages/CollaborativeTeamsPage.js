@@ -199,6 +199,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
   };
 
   const CreateTeamModal = () => {
+    // Form state
     const [formData, setFormData] = useState({
       name: '',
       short_name: '',
@@ -208,17 +209,25 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       colors: []
     });
 
-    const [newColor, setNewColor] = useState('');
-    
-    // Image management states
+    // Enhanced image state for optimized uploads
     const [imageFiles, setImageFiles] = useState({
       logo: null,
       secondary_photos: []
     });
+    
     const [imagePreviews, setImagePreviews] = useState({
       logo: '',
       secondary_photos: []
     });
+
+    // New states for optimized image uploads
+    const [uploadProgress, setUploadProgress] = useState({});
+    const [uploadedImages, setUploadedImages] = useState({
+      logo: null,
+      secondary_photos: []
+    });
+
+    const [newColor, setNewColor] = useState('');
 
     const handleImageUpload = (imageType, file) => {
       if (!file) return;
