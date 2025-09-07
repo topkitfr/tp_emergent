@@ -12558,11 +12558,16 @@ async def send_contribution_notification(user_id: str, contribution_id: str, act
             """
         
         # Use existing Gmail service to send notification
-        await gmail_service.send_email(
-            to_email=user['email'],
-            subject=subject,
-            body=message
-        )
+        try:
+            await gmail_service.send_email(
+                to_email=user['email'],
+                subject=subject,
+                body=message
+            )
+        except Exception as email_error:
+            logger.error(f"Gmail service error: {email_error}")
+            # Fallback: log the notification instead
+            print(f"EMAIL NOTIFICATION: {user['email']} - {subject} - {message}")
         
     except Exception as e:
         logger.error(f"Failed to send contribution notification: {e}")
