@@ -12582,8 +12582,8 @@ async def get_kit_store(
         for rk in all_reference_kits:
             rk.pop('_id', None)
             
-            # Get master kit
-            master_kit = await db.master_kits.find_one({"id": rk.get("master_kit_id")})
+            # Get master kit (from master_jerseys collection)
+            master_kit = await db.master_jerseys.find_one({"id": rk.get("master_kit_id")})
             if not master_kit:
                 logger.info(f"Skipping reference kit {rk.get('topkit_reference')} - master kit not found")
                 continue  # Skip if master kit not found
