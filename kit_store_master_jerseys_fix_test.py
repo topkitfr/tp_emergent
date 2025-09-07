@@ -239,8 +239,8 @@ class KitStoreMasterJerseysTester:
                         
                         master_jersey = kit['master_jersey_info']
                         
-                        # Check for team information
-                        if 'team_info' in master_jersey and master_jersey['team_info']:
+                        # Check for team information (could be in team_info or via team_id)
+                        if ('team_info' in master_jersey and master_jersey['team_info']) or 'team_id' in master_jersey:
                             has_team_info = True
                             kits_with_team_info += 1
                         
