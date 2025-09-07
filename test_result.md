@@ -298,15 +298,19 @@ frontend:
 
 test_plan:
   current_focus:
+    - "✅ COMPLETED: Critical Image Display Bug Investigation - ROOT CAUSE IDENTIFIED"
     - "✅ COMPLETED: Database Cleanup Verification - Clean Database State Confirmed"
     - "✅ COMPLETED: Admin User Functionality - Authentication Working Perfectly"
-    - "✅ COMPLETED: Clean Slate Confirmation - All Endpoints Return Empty Arrays"
-    - "✅ COMPLETED: System Readiness - All Endpoints Functional and Ready"
-    - "✅ COMPLETED: Enhanced TopKit System - Works with Clean Database"
-    - "✅ COMPLETED: Community DB Image Upload Fix Verification - No JavaScript Errors Detected"
+    - "✅ COMPLETED: Image Upload System Testing - All Upload Endpoints Working"
+    - "✅ COMPLETED: Image Accessibility Verification - All Images Accessible"
+    - "✅ COMPLETED: Target Team Entities Investigation - Teams Found But Missing Images"
   stuck_tasks: []
   test_all: true
-  test_priority: "image_upload_fix_verification_complete"
+  test_priority: "critical_image_display_bug_investigation_complete"
+
+agent_communication:
+    - agent: "testing"
+    - message: "🚨 CRITICAL IMAGE DISPLAY BUG INVESTIGATION COMPLETE - ROOT CAUSE IDENTIFIED AND SOLUTION PROVIDED! Comprehensive backend testing reveals the EXACT issue preventing images from displaying on entity detail pages. INVESTIGATION FINDINGS: ✅ IMAGE UPLOAD SYSTEM (100% WORKING): Both direct image upload (/api/upload/image) and contribution image upload (/api/contributions-v2/{id}/images) working perfectly with proper image processing, optimization, and storage. ✅ IMAGE ACCESSIBILITY (100% WORKING): All uploaded images accessible via proper URLs with correct HTTP responses. ✅ TARGET ENTITIES FOUND: Both TK-TEAM-4156DC3C (AC Milan) and TK-TEAM-00BEEF9B (Paris Saint-Germain) exist in database but have NO image data. ❌ ROOT CAUSE IDENTIFIED: MISSING IMAGE INTEGRATION IN AUTO-APPROVAL PROCESS! The critical issue is that while users can successfully upload images during contribution creation (3 contributions have images), the auto-approval system fails to transfer image data from approved contributions to main catalogue entities. When contributions are auto-approved and teams/brands/players are created, the image URLs from contribution.images are NOT copied to entity.logo_url fields. REQUIRED FIX: Add image transfer logic in enable_auto_approval_for_testing() function and entity creation processes to copy image URLs from approved contributions to main entity records. This will resolve the placeholder balloon icons issue and display actual uploaded photos on entity detail pages."
 ##
 backend:
   - task: "Critical Image Display Bug Investigation"
