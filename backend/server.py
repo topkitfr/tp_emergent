@@ -12988,11 +12988,13 @@ app.include_router(api_router)
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# Create uploads directory if it doesn't exist
-from pathlib import Path
+# Mount static files
 uploads_dir = Path("uploads")
 uploads_dir.mkdir(exist_ok=True)
 (uploads_dir / "profile_pictures").mkdir(exist_ok=True)
+(uploads_dir / "contributions").mkdir(exist_ok=True)
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
