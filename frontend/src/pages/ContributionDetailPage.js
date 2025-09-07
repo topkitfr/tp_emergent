@@ -172,7 +172,7 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) =
     setVoting(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/api/contributions/${contribution.id}/vote`, {
+      const response = await fetch(`${API}/api/contributions-v2/${contribution.id}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
