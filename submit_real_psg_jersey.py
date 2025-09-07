@@ -9,7 +9,7 @@ import os
 from io import BytesIO
 
 # Configuration
-BACKEND_URL = "https://football-threads-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-commons.preview.emergentagent.com/api"
 USER_EMAIL = "testuser.images@gmail.com"
 USER_PASSWORD = "SecureTestPass789!"
 
