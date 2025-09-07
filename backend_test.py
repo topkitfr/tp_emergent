@@ -1090,9 +1090,9 @@ class TopKitBackendTester:
         return all_success
 
     def run_all_tests(self):
-        """Run all backend tests for final TopKit enhancement validation"""
-        print("🚀 Starting TopKit Backend Testing - Final Comprehensive Enhancement Project Validation")
-        print("Testing complete TopKit enhancement system with all 4 phases implemented")
+        """Run all backend tests focused on CRITICAL IMAGE DISPLAY BUG INVESTIGATION"""
+        print("🚀 Starting TopKit Backend Testing - CRITICAL IMAGE DISPLAY BUG INVESTIGATION")
+        print("Testing image upload, storage, integration, and display functionality")
         print("=" * 90)
         
         # Step 1: Authenticate admin with specified credentials
@@ -1100,55 +1100,51 @@ class TopKitBackendTester:
             print("❌ Cannot proceed without admin authentication")
             return False
         
-        # Step 2: Test Unified Form System with all entity types
-        print("\n🔧 PHASE 1: Testing Unified Form System with All Entity Types")
+        # Step 2: Test Specific Team Entities for Image Data
+        print("\n🔍 INVESTIGATION 1: Testing Specific Team Entities for Image Data")
         print("-" * 60)
-        unified_success, created_contributions = self.test_unified_form_system_all_entities()
+        self.test_specific_team_entities_image_data()
         
-        # Step 3: Test Integration Pipeline
-        print("\n🔄 PHASE 2: Testing Integration Pipeline")
+        # Step 3: Test Image Upload Process
+        print("\n📤 INVESTIGATION 2: Testing Image Upload Process")
         print("-" * 60)
-        integration_success = self.test_integration_pipeline()
+        self.test_image_upload_endpoint()
         
-        # Step 4: Test Display APIs
-        print("\n📊 PHASE 3: Testing Display APIs")
+        # Step 4: Test Image Storage and Association
+        print("\n💾 INVESTIGATION 3: Testing Image Storage and Association")
         print("-" * 60)
-        display_success = self.test_display_apis()
+        self.test_contribution_image_association()
         
-        # Step 5: Test Complete Data Flow
-        print("\n🌊 PHASE 4: Testing Complete Data Flow")
+        # Step 5: Test Image Integration Workflow
+        print("\n🔄 INVESTIGATION 4: Testing Image Integration Workflow")
         print("-" * 60)
-        flow_success = self.test_complete_data_flow()
+        self.test_image_processing_workflow()
         
-        # Step 6: Test Reference Kits in Kit Store
-        print("\n🏪 PHASE 5: Testing Reference Kits in Kit Store")
+        # Step 6: Test Image File Existence and Accessibility
+        print("\n🌐 INVESTIGATION 5: Testing Image File Existence and Accessibility")
         print("-" * 60)
-        kit_store_success = self.test_reference_kits_in_kit_store()
+        self.test_image_file_existence_and_accessibility()
         
-        # Step 7: Test original functionality (voting, auth, etc.)
-        print("\n🔐 PHASE 6: Testing Authentication & Security")
+        # Step 7: Test Cross-Entity Image Support
+        print("\n🔀 INVESTIGATION 6: Testing Cross-Entity Image Support")
+        print("-" * 60)
+        self.test_cross_entity_image_support()
+        
+        # Step 8: Test Basic System Functionality
+        print("\n🔧 INVESTIGATION 7: Testing Basic System Functionality")
         print("-" * 60)
         
         # Test contributions-v2 GET endpoint
         contributions = self.test_contributions_v2_get()
         
-        # Test image upload for contributions
-        image_contribution_id = self.test_image_upload_for_contributions()
-        
         # Test form dependency endpoints
         form_deps_success = self.test_form_dependency_endpoints()
-        
-        # Test voting system
-        voting_success = self.test_voting_system(created_contributions[0] if created_contributions else None)
         
         # Test authentication requirements
         auth_success = self.test_authentication_requirements()
         
-        # Test admin-specific endpoints
-        admin_success = self.test_admin_specific_endpoints()
-        
-        # Generate comprehensive summary
-        self.generate_final_summary()
+        # Generate comprehensive summary focused on image issues
+        self.generate_image_investigation_summary()
         
         return True
 
