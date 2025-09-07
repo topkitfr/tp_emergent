@@ -252,7 +252,7 @@ class TopKitBackendTester:
         try:
             # Test upvote
             vote_data = {
-                "vote_type": "UPVOTE"
+                "vote_type": "upvote"
             }
             
             response = self.session.post(f"{API_BASE}/contributions-v2/{contribution_id}/vote", json=vote_data)
