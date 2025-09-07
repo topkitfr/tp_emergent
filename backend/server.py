@@ -12823,6 +12823,10 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
             
             for i, img in enumerate(images):
                 img_url = img.get('url', '') if isinstance(img, dict) else str(img)
+                # Ensure the URL includes the /api prefix for proper routing
+                if img_url and not img_url.startswith('http') and not img_url.startswith('data:'):
+                    img_url = f"api/{img_url}"
+                
                 if i == 0:
                     main_photo = img_url
                 else:
