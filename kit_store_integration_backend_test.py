@@ -58,16 +58,21 @@ class KitStoreIntegrationTester:
             
             if response.status_code == 200:
                 data = response.json()
-                self.admin_token = data.get("access_token")
-                self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
+                self.admin_token = data.get("access_token") or data.get("token")
                 
-                user_info = data.get("user", {})
-                self.log_result(
-                    "Admin Authentication", 
-                    True, 
-                    f"Admin authenticated successfully - Name: {user_info.get('name')}, Role: {user_info.get('role')}, Token length: {len(self.admin_token)} chars"
-                )
-                return True
+                if self.admin_token:
+                    self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
+                    
+                    user_info = data.get("user", {})
+                    self.log_result(
+                        "Admin Authentication", 
+                        True, 
+                        f"Admin authenticated successfully - Name: {user_info.get('name')}, Role: {user_info.get('role')}, Token length: {len(self.admin_token)} chars"
+                    )
+                    return True
+                else:
+                    self.log_result("Admin Authentication", False, "", f"No token in response: {data}")
+                    return False
             else:
                 self.log_result("Admin Authentication", False, "", f"HTTP {response.status_code}: {response.text}")
                 return False
