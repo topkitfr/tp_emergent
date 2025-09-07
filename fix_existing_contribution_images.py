@@ -12,8 +12,8 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
+# Load environment variables from backend directory
+ROOT_DIR = Path(__file__).parent / 'backend'
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
