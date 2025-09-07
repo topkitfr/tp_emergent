@@ -2861,9 +2861,10 @@ async def get_profile_picture(user_id: str):
 async def upload_image(
     file: UploadFile = File(...),
     entity_type: str = Form(...),  # team, brand, player, competition, master_jersey
+    generate_variants: bool = Form(True),  # Whether to generate multiple size variants
     current_user: dict = Depends(get_current_user)
 ):
-    """Upload image for any entity type (teams, brands, players, competitions, master jerseys)"""
+    """Upload and process image for any entity type with optimization and variants"""
     try:
         user_id = current_user['id']
         
@@ -2876,61 +2877,65 @@ async def upload_image(
             )
         
         # Validate file type
-        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp']
         if file.content_type not in allowed_types:
             raise HTTPException(
                 status_code=400, 
-                detail="Type de fichier non autorisé. Utilisez JPG, PNG ou WebP."
+                detail="Type de fichier non autorisé. Utilisez JPG, PNG, WebP ou BMP."
             )
         
-        # Validate file size (max 10MB for entity images)
-        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        # Validate file size (max 15MB for entity images)
+        max_size = 15 * 1024 * 1024  # 15MB in bytes
         file_content = await file.read()
         if len(file_content) > max_size:
             raise HTTPException(
                 status_code=400,
-                detail="Le fichier est trop volumineux. Taille maximale : 10MB."
+                detail="Le fichier est trop volumineux. Taille maximale : 15MB."
             )
         
         # Reset file position
         await file.seek(0)
         
-        # Create uploads directory if it doesn't exist
-        upload_dir = Path(f"uploads/{entity_type}s")
-        upload_dir.mkdir(parents=True, exist_ok=True)
+        # Process image with optimization and variants
+        processed_results = await image_processor.process_uploaded_image(
+            file_content=file_content,
+            filename=file.filename,
+            entity_type=entity_type,
+            generate_variants=generate_variants,
+            optimize=True
+        )
         
-        # Generate unique filename
-        file_extension = file.filename.split('.')[-1].lower()
-        if file_extension not in ['jpg', 'jpeg', 'png', 'webp']:
-            file_extension = 'jpg'
+        # Extract main image URL (use medium size as default, fallback to original)
+        main_image_url = processed_results.get('medium') or processed_results.get('original')
         
-        unique_filename = f"{entity_type}_{uuid.uuid4().hex[:8]}_{int(datetime.now().timestamp())}.{file_extension}"
-        file_path = upload_dir / unique_filename
-        
-        # Save file
-        with open(file_path, 'wb') as f:
-            await file.seek(0)
-            f.write(await file.read())
-        
-        # Generate URL
-        image_url = f"uploads/{entity_type}s/{unique_filename}"
-        
-        # Log activity
+        # Log activity with enhanced metadata
+        metadata = processed_results.get('metadata', {})
         await log_user_activity(user_id, f"{entity_type}_image_uploaded", None, {
-            "filename": unique_filename,
+            "filename": file.filename,
             "file_size": len(file_content),
-            "entity_type": entity_type
+            "entity_type": entity_type,
+            "variants_generated": len([k for k in processed_results.keys() if k != 'metadata']),
+            "image_dimensions": f"{metadata.get('width', 0)}x{metadata.get('height', 0)}",
+            "optimization_applied": True
         })
         
         return {
-            "message": "Image téléchargée avec succès",
-            "image_url": image_url,
-            "filename": unique_filename,
-            "entity_type": entity_type
+            "message": "Image téléchargée et optimisée avec succès",
+            "image_url": main_image_url,
+            "variants": {k: v for k, v in processed_results.items() if k != 'metadata'},
+            "metadata": metadata,
+            "entity_type": entity_type,
+            "optimization_applied": True,
+            "variants_count": len([k for k in processed_results.keys() if k != 'metadata'])
         }
+        
+    except ValueError as ve:
+        # Handle image processing validation errors
+        raise HTTPException(status_code=400, detail=f"Erreur de validation de l'image: {str(ve)}")
         
     except HTTPException:
         raise
+        
     except Exception as e:
         logger.error(f"Image upload error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors du téléchargement de l'image")
