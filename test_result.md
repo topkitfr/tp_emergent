@@ -199,6 +199,18 @@ backend:
         - working: true
         - agent: "testing"
         - comment: "✅ UNIFIED CONTRIBUTIONS PAGE INTEGRATION VERIFIED: Comprehensive testing confirms the unified contributions system is working excellently. The catalogue system shows proper integration with Teams (23), Brands (8), Players (7), Competitions (21), and Master Kits (6) all accessible and displaying correctly. Navigation between sections working properly, data relationships maintained, and filtering systems operational. The unified approach is successfully implemented and functional."
+  
+  - task: "Community DB Navigation Fix - Authentication State Issue"
+    implemented: true
+    working: true
+    file: "CollaborativeApp.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "🎉 CRITICAL NAVIGATION ISSUE COMPLETELY RESOLVED! Fixed the issue where 'Community DB' navigation link was not visible for authenticated users. ROOT CAUSE: Missing route mappings in CollaborativeApp.js - getCurrentView() function missing mapping for /contributions-v2 and handleViewChange() function missing mapping for 'contributions-v2'. SOLUTION: Added missing mappings in both functions. VERIFICATION: ✅ Authentication working correctly (TopKit Admin), ✅ 'Community DB' now visible in navigation ['Home', 'Catalogue', 'Kit Store', 'Collections', 'Contributions', 'Community DB'], ✅ Navigation to /contributions-v2 works perfectly, ✅ Discogs-style collaborative database interface loads correctly with entity type buttons, filtering, and voting rules. The authentication state now persists properly and authenticated users can access all intended navigation items."
   - task: "Jersey Collection Buttons Fix"
     implemented: true
     working: true
