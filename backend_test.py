@@ -418,8 +418,7 @@ class TopKitBackendTester:
         self.test_form_dependency_endpoints()
         
         # Step 6: Test voting system
-        if contribution_id:
-            self.test_voting_system(contribution_id)
+        self.test_voting_system(contribution_id)
         
         # Step 7: Test authentication requirements
         self.test_authentication_requirements()
