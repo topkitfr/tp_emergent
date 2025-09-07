@@ -418,8 +418,9 @@ class LocalStorageOptimizationTester:
             upload_result = upload_response.json()
             
             # Extract filename from uploaded image
-            if 'original' in upload_result:
-                image_path = upload_result['original']
+            variants_obj = upload_result.get('variants', {})
+            if 'original' in variants_obj:
+                image_path = variants_obj['original']
                 filename = image_path.split('/')[-1]
                 
                 # Test metadata endpoint
