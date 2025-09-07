@@ -12,6 +12,11 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
     country: '',
     verified_only: false
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showContributionModal, setShowContributionModal] = useState(false);
