@@ -39,10 +39,13 @@ const ContributionsV2Page = ({ user }) => {
   }, [user]);
 
   const fetchContributions = async () => {
+    console.log('📡 fetchContributions called');
     try {
       const token = localStorage.getItem('token');
+      console.log('🔑 Token check:', token ? `Found token (${token.length} chars)` : 'No token');
+      
       if (!token) {
-        console.log('No token available, skipping contributions fetch');
+        console.log('❌ No token available, skipping contributions fetch');
         setContributions([]);
         setLoading(false);
         return;
@@ -54,25 +57,27 @@ const ContributionsV2Page = ({ user }) => {
       queryParams.append('page', filters.page);
       queryParams.append('limit', '20');
 
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/?${queryParams}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+      const url = `${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/?${queryParams}`;
+      console.log('📤 Fetching from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      );
+      });
+
+      console.log('📨 Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ Fetched ${data.length} contributions`);
+        console.log(`✅ Fetched ${data.length} contributions:`, data.map(c => c.title));
         setContributions(data);
       } else {
-        console.error('Failed to fetch contributions:', response.status);
+        console.error('❌ Failed to fetch contributions:', response.status);
         setContributions([]);
       }
     } catch (error) {
-      console.error('Error fetching contributions:', error);
+      console.error('💥 Error fetching contributions:', error);
       setContributions([]);
     } finally {
       setLoading(false);
