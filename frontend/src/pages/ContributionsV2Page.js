@@ -75,6 +75,12 @@ const ContributionsV2Page = ({ user }) => {
   };
 
   const handleVote = async (contributionId, voteType) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please log in to vote');
+      return;
+    }
+
     setVotingStates(prev => ({ ...prev, [contributionId]: true }));
 
     try {
@@ -84,7 +90,7 @@ const ContributionsV2Page = ({ user }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             vote_type: voteType,
