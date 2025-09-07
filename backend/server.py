@@ -12659,99 +12659,130 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
     """Integrate approved contribution data into the main catalogue"""
     try:
         entity_type = contribution.get('entity_type')
-        entity_data = contribution.get('entity_data', {})
+        data = contribution.get('data', {})
         
-        if entity_type == ContributionType.TEAM:
-            # Add to teams collection
-            team_data = {
-                "id": str(uuid.uuid4()),
-                "name": entity_data.get('name'),
-                "country": entity_data.get('country'),
-                "league": entity_data.get('league'),
-                "founded_year": entity_data.get('founded_year'),
-                "stadium": entity_data.get('stadium'),
-                "website": entity_data.get('website'),
-                "logo_url": entity_data.get('logo_url'),
-                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
-                "verified_at": datetime.utcnow(),
-                "verified_by": user_id,
-                "created_at": datetime.utcnow(),
-                "created_by": contribution.get('created_by'),
-                "source_contribution_id": contribution_id
+        # Generate new entity ID
+        entity_id = str(uuid.uuid4())
+        
+        # Common fields for all entities
+        common_fields = {
+            "id": entity_id,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "verified_level": "community_verified",
+            "verified_at": contribution.get('reviewed_at', datetime.utcnow()),
+            "verified_by": user_id,
+            "source_contribution_id": contribution_id,
+            "topkit_reference": contribution.get('topkit_reference')
+        }
+        
+        if entity_type == 'team':
+            team_doc = {
+                **common_fields,
+                "name": data.get('name'),
+                "country": data.get('country'),
+                "city": data.get('city', ''),
+                "founded_year": data.get('founded_year'),
+                "short_name": data.get('short_name', ''),
+                "official_name": data.get('official_name', ''),
+                "alternative_names": data.get('alternative_names', []),
+                "colors": data.get('colors', []),
+                "logo_url": data.get('logo_url', ''),
+                "stadium": data.get('stadium', ''),
+                "league_info": data.get('league_info', {}),
+                "current_competitions": data.get('current_competitions', []),
+                "primary_competition_id": data.get('primary_competition_id', '')
             }
-            await db.teams.insert_one(team_data)
-            
-        elif entity_type == ContributionType.BRAND:
-            # Add to brands collection
-            brand_data = {
-                "id": str(uuid.uuid4()),
-                "name": entity_data.get('name'),
-                "country": entity_data.get('country'),
-                "founded_year": entity_data.get('founded_year'),
-                "website": entity_data.get('website'),
-                "logo_url": entity_data.get('logo_url'),
-                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
-                "verified_at": datetime.utcnow(),
-                "verified_by": user_id,
-                "created_at": datetime.utcnow(),
-                "created_by": contribution.get('created_by'),
-                "source_contribution_id": contribution_id
+            await db.teams.insert_one(team_doc)
+            logger.info(f"Integrated team: {data.get('name')} to catalogue")
+                
+        elif entity_type == 'brand':
+            brand_doc = {
+                **common_fields,
+                "name": data.get('name'),
+                "official_name": data.get('official_name', ''),
+                "country": data.get('country'),
+                "founded_year": data.get('founded_year'),
+                "website": data.get('website', ''),
+                "alternative_names": data.get('alternative_names', []),
+                "logo_url": data.get('logo_url', ''),
+                "description": data.get('description', '')
             }
-            await db.brands.insert_one(brand_data)
-            
-        elif entity_type == ContributionType.COMPETITION:
-            # Add to competitions collection
-            competition_data = {
-                "id": str(uuid.uuid4()),
-                "competition_name": entity_data.get('competition_name'),
-                "country": entity_data.get('country'),
-                "level": entity_data.get('level'),
-                "type": entity_data.get('type'),
-                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
-                "verified_at": datetime.utcnow(),
-                "verified_by": user_id,
-                "created_at": datetime.utcnow(),
-                "created_by": contribution.get('created_by'),
-                "source_contribution_id": contribution_id
+            await db.brands.insert_one(brand_doc)
+            logger.info(f"Integrated brand: {data.get('name')} to catalogue")
+                
+        elif entity_type == 'player':
+            player_doc = {
+                **common_fields,
+                "name": data.get('name'),
+                "common_name": data.get('common_name', ''),
+                "nationality": data.get('nationality'),
+                "birth_date": data.get('birth_date', ''),
+                "position": data.get('position', ''),
+                "current_team": data.get('current_team', ''),
+                "jersey_number": data.get('jersey_number'),
+                "alternative_names": data.get('alternative_names', []),
+                "height": data.get('height', ''),
+                "weight": data.get('weight', ''),
+                "foot": data.get('foot', ''),
+                "market_value": data.get('market_value', ''),
+                "profile_picture_url": data.get('profile_picture_url', '')
             }
-            await db.competitions.insert_one(competition_data)
-            
-        elif entity_type == ContributionType.MASTER_KIT:
-            # Add to master_kits collection
-            master_kit_data = {
-                "id": str(uuid.uuid4()),
-                "team_id": entity_data.get('team_id'),
-                "season": entity_data.get('season'),
-                "kit_type": entity_data.get('kit_type'),
-                "brand_id": entity_data.get('brand_id'),
-                "description": entity_data.get('description'),
-                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
-                "verified_at": datetime.utcnow(),
-                "verified_by": user_id,
-                "created_at": datetime.utcnow(),
-                "created_by": contribution.get('created_by'),
-                "source_contribution_id": contribution_id
+            await db.players.insert_one(player_doc)
+            logger.info(f"Integrated player: {data.get('name')} to catalogue")
+                
+        elif entity_type == 'competition':
+            competition_doc = {
+                **common_fields,
+                "competition_name": data.get('competition_name'),
+                "official_name": data.get('official_name', ''),
+                "type": data.get('type'),
+                "country": data.get('country'),
+                "level": data.get('level', 1),
+                "confederations_federations": data.get('confederations_federations', []),
+                "alternative_names": data.get('alternative_names', []),
+                "season_format": data.get('season_format', ''),
+                "current_season": data.get('current_season', ''),
+                "logo_url": data.get('logo_url', '')
             }
-            await db.master_kits.insert_one(master_kit_data)
-            
-        elif entity_type == ContributionType.REFERENCE_KIT:
-            # Add to reference_kits collection
-            reference_kit_data = {
-                "id": str(uuid.uuid4()),
-                "master_kit_id": entity_data.get('master_kit_id'),
-                "size": entity_data.get('size'),
-                "condition": entity_data.get('condition'),
-                "authenticity": entity_data.get('authenticity'),
-                "special_features": entity_data.get('special_features', []),
-                "verified_level": VerificationLevel.COMMUNITY_VERIFIED,
-                "verified_at": datetime.utcnow(),
-                "verified_by": user_id,
-                "created_at": datetime.utcnow(),
-                "created_by": contribution.get('created_by'),
-                "source_contribution_id": contribution_id
+            await db.competitions.insert_one(competition_doc)
+            logger.info(f"Integrated competition: {data.get('competition_name')} to catalogue")
+                
+        elif entity_type == 'master_kit':
+            master_jersey_doc = {
+                **common_fields,
+                "team_id": data.get('team_id', ''),
+                "brand_id": data.get('brand_id', ''),
+                "season": data.get('season'),
+                "jersey_type": data.get('jersey_type', 'home'),
+                "model": data.get('model', ''),
+                "primary_color": data.get('primary_color', ''),
+                "secondary_colors": data.get('secondary_colors', []),
+                "pattern": data.get('pattern', ''),
+                "main_image_url": data.get('main_image_url', ''),
+                "additional_images": data.get('additional_images', []),
+                "description": data.get('description', ''),
+                "material": data.get('material', ''),
+                "manufacturer_code": data.get('manufacturer_code', ''),
+                "release_date": data.get('release_date', ''),
+                "discontinued_date": data.get('discontinued_date', '')
             }
-            await db.reference_kits.insert_one(reference_kit_data)
-            
+            await db.master_jerseys.insert_one(master_jersey_doc)
+            logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue")
+        
+        # Mark contribution as integrated
+        await db.contributions_v2.update_one(
+            {"id": contribution_id},
+            {
+                "$set": {
+                    "integrated": True,
+                    "integrated_at": datetime.utcnow(),
+                    "integrated_entity_id": entity_id,
+                    "integrated_entity_type": entity_type
+                }
+            }
+        )
+        
         logger.info(f"Successfully integrated {entity_type} contribution {contribution_id} to catalogue")
         
     except Exception as e:
