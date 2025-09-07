@@ -263,8 +263,6 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
         )}
       </div>
 
-      {/* Create Team Modal */}
-      {showCreateModal && <CreateTeamModal />}
 
       {/* Contribution Modal */}
       {showContributionModal && selectedTeamForContribution && (
