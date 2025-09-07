@@ -28,8 +28,13 @@ const ContributionsV2Page = ({ user }) => {
 
   // Add effect to refetch when user changes
   useEffect(() => {
+    console.log('🔄 User changed effect triggered, user:', user);
     if (user) {
+      console.log('✅ User is authenticated, fetching contributions...');
       fetchContributions();
+    } else {
+      console.log('❌ No user, clearing contributions');
+      setContributions([]);
     }
   }, [user]);
 
