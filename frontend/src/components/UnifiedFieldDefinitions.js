@@ -189,8 +189,19 @@ export const validateEntityData = (entityType, data) => {
   const errors = [];
   
   for (const field of requiredFields) {
-    if (!data[field.key] || (typeof data[field.key] === 'string' && data[field.key].trim() === '')) {
-      errors.push(`${field.label} is required`);
+    const value = data[field.key];
+    
+    // Handle image fields differently - they can have placeholder values or be handled separately
+    if (field.type === 'image' || field.type === 'image_multiple') {
+      // For image fields, just check if there's any value (including placeholder values)
+      if (!value) {
+        errors.push(`${field.label} is required`);
+      }
+    } else {
+      // Regular validation for non-image fields
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        errors.push(`${field.label} is required`);
+      }
     }
   }
   
