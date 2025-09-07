@@ -10006,8 +10006,12 @@ async def get_teams(
                     "type": competition["type"]
                 }
         
-        # Remove league_info from team data to avoid conflict
+        # Remove league_info from team data to avoid conflict and ensure required fields
         team_data = {k: v for k, v in team.items() if k != 'league_info'}
+        
+        # Ensure required fields have default values
+        team_data.setdefault('common_names', [])
+        team_data.setdefault('modification_count', 0)
         
         enriched_team = TeamResponse(
             **team_data,
