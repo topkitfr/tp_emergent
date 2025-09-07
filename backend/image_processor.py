@@ -14,13 +14,19 @@ import asyncio
 from pathlib import Path
 from typing import Tuple, Optional, Dict, List
 from PIL import Image, ImageOps
-from PIL.ExifTags import ORIENTATION
 import hashlib
 import logging
 from datetime import datetime
 import uuid
 
 logger = logging.getLogger(__name__)
+
+# Try to import ORIENTATION, fallback if not available
+try:
+    from PIL.ExifTags import ORIENTATION
+except ImportError:
+    # Fallback for older PIL versions
+    ORIENTATION = 274
 
 class ImageProcessor:
     """Advanced image processor for local storage optimization"""
