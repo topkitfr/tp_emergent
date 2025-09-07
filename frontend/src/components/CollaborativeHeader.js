@@ -26,8 +26,6 @@ const CollaborativeHeader = ({
     { id: 'home', label: 'Home', icon: '🏠', requiresAuth: false },
     { id: 'catalogue', label: 'Catalogue', icon: '📚', requiresAuth: false },
     { id: 'vestiaire', label: 'Kit Store', icon: '👕', requiresAuth: false },
-    { id: 'collections', label: 'Collections', icon: '💎', requiresAuth: true },
-    { id: 'contributions', label: 'Contributions', icon: '🗳️', requiresAuth: true },
     { id: 'contributions-v2', label: 'Community DB', icon: '🎯', requiresAuth: true }
   ];
 
