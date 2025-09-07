@@ -13279,6 +13279,11 @@ async def get_moderation_stats_v2(current_user: dict = Depends(get_current_user)
         logger.error(f"Get moderation stats error: {e}")
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération des statistiques")
 
+app.include_router(api_router)
+
+# Mount static files for uploads
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # Mount static files
 uploads_dir = Path("uploads")
 uploads_dir.mkdir(exist_ok=True)
