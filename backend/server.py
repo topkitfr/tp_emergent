@@ -12769,6 +12769,32 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
             }
             await db.master_jerseys.insert_one(master_jersey_doc)
             logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue")
+            
+        elif entity_type == 'reference_kit':
+            reference_kit_doc = {
+                **common_fields,
+                "master_kit_id": data.get('master_kit_id', ''),
+                "model_name": data.get('model_name'),
+                "release_type": data.get('release_type', 'replica'),
+                "original_retail_price": data.get('original_retail_price', 0.0),
+                "current_market_price": data.get('current_market_price', 0.0),
+                "release_date": data.get('release_date', ''),
+                "sku_code": data.get('sku_code', ''),
+                "barcode": data.get('barcode', ''),
+                "is_limited_edition": data.get('is_limited_edition', False),
+                "production_run": data.get('production_run', None),
+                "league_competition": data.get('league_competition', ''),
+                "product_images": data.get('product_images', []),
+                "main_photo": data.get('main_photo', ''),
+                "secondary_photos": data.get('secondary_photos', []),
+                "description": data.get('description', ''),
+                "sizes_available": data.get('sizes_available', []),
+                "material_composition": data.get('material_composition', ''),
+                "care_instructions": data.get('care_instructions', ''),
+                "authenticity_features": data.get('authenticity_features', [])
+            }
+            await db.reference_kits.insert_one(reference_kit_doc)
+            logger.info(f"Integrated reference kit: {data.get('model_name')} {data.get('release_type')} to Kit Store")
         
         # Mark contribution as integrated
         await db.contributions_v2.update_one(
