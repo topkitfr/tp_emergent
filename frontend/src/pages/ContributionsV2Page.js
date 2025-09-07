@@ -31,12 +31,24 @@ const ContributionsV2Page = ({ user }) => {
     console.log('🔄 User changed effect triggered, user:', user);
     if (user) {
       console.log('✅ User is authenticated, fetching contributions...');
-      fetchContributions();
+      // Add small delay to ensure token is properly set
+      setTimeout(() => {
+        fetchContributions();
+      }, 500);
     } else {
       console.log('❌ No user, clearing contributions');
       setContributions([]);
     }
   }, [user]);
+
+  // Add effect to refetch when component mounts and token is available
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && contributions.length === 0) {
+      console.log('🔄 Component mounted with token, fetching contributions...');
+      fetchContributions();
+    }
+  }, []);
 
   const fetchContributions = async () => {
     console.log('📡 fetchContributions called');
