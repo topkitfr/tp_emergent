@@ -12247,6 +12247,7 @@ async def get_reference_kits(
                 master_kit_info=master_kit_data,
                 team_info=team_data,
                 brand_info=brand_data,
+                competition_info=competition_data,
                 total_in_collections=kit.get('total_in_collections', 0),
                 total_for_sale=kit.get('total_for_sale', 0),
                 created_at=kit.get('created_at')
