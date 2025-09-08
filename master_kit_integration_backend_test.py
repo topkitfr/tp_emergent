@@ -654,6 +654,13 @@ class MasterKitIntegrationTester:
         else:
             print(f"❌ Master Jerseys Collection: FAILED TO RETRIEVE")
         
+        # Master kits analysis
+        if kits_data:
+            total_master_kits = kits_data.get('total_master_kits', 0)
+            print(f"🎽 Master Kits Collection: {total_master_kits} items")
+        else:
+            print(f"❌ Master Kits Collection: FAILED TO RETRIEVE")
+        
         # Integration analysis
         if integration_data:
             successful_integrations = integration_data.get('successful_integrations', 0)
