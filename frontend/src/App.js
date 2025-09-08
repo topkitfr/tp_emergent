@@ -3,11 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 
 // Football data for suggestions - Kept for future use
 // const LEAGUES_DATA = { ... }
-
-const SEASONS = [
-  '25/26', '24/25', '23/24', '22/23', '21/22', '20/21', '19/20', '18/19', '17/18', '16/17', 
-  '15/16', '14/15', '13/14', '12/13', '11/12', '10/11', '09/10', '08/09', '07/08', '06/07'
-];
+// const SEASONS = [ ... ]
 
 // Get the backend URL from environment variables
 const API = process.env.REACT_APP_BACKEND_URL;
