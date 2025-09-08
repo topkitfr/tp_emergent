@@ -221,6 +221,7 @@ const UnifiedFieldRenderer = ({
             ))}
           </select>
         );
+      }
 
       case 'select':
         return (
