@@ -2161,7 +2161,6 @@ const AppContent = () => {
                 { id: 'wishlist', label: 'Wishlist', icon: '⭐' },
                 { id: 'submissions', label: 'Mes Soumissions', icon: '📝' },
                 { id: 'listings', label: 'Mes Annonces', icon: '🏪' },
-                { id: 'friends', label: 'Mes Amis', icon: '👥' },
                 { id: 'messages', label: 'Messagerie', icon: '💬' }
               ].map((tab) => (
                 <button
