@@ -611,7 +611,7 @@ class MasterKitIntegrationTester:
         
         return True
 
-    def generate_master_kit_analysis(self, auto_approval, contributions_data, jerseys_data, 
+    def generate_master_kit_analysis(self, auto_approval, contributions_data, jerseys_data, kits_data,
                                    workflow_data, integration_data, integration_function, test_contrib_id):
         """Generate comprehensive analysis of master kit integration workflow"""
         print("\n" + "=" * 80)
