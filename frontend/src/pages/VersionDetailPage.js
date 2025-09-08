@@ -60,6 +60,32 @@ const VersionDetailPage = () => {
     }
   };
 
+  const handleAddToCollection = async (type) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/collections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          reference_kit_id: version.id,
+          collection_type: type
+        })
+      });
+
+      if (response.ok) {
+        alert(`Successfully added to ${type === 'own' ? 'collection' : 'wantlist'}!`);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to add to collection');
+      }
+    } catch (error) {
+      console.error('Error adding to collection:', error);
+      alert('Failed to add to collection');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
