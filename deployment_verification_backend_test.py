@@ -150,21 +150,21 @@ class DeploymentVerificationTester:
             return False
 
     def test_jwt_token_validation(self):
-        """Test JWT token validation"""
+        """Test JWT token validation by accessing protected endpoint"""
         if not self.admin_token:
             self.log_result("JWT Token Validation", False, "", "No admin token available")
             return False
             
         try:
-            # Test with valid token
-            response = self.session.get(f"{API_BASE}/auth/me")
+            # Test with valid token by accessing admin dashboard (protected endpoint)
+            response = self.session.get(f"{API_BASE}/admin/dashboard-stats")
             
             if response.status_code == 200:
-                user_data = response.json()
+                stats = response.json()
                 self.log_result(
                     "JWT Token Validation",
                     True,
-                    f"Token valid. User: {user_data.get('name')}, Email: {user_data.get('email')}"
+                    f"Token valid. Successfully accessed protected endpoint. Total users: {stats.get('users', {}).get('total', 0)}"
                 )
                 return True
             else:
