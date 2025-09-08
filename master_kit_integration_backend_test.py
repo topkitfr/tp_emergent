@@ -93,7 +93,7 @@ class MasterKitIntegrationTester:
         """Test 1: Check if master kits are being created in contributions first"""
         try:
             # Test GET /api/contributions-v2?entity_type=master_kit
-            response = self.session.get(f"{API_BASE}/contributions-v2", params={"entity_type": "master_kit"})
+            response = self.session.get(f"{API_BASE}/contributions-v2/", params={"entity_type": "master_kit"})
             
             if response.status_code == 200:
                 data = response.json()
