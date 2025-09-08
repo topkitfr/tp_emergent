@@ -25,6 +25,20 @@ const UnifiedFieldRenderer = ({
     }
   }, [value, field.type]);
 
+  // Check if field should be rendered based on dependencies
+  const shouldRenderField = () => {
+    if (field.dependsOn) {
+      const dependsOnValue = formData[field.dependsOn];
+      return !!dependsOnValue; // Only render if the field it depends on is truthy
+    }
+    return true; // Render by default
+  };
+
+  // Don't render field if it shouldn't be shown
+  if (!shouldRenderField()) {
+    return null;
+  }
+
   const handleListAdd = () => {
     if (newItem.trim() && !listItems.includes(newItem.trim())) {
       const updatedList = [...listItems, newItem.trim()];
