@@ -91,7 +91,6 @@ const AppContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [jerseys, setJerseys] = useState([]);
   const [marketplaceItems, setMarketplaceItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     league: '',
     team: '',
