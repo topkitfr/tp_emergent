@@ -107,7 +107,6 @@ export const getUnifiedFieldsForEntityType = (type) => {
     case 'personal_kit':
       return [
         // C/ Personal Kit form - additional info when adding Reference Kit to collection
-        { key: 'reference_kit_id', label: 'Reference Kit', type: 'reference_kit_select', required: true },
         { key: 'condition', label: 'Condition (state of the kit)', type: 'select', options: ['New', 'Excellent', 'Good', 'Fair', 'Poor'], required: false },
         { key: 'player_id', label: 'Player', type: 'player_select', required: false },
         { key: 'number', label: 'Number (player\'s jersey number)', type: 'number', required: false },
