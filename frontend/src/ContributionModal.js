@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getUnifiedFieldsForEntityType } from './components/UnifiedFieldDefinitions';
+import UnifiedFieldRenderer from './components/UnifiedFieldRenderer';
 
 const ContributionModal = ({ isOpen, onClose, entity, entityType, onContributionCreated }) => {
   const [formData, setFormData] = useState({});
