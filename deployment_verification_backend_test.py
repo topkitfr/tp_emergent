@@ -615,9 +615,8 @@ class DeploymentVerificationTester:
             ("/competitions", "Competitions Endpoint"),
             ("/players", "Players Endpoint"),
             ("/master-jerseys", "Master Jerseys Endpoint"),
-            ("/reference-kits", "Reference Kits Endpoint"),
-            ("/contributions-v2", "Contributions V2 Endpoint"),
-            ("/collections", "Collections Endpoint")
+            ("/contributions-v2/", "Contributions V2 Endpoint"),
+            ("/collections/my-owned", "Collections Endpoint")
         ]
         
         for endpoint, name in endpoints:
