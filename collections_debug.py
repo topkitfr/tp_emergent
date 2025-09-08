@@ -11,7 +11,7 @@ import json
 import sys
 
 # Configuration
-BACKEND_URL = "https://kit-master-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-forms.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {
