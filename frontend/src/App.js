@@ -1,17 +1,6 @@
-import React, { useState, useEffect, createContext, useContext, useReducer } from 'react';
-import './App.css';
-import axios from 'axios';
-import AuthModal from './AuthModal';
-import TwoFactorAuthSetup from './TwoFactorAuthSetup';
-import SecuritySettingsModal from './SecuritySettingsModal';
-import JerseyDetailEditor from './JerseyDetailEditor';
-import PaginationControls from './PaginationControls';
-import JerseyDetailModal from './JerseyDetailModal';
-import CollectionPage from './CollectionPage';
-import MyCollectionPage from './pages/MyCollectionPage';
-import PasswordResetPage from './PasswordResetPage';
-import { useCSVData } from './utils/csvLoader';
-import tokenManager from './utils/tokenManager';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { AuthContext } from './CollaborativeApp';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
