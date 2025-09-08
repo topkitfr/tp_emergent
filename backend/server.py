@@ -12203,11 +12203,25 @@ async def get_reference_kits(
             team_data.pop('_id', None)
             brand_data.pop('_id', None)
             
+            # Map database fields to expected model fields and provide defaults
             response = ReferenceKitResponse(
-                **kit,
+                id=kit.get('id'),
+                master_kit_id=kit.get('master_kit_id'),
+                available_sizes=kit.get('sizes_available', []),
+                available_prints=kit.get('available_prints', []),
+                original_retail_price=kit.get('original_retail_price'),
+                current_market_estimate=kit.get('current_market_price'),
+                price_range_min=kit.get('price_range_min'),
+                price_range_max=kit.get('price_range_max'),
+                is_limited_edition=kit.get('is_limited_edition', False),
+                topkit_reference=kit.get('topkit_reference'),
+                verified_level=kit.get('verified_level', 'unverified'),
                 master_kit_info=master_kit_data,
                 team_info=team_data,
-                brand_info=brand_data
+                brand_info=brand_data,
+                total_in_collections=kit.get('total_in_collections', 0),
+                total_for_sale=kit.get('total_for_sale', 0),
+                created_at=kit.get('created_at')
             )
             result.append(response)
         
