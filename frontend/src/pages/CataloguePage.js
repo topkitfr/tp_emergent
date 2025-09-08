@@ -46,13 +46,6 @@ const CataloguePage = ({
       icon: '🏆', 
       count: competitions?.length || 0,
       description: 'Championships and cups'
-    },
-    { 
-      id: 'master-jerseys', 
-      label: 'Master Kits', 
-      icon: '📋', 
-      count: masterJerseys?.length || 0,
-      description: 'Kit designs'
     }
   ];
 
