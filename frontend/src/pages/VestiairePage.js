@@ -1292,6 +1292,117 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Inline Personal Details Form */}
+                      {showPersonalDetailsForm && selectedReferenceKit?.id === release.id && selectedCollectionType === 'personal' && (
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Add to My Collection</h3>
+                            <p className="text-sm text-gray-600">
+                              {selectedReferenceKit.master_kit_info?.team_info?.name || 'Unknown Team'} - {selectedReferenceKit.master_kit_info?.season || 'Unknown Season'}
+                            </p>
+                          </div>
+
+                          <form onSubmit={(e) => { e.preventDefault(); handlePersonalDetailsSubmit(); }} className="space-y-4">
+                            {/* Condition */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Condition (state of the kit)
+                              </label>
+                              <select
+                                value={personalDetails.condition}
+                                onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Condition</option>
+                                <option value="New">New</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                              </select>
+                            </div>
+
+                            {/* Player */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Player
+                              </label>
+                              <select
+                                value={personalDetails.player_name}
+                                onChange={(e) => handlePlayerChange(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select Player</option>
+                                {players.map(player => (
+                                  <option key={player.id} value={player.id}>{player.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Number */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Number (player's jersey number)
+                              </label>
+                              <input
+                                type="number"
+                                value={personalDetails.player_number}
+                                onChange={(e) => setPersonalDetails({...personalDetails, player_number: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                                placeholder="10"
+                              />
+                            </div>
+
+                            {/* Purchase Price */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Purchase Price
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={personalDetails.price_buy}
+                                onChange={(e) => setPersonalDetails({...personalDetails, price_buy: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                                placeholder="99.99"
+                              />
+                            </div>
+
+                            {/* Estimated Value */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Estimated Value
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={personalDetails.price_value}
+                                onChange={(e) => setPersonalDetails({...personalDetails, price_value: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                                placeholder="120.00"
+                              />
+                            </div>
+
+                            {/* Submit Button */}
+                            <div className="flex space-x-3 pt-4">
+                              <button
+                                type="button"
+                                onClick={() => setShowPersonalDetailsForm(false)}
+                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                              >
+                                Add to Collection
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
