@@ -1092,7 +1092,7 @@ async def send_password_reset_email(email: str, token: str, user_name: str = "")
         from sendgrid.helpers.mail import Mail
         
         # Create reset link using environment variable
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://football-kit-hub-2.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://kit-master-fix.preview.emergentagent.com')
         reset_link = f"{frontend_url}/reset-password?token={token}"
         
         # HTML email content
@@ -1869,7 +1869,7 @@ async def register(user_data: UserRegister, request: Request):
             logger.error(f"Failed to send confirmation email to {user.email}: {e}")
     
     # Fallback verification link for development
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://football-kit-hub-2.preview.emergentagent.com')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://kit-master-fix.preview.emergentagent.com')
     verification_link = f"{frontend_url}/verify-email?token={verification_token}"
     
     return {
@@ -1963,7 +1963,7 @@ async def resend_verification_email(email: EmailStr):
     verification_token = generate_email_verification_token(user["id"], user["email"])
     
     # Generate verification link using environment variable
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://football-kit-hub-2.preview.emergentagent.com')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://kit-master-fix.preview.emergentagent.com')
     verification_link = f"{frontend_url}/verify-email?token={verification_token}"
     
     return {

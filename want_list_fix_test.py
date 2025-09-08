@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BACKEND_URL = "https://football-kit-hub-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-master-fix.preview.emergentagent.com/api"
 
 # Test credentials
 USER_EMAIL = "steinmetzlivio@gmail.com"

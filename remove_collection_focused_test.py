@@ -10,7 +10,7 @@ import uuid
 import time
 
 # Configuration
-BASE_URL = "https://football-kit-hub-2.preview.emergentagent.com/api"
+BASE_URL = "https://kit-master-fix.preview.emergentagent.com/api"
 
 class RemoveCollectionTester:
     def __init__(self):
