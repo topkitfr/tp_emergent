@@ -229,8 +229,11 @@ const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams =
         brands={brands}
         competitions={competitions}
         masterKits={masterJerseys}
+        referenceKits={referenceKits || []}
+        players={players || []}
         onImageUpload={handleImageUpload}
         API={process.env.REACT_APP_BACKEND_URL}
+        formData={formData}
       />
     );
   };
