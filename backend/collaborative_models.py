@@ -987,6 +987,10 @@ class MasterJerseyResponse(BaseModel):
     created_by: str
     verified_level: VerificationLevel
     topkit_reference: str
+    # Image fields
+    main_image_url: Optional[str] = None
+    additional_images: List[str] = []
+    # Enriched data
     team_info: Optional[Dict[str, Any]] = {}
     brand_info: Optional[Dict[str, Any]] = {}
     competition_info: Optional[Dict[str, Any]] = {}
