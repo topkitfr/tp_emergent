@@ -1,6 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { useCSVData } from './utils/csvLoader';
 
 // Football data for suggestions
 const LEAGUES_DATA = {
