@@ -12936,6 +12936,11 @@ async def create_contribution_v2(
     try:
         user_id = current_user['id']
         
+        # DEBUG: Log the received contribution data
+        logger.info(f"DEBUG - Received contribution data: {contribution_data.dict()}")
+        logger.info(f"DEBUG - Data field content: {contribution_data.data}")
+        logger.info(f"DEBUG - Entity type: {contribution_data.entity_type}")
+        
         # Validate entity type and data requirements
         requires_images = contribution_data.entity_type in [ContributionType.MASTER_KIT, ContributionType.REFERENCE_KIT]
         
