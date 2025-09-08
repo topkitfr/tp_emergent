@@ -55,9 +55,18 @@ class MasterKitIntegrationTester:
                 "password": ADMIN_PASSWORD
             })
             
+            print(f"Auth response status: {response.status_code}")
+            print(f"Auth response text: {response.text}")
+            
             if response.status_code == 200:
                 data = response.json()
+                print(f"Auth response data: {data}")
+                
                 self.admin_token = data.get("access_token")
+                if not self.admin_token:
+                    self.log_result("Admin Authentication", False, "", "No access_token in response")
+                    return False
+                    
                 # Set the authorization header for all future requests
                 self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
                 
