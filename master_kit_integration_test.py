@@ -78,10 +78,13 @@ class MasterKitIntegrationTester:
     def test_master_kit_contributions_status(self):
         """Test 1: Check approved master kit contributions"""
         try:
-            response = self.session.get(f"{API_BASE}/contributions-v2", params={
-                "entity_type": "master_kit",
-                "status": "approved"
-            })
+            headers = {"Authorization": f"Bearer {self.admin_token}"} if self.admin_token else {}
+            response = self.session.get(f"{API_BASE}/contributions-v2", 
+                                      params={
+                                          "entity_type": "master_kit",
+                                          "status": "approved"
+                                      },
+                                      headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
