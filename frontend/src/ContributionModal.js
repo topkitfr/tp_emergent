@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { getUnifiedFieldsForEntityType } from './components/UnifiedFieldDefinitions';
 import UnifiedFieldRenderer from './components/UnifiedFieldRenderer';
 
-const ContributionModal = ({ isOpen, onClose, entity, entityType, onContributionCreated }) => {
+const ContributionModal = ({ 
+  isOpen, 
+  onClose, 
+  entity, 
+  entityType, 
+  onContributionCreated,
+  teams = [],
+  brands = [],
+  competitions = [],
+  masterKits = [],
+  referenceKits = [],
+  players = []
+}) => {
   const [formData, setFormData] = useState({});
   const [originalData, setOriginalData] = useState({});
   const [title, setTitle] = useState('');
