@@ -92,6 +92,122 @@ const UnifiedFieldRenderer = ({
           />
         );
 
+      case 'team_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Team</option>
+            {teams.map(team => (
+              <option key={team.id} value={team.id}>{team.name}</option>
+            ))}
+          </select>
+        );
+
+      case 'brand_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Brand</option>
+            {brands.map(brand => (
+              <option key={brand.id} value={brand.id}>{brand.name}</option>
+            ))}
+          </select>
+        );
+
+      case 'competition_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Competition</option>
+            {competitions.map(competition => (
+              <option key={competition.id} value={competition.id}>{competition.competition_name || competition.name}</option>
+            ))}
+          </select>
+        );
+
+      case 'master_kit_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Master Kit</option>
+            {masterKits.map(kit => (
+              <option key={kit.id} value={kit.id}>
+                {kit.team_info?.name || 'Unknown Team'} - {kit.season} - {kit.type}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'reference_kit_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Reference Kit</option>
+            {referenceKits.map(kit => (
+              <option key={kit.id} value={kit.id}>
+                {kit.master_kit_info?.team_info?.name || 'Unknown Team'} - {kit.model} - {kit.topkit_reference}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'player_select':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Player</option>
+            {players.map(player => (
+              <option key={player.id} value={player.id}>{player.name}</option>
+            ))}
+          </select>
+        );
+
+      case 'season_select':
+        const currentYear = new Date().getFullYear();
+        const seasons = [];
+        // Generate seasons from 2020-2021 to current+2 years
+        for (let year = 2020; year <= currentYear + 2; year++) {
+          seasons.push(`${year}-${year + 1}`);
+        }
+        
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Season</option>
+            {seasons.reverse().map(season => (
+              <option key={season} value={season}>{season}</option>
+            ))}
+          </select>
+        );
+
       case 'select':
         return (
           <select
