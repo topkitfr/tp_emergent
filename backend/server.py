@@ -12157,7 +12157,7 @@ async def get_reference_kits(
             {"$limit": limit},
             {
                 "$lookup": {
-                    "from": "master_kits",
+                    "from": "master_jerseys",
                     "localField": "master_kit_id",
                     "foreignField": "id",
                     "as": "master_kit_info"
