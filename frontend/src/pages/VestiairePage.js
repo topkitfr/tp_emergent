@@ -1279,7 +1279,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                                 onClick={() => {
                                   setSelectedReferenceKit(release);
                                   setSelectedCollectionType('personal');
-                                  setShowPersonalDetailsModal(true);
+                                  setShowPersonalDetailsForm(true);
                                 }}
                                 className="text-green-600 hover:text-green-800 text-sm font-medium"
                               >
