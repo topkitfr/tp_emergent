@@ -580,6 +580,7 @@ class MasterKitIntegrationTester:
             auto_approval_enabled,
             contributions_data,
             jerseys_data,
+            kits_data,
             workflow_data,
             integration_data,
             integration_function_working,
