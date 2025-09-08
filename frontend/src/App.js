@@ -135,38 +135,6 @@ const AppContent = () => {
     }
   }, [user, currentView]);
 
-  // Filter marketplace based on search and filters
-  useEffect(() => {
-    let filtered = marketplaceItems;
-
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(item => 
-        item.team?.toLowerCase().includes(search) ||
-        item.league?.toLowerCase().includes(search) ||
-        item.player_name?.toLowerCase().includes(search)
-      );
-    }
-
-    if (filters.league) {
-      filtered = filtered.filter(item => item.league === filters.league);
-    }
-
-    if (filters.team) {
-      filtered = filtered.filter(item => item.team === filters.team);
-    }
-
-    if (filters.minPrice) {
-      filtered = filtered.filter(item => parseFloat(item.min_price || 0) >= parseFloat(filters.minPrice));
-    }
-
-    if (filters.maxPrice) {
-      filtered = filtered.filter(item => parseFloat(item.min_price || 0) <= parseFloat(filters.maxPrice));
-    }
-
-    setFilteredMarketplace(filtered);
-  }, [marketplaceItems, searchTerm, filters]);
-
   // API Functions
   const loadJerseys = async () => {
     try {
