@@ -144,7 +144,7 @@ class MasterKitIntegrationTester:
         """Test 2: Check the master jerseys collection directly"""
         try:
             # Test GET /api/master-jerseys
-            response = self.session.get(f"{API_BASE}/master-jerseys/")
+            response = self.session.get(f"{API_BASE}/master-jerseys")
             
             if response.status_code == 200:
                 data = response.json()
@@ -180,6 +180,48 @@ class MasterKitIntegrationTester:
                 
         except Exception as e:
             self.log_result("Master Jerseys Collection Check", False, "", str(e))
+            return None
+
+    def test_master_kits_collection(self):
+        """Test 2b: Check the master kits collection directly"""
+        try:
+            # Test GET /api/master-kits
+            response = self.session.get(f"{API_BASE}/master-kits")
+            
+            if response.status_code == 200:
+                data = response.json()
+                master_kits = data if isinstance(data, list) else data.get('master_kits', [])
+                
+                self.log_result(
+                    "Master Kits Collection Check",
+                    True,
+                    f"Found {len(master_kits)} master kits in collection"
+                )
+                
+                # Log details of master kits
+                if master_kits:
+                    print("   📋 Master Kits in Collection:")
+                    for kit in master_kits:
+                        print(f"      - ID: {kit.get('id')}, TopKit Ref: {kit.get('topkit_reference', 'N/A')}")
+                        print(f"        Team: {kit.get('team_name', 'N/A')}, Brand: {kit.get('brand_name', 'N/A')}")
+                        print(f"        Season: {kit.get('season', 'N/A')}, Type: {kit.get('kit_type', 'N/A')}")
+                        print(f"        Created: {kit.get('created_at', 'N/A')}")
+                
+                return {
+                    'total_master_kits': len(master_kits),
+                    'master_kits': master_kits
+                }
+            else:
+                self.log_result(
+                    "Master Kits Collection Check",
+                    False,
+                    "",
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+                return None
+                
+        except Exception as e:
+            self.log_result("Master Kits Collection Check", False, "", str(e))
             return None
 
     def test_contribution_approval_workflow(self, approved_contributions):
