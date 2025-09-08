@@ -3,7 +3,18 @@ import { X, Upload, ThumbsUp, ThumbsDown, Image as ImageIcon } from 'lucide-reac
 import { getUnifiedFieldsForEntityType, validateEntityData } from './UnifiedFieldDefinitions';
 import UnifiedFieldRenderer from './UnifiedFieldRenderer';
 
-const DynamicContributionForm = ({ isOpen, onClose, selectedType = null, teams = [], brands = [], competitions = [], masterJerseys = [], API }) => {
+const DynamicContributionForm = ({ 
+  isOpen, 
+  onClose, 
+  selectedType = null, 
+  teams = [], 
+  brands = [], 
+  competitions = [], 
+  masterJerseys = [], 
+  referenceKits = [], 
+  players = [], 
+  API 
+}) => {
   const [contributionType, setContributionType] = useState(selectedType || 'team');
   const [formData, setFormData] = useState({});
   const [images, setImages] = useState([]);
