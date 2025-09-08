@@ -96,7 +96,7 @@ const SEASONS = [
 ];
 
 // Get the backend URL from environment variables
-const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const API = process.env.REACT_APP_BACKEND_URL;
 
 // AuthContext to manage user authentication globally
 const AuthContext = createContext();
