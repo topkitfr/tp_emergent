@@ -12794,11 +12794,32 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
             logger.info(f"Integrated competition: {data.get('competition_name')} to catalogue with logo: {logo_url}")
                 
         elif entity_type == 'master_kit':
+            # For master kits, we need to resolve team_name/brand_name to team_id/brand_id
+            team_id = data.get('team_id', '')
+            brand_id = data.get('brand_id', '')
+            
+            # If we have names instead of IDs, try to resolve them
+            if not team_id and data.get('team_name'):
+                team = await db.teams.find_one({"name": {"$regex": data.get('team_name'), "$options": "i"}})
+                if team:
+                    team_id = team['id']
+                    logger.info(f"Resolved team '{data.get('team_name')}' to ID: {team_id}")
+                else:
+                    logger.warning(f"Could not resolve team name '{data.get('team_name')}' to team_id")
+            
+            if not brand_id and data.get('brand_name'):
+                brand = await db.brands.find_one({"name": {"$regex": data.get('brand_name'), "$options": "i"}})
+                if brand:
+                    brand_id = brand['id']
+                    logger.info(f"Resolved brand '{data.get('brand_name')}' to ID: {brand_id}")
+                else:
+                    logger.warning(f"Could not resolve brand name '{data.get('brand_name')}' to brand_id")
+            
             master_jersey_doc = {
                 **common_fields,
-                "team_id": data.get('team_id', ''),
-                "brand_id": data.get('brand_id', ''),
-                "season": data.get('season'),
+                "team_id": team_id,
+                "brand_id": brand_id,
+                "season": data.get('season', ''),  # Ensure season is never None
                 "jersey_type": data.get('jersey_type', 'home'),
                 "model": data.get('model', ''),
                 "primary_color": data.get('primary_color', ''),
@@ -12810,10 +12831,11 @@ async def integrate_approved_contribution_to_catalogue(contribution_id: str, con
                 "material": data.get('material', ''),
                 "manufacturer_code": data.get('manufacturer_code', ''),
                 "release_date": data.get('release_date', ''),
-                "discontinued_date": data.get('discontinued_date', '')
+                "discontinued_date": data.get('discontinued_date', ''),
+                "created_by": user_id  # Ensure created_by is always present
             }
             await db.master_jerseys.insert_one(master_jersey_doc)
-            logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue with image: {logo_url}")
+            logger.info(f"Integrated master kit: {data.get('season')} {data.get('jersey_type')} to catalogue with team_id: {team_id}, brand_id: {brand_id}, image: {logo_url}")
             
         elif entity_type == 'reference_kit':
             # For reference kits, extract multiple images
