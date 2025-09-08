@@ -44,7 +44,7 @@ const ContributionModal = ({
   // Initialize form data when entity or entityType changes
   useEffect(() => {
     if (isOpen && entity && entityType) {
-      const fields = getFieldsForEntityType(entityType);
+      const fields = getUnifiedFieldsForEntityType(entityType);
       const initialFormData = {};
       
       // Initialize form data based on entity data and field types
