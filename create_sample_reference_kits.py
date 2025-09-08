@@ -163,7 +163,7 @@ class ReferenceKitCreator:
                 },
                 {
                     "id": str(uuid.uuid4()),
-                    "master_jersey_id": master_jersey_id,
+                    "master_kit_id": master_jersey_id,
                     "model_name": f"{team_name} {season} {jersey_type.title()} - Player Version",
                     "release_type": "player_version",
                     "retail_price": 199.99,
