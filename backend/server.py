@@ -12286,9 +12286,10 @@ async def get_reference_kit_by_id(kit_id: str):
                         brand_info = brand
         
         # Get competition info if available
+        competition_info = {}
         if reference_kit.get("league_competition"):
-            # Try to find competition by name
-            competition = await db.competitions.find_one({"name": {"$regex": reference_kit["league_competition"], "$options": "i"}})
+            # Try to find competition by ID first
+            competition = await db.competitions.find_one({"id": reference_kit["league_competition"]})
             if competition:
                 competition.pop('_id', None)
                 competition_info = competition
