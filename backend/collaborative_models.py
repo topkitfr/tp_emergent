@@ -657,6 +657,25 @@ class ReferenceKitResponse(BaseModel):
     topkit_reference: str
     verified_level: VerificationLevel
     
+    # Image fields
+    main_photo: Optional[str] = None
+    product_images: List[str] = []
+    secondary_photos: List[str] = []
+    
+    # Model and competition fields
+    model_name: Optional[str] = None
+    league_competition: Optional[str] = None
+    
+    # Additional fields
+    description: Optional[str] = None
+    sku_code: Optional[str] = None
+    barcode: Optional[str] = None
+    release_date: Optional[str] = None
+    production_run: Optional[int] = None
+    material_composition: Optional[str] = None
+    care_instructions: Optional[str] = None
+    authenticity_features: List[str] = []
+    
     # Enriched Data
     master_kit_info: Dict[str, Any]  # Master Kit data
     team_info: Dict[str, Any]  # Team data
