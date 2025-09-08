@@ -71,8 +71,19 @@ const VersionDetailPage = () => {
   };
 
   const handleAddToCollection = async (type) => {
+    if (type === 'own') {
+      // Show modal to collect personal details for owned items
+      setShowPersonalDetailsModal(true);
+      return;
+    }
+    
+    // For 'want' type, add directly without personal details
+    await submitToCollection(type, {});
+  };
+
+  const submitToCollection = async (type, details = {}) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/collections`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reference-kit-collections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,20 +91,43 @@ const VersionDetailPage = () => {
         },
         body: JSON.stringify({
           reference_kit_id: version.id,
-          collection_type: type
+          collection_type: type,
+          ...details
         })
       });
 
       if (response.ok) {
+        const result = await response.json();
         alert(`Successfully added to ${type === 'own' ? 'collection' : 'wantlist'}!`);
+        setShowPersonalDetailsModal(false);
+        setPersonalDetails({
+          size: '',
+          condition: '',
+          player_name: '',
+          player_number: '',
+          purchase_price: '',
+          estimated_value: '',
+          personal_description: ''
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to add to collection');
+        alert(errorData.detail || 'Failed to add to collection');
       }
     } catch (error) {
       console.error('Error adding to collection:', error);
       alert('Failed to add to collection');
     }
+  };
+
+  const handlePersonalDetailsSubmit = () => {
+    // Convert numeric fields
+    const details = {
+      ...personalDetails,
+      purchase_price: personalDetails.purchase_price ? parseFloat(personalDetails.purchase_price) : null,
+      estimated_value: personalDetails.estimated_value ? parseFloat(personalDetails.estimated_value) : null
+    };
+    
+    submitToCollection('own', details);
   };
 
   if (loading) {
