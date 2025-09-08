@@ -500,6 +500,146 @@ const VersionDetailPage = () => {
             </p>
           </div>
         </div>
+
+        {/* Personal Details Modal */}
+        {showPersonalDetailsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Add Personal Details</h3>
+                  <button
+                    onClick={() => setShowPersonalDetailsModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Size */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Size <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={personalDetails.size}
+                      onChange={(e) => setPersonalDetails({...personalDetails, size: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select size</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                      <option value="XXL">XXL</option>
+                    </select>
+                  </div>
+
+                  {/* Condition */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Condition <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={personalDetails.condition}
+                      onChange={(e) => setPersonalDetails({...personalDetails, condition: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select condition</option>
+                      <option value="new">New</option>
+                      <option value="excellent">Excellent</option>
+                      <option value="good">Good</option>
+                      <option value="fair">Fair</option>
+                      <option value="poor">Poor</option>
+                    </select>
+                  </div>
+
+                  {/* Player Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                    <input
+                      type="text"
+                      value={personalDetails.player_name}
+                      onChange={(e) => setPersonalDetails({...personalDetails, player_name: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Ronaldo"
+                    />
+                  </div>
+
+                  {/* Player Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Player Number</label>
+                    <input
+                      type="text"
+                      value={personalDetails.player_number}
+                      onChange={(e) => setPersonalDetails({...personalDetails, player_number: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 7"
+                    />
+                  </div>
+
+                  {/* Purchase Price */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Price (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={personalDetails.purchase_price}
+                      onChange={(e) => setPersonalDetails({...personalDetails, purchase_price: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 120.00"
+                    />
+                  </div>
+
+                  {/* Estimated Value */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Value (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={personalDetails.estimated_value}
+                      onChange={(e) => setPersonalDetails({...personalDetails, estimated_value: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 150.00"
+                    />
+                  </div>
+
+                  {/* Personal Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Personal Notes</label>
+                    <textarea
+                      value={personalDetails.personal_description}
+                      onChange={(e) => setPersonalDetails({...personalDetails, personal_description: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      placeholder="Any personal notes about this kit..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowPersonalDetailsModal(false)}
+                    className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePersonalDetailsSubmit}
+                    disabled={!personalDetails.size || !personalDetails.condition}
+                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    Add to Collection
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
