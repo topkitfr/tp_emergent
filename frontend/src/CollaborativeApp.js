@@ -233,6 +233,7 @@ const AppContent = () => {
           <Route path="/explore" element={<CollaborativeExplorePage {...commonProps} />} />
           <Route path="/catalogue" element={<CataloguePage {...commonProps} />} />
           <Route path="/vestiaire" element={<VestiairePage {...commonProps} />} />
+          <Route path="/kit-area" element={<KitAreaPage {...commonProps} />} />
           <Route path="/my-collection" element={<MyCollectionPage {...commonProps} />} />
           <Route path="/contributions-v2" element={<ContributionsV2Page {...commonProps} />} />
           <Route path="/moderation" element={<ModerationDashboard {...commonProps} />} />
@@ -257,6 +258,11 @@ const AppContent = () => {
               onNavigateBack={() => navigate('/contributions-v2')}
             />
           } />
+
+          {/* Kit Area routes (Discogs-like structure) */}
+          <Route path="/kit-area/master/:id" element={<MasterJerseyDetailPage {...commonProps} />} />
+          <Route path="/kit-area/master/:id/versions" element={<AllVersionsPage {...commonProps} />} />
+          <Route path="/kit-area/version/:id" element={<VersionDetailPage {...commonProps} />} />
         </Routes>
       </div>
 
