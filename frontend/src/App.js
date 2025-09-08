@@ -135,35 +135,6 @@ const AppContent = () => {
     }
   }, [user, currentView]);
 
-  // Filter jerseys based on search and filters
-  useEffect(() => {
-    let filtered = jerseys;
-
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(jersey => 
-        jersey.team?.toLowerCase().includes(search) ||
-        jersey.league?.toLowerCase().includes(search) ||
-        jersey.player_name?.toLowerCase().includes(search) ||
-        jersey.season?.toLowerCase().includes(search)
-      );
-    }
-
-    if (filters.league) {
-      filtered = filtered.filter(jersey => jersey.league === filters.league);
-    }
-
-    if (filters.team) {
-      filtered = filtered.filter(jersey => jersey.team === filters.team);
-    }
-
-    if (filters.season) {
-      filtered = filtered.filter(jersey => jersey.season === filters.season);
-    }
-
-    setFilteredJerseys(filtered);
-  }, [jerseys, searchTerm, filters]);
-
   // Filter marketplace based on search and filters
   useEffect(() => {
     let filtered = marketplaceItems;
