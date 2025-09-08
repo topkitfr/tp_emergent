@@ -245,7 +245,6 @@ const AppContent = () => {
     // Reload data after login
     setTimeout(() => {
       loadNotifications();
-      loadFriends();
       loadUserCollections();
       loadUserSubmissions();
     }, 500);
