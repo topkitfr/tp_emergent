@@ -23,7 +23,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-forms.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitdeploy.preview.emergentagent.com/api"
 
 # Credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"

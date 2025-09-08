@@ -16,7 +16,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-forms.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitdeploy.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {
