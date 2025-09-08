@@ -1391,7 +1391,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 </div>
               )}
 
-              <form onSubmit={handleAddToCollection} className="space-y-4">
+              <form onSubmit={(e) => { e.preventDefault(); handlePersonalDetailsSubmit(); }} className="space-y-4">
                 {/* Condition */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
