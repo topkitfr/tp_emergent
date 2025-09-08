@@ -10695,8 +10695,18 @@ async def get_master_jerseys(
         brand_info = {"id": brand["id"], "name": brand["name"]} if brand else {}
         competition_info = {"id": competition["id"], "name": competition["name"]} if competition else None
         
-        enriched_jersey = MasterJerseyResponse(
+        # Clean jersey data to ensure all required fields are present and valid
+        clean_jersey_data = {
             **jersey,
+            "season": jersey.get("season") or "Unknown",  # Ensure season is never None
+            "created_by": jersey.get("created_by") or "system",  # Ensure created_by is never None
+            "jersey_type": jersey.get("jersey_type") or "home",  # Ensure jersey_type is never None
+            "model": jersey.get("model") or "unknown",  # Ensure model is never None
+            "primary_color": jersey.get("primary_color") or "#FFFFFF"  # Ensure primary_color is never None
+        }
+        
+        enriched_jersey = MasterJerseyResponse(
+            **clean_jersey_data,
             team_info=team_info,
             brand_info=brand_info,
             competition_info=competition_info,
