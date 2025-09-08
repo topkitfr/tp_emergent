@@ -2144,12 +2144,6 @@ const AppContent = () => {
                 </div>
                 <div className="text-sm text-gray-600">Soumissions</div>
               </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-black">
-                  0
-                </div>
-                <div className="text-sm text-gray-600">Amis</div>
-              </div>
             </div>
           </div>
 
