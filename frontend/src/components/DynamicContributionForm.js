@@ -374,7 +374,7 @@ const DynamicContributionForm = ({
 
           {/* Dynamic Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fields.map(field => renderField(field))}
+            {renderFields(fields)}
           </div>
 
           {/* Image Previews */}
