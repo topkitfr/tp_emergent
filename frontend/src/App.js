@@ -197,9 +197,6 @@ const AppContent = () => {
   });
   const [userSubmissions, setUserSubmissions] = useState([]);
 
-  // CSV Data
-  const { csvData, loading: csvLoading, error: csvError } = useCSVData();
-
   // Load data on mount and when user changes or view changes
   useEffect(() => {
     loadJerseys();
