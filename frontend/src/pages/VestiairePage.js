@@ -79,10 +79,10 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
       // For "wanted" items, add directly without detailed form
       await addToWantedDirectly(referenceKit);
     } else {
-      // For "owned" items, show detailed personal details modal
+      // For "owned" items, show detailed personal details form
       setSelectedReferenceKit(referenceKit);
       setSelectedCollectionType(collectionType);
-      setShowPersonalDetailsModal(true);
+      setShowPersonalDetailsForm(true);
     }
   };
 
