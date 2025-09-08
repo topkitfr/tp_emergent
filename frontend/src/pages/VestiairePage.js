@@ -1279,11 +1279,11 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                                 onClick={() => {
                                   setSelectedReferenceKit(release);
                                   setSelectedCollectionType('personal');
-                                  setShowPersonalDetailsForm(true);
+                                  setShowPersonalDetailsForm(!showPersonalDetailsForm || selectedReferenceKit?.id !== release.id);
                                 }}
                                 className="text-green-600 hover:text-green-800 text-sm font-medium"
                               >
-                                Add to Collection
+                                {showPersonalDetailsForm && selectedReferenceKit?.id === release.id ? 'Hide Form' : 'Add to Collection'}
                               </button>
                             )}
                           </div>
