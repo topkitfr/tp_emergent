@@ -538,6 +538,11 @@ class MasterKitIntegrationTester:
         print("-" * 50)
         jerseys_data = self.test_master_jerseys_collection()
         
+        # Step 4b: Check master kits collection
+        print("\n🎽 STEP 3b: Checking Master Kits Collection")
+        print("-" * 50)
+        kits_data = self.test_master_kits_collection()
+        
         # Step 5: Analyze contribution approval workflow
         print("\n🔄 STEP 4: Analyzing Contribution Approval Workflow")
         print("-" * 50)
