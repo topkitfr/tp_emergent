@@ -78,24 +78,16 @@ export const getUnifiedFieldsForEntityType = (type) => {
 
     case 'master_kit':
       return [
-        // Core required fields - Enhanced from existing forms
+        // A/ Master Kit form as specified
         { key: 'team_id', label: 'Team', type: 'team_select', required: true },
+        { key: 'season', label: 'Season', type: 'season_select', required: true, placeholder: '2024-2025' },
         { key: 'brand_id', label: 'Brand', type: 'brand_select', required: true },
-        { key: 'season', label: 'Season', type: 'text', required: true, placeholder: 'e.g., 2024-25' },
-        { key: 'jersey_type', label: 'Kit Type', type: 'select', options: ['Home', 'Away', 'Third', 'Goalkeeper', 'Training'], required: true },
-        { key: 'model', label: 'Model', type: 'text', required: true },
-        { key: 'primary_color', label: 'Primary Color', type: 'text', required: true },
-        
-        // Enhanced fields from existing master jersey creation
-        { key: 'secondary_colors', label: 'Secondary Colors', type: 'color_list', placeholder: 'Add secondary colors' },
-        { key: 'main_sponsor', label: 'Main Sponsor', type: 'text' },
-        { key: 'special_edition', label: 'Special Edition', type: 'checkbox' },
-        { key: 'design_name', label: 'Design Name', type: 'text' },
-        { key: 'pattern', label: 'Pattern Description', type: 'textarea' },
-        
-        // Image fields
-        { key: 'main_image_url', label: 'Kit Photo (Front)', type: 'image', required: true },
-        { key: 'secondary_photos', label: 'Additional Photos (Back, Sleeves)', type: 'image_multiple' }
+        { key: 'type', label: 'Type', type: 'select', options: ['home', 'away', 'third', 'fourth', 'gk', 'special'], required: true },
+        { key: 'main_sponsor', label: 'Main Sponsor', type: 'brand_select' },
+        { key: 'sku_code', label: 'SKU Code', type: 'text', grouped: 'sku_barcode' },
+        { key: 'barcode', label: 'Barcode', type: 'text', grouped: 'sku_barcode' },
+        { key: 'pattern_description', label: 'Pattern Description', type: 'textarea' },
+        { key: 'photo', label: 'Photo (front view only)', type: 'image', required: true }
       ];
 
     case 'reference_kit':
