@@ -426,6 +426,36 @@ const VersionDetailPage = () => {
             </div>
           </div>
         )}
+
+        {/* Collection Actions */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Add to Collection</h2>
+            <p className="text-gray-600 mb-4">Add this reference kit to your personal collection or wantlist</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => handleAddToCollection('own')}
+                className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <span>📦</span>
+                Own This Kit
+              </button>
+              
+              <button
+                onClick={() => handleAddToCollection('want')}
+                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <span>❤️</span>
+                Want This Kit
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-500 mt-2">
+              Note: A kit can only be in your collection OR wantlist, not both
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
