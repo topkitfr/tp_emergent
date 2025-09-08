@@ -10717,6 +10717,51 @@ async def get_master_jerseys(
     
     return enriched_jerseys
 
+@api_router.get("/master-jerseys/{jersey_id}", response_model=MasterJerseyResponse)
+async def get_master_jersey_by_id(jersey_id: str):
+    """Get specific master jersey by ID"""
+    jersey = await db.master_jerseys.find_one({"id": jersey_id})
+    
+    if not jersey:
+        raise HTTPException(status_code=404, detail="Master jersey not found")
+    
+    jersey.pop('_id', None)
+    
+    # Récupérer infos team, brand, competition
+    team = await db.teams.find_one({"id": jersey["team_id"]}) if jersey.get("team_id") else None
+    brand = await db.brands.find_one({"id": jersey["brand_id"]}) if jersey.get("brand_id") else None
+    competition = None
+    if jersey.get("competition_id"):
+        competition = await db.competitions.find_one({"id": jersey["competition_id"]})
+    
+    # Compter releases
+    releases_count = await db.reference_kits.count_documents({"master_kit_id": jersey_id})
+    
+    team_info = {"id": team["id"], "name": team["name"], "short_name": team.get("short_name")} if team else {}
+    brand_info = {"id": brand["id"], "name": brand["name"]} if brand else {}
+    competition_info = {"id": competition["id"], "name": competition["name"]} if competition else None
+    
+    # Clean jersey data to ensure all required fields are present and valid
+    clean_jersey_data = {
+        **jersey,
+        "season": jersey.get("season") or "Unknown",  # Ensure season is never None
+        "created_by": jersey.get("created_by") or "system",  # Ensure created_by is never None
+        "jersey_type": jersey.get("jersey_type") or "home",  # Ensure jersey_type is never None
+        "model": jersey.get("model") or "unknown",  # Ensure model is never None
+        "primary_color": jersey.get("primary_color") or "#FFFFFF"  # Ensure primary_color is never None
+    }
+    
+    enriched_jersey = MasterJerseyResponse(
+        **clean_jersey_data,
+        team_info=team_info,
+        brand_info=brand_info,
+        competition_info=competition_info,
+        releases_count=releases_count,
+        collectors_count=0
+    )
+    
+    return enriched_jersey
+
 @api_router.post("/master-jerseys", response_model=MasterJerseyResponse)
 async def create_master_jersey(
     jersey_data: MasterJerseyCreate,
