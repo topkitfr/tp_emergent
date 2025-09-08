@@ -102,9 +102,6 @@ const AppContent = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
-  const [friends, setFriends] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState({ received: [], sent: [] });
-  const [friendsStats, setFriendsStats] = useState({ total_friends: 0, pending_received: 0, pending_sent: 0 });
 
   const [showJerseyEditor, setShowJerseyEditor] = useState(false);
   const [showJerseyDetailView, setShowJerseyDetailView] = useState(false);
