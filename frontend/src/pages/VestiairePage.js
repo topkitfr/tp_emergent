@@ -24,8 +24,8 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   }, []);
 
   // Define addToCollection function for new Personal Kit API
-  // States for personal details modal when adding to collection
-  const [showPersonalDetailsModal, setShowPersonalDetailsModal] = useState(false);
+  // States for personal details inline form when adding to collection
+  const [showPersonalDetailsForm, setShowPersonalDetailsForm] = useState(false);
   const [selectedReferenceKit, setSelectedReferenceKit] = useState(null);
   const [selectedCollectionType, setSelectedCollectionType] = useState('');
   const [players, setPlayers] = useState([]); // For player dropdown
