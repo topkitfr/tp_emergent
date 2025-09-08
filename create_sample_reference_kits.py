@@ -140,7 +140,7 @@ class ReferenceKitCreator:
                 },
                 {
                     "id": str(uuid.uuid4()),
-                    "master_jersey_id": master_jersey_id,
+                    "master_kit_id": master_jersey_id,
                     "model_name": f"{team_name} {season} {jersey_type.title()} - Replica",
                     "release_type": "replica", 
                     "retail_price": 89.99,
