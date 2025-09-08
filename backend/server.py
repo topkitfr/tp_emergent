@@ -10688,8 +10688,8 @@ async def get_master_jerseys(
         if jersey.get("competition_id"):
             competition = await db.competitions.find_one({"id": jersey["competition_id"]})
         
-        # Compter releases
-        releases_count = await db.jersey_releases.count_documents({"master_jersey_id": jersey["id"]})
+        # Count reference kits (not jersey_releases)
+        releases_count = await db.reference_kits.count_documents({"master_kit_id": jersey["id"]})
         
         team_info = {"id": team["id"], "name": team["name"], "short_name": team.get("short_name")} if team else {}
         brand_info = {"id": brand["id"], "name": brand["name"]} if brand else {}
