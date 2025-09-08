@@ -177,6 +177,9 @@ export const fieldTypeConfig = {
   },
   season_select: {
     component: 'season_select'
+  },
+  reference_kit_select: {
+    component: 'reference_kit_select'
   }
 };
 
