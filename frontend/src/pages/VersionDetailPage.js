@@ -9,6 +9,16 @@ const VersionDetailPage = () => {
   const [masterJersey, setMasterJersey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPersonalDetailsModal, setShowPersonalDetailsModal] = useState(false);
+  const [personalDetails, setPersonalDetails] = useState({
+    size: '',
+    condition: '',
+    player_name: '',
+    player_number: '',
+    purchase_price: '',
+    estimated_value: '',
+    personal_description: ''
+  });
 
   useEffect(() => {
     if (id) {
