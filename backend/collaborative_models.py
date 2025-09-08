@@ -970,6 +970,9 @@ class MasterJerseyResponse(BaseModel):
     team_info: Optional[Dict[str, Any]] = {}
     brand_info: Optional[Dict[str, Any]] = {}
     competition_info: Optional[Dict[str, Any]] = {}
+    # Statistics for versions and collectors
+    releases_count: int = 0
+    collectors_count: int = 0
 
 # ================================
 # ENHANCED CONTRIBUTIONS SYSTEM - DISCOGS STYLE
