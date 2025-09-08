@@ -555,10 +555,11 @@ class MasterKitIntegrationTester:
         # Step 6: Analyze integration process
         print("\n🔗 STEP 5: Analyzing Integration Process")
         print("-" * 50)
-        if contributions_data and jerseys_data:
+        if contributions_data and (jerseys_data or kits_data):
             integration_data = self.test_integration_process_analysis(
                 contributions_data.get('approved_contributions', []),
-                jerseys_data.get('master_jerseys', [])
+                jerseys_data.get('master_jerseys', []) if jerseys_data else [],
+                kits_data.get('master_kits', []) if kits_data else []
             )
         else:
             integration_data = None
