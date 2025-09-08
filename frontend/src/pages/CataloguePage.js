@@ -88,7 +88,7 @@ const CataloguePage = ({
           </div>
 
           {/* Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
             {tabs.map((tab) => (
               <div key={tab.id} className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl mb-2">{tab.icon}</div>
