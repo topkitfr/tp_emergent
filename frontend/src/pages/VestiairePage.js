@@ -1318,7 +1318,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">Add to My Collection</h2>
               <button
-                onClick={() => setShowPersonalDetailsModal(false)}
+                onClick={() => setShowPersonalDetailsForm(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ×
