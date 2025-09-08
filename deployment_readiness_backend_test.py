@@ -470,7 +470,6 @@ class DeploymentReadinessTester:
                     if endpoint == "/auth/login" and test_data:
                         token = data.get('token')
                         if token:
-                            self.user_token = token
                             self.log_result(
                                 f"API Endpoint - {description}",
                                 True,
