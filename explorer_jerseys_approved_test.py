@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://kitdeploy.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-collection-ui.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "steinmetzlivio@gmail.com"
