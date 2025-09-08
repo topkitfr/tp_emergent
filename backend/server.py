@@ -12339,6 +12339,7 @@ async def get_reference_kit_by_id(kit_id: str):
             master_kit_info=master_kit_info,
             team_info=team_info,
             brand_info=brand_info,
+            competition_info=competition_info,
             total_in_collections=reference_kit.get('total_in_collections', 0),
             total_for_sale=reference_kit.get('total_for_sale', 0),
             created_at=reference_kit.get('created_at')
