@@ -1422,7 +1422,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowPersonalDetailsModal(false)}
+                    onClick={() => setShowPersonalDetailsForm(false)}
                     className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-medium"
                   >
                     Cancel
