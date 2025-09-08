@@ -137,43 +137,25 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
     }
   };
 
+  // Handle adding reference kit to personal collection with simplified details
   const handlePersonalDetailsSubmit = async () => {
-    if (!selectedReferenceKit || !selectedCollectionType) return;
-
+    if (!selectedReferenceKit) return;
+    
     try {
-      console.log(`🔄 Adding Reference Kit ${selectedReferenceKit.id} to ${selectedCollectionType} collection with personal details`);
-      
       const personalKitData = {
         reference_kit_id: selectedReferenceKit.id,
-        // Map frontend fields to backend PersonalKitCreate model fields
-        size: personalDetails.size,
         condition: personalDetails.condition,
+        player_id: personalDetails.player_name,
+        number: personalDetails.player_number,
         purchase_price: personalDetails.price_buy ? parseFloat(personalDetails.price_buy) : null,
-        price_value: personalDetails.price_value ? parseFloat(personalDetails.price_value) : null,
-        purchase_date: personalDetails.purchase_date || null,
-        purchase_location: personalDetails.purchase_location || null,
-        is_worn: personalDetails.is_worn,
-        is_signed: personalDetails.is_signed,
-        signed_by: personalDetails.signed_by || null,
-        has_printing: personalDetails.has_printing,
-        printed_name: personalDetails.player_name || null, // Map player_name to printed_name
-        printed_number: personalDetails.player_number ? parseInt(personalDetails.player_number) : null,
-        printing_type: personalDetails.is_custom_printing ? 'custom' : 'player',
-        is_match_worn: personalDetails.is_match_worn,
-        match_details: personalDetails.match_details || null,
-        is_authenticated: personalDetails.is_authenticated,
-        authentication_details: personalDetails.authentication_details || null,
-        personal_notes: personalDetails.info || null, // Map info to personal_notes
-        acquisition_story: personalDetails.acquisition_story || null,
-        times_worn: personalDetails.times_worn || 0,
-        for_sale: personalDetails.for_sale || false
+        estimated_value: personalDetails.price_value ? parseFloat(personalDetails.price_value) : null
       };
 
       const response = await fetch(`${API}/api/personal-kits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(personalKitData)
       });
