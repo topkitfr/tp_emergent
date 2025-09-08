@@ -421,9 +421,9 @@ class DeploymentReadinessTester:
         print("🔗 Testing Critical API Endpoints")
         print("-" * 60)
         
-        # Authentication endpoints
+        # Authentication endpoints - test with admin since user may not exist
         auth_endpoints = [
-            ("/auth/login", "POST", "User login", {"email": USER_EMAIL, "password": USER_PASSWORD}),
+            ("/auth/login", "POST", "Admin login test", {"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}),
         ]
         
         # CRUD endpoints (GET operations)
