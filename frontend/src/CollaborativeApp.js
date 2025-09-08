@@ -23,6 +23,10 @@ import CompetitionDetailPage from './pages/CompetitionDetailPage';
 import PlayerDetailPage from './pages/PlayerDetailPage';
 import MasterJerseyDetailPage from './pages/MasterJerseyDetailPage';
 import ContributionDetailPage from './pages/ContributionDetailPage';
+// Import Kit Area pages (Discogs-like structure)
+import KitAreaPage from './pages/KitAreaPage';
+import AllVersionsPage from './pages/AllVersionsPage';
+import VersionDetailPage from './pages/VersionDetailPage';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
