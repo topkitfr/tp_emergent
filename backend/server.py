@@ -12178,6 +12178,14 @@ async def get_reference_kits(
                     "foreignField": "id",
                     "as": "brand_info"
                 }
+            },
+            {
+                "$lookup": {
+                    "from": "competitions",
+                    "localField": "master_kit_info.competition_id",
+                    "foreignField": "id",
+                    "as": "competition_info"
+                }
             }
         ]
         
