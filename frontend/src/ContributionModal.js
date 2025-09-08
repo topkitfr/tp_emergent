@@ -380,7 +380,7 @@ const ContributionModal = ({
 
   if (!isOpen) return null;
 
-  const fields = getFieldsForEntityType(entityType);
+  const fields = getUnifiedFieldsForEntityType(entityType);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
