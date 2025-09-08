@@ -58,13 +58,14 @@ class MasterKitIntegrationTester:
             if response.status_code == 200:
                 data = response.json()
                 self.admin_token = data.get("access_token")
+                # Set the authorization header for all future requests
                 self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
                 
                 user_info = data.get("user", {})
                 self.log_result(
                     "Admin Authentication", 
                     True, 
-                    f"Successfully authenticated as {user_info.get('name', 'Unknown')} ({user_info.get('role', 'Unknown role')})"
+                    f"Successfully authenticated as {user_info.get('name', 'Unknown')} ({user_info.get('role', 'Unknown role')}). Token: {self.admin_token[:20]}..."
                 )
                 return True
             else:
@@ -78,13 +79,11 @@ class MasterKitIntegrationTester:
     def test_master_kit_contributions_status(self):
         """Test 1: Check approved master kit contributions"""
         try:
-            headers = {"Authorization": f"Bearer {self.admin_token}"} if self.admin_token else {}
-            response = self.session.get(f"{API_BASE}/contributions-v2", 
-                                      params={
-                                          "entity_type": "master_kit",
-                                          "status": "approved"
-                                      },
-                                      headers=headers)
+            # The session should already have the Authorization header set
+            response = self.session.get(f"{API_BASE}/contributions-v2/", params={
+                "entity_type": "master_kit",
+                "status": "approved"
+            })
             
             if response.status_code == 200:
                 data = response.json()
