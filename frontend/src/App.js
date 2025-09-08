@@ -352,64 +352,6 @@ const AppContent = () => {
     loadUserSubmissions();
   };
 
-  // Friend management functions
-  const respondToFriendRequest = async (requestId, accept) => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch(`${API}/api/friends/respond`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify({
-          request_id: requestId,
-          accept: accept
-        })
-      });
-
-      if (response.ok) {
-        // Reload friends data
-        loadFriends();
-        // Show success message
-        alert(accept ? 'Demande d\'ami acceptée!' : 'Demande d\'ami refusée!');
-      } else {
-        alert('Erreur lors du traitement de la demande');
-      }
-    } catch (error) {
-      console.error('Error responding to friend request:', error);
-      alert('Erreur lors du traitement de la demande');
-    }
-  };
-
-  const removeFriend = async (friendId, friendName) => {
-    if (!user) return;
-    
-    const confirmRemove = window.confirm(`Êtes-vous sûr de vouloir supprimer ${friendName} de vos amis ?`);
-    if (!confirmRemove) return;
-    
-    try {
-      const response = await fetch(`${API}/api/friends/${friendId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
-
-      if (response.ok) {
-        // Reload friends data
-        loadFriends();
-        alert(`${friendName} a été supprimé de vos amis`);
-      } else {
-        alert('Erreur lors de la suppression de l\'ami');
-      }
-    } catch (error) {
-      console.error('Error removing friend:', error);
-      alert('Erreur lors de la suppression de l\'ami');
-    }
-  };
-
   // Check if jersey is in user collection
   const isInCollection = (jerseyId, type) => {
     return userCollections[type]?.some(item => item.jersey_id === jerseyId);
