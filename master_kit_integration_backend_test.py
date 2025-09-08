@@ -274,19 +274,19 @@ class MasterKitIntegrationTester:
             self.log_result("Contribution Approval Workflow", False, "", str(e))
             return None
 
-    def test_integration_process_analysis(self, approved_contributions, master_jerseys):
+    def test_integration_process_analysis(self, approved_contributions, master_jerseys, master_kits):
         """Test 4: Check if the issue is in the integration process"""
         try:
-            if not approved_contributions or not master_jerseys:
+            if not approved_contributions:
                 self.log_result(
                     "Integration Process Analysis",
                     False,
                     "",
-                    "Missing data for integration analysis"
+                    "No approved master kit contributions found for integration analysis"
                 )
                 return None
             
-            # Cross-reference approved contributions with master jerseys
+            # Cross-reference approved contributions with master jerseys and master kits
             integration_matches = []
             missing_integrations = []
             
@@ -297,8 +297,10 @@ class MasterKitIntegrationTester:
                 contrib_season = contrib_changes.get('season', '')
                 contrib_type = contrib_changes.get('kit_type', '')
                 
-                # Look for matching master jersey
+                # Look for matching master jersey or master kit
                 found_match = False
+                
+                # Check master jerseys
                 for jersey in master_jerseys:
                     if (jersey.get('team_name', '').lower() == contrib_team.lower() and
                         jersey.get('brand_name', '').lower() == contrib_brand.lower() and
@@ -306,10 +308,26 @@ class MasterKitIntegrationTester:
                         jersey.get('jersey_type', '').lower() == contrib_type.lower()):
                         integration_matches.append({
                             'contribution': contrib,
-                            'master_jersey': jersey
+                            'master_jersey': jersey,
+                            'type': 'master_jersey'
                         })
                         found_match = True
                         break
+                
+                # Check master kits if no jersey match found
+                if not found_match:
+                    for kit in master_kits:
+                        if (kit.get('team_name', '').lower() == contrib_team.lower() and
+                            kit.get('brand_name', '').lower() == contrib_brand.lower() and
+                            kit.get('season', '') == contrib_season and
+                            kit.get('kit_type', '').lower() == contrib_type.lower()):
+                            integration_matches.append({
+                                'contribution': contrib,
+                                'master_kit': kit,
+                                'type': 'master_kit'
+                            })
+                            found_match = True
+                            break
                 
                 if not found_match:
                     missing_integrations.append(contrib)
@@ -325,12 +343,16 @@ class MasterKitIntegrationTester:
                 print("   ✅ Successfully Integrated:")
                 for match in integration_matches:
                     contrib = match['contribution']
-                    jersey = match['master_jersey']
-                    print(f"      - Contribution {contrib.get('id')} → Master Jersey {jersey.get('id')}")
+                    if match['type'] == 'master_jersey':
+                        target = match['master_jersey']
+                        print(f"      - Contribution {contrib.get('id')} → Master Jersey {target.get('id')}")
+                    else:
+                        target = match['master_kit']
+                        print(f"      - Contribution {contrib.get('id')} → Master Kit {target.get('id')}")
                     print(f"        {contrib.get('changes', {}).get('team_name')} {contrib.get('changes', {}).get('season')} {contrib.get('changes', {}).get('kit_type')}")
             
             if missing_integrations:
-                print("   ❌ Missing Integrations (Approved but not in Master Jerseys):")
+                print("   ❌ Missing Integrations (Approved but not in Master Collections):")
                 for contrib in missing_integrations:
                     changes = contrib.get('changes', {})
                     print(f"      - Contribution {contrib.get('id')}: {changes.get('team_name')} {changes.get('season')} {changes.get('kit_type')}")
