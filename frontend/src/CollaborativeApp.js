@@ -30,7 +30,7 @@ import VersionDetailPage from './pages/VersionDetailPage';
 import AuthModal from './AuthModal';
 
 // Get the backend URL from environment variables
-const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const API = process.env.REACT_APP_BACKEND_URL;
 
 // Composant interne qui utilise les hooks de React Router
 const AppContent = () => {
