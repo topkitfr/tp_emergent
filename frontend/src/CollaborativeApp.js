@@ -184,6 +184,7 @@ const AppContent = () => {
       'explore': '/explore',
       'catalogue': '/catalogue',
       'vestiaire': '/vestiaire',
+      'kit-area': '/kit-area',
       'my-collection': '/my-collection',
       'contributions-v2': '/contributions-v2',
       'moderation': '/moderation',
