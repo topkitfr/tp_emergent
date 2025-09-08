@@ -669,15 +669,19 @@ class DeploymentVerificationTester:
             img.save(img_buffer, format='PNG')
             img_buffer.seek(0)
             
-            # Prepare multipart form data
+            # Prepare multipart form data with required fields
             files = {
-                'image': ('test_deployment.png', img_buffer, 'image/png')
+                'file': ('test_deployment.png', img_buffer, 'image/png')
+            }
+            data = {
+                'entity_type': 'team',
+                'generate_variants': 'true'
             }
             
             # Remove Content-Type header for multipart upload
             headers = {'Authorization': f'Bearer {self.admin_token}'}
             
-            response = requests.post(f"{API_BASE}/upload/image", files=files, headers=headers)
+            response = requests.post(f"{API_BASE}/upload/image", files=files, data=data, headers=headers)
             
             if response.status_code == 200:
                 data = response.json()
