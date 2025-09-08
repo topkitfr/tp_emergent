@@ -144,7 +144,7 @@ class MasterKitIntegrationTester:
         """Test 2: Check the master jerseys collection directly"""
         try:
             # Test GET /api/master-jerseys
-            response = self.session.get(f"{API_BASE}/master-jerseys")
+            response = self.session.get(f"{API_BASE}/master-jerseys/")
             
             if response.status_code == 200:
                 data = response.json()
