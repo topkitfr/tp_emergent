@@ -229,23 +229,104 @@ const DynamicContributionForm = ({
     }
   };
 
+  const renderFields = (fields) => {
+    const groupedFields = {};
+    const regularFields = [];
+
+    // Group fields that should be on the same line
+    fields.forEach(field => {
+      if (field.grouped) {
+        if (!groupedFields[field.grouped]) {
+          groupedFields[field.grouped] = [];
+        }
+        groupedFields[field.grouped].push(field);
+      } else {
+        regularFields.push(field);
+      }
+    });
+
+    const allRenderedFields = [];
+
+    // Render regular fields
+    regularFields.forEach(field => {
+      allRenderedFields.push(
+        <div key={field.key} className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            {field.label} {field.required && <span className="text-red-500">*</span>}
+          </label>
+          <UnifiedFieldRenderer
+            field={field}
+            value={formData[field.key]}
+            onChange={handleInputChange}
+            teams={teams}
+            brands={brands}
+            competitions={competitions}
+            masterKits={masterJerseys}
+            referenceKits={referenceKits || []}
+            players={players || []}
+            onImageUpload={handleImageUpload}
+            API={process.env.REACT_APP_BACKEND_URL}
+            formData={formData}
+          />
+        </div>
+      );
+    });
+
+    // Render grouped fields
+    Object.entries(groupedFields).forEach(([groupName, groupFields]) => {
+      allRenderedFields.push(
+        <div key={groupName} className="space-y-1 md:col-span-2">
+          <div className="grid grid-cols-2 gap-4">
+            {groupFields.map(field => (
+              <div key={field.key} className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  {field.label} {field.required && <span className="text-red-500">*</span>}
+                </label>
+                <UnifiedFieldRenderer
+                  field={field}
+                  value={formData[field.key]}
+                  onChange={handleInputChange}
+                  teams={teams}
+                  brands={brands}
+                  competitions={competitions}
+                  masterKits={masterJerseys}
+                  referenceKits={referenceKits || []}
+                  players={players || []}
+                  onImageUpload={handleImageUpload}
+                  API={process.env.REACT_APP_BACKEND_URL}
+                  formData={formData}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    });
+
+    return allRenderedFields;
+  };
+
   const renderField = (field) => {
     return (
-      <UnifiedFieldRenderer
-        key={field.key}
-        field={field}
-        value={formData[field.key]}
-        onChange={handleInputChange}
-        teams={teams}
-        brands={brands}
-        competitions={competitions}
-        masterKits={masterJerseys}
-        referenceKits={referenceKits || []}
-        players={players || []}
-        onImageUpload={handleImageUpload}
-        API={process.env.REACT_APP_BACKEND_URL}
-        formData={formData}
-      />
+      <div key={field.key} className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">
+          {field.label} {field.required && <span className="text-red-500">*</span>}
+        </label>
+        <UnifiedFieldRenderer
+          field={field}
+          value={formData[field.key]}
+          onChange={handleInputChange}
+          teams={teams}
+          brands={brands}
+          competitions={competitions}
+          masterKits={masterJerseys}
+          referenceKits={referenceKits || []}
+          players={players || []}
+          onImageUpload={handleImageUpload}
+          API={process.env.REACT_APP_BACKEND_URL}
+          formData={formData}
+        />
+      </div>
     );
   };
 
