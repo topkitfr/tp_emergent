@@ -5156,6 +5156,77 @@ async def add_to_collection(collection_data: CollectionAdd, current_user: dict =
     
     return {"message": f"Added to {collection_data.collection_type} collection", "collection_id": collection.id}
 
+@api_router.post("/reference-kit-collections") 
+async def add_reference_kit_to_collection(collection_data: ReferenceKitCollectionAdd, current_user: dict = Depends(get_current_user)):
+    """Add reference kit to collection with specific personal details"""
+    user_id = current_user["id"]
+    
+    # Verify reference kit exists
+    reference_kit = await db.reference_kits.find_one({"id": collection_data.reference_kit_id})
+    if not reference_kit:
+        raise HTTPException(status_code=404, detail="Reference kit not found")
+    
+    # Check for bilateral system rule - can't be in both owned and wanted
+    existing_opposite = await db.reference_kit_collections.find_one({
+        "user_id": user_id,
+        "reference_kit_id": collection_data.reference_kit_id,
+        "collection_type": "owned" if collection_data.collection_type == "wanted" else "wanted"
+    })
+    
+    if existing_opposite:
+        opposite_type = "owned" if collection_data.collection_type == "wanted" else "wanted"
+        raise HTTPException(status_code=400, detail=f"Reference kit is already in your {opposite_type} collection. Remove it first to add to {collection_data.collection_type}.")
+    
+    # Check if already in collection (same reference kit, same collection type)
+    existing = await db.reference_kit_collections.find_one({
+        "user_id": user_id,
+        "reference_kit_id": collection_data.reference_kit_id,
+        "collection_type": collection_data.collection_type
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Reference kit is already in your {collection_data.collection_type} collection")
+    
+    # Validate size if provided
+    size_enum = None
+    condition_enum = None
+    
+    if collection_data.size:
+        try:
+            size_enum = JerseySize(collection_data.size.upper())
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid size: {collection_data.size}. Must be one of: XS, S, M, L, XL, XXL")
+    
+    if collection_data.condition:
+        try:
+            condition_enum = JerseyCondition(collection_data.condition.lower())
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid condition: {collection_data.condition}. Must be one of: new, excellent, good, fair, poor")
+    
+    # Create collection entry
+    collection_item = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "reference_kit_id": collection_data.reference_kit_id,
+        "collection_type": collection_data.collection_type,
+        "size": size_enum.value if size_enum else None,
+        "condition": condition_enum.value if condition_enum else None,
+        "personal_description": collection_data.personal_description.strip() if collection_data.personal_description else None,
+        "purchase_price": collection_data.purchase_price,
+        "estimated_value": collection_data.estimated_value,
+        "player_name": collection_data.player_name.strip() if collection_data.player_name else None,
+        "player_number": collection_data.player_number.strip() if collection_data.player_number else None,
+        "added_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    await db.reference_kit_collections.insert_one(collection_item)
+    
+    return {
+        "message": f"Reference kit added to {collection_data.collection_type} collection", 
+        "collection_id": collection_item["id"]
+    }
+
 @api_router.post("/collections/remove")
 async def remove_from_collection_post(collection_data: CollectionAdd, current_user: dict = Depends(get_current_user)):
     """Remove jersey from collection"""
