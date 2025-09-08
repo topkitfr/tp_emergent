@@ -393,7 +393,7 @@ class MasterKitIntegrationTester:
                         import time
                         time.sleep(2)
                         
-                        jerseys_response = self.session.get(f"{API_BASE}/master-jerseys/")
+                        jerseys_response = self.session.get(f"{API_BASE}/master-jerseys")
                         if jerseys_response.status_code == 200:
                             jerseys = jerseys_response.json()
                             test_jersey_found = any(
