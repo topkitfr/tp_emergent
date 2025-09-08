@@ -92,23 +92,16 @@ export const getUnifiedFieldsForEntityType = (type) => {
 
     case 'reference_kit':
       return [
-        // Core required fields - Enhanced from Kit Store creation
+        // B/ Reference Kit form as specified
         { key: 'master_kit_id', label: 'Master Kit', type: 'master_kit_select', required: true },
-        { key: 'model_name', label: 'Model Name', type: 'text', required: true },
-        { key: 'release_type', label: 'Release Type', type: 'select', options: ['Replica', 'Authentic', 'Player Issue'], required: true },
-        { key: 'original_retail_price', label: 'Original Retail Price (€)', type: 'number' },
-        { key: 'release_date', label: 'Release Date', type: 'date' },
-        
-        // Enhanced fields from existing reference kit creation
-        { key: 'sku_code', label: 'SKU Code', type: 'text', placeholder: 'e.g., FN2345-413' },
-        { key: 'barcode', label: 'Barcode', type: 'text', placeholder: 'e.g., 1234567890123' },
-        { key: 'is_limited_edition', label: 'Limited Edition', type: 'checkbox' },
-        { key: 'production_run', label: 'Number of Units (if limited)', type: 'number' },
-        { key: 'league_competition', label: 'League/Competition', type: 'competition_select' },
-        
-        // Image fields
-        { key: 'product_images', label: 'Product Photos', type: 'image_multiple', required: true },
-        { key: 'main_photo', label: 'Main Photo (Front View)', type: 'image', required: true }
+        { key: 'league_competition', label: 'League/Competition', type: 'competition_select', required: true },
+        { key: 'model', label: 'Model', type: 'select', options: ['replica', 'authentic'], required: true },
+        { key: 'long_sleeve', label: 'Long Sleeve', type: 'checkbox' },
+        { key: 'limited', label: 'Limited', type: 'checkbox', reveals: 'limited_units' },
+        { key: 'limited_units', label: 'Number of Units', type: 'number', dependsOn: 'limited' },
+        { key: 'pic_1', label: 'Pic 1 (front/back)', type: 'image', required: true },
+        { key: 'pic_2', label: 'Pic 2 (sleeve/tags/other)', type: 'image' },
+        { key: 'description', label: 'Description', type: 'textarea' }
       ];
 
     default:
