@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-hub-fixed.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-hub-2.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
