@@ -160,64 +160,28 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
         body: JSON.stringify(personalKitData)
       });
 
-      const responseData = await response.json();
-
       if (response.ok) {
-        console.log(`✅ Successfully added to ${selectedCollectionType} collection with personal details`);
-        alert(`Kit added to ${selectedCollectionType === 'owned' ? 'owned' : 'wanted'} collection!`);
-        
-        // Reset modal state
+        console.log('✅ Successfully added to personal collection');
         setShowPersonalDetailsModal(false);
-        setSelectedReferenceKit(null);
-        setSelectedCollectionType('');
+        
+        // Reset form
         setPersonalDetails({
-          price_buy: '',
-          price_value: '',
+          condition: '',
           player_name: '',
           player_number: '',
-          condition: 'good',
-          info: '',
-          size: '',
-          has_printing: false,
-          is_custom_printing: false,
-          custom_print_text: '',
-          is_worn: false,
-          is_signed: false,
-          signed_by: '',
-          is_match_worn: false,
-          match_details: '',
-          is_authenticated: false,
-          authentication_details: '',
-          purchase_date: '',
-          purchase_location: '',
-          acquisition_story: '',
-          times_worn: 0,
-          for_sale: false
+          price_buy: '',
+          price_value: ''
         });
         
-        loadKitStore(); // Refresh list
+        // Notify parent if callback provided
+        if (onDataUpdate) onDataUpdate();
       } else {
-        console.error(`❌ Failed to add to collection: ${response.status}`);
-        console.error('Error details:', responseData);
-        
-        // Better error handling to avoid [object Object] display
-        let errorMessage = 'Failed to add to collection';
-        if (responseData && typeof responseData === 'object') {
-          if (responseData.detail) {
-            if (typeof responseData.detail === 'string') {
-              errorMessage = responseData.detail;
-            } else if (Array.isArray(responseData.detail)) {
-              // Handle Pydantic validation errors
-              errorMessage = responseData.detail.map(err => err.msg || err.message || 'Validation error').join(', ');
-            }
-          } else if (responseData.message) {
-            errorMessage = responseData.message;
-          }
-        }
-        alert(`Error: ${errorMessage}`);
+        const errorData = await response.json();
+        console.error('❌ Failed to add to personal collection:', errorData);
+        alert(`Error: ${errorData.detail || 'Failed to add to collection'}`);
       }
     } catch (error) {
-      console.error('Error adding to collection:', error);
+      console.error('Error adding to personal collection:', error);
       alert('Error adding to collection. Please try again.');
     }
   };
