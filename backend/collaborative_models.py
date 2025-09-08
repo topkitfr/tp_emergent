@@ -680,6 +680,7 @@ class ReferenceKitResponse(BaseModel):
     master_kit_info: Dict[str, Any]  # Master Kit data
     team_info: Dict[str, Any]  # Team data
     brand_info: Dict[str, Any]  # Brand data
+    competition_info: Dict[str, Any] = {}  # Competition data
     
     # Statistics  
     total_in_collections: int
