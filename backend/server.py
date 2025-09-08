@@ -12217,6 +12217,65 @@ async def get_reference_kits(
         logger.error(f"Get reference kits error: {e}")
         raise HTTPException(status_code=500, detail="Error fetching reference kits")
 
+@api_router.get("/reference-kits/{kit_id}", response_model=ReferenceKitResponse)
+async def get_reference_kit_by_id(kit_id: str):
+    """Get specific reference kit by ID"""
+    try:
+        # Get reference kit
+        reference_kit = await db.reference_kits.find_one({"id": kit_id})
+        
+        if not reference_kit:
+            raise HTTPException(status_code=404, detail="Reference kit not found")
+        
+        reference_kit.pop('_id', None)
+        
+        # Get enriched data
+        master_kit_info = {}
+        team_info = {}
+        brand_info = {}
+        competition_info = {}
+        
+        if reference_kit.get("master_kit_id"):
+            master_kit = await db.master_jerseys.find_one({"id": reference_kit["master_kit_id"]})
+            if master_kit:
+                master_kit.pop('_id', None)
+                master_kit_info = master_kit
+                
+                # Get team and brand info from master kit
+                if master_kit.get("team_id"):
+                    team = await db.teams.find_one({"id": master_kit["team_id"]})
+                    if team:
+                        team.pop('_id', None)
+                        team_info = team
+                
+                if master_kit.get("brand_id"):
+                    brand = await db.brands.find_one({"id": master_kit["brand_id"]})
+                    if brand:
+                        brand.pop('_id', None)
+                        brand_info = brand
+        
+        # Get competition info if available
+        if reference_kit.get("league_competition"):
+            # Try to find competition by name
+            competition = await db.competitions.find_one({"name": {"$regex": reference_kit["league_competition"], "$options": "i"}})
+            if competition:
+                competition.pop('_id', None)
+                competition_info = competition
+        
+        response = ReferenceKitResponse(
+            **reference_kit,
+            master_kit_info=master_kit_info,
+            team_info=team_info,
+            brand_info=brand_info,
+            competition_info=competition_info
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Get reference kit by ID error: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching reference kit")
+
 # ================================
 # PERSONAL KIT ENDPOINTS (USER COLLECTIONS)
 # ================================
