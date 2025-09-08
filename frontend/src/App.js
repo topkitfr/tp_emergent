@@ -182,26 +182,6 @@ const AppContent = () => {
     }
   };
 
-  const loadFriends = async () => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch(`${API}/api/friends`, {
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFriends(data.friends || []);
-        setPendingRequests(data.pending_requests || { received: [], sent: [] });
-        setFriendsStats(data.stats || { total_friends: 0, pending_received: 0, pending_sent: 0 });
-      }
-    } catch (error) {
-      console.error('Error loading friends:', error);
-    }
-  };
-
   const loadUserCollections = async () => {
     if (!user) return;
     
