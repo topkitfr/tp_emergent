@@ -12216,6 +12216,23 @@ async def get_reference_kits(
                 is_limited_edition=kit.get('is_limited_edition', False),
                 topkit_reference=kit.get('topkit_reference'),
                 verified_level=kit.get('verified_level', 'unverified'),
+                # Image fields
+                main_photo=kit.get('main_photo'),
+                product_images=kit.get('product_images', []),
+                secondary_photos=kit.get('secondary_photos', []),
+                # Model and competition fields
+                model_name=kit.get('model_name') or kit.get('release_type'),
+                league_competition=kit.get('league_competition'),
+                # Other fields
+                description=kit.get('description'),
+                sku_code=kit.get('sku_code'),
+                barcode=kit.get('barcode'),
+                release_date=kit.get('release_date'),
+                production_run=kit.get('production_run'),
+                material_composition=kit.get('material_composition'),
+                care_instructions=kit.get('care_instructions'),
+                authenticity_features=kit.get('authenticity_features', []),
+                # Related data
                 master_kit_info=master_kit_data,
                 team_info=team_data,
                 brand_info=brand_data,
