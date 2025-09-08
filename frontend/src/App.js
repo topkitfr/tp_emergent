@@ -91,15 +91,13 @@ const AppContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [jerseys, setJerseys] = useState([]);
   const [marketplaceItems, setMarketplaceItems] = useState([]);
-  const [filteredJerseys, setFilteredJerseys] = useState([]);
-  const [filteredMarketplace, setFilteredMarketplace] = useState([]);
-  const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [filters, setFilters] = useState({
     league: '',
     team: '',
     season: '',
     minPrice: '',
-    maxPrice: ''
+    maxPrice: '',
+    availability: ''
   });
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
