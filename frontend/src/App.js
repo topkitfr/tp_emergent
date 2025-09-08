@@ -119,7 +119,6 @@ const AppContent = () => {
     loadMarketplace();
     if (user) {
       loadNotifications();
-      loadFriends();
       loadUserCollections();
       loadUserSubmissions();
     }
