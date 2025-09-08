@@ -39,7 +39,7 @@ const ContributionModal = ({
   const [newColor, setNewColor] = useState('');
   const [newName, setNewName] = useState('');
 
-  const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const API = process.env.REACT_APP_BACKEND_URL;
 
   // Initialize form data when entity or entityType changes
   useEffect(() => {
