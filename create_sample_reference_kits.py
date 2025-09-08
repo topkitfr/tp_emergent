@@ -112,7 +112,7 @@ class ReferenceKitCreator:
             versions = [
                 {
                     "id": str(uuid.uuid4()),
-                    "master_jersey_id": master_jersey_id,
+                    "master_kit_id": master_jersey_id,
                     "model_name": f"{team_name} {season} {jersey_type.title()} - Authentic",
                     "release_type": "authentic",
                     "retail_price": 140.00,
