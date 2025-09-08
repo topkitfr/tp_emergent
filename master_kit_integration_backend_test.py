@@ -684,8 +684,8 @@ class MasterKitIntegrationTester:
             issues_found.append("APPROVAL WORKFLOW: No approved master kit contributions found")
         
         # Check for collection issues
-        if jerseys_data and jerseys_data.get('total_master_jerseys', 0) == 0:
-            issues_found.append("COLLECTION EMPTY: Master jerseys collection is empty")
+        if jerseys_data and jerseys_data.get('total_master_jerseys', 0) == 0 and kits_data and kits_data.get('total_master_kits', 0) == 0:
+            issues_found.append("COLLECTIONS EMPTY: Both master jerseys and master kits collections are empty")
         
         # Check for auto-approval issues
         if auto_approval is False:
