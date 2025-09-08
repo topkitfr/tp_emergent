@@ -12212,6 +12212,7 @@ async def get_reference_kits(
             master_kit_data.pop('_id', None)
             team_data.pop('_id', None)
             brand_data.pop('_id', None)
+            competition_data.pop('_id', None)
             
             # Map database fields to expected model fields and provide defaults
             response = ReferenceKitResponse(
