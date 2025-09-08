@@ -168,9 +168,19 @@ class DeploymentReadinessTester:
                 critical=True
             )
 
-        # Test environment variable values
+        # Test environment variable values by reading from .env files directly
         try:
-            mongo_url = os.environ.get('MONGO_URL')
+            # Read from backend .env file directly
+            backend_env_file = "/app/backend/.env"
+            mongo_url = None
+            
+            if os.path.exists(backend_env_file):
+                with open(backend_env_file, 'r') as f:
+                    for line in f:
+                        if line.startswith('MONGO_URL='):
+                            mongo_url = line.split('=', 1)[1].strip().strip('"')
+                            break
+            
             if mongo_url:
                 # Check if it's Atlas-compatible format
                 is_atlas_format = 'mongodb+srv://' in mongo_url or 'mongodb.net' in mongo_url
@@ -186,7 +196,7 @@ class DeploymentReadinessTester:
                     "MongoDB URL Format",
                     False,
                     "",
-                    "MONGO_URL not accessible in environment",
+                    "MONGO_URL not found in backend .env file",
                     critical=True
                 )
         except Exception as e:
