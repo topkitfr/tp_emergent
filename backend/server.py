@@ -12200,11 +12200,13 @@ async def get_reference_kits(
             master_kit_info = kit.pop('master_kit_info', [])
             team_info = kit.pop('team_info', [])
             brand_info = kit.pop('brand_info', [])
+            competition_info = kit.pop('competition_info', [])
             
             # Clean ObjectId fields from nested data
             master_kit_data = master_kit_info[0] if master_kit_info else {}
             team_data = team_info[0] if team_info else {}
             brand_data = brand_info[0] if brand_info else {}
+            competition_data = competition_info[0] if competition_info else {}
             
             # Remove MongoDB ObjectId fields
             master_kit_data.pop('_id', None)
