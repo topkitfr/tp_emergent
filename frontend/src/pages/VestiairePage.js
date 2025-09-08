@@ -162,7 +162,7 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
 
       if (response.ok) {
         console.log('✅ Successfully added to personal collection');
-        setShowPersonalDetailsModal(false);
+        setShowPersonalDetailsForm(false);
         
         // Reset form
         setPersonalDetails({
