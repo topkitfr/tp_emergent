@@ -12276,12 +12276,25 @@ async def get_reference_kit_by_id(kit_id: str):
                 competition.pop('_id', None)
                 competition_info = competition
         
+        # Map database fields to expected model fields and provide defaults
         response = ReferenceKitResponse(
-            **reference_kit,
+            id=reference_kit.get('id'),
+            master_kit_id=reference_kit.get('master_kit_id'),
+            available_sizes=reference_kit.get('sizes_available', []),
+            available_prints=reference_kit.get('available_prints', []),
+            original_retail_price=reference_kit.get('original_retail_price'),
+            current_market_estimate=reference_kit.get('current_market_price'),
+            price_range_min=reference_kit.get('price_range_min'),
+            price_range_max=reference_kit.get('price_range_max'),
+            is_limited_edition=reference_kit.get('is_limited_edition', False),
+            topkit_reference=reference_kit.get('topkit_reference'),
+            verified_level=reference_kit.get('verified_level', 'unverified'),
             master_kit_info=master_kit_info,
             team_info=team_info,
             brand_info=brand_info,
-            competition_info=competition_info
+            total_in_collections=reference_kit.get('total_in_collections', 0),
+            total_for_sale=reference_kit.get('total_for_sale', 0),
+            created_at=reference_kit.get('created_at')
         )
         
         return response
