@@ -333,177 +333,30 @@ const ContributionModal = ({
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
-              <div key={field.key} className="space-y-2">
+              <div key={field.key} className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                  {field.label} {field.required && <span className="text-red-500">*</span>}
                 </label>
-                
-                {field.type === 'select' ? (
-                  <select
-                    value={formData[field.key] || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      [field.key]: e.target.value
-                    }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    required={field.required}
-                  >
-                    <option value="">Select {field.label.toLowerCase()}</option>
-                    {Array.isArray(field.options) ? field.options.map(option => (
-                      <option key={typeof option === 'object' ? option.value : option} value={typeof option === 'object' ? option.value : option}>
-                        {typeof option === 'object' ? option.label : option}
-                      </option>
-                    )) : null}
-                  </select>
-                ) : field.type === 'color_list' ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newColor || ''}
-                        onChange={(e) => setNewColor(e.target.value)}
-                        placeholder={field.placeholder || "Enter color (e.g., Red, Blue, #FF0000)"}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (newColor && !(formData[field.key] || []).includes(newColor)) {
-                            setFormData(prev => ({
-                              ...prev,
-                              [field.key]: [...(prev[field.key] || []), newColor]
-                            }));
-                            setNewColor('');
-                          }
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(formData[field.key] || []).map((color, index) => (
-                        <span
-                          key={index}
-                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
-                        >
-                          {color}
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({
-                              ...prev,
-                              [field.key]: prev[field.key].filter(c => c !== color)
-                            }))}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : field.type === 'name_list' ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newName || ''}
-                        onChange={(e) => setNewName(e.target.value)}
-                        placeholder={field.placeholder || "Enter name"}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (newName && !(formData[field.key] || []).includes(newName)) {
-                            setFormData(prev => ({
-                              ...prev,
-                              [field.key]: [...(prev[field.key] || []), newName]
-                            }));
-                            setNewName('');
-                          }
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(formData[field.key] || []).map((name, index) => (
-                        <span
-                          key={index}
-                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm flex items-center"
-                        >
-                          {name}
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({
-                              ...prev,
-                              [field.key]: prev[field.key].filter(n => n !== name)
-                            }))}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : field.type === 'image' ? (
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          handleImageUpload(file, field.key);
-                          setFormData(prev => ({
-                            ...prev,
-                            [field.key]: file.name
-                          }));
-                        }
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    />
-                    {imagePreviews[field.key] && (
-                      <div className="mt-2">
-                        <img 
-                          src={imagePreviews[field.key]} 
-                          alt="Preview" 
-                          className="max-w-xs max-h-32 object-contain border rounded"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : field.type === 'textarea' ? (
-                  <textarea
-                    value={formData[field.key] || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      [field.key]: e.target.value
-                    }))}
-                    rows="3"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-                    required={field.required}
-                  />
-                ) : (
-                  <input
-                    type={field.type}
-                    value={formData[field.key] || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      [field.key]: e.target.value
-                    }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-                    required={field.required}
-                    min={field.min}
-                    max={field.max}
-                  />
-                )}
+                <UnifiedFieldRenderer
+                  field={field}
+                  value={formData[field.key]}
+                  onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))}
+                  teams={teams}
+                  brands={brands}
+                  competitions={competitions}
+                  masterKits={masterKits}
+                  referenceKits={referenceKits}
+                  players={players}
+                  onImageUpload={(event, fieldKey) => {
+                    // Handle image upload for edit forms
+                    const files = Array.from(event.target.files);
+                    if (files.length > 0) {
+                      setFormData(prev => ({ ...prev, [fieldKey]: `image_uploaded_${Date.now()}` }));
+                    }
+                  }}
+                  API={API}
+                  formData={formData}
+                />
               </div>
             ))}
           </div>
