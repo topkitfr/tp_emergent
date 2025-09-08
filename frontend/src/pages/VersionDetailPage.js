@@ -209,6 +209,23 @@ const VersionDetailPage = () => {
                   <p className="text-gray-900">{version.release_type?.charAt(0).toUpperCase() + version.release_type?.slice(1)}</p>
                 </div>
                 
+                {/* Master Kit Information */}
+                {version.master_kit_info && (
+                  <>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Master Kit</h3>
+                      <p className="text-gray-900">
+                        {version.master_kit_info.model} - {version.master_kit_info.season} {version.master_kit_info.jersey_type}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Master Kit ID</h3>
+                      <p className="text-gray-900 font-mono text-sm">{version.master_kit_info.id}</p>
+                    </div>
+                  </>
+                )}
+                
                 {version.sku_code && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">SKU Code</h3>
@@ -223,10 +240,17 @@ const VersionDetailPage = () => {
                   </div>
                 )}
                 
-                {version.league_competition && (
+                {(version.competition_info || version.league_competition) && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-1">Competition</h3>
-                    <p className="text-gray-900">{version.league_competition}</p>
+                    <h3 className="text-sm font-medium text-gray-700 mb-1">League/Competition</h3>
+                    <p className="text-gray-900">
+                      {version.competition_info && version.competition_info.name ? 
+                        version.competition_info.name : 
+                        version.competition_info && version.competition_info.type ? 
+                          `${version.competition_info.type} (${version.competition_info.country})` :
+                          version.league_competition
+                      }
+                    </p>
                   </div>
                 )}
                 
