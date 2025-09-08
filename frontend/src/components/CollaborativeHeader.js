@@ -25,7 +25,7 @@ const CollaborativeHeader = ({
   const navigationItems = [
     { id: 'home', label: 'Home', icon: '🏠', requiresAuth: false },
     { id: 'catalogue', label: 'Catalogue', icon: '📚', requiresAuth: false },
-    { id: 'vestiaire', label: 'Kit Store', icon: '👕', requiresAuth: false },
+    { id: 'kit-area', label: 'Kit Area', icon: '👕', requiresAuth: false },
     { id: 'contributions-v2', label: 'Community DB', icon: '🎯', requiresAuth: true }
   ];
 
