@@ -180,7 +180,10 @@ export const csvLoader = new CSVLoader();
 // Hook for React components
 export const useCSVData = () => {
   return {
+    csvData: csvLoader.data,
     data: csvLoader.data,
+    loading: false, // Static for now since we're not implementing async loading
+    error: null,    // Static for now since we're not implementing error handling
     isLoaded: csvLoader.isLoaded,
     loadFromURL: csvLoader.loadFromURL.bind(csvLoader),
     loadFromFile: csvLoader.loadFromFile.bind(csvLoader),
