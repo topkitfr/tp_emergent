@@ -93,7 +93,13 @@ class MasterKitIntegrationTester:
             
             if response.status_code == 200:
                 data = response.json()
-                contributions = data.get("contributions", [])
+                
+                # Handle both array and object responses
+                if isinstance(data, list):
+                    contributions = data
+                else:
+                    contributions = data.get("contributions", [])
+                
                 total_count = len(contributions)
                 
                 # Analyze contribution data
