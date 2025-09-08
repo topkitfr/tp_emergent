@@ -9,8 +9,11 @@ const UnifiedFieldRenderer = ({
   brands = [], 
   competitions = [], 
   masterKits = [],
+  referenceKits = [],
+  players = [],
   onImageUpload,
-  API 
+  API,
+  formData = {} // Add formData to check field dependencies
 }) => {
   const [listItems, setListItems] = useState(Array.isArray(value) ? value : []);
   const [newItem, setNewItem] = useState('');
