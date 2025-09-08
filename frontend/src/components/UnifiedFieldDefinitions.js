@@ -170,6 +170,9 @@ export const fieldTypeConfig = {
   },
   master_kit_select: {
     component: 'master_kit_select'
+  },
+  season_select: {
+    component: 'season_select'
   }
 };
 
