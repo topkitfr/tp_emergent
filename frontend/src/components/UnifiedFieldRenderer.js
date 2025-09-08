@@ -200,7 +200,7 @@ const UnifiedFieldRenderer = ({
           </select>
         );
 
-      case 'season_select':
+      case 'season_select': {
         const currentYear = new Date().getFullYear();
         const seasons = [];
         // Generate seasons from 2020-2021 to current+2 years
