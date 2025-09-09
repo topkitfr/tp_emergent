@@ -306,7 +306,22 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm overflow-hidden">
                   {brand.logo_url ? (
                     <img 
-                      src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : brand.logo_url.startsWith('api/') ? `/${brand.logo_url}` : `/api/${brand.logo_url}`}
+                      src={(() => {
+                        const url = brand.logo_url;
+                        console.log('Brand logo URL processing:', url);
+                        if (url.startsWith('data:') || url.startsWith('http')) {
+                          console.log('Using direct URL:', url);
+                          return url;
+                        } else if (url.startsWith('api/')) {
+                          const finalUrl = `/${url}`;
+                          console.log('URL starts with api/, using:', finalUrl);
+                          return finalUrl;
+                        } else {
+                          const finalUrl = `/api/${url}`;
+                          console.log('URL does not start with api/, using:', finalUrl);
+                          return finalUrl;
+                        }
+                      })()}
                       alt={brand.name}
                       className="w-full h-full object-contain p-2"
                       onError={(e) => {
