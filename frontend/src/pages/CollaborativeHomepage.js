@@ -86,7 +86,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Most wanted kits</h2>
             <button
-              onClick={() => onViewChange('master-jerseys')}
+              onClick={() => onViewChange('kit-area')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
               All kits
