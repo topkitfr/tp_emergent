@@ -140,7 +140,7 @@ class Competition(BaseModel):
     type: str  # "National league", "Continental competition", "International competition", "Intercontinental competition", "National cup", "Continental super cup"
     confederations_federations: List[str] = []  # ["UEFA"], ["FIFA"], ["CONMEBOL"], ["UEFA", "CONMEBOL"]
     country: Optional[str] = None  # France, Spain, etc. (None for international)
-    level: Optional[int] = None  # 1 pour première division, 2 pour deuxième, etc.
+    level: Optional[Union[str, int]] = None  # 1 pour première division, 2 pour deuxième, etc.
     
     # Historical information
     year_created: Optional[int] = None  # Year when competition was created
