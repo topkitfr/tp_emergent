@@ -388,9 +388,9 @@ class ContributionsFormTester:
         
         test_data = {
             "entity_type": "team",
+            "title": "Unauth Test Team",
             "data": {"name": "Unauth Test Team"},
-            "source_urls": [],
-            "notes": "Testing without authentication"
+            "source_urls": []
         }
         
         try:
