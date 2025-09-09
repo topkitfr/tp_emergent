@@ -1,7 +1,31 @@
 #!/usr/bin/env python3
 """
-TopKit Contributions Form Submission Backend Testing
-Testing all form submission functionality on the contributions page as requested in review.
+Contributions Form Functionality Testing - Review Request Specific
+===============================================================
+
+This test verifies the contributions form functionality as requested in the review:
+1. Test creating a team contribution with the exact payload format specified
+2. Verify the API accepts the payload format  
+3. Check the contribution is created successfully
+4. Verify the response format matches frontend expectations
+5. Test validation requirements
+
+SPECIFIC TEST NEEDED from review request:
+Test creating a team contribution with this exact data:
+POST /api/contributions-v2/
+Content-Type: application/json
+Authorization: Bearer {valid_admin_token}
+
+{
+  "entity_type": "team",
+  "title": "Frontend Test Team", 
+  "description": "",
+  "data": {
+    "name": "Frontend Test Team",
+    "country": "France"
+  },
+  "source_urls": []
+}
 """
 
 import requests
