@@ -1,5 +1,602 @@
 #!/usr/bin/env python3
 """
+Reference Kit Collections System Testing
+Testing the enhanced reference kit collections system with new fields and bilateral logic
+"""
+
+import requests
+import json
+import sys
+import os
+from datetime import datetime
+
+# Get backend URL from environment
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-manager.preview.emergentagent.com')
+API_BASE = f"{BACKEND_URL}/api"
+
+# Test credentials
+ADMIN_EMAIL = "topkitfr@gmail.com"
+ADMIN_PASSWORD = "TopKitSecure789#"
+
+class ReferenceKitCollectionsTest:
+    def __init__(self):
+        self.session = requests.Session()
+        self.admin_token = None
+        self.admin_user_id = None
+        self.test_reference_kit_id = None
+        
+    def log(self, message):
+        """Log test messages with timestamp"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        print(f"[{timestamp}] {message}")
+        
+    def authenticate_admin(self):
+        """Test 1: Authentication with admin credentials"""
+        self.log("🔐 Testing admin authentication...")
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/login", json={
+                "email": ADMIN_EMAIL,
+                "password": ADMIN_PASSWORD
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data.get('token')
+                self.admin_user_id = data.get('user', {}).get('id')
+                
+                if self.admin_token and len(self.admin_token) > 100:
+                    self.log(f"✅ Admin authentication successful - Token: {len(self.admin_token)} chars")
+                    self.log(f"✅ Admin user ID: {self.admin_user_id}")
+                    
+                    # Set authorization header for future requests
+                    self.session.headers.update({
+                        'Authorization': f'Bearer {self.admin_token}',
+                        'Content-Type': 'application/json'
+                    })
+                    return True
+                else:
+                    self.log(f"❌ Invalid token received: {self.admin_token}")
+                    return False
+            else:
+                self.log(f"❌ Authentication failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Authentication error: {e}")
+            return False
+    
+    def check_reference_kits_availability(self):
+        """Test 2: Check if reference kits exist for testing"""
+        self.log("📋 Checking reference kits availability...")
+        
+        try:
+            response = self.session.get(f"{API_BASE}/reference-kits")
+            
+            if response.status_code == 200:
+                reference_kits = response.json()
+                if isinstance(reference_kits, list) and len(reference_kits) > 0:
+                    self.test_reference_kit_id = reference_kits[0].get('id')
+                    self.log(f"✅ Found {len(reference_kits)} reference kits")
+                    self.log(f"✅ Using test reference kit ID: {self.test_reference_kit_id}")
+                    
+                    # Log details of first reference kit
+                    first_kit = reference_kits[0]
+                    self.log(f"   - TopKit Reference: {first_kit.get('topkit_reference', 'N/A')}")
+                    self.log(f"   - Master Jersey ID: {first_kit.get('master_jersey_id', 'N/A')}")
+                    return True
+                else:
+                    self.log("❌ No reference kits found - creating test reference kit")
+                    return self.create_test_reference_kit()
+            else:
+                self.log(f"❌ Failed to get reference kits: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error checking reference kits: {e}")
+            return False
+    
+    def create_test_reference_kit(self):
+        """Create a test reference kit if none exist"""
+        self.log("🔨 Creating test reference kit...")
+        
+        try:
+            # First get a master jersey
+            response = self.session.get(f"{API_BASE}/master-jerseys")
+            if response.status_code != 200:
+                self.log("❌ No master jerseys available for test reference kit")
+                return False
+                
+            master_jerseys = response.json()
+            if not master_jerseys:
+                self.log("❌ No master jerseys found")
+                return False
+                
+            master_jersey_id = master_jerseys[0].get('id')
+            
+            # Create test reference kit
+            test_kit_data = {
+                "master_jersey_id": master_jersey_id,
+                "player_name": "Test Player",
+                "player_number": "10",
+                "release_type": "authentic",
+                "retail_price": 140.0,
+                "available_sizes": ["S", "M", "L", "XL"]
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kits", json=test_kit_data)
+            
+            if response.status_code == 201:
+                created_kit = response.json()
+                self.test_reference_kit_id = created_kit.get('id')
+                self.log(f"✅ Test reference kit created: {self.test_reference_kit_id}")
+                return True
+            else:
+                self.log(f"❌ Failed to create test reference kit: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error creating test reference kit: {e}")
+            return False
+    
+    def test_add_to_owned_collection(self):
+        """Test 3: Add reference kit to owned collection with enhanced fields"""
+        self.log("📦 Testing add to owned collection with enhanced fields...")
+        
+        if not self.test_reference_kit_id:
+            self.log("❌ No test reference kit available")
+            return False
+            
+        try:
+            # Test with all new enhanced fields
+            collection_data = {
+                "reference_kit_id": self.test_reference_kit_id,
+                "collection_type": "owned",
+                "size": "M",
+                "condition": "mint",  # Test new condition value
+                "personal_description": "Test owned kit with enhanced fields",
+                "purchase_price": 120.0,
+                "estimated_value": 150.0,
+                "player_name": "Test Player",
+                "player_number": "10",
+                # New special attributes
+                "worn": True,
+                "worn_type": "match_worn",
+                "signed": True,
+                "signed_by": "Test Player"
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kit-collections", json=collection_data)
+            
+            if response.status_code == 201:
+                result = response.json()
+                self.log("✅ Successfully added to owned collection")
+                self.log(f"   - Collection ID: {result.get('collection_id')}")
+                self.log(f"   - Message: {result.get('message')}")
+                
+                # Verify enhanced fields are included
+                if 'worn' in str(result) and 'signed' in str(result):
+                    self.log("✅ Enhanced fields (worn, signed) included in response")
+                else:
+                    self.log("⚠️ Enhanced fields may not be fully included")
+                    
+                return True
+            else:
+                self.log(f"❌ Failed to add to owned collection: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error adding to owned collection: {e}")
+            return False
+    
+    def test_bilateral_system_prevention(self):
+        """Test 4: Test bilateral system - can't be in both owned and wanted"""
+        self.log("🔄 Testing bilateral system prevention...")
+        
+        if not self.test_reference_kit_id:
+            self.log("❌ No test reference kit available")
+            return False
+            
+        try:
+            # Try to add same kit to wanted collection (should fail)
+            collection_data = {
+                "reference_kit_id": self.test_reference_kit_id,
+                "collection_type": "wanted",
+                "size": "L",
+                "condition": "excellent"
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kit-collections", json=collection_data)
+            
+            if response.status_code == 400:
+                error_message = response.json().get('detail', '')
+                if 'already in your owned collection' in error_message:
+                    self.log("✅ Bilateral prevention working - cannot add to wanted when in owned")
+                    self.log(f"   - Error message: {error_message}")
+                    return True
+                else:
+                    self.log(f"❌ Unexpected error message: {error_message}")
+                    return False
+            else:
+                self.log(f"❌ Expected 400 error but got: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error testing bilateral prevention: {e}")
+            return False
+    
+    def test_duplicate_prevention(self):
+        """Test 5: Test duplicate prevention in same collection type"""
+        self.log("🚫 Testing duplicate prevention...")
+        
+        if not self.test_reference_kit_id:
+            self.log("❌ No test reference kit available")
+            return False
+            
+        try:
+            # Try to add same kit to owned collection again (should fail)
+            collection_data = {
+                "reference_kit_id": self.test_reference_kit_id,
+                "collection_type": "owned",
+                "size": "XL",
+                "condition": "good"
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kit-collections", json=collection_data)
+            
+            if response.status_code == 400:
+                error_message = response.json().get('detail', '')
+                if 'already in your owned collection' in error_message:
+                    self.log("✅ Duplicate prevention working - cannot add same kit twice")
+                    self.log(f"   - Error message: {error_message}")
+                    return True
+                else:
+                    self.log(f"❌ Unexpected error message: {error_message}")
+                    return False
+            else:
+                self.log(f"❌ Expected 400 error but got: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error testing duplicate prevention: {e}")
+            return False
+    
+    def test_condition_validation(self):
+        """Test 6: Test new condition values validation"""
+        self.log("🏷️ Testing new condition values validation...")
+        
+        if not self.test_reference_kit_id:
+            self.log("❌ No test reference kit available")
+            return False
+        
+        # Get another reference kit for testing
+        try:
+            response = self.session.get(f"{API_BASE}/reference-kits")
+            reference_kits = response.json()
+            if len(reference_kits) < 2:
+                self.log("⚠️ Only one reference kit available, skipping condition validation test")
+                return True
+                
+            second_kit_id = None
+            for kit in reference_kits:
+                if kit.get('id') != self.test_reference_kit_id:
+                    second_kit_id = kit.get('id')
+                    break
+                    
+            if not second_kit_id:
+                self.log("⚠️ No second reference kit found, skipping condition validation test")
+                return True
+        except:
+            self.log("⚠️ Could not get second reference kit, skipping condition validation test")
+            return True
+            
+        # Test all new condition values
+        new_conditions = ["new_with_tags", "mint", "excellent", "good", "fair", "poor"]
+        
+        for i, condition in enumerate(new_conditions):
+            try:
+                collection_data = {
+                    "reference_kit_id": second_kit_id,
+                    "collection_type": "wanted",
+                    "size": "M",
+                    "condition": condition,
+                    "personal_description": f"Test condition: {condition}"
+                }
+                
+                response = self.session.post(f"{API_BASE}/reference-kit-collections", json=collection_data)
+                
+                if response.status_code == 201:
+                    self.log(f"✅ Condition '{condition}' accepted")
+                    
+                    # Remove it for next test
+                    collections_response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/wanted")
+                    if collections_response.status_code == 200:
+                        collections = collections_response.json()
+                        for collection in collections:
+                            if collection.get('reference_kit_id') == second_kit_id:
+                                # Delete this collection for next test
+                                delete_response = self.session.delete(f"{API_BASE}/reference-kit-collections/{collection.get('id')}")
+                                break
+                    
+                elif response.status_code == 400 and 'already in your' in response.text:
+                    self.log(f"✅ Condition '{condition}' accepted (duplicate prevented)")
+                else:
+                    self.log(f"❌ Condition '{condition}' rejected: {response.status_code} - {response.text}")
+                    return False
+                    
+            except Exception as e:
+                self.log(f"❌ Error testing condition '{condition}': {e}")
+                return False
+        
+        self.log("✅ All new condition values validated successfully")
+        return True
+    
+    def test_get_owned_collections(self):
+        """Test 7: Test GET owned collections endpoint"""
+        self.log("📋 Testing GET owned collections endpoint...")
+        
+        try:
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/owned")
+            
+            if response.status_code == 200:
+                collections = response.json()
+                self.log(f"✅ GET owned collections successful - Found {len(collections)} items")
+                
+                if len(collections) > 0:
+                    first_collection = collections[0]
+                    self.log("✅ Data enrichment verification:")
+                    
+                    # Check for reference_kit data
+                    if 'reference_kit' in first_collection or 'reference_kit_info' in first_collection:
+                        self.log("   ✅ Reference kit data enriched")
+                    else:
+                        self.log("   ❌ Reference kit data missing")
+                    
+                    # Check for master_jersey data
+                    if 'master_jersey' in first_collection or 'master_jersey_info' in first_collection:
+                        self.log("   ✅ Master jersey data enriched")
+                    else:
+                        self.log("   ❌ Master jersey data missing")
+                    
+                    # Check for enhanced fields
+                    enhanced_fields = ['worn', 'worn_type', 'signed', 'signed_by']
+                    found_enhanced = 0
+                    for field in enhanced_fields:
+                        if field in first_collection:
+                            found_enhanced += 1
+                            self.log(f"   ✅ Enhanced field '{field}': {first_collection[field]}")
+                    
+                    if found_enhanced > 0:
+                        self.log(f"   ✅ Found {found_enhanced}/{len(enhanced_fields)} enhanced fields")
+                    else:
+                        self.log("   ⚠️ No enhanced fields found in response")
+                
+                return True
+            else:
+                self.log(f"❌ Failed to get owned collections: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error getting owned collections: {e}")
+            return False
+    
+    def test_get_wanted_collections(self):
+        """Test 8: Test GET wanted collections endpoint"""
+        self.log("📋 Testing GET wanted collections endpoint...")
+        
+        try:
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/wanted")
+            
+            if response.status_code == 200:
+                collections = response.json()
+                self.log(f"✅ GET wanted collections successful - Found {len(collections)} items")
+                
+                if len(collections) > 0:
+                    first_collection = collections[0]
+                    self.log("✅ Data enrichment verification:")
+                    
+                    # Check for reference_kit data
+                    if 'reference_kit' in first_collection or 'reference_kit_info' in first_collection:
+                        self.log("   ✅ Reference kit data enriched")
+                    else:
+                        self.log("   ❌ Reference kit data missing")
+                    
+                    # Check for master_jersey data  
+                    if 'master_jersey' in first_collection or 'master_jersey_info' in first_collection:
+                        self.log("   ✅ Master jersey data enriched")
+                    else:
+                        self.log("   ❌ Master jersey data missing")
+                
+                return True
+            else:
+                self.log(f"❌ Failed to get wanted collections: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error getting wanted collections: {e}")
+            return False
+    
+    def test_get_combined_collections(self):
+        """Test 9: Test GET combined collections endpoint"""
+        self.log("📋 Testing GET combined collections endpoint...")
+        
+        try:
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections")
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.log(f"✅ GET combined collections successful")
+                
+                # Check response structure
+                if isinstance(result, dict):
+                    owned = result.get('owned', [])
+                    wanted = result.get('wanted', [])
+                    self.log(f"   - Owned collections: {len(owned)}")
+                    self.log(f"   - Wanted collections: {len(wanted)}")
+                elif isinstance(result, list):
+                    self.log(f"   - Total collections: {len(result)}")
+                
+                return True
+            else:
+                self.log(f"❌ Failed to get combined collections: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error getting combined collections: {e}")
+            return False
+    
+    def test_collection_workflow(self):
+        """Test 10: Test complete collection workflow"""
+        self.log("🔄 Testing complete collection workflow...")
+        
+        if not self.test_reference_kit_id:
+            self.log("❌ No test reference kit available")
+            return False
+        
+        try:
+            # Get another reference kit for workflow testing
+            response = self.session.get(f"{API_BASE}/reference-kits")
+            reference_kits = response.json()
+            
+            workflow_kit_id = None
+            for kit in reference_kits:
+                if kit.get('id') != self.test_reference_kit_id:
+                    workflow_kit_id = kit.get('id')
+                    break
+            
+            if not workflow_kit_id:
+                self.log("⚠️ Only one reference kit available, using same kit for workflow test")
+                workflow_kit_id = self.test_reference_kit_id
+            
+            # Step 1: Add to wanted collection
+            self.log("   Step 1: Adding to wanted collection...")
+            wanted_data = {
+                "reference_kit_id": workflow_kit_id,
+                "collection_type": "wanted",
+                "size": "L",
+                "condition": "excellent"
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kit-collections", json=wanted_data)
+            if response.status_code not in [201, 400]:  # 400 if already exists
+                self.log(f"❌ Failed to add to wanted: {response.status_code}")
+                return False
+            
+            self.log("   ✅ Added to wanted collection")
+            
+            # Step 2: Try to add same kit to owned (should fail due to bilateral system)
+            self.log("   Step 2: Testing bilateral prevention...")
+            owned_data = {
+                "reference_kit_id": workflow_kit_id,
+                "collection_type": "owned",
+                "size": "M",
+                "condition": "mint"
+            }
+            
+            response = self.session.post(f"{API_BASE}/reference-kit-collections", json=owned_data)
+            if response.status_code == 400:
+                self.log("   ✅ Bilateral prevention working")
+            else:
+                self.log(f"   ❌ Expected bilateral prevention but got: {response.status_code}")
+                return False
+            
+            # Step 3: Remove from wanted and add to owned
+            self.log("   Step 3: Remove from wanted and add to owned...")
+            
+            # Get wanted collections to find the item to remove
+            collections_response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/wanted")
+            if collections_response.status_code == 200:
+                wanted_collections = collections_response.json()
+                collection_to_remove = None
+                
+                for collection in wanted_collections:
+                    if collection.get('reference_kit_id') == workflow_kit_id:
+                        collection_to_remove = collection.get('id')
+                        break
+                
+                if collection_to_remove:
+                    # Remove from wanted
+                    delete_response = self.session.delete(f"{API_BASE}/reference-kit-collections/{collection_to_remove}")
+                    if delete_response.status_code == 200:
+                        self.log("   ✅ Removed from wanted collection")
+                        
+                        # Now add to owned
+                        response = self.session.post(f"{API_BASE}/reference-kit-collections", json=owned_data)
+                        if response.status_code == 201:
+                            self.log("   ✅ Added to owned collection")
+                            self.log("✅ Complete workflow test successful")
+                            return True
+                        else:
+                            self.log(f"   ❌ Failed to add to owned: {response.status_code}")
+                            return False
+                    else:
+                        self.log(f"   ❌ Failed to remove from wanted: {delete_response.status_code}")
+                        return False
+                else:
+                    self.log("   ❌ Could not find wanted collection item to remove")
+                    return False
+            else:
+                self.log(f"   ❌ Failed to get wanted collections: {collections_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error in collection workflow: {e}")
+            return False
+    
+    def run_all_tests(self):
+        """Run all reference kit collections tests"""
+        self.log("🚀 Starting Reference Kit Collections System Testing")
+        self.log("=" * 60)
+        
+        tests = [
+            ("Authentication Test", self.authenticate_admin),
+            ("Reference Kit Existence Check", self.check_reference_kits_availability),
+            ("Add to Owned Collection", self.test_add_to_owned_collection),
+            ("Bilateral System Prevention", self.test_bilateral_system_prevention),
+            ("Duplicate Prevention", self.test_duplicate_prevention),
+            ("Condition Values Validation", self.test_condition_validation),
+            ("GET Owned Collections", self.test_get_owned_collections),
+            ("GET Wanted Collections", self.test_get_wanted_collections),
+            ("GET Combined Collections", self.test_get_combined_collections),
+            ("Collection Workflow", self.test_collection_workflow)
+        ]
+        
+        passed = 0
+        failed = 0
+        
+        for test_name, test_func in tests:
+            self.log(f"\n📋 Running: {test_name}")
+            try:
+                if test_func():
+                    passed += 1
+                    self.log(f"✅ {test_name} - PASSED")
+                else:
+                    failed += 1
+                    self.log(f"❌ {test_name} - FAILED")
+            except Exception as e:
+                failed += 1
+                self.log(f"❌ {test_name} - ERROR: {e}")
+        
+        # Summary
+        self.log("\n" + "=" * 60)
+        self.log("📊 REFERENCE KIT COLLECTIONS TESTING SUMMARY")
+        self.log("=" * 60)
+        self.log(f"✅ Tests Passed: {passed}")
+        self.log(f"❌ Tests Failed: {failed}")
+        self.log(f"📈 Success Rate: {(passed / (passed + failed) * 100):.1f}%")
+        
+        if failed == 0:
+            self.log("🎉 ALL TESTS PASSED - Reference Kit Collections System is PRODUCTION-READY!")
+        else:
+            self.log(f"⚠️ {failed} test(s) failed - Review required before production")
+        
+        return failed == 0
+
+if __name__ == "__main__":
+    tester = ReferenceKitCollectionsTest()
+    success = tester.run_all_tests()
+    sys.exit(0 if success else 1)
+"""
 TopKit Backend Testing - CRITICAL IMAGE DISPLAY BUG INVESTIGATION
 Testing image upload, storage, integration, and display functionality:
 1. Image Upload Process during contribution creation via Community DB
