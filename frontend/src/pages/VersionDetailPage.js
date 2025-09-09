@@ -558,11 +558,12 @@ const VersionDetailPage = () => {
                       required
                     >
                       <option value="">Select condition</option>
-                      <option value="new">New</option>
+                      <option value="new_with_tags">New with tags</option>
+                      <option value="mint">Mint</option>
                       <option value="excellent">Excellent</option>
-                      <option value="good">Good</option>
-                      <option value="fair">Fair</option>
-                      <option value="poor">Poor</option>
+                      <option value="good">Good (minor wear)</option>
+                      <option value="fair">Fair (visible wear)</option>
+                      <option value="poor">Poor (major flaws)</option>
                     </select>
                   </div>
 
