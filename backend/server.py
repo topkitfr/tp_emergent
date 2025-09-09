@@ -11160,7 +11160,7 @@ async def get_master_jersey_by_id(jersey_id: str):
         brand_info=brand_info,
         competition_info=competition_info,
         releases_count=releases_count,
-        collectors_count=0
+        collectors_count=collectors_count
     )
     
     return enriched_jersey
