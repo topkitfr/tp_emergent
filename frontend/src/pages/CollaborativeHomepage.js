@@ -98,7 +98,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
               <div
                 key={jersey.id || index}
                 className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100"
-                onClick={() => onViewChange('master-jerseys')}
+                onClick={() => onViewChange('kit-area')}
               >
                 <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                   {jersey.main_image_url ? (
