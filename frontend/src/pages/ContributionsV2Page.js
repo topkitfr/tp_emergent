@@ -33,9 +33,14 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
 
   // Add effect to refetch when user changes
   useEffect(() => {
-    console.log('🔄 User changed effect triggered, user:', user);
+    console.log('🔄 User changed effect triggered, user:', user ? 'AUTHENTICATED' : 'NOT_AUTHENTICATED');
     if (user) {
-      console.log('✅ User is authenticated, fetching contributions...');
+      console.log('✅ User is authenticated:', {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        hasToken: !!user.token
+      });
       // Add small delay to ensure token is properly set
       setTimeout(() => {
         fetchContributions();
