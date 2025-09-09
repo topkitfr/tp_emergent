@@ -403,24 +403,73 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredTeams.map((team) => (
-              <div key={team.id} className="relative group">
-                <TeamCard team={team} />
-                {user && (
-                  <button
-                    onClick={(e) => handleContributeClick(team, e)}
-                    className="absolute top-2 right-2 bg-white/90 hover:bg-white text-blue-600 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Improve this profile"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                )}
+          <>
+            {/* Grid View */}
+            {displayOptions.viewMode === 'grid' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredTeams.map((team) => (
+                  <div key={team.id} className="relative group">
+                    <TeamCard team={team} />
+                    {user && (
+                      <button
+                        onClick={(e) => handleContributeClick(team, e)}
+                        className="absolute top-2 right-2 bg-white/90 hover:bg-white text-blue-600 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Improve this profile"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Thumbnail View */}
+            {displayOptions.viewMode === 'thumbnail' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                {filteredTeams.map((team) => (
+                  <div key={team.id} className="relative group">
+                    <TeamThumbnail team={team} />
+                    {user && (
+                      <button
+                        onClick={(e) => handleContributeClick(team, e)}
+                        className="absolute top-1 right-1 bg-white/90 hover:bg-white text-blue-600 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Improve this profile"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {displayOptions.viewMode === 'list' && (
+              <div className="space-y-4">
+                {filteredTeams.map((team) => (
+                  <div key={team.id} className="relative group">
+                    <TeamListItem team={team} />
+                    {user && (
+                      <button
+                        onClick={(e) => handleContributeClick(team, e)}
+                        className="absolute top-4 right-4 bg-white/90 hover:bg-white text-blue-600 p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Improve this profile"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
