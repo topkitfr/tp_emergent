@@ -95,7 +95,7 @@ async def cleanup_test_contributions():
             print(f"   Comprehensive delete removed: {comprehensive_delete.deleted_count} contributions")
             total_deleted = comprehensive_delete.deleted_count
         
-        print(f"\n✅ Successfully deleted {delete_result.deleted_count} test contributions")
+        print(f"\n✅ Successfully deleted {total_deleted} test contributions (including TK-PLAYER-7F915C33)")
         
         # Show what's left
         remaining_count = await contributions_collection.count_documents({})
