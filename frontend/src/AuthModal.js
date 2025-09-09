@@ -131,8 +131,20 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       if (isLogin) {
         // Login successful
         console.log('🎉 Login successful, storing user data');
+        console.log('📦 Storing token length:', response.data.token?.length);
+        console.log('👤 User data keys:', Object.keys(response.data.user || {}));
+        
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Verify storage
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        console.log('✅ Storage verification:', {
+          tokenStored: !!storedToken,
+          tokenLength: storedToken?.length,
+          userStored: !!storedUser
+        });
         
         // Pass both token and user data to onLoginSuccess
         onLoginSuccess(response.data.token, response.data.user);
