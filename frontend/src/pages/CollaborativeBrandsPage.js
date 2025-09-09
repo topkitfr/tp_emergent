@@ -138,6 +138,111 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
     </div>
   );
 
+  // Thumbnail version - smaller cards
+  const BrandThumbnail = ({ brand }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+      onClick={() => navigate(`/brands/${brand.id}`)}
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        {brand.logo_url ? (
+          <img 
+            src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${API}/${brand.logo_url}`}
+            alt={`${brand.name} logo`}
+            className="w-full h-full object-contain p-2"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: brand.logo_url ? 'none' : 'flex'}}>
+          👕
+        </div>
+        
+        {brand.verified_level !== 'unverified' && (
+          <div className="absolute top-1 right-1 bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-medium">
+            ✓
+          </div>
+        )}
+      </div>
+      
+      <div className="p-2">
+        <h3 className="font-bold text-xs text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-1">
+          {brand.name}
+        </h3>
+        <div className="text-xs text-gray-600 mb-1">
+          {brand.country && <span>{brand.country}</span>}
+        </div>
+        <div className="text-xs text-blue-600 font-mono truncate">{brand.topkit_reference}</div>
+      </div>
+    </div>
+  );
+
+  // List version - horizontal layout
+  const BrandListItem = ({ brand }) => (
+    <div 
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group flex items-center space-x-4"
+      onClick={() => navigate(`/brands/${brand.id}`)}
+    >
+      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+        {brand.logo_url ? (
+          <img 
+            src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${API}/${brand.logo_url}`}
+            alt={`${brand.name} logo`}
+            className="w-full h-full object-contain rounded-lg p-2"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: brand.logo_url ? 'none' : 'flex'}}>
+          👕
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 truncate">
+            {brand.name}
+          </h3>
+          {brand.verified_level !== 'unverified' && (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+              ✓
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+          {brand.country && (
+            <span className="flex items-center">
+              <span className="mr-1">🌍</span>
+              {brand.country}
+            </span>
+          )}
+          {brand.founded_year && (
+            <span className="flex items-center">
+              <span className="mr-1">📅</span>
+              Founded in {brand.founded_year}
+            </span>
+          )}
+          {brand.website && (
+            <span className="flex items-center">
+              <span className="mr-1">🌐</span>
+              <span className="truncate">{brand.website}</span>
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-blue-600 font-mono text-sm">{brand.topkit_reference}</span>
+          <span className="text-gray-500 text-sm">{brand.kits_count || 0} kits</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
     <div className="max-w-7xl mx-auto px-4 py-8">
