@@ -418,7 +418,7 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
           competition_name: formData.name, // Map name to competition_name
           type: formData.competition_type, // Map competition_type to type
           alternative_names: formData.common_names, // Map common_names to alternative_names
-          level: formData.level ? parseInt(formData.level) : null,
+          level: formData.level || null,
           year_created: formData.start_year ? parseInt(formData.start_year) : null
         };
 
