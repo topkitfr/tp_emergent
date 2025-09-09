@@ -230,21 +230,24 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
               <div className="flex border border-gray-300 rounded">
                 <button
                   onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'grid' }))}
-                  className={`px-3 py-1 text-sm ${displayOptions.viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`px-3 py-2 text-sm flex items-center ${displayOptions.viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  📊 Grid
+                  <Grid className="w-4 h-4 mr-1" />
+                  Grid
                 </button>
                 <button
                   onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'thumbnail' }))}
-                  className={`px-3 py-1 text-sm border-x border-gray-300 ${displayOptions.viewMode === 'thumbnail' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`px-3 py-2 text-sm border-x border-gray-300 flex items-center ${displayOptions.viewMode === 'thumbnail' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  🖼️ Thumb
+                  <LayoutGrid className="w-4 h-4 mr-1" />
+                  Thumb
                 </button>
                 <button
                   onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'list' }))}
-                  className={`px-3 py-1 text-sm ${displayOptions.viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`px-3 py-2 text-sm flex items-center ${displayOptions.viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  📋 List
+                  <List className="w-4 h-4 mr-1" />
+                  List
                 </button>
               </div>
             </div>
