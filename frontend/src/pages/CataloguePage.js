@@ -28,7 +28,7 @@ const CataloguePage = ({
     },
     { 
       id: 'brands', 
-      label: 'Brands', 
+      label: 'Brand/Sponsor', 
       icon: '👕', 
       count: brands?.length || 0,
       description: 'Kit manufacturers'
