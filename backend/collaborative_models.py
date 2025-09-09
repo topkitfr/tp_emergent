@@ -3,7 +3,7 @@ Modèles collaboratifs pour TopKit - Base de données type Discogs
 Nouvelles entités pour la vision collaborative
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 import uuid
 from enum import Enum
