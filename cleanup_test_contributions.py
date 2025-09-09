@@ -30,13 +30,30 @@ async def cleanup_test_contributions():
         contributions_collection = db['contributions_v2']
         
         # Find all contributions with pending_review status (these are test data)
+        # Also find the specific contribution containing TK-PLAYER-7F915C33
         test_contributions = []
+        
+        # Find pending_review contributions
         async for contrib in contributions_collection.find({'status': 'pending_review'}):
             test_contributions.append({
                 'id': contrib.get('id'),
                 'title': contrib.get('title'),
                 'entity_type': contrib.get('entity_type'),
-                'created_at': contrib.get('created_at')
+                'created_at': contrib.get('created_at'),
+                'status': contrib.get('status'),
+                'topkit_reference': contrib.get('topkit_reference', 'None')
+            })
+        
+        # Also find the specific contribution with TK-PLAYER-7F915C33
+        specific_contrib = await contributions_collection.find_one({'topkit_reference': 'TK-PLAYER-7F915C33'})
+        if specific_contrib and specific_contrib not in [tc for tc in test_contributions if tc['id'] == specific_contrib.get('id')]:
+            test_contributions.append({
+                'id': specific_contrib.get('id'),
+                'title': specific_contrib.get('title'),
+                'entity_type': specific_contrib.get('entity_type'),
+                'created_at': specific_contrib.get('created_at'),
+                'status': specific_contrib.get('status'),
+                'topkit_reference': specific_contrib.get('topkit_reference', 'None')
             })
         
         print(f"📊 Found {len(test_contributions)} test contributions with pending_review status")
