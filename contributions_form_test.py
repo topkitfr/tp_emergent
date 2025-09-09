@@ -84,6 +84,81 @@ class ContributionsFormTester:
             print(f"   ❌ Authentication error: {e}")
             return False
     
+    def test_exact_review_request_payload(self):
+        """Test the EXACT payload format specified in the review request"""
+        print("\n🎯 Testing EXACT payload from review request...")
+        print("   POST /api/contributions-v2/")
+        print("   Content-Type: application/json")
+        print("   Authorization: Bearer {valid_admin_token}")
+        
+        # EXACT payload from review request
+        exact_payload = {
+            "entity_type": "team",
+            "title": "Frontend Test Team",
+            "description": "",
+            "data": {
+                "name": "Frontend Test Team",
+                "country": "France"
+            },
+            "source_urls": []
+        }
+        
+        print(f"   Payload: {json.dumps(exact_payload, indent=2)}")
+        
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/",
+                json=exact_payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            print(f"   Response status: {response.status_code}")
+            
+            if response.status_code in [200, 201]:
+                try:
+                    response_data = response.json()
+                    print(f"   ✅ SUCCESS: Contribution created successfully!")
+                    print(f"   Contribution ID: {response_data.get('id', 'Not found')}")
+                    print(f"   Entity Type: {response_data.get('entity_type', 'Not found')}")
+                    print(f"   Title: {response_data.get('title', 'Not found')}")
+                    print(f"   Status: {response_data.get('status', 'Not found')}")
+                    print(f"   Created At: {response_data.get('created_at', 'Not found')}")
+                    
+                    # Verify data structure
+                    data_field = response_data.get('data', {})
+                    if isinstance(data_field, dict):
+                        print(f"   Data Name: {data_field.get('name', 'Not found')}")
+                        print(f"   Data Country: {data_field.get('country', 'Not found')}")
+                    
+                    # Check required fields for frontend compatibility
+                    required_fields = ['id', 'entity_type', 'title', 'data', 'created_at', 'created_by', 'status']
+                    missing_fields = [field for field in required_fields if field not in response_data]
+                    
+                    if missing_fields:
+                        print(f"   ⚠️ Missing fields for frontend: {missing_fields}")
+                    else:
+                        print(f"   ✅ All required fields present for frontend")
+                    
+                    return True, response_data
+                    
+                except json.JSONDecodeError:
+                    print(f"   ❌ FAIL: Response is not valid JSON")
+                    print(f"   Response text: {response.text[:200]}")
+                    return False, None
+                    
+            else:
+                print(f"   ❌ FAIL: API call failed with status {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"   Error text: {response.text}")
+                return False, None
+                
+        except Exception as e:
+            print(f"   ❌ FAIL: Exception occurred: {e}")
+            return False, None
+    
     def test_contributions_v2_endpoint(self):
         """Test the main contributions-v2 endpoint"""
         print("\n📝 Testing POST /api/contributions-v2/ endpoint...")
