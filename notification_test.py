@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://topkit-manager.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"

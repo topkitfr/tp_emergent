@@ -18,7 +18,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-manager.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
 # Use unique email for regular user
 TEST_USER_EMAIL = f"test.user.{int(time.time())}@example.com"
 TEST_USER_PASSWORD = "SecurePass2024!"

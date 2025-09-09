@@ -9,7 +9,7 @@ import os
 from io import BytesIO
 
 # Configuration
-BACKEND_URL = "https://topkit-manager.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
 USER_EMAIL = "testuser.images@gmail.com"
 USER_PASSWORD = "SecureTestPass789!"
 

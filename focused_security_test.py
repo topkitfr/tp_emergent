@@ -9,7 +9,7 @@ import time
 import uuid
 from datetime import datetime
 
-BASE_URL = "https://topkit-manager.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
 
 def test_rate_limiting_focused():
     """Test rate limiting with proper timing and fresh session"""

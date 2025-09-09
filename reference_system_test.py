@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://topkit-manager.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
 
 class TopKitReferenceSystemTester:
     def __init__(self):
