@@ -306,25 +306,11 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm overflow-hidden">
                   {brand.logo_url ? (
                     <img 
-                      src={(() => {
-                        const url = brand.logo_url;
-                        console.log('Brand logo URL processing:', url);
-                        if (url.startsWith('data:') || url.startsWith('http')) {
-                          console.log('Using direct URL:', url);
-                          return url;
-                        } else if (url.startsWith('api/')) {
-                          const finalUrl = `/${url}`;
-                          console.log('URL starts with api/, using:', finalUrl);
-                          return finalUrl;
-                        } else {
-                          const finalUrl = `/api/${url}`;
-                          console.log('URL does not start with api/, using:', finalUrl);
-                          return finalUrl;
-                        }
-                      })()}
+                      src={`/api/uploads/${brand.logo_url.replace('api/uploads/', '')}`}
                       alt={brand.name}
                       className="w-full h-full object-contain p-2"
                       onError={(e) => {
+                        console.log('Failed to load brand logo:', e.target.src);
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
                       }}
