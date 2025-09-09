@@ -28,6 +28,7 @@ const VersionDetailPage = () => {
   useEffect(() => {
     if (id) {
       fetchVersionDetails();
+      fetchPlayers();
     }
   }, [id]);
 
