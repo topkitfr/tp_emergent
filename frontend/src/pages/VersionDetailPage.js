@@ -91,7 +91,7 @@ const VersionDetailPage = () => {
         },
         body: JSON.stringify({
           reference_kit_id: version.id,
-          collection_type: type,
+          collection_type: type === 'own' ? 'owned' : 'wanted',
           ...details
         })
       });
