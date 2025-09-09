@@ -589,13 +589,18 @@ const VersionDetailPage = () => {
                   {/* Player Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
-                    <input
-                      type="text"
+                    <select
                       value={personalDetails.player_name}
                       onChange={(e) => setPersonalDetails({...personalDetails, player_name: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Ronaldo"
-                    />
+                    >
+                      <option value="">Select a player (optional)</option>
+                      {players.map((player) => (
+                        <option key={player.id} value={player.name}>
+                          {player.name} ({player.topkit_reference})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Player Number */}
