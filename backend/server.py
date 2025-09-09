@@ -5207,7 +5207,7 @@ async def add_reference_kit_to_collection(collection_data: ReferenceKitCollectio
         try:
             condition_enum = JerseyCondition(collection_data.condition.lower())
         except ValueError:
-            raise HTTPException(status_code=422, detail=f"Invalid condition: {collection_data.condition}. Must be one of: new, excellent, good, fair, poor")
+            raise HTTPException(status_code=422, detail=f"Invalid condition: {collection_data.condition}. Must be one of: new_with_tags, mint, excellent, good, fair, poor")
     
     # Create collection entry
     collection_item = {
