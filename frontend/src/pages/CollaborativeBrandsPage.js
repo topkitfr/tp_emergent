@@ -263,7 +263,7 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
             <input
@@ -312,6 +312,48 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
             >
               Reset Filters
             </button>
+          </div>
+
+          {/* Display Options */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">View</label>
+            <div className="flex border border-gray-300 rounded">
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'grid' }))}
+                className={`px-3 py-2 text-sm flex items-center ${displayOptions.viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <Grid className="w-4 h-4 mr-1" />
+                Grid
+              </button>
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'thumbnail' }))}
+                className={`px-3 py-2 text-sm border-x border-gray-300 flex items-center ${displayOptions.viewMode === 'thumbnail' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <LayoutGrid className="w-4 h-4 mr-1" />
+                Thumb
+              </button>
+              <button
+                onClick={() => setDisplayOptions(prev => ({ ...prev, viewMode: 'list' }))}
+                className={`px-3 py-2 text-sm flex items-center ${displayOptions.viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <List className="w-4 h-4 mr-1" />
+                List
+              </button>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
+            <select
+              value={displayOptions.itemsPerPage}
+              onChange={(e) => setDisplayOptions(prev => ({ ...prev, itemsPerPage: parseInt(e.target.value), currentPage: 1 }))}
+              className="border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
           </div>
         </div>
       </div>
