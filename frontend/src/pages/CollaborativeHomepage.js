@@ -63,7 +63,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       <img 
                         src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') ? team.logo_url : `/api/${team.logo_url}`}
                         alt={team.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
