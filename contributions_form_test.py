@@ -535,6 +535,15 @@ class ContributionsFormTester:
             print("\n❌ CRITICAL: Cannot proceed without authentication")
             return test_results
         
+        # Test 1.5: EXACT payload test from review request (PRIORITY TEST)
+        print("\n🎯 PRIORITY TEST: Testing exact payload from review request...")
+        exact_test_success, exact_test_data = self.test_exact_review_request_payload()
+        test_results['exact_payload_test'] = {
+            'success': exact_test_success,
+            'data': exact_test_data,
+            'test': 'Exact Review Request Payload'
+        }
+        
         # Test 2: Form submissions for all entity types
         test_results['form_submissions'] = self.test_contributions_v2_endpoint()
         
