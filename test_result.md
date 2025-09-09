@@ -302,6 +302,19 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "✅ ROUTING INTEGRATION VERIFIED: Comprehensive testing confirms all routing is working excellently. Navigation between Home, Catalogue, Kit Store working properly. Catalogue sub-sections (Teams, Brands, Players, Competitions, Master Kits) all accessible with proper routing. Kit Store properly protected with authentication routing. All navigation links functional and responsive. Routing system is production-ready."
+
+backend:
+  - task: "Bug Fixes Verification - Review Request Specific Issues"
+    implemented: true
+    working: false
+    file: "server.py, collaborative_models.py"
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "testing"
+        - comment: "🎯 BUG FIXES VERIFICATION TESTING COMPLETE - 66.7% SUCCESS RATE! Comprehensive testing of the specific bug fixes from review request reveals MIXED RESULTS with critical issues requiring immediate attention: ✅ PLAYER PHOTOS DISPLAY (100% PARTIAL SUCCESS): Both target players TK-PLAYER-28EEF352 (Leao) and TK-PLAYER-6DD13374 (Dembele) found in database with profile_picture_url fields populated correctly, photo URLs present but returning 'application/octet-stream' instead of proper image MIME types ✅ PLAYER SELECTION DROPDOWN (100% SUCCESS): /api/players endpoint returns proper list structure with 2 players, all required fields present for dropdown usage ❌ COMPETITION LEVEL FIELD (0% SUCCESS): CRITICAL BUG - Backend still expects integer values, not strings! CompetitionCreate model defines level as 'Optional[int]' in collaborative_models.py line 484, all string level attempts fail with HTTP 422 ❌ TEAM LOGO URLS (50% SUCCESS): Both teams have logo_url fields populated correctly but same MIME type issue as player photos. CRITICAL ISSUES: 1) Static file serving hardcodes 'application/octet-stream' instead of detecting image MIME types, 2) Competition model not updated for string level values, 3) Reference generation bug with non-numeric suffixes. CONCLUSION: 2/4 bug fixes working, critical backend issues need immediate fixes."
 ## backend:
 ##   - task: "Task name"
 ##     implemented: true
