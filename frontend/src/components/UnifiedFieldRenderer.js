@@ -203,23 +203,28 @@ const UnifiedFieldRenderer = ({
       case 'season_select': {
         const currentYear = new Date().getFullYear();
         const seasons = [];
-        // Generate seasons from 2020-2021 to current+2 years
-        for (let year = 2020; year <= currentYear + 2; year++) {
+        // Generate seasons from 1980-1981 to current+5 years for suggestions
+        for (let year = 1980; year <= currentYear + 5; year++) {
           seasons.push(`${year}-${year + 1}`);
         }
         
         return (
-          <select
-            value={value || ''}
-            onChange={(e) => onChange(field.key, e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required={field.required}
-          >
-            <option value="">Select Season</option>
-            {seasons.reverse().map(season => (
-              <option key={season} value={season}>{season}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              value={value || ''}
+              onChange={(e) => onChange(field.key, e.target.value)}
+              placeholder={field.placeholder || 'Enter season (e.g., 1986-1987, 2024-2025)'}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required={field.required}
+              list={`seasons-${field.key}`}
+            />
+            <datalist id={`seasons-${field.key}`}>
+              {seasons.reverse().map(season => (
+                <option key={season} value={season}>{season}</option>
+              ))}
+            </datalist>
+          </div>
         );
       }
 
