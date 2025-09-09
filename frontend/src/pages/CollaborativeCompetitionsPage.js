@@ -534,15 +534,17 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Niveau
                 </label>
-                <input
-                  type="number"
+                <select
                   value={formData.level}
                   onChange={(e) => setFormData({...formData, level: e.target.value})}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: 1"
-                  min="1"
-                  max="10"
-                />
+                >
+                  <option value="">Sélectionner le niveau</option>
+                  <option value="pro">Pro</option>
+                  <option value="semi pro">Semi Pro</option>
+                  <option value="amateur">Amateur</option>
+                  <option value="special">Special</option>
+                </select>
               </div>
             </div>
 
