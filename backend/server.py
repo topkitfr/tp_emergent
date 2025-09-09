@@ -5437,7 +5437,6 @@ async def get_user_reference_kit_collections(user_id: str, current_user: dict = 
             {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
             {
                 "$project": {
-                    "_id": 0,  # Exclude MongoDB ObjectId
                     "id": 1,
                     "user_id": 1,
                     "reference_kit_id": 1,
@@ -5456,7 +5455,6 @@ async def get_user_reference_kit_collections(user_id: str, current_user: dict = 
                     "added_at": 1,
                     "updated_at": 1,
                     "reference_kit": {
-                        "_id": 0,  # Exclude ObjectId from nested document
                         "id": "$reference_kit_lookup.id",
                         "model_name": "$reference_kit_lookup.model_name",
                         "release_type": "$reference_kit_lookup.release_type",
@@ -5466,13 +5464,17 @@ async def get_user_reference_kit_collections(user_id: str, current_user: dict = 
                         "original_retail_price": "$reference_kit_lookup.original_retail_price"
                     },
                     "master_jersey": {
-                        "_id": 0,  # Exclude ObjectId from nested document  
                         "id": "$master_jersey_lookup.id",
                         "season": "$master_jersey_lookup.season",
                         "jersey_type": "$master_jersey_lookup.jersey_type",
                         "model": "$master_jersey_lookup.model",
                         "team_info": "$master_jersey_lookup.team_info"
                     }
+                }
+            },
+            {
+                "$addFields": {
+                    "_id": "$$REMOVE"  # Remove _id field after projection
                 }
             }
         ]
