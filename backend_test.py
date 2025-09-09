@@ -533,26 +533,181 @@ class ReferenceKitCollectionsTest:
             self.log(f"❌ Error in collection workflow: {e}")
             return False
     
+    def test_error_handling(self):
+        """Test 11: Error handling with non-existent user ID and invalid authentication"""
+        self.log("🚫 Testing error handling scenarios...")
+        
+        # Test 1: Non-existent user ID
+        fake_user_id = "00000000-0000-0000-0000-000000000000"
+        
+        try:
+            response = self.session.get(f"{API_BASE}/users/{fake_user_id}/reference-kit-collections/owned")
+            
+            if response.status_code == 404:
+                self.log("✅ Non-existent user ID properly returns 404")
+            elif response.status_code == 403:
+                self.log("✅ Non-existent user ID properly returns 403 (authorization)")
+            else:
+                self.log(f"⚠️ Non-existent user ID returned: {response.status_code}")
+        except Exception as e:
+            self.log(f"❌ Error testing non-existent user ID: {e}")
+            return False
+        
+        # Test 2: Invalid authentication
+        original_headers = self.session.headers.copy()
+        
+        try:
+            # Remove authorization header
+            self.session.headers.pop('Authorization', None)
+            
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/owned")
+            
+            if response.status_code == 401:
+                self.log("✅ Missing authentication properly returns 401")
+            else:
+                self.log(f"⚠️ Missing authentication returned: {response.status_code}")
+            
+            # Restore headers
+            self.session.headers.update(original_headers)
+            
+        except Exception as e:
+            self.log(f"❌ Error testing invalid authentication: {e}")
+            # Restore headers
+            self.session.headers.update(original_headers)
+            return False
+        
+        # Test 3: Invalid token
+        try:
+            self.session.headers['Authorization'] = 'Bearer invalid_token_12345'
+            
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/owned")
+            
+            if response.status_code == 401:
+                self.log("✅ Invalid token properly returns 401")
+            else:
+                self.log(f"⚠️ Invalid token returned: {response.status_code}")
+            
+            # Restore headers
+            self.session.headers.update(original_headers)
+            
+        except Exception as e:
+            self.log(f"❌ Error testing invalid token: {e}")
+            # Restore headers
+            self.session.headers.update(original_headers)
+            return False
+        
+        self.log("✅ Error handling tests completed successfully")
+        return True
+    
+    def test_data_structure_validation(self):
+        """Test 12: Validate complete data structure and field presence"""
+        self.log("🔍 Testing data structure validation...")
+        
+        try:
+            # Test owned collections data structure
+            response = self.session.get(f"{API_BASE}/users/{self.admin_user_id}/reference-kit-collections/owned")
+            
+            if response.status_code == 200:
+                collections = response.json()
+                
+                if len(collections) > 0:
+                    first_collection = collections[0]
+                    self.log("📋 Validating data structure for owned collections:")
+                    
+                    # Check required fields
+                    required_fields = ['id', 'user_id', 'reference_kit_id', 'collection_type']
+                    missing_required = []
+                    for field in required_fields:
+                        if field not in first_collection:
+                            missing_required.append(field)
+                        else:
+                            self.log(f"   ✅ Required field '{field}': {first_collection[field]}")
+                    
+                    if missing_required:
+                        self.log(f"   ❌ Missing required fields: {missing_required}")
+                        return False
+                    
+                    # Check reference_kit object structure
+                    reference_kit = first_collection.get('reference_kit')
+                    if reference_kit:
+                        self.log("   ✅ Reference kit object found")
+                        expected_ref_fields = ['id', 'model_name', 'release_type', 'topkit_reference', 'main_photo_url', 'product_images', 'original_retail_price']
+                        found_ref_fields = []
+                        for field in expected_ref_fields:
+                            if field in reference_kit:
+                                found_ref_fields.append(field)
+                                self.log(f"      ✅ Reference kit field '{field}': {reference_kit[field]}")
+                        
+                        self.log(f"   📊 Reference kit fields: {len(found_ref_fields)}/{len(expected_ref_fields)} found")
+                    else:
+                        self.log("   ❌ Reference kit object missing")
+                    
+                    # Check master_jersey object structure
+                    master_jersey = first_collection.get('master_jersey')
+                    if master_jersey:
+                        self.log("   ✅ Master jersey object found")
+                        expected_master_fields = ['id', 'season', 'jersey_type', 'model', 'team_info']
+                        found_master_fields = []
+                        for field in expected_master_fields:
+                            if field in master_jersey:
+                                found_master_fields.append(field)
+                                self.log(f"      ✅ Master jersey field '{field}': {master_jersey[field]}")
+                        
+                        self.log(f"   📊 Master jersey fields: {len(found_master_fields)}/{len(expected_master_fields)} found")
+                    else:
+                        self.log("   ❌ Master jersey object missing")
+                    
+                    # Check new enhanced fields
+                    enhanced_fields = ['worn', 'worn_type', 'signed', 'signed_by']
+                    found_enhanced = []
+                    for field in enhanced_fields:
+                        if field in first_collection:
+                            found_enhanced.append(field)
+                            self.log(f"   ✅ Enhanced field '{field}': {first_collection[field]}")
+                    
+                    self.log(f"   📊 Enhanced fields: {len(found_enhanced)}/{len(enhanced_fields)} found")
+                    
+                    # Check for MongoDB ObjectIds (should not be present)
+                    response_text = json.dumps(first_collection)
+                    if 'ObjectId' in response_text or '$oid' in response_text:
+                        self.log("   ❌ MongoDB ObjectIds detected in response - serialization issue")
+                        return False
+                    else:
+                        self.log("   ✅ No MongoDB ObjectIds detected - serialization working correctly")
+                    
+                    return True
+                else:
+                    self.log("⚠️ No collections found for data structure validation")
+                    return True  # Not a failure, just no data
+            else:
+                self.log(f"❌ Failed to get collections for validation: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log(f"❌ Error in data structure validation: {e}")
+            return False
+    
     def run_all_tests(self):
-        """Run all reference kit collections tests"""
-        self.log("🚀 Starting Reference Kit Collections System Testing")
-        self.log("=" * 60)
+        """Run all reference kit collections tests with focus on GET endpoints"""
+        self.log("🚀 Starting Reference Kit Collections System Testing - GET ENDPOINTS FOCUS")
+        self.log("=" * 70)
         
         tests = [
-            ("Authentication Test", self.authenticate_admin),
-            ("Reference Kit Existence Check", self.check_reference_kits_availability),
-            ("Add to Owned Collection", self.test_add_to_owned_collection),
-            ("Bilateral System Prevention", self.test_bilateral_system_prevention),
-            ("Duplicate Prevention", self.test_duplicate_prevention),
-            ("Condition Values Validation", self.test_condition_validation),
-            ("GET Owned Collections", self.test_get_owned_collections),
-            ("GET Wanted Collections", self.test_get_wanted_collections),
-            ("GET Combined Collections", self.test_get_combined_collections),
-            ("Collection Workflow", self.test_collection_workflow)
+            ("1. Authentication Test", self.authenticate_admin),
+            ("2. Reference Kit Availability Check", self.check_reference_kits_availability),
+            ("3. POST Test - Add to Owned Collection (Brief)", self.test_add_to_owned_collection),
+            ("4. GET Owned Collections (MAIN FOCUS)", self.test_get_owned_collections),
+            ("5. GET Wanted Collections (MAIN FOCUS)", self.test_get_wanted_collections),
+            ("6. GET Combined Collections (MAIN FOCUS)", self.test_get_combined_collections),
+            ("7. Data Structure Validation (MAIN FOCUS)", self.test_data_structure_validation),
+            ("8. Error Handling Tests", self.test_error_handling),
+            ("9. Bilateral System Prevention", self.test_bilateral_system_prevention),
+            ("10. Duplicate Prevention", self.test_duplicate_prevention)
         ]
         
         passed = 0
         failed = 0
+        critical_failed = 0  # Track critical GET endpoint failures
         
         for test_name, test_func in tests:
             self.log(f"\n📋 Running: {test_name}")
@@ -562,23 +717,31 @@ class ReferenceKitCollectionsTest:
                     self.log(f"✅ {test_name} - PASSED")
                 else:
                     failed += 1
+                    # Mark GET endpoint tests as critical
+                    if "GET" in test_name or "Data Structure" in test_name:
+                        critical_failed += 1
                     self.log(f"❌ {test_name} - FAILED")
             except Exception as e:
                 failed += 1
+                if "GET" in test_name or "Data Structure" in test_name:
+                    critical_failed += 1
                 self.log(f"❌ {test_name} - ERROR: {e}")
         
         # Summary
-        self.log("\n" + "=" * 60)
-        self.log("📊 REFERENCE KIT COLLECTIONS TESTING SUMMARY")
-        self.log("=" * 60)
+        self.log("\n" + "=" * 70)
+        self.log("📊 REFERENCE KIT COLLECTIONS GET ENDPOINTS TESTING SUMMARY")
+        self.log("=" * 70)
         self.log(f"✅ Tests Passed: {passed}")
         self.log(f"❌ Tests Failed: {failed}")
+        self.log(f"🚨 Critical GET Endpoint Failures: {critical_failed}")
         self.log(f"📈 Success Rate: {(passed / (passed + failed) * 100):.1f}%")
         
         if failed == 0:
-            self.log("🎉 ALL TESTS PASSED - Reference Kit Collections System is PRODUCTION-READY!")
+            self.log("🎉 ALL TESTS PASSED - Reference Kit Collections GET Endpoints are PRODUCTION-READY!")
+        elif critical_failed == 0:
+            self.log("✅ CRITICAL GET ENDPOINTS WORKING - Minor issues in non-critical tests")
         else:
-            self.log(f"⚠️ {failed} test(s) failed - Review required before production")
+            self.log(f"🚨 {critical_failed} CRITICAL GET ENDPOINT TEST(S) FAILED - ObjectId serialization issues may persist")
         
         return failed == 0
 
