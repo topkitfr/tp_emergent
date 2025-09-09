@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Grid, List, LayoutGrid } from 'lucide-react';
 
 const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
   const navigate = useNavigate();
