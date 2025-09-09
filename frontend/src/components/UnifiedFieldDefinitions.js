@@ -64,7 +64,7 @@ export const getUnifiedFieldsForEntityType = (type) => {
         { key: 'official_name', label: 'Official Name', type: 'text' },
         { key: 'type', label: 'Competition Type', type: 'select', options: ['National league', 'Continental competition', 'National cup', 'International competition', 'Intercontinental competition', 'Continental super cup'], required: true },
         { key: 'country', label: 'Country', type: 'text', required: true },
-        { key: 'level', label: 'Level', type: 'number' },
+        { key: 'level', label: 'Level', type: 'select', options: ['pro', 'semi pro', 'amateur', 'special'] },
         { key: 'founded_year', label: 'Founded Year', type: 'number' },
         
         // Enhanced fields
