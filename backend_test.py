@@ -449,6 +449,10 @@ class ReferenceKitCollectionsTest:
                     self.log(f"   - Total collections: {len(result)}")
                 
                 return True
+            elif response.status_code == 500:
+                self.log("❌ GET combined collections failed with 500 error - MongoDB ObjectId serialization issue")
+                self.log("   This is a known backend issue with aggregation pipeline")
+                return False
             else:
                 self.log(f"❌ Failed to get combined collections: {response.status_code} - {response.text}")
                 return False
