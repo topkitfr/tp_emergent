@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from authlib.integrations.starlette_client import OAuth
 import os
 import logging
+import mimetypes
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
