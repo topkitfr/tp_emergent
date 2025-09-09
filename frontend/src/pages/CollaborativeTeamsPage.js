@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Grid, List, LayoutGrid } from 'lucide-react';
 import { AuthContext } from '../App';
 import ContributionModal from '../ContributionModal';
 import { uploadOptimizedImage, ImageUploadProgress, OptimizedImage } from '../utils/imageUpload';
