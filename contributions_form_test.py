@@ -360,8 +360,8 @@ class ContributionsFormTester:
         
         # Make a few requests to generate activity
         test_requests = [
-            {"entity_type": "team", "data": {"name": "Log Test Team"}, "source_urls": [], "notes": ""},
-            {"entity_type": "invalid", "data": {}, "source_urls": [], "notes": ""},  # Should cause validation error
+            {"entity_type": "team", "title": "Log Test Team", "data": {"name": "Log Test Team"}, "source_urls": []},
+            {"entity_type": "invalid", "data": {}, "source_urls": []},  # Should cause validation error
         ]
         
         for i, req_data in enumerate(test_requests):
