@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-Reference Kit Collections System Testing
-Testing the enhanced reference kit collections system with new fields and bilateral logic
+Reference Kit Collections System Testing - FOCUSED ON GET ENDPOINTS
+Re-testing the reference kit collections system focusing on the GET endpoints that were previously failing:
+- Authentication Test with admin credentials
+- Brief POST test to ensure POST still works
+- MAIN FOCUS: GET endpoints for owned, wanted, and combined collections
+- Verify ObjectId serialization issues are resolved
+- Check data structure and enrichment (reference_kit and master_jersey objects)
+- Verify new fields (worn, worn_type, signed, signed_by)
+- Error handling tests
 """
 
 import requests
