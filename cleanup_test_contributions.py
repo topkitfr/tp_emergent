@@ -65,7 +65,8 @@ async def cleanup_test_contributions():
         # Show what will be deleted
         print(f"\n🗑️  CONTRIBUTIONS TO DELETE:")
         for contrib in test_contributions:
-            print(f"   - {contrib['entity_type']}: {contrib['title']} ({contrib['id']})")
+            ref_info = f" [Ref: {contrib['topkit_reference']}]" if contrib['topkit_reference'] != 'None' else ""
+            print(f"   - {contrib['entity_type']}: {contrib['title']} ({contrib['id']}){ref_info}")
         
         # Ask for confirmation in the script (for safety)
         print(f"\n⚠️  About to delete {len(test_contributions)} test contributions...")
