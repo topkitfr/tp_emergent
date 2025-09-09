@@ -11062,6 +11062,22 @@ async def get_master_jerseys(
         # Count reference kits (not jersey_releases)
         releases_count = await db.reference_kits.count_documents({"master_kit_id": jersey["id"]})
         
+        # Calculate collectors count
+        # Find all reference kits for this master jersey
+        reference_kits = await db.reference_kits.find({"master_kit_id": jersey["id"]}).to_list(length=None)
+        reference_kit_ids = [rk["id"] for rk in reference_kits]
+        
+        # Count unique users who have personal kits referencing these reference kits
+        collectors_count = 0
+        if reference_kit_ids:
+            collectors_pipeline = [
+                {"$match": {"reference_kit_id": {"$in": reference_kit_ids}}},
+                {"$group": {"_id": "$user_id"}},
+                {"$count": "total"}
+            ]
+            collectors_result = await db.personal_kits.aggregate(collectors_pipeline).to_list(length=None)
+            collectors_count = collectors_result[0]["total"] if collectors_result else 0
+        
         team_info = {"id": team["id"], "name": team["name"], "short_name": team.get("short_name")} if team else {}
         brand_info = {"id": brand["id"], "name": brand["name"]} if brand else {}
         competition_info = {"id": competition["id"], "name": competition["name"]} if competition else None
