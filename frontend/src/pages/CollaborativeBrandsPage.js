@@ -358,7 +358,7 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
         </div>
       </div>
 
-      {/* Brands Grid */}
+      {/* Brands Display with View Modes */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
@@ -382,11 +382,34 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
             <p className="text-gray-600">Try adjusting your filters or contribute to the community database.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBrands.map((brand) => (
-              <BrandCard key={brand.id} brand={brand} />
-            ))}
-          </div>
+          <>
+            {/* Grid View */}
+            {displayOptions.viewMode === 'grid' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredBrands.map((brand) => (
+                  <BrandCard key={brand.id} brand={brand} />
+                ))}
+              </div>
+            )}
+
+            {/* Thumbnail View */}
+            {displayOptions.viewMode === 'thumbnail' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                {filteredBrands.map((brand) => (
+                  <BrandThumbnail key={brand.id} brand={brand} />
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {displayOptions.viewMode === 'list' && (
+              <div className="space-y-4">
+                {filteredBrands.map((brand) => (
+                  <BrandListItem key={brand.id} brand={brand} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
