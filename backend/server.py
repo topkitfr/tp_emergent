@@ -5238,6 +5238,213 @@ async def add_reference_kit_to_collection(collection_data: ReferenceKitCollectio
         "collection_id": collection_item["id"]
     }
 
+@api_router.get("/users/{user_id}/reference-kit-collections/owned")
+async def get_user_owned_reference_kit_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user's owned reference kit collections"""
+    try:
+        # Verify access - users can only see their own collections unless profile is public
+        if current_user["id"] != user_id:
+            user = await db.users.find_one({"id": user_id})
+            if not user or user.get("profile_privacy", "public") == "private":
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get owned reference kit collections with enriched data
+        pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "owned"}},
+            {
+                "$lookup": {
+                    "from": "reference_kits",
+                    "localField": "reference_kit_id",
+                    "foreignField": "id",
+                    "as": "reference_kit_lookup"
+                }
+            },
+            {"$unwind": {"path": "$reference_kit_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "reference_kit_lookup.master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_jersey_lookup"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "reference_kit_id": 1,
+                    "collection_type": 1,
+                    "size": 1,
+                    "condition": 1,
+                    "personal_description": 1,
+                    "purchase_price": 1,
+                    "estimated_value": 1,
+                    "player_name": 1,
+                    "player_number": 1,
+                    "worn": 1,
+                    "worn_type": 1,
+                    "signed": 1,
+                    "signed_by": 1,
+                    "added_at": 1,
+                    "updated_at": 1,
+                    "reference_kit": "$reference_kit_lookup",
+                    "master_jersey": "$master_jersey_lookup"
+                }
+            }
+        ]
+        
+        collections = await db.reference_kit_collections.aggregate(pipeline).to_list(length=None)
+        
+        return collections
+        
+    except Exception as e:
+        logger.error(f"Error getting user owned reference kit collections: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/users/{user_id}/reference-kit-collections/wanted")
+async def get_user_wanted_reference_kit_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user's wanted reference kit collections"""
+    try:
+        # Verify access - users can only see their own collections unless profile is public
+        if current_user["id"] != user_id:
+            user = await db.users.find_one({"id": user_id})
+            if not user or user.get("profile_privacy", "public") == "private":
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get wanted reference kit collections with enriched data
+        pipeline = [
+            {"$match": {"user_id": user_id, "collection_type": "wanted"}},
+            {
+                "$lookup": {
+                    "from": "reference_kits",
+                    "localField": "reference_kit_id",
+                    "foreignField": "id",
+                    "as": "reference_kit_lookup"
+                }
+            },
+            {"$unwind": {"path": "$reference_kit_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "reference_kit_lookup.master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_jersey_lookup"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "reference_kit_id": 1,
+                    "collection_type": 1,
+                    "size": 1,
+                    "condition": 1,
+                    "personal_description": 1,
+                    "purchase_price": 1,
+                    "estimated_value": 1,
+                    "player_name": 1,
+                    "player_number": 1,
+                    "worn": 1,
+                    "worn_type": 1,
+                    "signed": 1,
+                    "signed_by": 1,
+                    "added_at": 1,
+                    "updated_at": 1,
+                    "reference_kit": "$reference_kit_lookup",
+                    "master_jersey": "$master_jersey_lookup"
+                }
+            }
+        ]
+        
+        collections = await db.reference_kit_collections.aggregate(pipeline).to_list(length=None)
+        
+        return collections
+        
+    except Exception as e:
+        logger.error(f"Error getting user wanted reference kit collections: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/users/{user_id}/reference-kit-collections")
+async def get_user_reference_kit_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user's reference kit collections (both owned and wanted)"""
+    try:
+        # Verify access - users can only see their own collections unless profile is public
+        if current_user["id"] != user_id:
+            user = await db.users.find_one({"id": user_id})
+            if not user or user.get("profile_privacy", "public") == "private":
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get all reference kit collections with enriched data
+        pipeline = [
+            {"$match": {"user_id": user_id}},
+            {
+                "$lookup": {
+                    "from": "reference_kits",
+                    "localField": "reference_kit_id",
+                    "foreignField": "id",
+                    "as": "reference_kit_lookup"
+                }
+            },
+            {"$unwind": {"path": "$reference_kit_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$lookup": {
+                    "from": "master_jerseys",
+                    "localField": "reference_kit_lookup.master_kit_id",
+                    "foreignField": "id",
+                    "as": "master_jersey_lookup"
+                }
+            },
+            {"$unwind": {"path": "$master_jersey_lookup", "preserveNullAndEmptyArrays": True}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "user_id": 1,
+                    "reference_kit_id": 1,
+                    "collection_type": 1,
+                    "size": 1,
+                    "condition": 1,
+                    "personal_description": 1,
+                    "purchase_price": 1,
+                    "estimated_value": 1,
+                    "player_name": 1,
+                    "player_number": 1,
+                    "worn": 1,
+                    "worn_type": 1,
+                    "signed": 1,
+                    "signed_by": 1,
+                    "added_at": 1,
+                    "updated_at": 1,
+                    "reference_kit": "$reference_kit_lookup",
+                    "master_jersey": "$master_jersey_lookup"
+                }
+            }
+        ]
+        
+        all_collections = await db.reference_kit_collections.aggregate(pipeline).to_list(length=None)
+        
+        # Separate into owned and wanted
+        owned = [c for c in all_collections if c.get("collection_type") == "owned"]
+        wanted = [c for c in all_collections if c.get("collection_type") == "wanted"]
+        
+        return {
+            "user_id": user_id,
+            "profile_owner": current_user["id"] == user_id,
+            "collections": all_collections,
+            "owned": owned,
+            "wanted": wanted,
+            "owned_count": len(owned),
+            "wanted_count": len(wanted)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user reference kit collections: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @api_router.post("/collections/remove")
 async def remove_from_collection_post(collection_data: CollectionAdd, current_user: dict = Depends(get_current_user)):
     """Remove jersey from collection"""
