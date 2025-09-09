@@ -481,7 +481,7 @@ class CompetitionCreate(BaseModel):
     type: str  # Competition type from CSV structure
     confederations_federations: List[str] = []  # ["UEFA"], ["FIFA"], etc.
     country: Optional[str] = None
-    level: Optional[int] = None
+    level: Optional[Union[str, int]] = None
     year_created: Optional[int] = None
     logo: Optional[str] = None  # Logo file path/URL
     trophy_photo: Optional[str] = None  # Trophy image file path/URL
