@@ -73,7 +73,7 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
             <img 
               src={`${API}/${team.logo_url}`}
               alt={team.name}
-              className="w-full h-full object-contain p-2"
+              className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -154,6 +154,111 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       </div>
     );
   };
+
+  // Thumbnail version - smaller cards
+  const TeamThumbnail = ({ team }) => (
+    <div 
+      onClick={() => handleTeamClick(team)}
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+    >
+      <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
+        {team.logo_url ? (
+          <img 
+            src={`${API}/${team.logo_url}`}
+            alt={team.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: team.logo_url ? 'none' : 'flex'}}>
+          ⚽
+        </div>
+        
+        {team.verified_level !== 'unverified' && (
+          <div className="absolute top-1 right-1 bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs font-medium">
+            ✓
+          </div>
+        )}
+      </div>
+      
+      <div className="p-2">
+        <h3 className="font-bold text-xs text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-1">
+          {team.name}
+        </h3>
+        <div className="text-xs text-gray-600 mb-1">
+          {team.country && <span>{team.country}</span>}
+        </div>
+        <div className="text-xs text-blue-600 font-mono truncate">{team.topkit_reference}</div>
+      </div>
+    </div>
+  );
+
+  // List version - horizontal layout
+  const TeamListItem = ({ team }) => (
+    <div 
+      onClick={() => handleTeamClick(team)}
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group flex items-center space-x-4"
+    >
+      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+        {team.logo_url ? (
+          <img 
+            src={`${API}/${team.logo_url}`}
+            alt={team.name}
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: team.logo_url ? 'none' : 'flex'}}>
+          ⚽
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-blue-600 truncate">
+            {team.name}
+          </h3>
+          {team.verified_level !== 'unverified' && (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+              ✓
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+          {team.country && (
+            <span className="flex items-center">
+              <span className="mr-1">🌍</span>
+              {team.country}
+            </span>
+          )}
+          {team.city && (
+            <span className="flex items-center">
+              <span className="mr-1">🏙️</span>
+              {team.city}
+            </span>
+          )}
+          {team.founded_year && (
+            <span className="flex items-center">
+              <span className="mr-1">📅</span>
+              Founded in {team.founded_year}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-blue-600 font-mono text-sm">{team.topkit_reference}</span>
+          <span className="text-gray-500 text-sm">{team.jerseys_count || 0} kits</span>
+        </div>
+      </div>
+    </div>
+  );
 
 
 
