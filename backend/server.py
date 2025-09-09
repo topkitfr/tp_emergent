@@ -10259,11 +10259,16 @@ async def serve_uploaded_file(file_path: str):
         if not full_path.exists() or not full_path.is_file():
             raise HTTPException(status_code=404, detail="File not found")
         
+        # Detect MIME type based on file extension
+        mime_type, _ = mimetypes.guess_type(str(full_path))
+        if mime_type is None:
+            mime_type = "application/octet-stream"
+        
         # Return the file
         return FileResponse(
             path=str(full_path),
             filename=full_path.name,
-            media_type="application/octet-stream"
+            media_type=mime_type
         )
         
     except HTTPException:
