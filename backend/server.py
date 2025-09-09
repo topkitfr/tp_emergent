@@ -489,6 +489,11 @@ class ReferenceKitCollectionAdd(BaseModel):
     estimated_value: Optional[float] = None
     player_name: Optional[str] = None
     player_number: Optional[str] = None
+    # New special attributes
+    worn: Optional[bool] = False
+    worn_type: Optional[str] = None  # "match_worn", "player_issue", "team_issue"
+    signed: Optional[bool] = False
+    signed_by: Optional[str] = None  # Player name who signed it
 
 class Message(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
