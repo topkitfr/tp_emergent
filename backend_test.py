@@ -376,6 +376,10 @@ class ReferenceKitCollectionsTest:
                         self.log("   ⚠️ No enhanced fields found in response")
                 
                 return True
+            elif response.status_code == 500:
+                self.log("❌ GET owned collections failed with 500 error - MongoDB ObjectId serialization issue")
+                self.log("   This is a known backend issue with aggregation pipeline")
+                return False
             else:
                 self.log(f"❌ Failed to get owned collections: {response.status_code} - {response.text}")
                 return False
