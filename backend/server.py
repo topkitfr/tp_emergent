@@ -5222,6 +5222,11 @@ async def add_reference_kit_to_collection(collection_data: ReferenceKitCollectio
         "estimated_value": collection_data.estimated_value,
         "player_name": collection_data.player_name.strip() if collection_data.player_name else None,
         "player_number": collection_data.player_number.strip() if collection_data.player_number else None,
+        # New special attributes
+        "worn": collection_data.worn,
+        "worn_type": collection_data.worn_type,
+        "signed": collection_data.signed,
+        "signed_by": collection_data.signed_by.strip() if collection_data.signed_by else None,
         "added_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }
