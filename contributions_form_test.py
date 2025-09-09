@@ -70,77 +70,83 @@ class ContributionsFormTester:
                 "name": "Team Contribution",
                 "data": {
                     "entity_type": "team",
+                    "title": "Add Test Team FC",
+                    "description": "Test team contribution for form submission testing",
                     "data": {
                         "name": "Test Team FC",
                         "country": "France",
                         "city": "Paris"
                     },
-                    "source_urls": ["https://example.com/test-team"],
-                    "notes": "Test team contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-team"]
                 }
             },
             {
                 "name": "Brand Contribution", 
                 "data": {
                     "entity_type": "brand",
+                    "title": "Add Test Brand",
+                    "description": "Test brand contribution for form submission testing",
                     "data": {
                         "name": "Test Brand",
                         "country": "France"
                     },
-                    "source_urls": ["https://example.com/test-brand"],
-                    "notes": "Test brand contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-brand"]
                 }
             },
             {
                 "name": "Player Contribution",
                 "data": {
-                    "entity_type": "player", 
+                    "entity_type": "player",
+                    "title": "Add Test Player",
+                    "description": "Test player contribution for form submission testing",
                     "data": {
                         "name": "Test Player",
                         "nationality": "French"
                     },
-                    "source_urls": ["https://example.com/test-player"],
-                    "notes": "Test player contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-player"]
                 }
             },
             {
                 "name": "Competition Contribution",
                 "data": {
                     "entity_type": "competition",
+                    "title": "Add Test Competition",
+                    "description": "Test competition contribution for form submission testing",
                     "data": {
                         "competition_name": "Test Competition",
                         "country": "France",
                         "type": "National league"
                     },
-                    "source_urls": ["https://example.com/test-competition"],
-                    "notes": "Test competition contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-competition"]
                 }
             },
             {
                 "name": "Master Kit Contribution",
                 "data": {
                     "entity_type": "master_kit",
+                    "title": "Add Test Master Kit",
+                    "description": "Test master kit contribution for form submission testing",
                     "data": {
                         "team_name": "Test Team FC",
                         "brand_name": "Test Brand",
                         "season": "2024-25",
                         "jersey_type": "home"
                     },
-                    "source_urls": ["https://example.com/test-master-kit"],
-                    "notes": "Test master kit contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-master-kit"]
                 }
             },
             {
                 "name": "Reference Kit Contribution",
                 "data": {
                     "entity_type": "reference_kit",
+                    "title": "Add Test Reference Kit",
+                    "description": "Test reference kit contribution for form submission testing",
                     "data": {
                         "master_kit_name": "Test Master Kit",
                         "size": "M",
                         "condition": "new"
                     },
-                    "source_urls": ["https://example.com/test-reference-kit"],
-                    "notes": "Test reference kit contribution for form submission testing"
+                    "source_urls": ["https://example.com/test-reference-kit"]
                 }
             }
         ]
