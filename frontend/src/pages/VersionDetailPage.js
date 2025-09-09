@@ -7,6 +7,7 @@ const VersionDetailPage = () => {
   const navigate = useNavigate();
   const [version, setVersion] = useState(null);
   const [masterJersey, setMasterJersey] = useState(null);
+  const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPersonalDetailsModal, setShowPersonalDetailsModal] = useState(false);
