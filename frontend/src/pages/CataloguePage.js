@@ -83,7 +83,7 @@ const CataloguePage = ({
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Explore our complete collaborative database: 
-              teams, brands, players and competitions documented by the community
+              teams, brand/sponsor, players and competitions documented by the community
             </p>
           </div>
 
