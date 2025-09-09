@@ -162,10 +162,11 @@ MAXIMUM_LISTING_PRICE = 5000.0 # Maximum €5000 for listings
 
 # Enums
 class JerseyCondition(str, Enum):
-    NEW = "new"
-    NEAR_MINT = "near_mint"
-    VERY_GOOD = "very_good"
+    NEW_WITH_TAGS = "new_with_tags"
+    MINT = "mint"
+    EXCELLENT = "excellent"
     GOOD = "good"
+    FAIR = "fair"
     POOR = "poor"
 
 class JerseySize(str, Enum):
