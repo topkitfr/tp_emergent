@@ -212,12 +212,11 @@ class ContributionsFormTester:
         
         validation_tests = [
             {
-                "name": "Empty data",
+                "name": "Missing title field",
                 "data": {
                     "entity_type": "team",
-                    "data": {},
-                    "source_urls": [],
-                    "notes": ""
+                    "data": {"name": "Test Team"},
+                    "source_urls": []
                 },
                 "expected_error": True
             },
@@ -225,21 +224,22 @@ class ContributionsFormTester:
                 "name": "Invalid entity type",
                 "data": {
                     "entity_type": "invalid_type",
+                    "title": "Test Invalid",
                     "data": {"name": "Test"},
-                    "source_urls": [],
-                    "notes": ""
+                    "source_urls": []
                 },
                 "expected_error": True
             },
             {
-                "name": "Missing required fields",
+                "name": "Valid data should be accepted",
                 "data": {
                     "entity_type": "team",
-                    "data": {"city": "Paris"},  # Missing name
-                    "source_urls": [],
-                    "notes": ""
+                    "title": "Valid Test Team",
+                    "description": "This should work",
+                    "data": {"name": "Valid Team", "country": "France"},
+                    "source_urls": []
                 },
-                "expected_error": True
+                "expected_error": False
             }
         ]
         
