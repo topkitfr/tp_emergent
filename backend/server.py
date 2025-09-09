@@ -11098,7 +11098,7 @@ async def get_master_jerseys(
             brand_info=brand_info,
             competition_info=competition_info,
             releases_count=releases_count,  # Updated to match model field
-            collectors_count=0  # Updated to match model field
+            collectors_count=collectors_count  # Updated to calculate actual collectors
         )
         enriched_jerseys.append(enriched_jersey)
     
