@@ -212,7 +212,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div
                   key={jersey.id || index}
                   className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100 relative"
-                  onClick={() => onViewChange('master-jerseys')}
+                  onClick={() => onViewChange('kit-area')}
                 >
                   <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
                     RARE
