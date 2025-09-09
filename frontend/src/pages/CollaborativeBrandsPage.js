@@ -11,6 +11,11 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
     country: '',
     verified_only: false
   });
+  const [displayOptions, setDisplayOptions] = useState({
+    viewMode: 'grid', // 'grid', 'thumbnail', 'list'
+    itemsPerPage: 20,
+    currentPage: 1
+  });
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showContributionModal, setShowContributionModal] = useState(false);
