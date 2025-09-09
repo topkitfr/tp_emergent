@@ -10291,19 +10291,29 @@ async def generate_reference(entity_type: str) -> str:
     
     prefix = prefixes.get(entity_type, "TK-ENTITY-")
     
-    # Trouver le prochain numéro
+    # Find the next number by looking for numeric suffixes only
     collection_name = f"{entity_type}s"
-    last_entity = await db[collection_name].find_one(
-        {"topkit_reference": {"$regex": f"^{prefix}"}},
-        sort=[("topkit_reference", -1)]
-    )
     
-    if last_entity:
-        last_num = int(last_entity["topkit_reference"].split("-")[-1])
-        new_num = last_num + 1
-    else:
-        new_num = 1
-        
+    # Get all entities with this prefix and extract numeric suffixes
+    entities = await db[collection_name].find(
+        {"topkit_reference": {"$regex": f"^{prefix}"}},
+        {"topkit_reference": 1}
+    ).to_list(None)
+    
+    max_num = 0
+    if entities:
+        for entity in entities:
+            ref = entity["topkit_reference"]
+            suffix = ref.split("-")[-1]
+            try:
+                # Only consider numeric suffixes
+                num = int(suffix)
+                max_num = max(max_num, num)
+            except ValueError:
+                # Skip non-numeric suffixes
+                continue
+    
+    new_num = max_num + 1
     return f"{prefix}{new_num:06d}"
 
 # ================================
