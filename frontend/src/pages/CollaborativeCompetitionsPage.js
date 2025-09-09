@@ -719,16 +719,6 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
             Collaborative database of football leagues and competitions
           </p>
         </div>
-        
-        {user && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center"
-          >
-            <span className="mr-2">➕</span>
-            Ajouter une compétition
-          </button>
-        )}
       </div>
 
       {/* Filters */}
