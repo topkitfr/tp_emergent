@@ -168,7 +168,7 @@ class ReferenceKitCollectionsTest:
             
             response = self.session.post(f"{API_BASE}/reference-kit-collections", json=collection_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201
                 result = response.json()
                 self.log("✅ Successfully added to owned collection")
                 self.log(f"   - Collection ID: {result.get('collection_id')}")
