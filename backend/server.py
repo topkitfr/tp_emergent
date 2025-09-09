@@ -11223,7 +11223,7 @@ async def create_master_jersey(
         brand_info=brand_info,
         competition_info=None,
         releases_count=0,  # Updated to match model field
-        collectors_count=0  # Updated to match model field
+        collectors_count=0  # Updated to match model field - new jersey has no collectors yet
     )
 
 # OLD VESTIAIRE ENDPOINT - COMMENTED OUT FOR KIT HIERARCHY SYSTEM
