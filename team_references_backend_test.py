@@ -23,7 +23,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 # Configuration
-BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 
 # Expected top 20 clubs in priority order (based on global importance)
 EXPECTED_TOP_20_CLUBS = [

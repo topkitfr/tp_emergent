@@ -6,7 +6,7 @@ Test to verify admin endpoint issue and create a fix
 import requests
 import json
 
-BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

@@ -19,7 +19,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BASE_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -907,7 +907,7 @@ class ComprehensiveTopKitTester:
                 listing_for_checkout = self.available_for_cart[0]
                 checkout_data = {
                     "listing_id": listing_for_checkout["id"],
-                    "origin_url": "https://jersey-tracker.preview.emergentagent.com/marketplace"
+                    "origin_url": "https://football-kit-ui.preview.emergentagent.com/marketplace"
                 }
                 
                 response = self.session.post(f"{BASE_URL}/checkout", json=checkout_data, headers=user_headers)
@@ -1500,7 +1500,7 @@ import sys
 from datetime import datetime
 
 # Configuration - Use environment variables from frontend/.env
-BASE_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BASE_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"

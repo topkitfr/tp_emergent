@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "steinmetzlivio@gmail.com"
@@ -321,7 +321,7 @@ class ComprehensiveJerseysEndpointTester:
                 try:
                     # Construct full URL if relative
                     if url.startswith('uploads/'):
-                        full_url = f"https://jersey-tracker.preview.emergentagent.com/{url}"
+                        full_url = f"https://football-kit-ui.preview.emergentagent.com/{url}"
                     else:
                         full_url = url
                     

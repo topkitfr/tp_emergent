@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 USER_EMAIL = "steinmetzlivio@gmail.com"
 USER_PASSWORD = "T0p_Mdp_1288*"
 

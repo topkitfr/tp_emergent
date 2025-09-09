@@ -30,7 +30,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-tracker.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
 
 # Test credentials - these should be the ONLY users in the database
 ADMIN_CREDENTIALS = {
