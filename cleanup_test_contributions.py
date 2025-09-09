@@ -75,8 +75,25 @@ async def cleanup_test_contributions():
         print("   ✅ Brands: Nike, Puma") 
         print("   ✅ Players: Leao, Dembele, Maldini")
         
-        # Delete all test contributions
-        delete_result = await contributions_collection.delete_many({'status': 'pending_review'})
+        # Delete all test contributions (pending_review) and the specific TK-PLAYER-7F915C33 contribution
+        delete_conditions = [
+            {'status': 'pending_review'},
+            {'topkit_reference': 'TK-PLAYER-7F915C33'}
+        ]
+        
+        total_deleted = 0
+        for condition in delete_conditions:
+            delete_result = await contributions_collection.delete_many(condition)
+            total_deleted += delete_result.deleted_count
+        
+        # Remove duplicates by using a more comprehensive delete
+        all_test_contribution_ids = [tc['id'] for tc in test_contributions]
+        if all_test_contribution_ids:
+            comprehensive_delete = await contributions_collection.delete_many({
+                'id': {'$in': all_test_contribution_ids}
+            })
+            print(f"   Comprehensive delete removed: {comprehensive_delete.deleted_count} contributions")
+            total_deleted = comprehensive_delete.deleted_count
         
         print(f"\n✅ Successfully deleted {delete_result.deleted_count} test contributions")
         
