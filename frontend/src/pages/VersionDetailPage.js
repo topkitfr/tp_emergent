@@ -709,14 +709,19 @@ const VersionDetailPage = () => {
                       
                       {personalDetails.signed && (
                         <div className="ml-6">
-                          <input
-                            type="text"
+                          <select
                             value={personalDetails.signed_by}
                             onChange={(e) => setPersonalDetails({...personalDetails, signed_by: e.target.value})}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter player name who signed it..."
                             required={personalDetails.signed}
-                          />
+                          >
+                            <option value="">Select player who signed it</option>
+                            {players.map((player) => (
+                              <option key={player.id} value={player.name}>
+                                {player.name} ({player.topkit_reference})
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       )}
                     </div>
