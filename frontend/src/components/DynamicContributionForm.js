@@ -272,13 +272,10 @@ const DynamicContributionForm = ({
     // Render grouped fields
     Object.entries(groupedFields).forEach(([groupName, groupFields]) => {
       allRenderedFields.push(
-        <div key={groupName} className="space-y-1 md:col-span-2">
+        <div key={groupName} className="md:col-span-2">
           <div className="grid grid-cols-2 gap-4">
             {groupFields.map(field => (
-              <div key={field.key} className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  {field.label} {field.required && <span className="text-red-500">*</span>}
-                </label>
+              <div key={field.key}>
                 <UnifiedFieldRenderer
                   field={field}
                   value={formData[field.key]}
