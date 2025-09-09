@@ -628,6 +628,84 @@ const VersionDetailPage = () => {
                       placeholder="Any personal notes about this kit..."
                     />
                   </div>
+
+                  {/* Special Attributes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Special Attributes
+                    </label>
+                    <p className="text-xs text-gray-600 mb-3">Check all that apply and provide details where requested</p>
+
+                    {/* Worn Checkbox */}
+                    <div className="mb-4">
+                      <div className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id="worn"
+                          checked={personalDetails.worn}
+                          onChange={(e) => setPersonalDetails({...personalDetails, worn: e.target.checked, worn_type: e.target.checked ? personalDetails.worn_type : ''})}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="worn" className="ml-2 text-sm text-gray-700">
+                          <strong>Worn</strong> (Check this box if the kit has been worn, then select the type below):
+                        </label>
+                      </div>
+                      
+                      {personalDetails.worn && (
+                        <div className="ml-6">
+                          <select
+                            value={personalDetails.worn_type}
+                            onChange={(e) => setPersonalDetails({...personalDetails, worn_type: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required={personalDetails.worn}
+                          >
+                            <option value="">Select worn type...</option>
+                            <option value="match_worn">Match Worn (worn in an official game)</option>
+                            <option value="player_issue">Player Issue (worn by a player, not in a game)</option>
+                            <option value="team_issue">Team Issue (issued to team/staff)</option>
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Signed Checkbox */}
+                    <div className="mb-4">
+                      <div className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id="signed"
+                          checked={personalDetails.signed}
+                          onChange={(e) => setPersonalDetails({...personalDetails, signed: e.target.checked, signed_by: e.target.checked ? personalDetails.signed_by : ''})}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="signed" className="ml-2 text-sm text-gray-700">
+                          <strong>Signed</strong> (Check this box if the kit is signed, then specify who signed it):
+                        </label>
+                      </div>
+                      
+                      {personalDetails.signed && (
+                        <div className="ml-6">
+                          <input
+                            type="text"
+                            value={personalDetails.signed_by}
+                            onChange={(e) => setPersonalDetails({...personalDetails, signed_by: e.target.value})}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter player name who signed it..."
+                            required={personalDetails.signed}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Disclaimer */}
+                    {(personalDetails.worn_type === 'match_worn' || personalDetails.signed) && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-yellow-800">
+                          <strong>Note:</strong> If signed or worn by a player you must be able to prove it upon resale
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 mt-6">
