@@ -176,17 +176,51 @@ const DynamicContributionForm = ({
         source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
 
+      const token = localStorage.getItem('token');
+      console.log('🔑 Token check:', token ? `Found token (${token.length} chars)` : 'No token found');
+
+      if (!token) {
+        alert('Please log in to create contributions');
+        return;
+      }
+
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/contributions-v2/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(contributionData)
       });
 
+      console.log('📡 Contribution response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
-        throw new Error(`Failed to create contribution: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('❌ Contribution creation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        
+        if (response.status === 401) {
+          alert('Your session has expired. Please log in again.');
+          return;
+        }
+        
+        let errorMessage = 'Failed to create contribution';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const contribution = await response.json();
