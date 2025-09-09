@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-kit-ui.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -266,7 +266,7 @@ class AntiFraudAdminTester:
         # Test without authentication first
         checkout_data = {
             "listing_id": "test-listing-id",
-            "origin_url": "https://football-kit-ui.preview.emergentagent.com"
+            "origin_url": "https://jersey-catalog-2.preview.emergentagent.com"
         }
         
         response, error = self.make_request("POST", "/payments/secure/checkout", checkout_data)

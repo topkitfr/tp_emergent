@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://football-kit-ui.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
 
 class JerseyReferenceSystemTester:
     def __init__(self):

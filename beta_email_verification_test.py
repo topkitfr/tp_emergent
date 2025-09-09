@@ -35,7 +35,7 @@ except ImportError as e:
     EMAIL_SERVICES_AVAILABLE = False
 
 # Configuration
-BASE_URL = "https://football-kit-ui.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

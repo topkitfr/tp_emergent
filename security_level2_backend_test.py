@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://football-kit-ui.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
