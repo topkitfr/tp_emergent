@@ -17,7 +17,11 @@ const VersionDetailPage = () => {
     player_number: '',
     purchase_price: '',
     estimated_value: '',
-    personal_description: ''
+    personal_description: '',
+    worn: false,
+    worn_type: '',
+    signed: false,
+    signed_by: ''
   });
 
   useEffect(() => {
