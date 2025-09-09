@@ -308,8 +308,8 @@ class ContributionsFormTester:
         invalid_data = {
             "entity_type": "team",
             "data": {},  # Empty data should trigger validation
-            "source_urls": [],
-            "notes": ""
+            "source_urls": []
+            # Missing title field should trigger validation error
         }
         
         try:
