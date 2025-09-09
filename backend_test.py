@@ -72,7 +72,7 @@ class CompetitionLevelFieldTester:
             async with self.session.post(f"{API_BASE}/auth/login", json=login_data) as response:
                 if response.status == 200:
                     data = await response.json()
-                    self.auth_token = data.get('access_token')
+                    self.auth_token = data.get('token')
                     
                     if self.auth_token:
                         self.log_result(
