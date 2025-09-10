@@ -10,8 +10,8 @@ aux patterns qui fonctionnent réellement.
 import requests
 
 # Configuration
-BACKEND_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
-FRONTEND_URL = "https://jersey-catalog-2.preview.emergentagent.com"
+BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+FRONTEND_URL = "https://kitfix-contrib.preview.emergentagent.com"
 
 def simulate_frontend_url_construction():
     """Simuler la logique de construction d'URL du frontend"""

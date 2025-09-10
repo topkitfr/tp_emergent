@@ -14,7 +14,7 @@ from PIL import Image
 import io
 
 # Configuration
-BACKEND_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "topkitfr@gmail.com"
 TEST_USER_PASSWORD = "TopKitSecure789#"
 

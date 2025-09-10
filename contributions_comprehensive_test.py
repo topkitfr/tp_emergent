@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"

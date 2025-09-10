@@ -6,7 +6,7 @@ Unlock user account by resetting failed login attempts
 import requests
 import json
 
-BACKEND_URL = "https://jersey-catalog-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "steinmetzlivio@gmail.com"
