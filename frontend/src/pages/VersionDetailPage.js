@@ -106,21 +106,44 @@ const VersionDetailPage = () => {
 
   const submitToCollection = async (type, details = {}) => {
     try {
+      const token = localStorage.getItem('token');
+      console.log('🔐 Authentication check:', {
+        hasToken: !!token,
+        tokenLength: token?.length,
+        tokenPreview: token?.substring(0, 20) + '...' 
+      });
+      
+      if (!token) {
+        alert('Please sign in to add items to your collection');
+        return;
+      }
+      
+      const requestData = {
+        reference_kit_id: version.id,
+        collection_type: type === 'own' ? 'owned' : 'wanted',
+        ...details
+      };
+      
+      console.log('📤 Submitting collection data:', requestData);
+      
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reference-kit-collections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          reference_kit_id: version.id,
-          collection_type: type === 'own' ? 'owned' : 'wanted',
-          ...details
-        })
+        body: JSON.stringify(requestData)
+      });
+
+      console.log('📥 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
       });
 
       if (response.ok) {
         const result = await response.json();
+        console.log('✅ Collection added successfully:', result);
         alert(`Successfully added to ${type === 'own' ? 'collection' : 'wantlist'}!`);
         setShowPersonalDetailsModal(false);
         setPersonalDetails({
@@ -138,10 +161,11 @@ const VersionDetailPage = () => {
         });
       } else {
         const errorData = await response.json();
+        console.error('❌ API Error:', errorData);
         alert(errorData.detail || 'Failed to add to collection');
       }
     } catch (error) {
-      console.error('Error adding to collection:', error);
+      console.error('❌ Error adding to collection:', error);
       alert('Failed to add to collection');
     }
   };
