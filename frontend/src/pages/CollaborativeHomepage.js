@@ -56,7 +56,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
             {recentTeams.map((team, index) => (
               <button
                 key={team.id}
-                onClick={() => onViewChange('catalogue')}
+                onClick={() => navigate('/catalogue')}
                 className="flex-shrink-0 bg-white rounded-lg p-4 hover:shadow-md transition-all border border-gray-100 min-w-[120px]"
               >
                 <div className="text-center">
