@@ -77,20 +77,19 @@ class ReferenceKitCollectionTester:
                         'Authorization': f'Bearer {self.admin_token}'
                     })
                     
-                    # Get user profile to extract user_id
-                    profile_response = self.session.get(f"{BACKEND_URL}/users/profile")
-                    if profile_response.status_code == 200:
-                        profile_data = profile_response.json()
-                        self.admin_user_id = profile_data.get('id')
-                        
+                    # Extract user_id from login response
+                    user_data = data.get('user', {})
+                    self.admin_user_id = user_data.get('id')
+                    
+                    if self.admin_user_id:
                         self.log_test(
                             "Admin Authentication", 
                             True, 
-                            f"Successfully authenticated admin user. Token length: {len(self.admin_token)}, User ID: {self.admin_user_id}, Role: {profile_data.get('role', 'unknown')}"
+                            f"Successfully authenticated admin user. Token length: {len(self.admin_token)}, User ID: {self.admin_user_id}, Role: {user_data.get('role', 'unknown')}"
                         )
                         return True
                     else:
-                        self.log_test("Admin Authentication", False, f"Failed to get user profile: {profile_response.status_code}")
+                        self.log_test("Admin Authentication", False, "No user ID found in login response")
                         return False
                 else:
                     self.log_test("Admin Authentication", False, "No access token received")
