@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Personal Details Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 24px; border-radius: 8px; max-width: 400px; width: 100%; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; }
+        select, input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .button-group { display: flex; gap: 12px; margin-top: 24px; }
+        button { flex: 1; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .cancel-btn { background: white; border: 1px solid #ccc; color: #666; }
+        .submit-btn { background: #16a34a; border: none; color: white; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Test Personal Details Form Submission</h1>
+    <button id="ownKitBtn" onclick="openModal()">Own This Kit</button>
+    
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Personal Details</h3>
+            <form id="personalDetailsForm">
+                <div class="form-group">
+                    <label>Size *</label>
+                    <select id="size" required>
+                        <option value="">Select size</option>
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Condition *</label>
+                    <select id="condition" required>
+                        <option value="">Select condition</option>
+                        <option value="new_with_tags">New with tags</option>
+                        <option value="mint">Mint</option>
+                        <option value="excellent">Excellent</option>
+                        <option value="good">Good (minor wear)</option>
+                        <option value="fair">Fair (visible wear)</option>
+                        <option value="poor">Poor (major flaws)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Purchase Price (€)</label>
+                    <input type="number" id="purchasePrice" step="0.01" placeholder="e.g., 120.00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Personal Notes</label>
+                    <textarea id="personalNotes" rows="3" placeholder="Any personal notes about this kit..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="button" id="submitBtn" class="submit-btn" onclick="handleSubmit()" disabled>Add to Collection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="results" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; display: none;">
+        <h3>Test Results:</h3>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        // Mock data
+        const mockVersion = {
+            id: 'ab4a6518-593b-4572-bacd-f84fbc115bb3'
+        };
+        
+        const mockToken = 'mock-jwt-token-for-testing';
+        
+        // Store mock token in localStorage
+        localStorage.setItem('token', mockToken);
+        
+        let personalDetails = {
+            size: '',
+            condition: '',
+            purchase_price: '',
+            personal_description: ''
+        };
+        
+        function openModal() {
+            document.getElementById('modal').classList.remove('hidden');
+            updateSubmitButton();
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            resetForm();
+        }
+        
+        function resetForm() {
+            document.getElementById('personalDetailsForm').reset();
+            personalDetails = {
+                size: '',
+                condition: '',
+                purchase_price: '',
+                personal_description: ''
+            };
+            updateSubmitButton();
+        }
+        
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const size = document.getElementById('size').value;
+            const condition = document.getElementById('condition').value;
+            
+            submitBtn.disabled = !size || !condition;
+        }
+        
+        // Add event listeners for form validation
+        document.getElementById('size').addEventListener('change', function() {
+            personalDetails.size = this.value;
+            updateSubmitButton();
+        });
+        
+        document.getElementById('condition').addEventListener('change', function() {
+            personalDetails.condition = this.value;
+            updateSubmitButton();
+        });
+        
+        document.getElementById('purchasePrice').addEventListener('input', function() {
+            personalDetails.purchase_price = this.value;
+        });
+        
+        document.getElementById('personalNotes').addEventListener('input', function() {
+            personalDetails.personal_description = this.value;
+        });
+        
+        async function handleSubmit() {
+            console.log('🚀 handleSubmit called');
+            
+            // Show results div
+            const resultsDiv = document.getElementById('results');
+            const resultContent = document.getElementById('resultContent');
+            resultsDiv.style.display = 'block';
+            
+            let results = [];
+            results.push('✅ handleSubmit function called successfully');
+            
+            try {
+                // Collect form data
+                const details = {
+                    size: personalDetails.size,
+                    condition: personalDetails.condition,
+                    purchase_price: personalDetails.purchase_price ? parseFloat(personalDetails.purchase_price) : null,
+                    personal_description: personalDetails.personal_description
+                };
+                
+                results.push(`📝 Form data collected: ${JSON.stringify(details, null, 2)}`);
+                
+                // Simulate the API call
+                const requestData = {
+                    reference_kit_id: mockVersion.id,
+                    collection_type: 'owned',
+                    ...details
+                };
+                
+                results.push(`🌐 API request data: ${JSON.stringify(requestData, null, 2)}`);
+                
+                // Mock API call (this would normally go to the backend)
+                console.log('Making API call to /api/reference-kit-collections');
+                console.log('Request data:', requestData);
+                
+                // Simulate network request
+                const response = await fetch('https://kitfix-contrib.preview.emergentagent.com/api/reference-kit-collections', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mockToken}`
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                results.push(`🌐 API response status: ${response.status}`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    results.push(`✅ API success: ${JSON.stringify(result)}`);
+                    alert('Successfully added to collection!');
+                    closeModal();
+                } else {
+                    const errorData = await response.json();
+                    results.push(`❌ API error: ${JSON.stringify(errorData)}`);
+                    alert(errorData.detail || 'Failed to add to collection');
+                }
+                
+            } catch (error) {
+                console.error('Error in handleSubmit:', error);
+                results.push(`❌ JavaScript error: ${error.message}`);
+                alert('Failed to add to collection');
+            }
+            
+            resultContent.innerHTML = results.map(r => `<div>${r}</div>`).join('');
+        }
+        
+        // Log when page loads
+        console.log('🚀 Test page loaded');
+        console.log('Mock version ID:', mockVersion.id);
+        console.log('Mock token:', mockToken);
+    </script>
+</body>
+</html>
