@@ -446,9 +446,27 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                 key={item.id}
                 className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
               >
-                {/* Kit Image */}
+                {/* Kit Image - Show reference kit image */}
                 <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                  <span className="text-4xl">👕</span>
+                  {item.reference_kit_info?.main_photo_url ? (
+                    <img
+                      src={item.reference_kit_info.main_photo_url.startsWith('http') 
+                        ? item.reference_kit_info.main_photo_url 
+                        : `${API}/${item.reference_kit_info.main_photo_url}`}
+                      alt={`${item.team_info?.name || 'Unknown'} ${item.master_kit_info?.season || ''}`}
+                      className="w-full h-48 object-contain rounded-lg"
+                    />
+                  ) : item.reference_kit_info?.product_images && item.reference_kit_info.product_images.length > 0 ? (
+                    <img
+                      src={item.reference_kit_info.product_images[0].startsWith('http') 
+                        ? item.reference_kit_info.product_images[0] 
+                        : `${API}/${item.reference_kit_info.product_images[0]}`}
+                      alt={`${item.team_info?.name || 'Unknown'} ${item.master_kit_info?.season || ''}`}
+                      className="w-full h-48 object-contain rounded-lg"
+                    />
+                  ) : (
+                    <span className="text-4xl">👕</span>
+                  )}
                 </div>
 
                 {/* Kit Details */}
