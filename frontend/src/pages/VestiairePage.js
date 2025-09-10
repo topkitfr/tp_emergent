@@ -22,7 +22,43 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
   useEffect(() => {
     loadKitStore();
     loadPlayers();
-  }, []);
+    if (user) {
+      loadUserCollectionCounts();
+    }
+  }, [user]);
+
+  const loadUserCollectionCounts = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const [ownedResponse, wantedResponse] = await Promise.all([
+        fetch(`${API}/api/users/${user.id}/reference-kit-collections/owned`, {
+          headers: {
+            'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          }
+        }),
+        fetch(`${API}/api/users/${user.id}/reference-kit-collections/wanted`, {
+          headers: {
+            'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          }
+        })
+      ]);
+
+      if (ownedResponse.ok && wantedResponse.ok) {
+        const [ownedData, wantedData] = await Promise.all([
+          ownedResponse.json(),
+          wantedResponse.json()
+        ]);
+
+        setUserCollectionCounts({
+          owned: Array.isArray(ownedData) ? ownedData.length : 0,
+          wanted: Array.isArray(wantedData) ? wantedData.length : 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user collection counts:', error);
+    }
+  };
 
   // Define addToCollection function for new Personal Kit API
   // States for personal details inline form when adding to collection
