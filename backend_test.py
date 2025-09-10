@@ -224,7 +224,7 @@ class ReferenceKitCollectionTester:
             print(f"Collection Type: {collection_type}")
             
             # Check reference_kit_info enrichment
-            reference_kit_info = collection.get('reference_kit_info', {})
+            reference_kit_info = collection.get('reference_kit_info') or collection.get('reference_kit', {})
             if reference_kit_info:
                 enrichment_results['enriched_collections'] += 1
                 print(f"✅ Reference Kit Info: {len(reference_kit_info)} fields")
@@ -240,7 +240,7 @@ class ReferenceKitCollectionTester:
                 print("❌ No reference_kit_info found")
             
             # Check master_kit_info/master_jersey_info enrichment
-            master_info = collection.get('master_kit_info') or collection.get('master_jersey_info', {})
+            master_info = collection.get('master_kit_info') or collection.get('master_jersey_info') or collection.get('master_jersey', {})
             if master_info:
                 season = master_info.get('season', 'unknown')
                 jersey_type = master_info.get('jersey_type', 'unknown')
@@ -259,6 +259,10 @@ class ReferenceKitCollectionTester:
             
             # Check team_info enrichment
             team_info = collection.get('team_info', {})
+            # Also check if team_info is nested in master_jersey
+            if not team_info and master_info:
+                team_info = master_info.get('team_info', {})
+                
             if team_info:
                 team_name = team_info.get('name', 'unknown')
                 if team_name and team_name.lower() != 'unknown':
@@ -281,6 +285,13 @@ class ReferenceKitCollectionTester:
                 print(f"✅ Brand Info: {brand_name}")
             else:
                 print("❌ No brand_info found")
+                
+            # Print the actual collection structure for debugging
+            print(f"DEBUG - Collection keys: {list(collection.keys())}")
+            if 'reference_kit' in collection:
+                print(f"DEBUG - Reference kit keys: {list(collection['reference_kit'].keys()) if collection['reference_kit'] else 'None'}")
+            if 'master_jersey' in collection:
+                print(f"DEBUG - Master jersey keys: {list(collection['master_jersey'].keys()) if collection['master_jersey'] else 'None'}")
         
         # Calculate success metrics
         enrichment_success_rate = (enrichment_results['enriched_collections'] / enrichment_results['total_collections']) * 100 if enrichment_results['total_collections'] > 0 else 0
