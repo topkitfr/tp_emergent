@@ -69,7 +69,7 @@ class ReferenceKitCollectionTester:
             if response.status_code == 200:
                 data = response.json()
                 print(f"Login response data: {data}")
-                self.admin_token = data.get('access_token')
+                self.admin_token = data.get('token') or data.get('access_token')
                 
                 if self.admin_token:
                     # Set authorization header for future requests
