@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, onViewChange }) => {
+  const navigate = useNavigate();
   
   // Statistics
   const stats = [
