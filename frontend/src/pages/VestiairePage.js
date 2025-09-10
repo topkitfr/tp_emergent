@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 const VestiairePage = ({ user, API, onDataUpdate }) => {
   const [referenceKits, setReferenceKits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userCollectionCounts, setUserCollectionCounts] = useState({ owned: 0, wanted: 0 });
   const [filters, setFilters] = useState({
     search: '',
     team_id: '',
