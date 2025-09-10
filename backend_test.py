@@ -63,8 +63,12 @@ class ReferenceKitCollectionTester:
             
             response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
             
+            print(f"Login response status: {response.status_code}")
+            print(f"Login response text: {response.text}")
+            
             if response.status_code == 200:
                 data = response.json()
+                print(f"Login response data: {data}")
                 self.admin_token = data.get('access_token')
                 
                 if self.admin_token:
