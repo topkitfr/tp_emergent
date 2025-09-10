@@ -171,12 +171,17 @@ const VersionDetailPage = () => {
   };
 
   const handlePersonalDetailsSubmit = () => {
+    console.log('🚀 handlePersonalDetailsSubmit called');
+    console.log('📝 Personal details state:', personalDetails);
+    
     // Convert numeric fields
     const details = {
       ...personalDetails,
       purchase_price: personalDetails.purchase_price ? parseFloat(personalDetails.purchase_price) : null,
       estimated_value: personalDetails.estimated_value ? parseFloat(personalDetails.estimated_value) : null
     };
+    
+    console.log('📦 Processed details for submission:', details);
     
     submitToCollection('own', details);
   };
