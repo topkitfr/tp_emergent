@@ -5,7 +5,6 @@ import CollaborativeHeader from './components/CollaborativeHeader';
 import CollaborativeHomepage from './pages/CollaborativeHomepage';
 import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
 import CataloguePage from './pages/CataloguePage';
-import VestiairePage from './pages/VestiairePage';
 import MyCollectionPage from './pages/MyCollectionPage';
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
 import CollaborativeBrandsPage from './pages/CollaborativeBrandsPage';
