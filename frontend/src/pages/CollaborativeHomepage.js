@@ -38,7 +38,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
           {/* CTA Buttons - TopKit Focus - Removed Documenter button */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
-              onClick={() => onViewChange('vestiaire')}
+              onClick={() => onViewChange('kit-area')}
               className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-full font-semibold transition-all text-lg"
             >
               Create your collection
