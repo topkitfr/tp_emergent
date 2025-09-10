@@ -5500,6 +5500,29 @@ async def get_user_reference_kit_collections(user_id: str, current_user: dict = 
         logger.error(f"Error getting user reference kit collections: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.delete("/reference-kit-collections/{collection_id}")
+async def remove_reference_kit_from_collection(collection_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove reference kit from user's collection (owned or wanted)"""
+    try:
+        user_id = current_user["id"]
+        
+        # Verify ownership and delete
+        result = await db.reference_kit_collections.delete_one({
+            "id": collection_id,
+            "user_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Reference kit collection not found or not owned by you")
+        
+        return {"message": "Reference kit removed from collection successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Reference kit collection removal error: {e}")
+        raise HTTPException(status_code=500, detail="Error removing reference kit from collection")
+
 @api_router.post("/collections/remove")
 async def remove_from_collection_post(collection_data: CollectionAdd, current_user: dict = Depends(get_current_user)):
     """Remove jersey from collection"""
