@@ -287,10 +287,8 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         user_token_length: user.token ? user.token.length : 'no token'
       });
       
-      // Use different endpoints for owned vs wanted items
-      const endpoint = isOwnedItem 
-        ? `${API}/api/personal-kits/${item.id}`  // Delete PersonalKit
-        : `${API}/api/wanted-kits/${item.id}`;   // Delete WantedKit
+      // Use reference kit collection delete endpoint for both owned and wanted items
+      const endpoint = `${API}/api/reference-kit-collections/${item.id}`;
       
       console.log(`🎯 DELETE endpoint: ${endpoint}`);
       
