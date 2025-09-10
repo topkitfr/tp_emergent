@@ -303,7 +303,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
               <div
                 key={brand.id}
                 className="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer group text-center"
-                onClick={() => onViewChange('brands')}
+                onClick={() => navigate('/catalogue')}
               >
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm overflow-hidden">
                   {brand.logo_url ? (
