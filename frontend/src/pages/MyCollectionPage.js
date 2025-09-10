@@ -111,13 +111,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     ownedItems.forEach(item => {
       // Use reference kit pricing or fallback to purchase price
       const referenceKit = item.reference_kit_info || {};
-      const baseValue = item.purchase_price || referenceKit.original_retail_price || referenceKit.current_market_estimate || 50;
+      const baseValue = item.purchase_price || item.price_value || referenceKit.original_retail_price || referenceKit.current_market_estimate || 50;
       const condition = item.condition || 'good';
       
       // Condition multiplier
       const conditionMultiplier = {
         'mint': 1.2,
         'near_mint': 1.1,
+        'excellent': 1.05,
         'good': 1.0,
         'fair': 0.8,
         'poor': 0.6
