@@ -1123,9 +1123,12 @@ const VestiairePage = ({ user, API, onDataUpdate }) => {
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {Array.isArray(referenceKits) ? referenceKits.reduce((sum, r) => sum + (r.total_in_collections || 0), 0) : 0}
+                {userCollectionCounts.owned + userCollectionCounts.wanted}
               </div>
               <div className="text-sm text-purple-700">Total Collections</div>
+              <div className="text-xs text-purple-600 mt-1">
+                {userCollectionCounts.owned} Owned • {userCollectionCounts.wanted} Wanted
+              </div>
             </div>
           </div>
         </div>
