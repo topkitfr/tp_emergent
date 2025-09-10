@@ -25,9 +25,9 @@ from typing import Dict, Any, List, Optional
 BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://kitfix-contrib.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
-# Test credentials
-TEST_EMAIL = "steinmetzlivio@gmail.com"
-TEST_PASSWORD = "T0p_Mdp_1288*"
+# Test credentials - using admin for testing
+TEST_EMAIL = "topkitfr@gmail.com"
+TEST_PASSWORD = "TopKitSecure789#"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
