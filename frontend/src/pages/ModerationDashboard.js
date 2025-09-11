@@ -217,7 +217,7 @@ const ModerationDashboard = ({ user, API }) => {
     </div>
   );
 
-  const ContributionCard = ({ contribution }) => (
+  const ContributionCard = ({ contribution, showActions = true, actionType = 'pending' }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
@@ -244,31 +244,67 @@ const ModerationDashboard = ({ user, API }) => {
         <span>Images: {contribution.images_count}</span>
       </div>
       
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleModerationAction(contribution.id, 'approve')}
-          className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
-        >
-          <CheckCircle className="w-4 h-4" />
-          Approve
-        </button>
-        <button
-          onClick={() => {
-            const reason = prompt('Reason for rejection:');
-            if (reason) handleModerationAction(contribution.id, 'reject', reason);
-          }}
-          className="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
-        >
-          <XCircle className="w-4 h-4" />
-          Reject
-        </button>
-        <button
-          onClick={() => window.open(`/contributions-v2/${contribution.id}`, '_blank')}
-          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Eye className="w-4 h-4" />
-        </button>
-      </div>
+      {showActions && (
+        <div className="flex gap-2">
+          {actionType === 'pending' && (
+            <>
+              <button
+                onClick={() => handleModerationAction(contribution.id, 'approve')}
+                className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Approve
+              </button>
+              <button
+                onClick={() => {
+                  const reason = prompt('Reason for rejection:');
+                  if (reason) handleModerationAction(contribution.id, 'reject', reason);
+                }}
+                className="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <XCircle className="w-4 h-4" />
+                Reject
+              </button>
+            </>
+          )}
+          
+          {actionType === 'approved' && (
+            <button
+              onClick={() => {
+                const reason = prompt('Reason for deleting this approved contribution:');
+                if (reason && confirm('Are you sure you want to delete this approved contribution?')) {
+                  handleModerationAction(contribution.id, 'reject', reason);
+                }
+              }}
+              className="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          )}
+          
+          {actionType === 'rejected' && (
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to restore this rejected contribution?')) {
+                  handleModerationAction(contribution.id, 'approve', 'Restored from rejected status');
+                }
+              }}
+              className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Restore
+            </button>
+          )}
+          
+          <button
+            onClick={() => window.open(`/contributions-v2/${contribution.id}`, '_blank')}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 
