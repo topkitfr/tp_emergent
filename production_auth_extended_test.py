@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Production backend URL
-BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 
 # Test account (using the main requested account)
 TEST_ACCOUNT = {

@@ -25,7 +25,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 
 # Admin credentials as specified in the request
 ADMIN_EMAIL = "topkitfr@gmail.com"

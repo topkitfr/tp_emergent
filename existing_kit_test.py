@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "T0p_Mdp_1288*"
 

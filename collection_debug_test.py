@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration - Using the exact URL from frontend/.env
-BASE_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 
 class CollectionDebugTester:
     def __init__(self):

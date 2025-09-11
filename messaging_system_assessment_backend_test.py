@@ -24,7 +24,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://kitfix-contrib.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {
