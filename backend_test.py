@@ -59,23 +59,22 @@ class ModerationDashboardTester:
                 data = response.json()
                 self.admin_token = data.get('token')
                 
-                # Set authorization header for future requests
-                self.session.headers.update({
-                    'Authorization': f'Bearer {self.admin_token}'
-                })
+                # Get user info from login response
+                user_data = data.get('user', {})
+                self.admin_user_id = user_data.get('id')
+                user_role = user_data.get('role')
                 
-                # Get user info to verify admin role
-                user_response = self.session.get(f"{BACKEND_URL}/auth/me")
-                if user_response.status_code == 200:
-                    user_data = user_response.json()
-                    self.admin_user_id = user_data.get('id')
-                    user_role = user_data.get('role')
+                if self.admin_token and self.admin_user_id:
+                    # Set authorization header for future requests
+                    self.session.headers.update({
+                        'Authorization': f'Bearer {self.admin_token}'
+                    })
                     
                     if user_role == 'admin':
                         self.log_test(
                             "Admin Authentication", 
                             True, 
-                            f"Successfully authenticated as admin. User ID: {self.admin_user_id}, Role: {user_role}"
+                            f"Successfully authenticated as admin. User ID: {self.admin_user_id}, Role: {user_role}, Token length: {len(self.admin_token)}"
                         )
                         return True
                     else:
@@ -89,7 +88,7 @@ class ModerationDashboardTester:
                     self.log_test(
                         "Admin Authentication", 
                         False, 
-                        f"Failed to get user info: {user_response.status_code}"
+                        f"Missing token or user ID in response. Token: {bool(self.admin_token)}, User ID: {bool(self.admin_user_id)}"
                     )
                     return False
             else:
