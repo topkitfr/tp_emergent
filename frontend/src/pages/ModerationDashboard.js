@@ -425,7 +425,11 @@ const ModerationDashboard = ({ user, API }) => {
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {contributions.slice(0, 6).map(contribution => (
-                  <ContributionCard key={contribution.id} contribution={contribution} />
+                  <ContributionCard 
+                    key={contribution.id} 
+                    contribution={contribution} 
+                    showActions={false}
+                  />
                 ))}
               </div>
             </div>
