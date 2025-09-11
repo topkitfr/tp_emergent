@@ -478,15 +478,195 @@ const ModerationDashboard = ({ user, API }) => {
                   (!filters.search || c.title.toLowerCase().includes(filters.search.toLowerCase()))
                 )
                 .map(contribution => (
-                  <ContributionCard key={contribution.id} contribution={contribution} />
+                  <ContributionCard 
+                    key={contribution.id} 
+                    contribution={contribution}
+                    actionType="pending" 
+                  />
                 ))}
             </div>
+
+            {/* Pagination for Pending */}
+            {activeTab === 'pending' && totalContributions > itemsPerPage && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={totalContributions}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                itemName="contributions"
+              />
+            )}
 
             {contributions.length === 0 && (
               <div className="text-center py-12">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">All Caught Up!</h3>
                 <p className="text-gray-600">No contributions pending review at the moment.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Approved Tab */}
+        {activeTab === 'approved' && (
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-green-900">Approved Contributions</h3>
+              </div>
+              <p className="text-green-700 text-sm mt-1">
+                These contributions have been approved and are live in the database. You can delete them if needed.
+              </p>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-64">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search approved contributions..."
+                      value={filters.search}
+                      onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={filters.entity_type}
+                  onChange={(e) => setFilters(prev => ({ ...prev, entity_type: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Types</option>
+                  <option value="team">Teams</option>
+                  <option value="brand">Brands</option>
+                  <option value="player">Players</option>
+                  <option value="competition">Competitions</option>
+                  <option value="master_kit">Master Kits</option>
+                  <option value="reference_kit">Reference Kits</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Approved Contributions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {contributions
+                .filter(c => 
+                  (!filters.entity_type || c.entity_type === filters.entity_type) &&
+                  (!filters.search || c.title.toLowerCase().includes(filters.search.toLowerCase()))
+                )
+                .map(contribution => (
+                  <ContributionCard 
+                    key={contribution.id} 
+                    contribution={contribution}
+                    actionType="approved" 
+                  />
+                ))}
+            </div>
+
+            {/* Pagination for Approved */}
+            {totalContributions > itemsPerPage && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={totalContributions}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                itemName="contributions"
+              />
+            )}
+
+            {contributions.length === 0 && (
+              <div className="text-center py-12">
+                <CheckCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Approved Contributions</h3>
+                <p className="text-gray-600">No approved contributions found matching your criteria.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rejected Tab */}
+        {activeTab === 'rejected' && (
+          <div className="space-y-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-600" />
+                <h3 className="font-semibold text-red-900">Rejected Contributions</h3>
+              </div>
+              <p className="text-red-700 text-sm mt-1">
+                These contributions have been rejected. You can restore them if you want to reconsider your decision.
+              </p>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-64">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search rejected contributions..."
+                      value={filters.search}
+                      onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={filters.entity_type}
+                  onChange={(e) => setFilters(prev => ({ ...prev, entity_type: e.target.value }))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Types</option>
+                  <option value="team">Teams</option>
+                  <option value="brand">Brands</option>
+                  <option value="player">Players</option>
+                  <option value="competition">Competitions</option>
+                  <option value="master_kit">Master Kits</option>
+                  <option value="reference_kit">Reference Kits</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Rejected Contributions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {contributions
+                .filter(c => 
+                  (!filters.entity_type || c.entity_type === filters.entity_type) &&
+                  (!filters.search || c.title.toLowerCase().includes(filters.search.toLowerCase()))
+                )
+                .map(contribution => (
+                  <ContributionCard 
+                    key={contribution.id} 
+                    contribution={contribution}
+                    actionType="rejected" 
+                  />
+                ))}
+            </div>
+
+            {/* Pagination for Rejected */}
+            {totalContributions > itemsPerPage && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={totalContributions}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                itemName="contributions"
+              />
+            )}
+
+            {contributions.length === 0 && (
+              <div className="text-center py-12">
+                <XCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Rejected Contributions</h3>
+                <p className="text-gray-600">No rejected contributions found matching your criteria.</p>
               </div>
             )}
           </div>
