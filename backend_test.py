@@ -16,18 +16,20 @@ import requests
 import json
 import sys
 from datetime import datetime
+from typing import Dict, List, Optional
 
 # Configuration
 BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
-class ReferenceKitCollectionTester:
+class ModerationDashboardTester:
     def __init__(self):
         self.session = requests.Session()
         self.admin_token = None
         self.admin_user_id = None
         self.test_results = []
+        self.test_contributions = []  # Store created test contributions
         
     def log_test(self, test_name, success, details):
         """Log test results"""
@@ -39,11 +41,10 @@ class ReferenceKitCollectionTester:
             'timestamp': datetime.now().isoformat()
         })
         print(f"{status} - {test_name}: {details}")
-        
+
     def authenticate_admin(self):
-        """Test 1: AUTHENTICATION TEST - Login with admin credentials"""
+        """Test admin authentication"""
         print("\n🔐 TESTING ADMIN AUTHENTICATION")
-        print("=" * 60)
         
         try:
             # Login with admin credentials
@@ -54,526 +55,684 @@ class ReferenceKitCollectionTester:
             
             response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
             
-            print(f"Login response status: {response.status_code}")
-            print(f"Login response text: {response.text}")
-            
             if response.status_code == 200:
                 data = response.json()
-                print(f"Login response data: {data}")
-                self.admin_token = data.get('token') or data.get('access_token')
+                self.admin_token = data.get('token')
                 
-                if self.admin_token:
-                    # Set authorization header for future requests
-                    self.session.headers.update({
-                        'Authorization': f'Bearer {self.admin_token}'
-                    })
-                    
-                    # Extract user_id from login response
-                    user_data = data.get('user', {})
+                # Set authorization header for future requests
+                self.session.headers.update({
+                    'Authorization': f'Bearer {self.admin_token}'
+                })
+                
+                # Get user info to verify admin role
+                user_response = self.session.get(f"{BACKEND_URL}/auth/me")
+                if user_response.status_code == 200:
+                    user_data = user_response.json()
                     self.admin_user_id = user_data.get('id')
+                    user_role = user_data.get('role')
                     
-                    if self.admin_user_id:
+                    if user_role == 'admin':
                         self.log_test(
                             "Admin Authentication", 
                             True, 
-                            f"Successfully authenticated admin user. Token length: {len(self.admin_token)}, User ID: {self.admin_user_id}, Role: {user_data.get('role', 'unknown')}"
+                            f"Successfully authenticated as admin. User ID: {self.admin_user_id}, Role: {user_role}"
                         )
                         return True
                     else:
-                        self.log_test("Admin Authentication", False, "No user ID found in login response")
+                        self.log_test(
+                            "Admin Authentication", 
+                            False, 
+                            f"User authenticated but role is '{user_role}', not 'admin'"
+                        )
                         return False
                 else:
-                    self.log_test("Admin Authentication", False, "No access token received")
+                    self.log_test(
+                        "Admin Authentication", 
+                        False, 
+                        f"Failed to get user info: {user_response.status_code}"
+                    )
                     return False
             else:
-                self.log_test("Admin Authentication", False, f"Login failed with status {response.status_code}: {response.text}")
+                self.log_test(
+                    "Admin Authentication", 
+                    False, 
+                    f"Login failed: {response.status_code} - {response.text}"
+                )
                 return False
                 
         except Exception as e:
-            self.log_test("Admin Authentication", False, f"Exception during authentication: {str(e)}")
+            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
-    
-    def test_collection_retrieval_endpoints(self):
-        """Test 2: COLLECTION RETRIEVAL TEST - Test GET endpoints for reference kit collections"""
-        print("\n📊 TESTING COLLECTION RETRIEVAL ENDPOINTS")
-        print("=" * 60)
+
+    def test_moderation_stats(self):
+        """Test moderation stats endpoint"""
+        print("\n📊 TESTING MODERATION STATS")
         
-        if not self.admin_user_id:
-            self.log_test("Collection Retrieval", False, "No admin user ID available")
-            return False, []
+        try:
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats")
             
-        endpoints_to_test = [
-            ("owned", f"/users/{self.admin_user_id}/reference-kit-collections/owned"),
-            ("wanted", f"/users/{self.admin_user_id}/reference-kit-collections/wanted"),
-            ("combined", f"/users/{self.admin_user_id}/reference-kit-collections")
-        ]
+            if response.status_code == 200:
+                stats = response.json()
+                
+                # Verify required fields are present
+                required_fields = [
+                    'pending_contributions', 'approved_today', 'rejected_today',
+                    'total_votes_today', 'auto_approved_today', 'auto_rejected_today',
+                    'contributions_by_type', 'top_contributors'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in stats]
+                
+                if not missing_fields:
+                    self.log_test(
+                        "Moderation Stats API", 
+                        True, 
+                        f"Stats retrieved successfully. Pending: {stats['pending_contributions']}, "
+                        f"Approved today: {stats['approved_today']}, Rejected today: {stats['rejected_today']}"
+                    )
+                    
+                    # Test contributions by type
+                    contrib_types = stats.get('contributions_by_type', {})
+                    self.log_test(
+                        "Contributions by Type Stats", 
+                        True, 
+                        f"Found {len(contrib_types)} contribution types: {list(contrib_types.keys())}"
+                    )
+                    
+                    return True
+                else:
+                    self.log_test(
+                        "Moderation Stats API", 
+                        False, 
+                        f"Missing required fields: {missing_fields}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Moderation Stats API", 
+                    False, 
+                    f"Failed to get stats: {response.status_code} - {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Moderation Stats API", False, f"Exception: {str(e)}")
+            return False
+
+    def test_contributions_pagination(self):
+        """Test contributions API with pagination"""
+        print("\n📄 TESTING CONTRIBUTIONS PAGINATION")
         
-        all_collections = []
-        endpoint_results = {}
+        try:
+            # Test basic pagination
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/?page=1&limit=10")
+            
+            if response.status_code == 200:
+                contributions = response.json()
+                
+                if isinstance(contributions, list):
+                    self.log_test(
+                        "Contributions Pagination - Basic", 
+                        True, 
+                        f"Retrieved {len(contributions)} contributions (max 10 requested)"
+                    )
+                    
+                    # Test different page sizes
+                    response_5 = self.session.get(f"{BACKEND_URL}/contributions-v2/?page=1&limit=5")
+                    if response_5.status_code == 200:
+                        contributions_5 = response_5.json()
+                        if len(contributions_5) <= 5:
+                            self.log_test(
+                                "Contributions Pagination - Limit Control", 
+                                True, 
+                                f"Limit parameter working: requested 5, got {len(contributions_5)}"
+                            )
+                        else:
+                            self.log_test(
+                                "Contributions Pagination - Limit Control", 
+                                False, 
+                                f"Limit not respected: requested 5, got {len(contributions_5)}"
+                            )
+                    
+                    # Test page 2 if we have enough contributions
+                    if len(contributions) >= 10:
+                        response_p2 = self.session.get(f"{BACKEND_URL}/contributions-v2/?page=2&limit=10")
+                        if response_p2.status_code == 200:
+                            contributions_p2 = response_p2.json()
+                            self.log_test(
+                                "Contributions Pagination - Page 2", 
+                                True, 
+                                f"Page 2 retrieved {len(contributions_p2)} contributions"
+                            )
+                    
+                    return True
+                else:
+                    self.log_test(
+                        "Contributions Pagination - Basic", 
+                        False, 
+                        f"Expected list, got {type(contributions)}"
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Contributions Pagination - Basic", 
+                    False, 
+                    f"Failed to get contributions: {response.status_code} - {response.text}"
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test("Contributions Pagination", False, f"Exception: {str(e)}")
+            return False
+
+    def test_status_filtering(self):
+        """Test status-based filtering for contributions"""
+        print("\n🔍 TESTING STATUS-BASED FILTERING")
         
-        for endpoint_name, endpoint_path in endpoints_to_test:
-            try:
-                response = self.session.get(f"{BACKEND_URL}{endpoint_path}")
+        try:
+            # Test different status filters
+            statuses_to_test = ['pending_review', 'approved', 'rejected']
+            
+            for status in statuses_to_test:
+                response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status={status}&limit=20")
                 
                 if response.status_code == 200:
-                    data = response.json()
+                    contributions = response.json()
                     
-                    # Handle different response structures
-                    if endpoint_name == "combined":
-                        # Combined endpoint might return structured data
-                        if isinstance(data, dict):
-                            owned_collections = data.get('owned', [])
-                            wanted_collections = data.get('wanted', [])
-                            collections = owned_collections + wanted_collections
+                    if isinstance(contributions, list):
+                        # Verify all contributions have the requested status
+                        status_match = all(contrib.get('status') == status for contrib in contributions)
+                        
+                        if status_match or len(contributions) == 0:
+                            self.log_test(
+                                f"Status Filter - {status}", 
+                                True, 
+                                f"Found {len(contributions)} contributions with status '{status}'"
+                            )
                         else:
-                            collections = data if isinstance(data, list) else []
+                            mismatched = [contrib.get('status') for contrib in contributions if contrib.get('status') != status]
+                            self.log_test(
+                                f"Status Filter - {status}", 
+                                False, 
+                                f"Status mismatch found: expected '{status}', found {set(mismatched)}"
+                            )
                     else:
-                        # Individual endpoints return arrays
-                        collections = data if isinstance(data, list) else []
-                    
-                    endpoint_results[endpoint_name] = {
-                        'success': True,
-                        'count': len(collections),
-                        'collections': collections
-                    }
-                    
-                    all_collections.extend(collections)
-                    
-                    self.log_test(
-                        f"GET {endpoint_name} collections", 
-                        True, 
-                        f"Retrieved {len(collections)} collections successfully"
-                    )
-                    
+                        self.log_test(
+                            f"Status Filter - {status}", 
+                            False, 
+                            f"Expected list, got {type(contributions)}"
+                        )
                 else:
-                    endpoint_results[endpoint_name] = {
-                        'success': False,
-                        'error': f"HTTP {response.status_code}: {response.text}"
-                    }
-                    
                     self.log_test(
-                        f"GET {endpoint_name} collections", 
+                        f"Status Filter - {status}", 
                         False, 
-                        f"Failed with status {response.status_code}: {response.text}"
+                        f"Failed to filter by status: {response.status_code} - {response.text}"
                     )
-                    
-            except Exception as e:
-                endpoint_results[endpoint_name] = {
-                    'success': False,
-                    'error': f"Exception: {str(e)}"
+            
+            # Test combined status and pagination
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=approved&page=1&limit=5")
+            if response.status_code == 200:
+                contributions = response.json()
+                self.log_test(
+                    "Status + Pagination Combined", 
+                    True, 
+                    f"Combined filtering working: {len(contributions)} approved contributions (limit 5)"
+                )
+            
+            return True
+                
+        except Exception as e:
+            self.log_test("Status-based Filtering", False, f"Exception: {str(e)}")
+            return False
+
+    def create_test_contribution(self):
+        """Create a test contribution for moderation testing"""
+        try:
+            # Create a test team contribution
+            contribution_data = {
+                "entity_type": "team",
+                "title": "Test Team for Moderation",
+                "description": "This is a test team contribution for moderation testing",
+                "entity_data": {
+                    "name": "Test Moderation Team",
+                    "country": "France",
+                    "city": "Paris",
+                    "founded_year": 2024,
+                    "colors": ["blue", "white"]
                 }
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/contributions-v2/", json=contribution_data)
+            
+            if response.status_code == 201:
+                contribution = response.json()
+                contribution_id = contribution.get('id')
+                self.test_contributions.append(contribution_id)
                 
                 self.log_test(
-                    f"GET {endpoint_name} collections", 
-                    False, 
-                    f"Exception: {str(e)}"
+                    "Test Contribution Creation", 
+                    True, 
+                    f"Created test contribution with ID: {contribution_id}"
                 )
-        
-        # Overall assessment
-        successful_endpoints = sum(1 for result in endpoint_results.values() if result['success'])
-        total_collections_found = len(all_collections)
-        
-        overall_success = successful_endpoints >= 2 and total_collections_found >= 0  # At least 2 endpoints working
-        
-        self.log_test(
-            "Collection Retrieval Overall", 
-            overall_success, 
-            f"Successfully tested {successful_endpoints}/3 endpoints. Total collections found: {total_collections_found}"
-        )
-        
-        return endpoint_results, all_collections
-    
-    def test_data_enrichment(self, collections):
-        """Test 3: DATA INHERITANCE VERIFICATION - Check data enrichment and inheritance"""
-        print("\n🔍 TESTING DATA ENRICHMENT AND INHERITANCE")
-        print("=" * 60)
-        
-        if not collections:
-            self.log_test("Data Enrichment", False, "No collections available for testing")
-            return False
-        
-        enrichment_results = {
-            'total_collections': len(collections),
-            'enriched_collections': 0,
-            'team_names_found': 0,
-            'season_info_found': 0,
-            'brand_info_found': 0,
-            'images_found': 0,
-            'unknown_team_names': 0
-        }
-        
-        for i, collection in enumerate(collections):
-            print(f"\n--- Analyzing Collection {i+1} ---")
-            
-            # Check basic structure
-            collection_id = collection.get('id', 'unknown')
-            reference_kit_id = collection.get('reference_kit_id', 'unknown')
-            collection_type = collection.get('collection_type', 'unknown')
-            
-            print(f"Collection ID: {collection_id}")
-            print(f"Reference Kit ID: {reference_kit_id}")
-            print(f"Collection Type: {collection_type}")
-            
-            # Check reference_kit_info enrichment
-            reference_kit_info = collection.get('reference_kit_info') or collection.get('reference_kit', {})
-            if reference_kit_info:
-                enrichment_results['enriched_collections'] += 1
-                print(f"✅ Reference Kit Info: {len(reference_kit_info)} fields")
-                
-                # Check for images
-                product_images = reference_kit_info.get('product_images', [])
-                if product_images:
-                    enrichment_results['images_found'] += 1
-                    print(f"✅ Product Images: {len(product_images)} images found")
-                else:
-                    print("⚠️ No product images found")
+                return contribution_id
             else:
-                print("❌ No reference_kit_info found")
-            
-            # Check master_kit_info/master_jersey_info enrichment
-            master_info = collection.get('master_kit_info') or collection.get('master_jersey_info') or collection.get('master_jersey', {})
-            if master_info:
-                season = master_info.get('season', 'unknown')
-                jersey_type = master_info.get('jersey_type', 'unknown')
-                model = master_info.get('model', 'unknown')
+                self.log_test(
+                    "Test Contribution Creation", 
+                    False, 
+                    f"Failed to create contribution: {response.status_code} - {response.text}"
+                )
+                return None
                 
-                if season != 'unknown':
-                    enrichment_results['season_info_found'] += 1
-                    print(f"✅ Season Info: {season}")
-                else:
-                    print("⚠️ No season information found")
-                    
-                print(f"Jersey Type: {jersey_type}")
-                print(f"Model: {model}")
-            else:
-                print("❌ No master kit/jersey info found")
-            
-            # Check team_info enrichment
-            team_info = collection.get('team_info', {})
-            # Also check if team_info is nested in master_jersey
-            if not team_info and master_info:
-                team_info = master_info.get('team_info', {})
-                
-            if team_info:
-                team_name = team_info.get('name', 'unknown')
-                if team_name and team_name.lower() != 'unknown':
-                    enrichment_results['team_names_found'] += 1
-                    print(f"✅ Team Name: {team_name}")
-                else:
-                    enrichment_results['unknown_team_names'] += 1
-                    print(f"⚠️ Team name is unknown or missing")
-                    
-                team_country = team_info.get('country', 'unknown')
-                print(f"Team Country: {team_country}")
-            else:
-                print("❌ No team_info found")
-            
-            # Check brand_info enrichment
-            brand_info = collection.get('brand_info', {})
-            if brand_info:
-                enrichment_results['brand_info_found'] += 1
-                brand_name = brand_info.get('name', 'unknown')
-                print(f"✅ Brand Info: {brand_name}")
-            else:
-                print("❌ No brand_info found")
-                
-            # Print the actual collection structure for debugging
-            print(f"DEBUG - Collection keys: {list(collection.keys())}")
-            if 'reference_kit' in collection:
-                print(f"DEBUG - Reference kit keys: {list(collection['reference_kit'].keys()) if collection['reference_kit'] else 'None'}")
-            if 'master_jersey' in collection:
-                print(f"DEBUG - Master jersey keys: {list(collection['master_jersey'].keys()) if collection['master_jersey'] else 'None'}")
-        
-        # Calculate success metrics
-        enrichment_success_rate = (enrichment_results['enriched_collections'] / enrichment_results['total_collections']) * 100 if enrichment_results['total_collections'] > 0 else 0
-        team_name_success_rate = (enrichment_results['team_names_found'] / enrichment_results['total_collections']) * 100 if enrichment_results['total_collections'] > 0 else 0
-        
-        overall_success = (
-            enrichment_results['enriched_collections'] > 0 and
-            enrichment_results['unknown_team_names'] == 0 and
-            enrichment_success_rate >= 50
-        )
-        
-        self.log_test(
-            "Data Enrichment Analysis", 
-            overall_success, 
-            f"Enrichment rate: {enrichment_success_rate:.1f}%, Team names found: {enrichment_results['team_names_found']}/{enrichment_results['total_collections']}, Unknown team names: {enrichment_results['unknown_team_names']}"
-        )
-        
-        return enrichment_results
-    
-    def test_delete_endpoint(self, collections):
-        """Test 4: NEW DELETE ENDPOINT TEST - Test DELETE endpoint for reference kit collections"""
-        print("\n🗑️ TESTING DELETE ENDPOINT")
-        print("=" * 60)
-        
-        if not collections:
-            self.log_test("Delete Endpoint", False, "No collections available for delete testing")
-            return False
-        
-        # Find a collection to delete (use the first one)
-        test_collection = collections[0]
-        collection_id = test_collection.get('id')
-        
-        if not collection_id:
-            self.log_test("Delete Endpoint", False, "No collection ID found for delete testing")
-            return False
-        
-        print(f"Testing DELETE with collection ID: {collection_id}")
+        except Exception as e:
+            self.log_test("Test Contribution Creation", False, f"Exception: {str(e)}")
+            return None
+
+    def test_moderation_actions(self):
+        """Test moderation actions (approve/reject/restore)"""
+        print("\n⚖️ TESTING MODERATION ACTIONS")
         
         try:
-            # Test DELETE endpoint
-            delete_response = self.session.delete(f"{BACKEND_URL}/reference-kit-collections/{collection_id}")
+            # First, try to find an existing pending contribution
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=pending_review&limit=5")
             
-            if delete_response.status_code == 200:
+            contribution_id = None
+            if response.status_code == 200:
+                contributions = response.json()
+                if contributions:
+                    contribution_id = contributions[0].get('id')
+                    self.log_test(
+                        "Find Pending Contribution", 
+                        True, 
+                        f"Found existing pending contribution: {contribution_id}"
+                    )
+            
+            # If no pending contribution found, create one
+            if not contribution_id:
+                contribution_id = self.create_test_contribution()
+            
+            if not contribution_id:
                 self.log_test(
-                    "DELETE endpoint success", 
-                    True, 
-                    f"Successfully deleted collection {collection_id}. Response: {delete_response.text}"
+                    "Moderation Actions Setup", 
+                    False, 
+                    "Could not find or create a contribution to test moderation"
+                )
+                return False
+            
+            # Test APPROVE action
+            approve_data = {
+                "action": "approve",
+                "reason": "Test approval - contribution meets quality standards",
+                "internal_notes": "Automated test approval",
+                "notify_contributor": False
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/{contribution_id}/moderate", 
+                json=approve_data
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                new_status = result.get('status')
+                
+                if new_status == 'approved':
+                    self.log_test(
+                        "Moderation Action - Approve", 
+                        True, 
+                        f"Successfully approved contribution. New status: {new_status}"
+                    )
+                    
+                    # Verify the contribution status was updated
+                    verify_response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contribution_id}")
+                    if verify_response.status_code == 200:
+                        contrib_data = verify_response.json()
+                        if contrib_data.get('status') == 'approved':
+                            self.log_test(
+                                "Moderation Action - Status Verification", 
+                                True, 
+                                "Contribution status correctly updated to approved"
+                            )
+                        else:
+                            self.log_test(
+                                "Moderation Action - Status Verification", 
+                                False, 
+                                f"Status not updated correctly: {contrib_data.get('status')}"
+                            )
+                else:
+                    self.log_test(
+                        "Moderation Action - Approve", 
+                        False, 
+                        f"Unexpected status after approval: {new_status}"
+                    )
+            else:
+                self.log_test(
+                    "Moderation Action - Approve", 
+                    False, 
+                    f"Failed to approve contribution: {response.status_code} - {response.text}"
+                )
+            
+            # Test REJECT action (create another test contribution first)
+            reject_contribution_id = self.create_test_contribution()
+            if reject_contribution_id:
+                reject_data = {
+                    "action": "reject",
+                    "reason": "Test rejection - does not meet quality standards",
+                    "internal_notes": "Automated test rejection",
+                    "notify_contributor": False
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/contributions-v2/{reject_contribution_id}/moderate", 
+                    json=reject_data
                 )
                 
-                # Verify deletion by trying to retrieve the collection again
-                # We'll check if the collection count decreased
-                verification_response = self.session.get(f"{BACKEND_URL}/users/{self.admin_user_id}/reference-kit-collections")
-                
-                if verification_response.status_code == 200:
-                    verification_data = verification_response.json()
+                if response.status_code == 200:
+                    result = response.json()
+                    new_status = result.get('status')
                     
-                    # Handle different response structures
-                    if isinstance(verification_data, dict):
-                        owned_collections = verification_data.get('owned', [])
-                        wanted_collections = verification_data.get('wanted', [])
-                        remaining_collections = owned_collections + wanted_collections
-                    else:
-                        remaining_collections = verification_data if isinstance(verification_data, list) else []
-                    
-                    # Check if the deleted collection is no longer present
-                    deleted_collection_found = any(c.get('id') == collection_id for c in remaining_collections)
-                    
-                    if not deleted_collection_found:
+                    if new_status == 'rejected':
                         self.log_test(
-                            "DELETE verification", 
+                            "Moderation Action - Reject", 
                             True, 
-                            f"Collection {collection_id} successfully removed. Remaining collections: {len(remaining_collections)}"
+                            f"Successfully rejected contribution. New status: {new_status}"
                         )
-                        return True
                     else:
                         self.log_test(
-                            "DELETE verification", 
+                            "Moderation Action - Reject", 
                             False, 
-                            f"Collection {collection_id} still found after deletion"
+                            f"Unexpected status after rejection: {new_status}"
+                        )
+                else:
+                    self.log_test(
+                        "Moderation Action - Reject", 
+                        False, 
+                        f"Failed to reject contribution: {response.status_code} - {response.text}"
+                    )
+            
+            # Test REQUEST_REVISION action
+            revision_contribution_id = self.create_test_contribution()
+            if revision_contribution_id:
+                revision_data = {
+                    "action": "request_revision",
+                    "reason": "Test revision request - needs more information",
+                    "internal_notes": "Automated test revision request",
+                    "notify_contributor": False
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/contributions-v2/{revision_contribution_id}/moderate", 
+                    json=revision_data
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    new_status = result.get('status')
+                    
+                    if new_status == 'needs_revision':
+                        self.log_test(
+                            "Moderation Action - Request Revision", 
+                            True, 
+                            f"Successfully requested revision. New status: {new_status}"
+                        )
+                    else:
+                        self.log_test(
+                            "Moderation Action - Request Revision", 
+                            False, 
+                            f"Unexpected status after revision request: {new_status}"
+                        )
+                else:
+                    self.log_test(
+                        "Moderation Action - Request Revision", 
+                        False, 
+                        f"Failed to request revision: {response.status_code} - {response.text}"
+                    )
+            
+            return True
+                
+        except Exception as e:
+            self.log_test("Moderation Actions", False, f"Exception: {str(e)}")
+            return False
+
+    def test_admin_access_control(self):
+        """Test that moderation endpoints require admin access"""
+        print("\n🔒 TESTING ADMIN ACCESS CONTROL")
+        
+        try:
+            # Save current admin token
+            admin_token = self.session.headers.get('Authorization')
+            
+            # Remove authorization header to test unauthorized access
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            # Test moderation stats without auth
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "Admin Access Control - Stats Unauthorized", 
+                    True, 
+                    "Correctly blocked unauthorized access to moderation stats"
+                )
+            else:
+                self.log_test(
+                    "Admin Access Control - Stats Unauthorized", 
+                    False, 
+                    f"Should have blocked unauthorized access, got: {response.status_code}"
+                )
+            
+            # Test moderation action without auth
+            if self.test_contributions:
+                test_data = {
+                    "action": "approve",
+                    "reason": "Test",
+                    "notify_contributor": False
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/contributions-v2/{self.test_contributions[0]}/moderate", 
+                    json=test_data
+                )
+                
+                if response.status_code == 401:
+                    self.log_test(
+                        "Admin Access Control - Moderation Unauthorized", 
+                        True, 
+                        "Correctly blocked unauthorized moderation action"
+                    )
+                else:
+                    self.log_test(
+                        "Admin Access Control - Moderation Unauthorized", 
+                        False, 
+                        f"Should have blocked unauthorized moderation, got: {response.status_code}"
+                    )
+            
+            # Restore admin token
+            self.session.headers['Authorization'] = admin_token
+            
+            # Verify admin access is restored
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats")
+            if response.status_code == 200:
+                self.log_test(
+                    "Admin Access Control - Restore Access", 
+                    True, 
+                    "Admin access correctly restored"
+                )
+            else:
+                self.log_test(
+                    "Admin Access Control - Restore Access", 
+                    False, 
+                    f"Failed to restore admin access: {response.status_code}"
+                )
+            
+            return True
+                
+        except Exception as e:
+            self.log_test("Admin Access Control", False, f"Exception: {str(e)}")
+            return False
+
+    def test_contribution_detail_access(self):
+        """Test accessing individual contribution details"""
+        print("\n📋 TESTING CONTRIBUTION DETAIL ACCESS")
+        
+        try:
+            # Get a list of contributions first
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/?limit=5")
+            
+            if response.status_code == 200:
+                contributions = response.json()
+                
+                if contributions:
+                    contribution_id = contributions[0].get('id')
+                    
+                    # Test getting contribution detail
+                    detail_response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contribution_id}")
+                    
+                    if detail_response.status_code == 200:
+                        detail = detail_response.json()
+                        
+                        # Verify required fields are present
+                        required_fields = ['id', 'entity_type', 'title', 'status', 'created_by', 'created_at']
+                        missing_fields = [field for field in required_fields if field not in detail]
+                        
+                        if not missing_fields:
+                            self.log_test(
+                                "Contribution Detail Access", 
+                                True, 
+                                f"Successfully retrieved contribution detail for ID: {contribution_id}"
+                            )
+                            
+                            # Check if history is present
+                            if 'history' in detail:
+                                self.log_test(
+                                    "Contribution History Present", 
+                                    True, 
+                                    f"Contribution has {len(detail['history'])} history entries"
+                                )
+                            
+                            return True
+                        else:
+                            self.log_test(
+                                "Contribution Detail Access", 
+                                False, 
+                                f"Missing required fields in detail: {missing_fields}"
+                            )
+                            return False
+                    else:
+                        self.log_test(
+                            "Contribution Detail Access", 
+                            False, 
+                            f"Failed to get contribution detail: {detail_response.status_code}"
                         )
                         return False
                 else:
                     self.log_test(
-                        "DELETE verification", 
+                        "Contribution Detail Access", 
                         False, 
-                        f"Failed to verify deletion: {verification_response.status_code}"
+                        "No contributions found to test detail access"
                     )
                     return False
-                    
-            elif delete_response.status_code == 404:
-                self.log_test(
-                    "DELETE endpoint error handling", 
-                    True, 
-                    f"Proper 404 error for non-existent collection: {delete_response.text}"
-                )
-                return True
-                
-            elif delete_response.status_code == 401:
-                self.log_test(
-                    "DELETE endpoint authentication", 
-                    True, 
-                    f"Proper authentication required: {delete_response.text}"
-                )
-                return False  # This is actually a problem if we're authenticated
-                
             else:
                 self.log_test(
-                    "DELETE endpoint", 
+                    "Contribution Detail Access", 
                     False, 
-                    f"Unexpected status code {delete_response.status_code}: {delete_response.text}"
+                    f"Failed to get contributions list: {response.status_code}"
                 )
                 return False
                 
         except Exception as e:
-            self.log_test("DELETE endpoint", False, f"Exception during delete test: {str(e)}")
+            self.log_test("Contribution Detail Access", False, f"Exception: {str(e)}")
             return False
-    
-    def test_error_handling(self):
-        """Test 5: ERROR HANDLING - Test various error scenarios"""
-        print("\n⚠️ TESTING ERROR HANDLING")
-        print("=" * 60)
-        
-        error_tests = []
-        
-        # Test 1: Invalid user ID
-        try:
-            response = self.session.get(f"{BACKEND_URL}/users/invalid-user-id/reference-kit-collections/owned")
-            error_tests.append({
-                'test': 'Invalid User ID',
-                'expected_status': [400, 404, 422],
-                'actual_status': response.status_code,
-                'success': response.status_code in [400, 404, 422]
-            })
-        except Exception as e:
-            error_tests.append({
-                'test': 'Invalid User ID',
-                'success': False,
-                'error': str(e)
-            })
-        
-        # Test 2: Unauthenticated request
-        try:
-            unauthenticated_session = requests.Session()
-            response = unauthenticated_session.get(f"{BACKEND_URL}/users/{self.admin_user_id}/reference-kit-collections/owned")
-            error_tests.append({
-                'test': 'Unauthenticated Request',
-                'expected_status': [401],
-                'actual_status': response.status_code,
-                'success': response.status_code == 401
-            })
-        except Exception as e:
-            error_tests.append({
-                'test': 'Unauthenticated Request',
-                'success': False,
-                'error': str(e)
-            })
-        
-        # Test 3: Invalid collection ID for DELETE
-        try:
-            response = self.session.delete(f"{BACKEND_URL}/reference-kit-collections/invalid-collection-id")
-            error_tests.append({
-                'test': 'Invalid Collection ID DELETE',
-                'expected_status': [400, 404, 422],
-                'actual_status': response.status_code,
-                'success': response.status_code in [400, 404, 422]
-            })
-        except Exception as e:
-            error_tests.append({
-                'test': 'Invalid Collection ID DELETE',
-                'success': False,
-                'error': str(e)
-            })
-        
-        # Log results
-        successful_error_tests = 0
-        for test in error_tests:
-            if test['success']:
-                successful_error_tests += 1
-                self.log_test(
-                    f"Error Handling - {test['test']}", 
-                    True, 
-                    f"Proper error response: {test.get('actual_status', 'N/A')}"
-                )
-            else:
-                self.log_test(
-                    f"Error Handling - {test['test']}", 
-                    False, 
-                    f"Unexpected response: {test.get('actual_status', test.get('error', 'Unknown'))}"
-                )
-        
-        overall_success = successful_error_tests >= 2  # At least 2 out of 3 error tests should pass
-        
-        self.log_test(
-            "Error Handling Overall", 
-            overall_success, 
-            f"Passed {successful_error_tests}/{len(error_tests)} error handling tests"
-        )
-        
-        return overall_success
-    
+
     def run_all_tests(self):
-        """Run all reference kit collection tests"""
-        print("🚀 STARTING REFERENCE KIT COLLECTION FUNCTIONALITY TESTING")
-        print("=" * 80)
-        print(f"Backend URL: {BACKEND_URL}")
-        print(f"Admin Email: {ADMIN_EMAIL}")
-        print(f"Test Time: {datetime.now().isoformat()}")
+        """Run all moderation dashboard tests"""
+        print("🚀 STARTING ENHANCED MODERATION DASHBOARD BACKEND TESTS")
         print("=" * 80)
         
-        # Test 1: Authentication
+        # Test 1: Admin Authentication
         if not self.authenticate_admin():
-            print("\n❌ CRITICAL: Authentication failed. Cannot proceed with other tests.")
+            print("\n❌ CRITICAL: Admin authentication failed. Cannot proceed with other tests.")
             return False
         
-        # Test 2: Collection Retrieval
-        endpoint_results, collections = self.test_collection_retrieval_endpoints()
+        # Test 2: Moderation Stats
+        self.test_moderation_stats()
         
-        # Test 3: Data Enrichment
-        enrichment_results = self.test_data_enrichment(collections)
+        # Test 3: Contributions Pagination
+        self.test_contributions_pagination()
         
-        # Test 4: Delete Endpoint (only if we have collections)
-        if collections:
-            delete_success = self.test_delete_endpoint(collections)
-        else:
-            self.log_test("Delete Endpoint", False, "No collections available for delete testing")
-            delete_success = False
+        # Test 4: Status-based Filtering
+        self.test_status_filtering()
         
-        # Test 5: Error Handling
-        error_handling_success = self.test_error_handling()
+        # Test 5: Contribution Detail Access
+        self.test_contribution_detail_access()
         
-        # Generate final report
-        self.generate_final_report()
+        # Test 6: Moderation Actions
+        self.test_moderation_actions()
+        
+        # Test 7: Admin Access Control
+        self.test_admin_access_control()
+        
+        # Print summary
+        self.print_test_summary()
         
         return True
-    
-    def generate_final_report(self):
-        """Generate final test report"""
+
+    def print_test_summary(self):
+        """Print comprehensive test summary"""
         print("\n" + "=" * 80)
-        print("📋 FINAL TEST REPORT - REFERENCE KIT COLLECTION FUNCTIONALITY")
+        print("📊 ENHANCED MODERATION DASHBOARD TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result['success'])
-        success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
+        failed_tests = total_tests - passed_tests
+        
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
         print(f"Total Tests: {total_tests}")
-        print(f"Passed Tests: {passed_tests}")
-        print(f"Failed Tests: {total_tests - passed_tests}")
+        print(f"Passed: {passed_tests} ✅")
+        print(f"Failed: {failed_tests} ❌")
         print(f"Success Rate: {success_rate:.1f}%")
         
-        print("\n📊 DETAILED RESULTS:")
-        print("-" * 80)
+        if failed_tests > 0:
+            print(f"\n❌ FAILED TESTS:")
+            for result in self.test_results:
+                if not result['success']:
+                    print(f"   • {result['test']}: {result['details']}")
         
+        print(f"\n✅ PASSED TESTS:")
         for result in self.test_results:
-            status = "✅ PASS" if result['success'] else "❌ FAIL"
-            print(f"{status} - {result['test']}")
-            print(f"    Details: {result['details']}")
-            print(f"    Time: {result['timestamp']}")
-            print()
+            if result['success']:
+                print(f"   • {result['test']}: {result['details']}")
         
         # Overall assessment
-        if success_rate >= 80:
-            print("🎉 OVERALL ASSESSMENT: EXCELLENT - Reference Kit Collection functionality is working well!")
-        elif success_rate >= 60:
-            print("⚠️ OVERALL ASSESSMENT: GOOD - Reference Kit Collection functionality is mostly working with minor issues.")
-        elif success_rate >= 40:
-            print("🔧 OVERALL ASSESSMENT: NEEDS IMPROVEMENT - Reference Kit Collection functionality has significant issues.")
+        if success_rate >= 90:
+            print(f"\n🎉 EXCELLENT: Enhanced Moderation Dashboard backend is working excellently!")
+        elif success_rate >= 75:
+            print(f"\n✅ GOOD: Enhanced Moderation Dashboard backend is working well with minor issues.")
+        elif success_rate >= 50:
+            print(f"\n⚠️ MODERATE: Enhanced Moderation Dashboard backend has some issues that need attention.")
         else:
-            print("🚨 OVERALL ASSESSMENT: CRITICAL ISSUES - Reference Kit Collection functionality is severely broken.")
-        
-        print("=" * 80)
+            print(f"\n❌ CRITICAL: Enhanced Moderation Dashboard backend has significant issues requiring immediate attention.")
 
 def main():
-    """Main function to run the tests"""
-    tester = ReferenceKitCollectionTester()
+    """Main test execution"""
+    tester = ModerationDashboardTester()
     
     try:
         success = tester.run_all_tests()
         
         if success:
-            print("\n✅ Testing completed successfully!")
-            sys.exit(0)
+            print(f"\n🏁 TESTING COMPLETED")
         else:
-            print("\n❌ Testing failed!")
+            print(f"\n💥 TESTING FAILED - Critical authentication issue")
             sys.exit(1)
             
     except KeyboardInterrupt:
-        print("\n⚠️ Testing interrupted by user")
+        print(f"\n⏹️ Testing interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n🚨 Unexpected error during testing: {str(e)}")
+        print(f"\n💥 UNEXPECTED ERROR: {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
