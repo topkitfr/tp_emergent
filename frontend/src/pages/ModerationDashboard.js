@@ -178,6 +178,25 @@ const ModerationDashboard = ({ user, API }) => {
     }
   };
 
+  // Handle pagination
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  // Handle tab change
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Use cached data if available to remember contributions
+    if (contributionsCache[tabId] && contributionsCache[tabId].length > 0) {
+      setContributions(contributionsCache[tabId]);
+    }
+  };
+
   const StatCard = ({ title, value, icon: Icon, color, trend }) => (
     <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
       <div className="flex items-center justify-between">
