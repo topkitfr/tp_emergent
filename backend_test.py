@@ -1,24 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Backend Test for Reference Kit Collection Functionality
-Testing the fixes for reference kit collection endpoints as specified in review request.
+Enhanced Moderation Dashboard Backend Test
+Testing the enhanced moderation dashboard backend functionality with new features.
 
-Test Requirements:
-1. AUTHENTICATION TEST: Login with admin credentials: topkitfr@gmail.com / TopKitSecure789#
-2. COLLECTION RETRIEVAL TEST: 
-   - GET /api/users/{user_id}/reference-kit-collections/owned
-   - GET /api/users/{user_id}/reference-kit-collections/wanted  
-   - Verify these endpoints return existing collection data (should show 2 items from database)
-   - Check data enrichment with reference_kit_info, master_kit_info, team_info, brand_info
-3. DATA INHERITANCE VERIFICATION: 
-   - Verify returned collections show proper team names (not "unknown")
-   - Check that season, brand, and other master kit information is inherited correctly
-   - Confirm images from reference kits are included in the response
-4. NEW DELETE ENDPOINT TEST: 
-   - Test the newly created DELETE /api/reference-kit-collections/{collection_id} endpoint
-   - Use one of the existing collection IDs from the database
-   - Verify proper error handling and successful deletion
+Test Requirements from Review Request:
+1. **Contributions API with Pagination**: Test the `/api/contributions-v2/` endpoint with different status filters (pending_review, approved, rejected) and pagination parameters (page, limit)
+2. **Status-based Filtering**: Verify that the API correctly filters contributions by status for the new Approved and Rejected tabs
+3. **Moderation Actions**: Test the `/api/contributions-v2/{contribution_id}/moderate` endpoint to ensure approve/reject/restore actions work correctly 
+4. **Moderation Stats**: Test `/api/contributions-v2/admin/moderation-stats` to ensure stats are calculated correctly for all the different statuses
+5. **Admin Authentication**: Verify that admin authentication works properly for accessing moderation features
 """
 
 import requests
