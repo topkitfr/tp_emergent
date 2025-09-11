@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Eye, CheckCircle, XCircle, Clock, Users, FileText, 
   TrendingUp, AlertTriangle, Search, Filter, RefreshCw,
-  ThumbsUp, ThumbsDown, MessageSquare, Calendar, BarChart3
+  ThumbsUp, ThumbsDown, MessageSquare, Calendar, BarChart3,
+  Trash2, RotateCcw
 } from 'lucide-react';
 import AdvancedAnalytics from '../components/AdvancedAnalytics';
 import ActivityFeed from '../components/ActivityFeed';
 import FieldSpecificVoting from '../components/FieldSpecificVoting';
+import PaginationControls from '../PaginationControls';
 
 const ModerationDashboard = ({ user, API }) => {
   const [stats, setStats] = useState({
