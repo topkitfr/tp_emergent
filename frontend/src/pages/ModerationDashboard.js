@@ -31,6 +31,19 @@ const ModerationDashboard = ({ user, API }) => {
     search: ''
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalContributions, setTotalContributions] = useState(0);
+
+  // Cache for contributions by tab to remember them
+  const [contributionsCache, setContributionsCache] = useState({
+    overview: [],
+    pending: [],
+    approved: [],
+    rejected: []
+  });
+
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchModerationData();
