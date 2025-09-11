@@ -48,7 +48,12 @@ const ModerationDashboard = ({ user, API }) => {
     if (user?.role === 'admin') {
       fetchModerationData();
     }
-  }, [user]);
+  }, [user, activeTab, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    // Reset page when changing tabs
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const fetchModerationData = async () => {
     try {
@@ -66,22 +71,81 @@ const ModerationDashboard = ({ user, API }) => {
         setStats(statsData);
       }
 
-      // Fetch pending contributions
-      const contribResponse = await fetch(`${API}/api/contributions-v2/?status=pending_review&limit=50`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (contribResponse.ok) {
-        const contribData = await contribResponse.json();
-        setContributions(contribData);
-      }
+      // Fetch contributions based on active tab with pagination
+      await fetchContributionsByTab(activeTab);
       
     } catch (error) {
       console.error('Error fetching moderation data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchContributionsByTab = async (tab) => {
+    try {
+      let status = '';
+      let limit = itemsPerPage;
+      
+      // Determine status based on tab
+      switch (tab) {
+        case 'overview':
+          // For overview, get recent pending contributions
+          status = 'pending_review';
+          limit = 6; // Just show 6 recent ones in overview
+          break;
+        case 'pending':
+          status = 'pending_review';
+          break;
+        case 'approved':
+          status = 'approved';
+          break;
+        case 'rejected':
+          status = 'rejected';
+          break;
+        default:
+          status = 'pending_review';
+      }
+
+      const contribResponse = await fetch(
+        `${API}/api/contributions-v2/?status=${status}&page=${tab === 'overview' ? 1 : currentPage}&limit=${limit}`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      
+      if (contribResponse.ok) {
+        const contribData = await contribResponse.json();
+        
+        // Update contributions and cache
+        setContributions(contribData);
+        setContributionsCache(prev => ({
+          ...prev,
+          [tab]: contribData
+        }));
+
+        // For non-overview tabs, we need to get total count for pagination
+        if (tab !== 'overview') {
+          // Get total count by making another request with a high limit to count all
+          const countResponse = await fetch(
+            `${API}/api/contributions-v2/?status=${status}&page=1&limit=1000`, 
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          
+          if (countResponse.ok) {
+            const countData = await countResponse.json();
+            setTotalContributions(countData.length);
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
     }
   };
 
