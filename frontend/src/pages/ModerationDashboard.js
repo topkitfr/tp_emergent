@@ -346,12 +346,14 @@ const ModerationDashboard = ({ user, API }) => {
             {[
               { id: 'overview', label: 'Overview', icon: TrendingUp },
               { id: 'pending', label: 'Pending Review', icon: Clock },
+              { id: 'approved', label: 'Approved', icon: CheckCircle },
+              { id: 'rejected', label: 'Rejected', icon: XCircle },
               { id: 'analytics', label: 'Advanced Analytics', icon: BarChart3 },
               { id: 'activity', label: 'Live Activity', icon: Users }
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   activeTab === tab.id 
                     ? 'bg-white text-blue-600 shadow-sm' 
