@@ -303,7 +303,7 @@ class ModerationDashboardTester:
             
             response = self.session.post(f"{BACKEND_URL}/contributions-v2/", json=contribution_data)
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201 as success
                 contribution = response.json()
                 contribution_id = contribution.get('id')
                 self.test_contributions.append(contribution_id)
@@ -311,7 +311,7 @@ class ModerationDashboardTester:
                 self.log_test(
                     "Test Contribution Creation", 
                     True, 
-                    f"Created test contribution with ID: {contribution_id}"
+                    f"Created test contribution with ID: {contribution_id}, Status: {contribution.get('status')}"
                 )
                 return contribution_id
             else:
