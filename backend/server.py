@@ -943,6 +943,14 @@ async def get_contribution(
         if not contribution:
             raise HTTPException(status_code=404, detail="Contribution not found")
         
+        # Handle backward compatibility
+        if "description" not in contribution:
+            contribution["description"] = ""
+        if "data" not in contribution:
+            contribution["data"] = contribution.get("change_summary", {})
+        if "source_urls" not in contribution:
+            contribution["source_urls"] = []
+        
         return ContributionResponse(**contribution)
         
     except HTTPException:
