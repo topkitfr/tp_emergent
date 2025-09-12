@@ -10434,6 +10434,12 @@ async def get_teams(
         team_data.setdefault('common_names', [])
         team_data.setdefault('modification_count', 0)
         
+        # Fix null values for required fields
+        if team_data.get('name') is None:
+            team_data['name'] = 'Unknown Team'
+        if team_data.get('country') is None:
+            team_data['country'] = 'Unknown Country'
+        
         enriched_team = TeamResponse(
             **team_data,
             league_info=competition_info,  # Using existing field name for compatibility
