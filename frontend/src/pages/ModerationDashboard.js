@@ -68,7 +68,38 @@ const ModerationDashboard = ({ user, API }) => {
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
-        setStats(statsData);
+        // Ensure all expected properties exist with defaults
+        setStats({
+          pending: statsData.pending || 0,
+          approved: statsData.approved || 0,
+          rejected: statsData.rejected || 0,
+          total: statsData.total || 0,
+          pending_contributions: statsData.pending || 0,
+          approved_today: statsData.approved_today || 0,
+          rejected_today: statsData.rejected_today || 0,
+          total_votes_today: statsData.total_votes_today || 0,
+          auto_approved_today: statsData.auto_approved_today || 0,
+          auto_rejected_today: statsData.auto_rejected_today || 0,
+          contributions_by_type: statsData.contributions_by_type || {},
+          top_contributors: statsData.top_contributors || []
+        });
+      } else {
+        console.error('Failed to fetch moderation stats:', statsResponse.status);
+        // Set default stats on error
+        setStats({
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          total: 0,
+          pending_contributions: 0,
+          approved_today: 0,
+          rejected_today: 0,
+          total_votes_today: 0,
+          auto_approved_today: 0,
+          auto_rejected_today: 0,
+          contributions_by_type: {},
+          top_contributors: []
+        });
       }
 
       // Fetch contributions based on active tab with pagination
@@ -76,6 +107,21 @@ const ModerationDashboard = ({ user, API }) => {
       
     } catch (error) {
       console.error('Error fetching moderation data:', error);
+      // Set default stats on error
+      setStats({
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        total: 0,
+        pending_contributions: 0,
+        approved_today: 0,
+        rejected_today: 0,
+        total_votes_today: 0,
+        auto_approved_today: 0,
+        auto_rejected_today: 0,
+        contributions_by_type: {},
+        top_contributors: []
+      });
     } finally {
       setLoading(false);
     }
