@@ -207,7 +207,8 @@ const AppContent = () => {
     competitions,
     masterJerseys,
     onDataUpdate: loadCollaborativeData,
-    searchQuery
+    searchQuery,
+    setShowAuthModal
   };
 
   return (
