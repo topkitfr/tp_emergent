@@ -204,8 +204,19 @@ async def create_master_kit(
                 logger.warning(f"Failed to create contribution entry for Master Kit: {str(contrib_error)}")
                 # Don't fail the Master Kit creation if contribution creation fails
             
+            # Get updated item with populated data
             created_kit = await db.master_kits.find_one({"id": master_kit.id})
-            return MasterKitResponse(**created_kit)
+            
+            # Populate related data for response
+            response_data = MasterKitResponse(
+                **created_kit,
+                club_name=club.get("name"),
+                competition_name=competition.get("competition_name"),
+                brand_name=brand.get("name"),
+                main_sponsor_name=main_sponsor.get("name") if main_sponsor else None
+            )
+            
+            return response_data
         else:
             raise HTTPException(status_code=500, detail="Error creating Master Kit")
             
