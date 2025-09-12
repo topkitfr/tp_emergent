@@ -822,6 +822,281 @@ async def cleanup_database(admin_user: dict = Depends(get_admin_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ================================
+# CONTRIBUTION SYSTEM ENDPOINTS
+# ================================
+
+class ContributionCreate(BaseModel):
+    entity_type: str
+    title: str
+    description: str = ""
+    data: dict
+    source_urls: List[str] = []
+
+class ContributionResponse(BaseModel):
+    id: str
+    entity_type: str
+    title: str
+    description: str
+    data: dict
+    status: str = "pending_review"
+    upvotes: int = 0
+    downvotes: int = 0
+    images_count: int = 0
+    created_at: datetime
+    topkit_reference: Optional[str] = None
+    source_urls: List[str] = []
+
+@app.post("/api/contributions-v2/", response_model=ContributionResponse)
+async def create_contribution(
+    contribution_data: ContributionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new contribution"""
+    try:
+        # Generate contribution
+        contribution = {
+            "id": str(uuid.uuid4()),
+            "entity_type": contribution_data.entity_type,
+            "title": contribution_data.title,
+            "description": contribution_data.description,
+            "data": contribution_data.data,
+            "status": "pending_review",
+            "created_at": datetime.utcnow(),
+            "created_by": current_user["id"],
+            "upvotes": 0,
+            "downvotes": 0,
+            "images_count": 0,
+            "source_urls": contribution_data.source_urls,
+            "topkit_reference": f"TK-CONTRIB-{uuid.uuid4().hex[:6].upper()}"
+        }
+        
+        # Insert into database
+        result = await db.contributions.insert_one(contribution)
+        
+        if result.inserted_id:
+            return ContributionResponse(**contribution)
+        else:
+            raise HTTPException(status_code=500, detail="Error creating contribution")
+            
+    except Exception as e:
+        logger.error(f"Error creating contribution: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/contributions-v2/", response_model=List[ContributionResponse])
+async def get_contributions(
+    status: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, le=100),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get contributions with filtering"""
+    try:
+        # Build filter query
+        filter_query = {}
+        if status:
+            filter_query["status"] = status
+        if entity_type:
+            filter_query["entity_type"] = entity_type
+        
+        # Calculate skip
+        skip = (page - 1) * limit
+        
+        # Query database
+        cursor = db.contributions.find(filter_query).skip(skip).limit(limit).sort("created_at", -1)
+        contributions = await cursor.to_list(length=None)
+        
+        return [ContributionResponse(**contrib) for contrib in contributions]
+        
+    except Exception as e:
+        logger.error(f"Error fetching contributions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/contributions-v2/{contribution_id}", response_model=ContributionResponse)
+async def get_contribution(
+    contribution_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get specific contribution by ID"""
+    try:
+        contribution = await db.contributions.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution not found")
+        
+        return ContributionResponse(**contribution)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching contribution {contribution_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class VoteRequest(BaseModel):
+    vote_type: str  # "upvote" or "downvote"
+    comment: str = ""
+    field_votes: dict = {}
+
+@app.post("/api/contributions-v2/{contribution_id}/vote")
+async def vote_on_contribution(
+    contribution_id: str,
+    vote_data: VoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Vote on a contribution"""
+    try:
+        contribution = await db.contributions.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution not found")
+        
+        # Update vote counts
+        if vote_data.vote_type == "upvote":
+            new_upvotes = contribution.get("upvotes", 0) + 1
+            await db.contributions.update_one(
+                {"id": contribution_id},
+                {"$set": {"upvotes": new_upvotes}}
+            )
+            
+            # Auto-approve if 3 upvotes
+            if new_upvotes >= 3:
+                await db.contributions.update_one(
+                    {"id": contribution_id},
+                    {"$set": {"status": "approved"}}
+                )
+                return {
+                    "message": "Vote recorded",
+                    "upvotes": new_upvotes,
+                    "downvotes": contribution.get("downvotes", 0),
+                    "status": "approved",
+                    "auto_approved": True
+                }
+        
+        elif vote_data.vote_type == "downvote":
+            new_downvotes = contribution.get("downvotes", 0) + 1
+            await db.contributions.update_one(
+                {"id": contribution_id},
+                {"$set": {"downvotes": new_downvotes}}
+            )
+            
+            # Auto-reject if 2 downvotes
+            if new_downvotes >= 2:
+                await db.contributions.update_one(
+                    {"id": contribution_id},
+                    {"$set": {"status": "rejected"}}
+                )
+                return {
+                    "message": "Vote recorded",
+                    "upvotes": contribution.get("upvotes", 0),
+                    "downvotes": new_downvotes,
+                    "status": "rejected",
+                    "auto_rejected": True
+                }
+        
+        # Get updated contribution
+        updated_contribution = await db.contributions.find_one({"id": contribution_id})
+        
+        return {
+            "message": "Vote recorded",
+            "upvotes": updated_contribution.get("upvotes", 0),
+            "downvotes": updated_contribution.get("downvotes", 0),
+            "status": updated_contribution.get("status", "pending_review")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error voting on contribution {contribution_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/contributions-v2/{contribution_id}/images")
+async def upload_contribution_image(
+    contribution_id: str,
+    file: UploadFile = File(...),
+    is_primary: str = Form("false"),
+    caption: str = Form(""),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload image for contribution"""
+    try:
+        # Verify contribution exists
+        contribution = await db.contributions.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution not found")
+        
+        # Save image
+        file_path = await save_uploaded_file(file, "contributions")
+        
+        # Update contribution with image info
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {"$inc": {"images_count": 1}}
+        )
+        
+        return {"file_url": file_path, "message": "Image uploaded successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading image for contribution {contribution_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/contributions-v2/admin/moderation-stats")
+async def get_moderation_stats(admin_user: dict = Depends(get_admin_user)):
+    """Get moderation statistics for admin"""
+    try:
+        total_pending = await db.contributions.count_documents({"status": "pending_review"})
+        total_approved = await db.contributions.count_documents({"status": "approved"})
+        total_rejected = await db.contributions.count_documents({"status": "rejected"})
+        
+        return {
+            "pending": total_pending,
+            "approved": total_approved,
+            "rejected": total_rejected,
+            "total": total_pending + total_approved + total_rejected
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching moderation stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ModerationAction(BaseModel):
+    action: str  # "approve" or "reject"
+    reason: str = ""
+
+@app.post("/api/contributions-v2/{contribution_id}/moderate")
+async def moderate_contribution(
+    contribution_id: str,
+    moderation_data: ModerationAction,
+    admin_user: dict = Depends(get_admin_user)
+):
+    """Moderate a contribution (admin only)"""
+    try:
+        contribution = await db.contributions.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution not found")
+        
+        new_status = "approved" if moderation_data.action == "approve" else "rejected"
+        
+        await db.contributions.update_one(
+            {"id": contribution_id},
+            {
+                "$set": {
+                    "status": new_status,
+                    "moderated_at": datetime.utcnow(),
+                    "moderated_by": admin_user["id"],
+                    "moderation_reason": moderation_data.reason
+                }
+            }
+        )
+        
+        return {"message": f"Contribution {moderation_data.action}d successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error moderating contribution {contribution_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # STATS ENDPOINT
 # ================================
 
