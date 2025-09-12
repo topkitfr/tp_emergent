@@ -46,8 +46,12 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     }
   };
 
-  // Filter collections based on search
+  // Filter collections based on active tab and search
   const filteredCollections = collections.filter((item) => {
+    // Filter by tab (owned/wanted)
+    const matchesTab = item.collection_type === activeTab;
+    
+    // Filter by search query
     if (searchQuery) {
       const masterKit = item.master_kit || {};
       
@@ -58,17 +62,20 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         masterKit.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         masterKit.topkit_reference?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchesSearch;
+      return matchesTab && matchesSearch;
     }
     
-    return true;
+    return matchesTab;
   });
 
   const collectionValue = useMemo(() => {
+    // Only calculate value for owned items
+    const ownedItems = collections.filter(c => c.collection_type === 'owned');
+    
     let totalValue = 0;
     let itemsWithValue = 0;
     
-    collections.forEach(item => {
+    ownedItems.forEach(item => {
       if (item.purchase_price) {
         totalValue += item.purchase_price;
         itemsWithValue++;
@@ -78,9 +85,18 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     return {
       total: Math.round(totalValue),
       average: itemsWithValue > 0 ? Math.round(totalValue / itemsWithValue) : 0,
-      count: collections.length,
+      count: ownedItems.length,
       itemsWithValue
     };
+  }, [collections]);
+
+  // Use useMemo to ensure reactive updates
+  const ownedCount = useMemo(() => {
+    return collections.filter(c => c.collection_type === 'owned').length;
+  }, [collections]);
+
+  const wantedCount = useMemo(() => {
+    return collections.filter(c => c.collection_type === 'wanted').length;
   }, [collections]);
 
   const handleEditItem = (item) => {
