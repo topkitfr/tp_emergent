@@ -913,7 +913,20 @@ async def get_contributions(
         cursor = db.contributions.find(filter_query).skip(skip).limit(limit).sort("created_at", -1)
         contributions = await cursor.to_list(length=None)
         
-        return [ContributionResponse(**contrib) for contrib in contributions]
+        # Convert contributions to handle both old and new formats
+        response_contributions = []
+        for contrib in contributions:
+            # Handle backward compatibility
+            if "description" not in contrib:
+                contrib["description"] = ""
+            if "data" not in contrib:
+                contrib["data"] = contrib.get("change_summary", {})
+            if "source_urls" not in contrib:
+                contrib["source_urls"] = []
+                
+            response_contributions.append(ContributionResponse(**contrib))
+        
+        return response_contributions
         
     except Exception as e:
         logger.error(f"Error fetching contributions: {str(e)}")
