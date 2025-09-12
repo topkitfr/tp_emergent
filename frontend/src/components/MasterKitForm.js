@@ -1,50 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, AlertCircle } from 'lucide-react';
+import { X, Upload, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
 const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
   const [formData, setFormData] = useState({
-    club: '',
+    club_id: '',
     season: '',
     kit_type: '',
-    competition: '',
+    competition_id: '',
     model: '',
-    brand: '',
+    brand_id: '',
+    main_sponsor_id: '',
     gender: '',
     primary_color: '',
     secondary_colors: [],
-    pattern_description: '',
-    main_sponsor: ''
+    pattern_description: ''
+  });
+  
+  const [formOptions, setFormOptions] = useState({
+    clubs: [],
+    competitions: [],
+    brands: []
   });
   
   const [frontPhoto, setFrontPhoto] = useState(null);
   const [frontPhotoPreview, setFrontPhotoPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [newSecondaryColor, setNewSecondaryColor] = useState('');
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       resetForm();
+      loadFormData();
     }
   }, [isOpen]);
 
   const resetForm = () => {
     setFormData({
-      club: '',
+      club_id: '',
       season: '',
       kit_type: '',
-      competition: '',
+      competition_id: '',
       model: '',
-      brand: '',
+      brand_id: '',
+      main_sponsor_id: '',
       gender: '',
       primary_color: '',
       secondary_colors: [],
-      pattern_description: '',
-      main_sponsor: ''
+      pattern_description: ''
     });
     setFrontPhoto(null);
     setFrontPhotoPreview(null);
     setErrors({});
+    setNewSecondaryColor('');
+  };
+
+  const loadFormData = async () => {
+    try {
+      const [clubsRes, competitionsRes, brandsRes] = await Promise.all([
+        fetch(`${API}/api/form-data/clubs`),
+        fetch(`${API}/api/form-data/competitions`),
+        fetch(`${API}/api/form-data/brands`)
+      ]);
+
+      if (clubsRes.ok && competitionsRes.ok && brandsRes.ok) {
+        const [clubs, competitions, brands] = await Promise.all([
+          clubsRes.json(),
+          competitionsRes.json(),
+          brandsRes.json()
+        ]);
+
+        setFormOptions({ clubs, competitions, brands });
+      }
+    } catch (error) {
+      console.error('Error loading form data:', error);
+    }
   };
 
   const handleInputChange = (key, value) => {
@@ -116,10 +147,9 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
   };
 
   const addSecondaryColor = () => {
-    const newColor = document.getElementById('new-secondary-color').value.trim();
-    if (newColor && !formData.secondary_colors.includes(newColor)) {
-      handleInputChange('secondary_colors', [...formData.secondary_colors, newColor]);
-      document.getElementById('new-secondary-color').value = '';
+    if (newSecondaryColor.trim() && !formData.secondary_colors.includes(newSecondaryColor.trim())) {
+      handleInputChange('secondary_colors', [...formData.secondary_colors, newSecondaryColor.trim()]);
+      setNewSecondaryColor('');
     }
   };
 
@@ -130,26 +160,32 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    // Required fields validation
+    // Required fields validation (fields with asterisk)
     const requiredFields = [
-      { key: 'club', label: 'Club' },
+      { key: 'club_id', label: 'Club' },
       { key: 'season', label: 'Season' },
       { key: 'kit_type', label: 'Type' },
-      { key: 'competition', label: 'Competition' },
+      { key: 'competition_id', label: 'Competition' },
       { key: 'model', label: 'Model' },
-      { key: 'brand', label: 'Brand' },
-      { key: 'gender', label: 'Gender' }
+      { key: 'brand_id', label: 'Brand' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'primary_color', label: 'Primary Color' }
     ];
 
     requiredFields.forEach(({ key, label }) => {
       if (!formData[key] || formData[key].trim() === '') {
-        newErrors[key] = `${label} is required`;
+        newErrors[key] = `${label} is required *`;
       }
     });
 
+    // Season format validation (YEAR-YEAR)
+    if (formData.season && !/^\d{4}-\d{4}$/.test(formData.season)) {
+      newErrors.season = 'Season must be in YEAR-YEAR format (e.g., 2024-2025)';
+    }
+
     // Front photo is required
     if (!frontPhoto) {
-      newErrors.front_photo = 'Front photo is required (minimum 800x600px)';
+      newErrors.front_photo = 'Front photo is required * (minimum 800x600px)';
     }
 
     setErrors(newErrors);
@@ -230,7 +266,7 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">
-            Create New Master Kit
+            Add a Kit
           </h2>
           <button
             onClick={onClose}
@@ -250,30 +286,35 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
                 <h3 className="font-semibold text-blue-900">Master Kit = Official Jersey Reference</h3>
                 <p className="text-sm text-blue-700 mt-1">
                   Create once per jersey design. Contains standard info shared by all users.
-                  All fields marked with * are required.
+                  Fields marked with * are required.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Club Field */}
+          {/* Club Field - Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Club <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.club}
-              onChange={(e) => handleInputChange('club', e.target.value)}
+            <select
+              value={formData.club_id}
+              onChange={(e) => handleInputChange('club_id', e.target.value)}
               className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
-                errors.club ? 'border-red-500' : 'border-gray-300'
+                errors.club_id ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="e.g., PSG, Manchester United, AC Milan"
-            />
-            {errors.club && <p className="text-red-500 text-xs mt-1">{errors.club}</p>}
+            >
+              <option value="">Select Club</option>
+              {formOptions.clubs.map(club => (
+                <option key={club.id} value={club.id}>
+                  {club.name} ({club.country})
+                </option>
+              ))}
+            </select>
+            {errors.club_id && <p className="text-red-500 text-xs mt-1">{errors.club_id}</p>}
           </div>
 
-          {/* Season Field */}
+          {/* Season Field - YEAR-YEAR format */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Season <span className="text-red-500">*</span>
@@ -285,12 +326,14 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
                 errors.season ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="e.g., 2024/2025, 2023-24"
+              placeholder="2024-2025"
+              pattern="\d{4}-\d{4}"
             />
+            <p className="text-xs text-gray-500 mt-1">Format: YEAR-YEAR (e.g., 2024-2025)</p>
             {errors.season && <p className="text-red-500 text-xs mt-1">{errors.season}</p>}
           </div>
 
-          {/* Type Field */}
+          {/* Type Field - Updated options */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Type <span className="text-red-500">*</span>
@@ -306,29 +349,36 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               <option value="home">Home</option>
               <option value="away">Away</option>
               <option value="third">Third</option>
-              <option value="training">Training</option>
+              <option value="fourth">Fourth</option>
+              <option value="gk">GK</option>
+              <option value="special">Special</option>
             </select>
             {errors.kit_type && <p className="text-red-500 text-xs mt-1">{errors.kit_type}</p>}
           </div>
 
-          {/* Competition Field */}
+          {/* Competition Field - Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Competition <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.competition}
-              onChange={(e) => handleInputChange('competition', e.target.value)}
+            <select
+              value={formData.competition_id}
+              onChange={(e) => handleInputChange('competition_id', e.target.value)}
               className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
-                errors.competition ? 'border-red-500' : 'border-gray-300'
+                errors.competition_id ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="e.g., Ligue 1, Champions League, Premier League"
-            />
-            {errors.competition && <p className="text-red-500 text-xs mt-1">{errors.competition}</p>}
+            >
+              <option value="">Select Competition</option>
+              {formOptions.competitions.map(comp => (
+                <option key={comp.id} value={comp.id}>
+                  {comp.name} ({comp.country})
+                </option>
+              ))}
+            </select>
+            {errors.competition_id && <p className="text-red-500 text-xs mt-1">{errors.competition_id}</p>}
           </div>
 
-          {/* Model Field */}
+          {/* Model Field - Updated options */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Model <span className="text-red-500">*</span>
@@ -343,29 +393,52 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               <option value="">Select Model</option>
               <option value="authentic">Authentic</option>
               <option value="replica">Replica</option>
-              <option value="player_issue">Player Issue</option>
             </select>
             {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
           </div>
 
-          {/* Brand Field */}
+          {/* Brand Field - Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Brand <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.brand}
-              onChange={(e) => handleInputChange('brand', e.target.value)}
+            <select
+              value={formData.brand_id}
+              onChange={(e) => handleInputChange('brand_id', e.target.value)}
               className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
-                errors.brand ? 'border-red-500' : 'border-gray-300'
+                errors.brand_id ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="e.g., Nike, Adidas, Puma"
-            />
-            {errors.brand && <p className="text-red-500 text-xs mt-1">{errors.brand}</p>}
+            >
+              <option value="">Select Brand</option>
+              {formOptions.brands.map(brand => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name} ({brand.country})
+                </option>
+              ))}
+            </select>
+            {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
           </div>
 
-          {/* Gender Field */}
+          {/* Main Sponsor Field - Dropdown (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Main Sponsor
+            </label>
+            <select
+              value={formData.main_sponsor_id}
+              onChange={(e) => handleInputChange('main_sponsor_id', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No Sponsor</option>
+              {formOptions.brands.map(brand => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name} ({brand.country})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Gender Field - Updated options */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Gender <span className="text-red-500">*</span>
@@ -378,15 +451,78 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               }`}
             >
               <option value="">Select Gender</option>
-              <option value="men">Men</option>
-              <option value="women">Women</option>
-              <option value="youth">Youth</option>
-              <option value="unisex">Unisex</option>
+              <option value="man">Man</option>
+              <option value="woman">Woman</option>
+              <option value="child">Child</option>
             </select>
             {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
           </div>
 
-          {/* Front Photo Upload */}
+          {/* Primary Color Field - Required */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Primary Color <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.primary_color}
+              onChange={(e) => handleInputChange('primary_color', e.target.value)}
+              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
+                errors.primary_color ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="e.g., Navy Blue, Red, White"
+            />
+            {errors.primary_color && <p className="text-red-500 text-xs mt-1">{errors.primary_color}</p>}
+          </div>
+
+          {/* Secondary Colors with + button */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Secondary Colors
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.secondary_colors.map((color, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {color}
+                  <button
+                    type="button"
+                    onClick={() => removeSecondaryColor(color)}
+                    className="ml-1 text-blue-600 hover:text-blue-800"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newSecondaryColor}
+                onChange={(e) => setNewSecondaryColor(e.target.value)}
+                placeholder="Add secondary color"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSecondaryColor();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addSecondaryColor}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-1"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Front Photo Upload - Required */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Front Photo <span className="text-red-500">*</span>
@@ -437,96 +573,18 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
             {errors.front_photo && <p className="text-red-500 text-xs mt-1">{errors.front_photo}</p>}
           </div>
 
-          {/* Optional Fields Section */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Optional Details</h3>
-            
-            {/* Primary Color */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Primary Color
-              </label>
-              <input
-                type="text"
-                value={formData.primary_color}
-                onChange={(e) => handleInputChange('primary_color', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Navy Blue, Red, White"
-              />
-            </div>
-
-            {/* Secondary Colors */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Secondary Colors
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {formData.secondary_colors.map((color, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {color}
-                    <button
-                      type="button"
-                      onClick={() => removeSecondaryColor(color)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  id="new-secondary-color"
-                  type="text"
-                  placeholder="Add secondary color"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addSecondaryColor();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={addSecondaryColor}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            {/* Pattern Description */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Pattern Description
-              </label>
-              <textarea
-                value={formData.pattern_description}
-                onChange={(e) => handleInputChange('pattern_description', e.target.value)}
-                rows="2"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe any patterns, designs, or special elements"
-              />
-            </div>
-
-            {/* Main Sponsor */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Main Sponsor
-              </label>
-              <input
-                type="text"
-                value={formData.main_sponsor}
-                onChange={(e) => handleInputChange('main_sponsor', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Qatar Airways, Emirates, Jeep"
-              />
-            </div>
+          {/* Pattern Description - Optional */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Pattern Description
+            </label>
+            <textarea
+              value={formData.pattern_description}
+              onChange={(e) => handleInputChange('pattern_description', e.target.value)}
+              rows="2"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe any patterns, designs, or special elements"
+            />
           </div>
 
           {/* Submit Buttons */}
@@ -544,7 +602,7 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               disabled={isSubmitting}
               className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Creating...' : 'Create Master Kit'}
+              {isSubmitting ? 'Creating...' : 'Add Kit'}
             </button>
           </div>
         </form>
