@@ -154,6 +154,36 @@ async def create_master_kit(
         result = await db.master_kits.insert_one(master_kit.dict())
         
         if result.inserted_id:
+            # Create a contribution entry for the Master Kit creation
+            try:
+                contribution_data = {
+                    "id": str(uuid.uuid4()),
+                    "title": f"New Master Kit: {master_kit.club} {master_kit.season} {master_kit.kit_type}",
+                    "entity_type": "master_kit",
+                    "entity_id": master_kit.id,
+                    "status": "approved",  # Auto-approve Master Kit creations
+                    "created_at": datetime.utcnow(),
+                    "created_by": current_user["id"],
+                    "upvotes": 0,
+                    "downvotes": 0,
+                    "images_count": 1 if master_kit.front_photo_url else 0,
+                    "topkit_reference": master_kit.topkit_reference,
+                    "change_summary": {
+                        "club": master_kit.club,
+                        "season": master_kit.season,
+                        "kit_type": master_kit.kit_type,
+                        "brand": master_kit.brand,
+                        "competition": master_kit.competition
+                    }
+                }
+                
+                await db.contributions.insert_one(contribution_data)
+                logger.info(f"Created contribution entry for Master Kit: {master_kit.topkit_reference}")
+                
+            except Exception as contrib_error:
+                logger.warning(f"Failed to create contribution entry for Master Kit: {str(contrib_error)}")
+                # Don't fail the Master Kit creation if contribution creation fails
+            
             created_kit = await db.master_kits.find_one({"id": master_kit.id})
             return MasterKitResponse(**created_kit)
         else:
