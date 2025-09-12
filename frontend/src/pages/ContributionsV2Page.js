@@ -237,9 +237,7 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
               { type: 'team', label: '⚽ Team', color: 'bg-green-50 text-green-700 hover:bg-green-100' },
               { type: 'brand', label: '👕 Brand', color: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
               { type: 'player', label: '👤 Player', color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
-              { type: 'competition', label: '🏆 Competition', color: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
-              { type: 'master_kit', label: '👕 Master Kit', color: 'bg-red-50 text-red-700 hover:bg-red-100' },
-              { type: 'reference_kit', label: '📦 Reference Kit', color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' }
+              { type: 'competition', label: '🏆 Competition', color: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' }
             ].map(({ type, label, color }) => (
               <button
                 key={type}
