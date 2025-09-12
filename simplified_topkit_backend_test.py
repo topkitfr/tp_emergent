@@ -1022,7 +1022,7 @@ class SimplifiedTopKitTester:
             collection_data = {
                 "master_kit_id": master_kit_id,
                 "size": "M",
-                "condition": "good",
+                "condition": "other",
                 "purchase_price": 100.00,
                 "personal_notes": "First addition to test duplicates"
             }
