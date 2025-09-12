@@ -1,99 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Grid, List, ChevronDown } from 'lucide-react';
+import { Search, Filter, Grid, List, ChevronDown, Plus } from 'lucide-react';
+import MasterKitForm from '../components/MasterKitForm';
+import PersonalDetailsForm from '../components/PersonalDetailsForm';
 
 const KitAreaPage = () => {
-  const [masterJerseys, setMasterJerseys] = useState([]);
+  const [masterKits, setMasterKits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState('grid');
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Filter states
   const [filters, setFilters] = useState({
-    team_id: '',
-    brand_id: '',
+    club: '',
+    brand: '',
     season: '',
-    jersey_type: ''
+    kit_type: ''
   });
   
+  // Modal states
+  const [showMasterKitForm, setShowMasterKitForm] = useState(false);
+  const [showPersonalDetailsForm, setShowPersonalDetailsForm] = useState(false);
+  const [selectedMasterKit, setSelectedMasterKit] = useState(null);
+  
   // Filter options
-  const [teams, setTeams] = useState([]);
   const [brands, setBrands] = useState([]);
   const [seasons, setSeasons] = useState([]);
   
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchFilterOptions();
-    fetchMasterJerseys();
+    fetchMasterKits();
   }, []);
 
   useEffect(() => {
-    fetchMasterJerseys();
-  }, [filters, currentPage, itemsPerPage]);
+    fetchMasterKits();
+  }, [filters, currentPage, itemsPerPage, searchQuery]);
 
-  const fetchFilterOptions = async () => {
-    try {
-      const [teamsRes, brandsRes] = await Promise.all([
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/teams`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }),
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/brands`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        })
-      ]);
-
-      if (teamsRes.ok) {
-        const teamsData = await teamsRes.json();
-        setTeams(teamsData);
-      }
-
-      if (brandsRes.ok) {
-        const brandsData = await brandsRes.json();
-        setBrands(brandsData);
-      }
-    } catch (error) {
-      console.error('Error fetching filter options:', error);
-    }
-  };
-
-  const fetchMasterJerseys = async () => {
+  const fetchMasterKits = async () => {
     try {
       setLoading(true);
       
       const params = new URLSearchParams();
-      if (filters.team_id) params.append('team_id', filters.team_id);
-      if (filters.brand_id) params.append('brand_id', filters.brand_id);
+      if (filters.club) params.append('club', filters.club);
+      if (filters.brand) params.append('brand', filters.brand);
       if (filters.season) params.append('season', filters.season);
-      if (filters.jersey_type) params.append('jersey_type', filters.jersey_type);
+      if (filters.kit_type) params.append('kit_type', filters.kit_type);
+      if (searchQuery) params.append('q', searchQuery);
       params.append('limit', itemsPerPage);
+      params.append('skip', (currentPage - 1) * itemsPerPage);
 
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/master-jerseys?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const endpoint = searchQuery 
+        ? `${process.env.REACT_APP_BACKEND_URL}/api/master-kits/search?${params}`
+        : `${process.env.REACT_APP_BACKEND_URL}/api/master-kits?${params}`;
+
+      const response = await fetch(endpoint);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch master jerseys');
+        throw new Error('Failed to fetch master kits');
       }
 
       const data = await response.json();
-      setMasterJerseys(data);
+      setMasterKits(data);
       
-      // Extract unique seasons for filter
-      const uniqueSeasons = [...new Set(data.map(jersey => jersey.season))].filter(Boolean);
+      // Extract unique brands and seasons for filters
+      const uniqueBrands = [...new Set(data.map(kit => kit.brand))].filter(Boolean);
+      const uniqueSeasons = [...new Set(data.map(kit => kit.season))].filter(Boolean);
+      setBrands(uniqueBrands);
       setSeasons(uniqueSeasons);
       
     } catch (error) {
-      console.error('Error fetching master jerseys:', error);
-      setError('Failed to load master jerseys');
+      console.error('Error fetching master kits:', error);
+      setError('Failed to load master kits');
     } finally {
       setLoading(false);
     }
@@ -109,101 +90,137 @@ const KitAreaPage = () => {
 
   const clearFilters = () => {
     setFilters({
-      team_id: '',
-      brand_id: '',
+      club: '',
+      brand: '',
       season: '',
-      jersey_type: ''
+      kit_type: ''
     });
+    setSearchQuery('');
   };
 
-  const handleMasterJerseyClick = (jerseyId) => {
-    navigate(`/kit-area/master/${jerseyId}`);
+  const handleMasterKitClick = (kitId) => {
+    navigate(`/kit-area/master/${kitId}`);
   };
 
-  const renderMasterJerseyCard = (jersey) => {
-    const teamName = jersey.team_info?.name || 'Unknown Team';
-    const brandName = jersey.brand_info?.name || 'Unknown Brand';
-    
+  const handleAddToCollection = (masterKit) => {
+    setSelectedMasterKit(masterKit);
+    setShowPersonalDetailsForm(true);
+  };
+
+  const handleMasterKitCreated = (newMasterKit) => {
+    // Refresh the list
+    fetchMasterKits();
+    // Optionally, show the personal details form for the newly created kit
+    setSelectedMasterKit(newMasterKit);
+    setShowPersonalDetailsForm(true);
+  };
+
+  const handleAddedToCollection = () => {
+    // Refresh the list to update collector counts
+    fetchMasterKits();
+  };
+
+  const renderMasterKitCard = (kit) => {
     return (
       <div 
-        key={jersey.id}
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-        onClick={() => handleMasterJerseyClick(jersey.id)}
+        key={kit.id}
+        className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
       >
-        <div className="aspect-w-16 aspect-h-12 bg-gray-100">
-          {jersey.main_image_url ? (
-            <img
-              src={jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
-              alt={`${teamName} ${jersey.season} ${jersey.jersey_type}`}
-              className="w-full h-48 object-cover"
-            />
-          ) : (
-            <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-              <span className="text-4xl">👕</span>
+        <div 
+          className="cursor-pointer"
+          onClick={() => handleMasterKitClick(kit.id)}
+        >
+          <div className="aspect-w-16 aspect-h-12 bg-gray-100">
+            {kit.front_photo_url ? (
+              <img
+                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/${kit.front_photo_url}`}
+                alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
+                className="w-full h-48 object-cover"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                <span className="text-4xl">👕</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4">
+            <h3 className="font-medium text-gray-900 text-sm mb-1">
+              {kit.club}
+            </h3>
+            <p className="text-xs text-gray-600 mb-2">
+              {kit.season} • {kit.kit_type?.charAt(0).toUpperCase() + kit.kit_type?.slice(1)}
+            </p>
+            <p className="text-xs text-gray-500 mb-2">
+              {kit.brand} • {kit.model?.charAt(0).toUpperCase() + kit.model?.slice(1)}
+            </p>
+            <div className="flex justify-between items-center text-xs text-gray-500">
+              <span>{kit.competition}</span>
+              <span>{kit.total_collectors || 0} collectors</span>
             </div>
-          )}
+          </div>
         </div>
         
-        <div className="p-4">
-          <h3 className="font-medium text-gray-900 text-sm mb-1">
-            {teamName}
-          </h3>
-          <p className="text-xs text-gray-600 mb-2">
-            {jersey.season} • {jersey.jersey_type?.charAt(0).toUpperCase() + jersey.jersey_type?.slice(1)}
-          </p>
-          <p className="text-xs text-gray-500 mb-2">
-            {brandName} • {jersey.model?.charAt(0).toUpperCase() + jersey.model?.slice(1)}
-          </p>
-          <div className="flex justify-between items-center text-xs text-gray-500">
-            <span>{jersey.releases_count || 0} versions</span>
-            <span>{jersey.collectors_count || 0} collectors</span>
-          </div>
+        {/* Add to Collection Button */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCollection(kit);
+            }}
+            className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Add to My Collection
+          </button>
         </div>
       </div>
     );
   };
 
-  const renderMasterJerseyList = (jersey) => {
-    const teamName = jersey.team_info?.name || 'Unknown Team';
-    const brandName = jersey.brand_info?.name || 'Unknown Brand';
-    
+  const renderMasterKitList = (kit) => {
     return (
       <div 
-        key={jersey.id}
-        className="bg-white border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer flex items-center space-x-4"
-        onClick={() => handleMasterJerseyClick(jersey.id)}
+        key={kit.id}
+        className="bg-white border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors flex items-center space-x-4"
       >
-        <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0">
-          {jersey.main_image_url ? (
-            <img
-              src={jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
-              alt={`${teamName} ${jersey.season} ${jersey.jersey_type}`}
-              className="w-16 h-16 object-cover rounded-lg"
-            />
-          ) : (
-            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">👕</span>
+        <div 
+          className="cursor-pointer flex items-center space-x-4 flex-1"
+          onClick={() => handleMasterKitClick(kit.id)}
+        >
+          <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0">
+            {kit.front_photo_url ? (
+              <img
+                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/${kit.front_photo_url}`}
+                alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-xl">👕</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">
+              {kit.club} - {kit.season} - {kit.kit_type?.charAt(0).toUpperCase() + kit.kit_type?.slice(1)}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {kit.brand} • {kit.model?.charAt(0).toUpperCase() + kit.model?.slice(1)} • {kit.competition}
+            </p>
+            <div className="flex space-x-4 text-xs text-gray-500 mt-1">
+              <span>{kit.total_collectors || 0} collectors</span>
+              <span>#{kit.topkit_reference}</span>
             </div>
-          )}
-        </div>
-        
-        <div className="flex-1">
-          <h3 className="font-medium text-gray-900">
-            {teamName} - {jersey.season} - {jersey.jersey_type?.charAt(0).toUpperCase() + jersey.jersey_type?.slice(1)}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {brandName} • {jersey.model?.charAt(0).toUpperCase() + jersey.model?.slice(1)}
-          </p>
-          <div className="flex space-x-4 text-xs text-gray-500 mt-1">
-            <span>{jersey.releases_count || 0} versions</span>
-            <span>{jersey.collectors_count || 0} collectors</span>
           </div>
         </div>
         
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-900">{jersey.topkit_reference}</p>
-          <p className="text-xs text-gray-500">Master Jersey</p>
-        </div>
+        <button
+          onClick={() => handleAddToCollection(kit)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          Add to Collection
+        </button>
       </div>
     );
   };
@@ -235,6 +252,13 @@ const KitAreaPage = () => {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Kit Area</h1>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowMasterKitForm(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Master Kit</span>
+              </button>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">View:</span>
                 <button
@@ -253,32 +277,43 @@ const KitAreaPage = () => {
             </div>
           </div>
 
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search master kits by club, season, brand, competition..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-              <select
-                value={filters.team_id}
-                onChange={(e) => handleFilterChange('team_id', e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Club</label>
+              <input
+                type="text"
+                value={filters.club}
+                onChange={(e) => handleFilterChange('club', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Teams</option>
-                {teams.map(team => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
-                ))}
-              </select>
+                placeholder="Filter by club"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
               <select
-                value={filters.brand_id}
-                onChange={(e) => handleFilterChange('brand_id', e.target.value)}
+                value={filters.brand}
+                onChange={(e) => handleFilterChange('brand', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Brands</option>
                 {brands.map(brand => (
-                  <option key={brand.id} value={brand.id}>{brand.name}</option>
+                  <option key={brand} value={brand}>{brand}</option>
                 ))}
               </select>
             </div>
@@ -300,17 +335,15 @@ const KitAreaPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
               <select
-                value={filters.jersey_type}
-                onChange={(e) => handleFilterChange('jersey_type', e.target.value)}
+                value={filters.kit_type}
+                onChange={(e) => handleFilterChange('kit_type', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Types</option>
                 <option value="home">Home</option>
                 <option value="away">Away</option>
                 <option value="third">Third</option>
-                <option value="fourth">Fourth</option>
-                <option value="goalkeeper">Goalkeeper</option>
-                <option value="special">Special</option>
+                <option value="training">Training</option>
               </select>
             </div>
 
@@ -327,7 +360,7 @@ const KitAreaPage = () => {
           {/* Results Summary */}
           <div className="flex justify-between items-center mb-4">
             <p className="text-sm text-gray-600">
-              {masterJerseys.length} master jerseys found
+              {masterKits.length} master kits found
             </p>
             <div className="flex items-center space-x-2">
               <label className="text-sm text-gray-600">Show:</label>
@@ -347,26 +380,57 @@ const KitAreaPage = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {masterJerseys.length === 0 ? (
+        {masterKits.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">👕</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No master jerseys found</h3>
-            <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No master kits found</h3>
+            <p className="text-gray-600 mb-4">
+              {searchQuery || Object.values(filters).some(f => f) 
+                ? "Try adjusting your search or filters to see more results."
+                : "No master kits have been created yet."
+              }
+            </p>
+            <button
+              onClick={() => setShowMasterKitForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
+            >
+              Create First Master Kit
+            </button>
           </div>
         ) : (
           <>
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {masterJerseys.map(renderMasterJerseyCard)}
+                {masterKits.map(renderMasterKitCard)}
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow overflow-hidden">
-                {masterJerseys.map(renderMasterJerseyList)}
+                {masterKits.map(renderMasterKitList)}
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Master Kit Form Modal */}
+      <MasterKitForm
+        isOpen={showMasterKitForm}
+        onClose={() => setShowMasterKitForm(false)}
+        onSuccess={handleMasterKitCreated}
+        API={process.env.REACT_APP_BACKEND_URL}
+      />
+
+      {/* Personal Details Form Modal */}
+      <PersonalDetailsForm
+        isOpen={showPersonalDetailsForm}
+        onClose={() => {
+          setShowPersonalDetailsForm(false);
+          setSelectedMasterKit(null);
+        }}
+        onSuccess={handleAddedToCollection}
+        masterKit={selectedMasterKit}
+        API={process.env.REACT_APP_BACKEND_URL}
+      />
     </div>
   );
 };
