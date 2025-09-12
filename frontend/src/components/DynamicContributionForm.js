@@ -32,7 +32,8 @@ const DynamicContributionForm = ({
   };
 
   const requiresImages = (type) => {
-    return ['master_kit', 'reference_kit'].includes(type);
+    // No entity types require images anymore (Master Kit and Reference Kit removed)
+    return false;
   };
 
   const resetForm = () => {
