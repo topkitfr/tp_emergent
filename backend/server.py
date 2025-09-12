@@ -151,7 +151,7 @@ async def get_teams():
 async def get_brands():
     """Get brands - basic endpoint to avoid 404s"""
     try:
-        cursor = db.brands.find({})
+        cursor = db.brands.find({}, {"_id": 0})  # Exclude MongoDB _id field
         brands = await cursor.to_list(length=None)
         return brands
     except Exception as e:
@@ -162,7 +162,7 @@ async def get_brands():
 async def get_competitions():
     """Get competitions - basic endpoint to avoid 404s"""
     try:
-        cursor = db.competitions.find({})
+        cursor = db.competitions.find({}, {"_id": 0})  # Exclude MongoDB _id field
         competitions = await cursor.to_list(length=None)
         return competitions
     except Exception as e:
@@ -173,7 +173,7 @@ async def get_competitions():
 async def get_players():
     """Get players - basic endpoint to avoid 404s"""
     try:
-        cursor = db.players.find({})
+        cursor = db.players.find({}, {"_id": 0})  # Exclude MongoDB _id field
         players = await cursor.to_list(length=None)
         return players
     except Exception as e:
