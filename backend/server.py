@@ -140,7 +140,7 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "general") -> st
 async def get_teams():
     """Get teams - basic endpoint to avoid 404s"""
     try:
-        cursor = db.teams.find({})
+        cursor = db.teams.find({}, {"_id": 0})  # Exclude MongoDB _id field
         teams = await cursor.to_list(length=None)
         return teams
     except Exception as e:
