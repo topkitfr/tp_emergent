@@ -115,6 +115,7 @@ class MasterKitCreate(BaseModel):
     competition_id: str = Field(..., min_length=1, description="Competition ID is required")
     model: KitModel = Field(..., description="Model is required")
     brand_id: str = Field(..., min_length=1, description="Brand ID is required")
+    sku_code: Optional[str] = None  # Optional product SKU or catalog code
     main_sponsor_id: Optional[str] = None  # Optional sponsor
     gender: Gender = Field(..., description="Gender is required")
     primary_color: str = Field(..., min_length=1, description="Primary color is required")
