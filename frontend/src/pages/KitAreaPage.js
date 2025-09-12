@@ -126,8 +126,49 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     setShowPersonalDetailsForm(true);
   };
 
-  const handleAddToWantList = (masterKit) => {
-    handleAddToCollection(masterKit, 'wanted');
+  const handleAddToWantList = async (masterKit) => {
+    // Check if user is authenticated
+    if (!user) {
+      // Show authentication modal
+      if (setShowAuthModal) {
+        setShowAuthModal(true);
+        // Store the action to perform after login
+        localStorage.setItem('pendingAction', JSON.stringify({
+          action: 'addToWantList',
+          masterKit: masterKit
+        }));
+      } else {
+        alert('Please sign in to add kits to your want list');
+      }
+      return;
+    }
+
+    // Directly add to want list without form
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/my-collection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          master_kit_id: masterKit.id,
+          collection_type: 'wanted'
+        })
+      });
+
+      if (response.ok) {
+        alert('Kit added to your want list!');
+        // Refresh master kits to update any UI counters
+        fetchMasterKits();
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.detail || 'Failed to add to want list'}`);
+      }
+    } catch (error) {
+      console.error('Error adding to want list:', error);
+      alert('Error adding to want list');
+    }
   };
 
   const handleMasterKitCreated = (newMasterKit) => {
