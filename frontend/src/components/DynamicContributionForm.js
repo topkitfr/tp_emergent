@@ -395,8 +395,6 @@ const DynamicContributionForm = ({
               <option value="brand">Brand</option>
               <option value="player">Player</option>
               <option value="competition">Competition</option>
-              <option value="master_kit">Master Kit</option>
-              <option value="reference_kit">Reference Kit</option>
             </select>
           </div>
 
