@@ -472,9 +472,11 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         onClose={() => {
           setShowPersonalDetailsForm(false);
           setSelectedMasterKit(null);
+          setSelectedCollectionType('owned');
         }}
         onSuccess={handleAddedToCollection}
         masterKit={selectedMasterKit}
+        collectionType={selectedCollectionType}
         API={process.env.REACT_APP_BACKEND_URL}
       />
     </div>
