@@ -549,7 +549,7 @@ class SimplifiedTopKitTester:
             update_data = {
                 "personal_notes": "Updated notes: This kit is now even more special after PSG won the Champions League!",
                 "purchase_price": 135.00,
-                "condition": "very_good",
+                "condition": "training",
                 "for_sale": True,
                 "asking_price": 200.00
             }
