@@ -208,8 +208,12 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
           {/* Collection Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
             <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{collectionValue.count}</div>
-              <div className="text-sm text-blue-700">Total Kits</div>
+              <div className="text-2xl font-bold text-blue-600">{ownedCount}</div>
+              <div className="text-sm text-blue-700">Owned Kits</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">{wantedCount}</div>
+              <div className="text-sm text-red-700">Wanted Kits</div>
             </div>
             <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="text-2xl font-bold text-green-600">€{collectionValue.total}</div>
@@ -219,10 +223,51 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
               <div className="text-2xl font-bold text-purple-600">€{collectionValue.average}</div>
               <div className="text-sm text-purple-700">Average Value</div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{collectionValue.itemsWithValue}</div>
-              <div className="text-sm text-yellow-700">With Purchase Price</div>
-            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-30">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex space-x-0">
+            <button
+              onClick={() => setActiveTab('owned')}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                activeTab === 'owned'
+                  ? 'border-green-600 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span className="mr-2">💎</span>
+              Owned ({ownedCount})
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('wanted')}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                activeTab === 'wanted'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'  
+              }`}
+            >
+              <span className="mr-2">❤️</span>
+              Wanted ({wantedCount})
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search in my collection..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </div>
