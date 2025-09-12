@@ -250,12 +250,23 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
           </div>
         </div>
         
-        <button
-          onClick={() => handleAddToCollection(kit)}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          Add to Collection
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleAddToCollection(kit, 'owned')}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+          >
+            <User className="w-4 h-4" />
+            <span>Own</span>
+          </button>
+          
+          <button
+            onClick={() => handleAddToWantList(kit)}
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+          >
+            <Heart className="w-4 h-4" />
+            <span>Want</span>
+          </button>
+        </div>
       </div>
     );
   };
