@@ -163,10 +163,6 @@ const DynamicContributionForm = ({
             return `New Player: ${formData.name || 'Unnamed Player'}`;
           case 'competition':
             return `New Competition: ${formData.competition_name || formData.name || 'Unnamed Competition'}`;
-          case 'master_kit':
-            return `New Master Kit: ${formData.season || 'Unknown Season'} ${formData.jersey_type || 'Kit'}`;
-          case 'reference_kit':
-            return `New Reference Kit: ${formData.model_name || 'Unknown Model'}`;
           default:
             return `New ${contributionType.replace('_', ' ')} Contribution`;
         }
