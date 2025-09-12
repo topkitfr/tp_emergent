@@ -38,18 +38,18 @@ class KitType(str, Enum):
     HOME = "home"
     AWAY = "away"
     THIRD = "third"
-    TRAINING = "training"
+    FOURTH = "fourth"
+    GK = "gk"
+    SPECIAL = "special"
 
 class KitModel(str, Enum):
     AUTHENTIC = "authentic"
     REPLICA = "replica"
-    PLAYER_ISSUE = "player_issue"
 
 class Gender(str, Enum):
-    MEN = "men"
-    WOMEN = "women"
-    YOUTH = "youth"
-    UNISEX = "unisex"
+    MAN = "man"
+    WOMAN = "woman"
+    CHILD = "child"
 
 class KitCondition(str, Enum):
     CLUB_STOCK = "club_stock"
