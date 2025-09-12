@@ -219,26 +219,42 @@ class MyCollectionUpdate(BaseModel):
 class MasterKitResponse(BaseModel):
     """Response model for Master Kit with all info and populated references"""
     id: str
-    club_id: str
+    
+    # Backward compatibility: Support both old (club/competition/brand as strings) and new (IDs) formats
+    club_id: Optional[str] = None  # New format
+    club: Optional[str] = None  # Old format - for backward compatibility
     club_name: Optional[str] = None  # Populated from club
+    
     season: str
     kit_type: KitType
-    competition_id: str
+    
+    competition_id: Optional[str] = None  # New format
+    competition: Optional[str] = None  # Old format - for backward compatibility
     competition_name: Optional[str] = None  # Populated from competition
+    
     model: KitModel
-    brand_id: str
+    
+    brand_id: Optional[str] = None  # New format
+    brand: Optional[str] = None  # Old format - for backward compatibility
     brand_name: Optional[str] = None  # Populated from brand
+    
     main_sponsor_id: Optional[str] = None
+    main_sponsor: Optional[str] = None  # Old format - for backward compatibility
     main_sponsor_name: Optional[str] = None  # Populated from sponsor
-    gender: Gender
-    primary_color: str
-    secondary_colors: List[str]
-    front_photo_url: Optional[str]
-    pattern_description: Optional[str]
+    
+    gender: Union[Gender, str]  # Allow old enum values for backward compatibility
+    primary_color: Optional[str] = None  # Made optional for backward compatibility
+    secondary_colors: List[str] = []
+    front_photo_url: Optional[str] = None
+    pattern_description: Optional[str] = None
     created_at: datetime
     verified_level: VerificationLevel
     topkit_reference: str
     total_collectors: int
+    
+    class Config:
+        # Allow population by field name or alias
+        allow_population_by_field_name = True
 
 class MyCollectionResponse(BaseModel):
     """Response model for My Collection item (Master Kit + Personal Details)"""
