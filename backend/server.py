@@ -370,7 +370,7 @@ async def search_master_kits(
     q: str = Query(..., min_length=2, description="Search query"),
     limit: int = Query(20, le=50)
 ):
-    """Search Master Kits by club, season, brand, etc."""
+    """Search Master Kits by club, season, brand, etc. - backward compatible"""
     try:
         # Build search query
         search_query = {
@@ -386,7 +386,37 @@ async def search_master_kits(
         cursor = db.master_kits.find(search_query).limit(limit)
         master_kits = await cursor.to_list(length=None)
         
-        return [MasterKitResponse(**kit) for kit in master_kits]
+        # Apply backward compatibility transformations
+        response_kits = []
+        for kit in master_kits:
+            try:
+                # Handle gender enum conversion
+                if kit.get("gender") == "men":
+                    kit["gender"] = "man"
+                elif kit.get("gender") == "women":
+                    kit["gender"] = "woman"
+                    
+                # Set names from old format fields
+                if "club" in kit and not kit.get("club_name"):
+                    kit["club_name"] = kit["club"]
+                if "competition" in kit and not kit.get("competition_name"):
+                    kit["competition_name"] = kit["competition"]
+                if "brand" in kit and not kit.get("brand_name"):
+                    kit["brand_name"] = kit["brand"]
+                if "main_sponsor" in kit and not kit.get("main_sponsor_name"):
+                    kit["main_sponsor_name"] = kit["main_sponsor"]
+                    
+                # Ensure primary_color has a default value if None
+                if kit.get("primary_color") is None:
+                    kit["primary_color"] = "Unknown"
+                
+                response_kits.append(MasterKitResponse(**kit))
+                
+            except Exception as kit_error:
+                logger.warning(f"Skipping Master Kit {kit.get('id', 'unknown')} in search due to validation error: {str(kit_error)}")
+                continue
+        
+        return response_kits
         
     except Exception as e:
         logger.error(f"Error searching Master Kits: {str(e)}")
