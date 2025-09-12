@@ -905,7 +905,7 @@ const CollaborativeMasterJerseyPage = ({
               <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                 {selectedJersey.main_image_url ? (
                   <img 
-                    src={selectedJersey.main_image_url.startsWith('data:') || selectedJersey.main_image_url.startsWith('http') ? selectedJersey.main_image_url : `/api/${selectedJersey.main_image_url}`}
+                    src={selectedJersey.main_image_url.startsWith('data:') || selectedJersey.main_image_url.startsWith('http') ? selectedJersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${selectedJersey.main_image_url}`}
                     alt={`${selectedJersey.team_info?.name} ${selectedJersey.season}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
