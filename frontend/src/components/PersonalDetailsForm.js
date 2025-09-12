@@ -151,6 +151,7 @@ const PersonalDetailsForm = ({
       // Add to My Collection
       const collectionData = {
         master_kit_id: masterKit.id,
+        collection_type: collectionType,
         name_printing: formData.name_printing || null,
         number_printing: formData.number_printing || null,
         patches: formData.patches || null,
