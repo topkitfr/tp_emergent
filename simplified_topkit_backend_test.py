@@ -1038,7 +1038,7 @@ class SimplifiedTopKitTester:
                 duplicate_data = {
                     "master_kit_id": master_kit_id,
                     "size": "L",
-                    "condition": "excellent",
+                    "condition": "training",
                     "purchase_price": 150.00,
                     "personal_notes": "Duplicate attempt"
                 }
