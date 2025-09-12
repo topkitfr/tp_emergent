@@ -930,22 +930,29 @@ class SimplifiedTopKitTester:
             response_root = self.session.get(f"{BACKEND_URL.replace('/api', '')}/")
             
             if response_root.status_code == 200:
-                root_data = response_root.json()
-                message = root_data.get('message', '')
-                version = root_data.get('version', '')
-                system = root_data.get('system', '')
-                
-                if 'TopKit' in message and version == '2.0.0' and 'Master Kit' in system:
-                    self.log_test(
-                        "Health - Root Endpoint", 
-                        True, 
-                        f"Root endpoint working. Message: {message}, Version: {version}, System: {system}"
-                    )
-                else:
+                try:
+                    root_data = response_root.json()
+                    message = root_data.get('message', '')
+                    version = root_data.get('version', '')
+                    system = root_data.get('system', '')
+                    
+                    if 'TopKit' in message and version == '2.0.0' and 'Master Kit' in system:
+                        self.log_test(
+                            "Health - Root Endpoint", 
+                            True, 
+                            f"Root endpoint working. Message: {message}, Version: {version}, System: {system}"
+                        )
+                    else:
+                        self.log_test(
+                            "Health - Root Endpoint", 
+                            False, 
+                            f"Unexpected root response: {root_data}"
+                        )
+                except json.JSONDecodeError:
                     self.log_test(
                         "Health - Root Endpoint", 
                         False, 
-                        f"Unexpected root response: {root_data}"
+                        f"Root endpoint returned non-JSON response: {response_root.text[:100]}"
                     )
             else:
                 self.log_test(
@@ -958,22 +965,30 @@ class SimplifiedTopKitTester:
             response_health = self.session.get(f"{BACKEND_URL.replace('/api', '')}/health")
             
             if response_health.status_code == 200:
-                health_data = response_health.json()
-                status = health_data.get('status')
-                timestamp = health_data.get('timestamp')
-                
-                if status == 'healthy' and timestamp:
-                    self.log_test(
-                        "Health - Health Endpoint", 
-                        True, 
-                        f"Health endpoint working. Status: {status}, Timestamp: {timestamp}"
-                    )
-                    return True
-                else:
+                try:
+                    health_data = response_health.json()
+                    status = health_data.get('status')
+                    timestamp = health_data.get('timestamp')
+                    
+                    if status == 'healthy' and timestamp:
+                        self.log_test(
+                            "Health - Health Endpoint", 
+                            True, 
+                            f"Health endpoint working. Status: {status}, Timestamp: {timestamp}"
+                        )
+                        return True
+                    else:
+                        self.log_test(
+                            "Health - Health Endpoint", 
+                            False, 
+                            f"Unexpected health response: {health_data}"
+                        )
+                        return False
+                except json.JSONDecodeError:
                     self.log_test(
                         "Health - Health Endpoint", 
                         False, 
-                        f"Unexpected health response: {health_data}"
+                        f"Health endpoint returned non-JSON response: {response_health.text[:100]}"
                     )
                     return False
             else:
