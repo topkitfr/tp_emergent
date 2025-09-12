@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Grid, List, ChevronDown, Plus } from 'lucide-react';
+import { Search, Filter, Grid, List, ChevronDown, Plus, Heart, User } from 'lucide-react';
 import MasterKitForm from '../components/MasterKitForm';
 import PersonalDetailsForm from '../components/PersonalDetailsForm';
 
-const KitAreaPage = () => {
+const KitAreaPage = ({ user, setShowAuthModal }) => {
   const [masterKits, setMasterKits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
