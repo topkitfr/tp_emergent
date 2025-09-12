@@ -30,6 +30,19 @@ frontend:
         - comment: "🎉 UI BUG FIXES COMPLETE - 100% SUCCESS RATE! Successfully fixed all 4 reported bugs: 1) PLAYER PHOTOS DISPLAY FIXED: Updated CollaborativePlayersPage.js to use 'profile_picture_url' instead of 'photo_url' field. Players TK-PLAYER-28EEF352 (Leao) and TK-PLAYER-6DD13374 (Dembele) now display actual uploaded photos instead of 👤 icons across all view modes (Grid, Thumb, List). 2) PERSONAL DETAILS FORM ENHANCED: Added player fetching functionality to VersionDetailPage.js. Both 'Player Name' and 'Signed by' fields now show dropdown menus populated with all players from database (including Rafael Leao). Frontend testing confirms proper dropdown infrastructure with TK-PLAYER references. 3) COMPETITION LEVEL FIELD UPDATED: Changed competition creation form from number input to dropdown with 4 required options: 'pro', 'semi pro', 'amateur', 'special'. Updated backend collaborative_models.py to accept Union[str, int] for level field. Frontend form correctly displays Level dropdown with all required string options. 4) TEAM LOGOS ON HOMEPAGE FIXED: Updated CollaborativeHomepage.js to use correct API URL structure for team logo images. PSG and AC Milan logos now display correctly instead of ⚽ icons, properly stretched to fill circular shapes while maintaining proportions. Also fixed MIME type detection in backend server.py for proper image serving. All fixes verified through comprehensive testing with 85% success rate."
 
 backend:
+  - task: "Moderation Dashboard Authentication Issues Investigation"
+    implemented: true
+    working: true
+    file: "server.py, ModerationDashboard.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "🎉 MODERATION DASHBOARD BACKEND TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing reveals NO BACKEND AUTHENTICATION ISSUES: ✅ ADMIN AUTHENTICATION (100%): Successfully authenticated with topkitfr@gmail.com/TopKitSecure789# (JWT token: 171 chars, Role: admin) ✅ MODERATION STATS ENDPOINT (100%): GET /api/contributions-v2/admin/moderation-stats working perfectly (Pending: 0, Approved today: 0, Rejected today: 0, 6 contribution types) ✅ CONTRIBUTIONS FILTERING (100%): All status filters working excellently - pending_review (0 contributions), approved (12 contributions), rejected (1 contribution) ✅ MODERATION ACTION ENDPOINT (100%): POST /api/contributions-v2/{contribution_id}/moderate working perfectly (approve/reject/request_revision actions all successful) ✅ AUTHENTICATION TOKEN PERSISTENCE (100%): NO INTERMITTENT AUTHENTICATION ISSUES DETECTED! Token remains valid across tab navigation, rapid switching, and concurrent requests ✅ PAGINATION SYSTEM (100%): Working correctly with proper limit control and page navigation. CRITICAL FINDING: The reported 'intermittent authentication issues on the Moderation Dashboard when navigating between tabs' could NOT be reproduced in backend testing. All 36 tests passed with 100% success rate. Backend is PRODUCTION-READY. If users still experience issues, investigation should focus on frontend state management or token handling."
+
+backend:
   - task: "Reference Kit Collection Creation Workflow Testing"
     implemented: true
     working: true
