@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "in general : - apply the grid/thumb/list views to the Team and brand pages of the catalog (as for the player and competition pages) preferred the style of the grid/list icons present on the Kit Area page (lucide design) - delete the blue button to add refs to the catalog on the Player and Competition pages (class=\"bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center\") - display the uploaded team logo in place of the balloon icon, stretch while keeping the proportions of the uploaded image to fill the shape, do you understand me? (homepage location: class=\"w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden\") - in the Team thumbnails, stretch the uploaded image while keeping the proportions to fill the shape (class=\"w-full h-full object-contain p-2\")"
+## user_problem_statement: "Test the updated 2-Type System with authentication flow and want list functionality: UPDATED SYSTEM OVERVIEW: - Master Kit + My Collection system with BOTH 'owned' and 'wanted' collections - Fixed authentication flow: unauthenticated users should see login modal when clicking collection buttons - Added 'Want' button alongside 'Add to Collection' button"
 
 frontend:
   - task: "Uploaded Photos Not Displaying in Waiting List/Moderation Dashboard"
