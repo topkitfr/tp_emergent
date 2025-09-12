@@ -475,67 +475,69 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
             {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
           </div>
 
-          {/* Primary Color Field - Required */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Primary Color <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.primary_color}
-              onChange={(e) => handleInputChange('primary_color', e.target.value)}
-              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
-                errors.primary_color ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="e.g., Navy Blue, Red, White"
-            />
-            {errors.primary_color && <p className="text-red-500 text-xs mt-1">{errors.primary_color}</p>}
-          </div>
-
-          {/* Secondary Colors with + button */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Secondary Colors
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {formData.secondary_colors.map((color, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                >
-                  {color}
-                  <button
-                    type="button"
-                    onClick={() => removeSecondaryColor(color)}
-                    className="ml-1 text-blue-600 hover:text-blue-800"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
+          {/* Colors Section - Primary and Secondary on the same line */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Primary Color Field - Required */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Primary Color <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
-                value={newSecondaryColor}
-                onChange={(e) => setNewSecondaryColor(e.target.value)}
-                placeholder="Add secondary color"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addSecondaryColor();
-                  }
-                }}
+                value={formData.primary_color}
+                onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
+                  errors.primary_color ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="e.g., Navy Blue, Red, White"
               />
-              <button
-                type="button"
-                onClick={addSecondaryColor}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-1"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add</span>
-              </button>
+              {errors.primary_color && <p className="text-red-500 text-xs mt-1">{errors.primary_color}</p>}
+            </div>
+
+            {/* Secondary Colors with + button */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Secondary Colors
+              </label>
+              <div className="flex flex-wrap gap-1 mb-2 min-h-[24px]">
+                {formData.secondary_colors.map((color, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {color}
+                    <button
+                      type="button"
+                      onClick={() => removeSecondaryColor(color)}
+                      className="ml-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSecondaryColor}
+                  onChange={(e) => setNewSecondaryColor(e.target.value)}
+                  placeholder="Add secondary color"
+                  className="flex-1 border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addSecondaryColor();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addSecondaryColor}
+                  className="px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
 
