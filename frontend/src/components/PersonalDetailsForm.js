@@ -6,6 +6,7 @@ const PersonalDetailsForm = ({
   onClose, 
   onSuccess, 
   masterKit, 
+  collectionType = 'owned',
   API 
 }) => {
   const [formData, setFormData] = useState({
