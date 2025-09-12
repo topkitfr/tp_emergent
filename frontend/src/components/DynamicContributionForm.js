@@ -15,7 +15,11 @@ const DynamicContributionForm = ({
   players = [], 
   API 
 }) => {
-  const [contributionType, setContributionType] = useState(selectedType || 'team');
+  const [contributionType, setContributionType] = useState(() => {
+    // Ensure we don't default to removed entity types
+    const validTypes = ['team', 'brand', 'player', 'competition'];
+    return validTypes.includes(selectedType) ? selectedType : 'team';
+  });
   const [formData, setFormData] = useState({});
   const [images, setImages] = useState([]);
   const [sourceUrls, setSourceUrls] = useState(['']);
