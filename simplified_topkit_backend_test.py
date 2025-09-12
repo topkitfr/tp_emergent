@@ -402,7 +402,7 @@ class SimplifiedTopKitTester:
             collection_data = {
                 "master_kit_id": master_kit_id,
                 "size": "L",
-                "condition": "excellent",
+                "condition": "other",
                 "purchase_price": 120.50,
                 "purchase_date": "2024-08-15",
                 "purchase_location": "Nike Store Paris",
@@ -411,7 +411,7 @@ class SimplifiedTopKitTester:
                 "signed_by": "Kylian Mbappé",
                 "certificate_url": "uploads/certificates/mbappe_signature_cert.pdf",
                 "is_match_worn": False,
-                "physical_state": "mint",
+                "physical_state": "new_with_tags",
                 "for_sale": False,
                 "tags": ["champions_league", "mbappe", "signed"]
             }
