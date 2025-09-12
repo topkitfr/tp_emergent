@@ -270,7 +270,7 @@ async def get_master_kits(
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0)
 ):
-    """Get Master Kits with optional filtering"""
+    """Get Master Kits with optional filtering - backward compatible"""
     try:
         # Build filter query
         filter_query = {}
@@ -287,7 +287,43 @@ async def get_master_kits(
         cursor = db.master_kits.find(filter_query).skip(skip).limit(limit)
         master_kits = await cursor.to_list(length=None)
         
-        return [MasterKitResponse(**kit) for kit in master_kits]
+        # Convert data to be compatible with both old and new formats
+        response_kits = []
+        for kit in master_kits:
+            try:
+                # Handle gender enum conversion for backward compatibility
+                if kit.get("gender") == "men":
+                    kit["gender"] = "man"
+                elif kit.get("gender") == "women":
+                    kit["gender"] = "woman"
+                    
+                # Set club_name from club field if using old format
+                if "club" in kit and not kit.get("club_name"):
+                    kit["club_name"] = kit["club"]
+                    
+                # Set competition_name from competition field if using old format
+                if "competition" in kit and not kit.get("competition_name"):
+                    kit["competition_name"] = kit["competition"]
+                    
+                # Set brand_name from brand field if using old format
+                if "brand" in kit and not kit.get("brand_name"):
+                    kit["brand_name"] = kit["brand"]
+                    
+                # Set main_sponsor_name from main_sponsor field if using old format
+                if "main_sponsor" in kit and not kit.get("main_sponsor_name"):
+                    kit["main_sponsor_name"] = kit["main_sponsor"]
+                    
+                # Ensure primary_color has a default value if None
+                if kit.get("primary_color") is None:
+                    kit["primary_color"] = "Unknown"
+                
+                response_kits.append(MasterKitResponse(**kit))
+                
+            except Exception as kit_error:
+                logger.warning(f"Skipping Master Kit {kit.get('id', 'unknown')} due to validation error: {str(kit_error)}")
+                continue
+        
+        return response_kits
         
     except Exception as e:
         logger.error(f"Error fetching Master Kits: {str(e)}")
