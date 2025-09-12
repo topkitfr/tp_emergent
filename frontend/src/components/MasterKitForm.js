@@ -45,6 +45,7 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
       competition_id: '',
       model: '',
       brand_id: '',
+      sku_code: '',
       main_sponsor_id: '',
       gender: '',
       primary_color: '',
