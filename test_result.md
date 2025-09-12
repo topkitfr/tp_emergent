@@ -17,6 +17,18 @@
 ## user_problem_statement: "Test the updated 2-Type System with authentication flow and want list functionality: UPDATED SYSTEM OVERVIEW: - Master Kit + My Collection system with BOTH 'owned' and 'wanted' collections - Fixed authentication flow: unauthenticated users should see login modal when clicking collection buttons - Added 'Want' button alongside 'Add to Collection' button"
 
 frontend:
+  - task: "Updated 2-Type System with Authentication Flow and Want List Functionality Testing"
+    implemented: true
+    working: "NA"
+    file: "pages/KitAreaPage.js, pages/MyCollectionPage.js, components/PersonalDetailsForm.js, AuthModal.js, CollaborativeApp.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "New 2-Type System implemented with Master Kit + My Collection system supporting both 'owned' and 'wanted' collections. Authentication flow updated to show login modal for unauthenticated users. Added separate 'Add to Collection' (green) and 'Add to Want List' (red) buttons. My Collection page has tabs for Owned/Wanted items. Needs comprehensive testing of all workflows."
+
   - task: "Uploaded Photos Not Displaying in Waiting List/Moderation Dashboard"
     implemented: true
     working: true
