@@ -133,6 +133,66 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "general") -> st
     return f"uploads/{subfolder}/{unique_filename}"
 
 # ================================
+# BASIC ENDPOINTS FOR FRONTEND COMPATIBILITY
+# ================================
+
+@app.get("/api/teams")
+async def get_teams():
+    """Get teams - basic endpoint to avoid 404s"""
+    try:
+        cursor = db.teams.find({})
+        teams = await cursor.to_list(length=None)
+        return teams
+    except Exception as e:
+        logger.error(f"Error fetching teams: {str(e)}")
+        return []
+
+@app.get("/api/brands")
+async def get_brands():
+    """Get brands - basic endpoint to avoid 404s"""
+    try:
+        cursor = db.brands.find({})
+        brands = await cursor.to_list(length=None)
+        return brands
+    except Exception as e:
+        logger.error(f"Error fetching brands: {str(e)}")
+        return []
+
+@app.get("/api/competitions")
+async def get_competitions():
+    """Get competitions - basic endpoint to avoid 404s"""
+    try:
+        cursor = db.competitions.find({})
+        competitions = await cursor.to_list(length=None)
+        return competitions
+    except Exception as e:
+        logger.error(f"Error fetching competitions: {str(e)}")
+        return []
+
+@app.get("/api/players")
+async def get_players():
+    """Get players - basic endpoint to avoid 404s"""
+    try:
+        cursor = db.players.find({})
+        players = await cursor.to_list(length=None)
+        return players
+    except Exception as e:
+        logger.error(f"Error fetching players: {str(e)}")
+        return []
+
+@app.get("/api/master-jerseys")
+async def get_master_jerseys():
+    """Get master jerseys - basic endpoint to avoid 404s (redirects to master-kits)"""
+    try:
+        # Redirect to master-kits endpoint for backward compatibility
+        cursor = db.master_kits.find({})
+        master_kits = await cursor.to_list(length=None)
+        return master_kits
+    except Exception as e:
+        logger.error(f"Error fetching master jerseys: {str(e)}")
+        return []
+
+# ================================
 # FORM DATA ENDPOINTS
 # ================================
 
