@@ -122,12 +122,16 @@ class MasterKitCreate(BaseModel):
     pattern_description: Optional[str] = None
     main_sponsor: Optional[str] = None
 
+class CollectionType(str, Enum):
+    OWNED = "owned"
+    WANTED = "wanted"
+
 # ================================
 # MY COLLECTION - MASTER KIT + PERSONAL DETAILS
 # ================================
 
 class MyCollection(BaseModel):
-    """My Collection = Master Kits that I own with personal details
+    """My Collection = Master Kits that I own/want with personal details
     When I add a Master Kit to my collection, it keeps all Master Kit info + my personal details"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
@@ -135,7 +139,10 @@ class MyCollection(BaseModel):
     master_kit_id: str = Field(..., description="Master Kit ID is required")
     user_id: str = Field(..., description="User ID is required")
     
-    # Personal Kit Form Fields (as specified)
+    # Collection Type (REQUIRED)
+    collection_type: CollectionType = Field(..., description="Collection type (owned/wanted)")
+    
+    # Personal Kit Form Fields (as specified) - mostly for owned items
     name_printing: Optional[str] = None  # e.g., "Mbappé"
     number_printing: Optional[str] = None  # e.g., "7"
     patches: Optional[str] = None  # dropdown: Ligue 1/Champions League/etc.
@@ -166,6 +173,7 @@ class MyCollection(BaseModel):
 class MyCollectionCreate(BaseModel):
     """Creation model for adding Master Kit to My Collection"""
     master_kit_id: str = Field(..., description="Master Kit ID is required")
+    collection_type: CollectionType = Field(..., description="Collection type (owned/wanted)")
     
     # All personal fields are optional when adding to collection
     name_printing: Optional[str] = None
