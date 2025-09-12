@@ -190,7 +190,11 @@ const PersonalDetailsForm = ({
 
       const collectionItem = await response.json();
       
-      alert('Master Kit added to your collection successfully!');
+      const successMessage = collectionType === 'owned' 
+        ? 'Master Kit added to your collection successfully!' 
+        : 'Master Kit added to your want list successfully!';
+      
+      alert(successMessage);
       onSuccess && onSuccess(collectionItem);
       onClose();
 
