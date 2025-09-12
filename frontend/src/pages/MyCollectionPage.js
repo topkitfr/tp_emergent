@@ -4,6 +4,7 @@ import { Edit, Trash2, Search } from 'lucide-react';
 const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('owned');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [editFormData, setEditFormData] = useState({});
