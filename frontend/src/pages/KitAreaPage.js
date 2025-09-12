@@ -103,9 +103,31 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     navigate(`/kit-area/master/${kitId}`);
   };
 
-  const handleAddToCollection = (masterKit) => {
+  const handleAddToCollection = (masterKit, collectionType = 'owned') => {
+    // Check if user is authenticated
+    if (!user) {
+      // Show authentication modal
+      if (setShowAuthModal) {
+        setShowAuthModal(true);
+        // Store the action to perform after login
+        localStorage.setItem('pendingAction', JSON.stringify({
+          action: 'addToCollection',
+          masterKit: masterKit,
+          collectionType: collectionType
+        }));
+      } else {
+        alert('Please sign in to add kits to your collection');
+      }
+      return;
+    }
+
     setSelectedMasterKit(masterKit);
+    setSelectedCollectionType(collectionType);
     setShowPersonalDetailsForm(true);
+  };
+
+  const handleAddToWantList = (masterKit) => {
+    handleAddToCollection(masterKit, 'wanted');
   };
 
   const handleMasterKitCreated = (newMasterKit) => {
