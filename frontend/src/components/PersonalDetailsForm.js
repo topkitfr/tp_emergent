@@ -230,12 +230,17 @@ const PersonalDetailsForm = ({
             <div className="flex items-start space-x-2">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900">Adding to My Collection</h3>
+                <h3 className="font-semibold text-blue-900">
+                  {collectionType === 'owned' ? 'Adding to My Collection' : 'Adding to Want List'}
+                </h3>
                 <p className="text-sm text-blue-700 mt-1">
                   {masterKit.club} - {masterKit.season} - {masterKit.kit_type} ({masterKit.brand})
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  All fields are optional. Add as much or as little detail as you want.
+                  {collectionType === 'owned' 
+                    ? 'All fields are optional. Add as much or as little detail as you want.'
+                    : 'Adding to your want list. Personal details are optional.'
+                  }
                 </p>
               </div>
             </div>
