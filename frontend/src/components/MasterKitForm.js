@@ -421,6 +421,21 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
             {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
           </div>
 
+          {/* SKU Code Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SKU Code
+            </label>
+            <input
+              type="text"
+              value={formData.sku_code}
+              onChange={(e) => handleInputChange('sku_code', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., NI-PSG-HOME-24-25"
+            />
+            <p className="text-xs text-gray-500 mt-1">Product SKU or catalog code (optional)</p>
+          </div>
+
           {/* Main Sponsor Field - Dropdown (Optional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
