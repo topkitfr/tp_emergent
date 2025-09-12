@@ -217,20 +217,24 @@ class MyCollectionUpdate(BaseModel):
 # ================================
 
 class MasterKitResponse(BaseModel):
-    """Response model for Master Kit with all info"""
+    """Response model for Master Kit with all info and populated references"""
     id: str
-    club: str
+    club_id: str
+    club_name: Optional[str] = None  # Populated from club
     season: str
     kit_type: KitType
-    competition: str
+    competition_id: str
+    competition_name: Optional[str] = None  # Populated from competition
     model: KitModel
-    brand: str
+    brand_id: str
+    brand_name: Optional[str] = None  # Populated from brand
+    main_sponsor_id: Optional[str] = None
+    main_sponsor_name: Optional[str] = None  # Populated from sponsor
     gender: Gender
-    front_photo_url: Optional[str]
-    primary_color: Optional[str]
+    primary_color: str
     secondary_colors: List[str]
+    front_photo_url: Optional[str]
     pattern_description: Optional[str]
-    main_sponsor: Optional[str]
     created_at: datetime
     verified_level: VerificationLevel
     topkit_reference: str
