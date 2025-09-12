@@ -253,8 +253,8 @@ class MasterKitResponse(BaseModel):
     total_collectors: int
     
     class Config:
-        # Allow population by field name or alias
-        allow_population_by_field_name = True
+        # Allow population by field name or alias (Pydantic v2)
+        populate_by_name = True
 
 class MyCollectionResponse(BaseModel):
     """Response model for My Collection item (Master Kit + Personal Details)"""
