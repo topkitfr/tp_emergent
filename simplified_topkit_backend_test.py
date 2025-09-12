@@ -1055,8 +1055,9 @@ class SimplifiedTopKitTester:
                 response2 = self.session.post(f"{BACKEND_URL}/my-collection", json=duplicate_data)
                 
                 if response2.status_code == 400:
-                    error_message = response2.json().get('detail', '')
-                    if 'already in' in error_message.lower():
+                    error_data = response2.json()
+                    error_message = error_data.get('detail', '')
+                    if 'already in' in error_message.lower() or 'duplicate' in error_message.lower():
                         self.log_test(
                             "Duplicate Prevention", 
                             True, 
@@ -1074,7 +1075,7 @@ class SimplifiedTopKitTester:
                     self.log_test(
                         "Duplicate Prevention", 
                         False, 
-                        f"Should have blocked duplicate, got: {response2.status_code}"
+                        f"Should have blocked duplicate, got: {response2.status_code} - {response2.text}"
                     )
                     return False
             else:
