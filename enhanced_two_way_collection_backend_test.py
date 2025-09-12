@@ -23,7 +23,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
 
 # Test credentials
 USER_EMAIL = "steinmetzlivio@gmail.com"

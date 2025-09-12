@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-admin.preview.emergentagent.com/api"
 
 class BackendCorrectionsTest:
     def __init__(self):

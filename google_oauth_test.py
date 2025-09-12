@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com"
+BACKEND_URL = "https://footkit-admin.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class GoogleOAuthTester:

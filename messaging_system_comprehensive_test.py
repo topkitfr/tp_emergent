@@ -14,7 +14,7 @@ import websocket
 import threading
 
 # Configuration
-BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-admin.preview.emergentagent.com/api"
 WS_URL = "wss://soccer-jersey-hub-2.preview.emergentagent.com/ws"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"

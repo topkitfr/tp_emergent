@@ -23,7 +23,7 @@ import base64
 import time
 
 # Configuration
-BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-admin.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

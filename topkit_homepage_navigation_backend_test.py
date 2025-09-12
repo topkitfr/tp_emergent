@@ -19,7 +19,7 @@ from datetime import datetime
 import os
 
 # Configuration - Use environment variables for production URLs
-BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
@@ -174,7 +174,7 @@ class TopKitHomepageNavigationTester:
         try:
             # Handle relative URLs
             if image_url.startswith('/'):
-                full_url = f"https://topkit-bugfixes.preview.emergentagent.com{image_url}"
+                full_url = f"https://footkit-admin.preview.emergentagent.com{image_url}"
             else:
                 full_url = image_url
             
@@ -480,7 +480,7 @@ class TopKitHomepageNavigationTester:
             
             for endpoint in test_endpoints:
                 try:
-                    response = requests.get(f"https://topkit-bugfixes.preview.emergentagent.com{endpoint}", timeout=5)
+                    response = requests.get(f"https://footkit-admin.preview.emergentagent.com{endpoint}", timeout=5)
                     
                     if response.status_code == 200:
                         content_type = response.headers.get('content-type', '')

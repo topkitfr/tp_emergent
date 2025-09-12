@@ -21,7 +21,7 @@ from datetime import datetime
 import os
 
 # Configuration
-BACKEND_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
 
 # Test credentials - using working alternative since steinmetzlivio@gmail.com is locked
 USER_CREDENTIALS = {

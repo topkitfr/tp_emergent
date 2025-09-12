@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://topkit-bugfixes.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-admin.preview.emergentagent.com/api"
 
 class CollectionEdgeCasesTester:
     def __init__(self):
