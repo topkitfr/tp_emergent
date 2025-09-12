@@ -576,8 +576,8 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) =
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {Object.entries(contribution.images).map(([imageType, imageData], index) => {
                     const imageUrl = Array.isArray(imageData) ? imageData[0] : imageData;
-                    // Construct proper image URL - avoid double /api/ prefix
-                    const imageSrc = imageUrl.startsWith('http') ? imageUrl : `${API}/api/${imageUrl}`;
+                    // Construct proper image URL - API already includes /api prefix
+                    const imageSrc = imageUrl.startsWith('http') ? imageUrl : `${API}/${imageUrl}`;
                     return (
                       <div key={imageType} className="bg-gray-50 rounded-lg overflow-hidden">
                         <div className="aspect-w-1 aspect-h-1">
