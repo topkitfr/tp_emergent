@@ -416,8 +416,6 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
                       {contribution.entity_type === 'brand' && '👕'}
                       {contribution.entity_type === 'player' && '👤'}
                       {contribution.entity_type === 'competition' && '🏆'}
-                      {contribution.entity_type === 'master_kit' && '👕'}
-                      {contribution.entity_type === 'reference_kit' && '📦'}
                     </div>
                     <div className="p-2">
                       <h4 className="font-medium text-xs text-gray-900 mb-1 line-clamp-1">{contribution.title}</h4>
