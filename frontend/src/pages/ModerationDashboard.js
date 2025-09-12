@@ -47,6 +47,9 @@ const ModerationDashboard = ({ user, API }) => {
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchModerationData();
+    } else if (user && user.role !== 'admin') {
+      // User is logged in but not admin
+      setLoading(false);
     }
   }, [user, activeTab, currentPage, itemsPerPage]);
 
