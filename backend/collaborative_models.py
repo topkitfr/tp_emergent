@@ -81,6 +81,7 @@ class MasterKit(BaseModel):
     competition_id: str  # Reference to competition in database *
     model: KitModel  # Authentic/Replica *
     brand_id: str  # Reference to brand in database *
+    sku_code: Optional[str] = None  # Product SKU or catalog code
     main_sponsor_id: Optional[str] = None  # Reference to sponsor/brand in database
     gender: Gender  # Man/Woman/Child *
     primary_color: str  # Primary color *
