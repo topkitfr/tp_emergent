@@ -272,22 +272,6 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search in my collection..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Collection Grid */}
       {loading ? (
         <div className="text-center py-12">
