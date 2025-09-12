@@ -331,11 +331,31 @@ async def get_master_kits(
 
 @app.get("/api/master-kits/{master_kit_id}", response_model=MasterKitResponse)
 async def get_master_kit(master_kit_id: str):
-    """Get specific Master Kit by ID"""
+    """Get specific Master Kit by ID - backward compatible"""
     try:
         master_kit = await db.master_kits.find_one({"id": master_kit_id})
         if not master_kit:
             raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        # Apply backward compatibility transformations
+        if master_kit.get("gender") == "men":
+            master_kit["gender"] = "man"
+        elif master_kit.get("gender") == "women":
+            master_kit["gender"] = "woman"
+            
+        # Set names from old format fields
+        if "club" in master_kit and not master_kit.get("club_name"):
+            master_kit["club_name"] = master_kit["club"]
+        if "competition" in master_kit and not master_kit.get("competition_name"):
+            master_kit["competition_name"] = master_kit["competition"]
+        if "brand" in master_kit and not master_kit.get("brand_name"):
+            master_kit["brand_name"] = master_kit["brand"]
+        if "main_sponsor" in master_kit and not master_kit.get("main_sponsor_name"):
+            master_kit["main_sponsor_name"] = master_kit["main_sponsor"]
+            
+        # Ensure primary_color has a default value if None
+        if master_kit.get("primary_color") is None:
+            master_kit["primary_color"] = "Unknown"
         
         return MasterKitResponse(**master_kit)
         
