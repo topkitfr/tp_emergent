@@ -188,10 +188,6 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
         return `${data.name || 'Unknown Player'} - ${data.nationality || 'Unknown Nationality'}`;
       case 'competition':
         return `${data.competition_name || 'Unknown Competition'} - ${data.country || 'Unknown Country'}`;
-      case 'master_kit':
-        return `${data.season || 'Unknown Season'} ${formatEntityType(data.jersey_type || 'unknown')} Kit`;
-      case 'reference_kit':
-        return `${data.model_name || 'Unknown Model'} - ${formatEntityType(data.release_type || 'unknown')}`;
       default:
         return 'Unknown Contribution';
     }
