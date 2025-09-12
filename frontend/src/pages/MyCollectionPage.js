@@ -295,14 +295,16 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         </div>
       ) : filteredCollections.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-4xl mb-4">💎</div>
+          <div className="text-4xl mb-4">
+            {activeTab === 'owned' ? '💎' : '❤️'}
+          </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {searchQuery ? 'No matching kits found' : 'No kits in your collection'}
+            {activeTab === 'owned' ? 'No owned kits' : 'No wanted kits'}
           </h3>
           <p className="text-gray-600">
-            {searchQuery 
-              ? 'Try adjusting your search terms'
-              : 'Start adding Master Kits to your collection from the Kit Area'
+            {activeTab === 'owned' 
+              ? 'Start adding Master Kits to your collection from the Kit Area'
+              : 'Start adding Master Kits to your want list from the Kit Area'
             }
           </p>
         </div>
