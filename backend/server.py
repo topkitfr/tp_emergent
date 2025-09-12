@@ -1103,6 +1103,11 @@ async def moderate_contribution(
             raise HTTPException(status_code=404, detail="Contribution not found")
         
         new_status = "approved" if moderation_data.action == "approve" else "rejected"
+        entity_id = None
+        
+        # If approving, create the actual entity in the database
+        if moderation_data.action == "approve":
+            entity_id = await create_entity_from_contribution(contribution)
         
         await db.contributions.update_one(
             {"id": contribution_id},
@@ -1111,18 +1116,89 @@ async def moderate_contribution(
                     "status": new_status,
                     "moderated_at": datetime.utcnow(),
                     "moderated_by": admin_user["id"],
-                    "moderation_reason": moderation_data.reason
+                    "moderation_reason": moderation_data.reason,
+                    "entity_id": entity_id
                 }
             }
         )
         
-        return {"message": f"Contribution {moderation_data.action}d successfully"}
+        return {
+            "message": f"Contribution {moderation_data.action}d successfully",
+            "entity_id": entity_id
+        }
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error moderating contribution {contribution_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+async def create_entity_from_contribution(contribution: dict) -> str:
+    """Create an entity in the appropriate collection from an approved contribution"""
+    try:
+        entity_type = contribution["entity_type"]
+        entity_data = contribution["data"]
+        entity_id = str(uuid.uuid4())
+        
+        # Prepare common fields
+        entity = {
+            "id": entity_id,
+            "created_at": datetime.utcnow(),
+            "created_from_contribution": contribution["id"],
+            "topkit_reference": f"TK-{entity_type.upper()}-{uuid.uuid4().hex[:6].upper()}"
+        }
+        
+        # Add entity-specific data
+        if entity_type == "team":
+            entity.update({
+                "name": entity_data.get("name", ""),
+                "short_name": entity_data.get("short_name", ""),
+                "country": entity_data.get("country", ""),
+                "city": entity_data.get("city", ""),
+                "founded_year": entity_data.get("founded_year", 0),
+                "colors": entity_data.get("colors", []),
+                "logo_url": entity_data.get("logo_url", ""),
+                "secondary_photos": entity_data.get("secondary_photos", "")
+            })
+            await db.teams.insert_one(entity)
+            
+        elif entity_type == "brand":
+            entity.update({
+                "name": entity_data.get("name", ""),
+                "country": entity_data.get("country", ""),
+                "founded_year": entity_data.get("founded_year", 0),
+                "logo_url": entity_data.get("logo_url", ""),
+                "description": entity_data.get("description", "")
+            })
+            await db.brands.insert_one(entity)
+            
+        elif entity_type == "player":
+            entity.update({
+                "name": entity_data.get("name", ""),
+                "nationality": entity_data.get("nationality", ""),
+                "position": entity_data.get("position", ""),
+                "birth_date": entity_data.get("birth_date", ""),
+                "photo_url": entity_data.get("photo_url", "")
+            })
+            await db.players.insert_one(entity)
+            
+        elif entity_type == "competition":
+            entity.update({
+                "name": entity_data.get("name", ""),
+                "competition_name": entity_data.get("competition_name", entity_data.get("name", "")),
+                "country": entity_data.get("country", ""),
+                "level": entity_data.get("level", ""),
+                "format": entity_data.get("format", ""),
+                "logo_url": entity_data.get("logo_url", "")
+            })
+            await db.competitions.insert_one(entity)
+        
+        logger.info(f"Created {entity_type} entity {entity_id} from contribution {contribution['id']}")
+        return entity_id
+        
+    except Exception as e:
+        logger.error(f"Error creating entity from contribution: {str(e)}")
+        return None
 
 # ================================
 # STATS ENDPOINT
