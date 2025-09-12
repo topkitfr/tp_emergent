@@ -240,6 +240,8 @@ class MasterKitResponse(BaseModel):
     brand: Optional[str] = None  # Old format - for backward compatibility
     brand_name: Optional[str] = None  # Populated from brand
     
+    sku_code: Optional[str] = None  # Product SKU or catalog code
+    
     main_sponsor_id: Optional[str] = None
     main_sponsor: Optional[str] = None  # Old format - for backward compatibility
     main_sponsor_name: Optional[str] = None  # Populated from sponsor
