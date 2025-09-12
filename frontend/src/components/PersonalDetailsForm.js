@@ -213,7 +213,7 @@ const PersonalDetailsForm = ({
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">
-            Add Personal Details
+            {collectionType === 'owned' ? 'Add Personal Details' : 'Add to Want List'}
           </h2>
           <button
             onClick={onClose}
