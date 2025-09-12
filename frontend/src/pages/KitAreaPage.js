@@ -25,6 +25,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
   const [showMasterKitForm, setShowMasterKitForm] = useState(false);
   const [showPersonalDetailsForm, setShowPersonalDetailsForm] = useState(false);
   const [selectedMasterKit, setSelectedMasterKit] = useState(null);
+  const [selectedCollectionType, setSelectedCollectionType] = useState('owned'); // 'owned' or 'wanted'
   
   // Filter options
   const [brands, setBrands] = useState([]);
