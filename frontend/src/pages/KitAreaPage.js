@@ -303,7 +303,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
-                <span>Create Master Kit</span>
+                <span>Add a kit</span>
               </button>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">View:</span>
