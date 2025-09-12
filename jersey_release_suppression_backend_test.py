@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 
 # Admin credentials for cleanup operations
 ADMIN_CREDENTIALS = {

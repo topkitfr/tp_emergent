@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration - Use environment variable from frontend/.env
-BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_CREDENTIALS = {

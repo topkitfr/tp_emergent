@@ -20,7 +20,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -139,7 +139,7 @@ class LeboncoinWorkflowTester:
                                                     headers=headers,
                                                     json={
                                                         "listing_id": self.listing_id,
-                                                        "origin_url": "https://footkit-admin.preview.emergentagent.com"
+                                                        "origin_url": "https://kit-collection-5.preview.emergentagent.com"
                                                     })
                     
                     if checkout_response.status_code == 200:

@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BASE_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 SPECIFIC_USER_EMAIL = "steinmetzlivio@gmail.com"
 SPECIFIC_USER_PASSWORD = "123"
 

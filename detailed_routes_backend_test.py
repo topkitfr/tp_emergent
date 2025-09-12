@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Configuration des URLs
-BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 
 class TopKitDetailedRoutesTester:
     def __init__(self):

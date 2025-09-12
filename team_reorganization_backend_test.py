@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Configuration
-BACKEND_URL = "https://footkit-admin.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
 
 # Expected priority teams (first 20 clubs by global importance)
 PRIORITY_TEAMS = [
