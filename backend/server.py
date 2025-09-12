@@ -133,6 +133,43 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "general") -> st
     return f"uploads/{subfolder}/{unique_filename}"
 
 # ================================
+# FORM DATA ENDPOINTS
+# ================================
+
+@app.get("/api/form-data/clubs")
+async def get_clubs_for_form():
+    """Get clubs for Master Kit form dropdown"""
+    try:
+        cursor = db.teams.find({}, {"id": 1, "name": 1, "country": 1})
+        clubs = await cursor.to_list(length=None)
+        return [{"id": club["id"], "name": club["name"], "country": club.get("country", "Unknown")} for club in clubs]
+    except Exception as e:
+        logger.error(f"Error fetching clubs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/form-data/competitions")
+async def get_competitions_for_form():
+    """Get competitions for Master Kit form dropdown"""
+    try:
+        cursor = db.competitions.find({}, {"id": 1, "competition_name": 1, "country": 1})
+        competitions = await cursor.to_list(length=None)
+        return [{"id": comp["id"], "name": comp["competition_name"], "country": comp.get("country", "Unknown")} for comp in competitions]
+    except Exception as e:
+        logger.error(f"Error fetching competitions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/form-data/brands")
+async def get_brands_for_form():
+    """Get brands for Master Kit form dropdown"""
+    try:
+        cursor = db.brands.find({}, {"id": 1, "name": 1, "country": 1})
+        brands = await cursor.to_list(length=None)
+        return [{"id": brand["id"], "name": brand["name"], "country": brand.get("country", "Unknown")} for brand in brands]
+    except Exception as e:
+        logger.error(f"Error fetching brands: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # MASTER KIT ENDPOINTS
 # ================================
 
