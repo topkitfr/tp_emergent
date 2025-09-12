@@ -297,13 +297,19 @@ async def add_to_my_collection(
 @app.get("/api/my-collection", response_model=List[MyCollectionResponse])
 async def get_my_collection(
     current_user: dict = Depends(get_current_user),
+    collection_type: Optional[str] = Query(None, description="Filter by collection type (owned/wanted)"),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0)
 ):
     """Get user's collection (Master Kits with personal details)"""
     try:
+        # Build query
+        query = {"user_id": current_user["id"]}
+        if collection_type:
+            query["collection_type"] = collection_type
+            
         # Get collection items
-        cursor = db.my_collection.find({"user_id": current_user["id"]}).skip(skip).limit(limit)
+        cursor = db.my_collection.find(query).skip(skip).limit(limit)
         collection_items = await cursor.to_list(length=None)
         
         # Embed Master Kit info for each item
