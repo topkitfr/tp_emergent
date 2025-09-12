@@ -143,6 +143,26 @@ async def create_master_kit(
 ):
     """Create a new Master Kit (official jersey reference)"""
     try:
+        # Validate referenced entities exist
+        club = await db.teams.find_one({"id": master_kit_data.club_id})
+        if not club:
+            raise HTTPException(status_code=400, detail="Club not found")
+        
+        competition = await db.competitions.find_one({"id": master_kit_data.competition_id})
+        if not competition:
+            raise HTTPException(status_code=400, detail="Competition not found")
+            
+        brand = await db.brands.find_one({"id": master_kit_data.brand_id})
+        if not brand:
+            raise HTTPException(status_code=400, detail="Brand not found")
+        
+        # Validate sponsor if provided
+        main_sponsor = None
+        if master_kit_data.main_sponsor_id:
+            main_sponsor = await db.brands.find_one({"id": master_kit_data.main_sponsor_id})
+            if not main_sponsor:
+                raise HTTPException(status_code=400, detail="Main sponsor not found")
+        
         # Generate new Master Kit
         master_kit = MasterKit(
             **master_kit_data.dict(),
