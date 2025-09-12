@@ -184,16 +184,28 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
           </div>
         </div>
         
-        {/* Add to Collection Button */}
-        <div className="px-4 pb-4">
+        {/* Add to Collection and Want List Buttons */}
+        <div className="px-4 pb-4 space-y-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleAddToCollection(kit);
+              handleAddToCollection(kit, 'owned');
             }}
-            className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
           >
-            Add to My Collection
+            <User className="w-4 h-4" />
+            <span>Add to My Collection</span>
+          </button>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToWantList(kit);
+            }}
+            className="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+          >
+            <Heart className="w-4 h-4" />
+            <span>Add to Want List</span>
           </button>
         </div>
       </div>
