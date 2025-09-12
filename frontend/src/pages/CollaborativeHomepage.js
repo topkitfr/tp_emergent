@@ -105,7 +105,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                   {jersey.main_image_url ? (
                     <img 
-                      src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+                      src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
                       alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
@@ -222,7 +222,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                     {jersey.main_image_url ? (
                       <img 
-                        src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+                        src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
                         alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
                         className="w-full h-full object-contain"
                         onError={(e) => {
@@ -266,7 +266,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
                   {jersey.main_image_url ? (
                     <img 
-                      src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `/api/${jersey.main_image_url}`}
+                      src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
                       alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
