@@ -383,22 +383,25 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
                   {/* Action Buttons */}
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditItem(item)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
-                      title="Edit personal details"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
+                    {/* Edit button ONLY for owned items */}
+                    {item.collection_type === 'owned' && (
+                      <button
+                        onClick={() => handleEditItem(item)}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+                        title="Edit personal details"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </button>
+                    )}
                     
                     <button
                       onClick={() => handleDeleteItem(item)}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
-                      title="Remove from collection"
+                      className={`${item.collection_type === 'owned' ? 'flex-1' : 'w-full'} bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1`}
+                      title={`Remove from ${item.collection_type === 'owned' ? 'collection' : 'want list'}`}
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>Remove</span>
+                      <span>{item.collection_type === 'owned' ? 'Remove' : 'Remove'}</span>
                     </button>
                   </div>
                 </div>
