@@ -75,20 +75,20 @@ class MasterKit(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
     # ALL FIELDS REQUIRED - as specified
-    club: str  # e.g., "PSG" *
-    season: str  # e.g., "2024/2025" *
-    kit_type: KitType  # Home/Away/Third/Training *
-    competition: str  # e.g., "Ligue 1", "Champions League" *
-    model: KitModel  # Authentic/Replica/Player Issue *
-    brand: str  # e.g., "Nike" *
-    gender: Gender  # Men/Women/Youth/Unisex *
+    club_id: str  # Reference to club in database *
+    season: str  # e.g., "2024-2025" (YEAR-YEAR format) *
+    kit_type: KitType  # Home/Away/Third/Fourth/GK/Special *
+    competition_id: str  # Reference to competition in database *
+    model: KitModel  # Authentic/Replica *
+    brand_id: str  # Reference to brand in database *
+    main_sponsor_id: Optional[str] = None  # Reference to sponsor/brand in database
+    gender: Gender  # Man/Woman/Child *
+    primary_color: str  # Primary color *
+    secondary_colors: List[str] = []  # Secondary colors with add/remove functionality
     front_photo_url: Optional[str] = None  # Upload required (minimum 800x600px) *
     
     # Optional additional info
-    primary_color: Optional[str] = None
-    secondary_colors: List[str] = []
     pattern_description: Optional[str] = None
-    main_sponsor: Optional[str] = None
     
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -108,19 +108,27 @@ class MasterKit(BaseModel):
 
 class MasterKitCreate(BaseModel):
     """Creation model for Master Kit - ALL FIELDS REQUIRED"""
-    club: str = Field(..., min_length=1, description="Club name is required")
-    season: str = Field(..., min_length=1, description="Season is required")
+    club_id: str = Field(..., min_length=1, description="Club ID is required")
+    season: str = Field(..., min_length=1, description="Season is required (YEAR-YEAR format)")
     kit_type: KitType = Field(..., description="Kit type is required")
-    competition: str = Field(..., min_length=1, description="Competition is required")
+    competition_id: str = Field(..., min_length=1, description="Competition ID is required")
     model: KitModel = Field(..., description="Model is required")
-    brand: str = Field(..., min_length=1, description="Brand is required")
+    brand_id: str = Field(..., min_length=1, description="Brand ID is required")
+    main_sponsor_id: Optional[str] = None  # Optional sponsor
     gender: Gender = Field(..., description="Gender is required")
+    primary_color: str = Field(..., min_length=1, description="Primary color is required")
+    secondary_colors: List[str] = []
     
     # Optional fields
-    primary_color: Optional[str] = None
-    secondary_colors: List[str] = []
     pattern_description: Optional[str] = None
-    main_sponsor: Optional[str] = None
+
+    @validator('season')
+    def validate_season_format(cls, v):
+        """Validate season format is YEAR-YEAR"""
+        import re
+        if not re.match(r'^\d{4}-\d{4}$', v):
+            raise ValueError('Season must be in YEAR-YEAR format (e.g., 2024-2025)')
+        return v
 
 class CollectionType(str, Enum):
     OWNED = "owned"
