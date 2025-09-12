@@ -439,7 +439,7 @@ class SimplifiedTopKitTester:
                             self.log_test(
                                 "My Collection - Personal Details", 
                                 True, 
-                                f"Personal details saved correctly. Size: {collection_item.get('size')}, Signed: {collection_item.get('is_signed')}"
+                                f"Personal details saved correctly. Size: {collection_item.get('size')}, Signed: {collection_item.get('is_signed')}, Condition: {collection_item.get('condition')}"
                             )
                         else:
                             self.log_test(
