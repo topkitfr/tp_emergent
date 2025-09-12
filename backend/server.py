@@ -836,8 +836,15 @@ class ContributionResponse(BaseModel):
     id: str
     entity_type: str
     title: str
-    description: str
-    data: dict
+    
+    # Support both old and new formats
+    description: Optional[str] = ""
+    data: Optional[dict] = {}
+    
+    # Old format fields (for backward compatibility)
+    entity_id: Optional[str] = None
+    change_summary: Optional[dict] = {}
+    
     status: str = "pending_review"
     upvotes: int = 0
     downvotes: int = 0
