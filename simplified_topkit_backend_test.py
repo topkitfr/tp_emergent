@@ -119,7 +119,7 @@ class SimplifiedTopKitTester:
                 "kit_type": "home",
                 "brand": "Nike",
                 "competition": "Ligue 1",
-                "model": "Vapor Match",
+                "model": "authentic",
                 "gender": "men",
                 "description": "PSG home kit for 2024-25 season with classic navy blue design",
                 "front_photo_url": "uploads/master_kits/psg_home_2024_front.jpg",
