@@ -540,9 +540,18 @@ const PersonalDetailsForm = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`px-6 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                collectionType === 'owned' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
             >
-              {isSubmitting ? 'Adding...' : 'Add to My Collection'}
+              {isSubmitting 
+                ? 'Adding...' 
+                : collectionType === 'owned' 
+                  ? 'Add to My Collection' 
+                  : 'Add to Want List'
+              }
             </button>
           </div>
         </form>
