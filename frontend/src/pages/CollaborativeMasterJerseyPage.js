@@ -288,7 +288,7 @@ const CollaborativeMasterJerseyPage = ({
   const MasterJerseyListItem = ({ jersey }) => (
     <div 
       className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group flex items-center space-x-4"
-      onClick={() => navigate(`/master-jerseys/${jersey.id}`)}
+      onClick={() => navigate(`/master-kits/${jersey.id}`)}
     >
       <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors overflow-hidden">
         {jersey.main_image_url ? (
