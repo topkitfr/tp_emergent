@@ -323,7 +323,7 @@ const MasterJerseyDetailPage = () => {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {version.model_name || `${teamName} ${masterJersey.season} ${masterJersey.jersey_type}`} • {version.release_type?.charAt(0).toUpperCase() + version.release_type?.slice(1)}
+                                {version.model_name || `${teamName} ${masterJersey.season} ${masterJersey.kit_type}`} • {version.release_type?.charAt(0).toUpperCase() + version.release_type?.slice(1)}
                               </p>
                               <p className="text-sm text-gray-600">{version.topkit_reference}</p>
                             </div>
