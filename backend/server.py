@@ -428,6 +428,11 @@ async def get_master_kits(
         logger.error(f"Error fetching Master Kits: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/test-master-jersey/{master_jersey_id}")
+async def test_master_jersey_endpoint(master_jersey_id: str):
+    """Test endpoint to verify routing works"""
+    return {"message": f"Test endpoint working for ID: {master_jersey_id}", "id": master_jersey_id}
+
 @app.get("/api/master-jerseys/{master_jersey_id}", response_model=MasterKitResponse)
 async def get_master_jersey_redirect(master_jersey_id: str):
     """Backward compatibility endpoint - redirects to master-kits"""
