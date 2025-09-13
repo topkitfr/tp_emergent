@@ -266,7 +266,7 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
       onClose();
 
     } catch (error) {
-      console.error('Error creating Master Kit:', error);
+      console.error('Error creating Master Kit contribution:', error);
       alert(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
