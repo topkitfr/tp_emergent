@@ -227,7 +227,7 @@ const AppContent = () => {
       'brands': '/brands',
       'players': '/players',
       'competitions': '/competitions',
-      'master-jerseys': '/master-jerseys',
+      'master-kits': '/master-kits',
       'profile': '/profile',
       'admin': '/admin'
     };
