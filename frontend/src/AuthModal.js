@@ -37,59 +37,19 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const handleAuthFormSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🚀 AuthModal - handleAuthFormSubmit called successfully!');
     
-    // Get form values using multiple methods for maximum reliability
-    const formElement = e.target.closest('form') || e.target;
-    
-    // Method 1: By ID (most reliable)
-    const emailFieldById = document.getElementById('auth-email-field');
-    const passwordFieldById = document.getElementById('auth-password-field');
-    
-    // Method 2: By name/type (fallback)
-    const emailFieldByName = formElement.querySelector('input[name="email"]') || formElement.querySelector('input[type="email"]');
-    const passwordFieldByName = formElement.querySelector('input[name="password"]') || formElement.querySelector('input[type="password"]');
-    
-    // Method 3: From state (fallback)
-    let actualEmail = formData.email;
-    let actualPassword = formData.password;
-    let actualName = formData.name;
-    
-    // Override with DOM values if available (more reliable)
-    if (emailFieldById?.value) {
-      actualEmail = emailFieldById.value;
-    } else if (emailFieldByName?.value) {
-      actualEmail = emailFieldByName.value;
-    }
-    
-    if (passwordFieldById?.value) {
-      actualPassword = passwordFieldById.value;
-    } else if (passwordFieldByName?.value) {
-      actualPassword = passwordFieldByName.value;
-    }
-    
-    // For name field (registration only)
-    if (!isLogin) {
-      const nameField = formElement.querySelector('input[name="name"]') || document.getElementById('auth-name-field');
-      if (nameField?.value) {
-        actualName = nameField.value;
-      }
-    }
-    
-    console.log('📝 Form submission values:', {
-      email: actualEmail ? 'PROVIDED' : 'MISSING',
-      password: actualPassword ? 'PROVIDED' : 'MISSING', 
-      name: actualName ? 'PROVIDED' : 'N/A',
-      isLogin: isLogin
-    });
+    console.log('🚀 AuthModal - Form submission started');
+    console.log('📧 Email from state:', formData.email);
+    console.log('🔑 Password provided:', !!formData.password);
+    console.log('🔄 Is login mode:', isLogin);
 
-    if (!actualEmail || !actualPassword) {
-      console.error('❌ Missing required fields - Email or password empty');
+    if (!formData.email || !formData.password) {
+      console.error('❌ Missing required fields');
       setError('Email and password are required');
       return;
     }
     
-    if (!isLogin && !actualName) {
+    if (!isLogin && !formData.name) {
       console.error('❌ Missing name for registration');
       setError('Name is required for registration');
       return;
@@ -99,61 +59,35 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setError('');
 
     try {
-      console.log(`🔄 Attempting ${isLogin ? 'login' : 'registration'} with email: ${actualEmail}`);
-      
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
       const payload = isLogin 
         ? { 
-            email: actualEmail.trim(), 
-            password: actualPassword 
+            email: formData.email.trim(), 
+            password: formData.password 
           }
         : { 
-            email: actualEmail.trim(), 
-            password: actualPassword, 
-            name: actualName.trim() 
+            email: formData.email.trim(), 
+            password: formData.password, 
+            name: formData.name.trim() 
           };
 
-      console.log('📤 Sending request to:', `${API}/api${endpoint}`);
-      console.log('📦 Payload structure:', {
-        email: payload.email ? 'PROVIDED' : 'MISSING',
-        password: payload.password ? 'PROVIDED' : 'MISSING',
-        name: payload.name ? 'PROVIDED' : 'N/A'
-      });
+      console.log('📤 API URL:', `${API}/api${endpoint}`);
+      console.log('📦 Payload:', { ...payload, password: '[HIDDEN]' });
       
       const response = await axios.post(`${API}/api${endpoint}`, payload);
       
-      console.log('✅ Authentication successful:', {
-        status: response.status,
-        hasToken: !!response.data.token,
-        hasUser: !!response.data.user
-      });
+      console.log('✅ Response received:', response.status);
 
       if (isLogin) {
-        // Login successful
-        console.log('🎉 Login successful, storing user data');
-        console.log('📦 Storing token length:', response.data.token?.length);
-        console.log('👤 User data keys:', Object.keys(response.data.user || {}));
+        console.log('🎉 Login successful, calling onLoginSuccess');
         
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Verify storage
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        console.log('✅ Storage verification:', {
-          tokenStored: !!storedToken,
-          tokenLength: storedToken?.length,
-          userStored: !!storedUser
-        });
-        
-        // Pass both token and user data to onLoginSuccess
+        // Call the parent's login success handler
         onLoginSuccess(response.data.token, response.data.user);
         onClose();
       } else {
         console.log('📝 Registration successful');
-        
-        // Show success message
         alert('Registration successful! You can now sign in.');
+        setIsLogin(true); // Switch to login mode
       }
       
     } catch (error) {
@@ -162,14 +96,9 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       let errorMessage = 'Connection error';
       
       if (error.response) {
-        console.error('📡 Server error response:', {
-          status: error.response.status,
-          data: error.response.data
-        });
+        console.error('📡 Server error:', error.response.status, error.response.data);
         
-        if (error.response.status === 400) {
-          errorMessage = error.response.data.detail || 'Invalid data provided';
-        } else if (error.response.status === 401) {
+        if (error.response.status === 400 || error.response.status === 401) {
           errorMessage = 'Invalid email or password';
         } else if (error.response.status === 422) {
           errorMessage = 'Invalid data format';
@@ -177,7 +106,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
           errorMessage = error.response.data.detail || 'Server error';
         }
       } else if (error.request) {
-        console.error('📡 Network error:', error.request);
+        console.error('📡 Network error - no response received');
         errorMessage = 'Network error. Check your connection.';
       } else {
         console.error('⚠️ Request setup error:', error.message);
