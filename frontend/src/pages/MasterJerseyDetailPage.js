@@ -128,7 +128,7 @@ const MasterJerseyDetailPage = () => {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {teamName} - {masterJersey.season} - {masterJersey.jersey_type?.charAt(0).toUpperCase() + masterJersey.jersey_type?.slice(1)}
+                {teamName} - {masterJersey.season} - {masterJersey.kit_type?.charAt(0).toUpperCase() + masterJersey.kit_type?.slice(1)}
               </h1>
               <p className="text-lg text-gray-600 mt-1">
                 {brandName} • {masterJersey.model?.charAt(0).toUpperCase() + masterJersey.model?.slice(1)}
