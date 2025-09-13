@@ -95,6 +95,44 @@ const AppContent = () => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser({ ...userData, token });
     setShowAuthModal(false);
+    
+    // Handle pending actions after login
+    const pendingActionStr = localStorage.getItem('pendingAction');
+    if (pendingActionStr) {
+      try {
+        const pendingAction = JSON.parse(pendingActionStr);
+        localStorage.removeItem('pendingAction'); // Clear the pending action
+        
+        // Handle different types of pending actions
+        if (pendingAction.action === 'addKit') {
+          // Navigate to Kit Area if not already there, and trigger kit creation
+          if (location.pathname !== '/kit-area') {
+            navigate('/kit-area');
+          }
+          // Delay to ensure component is mounted
+          setTimeout(() => {
+            // Trigger the kit creation modal by dispatching a custom event
+            window.dispatchEvent(new CustomEvent('openMasterKitForm'));
+          }, 500);
+        } else if (pendingAction.action === 'addToCollection' && pendingAction.masterKit) {
+          // Handle add to collection action
+          window.dispatchEvent(new CustomEvent('addToCollection', { 
+            detail: { 
+              masterKit: pendingAction.masterKit, 
+              collectionType: pendingAction.collectionType || 'owned' 
+            } 
+          }));
+        } else if (pendingAction.action === 'addToWantList' && pendingAction.masterKit) {
+          // Handle add to want list action
+          window.dispatchEvent(new CustomEvent('addToWantList', { 
+            detail: { masterKit: pendingAction.masterKit } 
+          }));
+        }
+      } catch (error) {
+        console.error('Error handling pending action:', error);
+      }
+    }
+    
     // Reload collaborative data
     loadCollaborativeData();
   };
