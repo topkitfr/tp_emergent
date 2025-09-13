@@ -1193,6 +1193,28 @@ async def create_entity_from_contribution(contribution: dict) -> str:
             })
             await db.competitions.insert_one(entity)
         
+        elif entity_type == "master_kit":
+            entity.update({
+                "club_id": entity_data.get("club_id", ""),
+                "season": entity_data.get("season", ""),
+                "kit_type": entity_data.get("kit_type", ""),
+                "competition_id": entity_data.get("competition_id", ""),
+                "model": entity_data.get("model", ""),
+                "brand_id": entity_data.get("brand_id", ""),
+                "sku_code": entity_data.get("sku_code", ""),
+                "main_sponsor_id": entity_data.get("main_sponsor_id", ""),
+                "gender": entity_data.get("gender", ""),
+                "primary_color": entity_data.get("primary_color", ""),
+                "secondary_colors": entity_data.get("secondary_colors", []),
+                "pattern_description": entity_data.get("pattern_description", ""),
+                "front_photo_url": entity_data.get("front_photo_url", ""),
+                "total_collectors": 0,
+                "created_by": contribution.get("created_by", "")
+            })
+            # Generate proper master kit topkit reference
+            entity["topkit_reference"] = f"TK-MASTER-{uuid.uuid4().hex[:6].upper()}"
+            await db.master_kits.insert_one(entity)
+        
         logger.info(f"Created {entity_type} entity {entity_id} from contribution {contribution['id']}")
         return entity_id
         
