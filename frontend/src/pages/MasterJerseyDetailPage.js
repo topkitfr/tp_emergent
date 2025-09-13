@@ -203,7 +203,7 @@ const MasterJerseyDetailPage = () => {
                 
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-1">Type</h3>
-                  <p className="text-gray-900">{masterJersey.jersey_type?.charAt(0).toUpperCase() + masterJersey.jersey_type?.slice(1)}</p>
+                  <p className="text-gray-900">{masterJersey.kit_type?.charAt(0).toUpperCase() + masterJersey.kit_type?.slice(1)}</p>
                 </div>
                 
                 <div>
