@@ -171,6 +171,26 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     }
   };
 
+  const handleAddKitClick = () => {
+    // Check if user is authenticated
+    if (!user) {
+      // Show authentication modal
+      if (setShowAuthModal) {
+        setShowAuthModal(true);
+        // Store the action to perform after login
+        localStorage.setItem('pendingAction', JSON.stringify({
+          action: 'addKit'
+        }));
+      } else {
+        alert('Please sign in to add a kit');
+      }
+      return;
+    }
+
+    // User is authenticated, show the Master Kit form
+    setShowMasterKitForm(true);
+  };
+
   const handleMasterKitCreated = (newMasterKit) => {
     // Refresh the list
     fetchMasterKits();
