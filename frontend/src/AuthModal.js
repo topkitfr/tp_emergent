@@ -195,10 +195,20 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setSuccessMessage('');
 
     try {
-      const response = await axios.post(`${API}/api/auth/reset-password`, {
-        token: resetToken,
-        new_password: formData.newPassword
+      const response = await fetch(`${API}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: resetToken,
+          new_password: formData.newPassword
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       setSuccessMessage('Password reset successfully. You can now sign in with your new password.');
       setShowResetForm(false);
