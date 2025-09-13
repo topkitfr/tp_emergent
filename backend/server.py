@@ -1209,7 +1209,13 @@ async def create_entity_from_contribution(contribution: dict) -> str:
                 "pattern_description": entity_data.get("pattern_description", ""),
                 "front_photo_url": entity_data.get("front_photo_url", ""),
                 "total_collectors": 0,
-                "created_by": contribution.get("created_by", "")
+                "created_by": contribution.get("created_by", ""),
+                "verified_level": "unverified",
+                "verified_at": None,
+                "verified_by": None,
+                "modification_count": 0,
+                "last_modified_at": None,
+                "last_modified_by": None
             })
             # Generate proper master kit topkit reference
             entity["topkit_reference"] = f"TK-MASTER-{uuid.uuid4().hex[:6].upper()}"
