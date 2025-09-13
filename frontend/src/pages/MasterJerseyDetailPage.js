@@ -104,8 +104,8 @@ const MasterJerseyDetailPage = () => {
     );
   }
 
-  const teamName = masterJersey.team_info?.name || 'Unknown Team';
-  const brandName = masterJersey.brand_info?.name || 'Unknown Brand';
+  const teamName = masterJersey.club_name || masterJersey.club || 'Unknown Team';
+  const brandName = masterJersey.brand_name || masterJersey.brand || 'Unknown Brand';
   const groupedVersions = groupVersionsByCompetition(versions);
 
   return (
