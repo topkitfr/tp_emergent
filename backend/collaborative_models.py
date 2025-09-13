@@ -252,7 +252,7 @@ class MasterKitResponse(BaseModel):
     front_photo_url: Optional[str] = None
     pattern_description: Optional[str] = None
     created_at: datetime
-    verified_level: VerificationLevel
+    verified_level: Union[VerificationLevel, str] = "unverified"  # Allow both enum and string for backward compatibility
     topkit_reference: str
     total_collectors: int
     
