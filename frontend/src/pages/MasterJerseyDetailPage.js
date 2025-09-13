@@ -276,7 +276,7 @@ const MasterJerseyDetailPage = () => {
                   <div className="text-sm text-gray-600">Versions</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{masterJersey.collectors_count || 0}</div>
+                  <div className="text-2xl font-bold text-green-600">{masterJersey.total_collectors || 0}</div>
                   <div className="text-sm text-gray-600">Collectors</div>
                 </div>
               </div>
