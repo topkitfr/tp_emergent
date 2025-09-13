@@ -233,11 +233,15 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
         front_photo_url: frontPhotoUrl
       };
 
+      // Get club name from loaded clubs data
+      const selectedClub = formOptions.clubs.find(club => club.id === formData.club_id);
+      const clubName = selectedClub ? selectedClub.name : 'Unknown Club';
+
       // Create Master Kit Contribution (instead of direct master kit)
       const contributionData = {
         entity_type: "master_kit",
-        title: `${formData.club_name || 'Unknown Club'} ${formData.season} ${formData.kit_type} Kit`,
-        description: `Master kit contribution for${formData.club_name ? ` ${formData.club_name}` : ' club'} ${formData.season} ${formData.kit_type} jersey${formData.pattern_description ? ` - ${formData.pattern_description}` : ''}`,
+        title: `${clubName} ${formData.season} ${formData.kit_type} Kit`,
+        description: `Master kit contribution for ${clubName} ${formData.season} ${formData.kit_type} jersey${formData.pattern_description ? ` - ${formData.pattern_description}` : ''}`,
         data: {
           ...masterKitData
         },
