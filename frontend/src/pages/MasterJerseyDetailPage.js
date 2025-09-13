@@ -168,7 +168,7 @@ const MasterJerseyDetailPage = () => {
                     {masterJersey.additional_images.map((image, index) => (
                       <img
                         key={index}
-                        src={image.startsWith('http') ? image : `${process.env.REACT_APP_BACKEND_URL}/${image}`}
+                        src={image.startsWith('http') ? image : `${process.env.REACT_APP_BACKEND_URL}/api/${image}`}
                         alt={`Additional view ${index + 1}`}
                         className="w-full h-20 object-cover rounded border"
                       />
