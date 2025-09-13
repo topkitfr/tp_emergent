@@ -255,13 +255,14 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create Master Kit');
+        throw new Error(errorData.detail || 'Failed to create Master Kit contribution');
       }
 
-      const createdMasterKit = await response.json();
+      const createdContribution = await response.json();
       
-      alert('Master Kit created successfully!');
-      onSuccess && onSuccess(createdMasterKit);
+      // Success! The contribution was created and is pending approval
+      alert('Master Kit contribution created successfully! Your submission is pending approval. Once approved, it will appear in the Kit Area.');
+      onSuccess && onSuccess(createdContribution);
       onClose();
 
     } catch (error) {
