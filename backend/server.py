@@ -1332,13 +1332,13 @@ async def create_entity_from_contribution(contribution: dict) -> str:
 
 @app.get("/api/stats")
 async def get_stats():
-    """Get statistics for the application"""
+    """Get statistics for the application - WITH COMPATIBILITY TEST"""
     return {
-        "master_kits": 999,  # Changed to test if code is updating
-        "collections": 888,  # Changed to test if code is updating  
-        "users": 777,        # Changed to test if code is updating
-        "system": "test_update_working",
-        "test_endpoint_registration": "SUCCESS"
+        "master_kits": 999,  # TEST VALUE TO VERIFY BACKEND UPDATE
+        "collections": 888,  # TEST VALUE
+        "users": 777,        # TEST VALUE
+        "system": "BACKEND_UPDATE_TEST_SUCCESS",
+        "backwards_compatibility": "TESTING"
     }
 
 # ================================
