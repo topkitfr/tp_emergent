@@ -105,21 +105,24 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       
       let errorMessage = 'Connection error';
       
-      if (error.response) {
-        console.error('📡 Server error:', error.response.status, error.response.data);
-        
-        if (error.response.status === 400 || error.response.status === 401) {
-          errorMessage = 'Invalid email or password';
-        } else if (error.response.status === 422) {
-          errorMessage = 'Invalid data format';
-        } else {
-          errorMessage = error.response.data.detail || 'Server error';
+      // Handle fetch-specific errors
+      if (error.message && error.message.includes('HTTP')) {
+        const statusMatch = error.message.match(/HTTP (\d+):/);
+        if (statusMatch) {
+          const status = parseInt(statusMatch[1]);
+          if (status === 400 || status === 401) {
+            errorMessage = 'Invalid email or password';
+          } else if (status === 422) {
+            errorMessage = 'Invalid data format';
+          } else {
+            errorMessage = `Server error (${status})`;
+          }
         }
-      } else if (error.request) {
-        console.error('📡 Network error - no response received');
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        console.error('📡 Network error - failed to reach server');
         errorMessage = 'Network error. Check your connection.';
       } else {
-        console.error('⚠️ Request setup error:', error.message);
+        console.error('⚠️ Request error:', error.message);
         errorMessage = 'Connection error';
       }
       
