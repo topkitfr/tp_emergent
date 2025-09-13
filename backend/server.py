@@ -659,6 +659,10 @@ async def get_my_collection(
         for item in collection_items:
             master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
             if master_kit:
+                # Add default collection_type for backward compatibility
+                if "collection_type" not in item:
+                    item["collection_type"] = "owned"
+                    
                 item["master_kit"] = MasterKitResponse(**master_kit)
                 response_items.append(MyCollectionResponse(**item))
         
