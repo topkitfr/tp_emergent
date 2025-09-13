@@ -19,21 +19,21 @@ const MasterJerseyDetailPage = () => {
 
   const fetchMasterJerseyDetails = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/master-jerseys/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/master-kits/${id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch master jersey details');
+        throw new Error('Failed to fetch master kit details');
       }
 
       const data = await response.json();
       setMasterJersey(data);
     } catch (error) {
-      console.error('Error fetching master jersey details:', error);
-      setError('Failed to load master jersey details');
+      console.error('Error fetching master kit details:', error);
+      setError('Failed to load master kit details');
     }
   };
 
