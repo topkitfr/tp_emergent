@@ -192,6 +192,11 @@ async def get_master_jerseys():
         logger.error(f"Error fetching master jerseys: {str(e)}")
         return []
 
+@app.get("/api/test-endpoint")
+async def test_endpoint():
+    """Test endpoint to verify API registration"""
+    return {"message": "Test endpoint working", "timestamp": "2025-09-13"}
+
 @app.get("/api/reference-kits")
 async def get_reference_kits_compatibility():
     """Backward compatibility endpoint for reference kits"""
