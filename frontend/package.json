@@ -13,7 +13,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "GENERATE_SOURCEMAP=false SKIP_PREFLIGHT_CHECK=true craco start",
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
