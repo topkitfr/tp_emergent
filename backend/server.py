@@ -192,6 +192,21 @@ async def get_master_jerseys():
         logger.error(f"Error fetching master jerseys: {str(e)}")
         return []
 
+@app.get("/api/reference-kits")
+async def get_reference_kits_compatibility(
+    master_kit_id: Optional[str] = Query(None, description="Filter by master kit ID")
+):
+    """Backward compatibility endpoint for reference kits (now returns empty as they don't exist in new system)"""
+    try:
+        # In the new simplified system, there are no "reference kits" as separate entities
+        # Master kits are the primary reference, and users create collections of them
+        # Return empty array for backward compatibility
+        return []
+        
+    except Exception as e:
+        logger.error(f"Error in reference-kits compatibility endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ================================
 # FORM DATA ENDPOINTS
 # ================================
