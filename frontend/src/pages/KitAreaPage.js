@@ -41,6 +41,35 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     fetchMasterKits();
   }, [filters, currentPage, itemsPerPage, searchQuery]);
 
+  // Listen for custom events to handle pending actions after login
+  useEffect(() => {
+    const handleOpenMasterKitForm = () => {
+      setShowMasterKitForm(true);
+    };
+
+    const handleAddToCollection = (event) => {
+      const { masterKit, collectionType } = event.detail;
+      setSelectedMasterKit(masterKit);
+      setSelectedCollectionType(collectionType);
+      setShowPersonalDetailsForm(true);
+    };
+
+    const handleAddToWantListEvent = async (event) => {
+      const { masterKit } = event.detail;
+      await handleAddToWantList(masterKit);
+    };
+
+    window.addEventListener('openMasterKitForm', handleOpenMasterKitForm);
+    window.addEventListener('addToCollection', handleAddToCollection);
+    window.addEventListener('addToWantList', handleAddToWantListEvent);
+
+    return () => {
+      window.removeEventListener('openMasterKitForm', handleOpenMasterKitForm);
+      window.removeEventListener('addToCollection', handleAddToCollection);
+      window.removeEventListener('addToWantList', handleAddToWantListEvent);
+    };
+  }, []);
+
   const fetchMasterKits = async () => {
     try {
       setLoading(true);
