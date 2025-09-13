@@ -207,6 +207,23 @@ async def get_reference_kits_compatibility(
         logger.error(f"Error in reference-kits compatibility endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/master-jerseys/{master_jersey_id}")
+async def get_master_jersey_backward_compat(master_jersey_id: str):
+    """Backward compatibility endpoint - redirects master-jerseys to master-kits"""
+    try:
+        master_kit = await db.master_kits.find_one({"id": master_jersey_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        # Return master kit data with backward compatibility
+        return master_kit
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in master-jerseys compatibility endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ================================
 # FORM DATA ENDPOINTS
 # ================================
