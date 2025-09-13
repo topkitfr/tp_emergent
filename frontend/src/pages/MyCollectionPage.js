@@ -18,13 +18,22 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const loadCollections = async () => {
     if (!user?.id) return;
     
+    // Get token with proper validation
+    const token = user.token || localStorage.getItem('token');
+    if (!token) {
+      console.error('❌ No authentication token available');
+      setCollections([]);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       console.log('🔄 Loading My Collection for user:', user.id);
 
       const response = await fetch(`${API}/api/my-collection`, {
         headers: {
-          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
