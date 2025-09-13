@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://kit-collection-5.preview.emergentagent.com/api"
+BASE_URL = "https://football-jersey-db.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 REGULAR_USER_EMAIL = "steinmetzlivio@gmail.com"
 REGULAR_USER_PASSWORD = "123"

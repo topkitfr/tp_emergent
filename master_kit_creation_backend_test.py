@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"

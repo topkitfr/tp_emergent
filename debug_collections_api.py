@@ -10,7 +10,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
 
 USER_CREDENTIALS = {
     "email": "steinmetzlivio@gmail.com", 

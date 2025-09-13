@@ -24,7 +24,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
 
 # Données de test - creating new test user with strong password
 USER_CREDENTIALS = {

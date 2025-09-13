@@ -7,7 +7,7 @@ import requests
 import json
 
 # Configuration
-BACKEND_URL = "https://kit-collection-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
