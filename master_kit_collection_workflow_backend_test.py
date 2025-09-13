@@ -582,7 +582,7 @@ class MasterKitCollectionWorkflowTester:
                 "master_kit_id": master_kit_id,
                 "collection_type": "owned",
                 "size": "XL",
-                "condition": "good",
+                "condition": "match_worn",  # Use correct enum value
                 "purchase_price": 75.00
             }
             
