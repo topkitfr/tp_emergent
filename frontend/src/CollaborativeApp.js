@@ -63,7 +63,7 @@ const AppContent = () => {
     if (path === '/brands') return 'brands';
     if (path === '/players') return 'players';
     if (path === '/competitions') return 'competitions';
-    if (path === '/master-jerseys') return 'master-jerseys';
+    if (path === '/master-kits') return 'master-kits';
     if (path === '/profile') return 'profile';
     if (path === '/admin') return 'admin';
     return 'home';
