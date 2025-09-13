@@ -147,10 +147,10 @@ const MasterJerseyDetailPage = () => {
           <div>
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="aspect-w-16 aspect-h-12">
-                {masterJersey.main_image_url ? (
+                {masterJersey.front_photo_url ? (
                   <img
-                    src={masterJersey.main_image_url.startsWith('http') ? masterJersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${masterJersey.main_image_url}`}
-                    alt={`${teamName} ${masterJersey.season} ${masterJersey.jersey_type}`}
+                    src={masterJersey.front_photo_url.startsWith('http') ? masterJersey.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/${masterJersey.front_photo_url}`}
+                    alt={`${teamName} ${masterJersey.season} ${masterJersey.kit_type}`}
                     className="w-full h-96 object-cover"
                   />
                 ) : (
