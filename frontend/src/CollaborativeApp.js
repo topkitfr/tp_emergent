@@ -277,7 +277,7 @@ const AppContent = () => {
           <Route path="/brands" element={<CollaborativeBrandsPage {...commonProps} />} />
           <Route path="/players" element={<CollaborativePlayersPage {...commonProps} />} />
           <Route path="/competitions" element={<CollaborativeCompetitionsPage {...commonProps} />} />
-          <Route path="/master-jerseys" element={<CollaborativeMasterJerseyPage {...commonProps} />} />
+          <Route path="/master-kits" element={<CollaborativeMasterJerseyPage {...commonProps} />} />
           <Route path="/profile" element={<CollaborativeProfilePage {...commonProps} />} />
           <Route path="/admin" element={<AdminDashboard user={user} API={API} />} />
           
