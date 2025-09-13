@@ -223,9 +223,13 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
   const handleMasterKitCreated = (newMasterKit) => {
     // Refresh the list
     fetchMasterKits();
-    // Optionally, show the personal details form for the newly created kit
-    setSelectedMasterKit(newMasterKit);
-    setShowPersonalDetailsForm(true);
+    
+    // Show confirmation message instead of immediately opening personal form
+    alert('Master kit created successfully! Your submission is pending approval. Once approved, it will appear in the Kit Area and you can add it to your collection.');
+    
+    // Don't automatically show personal details form - user should add to collection manually later
+    // setSelectedMasterKit(newMasterKit); 
+    // setShowPersonalDetailsForm(true);
   };
 
   const handleAddedToCollection = () => {
