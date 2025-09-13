@@ -93,7 +93,7 @@ const CollaborativeMasterJerseyPage = ({
 
     setLoading(true);
     try {
-      const response = await fetch(`${API}/api/master-jerseys`, {
+      const response = await fetch(`${API}/api/master-kits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
