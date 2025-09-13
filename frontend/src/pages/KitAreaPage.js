@@ -174,11 +174,19 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
 
     // Directly add to want list without form
     try {
+      // Get token with proper validation
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('❌ No authentication token available for want list');
+        alert('Authentication error. Please sign in again.');
+        return;
+      }
+
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/my-collection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           master_kit_id: masterKit.id,
