@@ -175,7 +175,7 @@ const AppContent = () => {
         fetch(`${API}/api/brands`),
         fetch(`${API}/api/players`),
         fetch(`${API}/api/competitions`),
-        fetch(`${API}/api/master-jerseys`)
+        fetch(`${API}/api/master-kits`)
       ]);
 
       if (teamsRes.ok) setTeams(await teamsRes.json());
