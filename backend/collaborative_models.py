@@ -265,6 +265,7 @@ class MyCollectionResponse(BaseModel):
     id: str
     master_kit_id: str
     user_id: str
+    collection_type: Optional[str] = "owned"  # Default to "owned" for backward compatibility
     
     # Master Kit info (embedded)
     master_kit: MasterKitResponse
