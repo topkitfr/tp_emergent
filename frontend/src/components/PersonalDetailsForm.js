@@ -105,6 +105,14 @@ const PersonalDetailsForm = ({
       return;
     }
 
+    // Get token with proper validation
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('❌ No authentication token available');
+      alert('Authentication error. Please sign in again.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -119,7 +127,7 @@ const PersonalDetailsForm = ({
         const certResponse = await fetch(`${API}/api/upload/certificate`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: certFormData
         });
@@ -137,7 +145,7 @@ const PersonalDetailsForm = ({
         const proofResponse = await fetch(`${API}/api/upload/proof-of-purchase`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: proofFormData
         });
@@ -178,7 +186,7 @@ const PersonalDetailsForm = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(collectionData)
       });
