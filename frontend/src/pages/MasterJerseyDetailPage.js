@@ -149,7 +149,7 @@ const MasterJerseyDetailPage = () => {
               <div className="aspect-w-16 aspect-h-12">
                 {masterJersey.front_photo_url ? (
                   <img
-                    src={masterJersey.front_photo_url.startsWith('http') ? masterJersey.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/${masterJersey.front_photo_url}`}
+                    src={masterJersey.front_photo_url.startsWith('http') ? masterJersey.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/api/${masterJersey.front_photo_url}`}
                     alt={`${teamName} ${masterJersey.season} ${masterJersey.kit_type}`}
                     className="w-full h-96 object-cover"
                   />
