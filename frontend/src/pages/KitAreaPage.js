@@ -327,7 +327,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
           <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0">
             {kit.front_photo_url ? (
               <img
-                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/${kit.front_photo_url}`}
+                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/api/${kit.front_photo_url}`}
                 alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
                 className="w-16 h-16 object-cover rounded-lg"
               />
