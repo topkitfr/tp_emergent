@@ -224,6 +224,49 @@ async def get_master_jersey_backward_compat(master_jersey_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ================================
+# BACKWARD COMPATIBILITY ENDPOINTS
+# ================================
+
+@app.get("/api/master-jerseys")
+async def get_master_jerseys_list():
+    """Backward compatibility - redirect master-jerseys list to master-kits"""
+    try:
+        master_kits = await db.master_kits.find({}).to_list(length=None)
+        # Remove MongoDB ObjectId from all items
+        for kit in master_kits:
+            if "_id" in kit:
+                del kit["_id"]
+        return master_kits
+    except Exception as e:
+        logger.error(f"Error fetching master jerseys: {str(e)}")
+        return []
+
+@app.get("/api/reference-kits")
+async def get_reference_kits_list():
+    """Backward compatibility - return empty array for reference kits"""
+    return []
+
+@app.get("/api/master-jerseys/{jersey_id}")  
+async def get_single_master_jersey(jersey_id: str):
+    """Backward compatibility - redirect single master-jersey to master-kit"""
+    try:
+        master_kit = await db.master_kits.find_one({"id": jersey_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        # Remove MongoDB ObjectId
+        if "_id" in master_kit:
+            del master_kit["_id"]
+            
+        return master_kit
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching master jersey {jersey_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # FORM DATA ENDPOINTS
 # ================================
 
