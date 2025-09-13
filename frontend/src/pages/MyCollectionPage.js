@@ -129,12 +129,19 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const handleSaveEdit = async () => {
     if (!editingItem) return;
 
+    // Get token with proper validation
+    const token = user?.token || localStorage.getItem('token');
+    if (!token) {
+      console.error('❌ No authentication token available for edit');
+      return;
+    }
+
     try {
       const response = await fetch(`${API}/api/my-collection/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(editFormData)
       });
