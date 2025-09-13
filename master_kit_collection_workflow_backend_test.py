@@ -192,16 +192,13 @@ class MasterKitCollectionWorkflowTester:
                 "master_kit_id": master_kit_id,
                 "collection_type": "owned",
                 "size": "L",
-                "condition": "excellent",
+                "condition": "club_stock",  # Use correct enum value
+                "physical_state": "very_good_condition",  # Use correct enum value
                 "purchase_price": 89.99,
-                "purchase_date": "2024-01-15",
-                "purchase_location": "Official Store",
                 "personal_notes": "My favorite kit from this season",
-                "player_name": "Mbappé",
-                "player_number": 7,
-                "signed": False,
-                "worn": False,
-                "for_sale": False
+                "name_printing": "Mbappé",  # Use correct field name
+                "number_printing": "7",  # Use correct field name
+                "is_signed": False  # Use correct field name
             }
             
             response = self.session.post(f"{BACKEND_URL}/my-collection", json=collection_data)
