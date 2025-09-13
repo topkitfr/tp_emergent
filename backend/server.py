@@ -357,21 +357,45 @@ async def get_master_kits(
                 elif kit.get("gender") == "women":
                     kit["gender"] = "woman"
                     
-                # Set club_name from club field if using old format
+                # Handle backward compatibility for club names
                 if "club" in kit and not kit.get("club_name"):
                     kit["club_name"] = kit["club"]
+                elif kit.get("club_id") and not kit.get("club_name"):
+                    # Look up club name from club_id
+                    club = await db.teams.find_one({"id": kit["club_id"]})
+                    if club:
+                        kit["club_name"] = club.get("name", "Unknown Club")
+                        kit["club"] = club.get("name", "Unknown Club")  # For backward compatibility
                     
-                # Set competition_name from competition field if using old format
+                # Handle backward compatibility for competition names
                 if "competition" in kit and not kit.get("competition_name"):
                     kit["competition_name"] = kit["competition"]
+                elif kit.get("competition_id") and not kit.get("competition_name"):
+                    # Look up competition name from competition_id
+                    competition = await db.competitions.find_one({"id": kit["competition_id"]})
+                    if competition:
+                        kit["competition_name"] = competition.get("competition_name", "Unknown Competition")
+                        kit["competition"] = competition.get("competition_name", "Unknown Competition")  # For backward compatibility
                     
-                # Set brand_name from brand field if using old format
+                # Handle backward compatibility for brand names
                 if "brand" in kit and not kit.get("brand_name"):
                     kit["brand_name"] = kit["brand"]
-                    
-                # Set main_sponsor_name from main_sponsor field if using old format
+                elif kit.get("brand_id") and not kit.get("brand_name"):
+                    # Look up brand name from brand_id
+                    brand = await db.brands.find_one({"id": kit["brand_id"]})
+                    if brand:
+                        kit["brand_name"] = brand.get("name", "Unknown Brand")
+                        kit["brand"] = brand.get("name", "Unknown Brand")  # For backward compatibility
+                        
+                # Handle backward compatibility for main sponsor names
                 if "main_sponsor" in kit and not kit.get("main_sponsor_name"):
                     kit["main_sponsor_name"] = kit["main_sponsor"]
+                elif kit.get("main_sponsor_id") and not kit.get("main_sponsor_name"):
+                    # Look up main sponsor name from main_sponsor_id
+                    sponsor = await db.brands.find_one({"id": kit["main_sponsor_id"]})
+                    if sponsor:
+                        kit["main_sponsor_name"] = sponsor.get("name", "Unknown Sponsor")
+                        kit["main_sponsor"] = sponsor.get("name", "Unknown Sponsor")  # For backward compatibility
                     
                 # Ensure primary_color has a default value if None
                 if kit.get("primary_color") is None:
