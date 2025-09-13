@@ -245,10 +245,10 @@ const MasterJerseyDetailPage = () => {
                 </div>
               )}
 
-              {masterJersey.pattern && (
+              {(masterJersey.pattern_description || masterJersey.pattern) && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-1">Pattern</h3>
-                  <p className="text-gray-900">{masterJersey.pattern}</p>
+                  <p className="text-gray-900">{masterJersey.pattern_description || masterJersey.pattern}</p>
                 </div>
               )}
 
