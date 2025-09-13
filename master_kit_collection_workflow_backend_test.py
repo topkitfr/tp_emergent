@@ -448,16 +448,16 @@ class MasterKitCollectionWorkflowTester:
                             
                             # Verify want list details are included
                             want_details = {
-                                'desired_size': first_item.get('desired_size'),
-                                'max_price': first_item.get('max_price'),
-                                'condition_preference': first_item.get('condition_preference'),
-                                'priority': first_item.get('priority')
+                                'size': first_item.get('size'),
+                                'name_printing': first_item.get('name_printing'),
+                                'number_printing': first_item.get('number_printing'),
+                                'personal_notes': first_item.get('personal_notes')
                             }
                             
                             self.log_test(
                                 "Wanted Collection Details", 
                                 True, 
-                                f"Want list details retrieved: Size {want_details['desired_size']}, Max Price €{want_details['max_price']}, Condition {want_details['condition_preference']}, Priority {want_details['priority']}"
+                                f"Want list details retrieved: Size {want_details['size']}, Player {want_details['name_printing']} #{want_details['number_printing']}, Notes: {want_details['personal_notes'][:30] if want_details['personal_notes'] else 'None'}..."
                             )
                             
                             return True
