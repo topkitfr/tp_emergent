@@ -331,7 +331,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                       <img
                         src={masterKit.front_photo_url.startsWith('http') 
                           ? masterKit.front_photo_url 
-                          : `${API}/${masterKit.front_photo_url}`}
+                          : `${API}/api/${masterKit.front_photo_url}`}
                         alt={`${masterKit.club || 'Unknown'} ${masterKit.season || ''}`}
                         className="w-full h-48 object-contain rounded-lg"
                       />
