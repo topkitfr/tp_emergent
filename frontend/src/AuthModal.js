@@ -73,8 +73,19 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       console.log('📤 API URL:', `${API}/api${endpoint}`);
       console.log('📦 Payload:', { ...payload, password: '[HIDDEN]' });
       
-      const response = await axios.post(`${API}/api${endpoint}`, payload);
+      const response = await fetch(`${API}/api${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
       
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
       console.log('✅ Response received:', response.status);
 
       if (isLogin) {
