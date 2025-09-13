@@ -78,7 +78,7 @@ const VersionDetailPage = () => {
 
   const fetchMasterJerseyDetails = async (masterKitId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/master-jerseys/${masterKitId}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/master-kits/${masterKitId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
