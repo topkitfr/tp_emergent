@@ -36,7 +36,7 @@ const ContributionDetailModal = ({
         'brand': 'brands',
         'player': 'players',
         'competition': 'competitions',
-        'master_jersey': 'master-jerseys',
+        'master_kit': 'master-kits',
         'jersey_release': 'jersey-releases'
       };
 
