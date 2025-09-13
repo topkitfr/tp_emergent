@@ -92,7 +92,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         console.log('🎉 Login successful, calling onLoginSuccess');
         
         // Call the parent's login success handler
-        onLoginSuccess(response.data.token, response.data.user);
+        onLoginSuccess(data.token, data.user);
         onClose();
       } else {
         console.log('📝 Registration successful');
