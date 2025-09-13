@@ -141,11 +141,22 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     try {
       console.log('Sending password reset request for:', formData.resetEmail);
       
-      const response = await axios.post(`${API}/api/auth/request-password-reset`, {
-        email: formData.resetEmail
+      const response = await fetch(`${API}/api/auth/request-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.resetEmail
+        })
       });
 
-      console.log('Password reset response:', response.data);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Password reset response:', data);
       setSuccessMessage('Reset link sent to your email if the account exists.');
       setFormData({ ...formData, resetEmail: '' });
       
