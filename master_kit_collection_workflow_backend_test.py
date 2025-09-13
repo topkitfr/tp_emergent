@@ -377,14 +377,15 @@ class MasterKitCollectionWorkflowTester:
                             personal_details = {
                                 'size': first_item.get('size'),
                                 'condition': first_item.get('condition'),
+                                'physical_state': first_item.get('physical_state'),
                                 'purchase_price': first_item.get('purchase_price'),
-                                'player_name': first_item.get('player_name')
+                                'name_printing': first_item.get('name_printing')
                             }
                             
                             self.log_test(
                                 "Owned Collection Personal Details", 
                                 True, 
-                                f"Personal details retrieved: Size {personal_details['size']}, Condition {personal_details['condition']}, Price €{personal_details['purchase_price']}, Player {personal_details['player_name']}"
+                                f"Personal details retrieved: Size {personal_details['size']}, Condition {personal_details['condition']}, State {personal_details['physical_state']}, Price €{personal_details['purchase_price']}, Player {personal_details['name_printing']}"
                             )
                             
                             return True
