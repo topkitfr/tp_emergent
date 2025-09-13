@@ -223,15 +223,16 @@ class MasterKitCollectionWorkflowTester:
                         saved_details = {
                             'size': collection_item.get('size'),
                             'condition': collection_item.get('condition'),
+                            'physical_state': collection_item.get('physical_state'),
                             'purchase_price': collection_item.get('purchase_price'),
-                            'player_name': collection_item.get('player_name'),
-                            'player_number': collection_item.get('player_number')
+                            'name_printing': collection_item.get('name_printing'),
+                            'number_printing': collection_item.get('number_printing')
                         }
                         
                         self.log_test(
                             "Personal Details Saved - Owned", 
                             True, 
-                            f"Personal details saved correctly: Size {saved_details['size']}, Condition {saved_details['condition']}, Price €{saved_details['purchase_price']}, Player {saved_details['player_name']} #{saved_details['player_number']}"
+                            f"Personal details saved correctly: Size {saved_details['size']}, Condition {saved_details['condition']}, State {saved_details['physical_state']}, Price €{saved_details['purchase_price']}, Player {saved_details['name_printing']} #{saved_details['number_printing']}"
                         )
                         
                         return True
