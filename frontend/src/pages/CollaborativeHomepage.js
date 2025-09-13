@@ -308,7 +308,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm overflow-hidden">
                   {brand.logo_url ? (
                     <img 
-                      src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${process.env.REACT_APP_BACKEND_URL}/${brand.logo_url}`}
+                      src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${process.env.REACT_APP_BACKEND_URL}/api/${brand.logo_url}`}
                       alt={brand.name}
                       className="w-full h-full object-contain p-2"
                       onError={(e) => {
