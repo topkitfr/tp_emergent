@@ -1320,22 +1320,14 @@ async def create_entity_from_contribution(contribution: dict) -> str:
 
 @app.get("/api/stats")
 async def get_stats():
-    """Get basic stats for the new system"""
-    try:
-        total_master_kits = await db.master_kits.count_documents({})
-        total_collections = await db.my_collection.count_documents({})
-        total_users = await db.users.count_documents({})
-        
-        return {
-            "master_kits": total_master_kits,
-            "collections": total_collections,
-            "users": total_users,
-            "system": "simplified_2_type"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error fetching stats: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    """Get statistics for the application"""
+    return {
+        "master_kits": 999,  # Changed to test if code is updating
+        "collections": 888,  # Changed to test if code is updating  
+        "users": 777,        # Changed to test if code is updating
+        "system": "test_update_working",
+        "test_endpoint_registration": "SUCCESS"
+    }
 
 # ================================
 # HEALTH CHECK
