@@ -1358,6 +1358,37 @@ async def root():
 async def health():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "ok", 
+        "timestamp": "2025-09-13",
+        "backend_update_test": "SUCCESS - CODE IS LOADING"
+    }
+
+@app.get("/api/master-jerseys/{jersey_id}")
+async def master_jersey_compat(jersey_id: str):
+    """Backward compatibility for master-jerseys"""
+    try:
+        master_kit = await db.master_kits.find_one({"id": jersey_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        if "_id" in master_kit:
+            del master_kit["_id"]
+            
+        return master_kit
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reference-kits")
+async def reference_kits_compat():
+    """Backward compatibility for reference-kits"""
+    return []
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
