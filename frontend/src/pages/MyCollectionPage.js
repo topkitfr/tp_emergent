@@ -168,13 +168,20 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     
     if (!confirm(confirmMessage)) return;
 
+    // Get token with proper validation
+    const token = user?.token || localStorage.getItem('token');
+    if (!token) {
+      console.error('❌ No authentication token available for delete');
+      return;
+    }
+
     try {
       console.log(`🗑️ Attempting to delete collection item:`, item.id);
       
       const response = await fetch(`${API}/api/my-collection/${item.id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.token || localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
