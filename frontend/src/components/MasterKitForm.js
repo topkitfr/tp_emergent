@@ -227,6 +227,12 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
         frontPhotoUrl = photoResult.file_url;
       }
 
+      // Prepare Master Kit data
+      const masterKitData = {
+        ...formData,
+        front_photo_url: frontPhotoUrl
+      };
+
       // Create Master Kit Contribution (instead of direct master kit)
       const contributionData = {
         entity_type: "master_kit",
