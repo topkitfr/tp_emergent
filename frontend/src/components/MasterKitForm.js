@@ -227,19 +227,24 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
         frontPhotoUrl = photoResult.file_url;
       }
 
-      // Create Master Kit
-      const masterKitData = {
-        ...formData,
-        front_photo_url: frontPhotoUrl
+      // Create Master Kit Contribution (instead of direct master kit)
+      const contributionData = {
+        entity_type: "master_kit",
+        title: `${formData.club_name || 'Unknown Club'} ${formData.season} ${formData.kit_type} Kit`,
+        description: `Master kit contribution for${formData.club_name ? ` ${formData.club_name}` : ' club'} ${formData.season} ${formData.kit_type} jersey${formData.pattern_description ? ` - ${formData.pattern_description}` : ''}`,
+        data: {
+          ...masterKitData
+        },
+        source_urls: []
       };
 
-      const response = await fetch(`${API}/api/master-kits`, {
+      const response = await fetch(`${API}/api/contributions-v2/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(masterKitData)
+        body: JSON.stringify(contributionData)
       });
 
       if (!response.ok) {
