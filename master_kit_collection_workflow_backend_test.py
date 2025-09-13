@@ -282,13 +282,10 @@ class MasterKitCollectionWorkflowTester:
             want_data = {
                 "master_kit_id": master_kit_id,
                 "collection_type": "wanted",
-                "desired_size": "M",
-                "max_price": 120.00,
-                "condition_preference": "very_good",
+                "size": "M",  # Desired size
                 "personal_notes": "Looking for this kit in good condition",
-                "priority": "high",
-                "player_preference": "Neymar",
-                "number_preference": 10
+                "name_printing": "Neymar",  # Player preference
+                "number_printing": "10"  # Number preference
             }
             
             response = self.session.post(f"{BACKEND_URL}/my-collection", json=want_data)
