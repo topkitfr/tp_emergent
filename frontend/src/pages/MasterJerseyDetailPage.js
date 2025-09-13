@@ -212,6 +212,11 @@ const MasterJerseyDetailPage = () => {
                 </div>
                 
                 <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-1">Competition</h3>
+                  <p className="text-gray-900">{masterJersey.competition_name || masterJersey.competition || 'Unknown Competition'}</p>
+                </div>
+                
+                <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-1">Primary Color</h3>
                   <div className="flex items-center space-x-2">
                     <div 
