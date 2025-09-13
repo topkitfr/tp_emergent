@@ -26,7 +26,7 @@ from PIL import Image
 import io
 
 # Configuration
-BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

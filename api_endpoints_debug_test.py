@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Configuration
-BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 SPECIFIC_MASTER_KIT_ID = "7274ceb6-45d1-47fa-8ce2-a79675a977ea"

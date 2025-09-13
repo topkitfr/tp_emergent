@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Production backend URL from frontend/.env
-BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
 
 # Test accounts as specified in review request
 TEST_ACCOUNTS = [

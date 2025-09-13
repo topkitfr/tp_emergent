@@ -8,7 +8,7 @@ import json
 import os
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-workflow-fix.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-debug-1.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 def test_voting_system():

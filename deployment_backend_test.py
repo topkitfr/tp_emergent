@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-workflow-fix.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-debug-1.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Test credentials
@@ -78,7 +78,7 @@ class DeploymentTester:
             
             # Check for hardcoded URLs (should not exist)
             hardcoded_patterns = [
-                'https://topkit-workflow-fix.preview.emergentagent.com',
+                'https://topkit-debug-1.preview.emergentagent.com',
                 'localhost:3000',
                 'http://localhost'
             ]
@@ -142,7 +142,7 @@ class DeploymentTester:
                 # Check if verification link is provided (for development)
                 if 'dev_verification_link' in data:
                     link = data['dev_verification_link']
-                    if 'FRONTEND_URL' in str(link) or link.startswith('https://topkit-workflow-fix.preview.emergentagent.com'):
+                    if 'FRONTEND_URL' in str(link) or link.startswith('https://topkit-debug-1.preview.emergentagent.com'):
                         self.log_test("Email Verification URL", True, "Verification URL uses proper domain")
                     else:
                         self.log_test("Email Verification URL", False, f"Unexpected URL format: {link}")
@@ -263,7 +263,7 @@ class DeploymentTester:
         ]
         
         hardcoded_patterns = [
-            'https://topkit-workflow-fix.preview.emergentagent.com',
+            'https://topkit-debug-1.preview.emergentagent.com',
             'localhost:3000',
             'http://localhost:3000'
         ]

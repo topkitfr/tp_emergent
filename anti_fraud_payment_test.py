@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -255,7 +255,7 @@ class AntiFraudPaymentTester:
         # Test secure checkout
         checkout_data = {
             "listing_id": self.test_listing_id,
-            "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
+            "origin_url": "https://topkit-debug-1.preview.emergentagent.com"
         }
         
         response, error = self.make_request("POST", "/payments/secure/checkout", 
@@ -431,7 +431,7 @@ class AntiFraudPaymentTester:
         # Create second transaction
         checkout_data = {
             "listing_id": self.test_listing_id,
-            "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
+            "origin_url": "https://topkit-debug-1.preview.emergentagent.com"
         }
         
         response, error = self.make_request("POST", "/payments/secure/checkout", 

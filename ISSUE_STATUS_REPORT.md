@@ -61,7 +61,7 @@ fetch(`${API}/api/master-kits/${id}`)
 ### Option 1: Direct API Access ✅
 The Master Kit data is accessible via correct endpoint:
 ```bash
-curl "https://football-jersey-db.preview.emergentagent.com/api/master-kits/7274ceb6-45d1-47fa-8ce2-a79675a977ea"
+curl "https://topkit-debug-1.preview.emergentagent.com/api/master-kits/7274ceb6-45d1-47fa-8ce2-a79675a977ea"
 ```
 
 ### Option 2: Backend Compatibility Endpoints (Pending Deployment)
@@ -90,6 +90,6 @@ Created backward compatibility endpoints in server.py:
 ## 💡 **User Workaround**
 
 While the UI is being fixed, you can verify your AC Milan kit data is complete and accurate by accessing:
-`https://football-jersey-db.preview.emergentagent.com/api/master-kits/7274ceb6-45d1-47fa-8ce2-a79675a977ea`
+`https://topkit-debug-1.preview.emergentagent.com/api/master-kits/7274ceb6-45d1-47fa-8ce2-a79675a977ea`
 
 The kit contains all the information you submitted and will display correctly once the deployment issues are resolved.
