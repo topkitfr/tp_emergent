@@ -25,7 +25,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -245,7 +245,7 @@ class MessagingSystemTester:
                                    headers=headers,
                                    json={
                                        "listing_id": self.listing_id,
-                                       "origin_url": "https://football-jersey-db.preview.emergentagent.com"
+                                       "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
                                    })
             
             if response.status_code == 200:

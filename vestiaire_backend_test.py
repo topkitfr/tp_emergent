@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-API_BASE = "https://football-jersey-db.preview.emergentagent.com/api"
+API_BASE = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 ADMIN_EMAIL = "topkitfr@gmail.com"

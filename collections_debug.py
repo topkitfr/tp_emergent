@@ -11,7 +11,7 @@ import json
 import sys
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {

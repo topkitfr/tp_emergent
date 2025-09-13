@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-API_BASE = "https://football-jersey-db.preview.emergentagent.com/api"
+API_BASE = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 # Données de test pour l'authentification
 TEST_USER = {

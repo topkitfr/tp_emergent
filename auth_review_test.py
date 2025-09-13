@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 # Review request credentials
 REVIEW_CREDENTIALS = {

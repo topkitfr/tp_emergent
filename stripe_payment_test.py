@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "stripe_test_b2d8722d@test.com"  # Verified user
 TEST_USER_PASSWORD = "StripeTestPass9!@"  # Verified password
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -108,7 +108,7 @@ class StripePaymentTester:
             # Test if Stripe endpoints are accessible
             test_data = {
                 "listing_id": "non-existent-listing",
-                "origin_url": "https://football-jersey-db.preview.emergentagent.com"
+                "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
             }
             
             async with self.session.post(
@@ -196,7 +196,7 @@ class StripePaymentTester:
         try:
             checkout_data = {
                 "listing_id": listing_id,
-                "origin_url": "https://football-jersey-db.preview.emergentagent.com"
+                "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
             }
             
             # Test authenticated checkout
@@ -427,7 +427,7 @@ class StripePaymentTester:
             # Try to create checkout session with manipulated price (should be ignored)
             checkout_data = {
                 "listing_id": self.test_listing_id,
-                "origin_url": "https://football-jersey-db.preview.emergentagent.com",
+                "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com",
                 "price": 1.0  # Try to manipulate price - should be ignored
             }
             
@@ -481,7 +481,7 @@ class StripePaymentTester:
             # Test 1: Invalid listing ID
             invalid_checkout_data = {
                 "listing_id": "invalid-listing-id",
-                "origin_url": "https://football-jersey-db.preview.emergentagent.com"
+                "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
             }
             
             async with self.session.post(
@@ -502,7 +502,7 @@ class StripePaymentTester:
                     
             # Test 3: Missing required fields
             incomplete_checkout_data = {
-                "origin_url": "https://football-jersey-db.preview.emergentagent.com"
+                "origin_url": "https://topkit-workflow-fix.preview.emergentagent.com"
                 # Missing listing_id
             }
             

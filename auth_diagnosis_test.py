@@ -12,7 +12,7 @@ import time
 import jwt
 
 # Configuration
-BASE_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "test@topkit.com"
 TEST_USER_PASSWORD = "password123"
 TEST_USER_NAME = "testuser"

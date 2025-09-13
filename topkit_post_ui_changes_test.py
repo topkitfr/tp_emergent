@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "postui_testuser@topkit.com"
 TEST_USER_PASSWORD = "SecurePass123!"
 TEST_USER_NAME = "Post UI Test User"

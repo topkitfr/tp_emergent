@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 class RapidEmptyDatabaseTester:
     def __init__(self):

@@ -34,7 +34,7 @@ import uuid
 from PIL import Image
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 USER_EMAIL = "testuser.images@gmail.com"
 USER_PASSWORD = "SecureTestPass789!"
 ADMIN_EMAIL = "topkitfr@gmail.com"
@@ -215,7 +215,7 @@ class ImageUploadWorkflowTester:
                         # Try to access the image URL
                         if front_url.startswith('/'):
                             # Relative URL - construct full URL
-                            full_url = f"https://football-jersey-db.preview.emergentagent.com{front_url}"
+                            full_url = f"https://topkit-workflow-fix.preview.emergentagent.com{front_url}"
                         else:
                             full_url = front_url
                         
@@ -235,7 +235,7 @@ class ImageUploadWorkflowTester:
                         # Try to access the image URL
                         if back_url.startswith('/'):
                             # Relative URL - construct full URL
-                            full_url = f"https://football-jersey-db.preview.emergentagent.com{back_url}"
+                            full_url = f"https://topkit-workflow-fix.preview.emergentagent.com{back_url}"
                         else:
                             full_url = back_url
                         

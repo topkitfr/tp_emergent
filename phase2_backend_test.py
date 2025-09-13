@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BASE_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 TEST_USER_EMAIL = f"phase2test_{int(time.time())}@topkit.com"
 TEST_USER_PASSWORD = "password123"
 TEST_USER_NAME = "Phase2TestUser"

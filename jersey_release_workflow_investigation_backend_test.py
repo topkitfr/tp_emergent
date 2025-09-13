@@ -28,7 +28,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://football-jersey-db.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-workflow-fix.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {
