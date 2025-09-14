@@ -101,6 +101,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
       if (filters.brand) params.append('brand', filters.brand);
       if (filters.season) params.append('season', filters.season);
       if (filters.kit_type) params.append('kit_type', filters.kit_type);
+      if (filters.competition) params.append('competition', filters.competition);
       if (searchQuery) params.append('q', searchQuery);
       params.append('limit', itemsPerPage);
       params.append('skip', (currentPage - 1) * itemsPerPage);
