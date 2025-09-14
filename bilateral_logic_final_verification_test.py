@@ -372,7 +372,8 @@ class BilateralLogicFinalVerificationTester:
                             "master_kit_id": master_kit_id,
                             "collection_type": "wanted",
                             "size": "M",
-                            "condition": "very_good_condition"
+                            "condition": "club_stock",
+                            "physical_state": "very_good_condition"
                         })
                         
                         prevention_tests += 1
