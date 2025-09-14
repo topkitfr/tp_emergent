@@ -16,7 +16,7 @@ import jwt
 from datetime import datetime, timedelta
 
 # Configuration
-BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
 
 # Test credentials from review request
 TEST_USER_CREDENTIALS = {

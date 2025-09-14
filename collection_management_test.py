@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Configuration
-BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com" 
 ADMIN_PASSWORD = "TopKitSecure789#"
 

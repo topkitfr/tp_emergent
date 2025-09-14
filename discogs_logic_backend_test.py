@@ -23,7 +23,7 @@ from datetime import datetime
 import sys
 
 # Configuration - Using production URL from frontend/.env
-BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
 
 # Test credentials from review request (updated from test_result.md history)
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"

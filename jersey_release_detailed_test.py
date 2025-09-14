@@ -8,7 +8,7 @@ import requests
 import json
 from datetime import datetime
 
-BASE_URL = "https://footkit-hub.preview.emergentagent.com/api"
+BASE_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "topkitfr@gmail.com"
 TEST_USER_PASSWORD = "TopKitSecure789#"
 
