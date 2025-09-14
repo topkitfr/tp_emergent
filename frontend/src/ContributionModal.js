@@ -244,7 +244,12 @@ const ContributionModal = ({
       
       // Handle image changes specially since they're tracked differently
       if (imageFiles.logo) {
-        changedFieldsData.logo_url = `image_uploaded_${Date.now()}`;
+        // Map logo upload to correct field based on entity type
+        if (entityType === 'master_kit') {
+          changedFieldsData.front_photo_url = `image_uploaded_${Date.now()}`;
+        } else {
+          changedFieldsData.logo_url = `image_uploaded_${Date.now()}`;
+        }
       }
       if (imageFiles.primary_photo) {
         changedFieldsData.primary_photo_url = `image_uploaded_${Date.now()}`;
