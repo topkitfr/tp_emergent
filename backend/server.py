@@ -1557,13 +1557,13 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
                 )
                 
             elif entity_type == "brand":
-                update_fields.update({
-                    "name": entity_data.get("name", ""),
-                    "country": entity_data.get("country", ""),
-                    "founded_year": entity_data.get("founded_year", 0),
-                    "logo_url": entity_data.get("logo_url", ""),
-                    "description": entity_data.get("description", "")
-                })
+                # Only update fields that are explicitly provided in the contribution
+                brand_fields = ["name", "country", "founded_year", "logo_url", "description"]
+                for field in brand_fields:
+                    if field in entity_data:
+                        update_fields[field] = entity_data[field]
+                
+                logger.info(f"Updating brand {existing_entity_id} with fields: {list(update_fields.keys())}")
                 
                 result = await db.brands.update_one(
                     {"id": existing_entity_id},
