@@ -993,6 +993,7 @@ class ContributionCreate(BaseModel):
     description: str = ""
     data: dict
     source_urls: List[str] = []
+    entity_id: Optional[str] = None  # For updating existing entities
 
 class ContributionResponse(BaseModel):
     id: str
