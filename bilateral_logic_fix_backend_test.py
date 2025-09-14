@@ -350,7 +350,8 @@ class BilateralLogicTester:
                     "master_kit_id": new_kit['id'],
                     "collection_type": "wanted",
                     "size": "M",
-                    "condition": "new_with_tags"
+                    "condition": "training",
+                    "physical_state": "new_with_tags"
                 })
                 
                 if response2.status_code == 400:
