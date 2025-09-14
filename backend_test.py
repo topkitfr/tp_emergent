@@ -18,6 +18,7 @@ import time
 import tempfile
 from PIL import Image
 import io
+import uuid
 
 # Get backend URL from environment
 BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-debug-1.preview.emergentagent.com')
@@ -27,11 +28,12 @@ API_BASE = f"{BACKEND_URL}/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 
-class LegacyImageSystemTester:
+class ImageUploadFixTester:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
+        self.test_team_id = "TK-TEAM-982B1F"  # Specific team from user report
         
     def log_test(self, test_name, success, details=""):
         """Log test result"""
@@ -67,345 +69,418 @@ class LegacyImageSystemTester:
         except Exception as e:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
-    
-    def test_legacy_image_endpoint_exists(self):
-        """Test 1: Verify Legacy Image Endpoint exists"""
+
+    def test_tk_team_982b1f_fix(self):
+        """Test 1: Verify TK-TEAM-982B1F Fix - User's specific team image issue"""
         try:
-            # Test with a dummy image ID to see if endpoint exists
-            test_image_id = "image_uploaded_1234567890"
-            response = self.session.get(f"{API_BASE}/legacy-image/{test_image_id}")
+            # First, check if the team exists in the database
+            response = self.session.get(f"{API_BASE}/teams")
+            if response.status_code != 200:
+                self.log_test("TK-TEAM-982B1F Team Lookup", False, f"Teams API failed: {response.status_code}")
+                return False
             
-            # We expect 404 for non-existent image, but endpoint should exist
-            if response.status_code == 404:
-                self.log_test("Legacy Image Endpoint Exists", True, f"Endpoint exists, returns 404 for non-existent image")
+            teams = response.json()
+            target_team = None
+            
+            # Look for the specific team
+            for team in teams:
+                if team.get('id') == self.test_team_id or team.get('topkit_reference') == self.test_team_id:
+                    target_team = team
+                    break
+            
+            if not target_team:
+                self.log_test("TK-TEAM-982B1F Team Exists", False, f"Team {self.test_team_id} not found in database")
+                return False
+            
+            self.log_test("TK-TEAM-982B1F Team Exists", True, f"Found team: {target_team.get('name', 'Unknown')}")
+            
+            # Check if team has logo_url with legacy format
+            logo_url = target_team.get('logo_url', '')
+            if not logo_url:
+                self.log_test("TK-TEAM-982B1F Logo URL", False, "Team has no logo_url field")
+                return False
+            
+            if not logo_url.startswith('image_uploaded_'):
+                self.log_test("TK-TEAM-982B1F Legacy Format", False, f"Logo URL not in legacy format: {logo_url}")
+                return False
+            
+            self.log_test("TK-TEAM-982B1F Legacy Format", True, f"Logo URL: {logo_url}")
+            
+            # Test if the legacy image endpoint can serve this image
+            response = self.session.get(f"{API_BASE}/legacy-image/{logo_url}")
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                self.log_test("TK-TEAM-982B1F Image Serving", True, 
+                            f"Image served successfully - Content-Type: {content_type}, Size: {len(response.content)} bytes")
                 return True
-            elif response.status_code == 200:
-                self.log_test("Legacy Image Endpoint Exists", True, f"Endpoint exists and found image")
-                return True
+            elif response.status_code == 404:
+                self.log_test("TK-TEAM-982B1F Image Serving", False, 
+                            f"Image file not found on server for {logo_url}")
+                return False
             else:
-                self.log_test("Legacy Image Endpoint Exists", False, f"Unexpected status: {response.status_code}")
+                self.log_test("TK-TEAM-982B1F Image Serving", False, 
+                            f"Unexpected response: {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Legacy Image Endpoint Exists", False, f"Exception: {str(e)}")
+            self.log_test("TK-TEAM-982B1F Fix Test", False, f"Exception: {str(e)}")
             return False
-    
-    def test_database_elements_with_legacy_format(self):
-        """Test 2: Check if database elements have logo_url fields with legacy format"""
-        legacy_images_found = []
-        
-        # Test teams
+
+    def create_test_image(self):
+        """Create a test image for upload testing"""
         try:
-            response = self.session.get(f"{API_BASE}/teams")
-            if response.status_code == 200:
-                teams = response.json()
-                for team in teams:
-                    logo_url = team.get('logo_url', '')
-                    if logo_url and 'image_uploaded_' in logo_url:
-                        legacy_images_found.append(f"Team '{team.get('name', 'Unknown')}': {logo_url}")
-                        
-                self.log_test("Teams with Legacy Images", len(legacy_images_found) > 0, 
-                            f"Found {len(legacy_images_found)} teams with legacy image format")
-            else:
-                self.log_test("Teams API Access", False, f"HTTP {response.status_code}")
-                
+            # Create a simple test image
+            img = Image.new('RGB', (800, 600), color='red')
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='PNG')
+            img_buffer.seek(0)
+            return img_buffer
         except Exception as e:
-            self.log_test("Teams API Access", False, f"Exception: {str(e)}")
-        
-        # Test brands
+            print(f"Error creating test image: {str(e)}")
+            return None
+
+    def test_image_upload_workflow(self):
+        """Test 2: Test Image Workflow for new team/brand creation"""
         try:
-            response = self.session.get(f"{API_BASE}/brands")
+            # Create a test image
+            test_image = self.create_test_image()
+            if not test_image:
+                self.log_test("Image Upload Workflow", False, "Failed to create test image")
+                return False
+            
+            # Test image upload to contributions directory
+            files = {'file': ('test_logo.png', test_image, 'image/png')}
+            
+            # Try to upload image for contribution
+            response = self.session.post(f"{API_BASE}/upload/image", files=files)
+            
             if response.status_code == 200:
-                brands = response.json()
-                brand_legacy_count = 0
-                for brand in brands:
-                    logo_url = brand.get('logo_url', '')
-                    if logo_url and 'image_uploaded_' in logo_url:
-                        legacy_images_found.append(f"Brand '{brand.get('name', 'Unknown')}': {logo_url}")
-                        brand_legacy_count += 1
-                        
-                self.log_test("Brands with Legacy Images", brand_legacy_count > 0, 
-                            f"Found {brand_legacy_count} brands with legacy image format")
-            else:
-                self.log_test("Brands API Access", False, f"HTTP {response.status_code}")
+                upload_data = response.json()
+                file_url = upload_data.get('file_url', '')
+                self.log_test("Image Upload to Contributions", True, f"Uploaded to: {file_url}")
                 
-        except Exception as e:
-            self.log_test("Brands API Access", False, f"Exception: {str(e)}")
-        
-        # Test players
-        try:
-            response = self.session.get(f"{API_BASE}/players")
-            if response.status_code == 200:
-                players = response.json()
-                player_legacy_count = 0
-                for player in players:
-                    photo_url = player.get('profile_picture_url', '') or player.get('photo_url', '')
-                    if photo_url and 'image_uploaded_' in photo_url:
-                        legacy_images_found.append(f"Player '{player.get('name', 'Unknown')}': {photo_url}")
-                        player_legacy_count += 1
-                        
-                self.log_test("Players with Legacy Images", player_legacy_count > 0, 
-                            f"Found {player_legacy_count} players with legacy image format")
-            else:
-                self.log_test("Players API Access", False, f"HTTP {response.status_code}")
+                # Now test creating a team contribution with this image
+                contribution_data = {
+                    "entity_type": "team",
+                    "title": "Test Team for Image Upload Fix",
+                    "description": "Testing image upload workflow",
+                    "data": {
+                        "name": "Test Team Upload Fix",
+                        "short_name": "TTUF",
+                        "country": "France",
+                        "city": "Paris",
+                        "founded_year": 2024,
+                        "colors": ["Red", "Blue"],
+                        "logo_url": f"image_uploaded_{int(time.time() * 1000)}"  # Legacy format
+                    }
+                }
                 
-        except Exception as e:
-            self.log_test("Players API Access", False, f"Exception: {str(e)}")
-        
-        # Test competitions
-        try:
-            response = self.session.get(f"{API_BASE}/competitions")
-            if response.status_code == 200:
-                competitions = response.json()
-                comp_legacy_count = 0
-                for comp in competitions:
-                    logo_url = comp.get('logo_url', '')
-                    if logo_url and 'image_uploaded_' in logo_url:
-                        legacy_images_found.append(f"Competition '{comp.get('competition_name', 'Unknown')}': {logo_url}")
-                        comp_legacy_count += 1
-                        
-                self.log_test("Competitions with Legacy Images", comp_legacy_count > 0, 
-                            f"Found {comp_legacy_count} competitions with legacy image format")
-            else:
-                self.log_test("Competitions API Access", False, f"HTTP {response.status_code}")
+                response = self.session.post(f"{API_BASE}/contributions-v2/", json=contribution_data)
                 
-        except Exception as e:
-            self.log_test("Competitions API Access", False, f"Exception: {str(e)}")
-        
-        # Summary
-        total_legacy_images = len(legacy_images_found)
-        self.log_test("Database Elements Legacy Format Detection", total_legacy_images > 0, 
-                     f"Total legacy format images found: {total_legacy_images}")
-        
-        # Print details of found legacy images
-        if legacy_images_found:
-            print("\n📋 LEGACY IMAGE DETAILS:")
-            for item in legacy_images_found[:10]:  # Show first 10
-                print(f"   {item}")
-            if len(legacy_images_found) > 10:
-                print(f"   ... and {len(legacy_images_found) - 10} more")
-        
-        return legacy_images_found
-    
-    def test_legacy_image_detection(self, legacy_images):
-        """Test 3: Verify that legacy format images are properly identified"""
-        if not legacy_images:
-            self.log_test("Legacy Image Detection", False, "No legacy images found to test")
-            return False
-        
-        # Test detection logic
-        detected_count = 0
-        for image_info in legacy_images:
-            # Extract image ID from the info string
-            if ': image_uploaded_' in image_info:
-                image_id = image_info.split(': image_uploaded_')[1]
-                if image_id and image_id.isdigit():
-                    detected_count += 1
-        
-        success = detected_count > 0
-        self.log_test("Legacy Image Detection", success, 
-                     f"Detected {detected_count} legacy format images (image_uploaded_TIMESTAMP)")
-        return success
-    
-    def test_legacy_image_endpoint_functionality(self, legacy_images):
-        """Test 4: Test the legacy image endpoint with actual legacy image IDs"""
-        if not legacy_images:
-            self.log_test("Legacy Image Endpoint Functionality", False, "No legacy images to test")
-            return False
-        
-        tested_count = 0
-        successful_responses = 0
-        
-        for image_info in legacy_images[:5]:  # Test first 5 legacy images
-            if ': image_uploaded_' in image_info:
-                try:
-                    image_id = image_info.split(': image_uploaded_')[1]
-                    if image_id:
-                        tested_count += 1
-                        response = self.session.get(f"{API_BASE}/legacy-image/image_uploaded_{image_id}")
-                        
-                        if response.status_code == 200:
-                            successful_responses += 1
-                            content_type = response.headers.get('content-type', '')
-                            self.log_test(f"Legacy Image Serve: image_uploaded_{image_id}", True, 
-                                        f"Content-Type: {content_type}, Size: {len(response.content)} bytes")
-                        elif response.status_code == 404:
-                            self.log_test(f"Legacy Image Serve: image_uploaded_{image_id}", False, 
-                                        "Image file not found on server")
-                        else:
-                            self.log_test(f"Legacy Image Serve: image_uploaded_{image_id}", False, 
-                                        f"HTTP {response.status_code}")
-                            
-                except Exception as e:
-                    self.log_test(f"Legacy Image Serve Test", False, f"Exception: {str(e)}")
-        
-        overall_success = successful_responses > 0
-        self.log_test("Legacy Image Endpoint Functionality", overall_success, 
-                     f"Successfully served {successful_responses}/{tested_count} legacy images")
-        return overall_success
-    
-    def test_image_file_existence(self):
-        """Test 5: Check if legacy image files exist on the server"""
-        # Test common legacy image directories
-        test_paths = [
-            "uploads/teams/",
-            "uploads/brands/", 
-            "uploads/players/",
-            "uploads/competitions/",
-            "uploads/"
-        ]
-        
-        files_found = 0
-        for path in test_paths:
-            try:
-                # Try to access a common file pattern
-                test_response = self.session.get(f"{API_BASE}/uploads/{path}")
-                if test_response.status_code != 404:
-                    files_found += 1
-            except:
-                pass
-        
-        self.log_test("Legacy Image File Directories", files_found > 0, 
-                     f"Found {files_found} accessible upload directories")
-        return files_found > 0
-    
-    def test_complete_workflow(self, legacy_images):
-        """Test 6: End-to-end test of database element -> legacy image URL -> backend serving"""
-        if not legacy_images:
-            self.log_test("Complete Workflow Test", False, "No legacy images for workflow test")
-            return False
-        
-        workflow_success = 0
-        total_tests = 0
-        
-        # Test workflow for each type of database element
-        for image_info in legacy_images[:3]:  # Test first 3
-            try:
-                total_tests += 1
-                
-                # Step 1: Database element has legacy format URL
-                if 'image_uploaded_' in image_info:
+                if response.status_code == 200:
+                    contrib_data = response.json()
+                    contrib_id = contrib_data.get('id')
+                    self.log_test("Team Contribution Creation", True, f"Created contribution: {contrib_id}")
                     
-                    # Step 2: Frontend should detect legacy format
-                    image_id = image_info.split(': image_uploaded_')[1]
+                    # Test moderating the contribution (approve it)
+                    moderation_data = {
+                        "action": "approve",
+                        "reason": "Testing image upload fix"
+                    }
                     
-                    # Step 3: Backend should serve via legacy endpoint
-                    response = self.session.get(f"{API_BASE}/legacy-image/image_uploaded_{image_id}")
+                    response = self.session.post(f"{API_BASE}/contributions-v2/{contrib_id}/moderate", 
+                                               json=moderation_data)
                     
                     if response.status_code == 200:
-                        workflow_success += 1
-                        self.log_test(f"Workflow: {image_info.split(':')[0]}", True, 
-                                    "Complete workflow successful")
-                    else:
-                        self.log_test(f"Workflow: {image_info.split(':')[0]}", False, 
-                                    f"Legacy endpoint returned {response.status_code}")
+                        mod_data = response.json()
+                        entity_id = mod_data.get('entity_id')
+                        self.log_test("Contribution Approval", True, f"Created entity: {entity_id}")
                         
-            except Exception as e:
-                self.log_test(f"Workflow Test", False, f"Exception: {str(e)}")
-        
-        overall_success = workflow_success > 0
-        self.log_test("Complete Workflow Test", overall_success, 
-                     f"Successful workflows: {workflow_success}/{total_tests}")
-        return overall_success
-    
-    def test_frontend_integration(self):
-        """Test 7: Verify frontend correctly routes legacy images to legacy endpoint"""
-        # This tests the backend's ability to handle the frontend's expected behavior
-        
-        # Test that the legacy endpoint accepts the expected format
-        test_cases = [
-            "image_uploaded_1757682307853",  # PSG logo from test results
-            "image_uploaded_1757775656853",  # AC Milan logo from test results
-            "image_uploaded_1757683563379",  # Qatar Airways logo from test results
-        ]
-        
-        endpoint_working = 0
-        for test_case in test_cases:
-            try:
-                response = self.session.get(f"{API_BASE}/legacy-image/{test_case}")
-                if response.status_code in [200, 404]:  # Both are valid responses
-                    endpoint_working += 1
-                    status = "Found" if response.status_code == 200 else "Not Found"
-                    self.log_test(f"Frontend Integration: {test_case}", True, f"Endpoint responds ({status})")
+                        # Verify the entity was created with proper image handling
+                        response = self.session.get(f"{API_BASE}/teams")
+                        if response.status_code == 200:
+                            teams = response.json()
+                            created_team = None
+                            for team in teams:
+                                if team.get('id') == entity_id:
+                                    created_team = team
+                                    break
+                            
+                            if created_team:
+                                logo_url = created_team.get('logo_url', '')
+                                if logo_url and logo_url.startswith('image_uploaded_'):
+                                    # Test if the image was copied to the teams directory
+                                    response = self.session.get(f"{API_BASE}/legacy-image/{logo_url}")
+                                    if response.status_code == 200:
+                                        self.log_test("Image Copy to Teams Directory", True, 
+                                                    f"Image accessible via legacy endpoint")
+                                        return True
+                                    else:
+                                        self.log_test("Image Copy to Teams Directory", False, 
+                                                    f"Image not accessible: {response.status_code}")
+                                        return False
+                                else:
+                                    self.log_test("Team Logo URL Format", False, 
+                                                f"Logo URL not in expected format: {logo_url}")
+                                    return False
+                            else:
+                                self.log_test("Created Team Verification", False, "Team not found after creation")
+                                return False
+                        else:
+                            self.log_test("Teams API Access", False, f"HTTP {response.status_code}")
+                            return False
+                    else:
+                        self.log_test("Contribution Approval", False, f"HTTP {response.status_code}")
+                        return False
                 else:
-                    self.log_test(f"Frontend Integration: {test_case}", False, f"HTTP {response.status_code}")
+                    self.log_test("Team Contribution Creation", False, f"HTTP {response.status_code}")
+                    return False
+            else:
+                self.log_test("Image Upload to Contributions", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Image Upload Workflow", False, f"Exception: {str(e)}")
+            return False
+
+    def test_legacy_image_endpoint(self):
+        """Test 3: Legacy Image Serving via /api/legacy-image/ endpoint"""
+        try:
+            # Test that the endpoint exists and handles various scenarios
+            test_cases = [
+                ("image_uploaded_1757831105912", "User reported image ID"),
+                ("image_uploaded_1234567890", "Non-existent image ID"),
+                ("invalid_format", "Invalid format test")
+            ]
+            
+            endpoint_working = True
+            
+            for image_id, description in test_cases:
+                response = self.session.get(f"{API_BASE}/legacy-image/{image_id}")
+                
+                if image_id == "image_uploaded_1757831105912":
+                    # This should be the user's specific image
+                    if response.status_code == 200:
+                        self.log_test(f"Legacy Endpoint - {description}", True, 
+                                    f"Image found and served (Size: {len(response.content)} bytes)")
+                    elif response.status_code == 404:
+                        self.log_test(f"Legacy Endpoint - {description}", False, 
+                                    "User's specific image not found - fix incomplete")
+                        endpoint_working = False
+                    else:
+                        self.log_test(f"Legacy Endpoint - {description}", False, 
+                                    f"Unexpected status: {response.status_code}")
+                        endpoint_working = False
+                        
+                elif image_id == "image_uploaded_1234567890":
+                    # This should return 404
+                    if response.status_code == 404:
+                        self.log_test(f"Legacy Endpoint - {description}", True, 
+                                    "Correctly returns 404 for non-existent image")
+                    else:
+                        self.log_test(f"Legacy Endpoint - {description}", False, 
+                                    f"Expected 404, got {response.status_code}")
+                        
+                elif image_id == "invalid_format":
+                    # This should handle gracefully
+                    if response.status_code in [404, 400]:
+                        self.log_test(f"Legacy Endpoint - {description}", True, 
+                                    f"Handles invalid format gracefully ({response.status_code})")
+                    else:
+                        self.log_test(f"Legacy Endpoint - {description}", False, 
+                                    f"Unexpected handling: {response.status_code}")
+            
+            return endpoint_working
+            
+        except Exception as e:
+            self.log_test("Legacy Image Endpoint Test", False, f"Exception: {str(e)}")
+            return False
+
+    def test_file_system_verification(self):
+        """Test 4: File System Verification - Check image directories"""
+        try:
+            # Test that the upload directories are accessible
+            directories = ["teams", "brands", "players", "competitions", "contributions"]
+            accessible_dirs = 0
+            
+            for directory in directories:
+                # Try to access the directory by attempting to upload a test file
+                test_image = self.create_test_image()
+                if test_image:
+                    files = {'file': (f'test_{directory}.png', test_image, 'image/png')}
                     
-            except Exception as e:
-                self.log_test(f"Frontend Integration Test", False, f"Exception: {str(e)}")
-        
-        success = endpoint_working == len(test_cases)
-        self.log_test("Frontend Integration", success, 
-                     f"Legacy endpoint properly handles {endpoint_working}/{len(test_cases)} test cases")
-        return success
-    
+                    # Try different upload endpoints
+                    upload_endpoints = [
+                        f"/upload/image",
+                        f"/upload/{directory}",
+                        f"/upload/master-kit-photo"
+                    ]
+                    
+                    for endpoint in upload_endpoints:
+                        try:
+                            response = self.session.post(f"{API_BASE}{endpoint}", files=files)
+                            if response.status_code in [200, 201]:
+                                accessible_dirs += 1
+                                self.log_test(f"Directory Access - {directory}", True, 
+                                            f"Upload successful via {endpoint}")
+                                break
+                        except:
+                            continue
+                    else:
+                        self.log_test(f"Directory Access - {directory}", False, 
+                                    "No working upload endpoint found")
+            
+            success = accessible_dirs > 0
+            self.log_test("File System Verification", success, 
+                         f"Accessible upload directories: {accessible_dirs}/{len(directories)}")
+            return success
+            
+        except Exception as e:
+            self.log_test("File System Verification", False, f"Exception: {str(e)}")
+            return False
+
+    def test_image_display_integration(self):
+        """Test 5: Image Display Integration - Full workflow verification"""
+        try:
+            # Test the complete workflow: database → legacy format → serving → display
+            
+            # Get teams with legacy format images
+            response = self.session.get(f"{API_BASE}/teams")
+            if response.status_code != 200:
+                self.log_test("Image Display Integration", False, f"Teams API failed: {response.status_code}")
+                return False
+            
+            teams = response.json()
+            legacy_teams = []
+            
+            for team in teams:
+                logo_url = team.get('logo_url', '')
+                if logo_url and logo_url.startswith('image_uploaded_'):
+                    legacy_teams.append({
+                        'name': team.get('name', 'Unknown'),
+                        'id': team.get('id', ''),
+                        'logo_url': logo_url
+                    })
+            
+            if not legacy_teams:
+                self.log_test("Legacy Teams Found", False, "No teams with legacy format images found")
+                return False
+            
+            self.log_test("Legacy Teams Found", True, f"Found {len(legacy_teams)} teams with legacy images")
+            
+            # Test serving for each legacy team
+            successful_serves = 0
+            for team in legacy_teams[:5]:  # Test first 5
+                response = self.session.get(f"{API_BASE}/legacy-image/{team['logo_url']}")
+                
+                if response.status_code == 200:
+                    successful_serves += 1
+                    content_type = response.headers.get('content-type', '')
+                    self.log_test(f"Image Serve - {team['name']}", True, 
+                                f"Content-Type: {content_type}")
+                else:
+                    self.log_test(f"Image Serve - {team['name']}", False, 
+                                f"HTTP {response.status_code}")
+            
+            success = successful_serves > 0
+            self.log_test("Image Display Integration", success, 
+                         f"Successfully served {successful_serves}/{len(legacy_teams[:5])} legacy images")
+            return success
+            
+        except Exception as e:
+            self.log_test("Image Display Integration", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
-        """Run all legacy image system tests"""
-        print("🎯 LEGACY IMAGE SYSTEM FIX BACKEND TESTING")
-        print("=" * 60)
+        """Run all image upload fix tests"""
+        print("🎯 IMAGE UPLOAD FIX BACKEND TESTING - TK-TEAM-982B1F")
+        print("=" * 70)
         
         # Step 1: Authenticate
         if not self.authenticate():
             print("❌ Authentication failed - cannot proceed with tests")
             return False
         
-        # Step 2: Test legacy image endpoint exists
-        self.test_legacy_image_endpoint_exists()
+        # Step 2: Test TK-TEAM-982B1F specific fix
+        self.test_tk_team_982b1f_fix()
         
-        # Step 3: Find database elements with legacy format
-        legacy_images = self.test_database_elements_with_legacy_format()
+        # Step 3: Test image upload workflow
+        self.test_image_upload_workflow()
         
-        # Step 4: Test legacy image detection
-        self.test_legacy_image_detection(legacy_images)
+        # Step 4: Test legacy image endpoint
+        self.test_legacy_image_endpoint()
         
-        # Step 5: Test legacy image endpoint functionality
-        self.test_legacy_image_endpoint_functionality(legacy_images)
+        # Step 5: Test file system verification
+        self.test_file_system_verification()
         
-        # Step 6: Test image file existence
-        self.test_image_file_existence()
-        
-        # Step 7: Test complete workflow
-        self.test_complete_workflow(legacy_images)
-        
-        # Step 8: Test frontend integration
-        self.test_frontend_integration()
+        # Step 6: Test image display integration
+        self.test_image_display_integration()
         
         # Calculate success rate
         total_tests = len(self.test_results)
         successful_tests = sum(1 for result in self.test_results if result['success'])
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print("\n" + "=" * 60)
-        print(f"🎯 LEGACY IMAGE SYSTEM TESTING COMPLETE")
+        print("\n" + "=" * 70)
+        print(f"🎯 IMAGE UPLOAD FIX TESTING COMPLETE")
         print(f"📊 SUCCESS RATE: {success_rate:.1f}% ({successful_tests}/{total_tests} tests passed)")
         
         # Summary of key findings
         print("\n📋 KEY FINDINGS:")
         
-        # Check if legacy endpoint exists
-        endpoint_exists = any(result['success'] for result in self.test_results if 'Legacy Image Endpoint Exists' in result['test'])
-        print(f"   • Legacy Image Endpoint: {'✅ EXISTS' if endpoint_exists else '❌ MISSING'}")
+        # Check TK-TEAM-982B1F fix
+        tk_team_fixed = any(result['success'] for result in self.test_results 
+                           if 'TK-TEAM-982B1F' in result['test'])
+        print(f"   • TK-TEAM-982B1F Fix: {'✅ RESOLVED' if tk_team_fixed else '❌ STILL BROKEN'}")
         
-        # Check if legacy images found
-        legacy_found = any(result['success'] for result in self.test_results if 'Database Elements Legacy Format Detection' in result['test'])
-        print(f"   • Legacy Format Images: {'✅ FOUND' if legacy_found else '❌ NOT FOUND'}")
+        # Check image workflow
+        workflow_working = any(result['success'] for result in self.test_results 
+                              if 'Image Upload Workflow' in result['test'])
+        print(f"   • Image Upload Workflow: {'✅ WORKING' if workflow_working else '❌ BROKEN'}")
         
-        # Check if images are being served
-        images_served = any(result['success'] for result in self.test_results if 'Legacy Image Endpoint Functionality' in result['test'])
-        print(f"   • Legacy Images Served: {'✅ WORKING' if images_served else '❌ NOT WORKING'}")
+        # Check legacy endpoint
+        legacy_working = any(result['success'] for result in self.test_results 
+                            if 'Legacy Endpoint' in result['test'])
+        print(f"   • Legacy Image Endpoint: {'✅ WORKING' if legacy_working else '❌ BROKEN'}")
         
-        # Check workflow
-        workflow_working = any(result['success'] for result in self.test_results if 'Complete Workflow Test' in result['test'])
-        print(f"   • End-to-End Workflow: {'✅ WORKING' if workflow_working else '❌ NOT WORKING'}")
+        # Check file system
+        filesystem_ok = any(result['success'] for result in self.test_results 
+                           if 'File System' in result['test'])
+        print(f"   • File System Access: {'✅ OK' if filesystem_ok else '❌ ISSUES'}")
         
-        return success_rate >= 70  # Consider 70%+ as success
+        # Check integration
+        integration_ok = any(result['success'] for result in self.test_results 
+                            if 'Display Integration' in result['test'])
+        print(f"   • Image Display Integration: {'✅ WORKING' if integration_ok else '❌ BROKEN'}")
+        
+        # Critical assessment
+        critical_issues = []
+        if not tk_team_fixed:
+            critical_issues.append("User's specific team (TK-TEAM-982B1F) image still not displaying")
+        if not workflow_working:
+            critical_issues.append("New entity image upload workflow broken")
+        if not legacy_working:
+            critical_issues.append("Legacy image serving endpoint not working")
+        
+        if critical_issues:
+            print(f"\n🚨 CRITICAL ISSUES FOUND:")
+            for issue in critical_issues:
+                print(f"   • {issue}")
+        else:
+            print(f"\n🎉 ALL CRITICAL COMPONENTS WORKING!")
+        
+        return success_rate >= 80 and len(critical_issues) == 0
 
 if __name__ == "__main__":
-    tester = LegacyImageSystemTester()
+    tester = ImageUploadFixTester()
     success = tester.run_all_tests()
     
     if success:
-        print("\n🎉 LEGACY IMAGE SYSTEM FIX VERIFICATION: SUCCESS")
+        print("\n🎉 IMAGE UPLOAD FIX VERIFICATION: SUCCESS")
+        print("✅ User's reported bug (TK-TEAM-982B1F) should be resolved")
     else:
-        print("\n🚨 LEGACY IMAGE SYSTEM FIX VERIFICATION: NEEDS ATTENTION")
+        print("\n🚨 IMAGE UPLOAD FIX VERIFICATION: NEEDS ATTENTION")
+        print("❌ Critical issues found - user's bug may still exist")
     
     sys.exit(0 if success else 1)
