@@ -11,6 +11,12 @@ const MasterJerseyDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showContributionModal, setShowContributionModal] = useState(false);
+  
+  // Data for ContributionModal dropdowns
+  const [teams, setTeams] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [competitions, setCompetitions] = useState([]);
+  const [players, setPlayers] = useState([]);
 
   useEffect(() => {
     if (id) {
