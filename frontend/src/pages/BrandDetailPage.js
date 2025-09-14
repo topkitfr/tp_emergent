@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ContributionModal from '../ContributionModal';
 
-const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
+const BrandDetailPage = ({ user, API, brands, masterJerseys, onDataUpdate }) => {
   const { brandId } = useParams();
   const navigate = useNavigate();
   const [brand, setBrand] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showContributionModal, setShowContributionModal] = useState(false);
   const [secondaryImages, setSecondaryImages] = useState([]);
+  const [relatedMasterKits, setRelatedMasterKits] = useState([]);
 
   useEffect(() => {
     if (brands && brandId) {
@@ -20,8 +21,25 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
       if (foundBrand && foundBrand.secondary_images) {
         setSecondaryImages(foundBrand.secondary_images.filter(Boolean));
       }
+
+      // Find related Master Kits for this brand
+      if (foundBrand && masterJerseys) {
+        const brandRelatedKits = masterJerseys.filter(kit => 
+          kit.brand_id === foundBrand.id || 
+          kit.brand === foundBrand.name ||
+          kit.brand_name === foundBrand.name
+        ).slice(0, 5); // Limit to 5 kits
+        setRelatedMasterKits(brandRelatedKits);
+      }
     }
-  }, [brands, brandId]);
+  }, [brands, brandId, masterJerseys]);
+
+  const handleSeeMoreClick = () => {
+    if (brand) {
+      // Navigate to Kit Area with brand filter
+      navigate(`/kit-area?brand=${encodeURIComponent(brand.name)}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -47,10 +65,10 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
       <div className="max-w-6xl mx-auto px-4 py-8 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Marque non trouvée</h2>
         <button 
-          onClick={() => navigate('/brands')}
+          onClick={() => navigate('/catalogue')}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
         >
-          Retour aux marques
+          Retour au catalogue
         </button>
       </div>
     );
@@ -78,8 +96,9 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
             </button>
           )}
           <button
-            onClick={() => navigate('/brands')}
+            onClick={() => navigate('/catalogue')}
             className="text-gray-400 hover:text-gray-600 text-2xl"
+            title="Retour au catalogue"
           >
             ×
           </button>
@@ -93,7 +112,11 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
             {brand.logo_url ? (
               <img 
-                src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${API}/${brand.logo_url}`}
+                src={brand.logo_url.startsWith('image_uploaded_') 
+                  ? `${API}/api/legacy-image/${brand.logo_url}` 
+                  : brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') 
+                    ? brand.logo_url 
+                    : `${API}/api/${brand.logo_url}`}
                 alt={`${brand.name} logo`}
                 className="w-full h-full object-contain p-8"
                 onError={(e) => {
@@ -135,7 +158,7 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
               
               <div>
                 <span className="font-semibold text-gray-700">Maillots référencés :</span>
-                <span className="ml-2 text-gray-900">{brand.jerseys_count || 0}</span>
+                <span className="ml-2 text-gray-900">{relatedMasterKits.length}</span>
               </div>
               
               <div>
@@ -155,7 +178,11 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
             {secondaryImages.slice(0, 3).map((image, index) => (
               <div key={index} className="aspect-video bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
                 <img 
-                  src={image.startsWith('data:') || image.startsWith('http') ? image : `${API}/${image}`}
+                  src={image.startsWith('image_uploaded_') 
+                    ? `${API}/api/legacy-image/${image}` 
+                    : image.startsWith('data:') || image.startsWith('http') 
+                      ? image 
+                      : `${API}/api/${image}`}
                   alt={`${brand.name} - Image ${index + 1}`}
                   className="w-full h-full object-contain"
                   onError={(e) => {
@@ -173,6 +200,71 @@ const BrandDetailPage = ({ user, API, brands, onDataUpdate }) => {
           <div className="text-center py-8 text-gray-500">
             <div className="text-4xl mb-2">🖼️</div>
             <p>Aucune image secondaire disponible</p>
+          </div>
+        )}
+      </div>
+
+      {/* Section Maillots associés */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Maillots associés</h3>
+          {relatedMasterKits.length > 0 && (
+            <button
+              onClick={handleSeeMoreClick}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Voir tout ({relatedMasterKits.length}) →
+            </button>
+          )}
+        </div>
+        
+        {relatedMasterKits.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {relatedMasterKits.map((kit) => (
+              <div 
+                key={kit.id}
+                onClick={() => navigate(`/master-kits/${kit.id}`)}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="relative w-full h-32 bg-gray-100 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  {kit.front_photo_url ? (
+                    <img 
+                      src={kit.front_photo_url.startsWith('http') 
+                        ? kit.front_photo_url 
+                        : `${API}/api/${kit.front_photo_url}`}
+                      alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: kit.front_photo_url ? 'none' : 'flex'}}>
+                    👕
+                  </div>
+                </div>
+                
+                <div className="p-3">
+                  <h4 className="font-bold text-sm text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-2">
+                    {kit.club} {kit.season}
+                  </h4>
+                  <div className="text-xs text-gray-600 mb-2">
+                    <div className="capitalize">{kit.kit_type}</div>
+                    <div>{kit.brand}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600 font-mono truncate">{kit.topkit_reference}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">👕</div>
+            <p>Aucun maillot associé à cette marque</p>
+            <p className="text-sm mt-1">Les maillots apparaîtront ici une fois référencés</p>
           </div>
         )}
       </div>
