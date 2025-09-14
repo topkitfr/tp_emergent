@@ -186,9 +186,13 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
       onClick={() => navigate(`/players/${player.id}`)}
     >
       <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
-        {player.profile_picture_url ? (
+        {player.photo_url ? (
           <img 
-            src={player.profile_picture_url.startsWith('data:') || player.profile_picture_url.startsWith('http') ? player.profile_picture_url : `${API}/${player.profile_picture_url}`}
+            src={player.photo_url.startsWith('data:') || player.photo_url.startsWith('http') 
+              ? player.photo_url 
+              : player.photo_url.startsWith('image_uploaded_')
+                ? `${API}/api/legacy-image/${player.photo_url}`
+                : `${API}/api/${player.photo_url}`}
             alt={`${player.name} photo`}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -197,7 +201,7 @@ const CollaborativePlayersPage = ({ user, API, players, onDataUpdate }) => {
             }}
           />
         ) : null}
-        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: player.profile_picture_url ? 'none' : 'flex'}}>
+        <div className="text-2xl flex items-center justify-center w-full h-full" style={{display: player.photo_url ? 'none' : 'flex'}}>
           👤
         </div>
         
