@@ -226,9 +226,9 @@ async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fie
 
 @app.get("/api/teams")
 async def get_teams():
-    """Get teams - basic endpoint to avoid 404s"""
+    """Get teams - basic endpoint to avoid 404s (latest first for homepage)"""
     try:
-        cursor = db.teams.find({}, {"_id": 0})  # Exclude MongoDB _id field
+        cursor = db.teams.find({}, {"_id": 0}).sort("created_at", -1)  # Sort by created_at descending (latest first)
         teams = await cursor.to_list(length=None)
         return teams
     except Exception as e:
