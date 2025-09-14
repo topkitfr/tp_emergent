@@ -289,7 +289,11 @@ const ContributionModal = ({
         
         // Upload images if any exist
         const allImages = [];
-        if (imageFiles.logo) allImages.push({ file: imageFiles.logo, fieldKey: 'logo' });
+        if (imageFiles.logo) {
+          // Map fieldKey based on entity type
+          const fieldKey = entityType === 'master_kit' ? 'front_photo' : 'logo';
+          allImages.push({ file: imageFiles.logo, fieldKey });
+        }
         if (imageFiles.primary_photo) allImages.push({ file: imageFiles.primary_photo, fieldKey: 'primary_photo' });
         if (imageFiles.secondary_photos.length > 0) {
           imageFiles.secondary_photos.forEach((file, index) => {
