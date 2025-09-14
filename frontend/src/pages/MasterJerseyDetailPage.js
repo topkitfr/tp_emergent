@@ -22,6 +22,11 @@ const MasterJerseyDetailPage = () => {
     if (id) {
       fetchMasterJerseyDetails();
       fetchVersions();
+      // Fetch data for ContributionModal dropdowns
+      fetchTeams();
+      fetchBrands();
+      fetchCompetitions();
+      fetchPlayers();
     }
   }, [id]);
 
