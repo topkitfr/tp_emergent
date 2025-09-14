@@ -461,7 +461,7 @@ class MasterKitFrontPhotoTester:
                 return
                 
             # Step 4: Test front photo image upload with correct fieldKey
-            image_uploaded = await self.test_front_photo_image_upload(contribution_id)
+            image_path = await self.test_front_photo_image_upload(contribution_id)
             
             # Step 5: Verify contribution data structure
             await self.test_contribution_data_verification(contribution_id)
@@ -469,9 +469,8 @@ class MasterKitFrontPhotoTester:
             # Step 6: Test contribution approval and image transfer
             master_kit_id = await self.test_contribution_approval_and_image_transfer(contribution_id)
             
-            # Step 7: Test image serving (if we have an image path)
-            # This would need the actual image path from the upload response
-            await self.test_image_serving_endpoint(None)  # Skip for now
+            # Step 7: Test image serving with actual image path
+            await self.test_image_serving_endpoint(image_path)
             
         finally:
             await self.cleanup_session()
