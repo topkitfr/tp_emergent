@@ -1218,6 +1218,13 @@ async def upload_contribution_image(
         file_path = await save_uploaded_file(file, "contributions")
         
         # Update contribution with image info and file path
+        # First ensure uploaded_images array exists
+        await db.contributions.update_one(
+            {"id": contribution_id, "uploaded_images": {"$exists": False}},
+            {"$set": {"uploaded_images": []}}
+        )
+        
+        # Then push the new image info and increment count
         update_data = {
             "$inc": {"images_count": 1},
             "$push": {"uploaded_images": {
@@ -1228,10 +1235,12 @@ async def upload_contribution_image(
             }}
         }
         
-        await db.contributions.update_one(
+        result = await db.contributions.update_one(
             {"id": contribution_id},
             update_data
         )
+        
+        logger.info(f"Updated contribution {contribution_id} with image. Modified count: {result.modified_count}")
         
         return {"file_url": file_path, "message": "Image uploaded successfully"}
         
