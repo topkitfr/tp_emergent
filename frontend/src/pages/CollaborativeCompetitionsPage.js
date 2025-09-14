@@ -150,7 +150,11 @@ const CollaborativeCompetitionsPage = ({ user, API, competitions, onDataUpdate }
       <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
         {competition.logo_url ? (
           <img 
-            src={competition.logo_url.startsWith('data:') || competition.logo_url.startsWith('http') ? competition.logo_url : `${API}/${competition.logo_url}`}
+            src={competition.logo_url.startsWith('data:') || competition.logo_url.startsWith('http') 
+              ? competition.logo_url 
+              : competition.logo_url.startsWith('image_uploaded_')
+                ? `${API}/api/legacy-image/${competition.logo_url}`
+                : `${API}/api/${competition.logo_url}`}
             alt={`${competition.name} logo`}
             className="w-full h-full object-contain p-4"
             onError={(e) => {
