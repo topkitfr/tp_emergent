@@ -20,6 +20,41 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) =
     }
   }, [contributionId]);
 
+  // Add keyboard navigation for image modal
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (expandedImage) {
+        if (event.key === 'Escape') {
+          setExpandedImage(null);
+        }
+        // Add navigation between images if multiple images exist
+        if (contribution?.images && Object.keys(contribution.images).length > 1) {
+          const imageEntries = Object.entries(contribution.images);
+          const currentIndex = imageEntries.findIndex(([type]) => {
+            const imageUrl = Array.isArray(contribution.images[type]) ? contribution.images[type][0] : contribution.images[type];
+            const imageSrc = imageUrl.startsWith('http') ? imageUrl : `${API}/${imageUrl}`;
+            return imageSrc === expandedImage.src;
+          });
+          
+          if (event.key === 'ArrowLeft' && currentIndex > 0) {
+            const [prevType, prevImageData] = imageEntries[currentIndex - 1];
+            const prevImageUrl = Array.isArray(prevImageData) ? prevImageData[0] : prevImageData;
+            const prevImageSrc = prevImageUrl.startsWith('http') ? prevImageUrl : `${API}/${prevImageUrl}`;
+            setExpandedImage({ src: prevImageSrc, alt: formatFieldName(prevType) });
+          } else if (event.key === 'ArrowRight' && currentIndex < imageEntries.length - 1) {
+            const [nextType, nextImageData] = imageEntries[currentIndex + 1];
+            const nextImageUrl = Array.isArray(nextImageData) ? nextImageData[0] : nextImageData;
+            const nextImageSrc = nextImageUrl.startsWith('http') ? nextImageUrl : `${API}/${nextImageUrl}`;
+            setExpandedImage({ src: nextImageSrc, alt: formatFieldName(nextType) });
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [expandedImage, contribution, API]);
+
   const loadContributionDetails = async () => {
     setLoading(true);
     try {
