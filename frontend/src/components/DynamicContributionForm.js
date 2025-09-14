@@ -338,9 +338,6 @@ const DynamicContributionForm = ({
   const renderField = (field) => {
     return (
       <div key={field.key} className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">
-          {field.label} {field.required && <span className="text-red-500">*</span>}
-        </label>
         <UnifiedFieldRenderer
           field={field}
           value={formData[field.key]}
