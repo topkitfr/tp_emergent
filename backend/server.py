@@ -59,10 +59,10 @@ app.add_middleware(
 # Database
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-db = client.topkit_db
+db = client[os.environ.get('DB_NAME', 'topkit_db')]
 
 # Security
-SECRET_KEY = "topkit_secret_key_2024"
+SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
 ALGORITHM = "HS256"
 security = HTTPBearer()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
