@@ -139,6 +139,17 @@ const MasterJerseyDetailPage = () => {
                 {masterJersey.topkit_reference}
               </p>
             </div>
+            
+            <div className="flex gap-3 mt-4 lg:mt-0">
+              {localStorage.getItem('token') && (
+                <button
+                  onClick={() => setShowContributionModal(true)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+                >
+                  ✏️ Améliorer cette fiche
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
