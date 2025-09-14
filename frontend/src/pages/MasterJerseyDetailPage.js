@@ -10,6 +10,7 @@ const MasterJerseyDetailPage = () => {
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showContributionModal, setShowContributionModal] = useState(false);
 
   useEffect(() => {
     if (id) {
