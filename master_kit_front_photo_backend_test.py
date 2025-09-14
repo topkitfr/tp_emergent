@@ -124,6 +124,9 @@ class MasterKitFrontPhotoTester:
                     "kit_type": "home",
                     "brand": "Test Brand",
                     "competition": "Test Competition",
+                    "model": "authentic",  # Required field for master kit
+                    "gender": "men",  # Required field for master kit
+                    "primary_color": "Red",  # Required field for master kit
                     "front_photo_url": "image_uploaded_test_front_photo"  # This should be mapped correctly
                 },
                 "source_urls": []
