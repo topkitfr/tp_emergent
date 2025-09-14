@@ -241,30 +241,6 @@ const ContributionModal = ({
         source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
 
-      // Convert images to base64 if present
-      if (imageFiles.logo) {
-        const logoBase64 = await convertFileToBase64(imageFiles.logo);
-        contributionData.images = { logo: logoBase64 };
-      }
-
-      if (imageFiles.primary_photo) {
-        const photoBase64 = await convertFileToBase64(imageFiles.primary_photo);
-        contributionData.images = {
-          ...(contributionData.images || {}),
-          primary_photo: photoBase64
-        };
-      }
-
-      if (imageFiles.secondary_photos.length > 0) {
-        const secondaryPhotos = await Promise.all(
-          imageFiles.secondary_photos.map(file => convertFileToBase64(file))
-        );
-        contributionData.images = {
-          ...(contributionData.images || {}),
-          secondary_photos: secondaryPhotos
-        };
-      }
-
       console.log('Submitting contribution:', contributionData);
 
       // Submit contribution
@@ -280,6 +256,42 @@ const ContributionModal = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Contribution submitted successfully:', result);
+        
+        // Upload images if any exist
+        const allImages = [];
+        if (imageFiles.logo) allImages.push({ file: imageFiles.logo, fieldKey: 'logo' });
+        if (imageFiles.primary_photo) allImages.push({ file: imageFiles.primary_photo, fieldKey: 'primary_photo' });
+        if (imageFiles.secondary_photos.length > 0) {
+          imageFiles.secondary_photos.forEach((file, index) => {
+            allImages.push({ file, fieldKey: `secondary_photo_${index}` });
+          });
+        }
+
+        // Upload images if any
+        if (allImages.length > 0) {
+          for (let i = 0; i < allImages.length; i++) {
+            const { file, fieldKey } = allImages[i];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('is_primary', i === 0 ? 'true' : 'false');
+            formData.append('caption', fieldKey || '');
+
+            const imageResponse = await fetch(
+              `${API}/api/contributions-v2/${result.id}/images`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+              }
+            );
+
+            if (!imageResponse.ok) {
+              console.warn(`Failed to upload image ${i + 1}`);
+            }
+          }
+        }
         
         alert('Contribution submitted successfully! It will be reviewed by the community.');
         
