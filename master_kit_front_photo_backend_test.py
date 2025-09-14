@@ -394,7 +394,154 @@ class MasterKitFrontPhotoTester:
             })
             return False
             
-    async def test_image_serving_endpoint(self, image_path):
+    async def test_logo_to_front_photo_mapping(self):
+        """Test the specific fix: logo image upload should map to front_photo_url for master_kit"""
+        try:
+            # Create a master_kit contribution that simulates the frontend sending 'logo' field
+            contribution_data = {
+                "entity_type": "master_kit",
+                "title": "Test Logo to Front Photo Mapping",
+                "description": "Testing that logo field maps to front_photo_url for master_kit",
+                "data": {
+                    "club": "Paris Saint-Germain",
+                    "season": "2024-25",
+                    "kit_type": "home",
+                    "brand": "Nike",
+                    "competition": "Ligue 1",
+                    "model": "authentic",
+                    "gender": "men",
+                    "primary_color": "Blue",
+                    "logo": "image_uploaded_logo_test",  # Frontend might send this as 'logo'
+                    "front_photo_url": "image_uploaded_front_photo_test"  # But it should be mapped to this
+                },
+                "source_urls": []
+            }
+            
+            async with self.session.post(
+                f"{API_BASE}/contributions-v2/",
+                json=contribution_data,
+                headers=self.get_auth_headers()
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    contribution_id = data["id"]
+                    
+                    # Create test image for logo upload
+                    image_path = await self.create_test_image("logo_test.jpg")
+                    if not image_path:
+                        self.test_results.append({
+                            "test": "Logo to Front Photo Mapping",
+                            "status": "❌ FAIL",
+                            "details": "Failed to create test image"
+                        })
+                        return False
+                        
+                    try:
+                        # Upload image with 'logo' caption (simulating frontend behavior)
+                        with open(image_path, 'rb') as f:
+                            form_data = aiohttp.FormData()
+                            form_data.add_field('file', f, filename='logo.jpg', content_type='image/jpeg')
+                            form_data.add_field('is_primary', 'true')
+                            form_data.add_field('caption', 'logo')  # Frontend sends 'logo'
+                            
+                            async with self.session.post(
+                                f"{API_BASE}/contributions-v2/{contribution_id}/images",
+                                data=form_data,
+                                headers=self.get_auth_headers()
+                            ) as upload_response:
+                                if upload_response.status == 200:
+                                    # Now approve the contribution and check if it maps correctly
+                                    moderation_data = {
+                                        "action": "approve",
+                                        "reason": "Testing logo to front_photo mapping"
+                                    }
+                                    
+                                    async with self.session.post(
+                                        f"{API_BASE}/contributions-v2/{contribution_id}/moderate",
+                                        json=moderation_data,
+                                        headers=self.get_auth_headers()
+                                    ) as moderate_response:
+                                        if moderate_response.status == 200:
+                                            moderate_data = await moderate_response.json()
+                                            entity_id = moderate_data.get("entity_id")
+                                            
+                                            if entity_id:
+                                                # Check if the created master_kit has front_photo_url
+                                                await asyncio.sleep(1)
+                                                
+                                                async with self.session.get(
+                                                    f"{API_BASE}/master-kits/{entity_id}",
+                                                    headers=self.get_auth_headers()
+                                                ) as kit_response:
+                                                    if kit_response.status == 200:
+                                                        kit_data = await kit_response.json()
+                                                        
+                                                        has_front_photo = "front_photo_url" in kit_data
+                                                        front_photo_value = kit_data.get("front_photo_url", "")
+                                                        
+                                                        # The key test: logo should have been mapped to front_photo_url
+                                                        mapping_success = has_front_photo and front_photo_value
+                                                        
+                                                        self.test_results.append({
+                                                            "test": "Logo to Front Photo Mapping",
+                                                            "status": "✅ PASS" if mapping_success else "❌ FAIL",
+                                                            "details": f"Logo mapped to front_photo_url: {mapping_success}. Value: {front_photo_value}"
+                                                        })
+                                                        
+                                                        return mapping_success
+                                                    else:
+                                                        error_text = await kit_response.text()
+                                                        self.test_results.append({
+                                                            "test": "Logo to Front Photo Mapping",
+                                                            "status": "❌ FAIL",
+                                                            "details": f"Failed to fetch master kit: {error_text}"
+                                                        })
+                                                        return False
+                                            else:
+                                                self.test_results.append({
+                                                    "test": "Logo to Front Photo Mapping",
+                                                    "status": "❌ FAIL",
+                                                    "details": "No entity_id returned from moderation"
+                                                })
+                                                return False
+                                        else:
+                                            error_text = await moderate_response.text()
+                                            self.test_results.append({
+                                                "test": "Logo to Front Photo Mapping",
+                                                "status": "❌ FAIL",
+                                                "details": f"Moderation failed: {error_text}"
+                                            })
+                                            return False
+                                else:
+                                    error_text = await upload_response.text()
+                                    self.test_results.append({
+                                        "test": "Logo to Front Photo Mapping",
+                                        "status": "❌ FAIL",
+                                        "details": f"Image upload failed: {error_text}"
+                                    })
+                                    return False
+                                    
+                    finally:
+                        # Clean up temporary file
+                        if os.path.exists(image_path):
+                            os.unlink(image_path)
+                            
+                else:
+                    error_text = await response.text()
+                    self.test_results.append({
+                        "test": "Logo to Front Photo Mapping",
+                        "status": "❌ FAIL",
+                        "details": f"Contribution creation failed: {error_text}"
+                    })
+                    return False
+                    
+        except Exception as e:
+            self.test_results.append({
+                "test": "Logo to Front Photo Mapping",
+                "status": "❌ FAIL",
+                "details": f"Exception: {str(e)}"
+            })
+            return False
         """Test that uploaded images can be served correctly"""
         try:
             if not image_path:
