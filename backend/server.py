@@ -1571,13 +1571,13 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
                 )
                 
             elif entity_type == "player":
-                update_fields.update({
-                    "name": entity_data.get("name", ""),
-                    "nationality": entity_data.get("nationality", ""),
-                    "position": entity_data.get("position", ""),
-                    "birth_date": entity_data.get("birth_date", ""),
-                    "photo_url": entity_data.get("photo_url", "")
-                })
+                # Only update fields that are explicitly provided in the contribution
+                player_fields = ["name", "nationality", "position", "birth_date", "photo_url"]
+                for field in player_fields:
+                    if field in entity_data:
+                        update_fields[field] = entity_data[field]
+                
+                logger.info(f"Updating player {existing_entity_id} with fields: {list(update_fields.keys())}")
                 
                 result = await db.players.update_one(
                     {"id": existing_entity_id},
