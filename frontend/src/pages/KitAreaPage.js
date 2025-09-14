@@ -18,7 +18,8 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     club: '',
     brand: '',
     season: '',
-    kit_type: ''
+    kit_type: '',
+    competition: ''
   });
   
   // Modal states
