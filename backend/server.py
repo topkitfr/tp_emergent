@@ -1637,24 +1637,23 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         contribution_id = contribution["id"]
         
         # Find all images associated with this contribution
-        # Images are stored in contribution data or as separate files
         contribution_images = []
         
-        # Check if contribution has images in data
+        # Check for uploaded images stored in contribution document
+        if "uploaded_images" in contribution:
+            for img_info in contribution["uploaded_images"]:
+                field_name = img_info.get("field_name", "logo")
+                file_path = img_info.get("file_path", "")
+                if file_path:
+                    contribution_images.append((field_name, file_path))
+        
+        # Also check if contribution has images in data (legacy format)
         if "images" in contribution.get("data", {}):
             images_data = contribution["data"]["images"]
             if isinstance(images_data, dict):
                 for field_name, image_path in images_data.items():
                     if image_path and isinstance(image_path, str):
                         contribution_images.append((field_name, image_path))
-        
-        # Also check for uploaded files in contributions folder
-        import os
-        contributions_dir = f"/app/backend/uploads/contributions"
-        if os.path.exists(contributions_dir):
-            for filename in os.listdir(contributions_dir):
-                if contribution_id in filename or filename.startswith(f"contrib_{contribution_id}"):
-                    contribution_images.append(("uploaded_file", f"contributions/{filename}"))
         
         if not contribution_images:
             logger.info(f"No images found for contribution {contribution_id}")
@@ -1685,10 +1684,10 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         for field_name, source_path in contribution_images:
             try:
                 # Construct full source path
-                if source_path.startswith("contributions/"):
+                if source_path.startswith("/"):
+                    full_source_path = source_path
+                elif source_path.startswith("contributions/"):
                     full_source_path = f"/app/backend/uploads/{source_path}"
-                elif source_path.startswith("image_uploaded_"):
-                    full_source_path = f"/app/backend/uploads/contributions/{source_path}"
                 else:
                     full_source_path = f"/app/backend/uploads/contributions/{source_path}"
                 
@@ -1697,7 +1696,7 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                     continue
                 
                 # Generate new filename for entity
-                file_extension = os.path.splitext(source_path)[1] or '.jpg'
+                file_extension = os.path.splitext(source_path)[1] or '.png'
                 new_filename = f"{entity_id}_{field_name}_{uuid.uuid4().hex[:8]}{file_extension}"
                 target_path = f"{target_dir}/{new_filename}"
                 
@@ -1744,6 +1743,7 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                 
                 if result.modified_count > 0:
                     logger.info(f"Updated {entity_type} {entity_id} with new image URLs: {entity_updates}")
+                    return True
                 else:
                     logger.warning(f"Failed to update {entity_type} {entity_id} with image URLs")
         
