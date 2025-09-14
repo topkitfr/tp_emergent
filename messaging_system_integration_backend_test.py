@@ -32,7 +32,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Credentials de test
 ADMIN_CREDENTIALS = {
@@ -185,7 +185,7 @@ class MessagingSystemIntegrationTester:
             
             checkout_data = {
                 "listing_id": self.test_listing_id,
-                "origin_url": "https://topkit-debug-1.preview.emergentagent.com/marketplace"
+                "origin_url": "https://image-fix-10.preview.emergentagent.com/marketplace"
             }
             
             response = requests.post(f"{BASE_URL}/payments/secure/checkout", json=checkout_data, headers=headers)
@@ -437,7 +437,7 @@ class MessagingSystemIntegrationTester:
             
             checkout_data = {
                 "listing_id": self.test_listing_id,
-                "origin_url": "https://topkit-debug-1.preview.emergentagent.com/marketplace"
+                "origin_url": "https://image-fix-10.preview.emergentagent.com/marketplace"
             }
             
             response = requests.post(f"{BASE_URL}/payments/secure/checkout", json=checkout_data, headers=headers)

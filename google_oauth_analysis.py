@@ -11,7 +11,7 @@ from datetime import datetime
 import urllib.parse
 
 # Configuration
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class GoogleOAuthAnalyzer:
@@ -293,7 +293,7 @@ class GoogleOAuthAnalyzer:
             "OAuth redirect URI configured for HTTP but application runs on HTTPS",
             {
                 "configured_redirect": "http://cd697a52-f790-47ca-9d2b-bf2e0d4d8598.preview.emergentagent.com/api/auth/google/callback",
-                "actual_domain": "https://topkit-debug-1.preview.emergentagent.com",
+                "actual_domain": "https://image-fix-10.preview.emergentagent.com",
                 "impact": "Google OAuth may reject callback due to protocol mismatch"
             }
         )

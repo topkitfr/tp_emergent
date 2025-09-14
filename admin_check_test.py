@@ -6,7 +6,7 @@ Admin Check - Verify pending jerseys and admin functionality
 import requests
 import json
 
-BASE_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 def authenticate_admin():
     """Authenticate as admin user"""

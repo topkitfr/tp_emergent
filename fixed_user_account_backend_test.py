@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Test credentials from review request
 USER_EMAIL = "steinmetzlivio.fixed@gmail.com"

@@ -23,7 +23,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 # Configuration
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Expected top 20 clubs in priority order (based on global importance)
 EXPECTED_TOP_20_CLUBS = [

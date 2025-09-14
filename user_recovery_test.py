@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Admin credentials (confirmed working)
 ADMIN_EMAIL = "topkitfr@gmail.com"

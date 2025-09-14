@@ -32,8 +32,8 @@ import uuid
 import time
 
 # Configuration
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
-STATIC_URL = "https://topkit-debug-1.preview.emergentagent.com/uploads"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
+STATIC_URL = "https://image-fix-10.preview.emergentagent.com/uploads"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "testuser1d7bbc68@example.com"

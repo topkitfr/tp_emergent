@@ -11,7 +11,7 @@ import aiohttp
 import os
 
 # Configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-debug-1.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://image-fix-10.preview.emergentagent.com')
 
 async def test_logo_urls():
     """Test team and brand logo URLs"""

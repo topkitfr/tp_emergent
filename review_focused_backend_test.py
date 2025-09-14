@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Configuration - Use the REACT_APP_BACKEND_URL from frontend/.env
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Admin credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"

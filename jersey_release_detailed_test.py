@@ -8,7 +8,7 @@ import requests
 import json
 from datetime import datetime
 
-BASE_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "topkitfr@gmail.com"
 TEST_USER_PASSWORD = "TopKitSecure789#"
 

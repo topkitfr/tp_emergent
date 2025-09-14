@@ -30,7 +30,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 # Test credentials - these should be the ONLY users in the database
 ADMIN_CREDENTIALS = {

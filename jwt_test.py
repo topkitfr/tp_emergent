@@ -5,7 +5,7 @@ Test JWT validation specifically
 
 import requests
 
-BASE_URL = "https://topkit-debug-1.preview.emergentagent.com/api"
+BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
 
 def test_jwt_validation():
     session = requests.Session()
