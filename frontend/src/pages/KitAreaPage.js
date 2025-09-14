@@ -32,6 +32,27 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
   const [seasons, setSeasons] = useState([]);
   
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Parse URL parameters on component mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const urlFilters = {
+      club: searchParams.get('club') || '',
+      brand: searchParams.get('brand') || '',
+      season: searchParams.get('season') || '',
+      kit_type: searchParams.get('kit_type') || '',
+      competition: searchParams.get('competition') || ''
+    };
+    
+    // Only update filters if there are URL parameters
+    if (Object.values(urlFilters).some(value => value !== '')) {
+      setFilters(prev => ({
+        ...prev,
+        ...urlFilters
+      }));
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchMasterKits();
