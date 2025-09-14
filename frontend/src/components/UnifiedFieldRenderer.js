@@ -284,6 +284,26 @@ const UnifiedFieldRenderer = ({
             <p className="text-xs text-gray-500">
               Max 5MB per image. {field.required ? 'Required.' : 'Optional.'}
             </p>
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                <div className="relative inline-block">
+                  <img 
+                    src={imagePreview} 
+                    alt={`${field.label} preview`}
+                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImagePreview(null)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
 
