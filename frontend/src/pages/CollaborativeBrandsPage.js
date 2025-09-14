@@ -63,7 +63,11 @@ const CollaborativeBrandsPage = ({ user, API, brands, onDataUpdate }) => {
       <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
         {brand.logo_url ? (
           <img 
-            src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') ? brand.logo_url : `${API}/api/${brand.logo_url}`}
+            src={brand.logo_url.startsWith('data:') || brand.logo_url.startsWith('http') 
+              ? brand.logo_url 
+              : brand.logo_url.startsWith('image_uploaded_')
+                ? `${API}/api/legacy-image/${brand.logo_url}`
+                : `${API}/api/${brand.logo_url}`}
             alt={`${brand.name} logo`}
             className="w-full h-full object-contain p-4"
             onError={(e) => {
