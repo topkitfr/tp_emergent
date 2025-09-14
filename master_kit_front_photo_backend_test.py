@@ -203,7 +203,7 @@ class MasterKitFrontPhotoTester:
                                 "status": "✅ PASS",
                                 "details": f"Successfully uploaded front photo. File URL: {file_url}"
                             })
-                            return True
+                            return file_url
                         else:
                             error_text = await response.text()
                             self.test_results.append({
