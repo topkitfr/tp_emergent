@@ -64,12 +64,22 @@ const UnifiedFieldRenderer = ({
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
+    const file = files[0];
+    
+    // Create preview for image files
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
     if (onImageUpload) {
       // Call onImageUpload with the event and field key as expected by DynamicContributionForm
       await onImageUpload(event, field.key);
     } else {
       // Fallback to base64 conversion for preview
-      const file = files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
         onChange(field.key, e.target.result);
