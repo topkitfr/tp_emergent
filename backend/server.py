@@ -1496,6 +1496,126 @@ async def create_entity_from_contribution(contribution: dict) -> str:
         logger.error(f"Error creating entity from contribution: {str(e)}")
         return None
 
+async def create_or_update_entity_from_contribution(contribution: dict) -> str:
+    """Create or update an entity in the appropriate collection from an approved contribution"""
+    try:
+        entity_type = contribution["entity_type"]
+        entity_data = contribution["data"]
+        
+        # Check if this is an update (entity_id provided) or a new creation
+        existing_entity_id = contribution.get("entity_id")
+        
+        if existing_entity_id:
+            # Update existing entity
+            logger.info(f"Updating existing {entity_type} entity {existing_entity_id} from contribution {contribution['id']}")
+            
+            # Prepare update fields
+            update_fields = {
+                "last_modified_at": datetime.utcnow(),
+                "last_modified_by": contribution.get("created_by", ""),
+                "modification_count": {"$inc": 1}  # This will be handled separately
+            }
+            
+            # Add entity-specific data to update fields
+            if entity_type == "team":
+                update_fields.update({
+                    "name": entity_data.get("name", ""),
+                    "short_name": entity_data.get("short_name", ""),
+                    "country": entity_data.get("country", ""),
+                    "city": entity_data.get("city", ""),
+                    "founded_year": entity_data.get("founded_year", 0),
+                    "colors": entity_data.get("colors", []),
+                    "logo_url": entity_data.get("logo_url", ""),
+                    "secondary_photos": entity_data.get("secondary_photos", "")
+                })
+                
+                # Update the entity
+                result = await db.teams.update_one(
+                    {"id": existing_entity_id},
+                    {"$set": update_fields, "$inc": {"modification_count": 1}}
+                )
+                
+            elif entity_type == "brand":
+                update_fields.update({
+                    "name": entity_data.get("name", ""),
+                    "country": entity_data.get("country", ""),
+                    "founded_year": entity_data.get("founded_year", 0),
+                    "logo_url": entity_data.get("logo_url", ""),
+                    "description": entity_data.get("description", "")
+                })
+                
+                result = await db.brands.update_one(
+                    {"id": existing_entity_id},
+                    {"$set": update_fields, "$inc": {"modification_count": 1}}
+                )
+                
+            elif entity_type == "player":
+                update_fields.update({
+                    "name": entity_data.get("name", ""),
+                    "nationality": entity_data.get("nationality", ""),
+                    "position": entity_data.get("position", ""),
+                    "birth_date": entity_data.get("birth_date", ""),
+                    "photo_url": entity_data.get("photo_url", "")
+                })
+                
+                result = await db.players.update_one(
+                    {"id": existing_entity_id},
+                    {"$set": update_fields, "$inc": {"modification_count": 1}}
+                )
+                
+            elif entity_type == "competition":
+                update_fields.update({
+                    "name": entity_data.get("name", ""),
+                    "competition_name": entity_data.get("competition_name", entity_data.get("name", "")),
+                    "country": entity_data.get("country", ""),
+                    "level": entity_data.get("level", ""),
+                    "format": entity_data.get("format", ""),
+                    "logo_url": entity_data.get("logo_url", "")
+                })
+                
+                result = await db.competitions.update_one(
+                    {"id": existing_entity_id},
+                    {"$set": update_fields, "$inc": {"modification_count": 1}}
+                )
+                
+            elif entity_type == "master_kit":
+                update_fields.update({
+                    "club_id": entity_data.get("club_id", ""),
+                    "season": entity_data.get("season", ""),
+                    "kit_type": entity_data.get("kit_type", ""),
+                    "competition_id": entity_data.get("competition_id", ""),
+                    "model": entity_data.get("model", ""),
+                    "brand_id": entity_data.get("brand_id", ""),
+                    "sku_code": entity_data.get("sku_code", ""),
+                    "main_sponsor_id": entity_data.get("main_sponsor_id", ""),
+                    "gender": entity_data.get("gender", ""),
+                    "primary_color": entity_data.get("primary_color", ""),
+                    "secondary_colors": entity_data.get("secondary_colors", []),
+                    "pattern_description": entity_data.get("pattern_description", ""),
+                    "front_photo_url": entity_data.get("front_photo_url", "")
+                })
+                
+                result = await db.master_kits.update_one(
+                    {"id": existing_entity_id},
+                    {"$set": update_fields, "$inc": {"modification_count": 1}}
+                )
+            
+            if result.modified_count > 0:
+                logger.info(f"Successfully updated {entity_type} entity {existing_entity_id}")
+                return existing_entity_id
+            else:
+                logger.warning(f"No changes made to {entity_type} entity {existing_entity_id}")
+                return existing_entity_id
+                
+        else:
+            # Create new entity - delegate to existing function
+            logger.info(f"Creating new {entity_type} entity from contribution {contribution['id']}")
+            return await create_entity_from_contribution(contribution)
+            
+    except Exception as e:
+        logger.error(f"Error creating or updating entity from contribution: {str(e)}")
+        return None
+
 # ================================
 # STATS ENDPOINT
 # ================================
