@@ -841,6 +841,51 @@ async def serve_file(file_path: str):
         logger.error(f"Error serving file {file_path}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/legacy-image/{image_id}")
+async def serve_legacy_image(image_id: str):
+    """Serve legacy format images (image_uploaded_TIMESTAMP)"""
+    try:
+        # Legacy images might be stored in various directories
+        possible_paths = [
+            UPLOAD_DIR / "teams" / f"{image_id}.jpg",
+            UPLOAD_DIR / "teams" / f"{image_id}.jpeg", 
+            UPLOAD_DIR / "teams" / f"{image_id}.png",
+            UPLOAD_DIR / "brands" / f"{image_id}.jpg",
+            UPLOAD_DIR / "brands" / f"{image_id}.jpeg",
+            UPLOAD_DIR / "brands" / f"{image_id}.png",
+            UPLOAD_DIR / "players" / f"{image_id}.jpg",
+            UPLOAD_DIR / "players" / f"{image_id}.jpeg",
+            UPLOAD_DIR / "players" / f"{image_id}.png",
+            UPLOAD_DIR / "competitions" / f"{image_id}.jpg",
+            UPLOAD_DIR / "competitions" / f"{image_id}.jpeg",
+            UPLOAD_DIR / "competitions" / f"{image_id}.png",
+            # Also check root uploads directory
+            UPLOAD_DIR / f"{image_id}.jpg",
+            UPLOAD_DIR / f"{image_id}.jpeg",
+            UPLOAD_DIR / f"{image_id}.png"
+        ]
+        
+        for path in possible_paths:
+            if path.exists():
+                # Determine content type
+                content_type, _ = mimetypes.guess_type(str(path))
+                if not content_type:
+                    content_type = "application/octet-stream"
+                
+                return FileResponse(
+                    path=str(path),
+                    media_type=content_type
+                )
+        
+        # If no file found, return a 404
+        raise HTTPException(status_code=404, detail=f"Legacy image {image_id} not found")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving legacy image {image_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # ================================
 # BASIC AUTH ENDPOINTS (placeholder)
 # ================================
