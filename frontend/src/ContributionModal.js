@@ -405,7 +405,8 @@ const ContributionModal = ({
             {/* Main Photo Upload */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                {entityType === 'master_jersey' ? 'Photo principale (face uniquement)' : 'Logo/Main Photo'}
+                {entityType === 'master_kit' ? 'Front Photo' : 
+                 entityType === 'master_jersey' ? 'Photo principale (face uniquement)' : 'Logo/Main Photo'}
               </label>
               <input
                 type="file"
@@ -415,12 +416,12 @@ const ContributionModal = ({
               />
               {imagePreviews.logo && (
                 <div className="mt-2">
-                  <img src={imagePreviews.logo} alt="Logo preview" className="w-24 h-24 object-cover rounded-lg border" />
+                  <img src={imagePreviews.logo} alt="Preview" className="w-24 h-24 object-cover rounded-lg border" />
                 </div>
               )}
-              {entityType === 'master_jersey' && (
+              {(entityType === 'master_jersey' || entityType === 'master_kit') && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Image de face du maillot uniquement. Les photos secondaires ne sont pas autorisées pour les Master Kits.
+                  {entityType === 'master_kit' ? 'Front view of the kit only.' : 'Image de face du maillot uniquement. Les photos secondaires ne sont pas autorisées pour les Master Kits.'}
                 </p>
               )}
             </div>
