@@ -1696,6 +1696,8 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                 # Construct full source path
                 if source_path.startswith("/"):
                     full_source_path = source_path
+                elif source_path.startswith("uploads/"):
+                    full_source_path = f"/app/backend/{source_path}"
                 elif source_path.startswith("contributions/"):
                     full_source_path = f"/app/backend/uploads/{source_path}"
                 else:
