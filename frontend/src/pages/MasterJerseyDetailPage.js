@@ -357,6 +357,20 @@ const MasterJerseyDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Contribution Modal */}
+      {showContributionModal && (
+        <ContributionModal
+          isOpen={showContributionModal}
+          onClose={() => setShowContributionModal(false)}
+          entity={masterJersey}
+          entityType="master_kit"
+          onContributionCreated={(newContribution) => {
+            console.log('Contribution créée:', newContribution);
+            setShowContributionModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };
