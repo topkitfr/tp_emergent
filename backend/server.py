@@ -63,7 +63,14 @@ app.add_middleware(
 # Database
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-db = client[os.environ.get('DB_NAME', 'topkit_db')]
+DB_NAME = os.environ.get('DB_NAME', 'topkit_db')
+db = client[DB_NAME]
+
+# Debug logging for database configuration
+print(f"🔍 DATABASE CONFIGURATION:")
+print(f"  MONGO_URL: {MONGO_URL}")
+print(f"  DB_NAME: {DB_NAME}")
+print(f"  Database connection: {db.name}")
 
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
