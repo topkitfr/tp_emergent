@@ -237,10 +237,8 @@ const ContributionModal = ({
         title: title.trim(),
         description: description.trim(),
         entity_type: entityType,
-        entity_id: entity.id,
-        proposed_data: formData,
-        source_urls: sourceUrls.filter(url => url.trim() !== ''),
-        changes: changes
+        data: formData,
+        source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
 
       // Convert images to base64 if present
