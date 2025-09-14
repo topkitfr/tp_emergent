@@ -1602,21 +1602,17 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
                 )
                 
             elif entity_type == "master_kit":
-                update_fields.update({
-                    "club_id": entity_data.get("club_id", ""),
-                    "season": entity_data.get("season", ""),
-                    "kit_type": entity_data.get("kit_type", ""),
-                    "competition_id": entity_data.get("competition_id", ""),
-                    "model": entity_data.get("model", ""),
-                    "brand_id": entity_data.get("brand_id", ""),
-                    "sku_code": entity_data.get("sku_code", ""),
-                    "main_sponsor_id": entity_data.get("main_sponsor_id", ""),
-                    "gender": entity_data.get("gender", ""),
-                    "primary_color": entity_data.get("primary_color", ""),
-                    "secondary_colors": entity_data.get("secondary_colors", []),
-                    "pattern_description": entity_data.get("pattern_description", ""),
-                    "front_photo_url": entity_data.get("front_photo_url", "")
-                })
+                # Only update fields that are explicitly provided in the contribution
+                master_kit_fields = [
+                    "club_id", "season", "kit_type", "competition_id", "model", "brand_id", 
+                    "sku_code", "main_sponsor_id", "gender", "primary_color", "secondary_colors", 
+                    "pattern_description", "front_photo_url"
+                ]
+                for field in master_kit_fields:
+                    if field in entity_data:
+                        update_fields[field] = entity_data[field]
+                
+                logger.info(f"Updating master_kit {existing_entity_id} with fields: {list(update_fields.keys())}")
                 
                 result = await db.master_kits.update_one(
                     {"id": existing_entity_id},
