@@ -1027,6 +1027,7 @@ async def create_contribution(
         contribution = {
             "id": str(uuid.uuid4()),
             "entity_type": contribution_data.entity_type,
+            "entity_id": contribution_data.entity_id,  # Store entity_id for updates
             "title": contribution_data.title,
             "description": contribution_data.description,
             "data": contribution_data.data,
