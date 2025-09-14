@@ -72,6 +72,54 @@ const MasterJerseyDetailPage = () => {
     }
   };
 
+  const fetchTeams = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/teams`);
+      if (response.ok) {
+        const data = await response.json();
+        setTeams(data);
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
+  const fetchBrands = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/brands`);
+      if (response.ok) {
+        const data = await response.json();
+        setBrands(data);
+      }
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    }
+  };
+
+  const fetchCompetitions = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/competitions`);
+      if (response.ok) {
+        const data = await response.json();
+        setCompetitions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching competitions:', error);
+    }
+  };
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/players`);
+      if (response.ok) {
+        const data = await response.json();
+        setPlayers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching players:', error);
+    }
+  };
+
   const groupVersionsByCompetition = (versions) => {
     const grouped = {};
     versions.forEach(version => {
