@@ -166,7 +166,9 @@ const CollaborativeTeamsPage = ({ user, API, teams, onDataUpdate }) => {
       <div className="aspect-square bg-gray-100 flex items-center justify-center relative group-hover:bg-gray-200 transition-colors">
         {team.logo_url ? (
           <img 
-            src={`${API}/api/${team.logo_url}`}
+            src={team.logo_url.startsWith('image_uploaded_')
+              ? `${API}/api/legacy-image/${team.logo_url}`
+              : `${API}/api/${team.logo_url}`}
             alt={team.name}
             className="w-full h-full object-cover"
             onError={(e) => {
