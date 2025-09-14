@@ -66,12 +66,6 @@ client = AsyncIOMotorClient(MONGO_URL)
 DB_NAME = os.environ.get('DB_NAME', 'topkit_db')
 db = client[DB_NAME]
 
-# Debug logging for database configuration
-print(f"🔍 DATABASE CONFIGURATION:")
-print(f"  MONGO_URL: {MONGO_URL}")
-print(f"  DB_NAME: {DB_NAME}")
-print(f"  Database connection: {db.name}")
-
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
 ALGORITHM = "HS256"
