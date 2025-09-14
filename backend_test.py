@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
 """
-Backend Testing for Selective Update Functionality - "Improve This File" Workflow
-Testing the critical bug fix where contributions now only update changed fields instead of all fields.
+Backend Testing for Authentication and Database Configuration Issues
 
-BACKGROUND: 
-Fixed critical bug where "improve this file" workflow was updating ALL fields of an entity 
-instead of only the changed fields. When a user wanted to only change a logo, it was also 
-changing the name and other fields unintentionally.
+REVIEW REQUEST FOCUS:
+Test the backend authentication and user login functionality after fixing the database configuration issues. 
+The backend was showing "not authorized on topkit_db" errors because the database name was hardcoded. 
 
 FIXES IMPLEMENTED:
-1. Frontend (ContributionModal.js): Now sends only changed fields in contribution data
-2. Backend (server.py): Modified create_or_update_entity_from_contribution to only update 
-   fields that are explicitly provided in the contribution data
-3. Fixed TK-TEAM-616469 name back to "paris saint-germain"
+1. Changed `db = client.topkit_db` to `db = client[os.environ.get('DB_NAME', 'topkit_db')]` in server.py
+2. Added SECRET_KEY to environment variables
+3. Fixed test_server.py database reference as well
 
 TEST REQUIREMENTS:
-1. Test contribution creation endpoint works with selective field data
-2. Test moderation approval with selective updates only changes intended fields
-3. Test workflow for all entity types: teams, brands, players, competitions, master_kits
-4. Verify TK-TEAM-616469 now has correct name "paris saint-germain"
-5. Verify image transfer logic still works correctly with selective updates
+1. Basic health check endpoint to verify backend is running
+2. User authentication endpoint `/api/auth/login` with the admin account topkitfr@gmail.com
+3. Any basic database operations to confirm the database connection is working properly
+
+The user was getting database authorization errors when trying to log in on the deployed website, 
+so we need to verify this is now resolved.
 """
 
 import asyncio
