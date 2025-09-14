@@ -1015,6 +1015,7 @@ class ContributionResponse(BaseModel):
     created_at: datetime
     topkit_reference: Optional[str] = None
     source_urls: List[str] = []
+    uploaded_images: Optional[List[dict]] = []  # New field for tracking uploaded images
 
 @app.post("/api/contributions-v2/", response_model=ContributionResponse)
 async def create_contribution(
