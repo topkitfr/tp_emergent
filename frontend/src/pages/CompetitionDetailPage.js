@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ContributionModal from '../ContributionModal';
 
-const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
+const CompetitionDetailPage = ({ user, API, competitions, masterJerseys, onDataUpdate }) => {
   const { competitionId } = useParams();
   const navigate = useNavigate();
   const [competition, setCompetition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showContributionModal, setShowContributionModal] = useState(false);
   const [secondaryImages, setSecondaryImages] = useState([]);
+  const [relatedMasterKits, setRelatedMasterKits] = useState([]);
 
   useEffect(() => {
     if (competitions && competitionId) {
@@ -20,8 +21,27 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
       if (foundCompetition && foundCompetition.secondary_images) {
         setSecondaryImages(foundCompetition.secondary_images.filter(Boolean));
       }
+
+      // Find related Master Kits for this competition
+      if (foundCompetition && masterJerseys) {
+        const competitionRelatedKits = masterJerseys.filter(kit => 
+          kit.competition_id === foundCompetition.id || 
+          kit.competition === foundCompetition.name ||
+          kit.competition === foundCompetition.competition_name ||
+          kit.competition_name === foundCompetition.name ||
+          kit.competition_name === foundCompetition.competition_name
+        ).slice(0, 5); // Limit to 5 kits
+        setRelatedMasterKits(competitionRelatedKits);
+      }
     }
-  }, [competitions, competitionId]);
+  }, [competitions, competitionId, masterJerseys]);
+
+  const handleSeeMoreClick = () => {
+    if (competition) {
+      // Navigate to Kit Area with competition filter
+      navigate(`/kit-area?competition=${encodeURIComponent(competition.name || competition.competition_name)}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -47,10 +67,10 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
       <div className="max-w-6xl mx-auto px-4 py-8 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Ligue non trouvée</h2>
         <button 
-          onClick={() => navigate('/competitions')}
+          onClick={() => navigate('/catalogue')}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
         >
-          Retour aux ligues
+          Retour au catalogue
         </button>
       </div>
     );
@@ -61,8 +81,8 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
       {/* Header avec boutons */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{competition.name}</h1>
-          {competition.official_name && competition.official_name !== competition.name && (
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{competition.name || competition.competition_name}</h1>
+          {competition.official_name && competition.official_name !== (competition.name || competition.competition_name) && (
             <p className="text-xl text-gray-600 mb-2">{competition.official_name}</p>
           )}
           <p className="text-blue-600 font-mono">{competition.topkit_reference}</p>
@@ -78,8 +98,9 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
             </button>
           )}
           <button
-            onClick={() => navigate('/competitions')}
+            onClick={() => navigate('/catalogue')}
             className="text-gray-400 hover:text-gray-600 text-2xl"
+            title="Retour au catalogue"
           >
             ×
           </button>
@@ -93,8 +114,12 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
             {competition.logo_url ? (
               <img 
-                src={competition.logo_url.startsWith('data:') || competition.logo_url.startsWith('http') ? competition.logo_url : `${API}/${competition.logo_url}`}
-                alt={`${competition.name} logo`}
+                src={competition.logo_url.startsWith('image_uploaded_') 
+                  ? `${API}/api/legacy-image/${competition.logo_url}` 
+                  : competition.logo_url.startsWith('data:') || competition.logo_url.startsWith('http') 
+                    ? competition.logo_url 
+                    : `${API}/api/${competition.logo_url}`}
+                alt={`${competition.name || competition.competition_name} logo`}
                 className="w-full h-full object-contain p-8"
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -119,7 +144,7 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
               
               <div>
                 <span className="font-semibold text-gray-700">Type :</span>
-                <span className="ml-2 text-gray-900 capitalize">{competition.competition_type || 'Non spécifié'}</span>
+                <span className="ml-2 text-gray-900 capitalize">{competition.competition_type || competition.level || 'Non spécifié'}</span>
               </div>
               
               {competition.founded_year && (
@@ -138,7 +163,7 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
               
               <div>
                 <span className="font-semibold text-gray-700">Maillots référencés :</span>
-                <span className="ml-2 text-gray-900">{competition.jerseys_count || 0}</span>
+                <span className="ml-2 text-gray-900">{relatedMasterKits.length}</span>
               </div>
               
               <div>
@@ -158,8 +183,12 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
             {secondaryImages.slice(0, 3).map((image, index) => (
               <div key={index} className="aspect-video bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
                 <img 
-                  src={image.startsWith('data:') || image.startsWith('http') ? image : `${API}/${image}`}
-                  alt={`${competition.name} - Image ${index + 1}`}
+                  src={image.startsWith('image_uploaded_') 
+                    ? `${API}/api/legacy-image/${image}` 
+                    : image.startsWith('data:') || image.startsWith('http') 
+                      ? image 
+                      : `${API}/api/${image}`}
+                  alt={`${competition.name || competition.competition_name} - Image ${index + 1}`}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none';
@@ -176,6 +205,71 @@ const CompetitionDetailPage = ({ user, API, competitions, onDataUpdate }) => {
           <div className="text-center py-8 text-gray-500">
             <div className="text-4xl mb-2">🖼️</div>
             <p>Aucune image secondaire disponible</p>
+          </div>
+        )}
+      </div>
+
+      {/* Section Maillots associés */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Maillots associés</h3>
+          {relatedMasterKits.length > 0 && (
+            <button
+              onClick={handleSeeMoreClick}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Voir tout ({relatedMasterKits.length}) →
+            </button>
+          )}
+        </div>
+        
+        {relatedMasterKits.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {relatedMasterKits.map((kit) => (
+              <div 
+                key={kit.id}
+                onClick={() => navigate(`/master-kits/${kit.id}`)}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="relative w-full h-32 bg-gray-100 rounded-t-lg overflow-hidden flex items-center justify-center">
+                  {kit.front_photo_url ? (
+                    <img 
+                      src={kit.front_photo_url.startsWith('http') 
+                        ? kit.front_photo_url 
+                        : `${API}/api/${kit.front_photo_url}`}
+                      alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="text-4xl flex items-center justify-center w-full h-full" style={{display: kit.front_photo_url ? 'none' : 'flex'}}>
+                    👕
+                  </div>
+                </div>
+                
+                <div className="p-3">
+                  <h4 className="font-bold text-sm text-gray-900 mb-1 group-hover:text-blue-600 line-clamp-2">
+                    {kit.club} {kit.season}
+                  </h4>
+                  <div className="text-xs text-gray-600 mb-2">
+                    <div className="capitalize">{kit.kit_type}</div>
+                    <div>{kit.brand}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-blue-600 font-mono truncate">{kit.topkit_reference}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">👕</div>
+            <p>Aucun maillot associé à cette compétition</p>
+            <p className="text-sm mt-1">Les maillots apparaîtront ici une fois référencés</p>
           </div>
         )}
       </div>
