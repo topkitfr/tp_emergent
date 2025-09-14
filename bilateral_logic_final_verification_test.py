@@ -466,7 +466,8 @@ class BilateralLogicFinalVerificationTester:
                             "master_kit_id": test_kit_id,
                             "collection_type": "wanted",
                             "size": "L",
-                            "condition": "very_good_condition"
+                            "condition": "club_stock",
+                            "physical_state": "very_good_condition"
                         })
                         
                         if wanted_response.status_code == 400:
