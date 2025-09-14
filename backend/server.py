@@ -1816,7 +1816,7 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                 legacy_filename = None
                 if field_name in ["logo", "logo_url", "uploaded_file"] or field_name.endswith("_logo"):
                     legacy_filename = current_entity.get("logo_url", "")
-                elif field_name in ["photo", "photo_url", "primary_photo"]:
+                elif field_name in ["photo", "photo_url", "primary_photo", "front_photo"]:
                     if entity_type == "player":
                         legacy_filename = current_entity.get("photo_url", "")
                     elif entity_type == "master_kit":
