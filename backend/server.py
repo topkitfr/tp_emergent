@@ -1616,6 +1616,129 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
         logger.error(f"Error creating or updating entity from contribution: {str(e)}")
         return None
 
+async def transfer_contribution_images_to_entity(contribution: dict, entity_id: str) -> bool:
+    """Transfer images from contribution to the actual entity when approved"""
+    try:
+        entity_type = contribution["entity_type"]
+        contribution_id = contribution["id"]
+        
+        # Find all images associated with this contribution
+        # Images are stored in contribution data or as separate files
+        contribution_images = []
+        
+        # Check if contribution has images in data
+        if "images" in contribution.get("data", {}):
+            images_data = contribution["data"]["images"]
+            if isinstance(images_data, dict):
+                for field_name, image_path in images_data.items():
+                    if image_path and isinstance(image_path, str):
+                        contribution_images.append((field_name, image_path))
+        
+        # Also check for uploaded files in contributions folder
+        import os
+        contributions_dir = f"/app/backend/uploads/contributions"
+        if os.path.exists(contributions_dir):
+            for filename in os.listdir(contributions_dir):
+                if contribution_id in filename or filename.startswith(f"contrib_{contribution_id}"):
+                    contribution_images.append(("uploaded_file", f"contributions/{filename}"))
+        
+        if not contribution_images:
+            logger.info(f"No images found for contribution {contribution_id}")
+            return True
+        
+        # Determine target folder based on entity type
+        target_folder_map = {
+            "team": "teams",
+            "brand": "brands", 
+            "player": "players",
+            "competition": "competitions",
+            "master_kit": "master_kits"
+        }
+        
+        target_folder = target_folder_map.get(entity_type)
+        if not target_folder:
+            logger.warning(f"Unknown entity type for image transfer: {entity_type}")
+            return False
+        
+        # Create target directory if it doesn't exist
+        target_dir = f"/app/backend/uploads/{target_folder}"
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # Transfer images and update entity
+        entity_updates = {}
+        transferred_files = []
+        
+        for field_name, source_path in contribution_images:
+            try:
+                # Construct full source path
+                if source_path.startswith("contributions/"):
+                    full_source_path = f"/app/backend/uploads/{source_path}"
+                elif source_path.startswith("image_uploaded_"):
+                    full_source_path = f"/app/backend/uploads/contributions/{source_path}"
+                else:
+                    full_source_path = f"/app/backend/uploads/contributions/{source_path}"
+                
+                if not os.path.exists(full_source_path):
+                    logger.warning(f"Source image file not found: {full_source_path}")
+                    continue
+                
+                # Generate new filename for entity
+                file_extension = os.path.splitext(source_path)[1] or '.jpg'
+                new_filename = f"{entity_id}_{field_name}_{uuid.uuid4().hex[:8]}{file_extension}"
+                target_path = f"{target_dir}/{new_filename}"
+                
+                # Copy file to entity folder
+                import shutil
+                shutil.copy2(full_source_path, target_path)
+                transferred_files.append(target_path)
+                
+                # Update entity URL field based on field name and entity type
+                relative_path = f"{target_folder}/{new_filename}"
+                
+                if field_name in ["logo", "logo_url", "uploaded_file"] or field_name.endswith("_logo"):
+                    entity_updates["logo_url"] = relative_path
+                elif field_name in ["photo", "photo_url", "primary_photo"]:
+                    if entity_type == "player":
+                        entity_updates["photo_url"] = relative_path
+                    elif entity_type == "master_kit":
+                        entity_updates["front_photo_url"] = relative_path
+                elif field_name == "secondary_photos":
+                    entity_updates["secondary_photos"] = relative_path
+                
+                logger.info(f"Transferred image {source_path} -> {relative_path} for entity {entity_id}")
+                
+            except Exception as e:
+                logger.error(f"Error transferring image {source_path}: {str(e)}")
+                continue
+        
+        # Update entity with new image URLs
+        if entity_updates:
+            collection_map = {
+                "team": db.teams,
+                "brand": db.brands,
+                "player": db.players, 
+                "competition": db.competitions,
+                "master_kit": db.master_kits
+            }
+            
+            collection = collection_map.get(entity_type)
+            if collection:
+                result = await collection.update_one(
+                    {"id": entity_id},
+                    {"$set": entity_updates}
+                )
+                
+                if result.modified_count > 0:
+                    logger.info(f"Updated {entity_type} {entity_id} with new image URLs: {entity_updates}")
+                else:
+                    logger.warning(f"Failed to update {entity_type} {entity_id} with image URLs")
+        
+        return len(transferred_files) > 0
+        
+    except Exception as e:
+        logger.error(f"Error transferring contribution images to entity: {str(e)}")
+        return False
+
 # ================================
 # STATS ENDPOINT
 # ================================
