@@ -73,29 +73,6 @@ client = AsyncIOMotorClient(MONGO_URL)
 # Force database name to 'topkit' to ensure consistency across all instances
 db = client['topkit']
 
-# Debug logging for database configuration
-logger.info(f"🔍 DATABASE CONFIGURATION:")
-logger.info(f"  MONGO_URL: {MONGO_URL}")
-logger.info(f"  Database connection: {db.name}")
-
-# Test database connection
-async def test_db_connection():
-    try:
-        # Test connection to the correct database
-        result = await db.command("ping")
-        logger.info(f"✅ Database ping successful: {result}")
-        
-        # List collections to verify we're in the right database
-        collections = await db.list_collection_names()
-        logger.info(f"📋 Collections in '{db.name}' database: {collections}")
-        
-    except Exception as e:
-        logger.error(f"❌ Database connection test failed: {str(e)}")
-
-# Run the test on startup
-import asyncio
-asyncio.create_task(test_db_connection())
-
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
 ALGORITHM = "HS256"
