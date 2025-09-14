@@ -1297,6 +1297,32 @@ async def create_entity_from_contribution(contribution: dict) -> str:
         
         # Add entity-specific data
         if entity_type == "team":
+            # Process logo_url - copy from contributions to teams directory if needed
+            logo_url = entity_data.get("logo_url", "")
+            if logo_url and logo_url.startswith("image_uploaded_"):
+                # Find the actual uploaded file in contributions directory
+                contribution_files = list(Path(UPLOAD_DIR / "contributions").glob("*.jpg")) + \
+                                   list(Path(UPLOAD_DIR / "contributions").glob("*.jpeg")) + \
+                                   list(Path(UPLOAD_DIR / "contributions").glob("*.png"))
+                
+                # Find the most recent file (likely the uploaded logo)
+                if contribution_files:
+                    latest_file = max(contribution_files, key=lambda p: p.stat().st_mtime)
+                    
+                    # Copy to teams directory with the expected legacy name
+                    teams_dir = UPLOAD_DIR / "teams"
+                    teams_dir.mkdir(exist_ok=True)
+                    
+                    # Determine file extension from the source file
+                    file_ext = latest_file.suffix
+                    destination = teams_dir / f"{logo_url}{file_ext}"
+                    
+                    try:
+                        shutil.copy2(latest_file, destination)
+                        logger.info(f"Copied team logo from {latest_file} to {destination}")
+                    except Exception as e:
+                        logger.error(f"Failed to copy team logo: {str(e)}")
+            
             entity.update({
                 "name": entity_data.get("name", ""),
                 "short_name": entity_data.get("short_name", ""),
@@ -1304,17 +1330,43 @@ async def create_entity_from_contribution(contribution: dict) -> str:
                 "city": entity_data.get("city", ""),
                 "founded_year": entity_data.get("founded_year", 0),
                 "colors": entity_data.get("colors", []),
-                "logo_url": entity_data.get("logo_url", ""),
+                "logo_url": logo_url,
                 "secondary_photos": entity_data.get("secondary_photos", "")
             })
             await db.teams.insert_one(entity)
             
         elif entity_type == "brand":
+            # Process logo_url - copy from contributions to brands directory if needed
+            logo_url = entity_data.get("logo_url", "")
+            if logo_url and logo_url.startswith("image_uploaded_"):
+                # Find the actual uploaded file in contributions directory
+                contribution_files = list(Path(UPLOAD_DIR / "contributions").glob("*.jpg")) + \
+                                   list(Path(UPLOAD_DIR / "contributions").glob("*.jpeg")) + \
+                                   list(Path(UPLOAD_DIR / "contributions").glob("*.png"))
+                
+                # Find the most recent file (likely the uploaded logo)
+                if contribution_files:
+                    latest_file = max(contribution_files, key=lambda p: p.stat().st_mtime)
+                    
+                    # Copy to brands directory with the expected legacy name
+                    brands_dir = UPLOAD_DIR / "brands"
+                    brands_dir.mkdir(exist_ok=True)
+                    
+                    # Determine file extension from the source file
+                    file_ext = latest_file.suffix
+                    destination = brands_dir / f"{logo_url}{file_ext}"
+                    
+                    try:
+                        shutil.copy2(latest_file, destination)
+                        logger.info(f"Copied brand logo from {latest_file} to {destination}")
+                    except Exception as e:
+                        logger.error(f"Failed to copy brand logo: {str(e)}")
+            
             entity.update({
                 "name": entity_data.get("name", ""),
                 "country": entity_data.get("country", ""),
                 "founded_year": entity_data.get("founded_year", 0),
-                "logo_url": entity_data.get("logo_url", ""),
+                "logo_url": logo_url,
                 "description": entity_data.get("description", "")
             })
             await db.brands.insert_one(entity)
