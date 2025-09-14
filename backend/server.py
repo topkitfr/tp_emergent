@@ -70,14 +70,12 @@ app.add_middleware(
 # Database
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-DB_NAME = os.environ.get('DB_NAME', 'topkit')
-# Force the database name to be 'topkit' to avoid any confusion
+# Force database name to 'topkit' to ensure consistency across all instances
 db = client['topkit']
 
 # Debug logging for database configuration
 logger.info(f"🔍 DATABASE CONFIGURATION:")
 logger.info(f"  MONGO_URL: {MONGO_URL}")
-logger.info(f"  DB_NAME: {DB_NAME}")
 logger.info(f"  Database connection: {db.name}")
 
 # Test database connection
