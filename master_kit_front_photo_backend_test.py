@@ -542,6 +542,8 @@ class MasterKitFrontPhotoTester:
                 "details": f"Exception: {str(e)}"
             })
             return False
+            
+    async def test_image_serving_endpoint(self, image_path):
         """Test that uploaded images can be served correctly"""
         try:
             if not image_path:
