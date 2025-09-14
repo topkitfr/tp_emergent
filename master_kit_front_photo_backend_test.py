@@ -619,6 +619,9 @@ class MasterKitFrontPhotoTester:
             # Step 7: Test image serving with actual image path
             await self.test_image_serving_endpoint(image_path)
             
+            # Step 8: Test specific logo to front_photo mapping fix
+            await self.test_logo_to_front_photo_mapping()
+            
         finally:
             await self.cleanup_session()
             
