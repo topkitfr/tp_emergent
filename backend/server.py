@@ -1585,14 +1585,16 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
                 )
                 
             elif entity_type == "competition":
-                update_fields.update({
-                    "name": entity_data.get("name", ""),
-                    "competition_name": entity_data.get("competition_name", entity_data.get("name", "")),
-                    "country": entity_data.get("country", ""),
-                    "level": entity_data.get("level", ""),
-                    "format": entity_data.get("format", ""),
-                    "logo_url": entity_data.get("logo_url", "")
-                })
+                # Only update fields that are explicitly provided in the contribution
+                competition_fields = ["name", "competition_name", "country", "level", "format", "logo_url"]
+                for field in competition_fields:
+                    if field in entity_data:
+                        update_fields[field] = entity_data[field]
+                    # Special handling for competition_name fallback
+                    elif field == "competition_name" and "name" in entity_data:
+                        update_fields["competition_name"] = entity_data["name"]
+                
+                logger.info(f"Updating competition {existing_entity_id} with fields: {list(update_fields.keys())}")
                 
                 result = await db.competitions.update_one(
                     {"id": existing_entity_id},
