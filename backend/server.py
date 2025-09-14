@@ -1269,9 +1269,9 @@ async def moderate_contribution(
         new_status = "approved" if moderation_data.action == "approve" else "rejected"
         entity_id = None
         
-        # If approving, create the actual entity in the database
+        # If approving, create or update the actual entity in the database
         if moderation_data.action == "approve":
-            entity_id = await create_entity_from_contribution(contribution)
+            entity_id = await create_or_update_entity_from_contribution(contribution)
         
         await db.contributions.update_one(
             {"id": contribution_id},
