@@ -424,6 +424,12 @@ const MasterJerseyDetailPage = () => {
           onClose={() => setShowContributionModal(false)}
           entity={masterJersey}
           entityType="master_kit"
+          teams={teams}
+          brands={brands}
+          competitions={competitions}
+          players={players}
+          masterKits={[]}
+          referenceKits={[]}
           onContributionCreated={(newContribution) => {
             console.log('Contribution créée:', newContribution);
             setShowContributionModal(false);
