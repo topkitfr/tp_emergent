@@ -1667,6 +1667,10 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
             
             if result.modified_count > 0:
                 logger.info(f"Successfully updated {entity_type} entity {existing_entity_id}")
+                
+                # Trigger cascading updates for related entities
+                await trigger_cascading_updates(entity_type, existing_entity_id, update_fields)
+                
                 return existing_entity_id
             else:
                 logger.warning(f"No changes made to {entity_type} entity {existing_entity_id}")
