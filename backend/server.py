@@ -1512,8 +1512,8 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
             # Prepare update fields
             update_fields = {
                 "last_modified_at": datetime.utcnow(),
-                "last_modified_by": contribution.get("created_by", ""),
-                "modification_count": {"$inc": 1}  # This will be handled separately
+                "last_modified_by": contribution.get("created_by", "")
+                # modification_count will be handled with $inc separately
             }
             
             # Add entity-specific data to update fields
