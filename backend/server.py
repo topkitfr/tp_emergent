@@ -14,6 +14,10 @@ from pathlib import Path
 import uuid
 import asyncio
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
