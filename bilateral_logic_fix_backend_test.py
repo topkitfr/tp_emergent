@@ -181,11 +181,23 @@ class BilateralLogicTester:
                     "No owned items to test with")
                 return False
             
-            # Get first owned item
-            owned_item = collection_data['owned'][0]
-            master_kit_id = owned_item['master_kit_id']
+            # Find an owned item that is NOT in wanted collection
+            owned_only_item = None
+            wanted_kit_ids = {item['master_kit_id'] for item in collection_data['wanted']}
             
-            print(f"Attempting to add owned Master Kit {master_kit_id} to wanted collection...")
+            for owned_item in collection_data['owned']:
+                if owned_item['master_kit_id'] not in wanted_kit_ids:
+                    owned_only_item = owned_item
+                    break
+            
+            if not owned_only_item:
+                self.log_test("Bilateral Prevention (Owned→Wanted)", False, 
+                    "All owned items are already in wanted collection - cannot test")
+                return False
+            
+            master_kit_id = owned_only_item['master_kit_id']
+            
+            print(f"Attempting to add owned-only Master Kit {master_kit_id} to wanted collection...")
             
             response = self.session.post(f"{API_BASE}/my-collection", json={
                 "master_kit_id": master_kit_id,
