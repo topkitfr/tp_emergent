@@ -456,7 +456,8 @@ class BilateralLogicFinalVerificationTester:
                         "master_kit_id": test_kit_id,
                         "collection_type": "owned",
                         "size": "L",
-                        "condition": "very_good_condition"
+                        "condition": "club_stock",
+                        "physical_state": "very_good_condition"
                     })
                     
                     if add_response.status_code in [200, 400]:  # 200 = success, 400 = already exists
