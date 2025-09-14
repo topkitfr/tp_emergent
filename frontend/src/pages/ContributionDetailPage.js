@@ -846,25 +846,40 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) =
 
       {/* Image Expansion Modal */}
       {expandedImage && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4" onClick={() => setExpandedImage(null)}>
-          <div className="relative max-w-6xl max-h-full">
-            <img 
-              src={expandedImage.src}
-              alt={expandedImage.alt}
-              className="max-w-full max-h-full object-contain"
-            />
-            <div className="absolute top-4 right-4">
-              <button
-                onClick={() => setExpandedImage(null)}
-                className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-95 flex items-center justify-center p-4" onClick={() => setExpandedImage(null)}>
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col">
+            {/* Image */}
+            <div className="relative flex-1 flex items-center justify-center">
+              <img 
+                src={expandedImage.src}
+                alt={expandedImage.alt}
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
-            <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded">
-              {expandedImage.alt}
+            
+            {/* Image Info Bar */}
+            <div className="bg-black bg-opacity-75 text-white px-4 py-3 rounded-b-lg mt-2 text-center">
+              <h3 className="font-medium text-lg">{expandedImage.alt}</h3>
+              <p className="text-sm text-gray-300 mt-1">Appuyez sur Échap ou cliquez à l'extérieur pour fermer</p>
+            </div>
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setExpandedImage(null)}
+              className="absolute -top-12 right-0 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-3 transition-colors"
+              title="Fermer (Échap)"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Navigation hint */}
+            <div className="absolute -bottom-16 left-0 right-0 text-center">
+              <p className="text-white text-sm bg-black bg-opacity-50 rounded-md px-3 py-1 inline-block">
+                Utilisez les flèches ← → pour naviguer entre les images
+              </p>
             </div>
           </div>
         </div>
