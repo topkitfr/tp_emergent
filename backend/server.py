@@ -1700,7 +1700,7 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         }
         
         collection = collection_map.get(entity_type)
-        if not collection:
+        if collection is None:
             logger.warning(f"Unknown entity type for image transfer: {entity_type}")
             return False
             
