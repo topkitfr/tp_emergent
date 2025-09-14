@@ -17,6 +17,7 @@ const UnifiedFieldRenderer = ({
 }) => {
   const [listItems, setListItems] = useState(Array.isArray(value) ? value : []);
   const [newItem, setNewItem] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Update listItems when value changes externally
   useEffect(() => {
