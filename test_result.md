@@ -4295,6 +4295,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "✅ COMPLETED: Selective Update Functionality Testing - 'Improve This File' Workflow"
     - "✅ COMPLETED: Contributions Form Functionality Verification - Review Request Specific"
     - "✅ COMPLETED: Master Kit Form Consistency & Image Upload Testing"
     - "Add New Reference Kit Form - Club Dropdown Bug Fix"
@@ -4302,7 +4303,7 @@ test_plan:
   stuck_tasks: 
     - "Add New Reference Kit Form - Club Dropdown Bug Fix"
   test_all: false
-  test_priority: "contributions_form_verified"
+  test_priority: "selective_update_verified"
 
 backend:
   - task: "Selective Update Functionality Testing - 'Improve This File' Workflow"
