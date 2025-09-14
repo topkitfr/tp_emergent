@@ -57,28 +57,30 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
               <button
                 key={team.id}
                 onClick={() => navigate('/catalogue')}
-                className="flex-shrink-0 bg-white rounded-lg p-4 hover:shadow-md transition-all border border-gray-100 min-w-[120px]"
+                className="flex-shrink-0 bg-white rounded-lg p-4 hover:shadow-md transition-all border border-gray-100 w-[120px] h-[120px] flex flex-col items-center justify-center"
               >
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden">
-                    {team.logo_url ? (
-                      <img 
-                        src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') 
-                          ? team.logo_url 
-                          : team.logo_url.startsWith('image_uploaded_')
-                            ? `${process.env.REACT_APP_BACKEND_URL}/api/legacy-image/${team.logo_url}`
-                            : `${process.env.REACT_APP_BACKEND_URL}/api/${team.logo_url}`}
-                        alt={team.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <span className="text-xl" style={{display: team.logo_url ? 'none' : 'flex'}}>⚽</span>
-                  </div>
-                  <div className="font-medium text-sm text-gray-900 truncate">{team.name}</div>
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2 overflow-hidden">
+                  {team.logo_url ? (
+                    <img 
+                      src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') 
+                        ? team.logo_url 
+                        : team.logo_url.startsWith('image_uploaded_')
+                          ? `${process.env.REACT_APP_BACKEND_URL}/api/legacy-image/${team.logo_url}`
+                          : `${process.env.REACT_APP_BACKEND_URL}/api/${team.logo_url}`}
+                      alt={team.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className="text-xl" style={{display: team.logo_url ? 'none' : 'flex'}}>⚽</span>
+                </div>
+                <div className="font-medium text-sm text-gray-900 text-center w-full overflow-hidden">
+                  <span className="block truncate" title={team.name}>
+                    {team.name.length > 12 ? `${team.name.substring(0, 9)}...` : team.name}
+                  </span>
                 </div>
               </button>
             ))}
