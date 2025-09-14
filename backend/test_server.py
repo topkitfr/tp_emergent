@@ -20,7 +20,7 @@ app = FastAPI()
 # Database connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-db = client.topkit
+db = client[os.environ.get('DB_NAME', 'topkit')]
 
 @app.get("/health")
 async def health_check():
