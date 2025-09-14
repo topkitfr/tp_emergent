@@ -1688,8 +1688,26 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         os.makedirs(target_dir, exist_ok=True)
         
         # Transfer images and update entity
-        entity_updates = {}
         transferred_files = []
+        
+        # Get current entity to check existing logo_url
+        collection_map = {
+            "team": db.teams,
+            "brand": db.brands,
+            "player": db.players, 
+            "competition": db.competitions,
+            "master_kit": db.master_kits
+        }
+        
+        collection = collection_map.get(entity_type)
+        if not collection:
+            logger.warning(f"Unknown entity type for image transfer: {entity_type}")
+            return False
+            
+        current_entity = await collection.find_one({"id": entity_id})
+        if not current_entity:
+            logger.warning(f"Entity {entity_id} not found for image transfer")
+            return False
         
         for field_name, source_path in contribution_images:
             try:
@@ -1707,58 +1725,37 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                     logger.warning(f"Source image file not found: {full_source_path}")
                     continue
                 
-                # Generate new filename for entity
-                file_extension = os.path.splitext(source_path)[1] or '.png'
-                new_filename = f"{entity_id}_{field_name}_{uuid.uuid4().hex[:8]}{file_extension}"
-                target_path = f"{target_dir}/{new_filename}"
+                # Get the legacy filename from the entity's current logo_url
+                legacy_filename = None
+                if field_name in ["logo", "logo_url", "uploaded_file"] or field_name.endswith("_logo"):
+                    legacy_filename = current_entity.get("logo_url", "")
+                elif field_name in ["photo", "photo_url", "primary_photo"]:
+                    if entity_type == "player":
+                        legacy_filename = current_entity.get("photo_url", "")
+                    elif entity_type == "master_kit":
+                        legacy_filename = current_entity.get("front_photo_url", "")
                 
-                # Copy file to entity folder
+                if not legacy_filename or not legacy_filename.startswith("image_uploaded_"):
+                    logger.warning(f"No legacy filename found for {field_name} in entity {entity_id}")
+                    continue
+                
+                # Determine file extension from source file
+                file_extension = os.path.splitext(source_path)[1] or '.png'
+                target_filename = f"{legacy_filename}{file_extension}"
+                target_path = f"{target_dir}/{target_filename}"
+                
+                # Copy file to entity folder with legacy filename
                 import shutil
                 shutil.copy2(full_source_path, target_path)
                 transferred_files.append(target_path)
                 
-                # Update entity URL field based on field name and entity type
-                relative_path = f"{target_folder}/{new_filename}"
-                
-                if field_name in ["logo", "logo_url", "uploaded_file"] or field_name.endswith("_logo"):
-                    entity_updates["logo_url"] = relative_path
-                elif field_name in ["photo", "photo_url", "primary_photo"]:
-                    if entity_type == "player":
-                        entity_updates["photo_url"] = relative_path
-                    elif entity_type == "master_kit":
-                        entity_updates["front_photo_url"] = relative_path
-                elif field_name == "secondary_photos":
-                    entity_updates["secondary_photos"] = relative_path
-                
-                logger.info(f"Transferred image {source_path} -> {relative_path} for entity {entity_id}")
+                logger.info(f"Transferred image {source_path} -> {target_folder}/{target_filename} for entity {entity_id}")
                 
             except Exception as e:
                 logger.error(f"Error transferring image {source_path}: {str(e)}")
                 continue
         
-        # Update entity with new image URLs
-        if entity_updates:
-            collection_map = {
-                "team": db.teams,
-                "brand": db.brands,
-                "player": db.players, 
-                "competition": db.competitions,
-                "master_kit": db.master_kits
-            }
-            
-            collection = collection_map.get(entity_type)
-            if collection:
-                result = await collection.update_one(
-                    {"id": entity_id},
-                    {"$set": entity_updates}
-                )
-                
-                if result.modified_count > 0:
-                    logger.info(f"Updated {entity_type} {entity_id} with new image URLs: {entity_updates}")
-                    return True
-                else:
-                    logger.warning(f"Failed to update {entity_type} {entity_id} with image URLs")
-        
+        # No need to update entity URLs since they're already set correctly
         return len(transferred_files) > 0
         
     except Exception as e:
