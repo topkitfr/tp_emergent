@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Calendar, Users, Star, ChevronRight } from 'lucide-react';
+import ContributionModal from '../ContributionModal';
 
 const MasterJerseyDetailPage = () => {
   const { id } = useParams();
