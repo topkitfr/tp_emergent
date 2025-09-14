@@ -77,17 +77,19 @@ export const getUnifiedFieldsForEntityType = (type) => {
       ];
 
     case 'master_kit':
+    case 'master_jersey':
       return [
-        // A/ Master Kit form as specified
-        { key: 'team_id', label: 'Team', type: 'team_select', required: true },
-        { key: 'season', label: 'Season', type: 'season_select', required: true, placeholder: '2024-2025' },
-        { key: 'brand_id', label: 'Brand', type: 'brand_select', required: true },
-        { key: 'type', label: 'Type', type: 'select', options: ['home', 'away', 'third', 'fourth', 'gk', 'special'], required: true },
-        { key: 'main_sponsor', label: 'Main Sponsor', type: 'brand_select' },
-        { key: 'sku_code', label: 'SKU Code', type: 'text', grouped: 'sku_barcode' },
-        { key: 'barcode', label: 'Barcode', type: 'text', grouped: 'sku_barcode' },
-        { key: 'pattern_description', label: 'Pattern Description', type: 'textarea' },
-        { key: 'photo', label: 'Photo (front view only)', type: 'image', required: true }
+        // Master Kit form fields for contribution improvements
+        { key: 'club_id', label: 'Team', type: 'team_select', required: false },
+        { key: 'season', label: 'Season', type: 'text', required: false, placeholder: '2024-2025' },
+        { key: 'brand_id', label: 'Brand', type: 'brand_select', required: false },
+        { key: 'kit_type', label: 'Kit Type', type: 'select', options: ['home', 'away', 'third', 'fourth', 'gk', 'special'], required: false },
+        { key: 'main_sponsor_id', label: 'Main Sponsor', type: 'brand_select', required: false },
+        { key: 'model', label: 'Model', type: 'select', options: ['replica', 'authentic', 'player_issue'], required: false },
+        { key: 'sku_code', label: 'SKU Code', type: 'text', required: false },
+        { key: 'primary_color', label: 'Primary Color', type: 'text', required: false },
+        { key: 'pattern_description', label: 'Pattern Description', type: 'textarea', required: false },
+        { key: 'front_photo_url', label: 'Front Photo', type: 'image', required: false }
       ];
 
     case 'reference_kit':
