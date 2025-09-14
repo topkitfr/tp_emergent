@@ -1540,18 +1540,15 @@ async def create_or_update_entity_from_contribution(contribution: dict) -> str:
                 # modification_count will be handled with $inc separately
             }
             
-            # Add entity-specific data to update fields
+            # Add only provided/changed entity-specific data to update fields
             if entity_type == "team":
-                update_fields.update({
-                    "name": entity_data.get("name", ""),
-                    "short_name": entity_data.get("short_name", ""),
-                    "country": entity_data.get("country", ""),
-                    "city": entity_data.get("city", ""),
-                    "founded_year": entity_data.get("founded_year", 0),
-                    "colors": entity_data.get("colors", []),
-                    "logo_url": entity_data.get("logo_url", ""),
-                    "secondary_photos": entity_data.get("secondary_photos", "")
-                })
+                # Only update fields that are explicitly provided in the contribution
+                team_fields = ["name", "short_name", "country", "city", "founded_year", "colors", "logo_url", "secondary_photos"]
+                for field in team_fields:
+                    if field in entity_data:
+                        update_fields[field] = entity_data[field]
+                
+                logger.info(f"Updating team {existing_entity_id} with fields: {list(update_fields.keys())}")
                 
                 # Update the entity
                 result = await db.teams.update_one(
