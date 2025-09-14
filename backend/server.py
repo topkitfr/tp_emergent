@@ -1272,6 +1272,10 @@ async def moderate_contribution(
         # If approving, create or update the actual entity in the database
         if moderation_data.action == "approve":
             entity_id = await create_or_update_entity_from_contribution(contribution)
+            
+            # Transfer contribution images to entity if any exist
+            if entity_id:
+                await transfer_contribution_images_to_entity(contribution, entity_id)
         
         await db.contributions.update_one(
             {"id": contribution_id},
