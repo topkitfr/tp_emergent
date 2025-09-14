@@ -12,7 +12,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
     { label: 'Kits', value: masterJerseys?.length || 0, icon: '📋', color: 'text-gray-900' }
   ];
 
-  const recentTeams = teams?.slice(0, 6) || [];
+  const recentTeams = teams?.slice(0, 10) || []; // Increased to show more teams including TK-TEAM-616469
   const recentBrands = brands?.slice(0, 4) || [];
   const recentMasterJerseys = masterJerseys?.slice(0, 12) || [];
 
