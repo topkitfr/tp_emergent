@@ -334,7 +334,8 @@ class BilateralLogicTester:
                 "master_kit_id": new_kit['id'],
                 "collection_type": "owned",
                 "size": "L",
-                "condition": "very_good_condition",
+                "condition": "club_stock",
+                "physical_state": "very_good_condition",
                 "purchase_price": 100.00
             })
             
