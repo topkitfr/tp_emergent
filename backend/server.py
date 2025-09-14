@@ -597,14 +597,29 @@ async def add_to_my_collection(
             raise HTTPException(status_code=404, detail="Master Kit not found")
         
         # Check if already in collection (same type)
-        existing = await db.my_collection.find_one({
+        existing_same_type = await db.my_collection.find_one({
             "user_id": current_user["id"],
             "master_kit_id": collection_data.master_kit_id,
             "collection_type": collection_data.collection_type
         })
-        if existing:
+        if existing_same_type:
             collection_type_name = "owned collection" if collection_data.collection_type == "owned" else "want list"
             raise HTTPException(status_code=400, detail=f"Master Kit already in your {collection_type_name}")
+        
+        # BILATERAL LOGIC: Check if already in opposite collection type
+        opposite_type = "wanted" if collection_data.collection_type == "owned" else "owned"
+        existing_opposite_type = await db.my_collection.find_one({
+            "user_id": current_user["id"],
+            "master_kit_id": collection_data.master_kit_id,
+            "collection_type": opposite_type
+        })
+        if existing_opposite_type:
+            opposite_type_name = "owned collection" if opposite_type == "owned" else "want list"
+            current_type_name = "owned collection" if collection_data.collection_type == "owned" else "want list"
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Master Kit is already in your {opposite_type_name}. Please remove it first before adding to {current_type_name}."
+            )
         
         # Create collection entry
         collection_item = MyCollection(
