@@ -63,7 +63,7 @@ app.add_middleware(
 # Database
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(MONGO_URL)
-DB_NAME = os.environ.get('DB_NAME', 'topkit_db')
+DB_NAME = os.environ.get('DB_NAME', 'topkit')
 db = client[DB_NAME]
 
 # Security
