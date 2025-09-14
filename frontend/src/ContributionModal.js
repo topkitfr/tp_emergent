@@ -237,6 +237,7 @@ const ContributionModal = ({
         title: title.trim(),
         description: description.trim(),
         entity_type: entityType,
+        entity_id: entity.id, // Include the entity ID for updates
         data: formData,
         source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
