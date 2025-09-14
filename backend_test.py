@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Legacy Image System Fix Backend Testing
-Testing the new /api/legacy-image/{image_id} endpoint and database elements image display
+Image Upload Fix Backend Testing - TK-TEAM-982B1F Critical Bug Fix
+Testing the newly implemented image upload fix for new entities:
+- Verify TK-TEAM-982B1F Fix
+- Test Image Workflow for new team/brand creation
+- Legacy Image Serving via /api/legacy-image/ endpoint
+- File System Verification
+- Image Display Integration
 """
 
 import requests
@@ -10,6 +15,9 @@ import os
 import sys
 from pathlib import Path
 import time
+import tempfile
+from PIL import Image
+import io
 
 # Get backend URL from environment
 BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://topkit-debug-1.preview.emergentagent.com')
