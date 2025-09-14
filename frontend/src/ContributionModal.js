@@ -232,13 +232,37 @@ const ContributionModal = ({
     setLoading(true);
 
     try {
-      // Prepare contribution data
+      // Prepare only the changed fields for contribution data
+      const changedFieldsData = {};
+      
+      // Only include fields that actually changed
+      changes.forEach(change => {
+        if (change.field && formData[change.field] !== undefined) {
+          changedFieldsData[change.field] = formData[change.field];
+        }
+      });
+      
+      // Handle image changes specially since they're tracked differently
+      if (imageFiles.logo) {
+        changedFieldsData.logo_url = `image_uploaded_${Date.now()}`;
+      }
+      if (imageFiles.primary_photo) {
+        changedFieldsData.primary_photo_url = `image_uploaded_${Date.now()}`;
+      }
+      if (imageFiles.secondary_photos.length > 0) {
+        changedFieldsData.secondary_photos = `${imageFiles.secondary_photos.length} new photos`;
+      }
+      
+      console.log('Changed fields only:', changedFieldsData);
+      console.log('All detected changes:', changes);
+
+      // Prepare contribution data with only changed fields
       const contributionData = {
         title: title.trim(),
         description: description.trim(),
         entity_type: entityType,
         entity_id: entity.id, // Include the entity ID for updates
-        data: formData,
+        data: changedFieldsData, // Send only changed fields instead of all formData
         source_urls: sourceUrls.filter(url => url.trim() !== '')
       };
 
