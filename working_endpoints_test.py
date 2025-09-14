@@ -6,7 +6,7 @@ Test only the endpoints that should work based on correct dependency injection
 import requests
 import json
 
-BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 USER_EMAIL = "steinmetzlivio@gmail.com"

@@ -13,7 +13,7 @@ from datetime import datetime
 import jwt
 
 # Configuration
-BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
 
 # Review request credentials
 REVIEW_CREDENTIALS = {

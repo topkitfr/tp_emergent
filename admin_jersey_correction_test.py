@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BACKEND_URL = "https://footkit-hub.preview.emergentagent.com/api"
 
 # Test credentials from review request
 ADMIN_EMAIL = "topkitfr@gmail.com"

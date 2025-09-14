@@ -246,11 +246,11 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{os.environ.get('FRONTEND_URL', 'https://image-fix-10.preview.emergentagent.com')}/settings/security" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://footkit-hub.preview.emergentagent.com')}/settings/security" 
                style="background-color: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 🔐 Sécuriser mon compte
             </a>
-            <a href="{os.environ.get('FRONTEND_URL', 'https://image-fix-10.preview.emergentagent.com')}/password/change" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://footkit-hub.preview.emergentagent.com')}/password/change" 
                style="background-color: #ffc107; color: #212529; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔑 Changer le mot de passe
             </a>
@@ -345,7 +345,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{os.environ.get("FRONTEND_URL", "https://image-fix-10.preview.emergentagent.com")}}/my-listings" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://footkit-hub.preview.emergentagent.com")}}/my-listings" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 📋 Gérer mes annonces
             </a>
@@ -454,7 +454,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{os.environ.get("FRONTEND_URL", "https://image-fix-10.preview.emergentagent.com")}}/sales" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://footkit-hub.preview.emergentagent.com")}}/sales" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 📊 Voir mes ventes
             </a>
@@ -556,7 +556,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{os.environ.get("FRONTEND_URL", "https://image-fix-10.preview.emergentagent.com")}}/purchases" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://footkit-hub.preview.emergentagent.com")}}/purchases" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
                 📋 Mes achats
             </a>

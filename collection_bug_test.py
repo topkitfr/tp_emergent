@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-hub.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "123"
 

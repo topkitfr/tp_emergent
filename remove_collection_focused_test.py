@@ -10,7 +10,7 @@ import uuid
 import time
 
 # Configuration
-BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-hub.preview.emergentagent.com/api"
 
 class RemoveCollectionTester:
     def __init__(self):

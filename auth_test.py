@@ -11,7 +11,7 @@ import jwt
 from datetime import datetime
 
 # Configuration - Using production URL from frontend/.env
-BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-hub.preview.emergentagent.com/api"
 
 # Test data as specified in review request
 TEST_EMAIL = "test@topkit.com"

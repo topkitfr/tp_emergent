@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration - Use the correct backend URL from frontend/.env
-BASE_URL = "https://image-fix-10.preview.emergentagent.com/api"
+BASE_URL = "https://footkit-hub.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "topkitfr@gmail.com"
