@@ -278,7 +278,8 @@ class BilateralLogicTester:
                 "master_kit_id": master_kit_id,
                 "collection_type": "owned",
                 "size": "M",
-                "condition": "new_with_tags",
+                "condition": "match_worn",
+                "physical_state": "new_with_tags",
                 "purchase_price": 150.00
             })
             
