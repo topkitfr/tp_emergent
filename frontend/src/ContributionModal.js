@@ -270,7 +270,7 @@ const ContributionModal = ({
       console.log('Submitting contribution:', contributionData);
 
       // Submit contribution
-      const response = await fetch(`${API}/api/contributions`, {
+      const response = await fetch(`${API}/api/contributions-v2/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
