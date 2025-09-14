@@ -1217,10 +1217,20 @@ async def upload_contribution_image(
         # Save image
         file_path = await save_uploaded_file(file, "contributions")
         
-        # Update contribution with image info
+        # Update contribution with image info and file path
+        update_data = {
+            "$inc": {"images_count": 1},
+            "$push": {"uploaded_images": {
+                "field_name": caption or "logo",
+                "file_path": file_path,
+                "is_primary": is_primary.lower() == "true",
+                "uploaded_at": datetime.utcnow()
+            }}
+        }
+        
         await db.contributions.update_one(
             {"id": contribution_id},
-            {"$inc": {"images_count": 1}}
+            update_data
         )
         
         return {"file_url": file_path, "message": "Image uploaded successfully"}
