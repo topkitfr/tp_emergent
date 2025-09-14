@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BASE_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
 
 def test_valuation_system():
     session = requests.Session()

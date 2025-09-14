@@ -16,7 +16,7 @@ import base64
 from datetime import datetime
 
 # Configuration des URLs
-BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
 
 # Données d'authentification selon review request
 USER_EMAIL = "steinmetzlivio@gmail.com"

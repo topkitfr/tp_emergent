@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
 
 # Test credentials (confirmed working)
 ADMIN_CREDENTIALS = {

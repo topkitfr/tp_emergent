@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
 TEST_USERS = {
     "user": {"email": "friendstest@example.com", "password": "SecurePass789!"},
     "admin": {"email": "topkitfr@gmail.com", "password": "TopKitSecure789#"}

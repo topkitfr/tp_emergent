@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Configuration
-BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 TARGET_MASTER_KIT = "TK-MASTER-8270A7"

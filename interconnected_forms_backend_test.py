@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv('frontend/.env')
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://jersey-collab-1.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://kit-fixes.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Admin credentials for testing

@@ -13,7 +13,7 @@ from datetime import datetime
 import jwt
 
 # Configuration
-BACKEND_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
 
 # Review request credentials
 REVIEW_CREDENTIALS = {

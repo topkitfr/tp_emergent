@@ -12,7 +12,7 @@ import time
 import jwt
 
 # Configuration - Using correct backend URL from frontend .env
-BASE_URL = "https://jersey-collab-1.preview.emergentagent.com/api"
+BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
 
 class AuthenticationTester:
     def __init__(self):
