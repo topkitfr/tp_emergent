@@ -86,7 +86,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Database Fresh Start Cleanup Verification"
+    - "Price Estimation Endpoints Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
