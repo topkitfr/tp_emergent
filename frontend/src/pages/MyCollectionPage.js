@@ -553,9 +553,38 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                 <h3 className="font-semibold text-gray-900">
                   {editingItem.master_kit?.club || 'Unknown Club'} - {editingItem.master_kit?.season || 'Unknown Season'}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mb-3">
                   Editing details for your collection
                 </p>
+                
+                {/* Live Price Preview */}
+                {priceEstimations[editingItem.id] && (
+                  <div className="bg-white border border-blue-200 rounded-lg p-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Current Estimated Value:</span>
+                      <span className="text-lg font-bold text-purple-600">
+                        €{priceEstimations[editingItem.id].estimated_price}
+                      </span>
+                    </div>
+                    {editingItem.purchase_price && (
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs text-gray-500">vs Purchase Price (€{editingItem.purchase_price}):</span>
+                        {(() => {
+                          const difference = priceEstimations[editingItem.id].estimated_price - editingItem.purchase_price;
+                          const percentage = ((difference / editingItem.purchase_price) * 100).toFixed(1);
+                          return (
+                            <span className={`text-xs font-medium ${difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {difference >= 0 ? '+' : ''}€{difference.toFixed(2)} ({percentage}%)
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500 mt-2">
+                      💡 Price updates automatically when you save changes
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
