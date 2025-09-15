@@ -27,22 +27,28 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         }}
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight akira-font">
-            <span className="inline-block bg-white px-4 py-2 mb-2" style={{color: 'rgb(17, 24, 39)'}}>
-              Value your collection
-            </span>
+          <div className="mb-6">
+            <div className="bg-white px-8 py-4 mb-4 inline-block">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight akira-font m-0" style={{color: 'rgb(17, 24, 39)'}}>
+                VALUE YOUR COLLECTION
+              </h1>
+            </div>
             <br />
-            <span className="inline-block bg-white px-4 py-2" style={{color: 'rgb(75, 85, 99)'}}>
-              of football kits
-            </span>
-          </h1>
+            <div className="bg-white px-8 py-4 inline-block">
+              <h2 className="text-4xl md:text-6xl font-bold leading-tight akira-font m-0" style={{color: 'rgb(75, 85, 99)'}}>
+                OF FOOTBALL KITS
+              </h2>
+            </div>
+          </div>
           
-          <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto">
-            <span className="inline-block bg-white px-4 py-2" style={{color: 'rgb(75, 85, 99)'}}>
-              Discover the value of your kits with TopKit, 
-              the world's most complete collaborative database on football
-            </span>
-          </p>
+          <div className="mb-8">
+            <div className="bg-white px-8 py-4 inline-block max-w-4xl">
+              <p className="text-lg md:text-xl m-0" style={{color: 'rgb(75, 85, 99)'}}>
+                Discover the value of your kits with TopKit, 
+                the world's most complete collaborative database on football
+              </p>
+            </div>
+          </div>
           
           {/* CTA Buttons - TopKit Focus - Removed Documenter button */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
