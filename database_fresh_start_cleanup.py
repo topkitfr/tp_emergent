@@ -154,8 +154,7 @@ async def main():
 
 if __name__ == "__main__":
     print("⚠️  WARNING: This will DELETE ALL DATA except admin user!")
-    print("Press Enter to continue or Ctrl+C to cancel...")
-    input()
+    print("🚀 Starting automatic cleanup...")
     
     success = asyncio.run(main())
     if success:
