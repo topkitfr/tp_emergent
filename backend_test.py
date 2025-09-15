@@ -31,6 +31,7 @@ class TopKitTester:
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
+        self.collection_items = []  # Store collection items for testing
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -69,6 +70,186 @@ class TopKitTester:
                 
         except Exception as e:
             self.log_test("Authentication", False, f"Exception during authentication: {str(e)}")
+            return False
+    
+    def test_my_collection_endpoint(self):
+        """Test the My Collection endpoint - main focus of this test"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            
+            if response.status_code == 200:
+                collection_data = response.json()
+                self.collection_items = collection_data  # Store for later tests
+                
+                self.log_test("My Collection Endpoint", True, 
+                             f"Retrieved {len(collection_data)} collection items successfully")
+                
+                # Check if we have the expected PSG items
+                psg_items = [item for item in collection_data if item.get('master_kit', {}).get('id') in [PSG_2015_KIT_ID, PSG_2023_KIT_ID]]
+                
+                self.log_test("PSG Collection Items Found", len(psg_items) == 2,
+                             f"Found {len(psg_items)} PSG items (expected 2)")
+                
+                # Verify no Pydantic validation errors by checking structure
+                for i, item in enumerate(collection_data):
+                    required_fields = ['id', 'master_kit_id', 'user_id', 'master_kit']
+                    missing_fields = [field for field in required_fields if field not in item]
+                    
+                    if missing_fields:
+                        self.log_test(f"Collection Item {i+1} Structure", False,
+                                     f"Missing required fields: {missing_fields}")
+                    else:
+                        self.log_test(f"Collection Item {i+1} Structure", True,
+                                     "All required fields present")
+                
+                return collection_data
+                
+            elif response.status_code == 401:
+                self.log_test("My Collection Endpoint", False, 
+                             "Authentication failed - token may be invalid", response.text)
+                return []
+            else:
+                self.log_test("My Collection Endpoint", False, 
+                             f"Failed with status {response.status_code}", response.text)
+                return []
+                
+        except Exception as e:
+            self.log_test("My Collection Endpoint", False, f"Exception: {str(e)}")
+            return []
+    
+    def test_collection_price_estimation(self, collection_item, expected_price):
+        """Test price estimation for a collection item"""
+        try:
+            collection_id = collection_item.get('id')
+            master_kit = collection_item.get('master_kit', {})
+            kit_name = f"{master_kit.get('club', 'Unknown')} {master_kit.get('season', 'Unknown')}"
+            
+            response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", timeout=10)
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                estimated_price = price_data.get('estimated_price', 0)
+                
+                # Check if price matches expected value (with some tolerance for rounding)
+                price_match = abs(estimated_price - expected_price) < 5.0  # Allow €5 tolerance
+                
+                self.log_test(f"Price Estimation ({kit_name})", price_match,
+                             f"Estimated: €{estimated_price}, Expected: €{expected_price}",
+                             price_data)
+                
+                return price_data
+                
+            elif response.status_code == 404:
+                self.log_test(f"Price Estimation ({kit_name})", False,
+                             f"Collection item not found for price estimation", f"Collection ID {collection_id} not found")
+                return None
+            else:
+                self.log_test(f"Price Estimation ({kit_name})", False,
+                             f"Failed with status {response.status_code}", response.text)
+                return None
+                
+        except Exception as e:
+            self.log_test(f"Price Estimation ({kit_name})", False, f"Exception: {str(e)}")
+            return None
+    
+    def test_update_collection_item(self, collection_item):
+        """Test updating a collection item with new details"""
+        try:
+            collection_id = collection_item.get('id')
+            master_kit = collection_item.get('master_kit', {})
+            kit_name = f"{master_kit.get('club', 'Unknown')} {master_kit.get('season', 'Unknown')}"
+            
+            # Test update data
+            update_data = {
+                "name_printing": "Mbappé",
+                "number_printing": "7",
+                "patches": "Champions League",
+                "is_signed": True,
+                "signed_by": "Kylian Mbappé",
+                "size": "L",
+                "purchase_price": 150.0,
+                "personal_notes": "Updated via testing - signature verified"
+            }
+            
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_id}",
+                json=update_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                updated_item = response.json()
+                
+                # Verify the update was successful
+                update_success = (
+                    updated_item.get('name_printing') == update_data['name_printing'] and
+                    updated_item.get('number_printing') == update_data['number_printing'] and
+                    updated_item.get('is_signed') == update_data['is_signed']
+                )
+                
+                self.log_test(f"Update Collection Item ({kit_name})", update_success,
+                             f"Successfully updated collection item with new details",
+                             {
+                                 "name_printing": updated_item.get('name_printing'),
+                                 "number_printing": updated_item.get('number_printing'),
+                                 "is_signed": updated_item.get('is_signed'),
+                                 "signed_by": updated_item.get('signed_by')
+                             })
+                
+                return updated_item
+                
+            elif response.status_code == 404:
+                self.log_test(f"Update Collection Item ({kit_name})", False,
+                             f"Collection item not found for update", f"Collection ID {collection_id} not found")
+                return None
+            else:
+                self.log_test(f"Update Collection Item ({kit_name})", False,
+                             f"Failed with status {response.status_code}", response.text)
+                return None
+                
+        except Exception as e:
+            self.log_test(f"Update Collection Item ({kit_name})", False, f"Exception: {str(e)}")
+            return None
+    
+    def verify_pydantic_validation_fixes(self, collection_data):
+        """Verify that Pydantic validation issues have been resolved"""
+        try:
+            validation_issues = []
+            
+            for item in collection_data:
+                # Check for previously problematic fields
+                master_kit = item.get('master_kit', {})
+                
+                # These fields were causing validation errors before
+                problematic_fields = {
+                    'certificate_url': item.get('certificate_url'),
+                    'condition_other': item.get('condition_other'), 
+                    'proof_of_purchase_url': item.get('proof_of_purchase_url'),
+                    'updated_at': item.get('updated_at')
+                }
+                
+                # Check if fields are properly handled (None is acceptable)
+                for field_name, field_value in problematic_fields.items():
+                    if field_value is not None and not isinstance(field_value, (str, type(None))):
+                        validation_issues.append(f"Field {field_name} has invalid type: {type(field_value)}")
+                
+                # Check master_kit structure
+                if not master_kit:
+                    validation_issues.append("Missing master_kit data")
+                elif not master_kit.get('id'):
+                    validation_issues.append("Missing master_kit.id")
+            
+            if validation_issues:
+                self.log_test("Pydantic Validation Fixes", False,
+                             f"Found {len(validation_issues)} validation issues", validation_issues)
+            else:
+                self.log_test("Pydantic Validation Fixes", True,
+                             "No Pydantic validation issues detected - fixes successful")
+            
+            return len(validation_issues) == 0
+            
+        except Exception as e:
+            self.log_test("Pydantic Validation Fixes", False, f"Exception during validation check: {str(e)}")
             return False
     
     def test_master_kits_endpoint(self):
