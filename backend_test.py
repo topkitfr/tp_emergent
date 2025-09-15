@@ -390,9 +390,10 @@ class TopKitTester:
             self.log_test("Price Calculation Logic", False, f"Exception during verification: {str(e)}")
     
     def run_all_tests(self):
-        """Run all tests"""
-        print("🧪 Starting TopKit Backend Testing - Price Estimation Focus")
-        print("=" * 60)
+        """Run all tests focusing on My Collection functionality"""
+        print("🧪 Starting TopKit Backend Testing - My Collection Focus")
+        print("Testing My Collection functionality after Pydantic validation fixes")
+        print("=" * 70)
         
         # Step 1: Authentication
         if not self.authenticate():
@@ -401,29 +402,36 @@ class TopKitTester:
         
         print()
         
-        # Step 2: Test master kits endpoint
-        print("📋 Testing Master Kits Endpoint...")
-        test_kits = self.test_master_kits_endpoint()
+        # Step 2: Test My Collection endpoint (main focus)
+        print("📋 Testing My Collection Endpoint...")
+        collection_data = self.test_my_collection_endpoint()
         print()
         
-        # Step 3: Test individual master kit retrieval
-        print("🔍 Testing Individual Master Kit Retrieval...")
-        psg_2015_data = self.test_individual_master_kit(PSG_2015_KIT_ID, "PSG 2015-2016")
-        psg_2023_data = self.test_individual_master_kit(PSG_2023_KIT_ID, "PSG 2023-2024")
+        if not collection_data:
+            print("❌ No collection data retrieved. Cannot proceed with further tests.")
+            return False
+        
+        # Step 3: Verify Pydantic validation fixes
+        print("🔧 Verifying Pydantic Validation Fixes...")
+        self.verify_pydantic_validation_fixes(collection_data)
         print()
         
-        # Step 4: Test price estimation endpoints
-        print("💰 Testing Price Estimation Endpoints...")
-        psg_2015_price = self.test_price_estimation(PSG_2015_KIT_ID, EXPECTED_PRICES[PSG_2015_KIT_ID], "PSG 2015-2016")
-        psg_2023_price = self.test_price_estimation(PSG_2023_KIT_ID, EXPECTED_PRICES[PSG_2023_KIT_ID], "PSG 2023-2024")
+        # Step 4: Test price estimation for collection items
+        print("💰 Testing Price Estimation for Collection Items...")
+        psg_items = [item for item in collection_data if item.get('master_kit', {}).get('id') in [PSG_2015_KIT_ID, PSG_2023_KIT_ID]]
+        
+        for item in psg_items:
+            master_kit_id = item.get('master_kit', {}).get('id')
+            expected_price = EXPECTED_PRICES.get(master_kit_id, 0)
+            if expected_price > 0:
+                self.test_collection_price_estimation(item, expected_price)
         print()
         
-        # Step 5: Verify price calculation logic
-        print("🧮 Verifying Price Calculation Logic...")
-        if psg_2015_data and psg_2015_price:
-            self.verify_price_calculation_logic(psg_2015_data, psg_2015_price)
-        if psg_2023_data and psg_2023_price:
-            self.verify_price_calculation_logic(psg_2023_data, psg_2023_price)
+        # Step 5: Test updating collection items
+        print("✏️ Testing Collection Item Updates...")
+        if psg_items:
+            # Test updating the first PSG item
+            self.test_update_collection_item(psg_items[0])
         print()
         
         # Summary
