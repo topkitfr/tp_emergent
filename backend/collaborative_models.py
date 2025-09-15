@@ -246,7 +246,7 @@ class MasterKitResponse(BaseModel):
     main_sponsor: Optional[str] = None  # Old format - for backward compatibility
     main_sponsor_name: Optional[str] = None  # Populated from sponsor
     
-    gender: Union[Gender, str]  # Allow old enum values for backward compatibility
+    gender: Optional[Union[Gender, str]] = None  # Allow old enum values and made optional for backward compatibility
     primary_color: Optional[str] = None  # Made optional for backward compatibility
     secondary_colors: List[str] = []
     front_photo_url: Optional[str] = None
