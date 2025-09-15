@@ -115,23 +115,36 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     // Only calculate value for owned items
     const ownedItems = collections.filter(c => c.collection_type === 'owned');
     
-    let totalValue = 0;
-    let itemsWithValue = 0;
+    let totalPurchaseValue = 0;
+    let totalEstimatedValue = 0;
+    let itemsWithPurchasePrice = 0;
+    let itemsWithEstimatedPrice = 0;
     
     ownedItems.forEach(item => {
+      // Purchase price calculation
       if (item.purchase_price) {
-        totalValue += item.purchase_price;
-        itemsWithValue++;
+        totalPurchaseValue += item.purchase_price;
+        itemsWithPurchasePrice++;
+      }
+      
+      // Estimated price calculation
+      const estimation = priceEstimations[item.id];
+      if (estimation?.estimated_price) {
+        totalEstimatedValue += estimation.estimated_price;
+        itemsWithEstimatedPrice++;
       }
     });
     
     return {
-      total: Math.round(totalValue),
-      average: itemsWithValue > 0 ? Math.round(totalValue / itemsWithValue) : 0,
+      totalPurchase: Math.round(totalPurchaseValue),
+      totalEstimated: Math.round(totalEstimatedValue),
+      averagePurchase: itemsWithPurchasePrice > 0 ? Math.round(totalPurchaseValue / itemsWithPurchasePrice) : 0,
+      averageEstimated: itemsWithEstimatedPrice > 0 ? Math.round(totalEstimatedValue / itemsWithEstimatedPrice) : 0,
       count: ownedItems.length,
-      itemsWithValue
+      itemsWithPurchasePrice,
+      itemsWithEstimatedPrice
     };
-  }, [collections]);
+  }, [collections, priceEstimations]);
 
   // Use useMemo to ensure reactive updates
   const ownedCount = useMemo(() => {
