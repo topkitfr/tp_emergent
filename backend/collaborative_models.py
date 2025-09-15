@@ -254,7 +254,7 @@ class MasterKitResponse(BaseModel):
     created_at: datetime
     verified_level: Union[VerificationLevel, str] = "unverified"  # Allow both enum and string for backward compatibility
     topkit_reference: str
-    total_collectors: int
+    total_collectors: int = 0  # Made optional with default for backward compatibility
     
     class Config:
         # Allow population by field name or alias (Pydantic v2)
