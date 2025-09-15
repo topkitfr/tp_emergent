@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Price Estimation Focus
-Testing the new price estimation endpoints and master kit verification
+TopKit Backend Testing Suite - My Collection Focus
+Testing the My Collection functionality after Pydantic validation fixes
 """
 
 import requests
@@ -16,14 +16,14 @@ TEST_CREDENTIALS = {
     "password": "TopKitSecure789#"
 }
 
-# Test kit IDs from the review request
+# Test kit IDs from the review request - PSG collection items
 PSG_2015_KIT_ID = "802f4f1d-7b3c-47fe-969f-5d45ed615257"
 PSG_2023_KIT_ID = "1fe4787a-a0c0-4bb3-959d-931857745a2b"
 
 # Expected price calculations from review request
 EXPECTED_PRICES = {
-    PSG_2015_KIT_ID: 280.0,  # 2015 kit (authentic, 10 years) = €280
-    PSG_2023_KIT_ID: 108.0   # 2023 kit (replica, 2 years) = €108
+    PSG_2015_KIT_ID: 952.0,  # PSG 2015 kit with Mbappé signature = €952
+    PSG_2023_KIT_ID: 108.0   # PSG 2023 basic kit = €108
 }
 
 class TopKitTester:
