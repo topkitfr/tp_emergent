@@ -189,7 +189,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                     </div>
                   </div>
                   <div className="flex-2">
-                    <h3 className="font-semibold text-gray-900 mb-1">{team.name}</h3>
+                    <h3 className="font-semibold text-gray-900 mb-1">{team.name || 'Unknown Team'}</h3>
                     <p className="text-sm text-gray-500 mb-2">New team documented</p>
                     <p className="text-sm font-semibold text-gray-900">
                       <span className="text-green-600">+5 kits referenced</span>
