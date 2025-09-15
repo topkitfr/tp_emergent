@@ -653,7 +653,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     />
                     <label htmlFor="edit_is_signed" className="ml-2 block text-sm font-medium text-gray-900">
                       This kit is signed
-                      <span className="text-blue-600 ml-1" title="Adds +2.0 coefficient to estimated value">💰💰</span>
+                      <span className="text-blue-600 ml-1" title="Adds +1.0 coefficient to estimated value">💰</span>
                     </label>
                   </div>
 
@@ -667,7 +667,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                         placeholder="Player name or person who signed"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Signatures by famous players greatly increase value (+2.0 coefficient)</p>
+                      <p className="text-xs text-gray-500 mt-1">Signatures by famous players increase value (+1.0 coefficient)</p>
                     </div>
                   )}
                 </div>
@@ -681,12 +681,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select condition</option>
-                    <option value="match_prepared">Match Prepared (+€1.0 coefficient)</option>
-                    <option value="match_worn">Match Worn (+€2.0 coefficient)</option>
+                    <option value="club_stock">Club Stock (+1.2 coefficient)</option>
+                    <option value="match_prepared">Match Prepared (+0.8 coefficient)</option>
+                    <option value="match_worn">Match Worn (+1.5 coefficient)</option>
+                    <option value="training">Training (+0.2 coefficient)</option>
                     <option value="other">Other</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Match conditions affect the estimated value significantly
+                    Kit condition significantly affects estimated value
                   </p>
                 </div>
 
