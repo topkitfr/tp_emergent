@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://jerseydb-clean.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-value-calc.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {
