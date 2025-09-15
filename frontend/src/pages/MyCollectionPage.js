@@ -638,12 +638,13 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select condition</option>
-                    <option value="club_stock">Club Stock</option>
-                    <option value="match_prepared">Match Prepared</option>
-                    <option value="match_worn">Match Worn</option>
-                    <option value="training">Training</option>
+                    <option value="match_prepared">Match Prepared (+€1.0 coefficient)</option>
+                    <option value="match_worn">Match Worn (+€2.0 coefficient)</option>
                     <option value="other">Other</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Match conditions affect the estimated value significantly
+                  </p>
                 </div>
 
                 {/* Physical State */}
