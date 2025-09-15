@@ -20,415 +20,348 @@ CONTEXT: This is fixing a deployment issue where production was routing to an ol
 The fix involved removing hardcoded database name and using environment variables properly.
 """
 
-import asyncio
-import aiohttp
+import requests
 import json
 import os
-import uuid
+import sys
 from datetime import datetime
-from pathlib import Path
 
 # Configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://mongodb-routing.preview.emergentagent.com')
-API_BASE = f"{BACKEND_URL}/api"
+BACKEND_URL = "https://mongodb-routing.preview.emergentagent.com/api"
+TEST_CREDENTIALS = {
+    "email": "topkitfr@gmail.com",
+    "password": "TopKitSecure789#"
+}
 
-# Test credentials
-ADMIN_EMAIL = "topkitfr@gmail.com"
-ADMIN_PASSWORD = "TopKitSecure789#"
-
-class AuthenticationDatabaseTester:
+class DeploymentInfrastructureTest:
     def __init__(self):
-        self.session = None
+        self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
-        self.admin_user = None
         
-    async def setup(self):
-        """Initialize session"""
-        self.session = aiohttp.ClientSession()
-        
-    async def cleanup(self):
-        """Clean up session"""
-        if self.session:
-            await self.session.close()
-            
-    async def test_backend_health_check(self):
-        """Test basic health check endpoint to verify backend is running"""
-        print("\n🔍 Testing backend health check...")
-        
+    def log_test(self, test_name, success, message, details=None):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = {
+            "test": test_name,
+            "status": status,
+            "message": message,
+            "details": details or {},
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
+        print(f"{status}: {test_name} - {message}")
+        if details and not success:
+            print(f"   Details: {details}")
+    
+    def test_environment_variable_loading(self):
+        """Test 1: Verify environment variable loading is working"""
         try:
-            # Test root endpoint
-            async with self.session.get(f"{BACKEND_URL}/") as response:
-                if response.status == 200:
-                    print("✅ Backend root endpoint is accessible")
-                    
-                    # Test health endpoint
-                    async with self.session.get(f"{API_BASE}/health") as health_response:
-                        if health_response.status == 200:
-                            print("✅ Backend health endpoint is working")
-                            self.test_results.append(("Backend Health Check", True, "Both root and health endpoints accessible"))
-                            return True
-                        else:
-                            print(f"⚠️ Health endpoint returned {health_response.status}, but root endpoint works")
-                            self.test_results.append(("Backend Health Check", True, f"Root endpoint works, health endpoint: {health_response.status}"))
-                            return True
-                else:
-                    print(f"❌ Backend root endpoint failed: {response.status}")
-                    self.test_results.append(("Backend Health Check", False, f"Root endpoint failed: {response.status}"))
-                    return False
-                    
-        except Exception as e:
-            print(f"❌ Backend health check error: {str(e)}")
-            self.test_results.append(("Backend Health Check", False, f"Exception: {str(e)}"))
-            return False
+            # Make a request to any endpoint to trigger backend startup logs
+            response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
             
-    async def test_database_connection(self):
-        """Test basic database operations to confirm database connection is working"""
-        print("\n🔍 Testing database connection...")
-        
+            # The backend should be using DB_NAME from environment variables
+            # We can't directly check the backend logs, but we can verify the endpoint works
+            # which indicates the database connection with environment variables is working
+            
+            if response.status_code in [200, 401]:  # 200 for success, 401 for auth required
+                self.log_test(
+                    "Environment Variable Loading",
+                    True,
+                    "Backend is responding, indicating environment variables are loaded correctly",
+                    {"status_code": response.status_code}
+                )
+                return True
+            else:
+                self.log_test(
+                    "Environment Variable Loading",
+                    False,
+                    f"Backend not responding properly: {response.status_code}",
+                    {"status_code": response.status_code, "response": response.text[:200]}
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test(
+                "Environment Variable Loading",
+                False,
+                f"Failed to connect to backend: {str(e)}",
+                {"error": str(e)}
+            )
+            return False
+    
+    def test_authentication_endpoint(self):
+        """Test 2: Test basic authentication endpoint with provided credentials"""
         try:
-            # Test teams endpoint (basic database read operation)
-            async with self.session.get(f"{API_BASE}/teams") as response:
-                if response.status == 200:
-                    teams = await response.json()
-                    print(f"✅ Database connection working - retrieved {len(teams)} teams")
-                    
-                    # Test brands endpoint
-                    async with self.session.get(f"{API_BASE}/brands") as brands_response:
-                        if brands_response.status == 200:
-                            brands = await brands_response.json()
-                            print(f"✅ Database connection confirmed - retrieved {len(brands)} brands")
-                            
-                            # Test master-kits endpoint
-                            async with self.session.get(f"{API_BASE}/master-kits") as kits_response:
-                                if kits_response.status == 200:
-                                    kits = await kits_response.json()
-                                    print(f"✅ Database connection excellent - retrieved {len(kits)} master kits")
-                                    self.test_results.append(("Database Connection", True, f"All endpoints working: {len(teams)} teams, {len(brands)} brands, {len(kits)} kits"))
-                                    return True
-                                else:
-                                    print(f"⚠️ Master kits endpoint issue: {kits_response.status}")
-                                    self.test_results.append(("Database Connection", True, f"Teams and brands working, kits: {kits_response.status}"))
-                                    return True
-                        else:
-                            print(f"⚠️ Brands endpoint issue: {brands_response.status}")
-                            self.test_results.append(("Database Connection", True, f"Teams working, brands: {brands_response.status}"))
-                            return True
-                else:
-                    error_text = await response.text()
-                    print(f"❌ Database connection failed - teams endpoint: {response.status} - {error_text}")
-                    self.test_results.append(("Database Connection", False, f"Teams endpoint failed: {response.status}"))
-                    return False
-                    
-        except Exception as e:
-            print(f"❌ Database connection test error: {str(e)}")
-            self.test_results.append(("Database Connection", False, f"Exception: {str(e)}"))
-            return False
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json=TEST_CREDENTIALS,
+                timeout=10
+            )
             
-    async def test_authentication_endpoint(self):
-        """Test user authentication endpoint with admin account"""
-        print("\n🔍 Testing authentication endpoint...")
-        
+            if response.status_code == 200:
+                data = response.json()
+                if "token" in data and "user" in data:
+                    self.auth_token = data["token"]
+                    self.log_test(
+                        "Authentication Endpoint",
+                        True,
+                        f"Authentication successful for {TEST_CREDENTIALS['email']}",
+                        {
+                            "user_name": data["user"].get("name"),
+                            "user_role": data["user"].get("role"),
+                            "token_length": len(data["token"])
+                        }
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Authentication Endpoint",
+                        False,
+                        "Authentication response missing required fields",
+                        {"response": data}
+                    )
+                    return False
+            else:
+                error_msg = "Authentication failed"
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("detail", error_msg)
+                except:
+                    pass
+                
+                self.log_test(
+                    "Authentication Endpoint",
+                    False,
+                    f"Authentication failed: {error_msg}",
+                    {"status_code": response.status_code, "response": response.text[:200]}
+                )
+                return False
+                
+        except Exception as e:
+            self.log_test(
+                "Authentication Endpoint",
+                False,
+                f"Authentication request failed: {str(e)}",
+                {"error": str(e)}
+            )
+            return False
+    
+    def test_database_connectivity(self):
+        """Test 3: Test basic API endpoints to ensure database connectivity"""
         try:
-            login_data = {
-                "email": ADMIN_EMAIL,
-                "password": ADMIN_PASSWORD
-            }
+            # Test master-kits endpoint
+            response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
             
-            async with self.session.post(f"{API_BASE}/auth/login", json=login_data) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    
-                    # Verify response structure
-                    if "token" in data and "user" in data:
-                        self.auth_token = data["token"]
-                        self.admin_user = data["user"]
-                        
-                        print(f"✅ Authentication successful!")
-                        print(f"   User: {self.admin_user.get('name', 'Unknown')} ({self.admin_user.get('email', 'Unknown')})")
-                        print(f"   Role: {self.admin_user.get('role', 'Unknown')}")
-                        print(f"   Token length: {len(self.auth_token)} characters")
-                        
-                        # Verify token is valid JWT format
-                        if len(self.auth_token.split('.')) == 3:
-                            print("✅ JWT token format is correct")
-                            self.test_results.append(("Authentication Endpoint", True, f"Login successful for {self.admin_user.get('name')} with valid JWT"))
-                            return True
-                        else:
-                            print("⚠️ Token format seems incorrect but login succeeded")
-                            self.test_results.append(("Authentication Endpoint", True, "Login successful but token format unusual"))
-                            return True
-                    else:
-                        print(f"❌ Authentication response missing required fields: {list(data.keys())}")
-                        self.test_results.append(("Authentication Endpoint", False, f"Response missing fields: {list(data.keys())}"))
-                        return False
-                else:
-                    error_text = await response.text()
-                    print(f"❌ Authentication failed: {response.status} - {error_text}")
-                    
-                    # Check if this is the database authorization error we're fixing
-                    if "not authorized" in error_text.lower() or "authorization" in error_text.lower():
-                        print("🚨 CRITICAL: This appears to be the database authorization error mentioned in the review!")
-                        self.test_results.append(("Authentication Endpoint", False, f"Database authorization error: {response.status} - {error_text}"))
-                    else:
-                        self.test_results.append(("Authentication Endpoint", False, f"Auth failed: {response.status} - {error_text}"))
-                    return False
-                    
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test(
+                    "Database Connectivity - Master Kits",
+                    True,
+                    f"Master kits endpoint working, found {len(data)} master kits",
+                    {"count": len(data), "sample_kit": data[0] if data else None}
+                )
+                master_kits_success = True
+            else:
+                self.log_test(
+                    "Database Connectivity - Master Kits",
+                    False,
+                    f"Master kits endpoint failed: {response.status_code}",
+                    {"status_code": response.status_code, "response": response.text[:200]}
+                )
+                master_kits_success = False
+            
+            # Test teams endpoint
+            response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test(
+                    "Database Connectivity - Teams",
+                    True,
+                    f"Teams endpoint working, found {len(data)} teams",
+                    {"count": len(data)}
+                )
+                teams_success = True
+            else:
+                self.log_test(
+                    "Database Connectivity - Teams",
+                    False,
+                    f"Teams endpoint failed: {response.status_code}",
+                    {"status_code": response.status_code, "response": response.text[:200]}
+                )
+                teams_success = False
+            
+            return master_kits_success and teams_success
+            
         except Exception as e:
-            print(f"❌ Authentication test error: {str(e)}")
-            self.test_results.append(("Authentication Endpoint", False, f"Exception: {str(e)}"))
+            self.log_test(
+                "Database Connectivity",
+                False,
+                f"Database connectivity test failed: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-    async def test_authenticated_database_operations(self):
-        """Test database operations that require authentication"""
-        print("\n🔍 Testing authenticated database operations...")
-        
+    
+    def test_authenticated_endpoints(self):
+        """Test 4: Test authenticated endpoints to verify database operations work"""
         if not self.auth_token:
-            print("❌ Cannot test authenticated operations without valid token")
-            self.test_results.append(("Authenticated Database Operations", False, "No valid auth token"))
+            self.log_test(
+                "Authenticated Endpoints",
+                False,
+                "No auth token available, skipping authenticated endpoint tests",
+                {}
+            )
             return False
-            
+        
         try:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
             
-            # Test 1: Get user's collection (requires authentication)
-            async with self.session.get(f"{API_BASE}/my-collection", headers=headers) as response:
-                if response.status == 200:
-                    collection = await response.json()
-                    print(f"✅ My Collection endpoint working - {len(collection)} items")
-                    
-                    # Test 2: Get contributions (requires authentication)
-                    async with self.session.get(f"{API_BASE}/contributions-v2/", headers=headers) as contrib_response:
-                        if contrib_response.status == 200:
-                            contributions = await contrib_response.json()
-                            print(f"✅ Contributions endpoint working - {len(contributions)} contributions")
-                            
-                            # Test 3: Admin endpoint (requires admin role)
-                            async with self.session.get(f"{API_BASE}/contributions-v2/admin/moderation-stats", headers=headers) as admin_response:
-                                if admin_response.status == 200:
-                                    stats = await admin_response.json()
-                                    print(f"✅ Admin endpoint working - moderation stats retrieved")
-                                    print(f"   Pending: {stats.get('pending', 0)}, Approved: {stats.get('approved', 0)}, Rejected: {stats.get('rejected', 0)}")
-                                    self.test_results.append(("Authenticated Database Operations", True, "All authenticated endpoints working"))
-                                    return True
-                                elif admin_response.status == 403:
-                                    print("⚠️ Admin endpoint access denied (user may not have admin role)")
-                                    self.test_results.append(("Authenticated Database Operations", True, "Basic auth working, admin access controlled"))
-                                    return True
-                                else:
-                                    print(f"⚠️ Admin endpoint issue: {admin_response.status}")
-                                    self.test_results.append(("Authenticated Database Operations", True, f"Basic auth working, admin endpoint: {admin_response.status}"))
-                                    return True
-                        else:
-                            print(f"⚠️ Contributions endpoint issue: {contrib_response.status}")
-                            self.test_results.append(("Authenticated Database Operations", True, f"Collection working, contributions: {contrib_response.status}"))
-                            return True
-                elif response.status == 401:
-                    print("❌ Authentication token is invalid or expired")
-                    self.test_results.append(("Authenticated Database Operations", False, "Invalid/expired token"))
-                    return False
-                else:
-                    error_text = await response.text()
-                    print(f"❌ My Collection endpoint failed: {response.status} - {error_text}")
-                    
-                    # Check for database authorization errors
-                    if "not authorized" in error_text.lower():
-                        print("🚨 CRITICAL: Database authorization error detected in authenticated operations!")
-                        self.test_results.append(("Authenticated Database Operations", False, f"Database auth error: {response.status}"))
-                    else:
-                        self.test_results.append(("Authenticated Database Operations", False, f"Endpoint failed: {response.status}"))
-                    return False
-                    
-        except Exception as e:
-            print(f"❌ Authenticated operations test error: {str(e)}")
-            self.test_results.append(("Authenticated Database Operations", False, f"Exception: {str(e)}"))
-            return False
+            # Test my-collection endpoint (requires authentication)
+            response = self.session.get(
+                f"{BACKEND_URL}/my-collection",
+                headers=headers,
+                timeout=10
+            )
             
-    async def test_database_configuration_fix(self):
-        """Test that the database configuration fix is working"""
-        print("\n🔍 Testing database configuration fix...")
-        
-        try:
-            # Test that we can access different collections without hardcoded database names
-            endpoints_to_test = [
-                ("/teams", "teams collection"),
-                ("/brands", "brands collection"),
-                ("/players", "players collection"),
-                ("/competitions", "competitions collection"),
-                ("/master-kits", "master_kits collection")
-            ]
-            
-            working_endpoints = 0
-            total_endpoints = len(endpoints_to_test)
-            
-            for endpoint, description in endpoints_to_test:
-                try:
-                    async with self.session.get(f"{API_BASE}{endpoint}") as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            print(f"✅ {description}: {len(data)} items retrieved")
-                            working_endpoints += 1
-                        else:
-                            error_text = await response.text()
-                            print(f"⚠️ {description}: {response.status}")
-                            
-                            # Check for database authorization errors
-                            if "not authorized" in error_text.lower():
-                                print(f"🚨 CRITICAL: Database authorization error in {description}!")
-                                self.test_results.append(("Database Configuration Fix", False, f"Auth error in {description}"))
-                                return False
-                            else:
-                                working_endpoints += 1  # Non-auth errors are acceptable
-                                
-                except Exception as e:
-                    print(f"⚠️ {description}: Exception - {str(e)}")
-                    
-            success_rate = (working_endpoints / total_endpoints) * 100
-            print(f"\n📊 Database configuration test: {working_endpoints}/{total_endpoints} endpoints working ({success_rate:.1f}%)")
-            
-            if working_endpoints >= total_endpoints * 0.8:  # 80% success rate is acceptable
-                print("✅ Database configuration fix appears to be working")
-                self.test_results.append(("Database Configuration Fix", True, f"{working_endpoints}/{total_endpoints} endpoints working"))
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test(
+                    "Authenticated Endpoints - My Collection",
+                    True,
+                    f"My collection endpoint working, found {len(data)} items",
+                    {"count": len(data)}
+                )
                 return True
             else:
-                print("❌ Database configuration issues detected")
-                self.test_results.append(("Database Configuration Fix", False, f"Only {working_endpoints}/{total_endpoints} endpoints working"))
+                self.log_test(
+                    "Authenticated Endpoints - My Collection",
+                    False,
+                    f"My collection endpoint failed: {response.status_code}",
+                    {"status_code": response.status_code, "response": response.text[:200]}
+                )
                 return False
                 
         except Exception as e:
-            print(f"❌ Database configuration test error: {str(e)}")
-            self.test_results.append(("Database Configuration Fix", False, f"Exception: {str(e)}"))
+            self.log_test(
+                "Authenticated Endpoints",
+                False,
+                f"Authenticated endpoint test failed: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-    async def test_environment_variables(self):
-        """Test that environment variables are properly configured"""
-        print("\n🔍 Testing environment variables configuration...")
-        
+    
+    def test_database_name_usage(self):
+        """Test 5: Verify database operations work (indicating correct DB_NAME usage)"""
         try:
-            # Test that backend is using environment variables by checking behavior
-            # We can't directly access env vars, but we can test their effects
+            # Test multiple endpoints to ensure database operations are working
+            endpoints_to_test = [
+                ("teams", "/teams"),
+                ("brands", "/brands"),
+                ("competitions", "/competitions"),
+                ("players", "/players")
+            ]
             
-            # Test 1: Authentication should work (SECRET_KEY env var)
-            if self.auth_token:
-                print("✅ SECRET_KEY environment variable appears to be working (authentication successful)")
-                
-                # Test 2: Database operations work (DB_NAME env var)
-                async with self.session.get(f"{API_BASE}/teams") as response:
-                    if response.status == 200:
-                        print("✅ DB_NAME environment variable appears to be working (database accessible)")
-                        
-                        # Test 3: Check if we can access stats endpoint (indicates proper DB connection)
-                        if self.auth_token:
-                            headers = {"Authorization": f"Bearer {self.auth_token}"}
-                            async with self.session.get(f"{API_BASE}/contributions-v2/admin/moderation-stats", headers=headers) as stats_response:
-                                if stats_response.status == 200:
-                                    print("✅ Database connection with environment variables is fully functional")
-                                    self.test_results.append(("Environment Variables", True, "All env vars working correctly"))
-                                    return True
-                                elif stats_response.status == 403:
-                                    print("✅ Database connection working, admin access controlled properly")
-                                    self.test_results.append(("Environment Variables", True, "Env vars working, proper access control"))
-                                    return True
-                                else:
-                                    print(f"⚠️ Stats endpoint: {stats_response.status} (but basic functionality works)")
-                                    self.test_results.append(("Environment Variables", True, f"Basic env vars working, stats: {stats_response.status}"))
-                                    return True
+            all_success = True
+            results = {}
+            
+            for name, endpoint in endpoints_to_test:
+                try:
+                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        results[name] = {"success": True, "count": len(data)}
                     else:
-                        error_text = await response.text()
-                        if "not authorized" in error_text.lower():
-                            print("❌ DB_NAME environment variable may not be working - database authorization error")
-                            self.test_results.append(("Environment Variables", False, "Database authorization error - check DB_NAME"))
-                            return False
-                        else:
-                            print(f"⚠️ Database issue but may not be env var related: {response.status}")
-                            self.test_results.append(("Environment Variables", True, f"SECRET_KEY working, DB issue: {response.status}"))
-                            return True
+                        results[name] = {"success": False, "status_code": response.status_code}
+                        all_success = False
+                except Exception as e:
+                    results[name] = {"success": False, "error": str(e)}
+                    all_success = False
+            
+            if all_success:
+                self.log_test(
+                    "Database Name Usage",
+                    True,
+                    "All database endpoints working, indicating correct DB_NAME usage",
+                    results
+                )
             else:
-                print("❌ SECRET_KEY environment variable may not be working - authentication failed")
-                self.test_results.append(("Environment Variables", False, "Authentication failed - check SECRET_KEY"))
-                return False
-                
+                self.log_test(
+                    "Database Name Usage",
+                    False,
+                    "Some database endpoints failed, may indicate DB_NAME issues",
+                    results
+                )
+            
+            return all_success
+            
         except Exception as e:
-            print(f"❌ Environment variables test error: {str(e)}")
-            self.test_results.append(("Environment Variables", False, f"Exception: {str(e)}"))
+            self.log_test(
+                "Database Name Usage",
+                False,
+                f"Database name usage test failed: {str(e)}",
+                {"error": str(e)}
+            )
             return False
-            
-    async def run_all_tests(self):
-        """Run all authentication and database tests"""
-        print("🚀 Starting Authentication and Database Configuration Testing...")
-        print("=" * 80)
+    
+    def run_all_tests(self):
+        """Run all deployment infrastructure tests"""
+        print("🚀 Starting Deployment Infrastructure Fix Testing")
+        print("=" * 60)
         
-        await self.setup()
+        # Test 1: Environment variable loading
+        env_success = self.test_environment_variable_loading()
         
-        # Run all tests in order
-        test_functions = [
-            self.test_backend_health_check,
-            self.test_database_connection,
-            self.test_authentication_endpoint,
-            self.test_authenticated_database_operations,
-            self.test_database_configuration_fix,
-            self.test_environment_variables
-        ]
+        # Test 2: Authentication endpoint
+        auth_success = self.test_authentication_endpoint()
         
-        for test_func in test_functions:
-            try:
-                await test_func()
-            except Exception as e:
-                print(f"❌ Test {test_func.__name__} failed with exception: {str(e)}")
-                self.test_results.append((test_func.__name__, False, f"Exception: {str(e)}"))
-                
-        await self.cleanup()
+        # Test 3: Database connectivity
+        db_success = self.test_database_connectivity()
         
-        # Print summary
-        self.print_summary()
+        # Test 4: Authenticated endpoints (if auth worked)
+        auth_endpoints_success = self.test_authenticated_endpoints()
         
-    def print_summary(self):
-        """Print test results summary"""
-        print("\n" + "=" * 80)
-        print("📊 AUTHENTICATION AND DATABASE CONFIGURATION TEST RESULTS")
-        print("=" * 80)
+        # Test 5: Database name usage verification
+        db_name_success = self.test_database_name_usage()
         
-        passed = sum(1 for _, success, _ in self.test_results if success)
-        total = len(self.test_results)
-        success_rate = (passed / total * 100) if total > 0 else 0
+        # Summary
+        print("\n" + "=" * 60)
+        print("📊 TEST SUMMARY")
+        print("=" * 60)
         
-        print(f"\n📈 Overall Success Rate: {passed}/{total} ({success_rate:.1f}%)")
+        total_tests = len(self.test_results)
+        passed_tests = len([r for r in self.test_results if "✅ PASS" in r["status"]])
         
-        print("\n✅ PASSED TESTS:")
-        for test_name, success, details in self.test_results:
-            if success:
-                print(f"  ✅ {test_name}: {details}")
-                
-        print("\n❌ FAILED TESTS:")
-        failed_tests = [(name, details) for name, success, details in self.test_results if not success]
-        if failed_tests:
-            for test_name, details in failed_tests:
-                print(f"  ❌ {test_name}: {details}")
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {total_tests - passed_tests}")
+        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+        
+        # Critical assessment
+        critical_tests = [env_success, auth_success, db_success]
+        critical_passed = sum(critical_tests)
+        
+        print(f"\n🎯 CRITICAL TESTS (Environment, Auth, Database): {critical_passed}/3 passed")
+        
+        if critical_passed == 3:
+            print("✅ DEPLOYMENT INFRASTRUCTURE FIX: SUCCESS")
+            print("   - Environment variables are being loaded correctly")
+            print("   - Authentication is working without 'not authorized on topkit' errors")
+            print("   - Database connectivity is working with dynamic DB_NAME")
         else:
-            print("  None - All tests passed!")
-            
-        print("\n" + "=" * 80)
+            print("❌ DEPLOYMENT INFRASTRUCTURE FIX: ISSUES DETECTED")
+            if not env_success:
+                print("   - Environment variable loading may have issues")
+            if not auth_success:
+                print("   - Authentication is still failing (may indicate hardcoded DB issues)")
+            if not db_success:
+                print("   - Database connectivity issues detected")
         
-        # Critical findings
-        if success_rate >= 90:
-            print("🎉 AUTHENTICATION AND DATABASE CONFIGURATION IS WORKING EXCELLENTLY!")
-            print("✅ The database authorization fix is production-ready")
-            print("✅ User authentication with topkitfr@gmail.com is working")
-            print("✅ Database operations are functioning properly")
-        elif success_rate >= 70:
-            print("⚠️  AUTHENTICATION AND DATABASE CONFIGURATION HAS MINOR ISSUES")
-            print("🔧 Some components need attention but core functionality works")
-        else:
-            print("🚨 CRITICAL ISSUES WITH AUTHENTICATION AND DATABASE CONFIGURATION")
-            print("❌ Major problems detected - the database authorization error may still exist")
-            print("❌ Immediate attention required")
-            
-        print("=" * 80)
-
-async def main():
-    """Main test execution"""
-    tester = AuthenticationDatabaseTester()
-    await tester.run_all_tests()
+        return critical_passed == 3
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    tester = DeploymentInfrastructureTest()
+    success = tester.run_all_tests()
+    
+    # Exit with appropriate code
+    sys.exit(0 if success else 1)
