@@ -52,10 +52,8 @@ class Gender(str, Enum):
     CHILD = "child"
 
 class KitCondition(str, Enum):
-    CLUB_STOCK = "club_stock"
-    MATCH_PREPARED = "match_prepared"
-    MATCH_WORN = "match_worn"
-    TRAINING = "training"
+    MATCH_PREPARED = "match_prepared"  # Match Issue (prepared for a match, unused): +1.0
+    MATCH_WORN = "match_worn"  # Match Worn (used in a match): +2.0
     OTHER = "other"
 
 class PhysicalState(str, Enum):
