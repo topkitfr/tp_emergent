@@ -28,13 +28,13 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
           <div className="mb-6">
-            <div className="bg-white px-8 py-4 mb-4 inline-block">
+            <div className="bg-white px-6 py-3 mb-4 inline-block">
               <h1 className="text-4xl md:text-6xl font-bold leading-tight akira-font m-0" style={{color: 'rgb(17, 24, 39)'}}>
                 VALUE YOUR COLLECTION
               </h1>
             </div>
             <br />
-            <div className="bg-white px-8 py-4 inline-block">
+            <div className="bg-white px-6 py-3 inline-block">
               <h2 className="text-4xl md:text-6xl font-bold leading-tight akira-font m-0" style={{color: 'rgb(75, 85, 99)'}}>
                 OF FOOTBALL KITS
               </h2>
@@ -42,10 +42,11 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
           </div>
           
           <div className="mb-8">
-            <div className="bg-white px-8 py-4 inline-block max-w-4xl">
+            <div className="bg-white px-6 py-3 inline-block">
               <p className="text-lg md:text-xl m-0" style={{color: 'rgb(75, 85, 99)'}}>
-                Discover the value of your kits with TopKit, 
-                the world's most complete collaborative database on football
+                Discover the value of your kits with TopKit, <br />
+                the world's most complete collaborative <br />
+                database on football
               </p>
             </div>
           </div>
