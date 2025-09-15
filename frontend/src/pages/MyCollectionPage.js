@@ -701,12 +701,15 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select physical state</option>
-                    <option value="new_with_tags">New with tags</option>
-                    <option value="very_good_condition">Very good condition</option>
-                    <option value="used">Used</option>
-                    <option value="damaged">Damaged</option>
-                    <option value="needs_restoration">Needs restoration</option>
+                    <option value="new_with_tags">New with tags (+0.3 coefficient)</option>
+                    <option value="very_good_condition">Very good condition (+0.15 coefficient)</option>
+                    <option value="used">Used (no impact)</option>
+                    <option value="damaged">Damaged (-0.25 coefficient)</option>
+                    <option value="needs_restoration">Needs restoration (-0.4 coefficient)</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Physical condition can positively or negatively impact value
+                  </p>
                 </div>
 
                 {/* Size */}
