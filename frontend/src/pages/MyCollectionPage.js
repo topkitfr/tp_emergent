@@ -762,19 +762,28 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
-                <button
-                  onClick={() => setEditingItem(null)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
-                >
-                  ✅ Update Kit Details
-                </button>
+              <div className="flex justify-between items-center space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <div className="text-xs text-gray-500">
+                  💡 Click "Save & Continue" to update the price estimation
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setEditFormData({});
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleSaveEdit}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <span>💾</span>
+                    <span>Save & Continue Editing</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
