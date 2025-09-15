@@ -78,8 +78,8 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   <span className="text-xl" style={{display: team.logo_url ? 'none' : 'flex'}}>⚽</span>
                 </div>
                 <div className="font-medium text-sm text-gray-900 text-center w-full overflow-hidden">
-                  <span className="block truncate" title={team.name}>
-                    {team.name.length > 12 ? `${team.name.substring(0, 9)}...` : team.name}
+                  <span className="block truncate" title={team.name || 'Unknown Team'}>
+                    {team.name && team.name.length > 12 ? `${team.name.substring(0, 9)}...` : (team.name || 'Unknown Team')}
                   </span>
                 </div>
               </button>
