@@ -423,20 +423,65 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     </div>
 
                     {/* Pricing Information */}
-                    {item.purchase_price && (
-                      <div className="border-t pt-3 mt-3">
+                    <div className="border-t pt-3 mt-3">
+                      {/* Estimated Price (always shown for owned items) */}
+                      {item.collection_type === 'owned' && priceEstimations[item.id] && (
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Estimated Value:</span>
+                          <span className="font-bold text-purple-600">€{priceEstimations[item.id].estimated_price}</span>
+                        </div>
+                      )}
+                      
+                      {/* Purchase Price */}
+                      {item.purchase_price && (
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Purchase Price:</span>
                           <span className="font-medium text-green-600">€{item.purchase_price}</span>
                         </div>
-                        {item.purchase_date && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Purchase Date:</span>
-                            <span className="font-medium">{new Date(item.purchase_date).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+                      
+                      {/* Value Comparison */}
+                      {item.collection_type === 'owned' && item.purchase_price && priceEstimations[item.id] && (
+                        <div className="flex justify-between text-sm mt-1">
+                          <span className="text-gray-600">Value Change:</span>
+                          {(() => {
+                            const purchasePrice = item.purchase_price;
+                            const estimatedPrice = priceEstimations[item.id].estimated_price;
+                            const difference = estimatedPrice - purchasePrice;
+                            const percentage = ((difference / purchasePrice) * 100).toFixed(1);
+                            
+                            return (
+                              <span className={`font-medium ${difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {difference >= 0 ? '+' : ''}€{difference.toFixed(2)} ({percentage}%)
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      )}
+                      
+                      {item.purchase_date && (
+                        <div className="flex justify-between text-sm mt-1">
+                          <span className="text-gray-600">Purchase Date:</span>
+                          <span className="font-medium">{new Date(item.purchase_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      
+                      {/* Price Estimation Details (only for owned items) */}
+                      {item.collection_type === 'owned' && priceEstimations[item.id]?.calculation_details && (
+                        <div className="mt-2 pt-2 border-t border-gray-100">
+                          <details className="text-xs">
+                            <summary className="cursor-pointer text-gray-500 hover:text-gray-700">Price Breakdown</summary>
+                            <div className="mt-2 space-y-1 text-gray-600">
+                              <div>Base: €{priceEstimations[item.id].calculation_details.base_price} ({masterKit.model})</div>
+                              {priceEstimations[item.id].calculation_details.coefficients_applied?.map((coeff, idx) => (
+                                <div key={idx}>+ {coeff.factor}: {coeff.value}</div>
+                              ))}
+                              <div className="font-medium pt-1 border-t">{priceEstimations[item.id].calculation_details.formula}</div>
+                            </div>
+                          </details>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
