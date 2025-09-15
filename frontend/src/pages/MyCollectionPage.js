@@ -44,6 +44,11 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         const data = await response.json();
         console.log('📊 My Collection Data:', Array.isArray(data) ? data.length : 'not array', data);
         setCollections(Array.isArray(data) ? data : []);
+        
+        // Load price estimations for all collection items
+        if (Array.isArray(data) && data.length > 0) {
+          await loadPriceEstimations(data, token);
+        }
       } else {
         console.error('❌ Failed to load My Collection');
         setCollections([]);
@@ -53,6 +58,34 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       setCollections([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPriceEstimations = async (collectionItems, token) => {
+    try {
+      const estimations = {};
+      
+      // Load price estimations for each collection item
+      for (const item of collectionItems) {
+        try {
+          const response = await fetch(`${API}/api/my-collection/${item.id}/price-estimation`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const priceData = await response.json();
+            estimations[item.id] = priceData;
+          }
+        } catch (error) {
+          console.error(`Error loading price estimation for item ${item.id}:`, error);
+        }
+      }
+      
+      setPriceEstimations(estimations);
+    } catch (error) {
+      console.error('Error loading price estimations:', error);
     }
   };
 
