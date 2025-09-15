@@ -230,9 +230,9 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                     RARE
                   </div>
                   <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
-                    {jersey.main_image_url ? (
+                    {jersey.front_photo_url ? (
                       <img 
-                        src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
+                        src={jersey.front_photo_url.startsWith('data:') || jersey.front_photo_url.startsWith('http') ? jersey.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/api/${jersey.front_photo_url}`}
                         alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
                         className="w-full h-full object-contain"
                         onError={(e) => {
