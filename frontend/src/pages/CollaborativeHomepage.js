@@ -27,14 +27,21 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         }}
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight akira-font">
-            Value your collection <br />
-            <span className="text-gray-600">of football kits</span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight akira-font">
+            <span className="inline-block bg-white px-4 py-2 mb-2" style={{color: 'rgb(17, 24, 39)'}}>
+              Value your collection
+            </span>
+            <br />
+            <span className="inline-block bg-white px-4 py-2" style={{color: 'rgb(75, 85, 99)'}}>
+              of football kits
+            </span>
           </h1>
           
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Discover the value of your kits with TopKit, 
-            the world's most complete collaborative database on football
+          <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto">
+            <span className="inline-block bg-white px-4 py-2" style={{color: 'rgb(75, 85, 99)'}}>
+              Discover the value of your kits with TopKit, 
+              the world's most complete collaborative database on football
+            </span>
           </p>
           
           {/* CTA Buttons - TopKit Focus - Removed Documenter button */}
