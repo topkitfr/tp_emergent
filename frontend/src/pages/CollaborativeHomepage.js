@@ -289,7 +289,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                 </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
-                    {jersey.team_info?.name || 'Unknown team'} {jersey.season}
+                    {jersey.club_name || jersey.club || 'Unknown team'} {jersey.season}
                   </h3>
                   <p className="text-sm text-green-600">
                     <span className="text-lg font-bold">Documented ✓</span>
