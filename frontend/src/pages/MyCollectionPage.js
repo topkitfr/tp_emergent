@@ -8,6 +8,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [priceEstimations, setPriceEstimations] = useState({}); // Store price estimations
 
   useEffect(() => {
     if (user) {
