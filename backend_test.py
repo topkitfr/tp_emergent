@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """
-Backend Testing for Authentication and Database Configuration Issues
+Backend Test for Deployment Infrastructure Fix
+Testing that the hardcoded database name 'topkit' issue has been resolved
+and environment variables are being used correctly.
 
-REVIEW REQUEST FOCUS:
-Test the backend authentication and user login functionality after fixing the database configuration issues. 
-The backend was showing "not authorized on topkit_db" errors because the database name was hardcoded. 
+SPECIFIC TESTING REQUIREMENTS:
+1. Test basic authentication endpoint (POST /api/auth/login) with credentials topkitfr@gmail.com/TopKitSecure789#
+2. Verify that the backend is now reading DB_NAME from environment variables instead of hardcoded value
+3. Test basic API endpoints like GET /api/master-kits to ensure database connectivity
+4. Check that environment variable loading is working correctly (dotenv is loaded)
+5. Verify the database connection is working with the dynamic DB_NAME
 
-FIXES IMPLEMENTED:
-1. Changed `db = client.topkit_db` to `db = client[os.environ.get('DB_NAME', 'topkit_db')]` in server.py
-2. Added SECRET_KEY to environment variables
-3. Fixed test_server.py database reference as well
+EXPECTED RESULTS:
+- Authentication should work without "not authorized on topkit_db" errors
+- Database operations should work correctly
+- Backend should be reading DB_NAME from environment variables
 
-TEST REQUIREMENTS:
-1. Basic health check endpoint to verify backend is running
-2. User authentication endpoint `/api/auth/login` with the admin account topkitfr@gmail.com
-3. Any basic database operations to confirm the database connection is working properly
-
-The user was getting database authorization errors when trying to log in on the deployed website, 
-so we need to verify this is now resolved.
+CONTEXT: This is fixing a deployment issue where production was routing to an old backend instance. 
+The fix involved removing hardcoded database name and using environment variables properly.
 """
 
 import asyncio
