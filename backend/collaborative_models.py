@@ -269,22 +269,22 @@ class MyCollectionResponse(BaseModel):
     master_kit: MasterKitResponse
     
     # Personal details
-    name_printing: Optional[str]
-    number_printing: Optional[str]
-    patches: Optional[str]
-    is_signed: bool
-    signed_by: Optional[str]
-    certificate_url: Optional[str]
-    condition: Optional[KitCondition]
-    condition_other: Optional[str]
-    physical_state: Optional[PhysicalState]
-    size: Optional[str]
-    purchase_price: Optional[float]
-    purchase_date: Optional[datetime]
-    proof_of_purchase_url: Optional[str]
-    personal_notes: Optional[str]
+    name_printing: Optional[str] = None
+    number_printing: Optional[str] = None
+    patches: Optional[str] = None
+    is_signed: bool = False
+    signed_by: Optional[str] = None
+    certificate_url: Optional[str] = None
+    condition: Optional[KitCondition] = None
+    condition_other: Optional[str] = None
+    physical_state: Optional[PhysicalState] = None
+    size: Optional[str] = None
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[datetime] = None
+    proof_of_purchase_url: Optional[str] = None
+    personal_notes: Optional[str] = None
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
 
 # ================================
 # EXISTING ENTITIES (UNCHANGED)
