@@ -653,6 +653,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     />
                     <label htmlFor="edit_is_signed" className="ml-2 block text-sm font-medium text-gray-900">
                       This kit is signed
+                      <span className="text-blue-600 ml-1" title="Adds +2.0 coefficient to estimated value">💰💰</span>
                     </label>
                   </div>
 
@@ -666,6 +667,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                         placeholder="Player name or person who signed"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Signatures by famous players greatly increase value (+2.0 coefficient)</p>
                     </div>
                   )}
                 </div>
