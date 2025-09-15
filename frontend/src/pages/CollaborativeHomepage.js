@@ -27,7 +27,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         }}
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight akira-font">
             Value your collection <br />
             <span className="text-gray-600">of football kits</span>
           </h1>
