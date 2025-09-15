@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Configuration
-BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 USER_EMAIL = "topkitfr@gmail.com"
 USER_PASSWORD = "TopKitSecure789#"
 

@@ -11,7 +11,7 @@ Testing authentication system and notification backend APIs as requested:
 - User profile endpoint accessibility
 - Notification creation and retrieval endpoints
 
-Backend URL: https://kit-fixes.preview.emergentagent.com/api
+Backend URL: https://mongodb-routing.preview.emergentagent.com/api
 """
 
 import requests
@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "steinmetzlivio@gmail.com"
 TEST_USER_PASSWORD = "TopKit123!"
 

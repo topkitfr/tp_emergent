@@ -1,70 +1,53 @@
 <analysis>
-The AI engineer began by addressing a critical data integrity bug in  and implementing a cleanup script. Following this, significant UX improvements were rolled out for database detail pages, including enhanced navigation, image display, and integration of related Master Kits. The primary focus then shifted to refining the file improvement system. Initial tasks involved fixing duplicate form labels and adding image previews. A persistent Not Found error was resolved by correcting the API endpoint and data structure in . The moderation approval workflow was further enhanced in  to correctly update existing entities, preventing duplicates. A major bug related to image transfer during moderation approval was rectified by ensuring images are properly copied and linked. Subsequent work involved fixing a bug where improving an entity's logo unintentionally changed its name, implementing selective updates, and adding an improve this file button to Master Kit detail pages. The engineer also tackled issues with image uploads in the contribution form and cascading updates for related entities. Finally, a critical bug preventing  images from being displayed after approval was identified and resolved by correctly mapping image fields in the backend's transfer function and retroactively fixing existing contributions. All identified issues were thoroughly tested and verified.
+The AI engineer's work focused primarily on debugging and resolving critical deployment-related issues. Initially, the task involved summarising prior work, but the user immediately reported a not authorized on topkit_db MongoDB error during login. This escalated into a complex debugging process involving multiple environment variable misconfigurations, incorrect database name assumptions, and ultimately, the identification of a fundamental deployment infrastructure issue. The engineer systematically addressed hardcoded values,  loading problems, and frontend environment mismatches, leading to a final diagnosis that the external production backend was routing to an outdated instance, preventing the applied fixes from taking effect globally.
 </analysis>
 
 <product_requirements>
-The TopKit application is designed as a collaborative platform for football jersey collectors, focused on Master Kits and personal collections. It features a consistent UI/UX, a Database (formerly Catalogue), and streamlined contribution forms. Key functionalities include a Moderation Dashboard, authenticated Add to Collection and Want features, and a Master Kit creation process requiring moderation.
-
-Throughout the development trajectory, the following problems were explicitly addressed and implemented:
-1.  **Bilateral Logic Bug**: Fixed to prevent simultaneous own and want collection states for kits.
-2.  **Database Detail Page UX**: Enhanced close button navigation to , improved image display, and added a Maillots associés section with filtered links to  for related Master Kits.
-3.  **File Improvement System UX**: Eliminated duplicate form labels, added image previews, improved layout on contribution detail pages.
-4.  **Bug Fixes & Enhancements**:
-    *   Resolved Error: Not Found on contribution form submission by correcting API endpoints and data structures in .
-    *   Ensured approved contributions update existing entities, rather than creating duplicates, by passing  and refining backend logic in .
-    *   Fixed image transfer upon moderation approval, ensuring images are copied from contribution folders to entity folders and linked correctly.
-    *   Implemented **selective field updates**: When improving an existing entity (e.g., changing only a logo), only the modified fields are updated, preventing unintended changes to other fields.
-    *   Added an **Améliorer cette fiche (improve this file) button** to Master Kit detail pages ().
-    *   Corrected the **Master Kit Profile dropdowns** (Team, Brand, Main Sponsor) by ensuring correct field definitions () and passing necessary data (, , ) to the .
-    *   Improved **Homepage Teams Display**: Modified to show the latest teams first and adjusted button styling for square shape and text truncation.
-    *   Fixed **Front Photo upload functionality** for Master Kits, ensuring proper field mapping () and correct image transfer during moderation approval.
+The TopKit application is a collaborative platform for football jersey collectors, focusing on Master Kits and personal collections, with a consistent UI/UX, a Database (formerly Catalogue), and streamlined contribution forms. It includes a Moderation Dashboard, authenticated Add to Collection and Want features, and a moderation-required Master Kit creation process. Key problems addressed include: a bilateral logic bug, enhanced database detail page UX, improved file improvement system UX (duplicate labels, image previews), fixing Not Found errors on contribution forms, ensuring approved contributions update existing entities without duplication, correct image transfer during moderation, selective field updates, adding an Améliorer cette fiche button to Master Kit detail pages, correcting Master Kit Profile dropdowns, improving homepage team display, and fixing Master Kit Front Photo upload/display.
 </product_requirements>
 
 <key_technical_concepts>
--   **React/FastAPI/MongoDB Stack**: Core architecture.
--   **Pydantic Models**: Backend data validation.
--   **React Router**: Frontend navigation.
--   **RESTful APIs**: Frontend-backend communication, including  and image uploads.
--   **File System Operations**: Image storage and transfer.
--   **UUIDs**: Used for entity IDs instead of MongoDB ObjectIDs for serialization.
--   **Frontend State Management**: ,  for form data and modals.
+- **React/FastAPI/MongoDB Stack**: Core application architecture.
+- **Pydantic Models**: Backend data validation.
+- **React Router**: Frontend navigation.
+- **RESTful APIs**: Frontend-backend communication, including  and image uploads.
+- **File System Operations**: Image storage and transfer.
+- **UUIDs**: Used for entity IDs instead of MongoDB ObjectIDs.
+- **Frontend State Management**: ,  for forms and modals.
+- **Python-dotenv**: For loading environment variables.
 </key_technical_concepts>
 
 <code_architecture>
-The application utilizes a React frontend, a FastAPI backend, and a MongoDB database, with all backend APIs prefixed with .
+The application uses a React frontend, a FastAPI backend, and a MongoDB database, with all backend APIs prefixed with .
 
 
 -   ****:
-    *   Importance: Main FastAPI server, handling API routes and business logic.
-    *   Changes: Implemented selective updates in  for various entity types (team, brand, player, competition, master_kit). Added  for related entities. Modified  endpoint to sort by  descending. Updated  to correctly recognize and transfer images for the  field.
+    *   Importance: Main FastAPI server handling API routes and business logic.
+    *   Changes: Modified to dynamically retrieve  and  from environment variables, then  was added to ensure  file loading. Debug logging for  was added and removed. Finally,  was hardcoded to bypass a deployment routing issue.
 -   ****:
-    *   Importance: Handles the file improvement and general contribution forms.
-    *   Changes: Modified to send  for selective updates. Corrected image upload input styling. Mapped  field to  for  entity type and adjusted the  for image uploads. Updated the main photo label for  contributions.
+    *   Importance: Stores backend environment configurations.
+    *   Changes:  was initially expected, then set to topkit, then test (incorrectly), then reverted to topkit.  was added.
 -   ****:
-    *   Importance: Centralizes definitions for dynamic form fields.
-    *   Changes: Added a  to map field definitions to  fields, enabling dropdowns for master kit contributions.
+    *   Importance: Contains backend testing endpoints and configurations.
+    *   Changes: Modified to use  from environment variables, similar to .
 -   ****:
-    *   Importance: Displays detailed information about a specific Master Kit.
-    *   Changes: Incorporated an Améliorer cette fiche (improve this file) button. Added state for controlling the  and fetched/passed , , and  data as props to the modal.
--   ****:
-    *   Importance: The main entry point for users, displaying recent content.
-    *   Changes: Increased the number of  displayed (from 6 to 10) and reversed their order to show the latest teams first. Applied styling updates to team buttons, ensuring they are square and truncate text with an ellipsis.
+    *   Importance: Stores frontend environment configurations.
+    *   Changes:  was updated from a preview environment URL () to the production URL ().
 </code_architecture>
 
 <pending_tasks>
-- There are no pending tasks explicitly outlined in the trajectory as the last reported bug related to image display on the kit area page has been resolved and verified with 100% success rate.
+- The primary pending task is to resolve the **deployment infrastructure issue** where the external production backend () is routing to an outdated or misconfigured backend instance, causing persistent database authorization errors despite local code fixes.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was focused on resolving a critical bug where approved Master Kit image corrections () were not being displayed on the frontend. The investigation revealed that while image files were successfully uploaded to the  folder, the  function in  was failing to correctly transfer these images to the  folder and update the  field in the database.
-
-The root cause was identified as a missing mapping within , which did not recognize the  field name during the image transfer process. The  file was modified to include  in the field mapping condition, ensuring the function correctly processes images with this field name.
-
-To verify the fix and address historical data inconsistencies, a series of debug and fix scripts (, , , ) were created and executed. These scripts confirmed that the manual image transfer logic was sound and successfully applied the fix to all existing contributions that had images but failed to transfer them correctly.
-
-Finally, comprehensive backend and frontend testing was conducted. This confirmed that the specific user-reported contribution () now correctly displayed its image, the complete end-to-end workflow (contribution, upload, approval, transfer, serving) was fully functional, the  function recognized  correctly, and all 12 existing master kits with front photos were accessible. The front photo upload and display workflow is now confirmed to be working perfectly with a 100% success rate.
+Immediately before this summary, the AI engineer was deep in resolving persistent not authorized on topkit_db errors and 500 server errors reported by the user on the deployed website. The work involved:
+1.  **Backend Configuration**: Ensuring  and  were dynamically loaded from environment variables in  and , and updating .
+2.  **Environment Loading**: Discovering and fixing a critical issue where  was not being loaded in , causing environment variables to be ignored.  was added.
+3.  **Database Name Correction**: Debugging revealed the actual MongoDB database containing data was topkit, not test as initially advised by a sub-agent.  in  was corrected to topkit.
+4.  **Frontend URL Correction**: Rectifying  to point  to the correct production domain () instead of a preview environment.
+5.  **Infrastructure Issue Identification**: Despite all code-level fixes and local verification, comprehensive testing revealed that the external production domain () was still routing to an old backend instance. As a temporary measure to force the correct database,  was hardcoded in . The current state is that the local environment functions perfectly, but the external production site is impacted by this unaddressed routing/infrastructure discrepancy.
 </current_work>
 
 <optional_next_step>
-No explicit next step was requested by the user at the end of the trajectory.
+Escalate the identified deployment infrastructure issue to ensure the external backend instance is correctly updated and routed.
 </optional_next_step>

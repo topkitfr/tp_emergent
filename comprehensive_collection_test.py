@@ -9,7 +9,7 @@ import json
 import time
 from datetime import datetime
 
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 
 class ComprehensiveCollectionTester:
     def __init__(self):

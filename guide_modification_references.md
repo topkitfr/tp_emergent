@@ -21,7 +21,7 @@ Puisque l'interface de modification n'existe pas encore, utilisez l'API directem
 
 ```bash
 # Mettre à jour une équipe
-curl -X PUT "https://kit-fixes.preview.emergentagent.com/api/teams/{TEAM_ID}" \
+curl -X PUT "https://mongodb-routing.preview.emergentagent.com/api/teams/{TEAM_ID}" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

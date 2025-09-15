@@ -39,7 +39,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Configuration
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 ADMIN_PASSWORD = "TopKitSecure789#"
 

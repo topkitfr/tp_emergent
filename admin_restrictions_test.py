@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 ADMIN_EMAIL = "topkitfr@gmail.com"
 REGULAR_USER_EMAIL = "steinmetzlivio@gmail.com"
 REGULAR_USER_PASSWORD = "123"

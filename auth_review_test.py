@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 
 # Review request credentials
 REVIEW_CREDENTIALS = {

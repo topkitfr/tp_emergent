@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 
 # Test user credentials (existing users as requested)
 ADMIN_EMAIL = "topkitfr@gmail.com"

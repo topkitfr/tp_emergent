@@ -29,7 +29,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 
 # Test credentials - using working admin account
 TEST_USER_EMAIL = "topkitfr@gmail.com"

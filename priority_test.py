@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BASE_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 TEST_USER_EMAIL = "prioritytest@topkit.com"
 TEST_USER_PASSWORD = "SecurePass123!"
 TEST_USER_NAME = "Priority Test User"

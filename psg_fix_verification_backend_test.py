@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-fixes.preview.emergentagent.com/api"
+BACKEND_URL = "https://mongodb-routing.preview.emergentagent.com/api"
 
 # PSG Jersey Details from review request
 PSG_JERSEY_ID = "c578d59f-43ab-4b27-bda5-fc337f7c1250"
@@ -69,7 +69,7 @@ def test_photo_accessibility():
         
         if response.status_code == 200:
             jersey = response.json()
-            base_url = "https://kit-fixes.preview.emergentagent.com"
+            base_url = "https://mongodb-routing.preview.emergentagent.com"
             
             # Test front photo
             front_photo = jersey.get('front_photo_url')
