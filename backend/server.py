@@ -16,14 +16,11 @@ import asyncio
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
-import os
 from pathlib import Path
 
 # Force load .env file from the backend directory
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
-print(f"🔧 Loading .env from: {env_path}")
-print(f"🔧 DB_NAME after load: {os.environ.get('DB_NAME', 'NOT_SET')}")
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
