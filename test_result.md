@@ -86,7 +86,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "My Collection Functionality Testing"
+    - "Updated Pricing Coefficients System Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
