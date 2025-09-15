@@ -170,7 +170,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                             : team.logo_url.startsWith('image_uploaded_')
                               ? `${process.env.REACT_APP_BACKEND_URL}/api/legacy-image/${team.logo_url}`
                               : `${process.env.REACT_APP_BACKEND_URL}/api/${team.logo_url}`}
-                          alt={team.name}
+                          alt={team.name || 'Unknown Team'}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.style.display = 'none';
