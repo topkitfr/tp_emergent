@@ -120,7 +120,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       }}
                     />
                   ) : null}
-                  <span className="text-4xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
+                  <span className="text-4xl" style={{display: jersey.front_photo_url ? 'none' : 'flex'}}>👕</span>
                 </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
@@ -241,7 +241,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                         }}
                       />
                     ) : null}
-                    <span className="text-4xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
+                    <span className="text-4xl" style={{display: jersey.front_photo_url ? 'none' : 'flex'}}>👕</span>
                   </div>
                   <div className="p-3">
                     <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
@@ -285,7 +285,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       }}
                     />
                   ) : null}
-                  <span className="text-4xl" style={{display: jersey.main_image_url ? 'none' : 'flex'}}>👕</span>
+                  <span className="text-4xl" style={{display: jersey.front_photo_url ? 'none' : 'flex'}}>👕</span>
                 </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
