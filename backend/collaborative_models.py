@@ -228,7 +228,7 @@ class MasterKitResponse(BaseModel):
     club_name: Optional[str] = None  # Populated from club
     
     season: str
-    kit_type: KitType
+    kit_type: Optional[KitType] = None  # Made optional for backward compatibility
     
     competition_id: Optional[str] = None  # New format
     competition: Optional[str] = None  # Old format - for backward compatibility
