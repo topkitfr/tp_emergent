@@ -2049,29 +2049,55 @@ async def get_collection_item_price_estimation(
         base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
         coefficients = []
         
-        if collection_item.get('name_printing') or collection_item.get('number_printing'):
-            coefficients.append({"factor": "Official name/number (flocking)", "value": "+0.3"})
+        # Flocking breakdown (more granular)
+        has_name = bool(collection_item.get('name_printing'))
+        has_number = bool(collection_item.get('number_printing'))
+        
+        if has_name and has_number:
+            coefficients.append({"factor": "Full flocking (name + number)", "value": "+0.2"})
+        elif has_name:
+            coefficients.append({"factor": "Official name flocking", "value": "+0.15"})
+        elif has_number:
+            coefficients.append({"factor": "Official number flocking", "value": "+0.1"})
         
         if collection_item.get('patches'):
-            coefficients.append({"factor": "Competition patches", "value": "+0.5"})
+            coefficients.append({"factor": "Competition patches", "value": "+0.15"})
         
+        # Condition coefficients (updated)
         condition = collection_item.get('condition')
-        if condition == 'match_prepared':
-            coefficients.append({"factor": "Match Issue (prepared for match, unused)", "value": "+1.0"})
+        if condition == 'club_stock':
+            coefficients.append({"factor": "Club Stock condition", "value": "+1.2"})
+        elif condition == 'match_prepared':
+            coefficients.append({"factor": "Match Prepared condition", "value": "+0.8"})
         elif condition == 'match_worn':
-            coefficients.append({"factor": "Match Worn (used in match)", "value": "+2.0"})
+            coefficients.append({"factor": "Match Worn condition", "value": "+1.5"})
+        elif condition == 'training':
+            coefficients.append({"factor": "Training condition", "value": "+0.2"})
+        
+        # Physical State coefficients (new)
+        physical_state = collection_item.get('physical_state')
+        if physical_state == 'new_with_tags':
+            coefficients.append({"factor": "New with tags", "value": "+0.3"})
+        elif physical_state == 'very_good_condition':
+            coefficients.append({"factor": "Very good condition", "value": "+0.15"})
+        elif physical_state == 'used':
+            coefficients.append({"factor": "Used condition", "value": "0"})
+        elif physical_state == 'damaged':
+            coefficients.append({"factor": "Damaged condition", "value": "-0.25"})
+        elif physical_state == 'needs_restoration':
+            coefficients.append({"factor": "Needs restoration", "value": "-0.4"})
         
         if collection_item.get('is_signed') and collection_item.get('signed_by'):
-            coefficients.append({"factor": f"Signed by {collection_item['signed_by']}", "value": "+2.0"})
+            coefficients.append({"factor": f"Signed by {collection_item['signed_by']}", "value": "+1.0"})
         
-        # Age coefficient
+        # Age coefficient (updated)
         season = master_kit.get('season', '')
         if season and '-' in season:
             try:
                 start_year = int(season.split('-')[0])
                 age_years = 2025 - start_year
-                age_coefficient = min(age_years * 0.1, 3.0)
-                coefficients.append({"factor": f"Age ({age_years} years)", "value": f"+{age_coefficient:.1f}"})
+                age_coefficient = min(age_years * 0.03, 0.6)
+                coefficients.append({"factor": f"Age ({age_years} years)", "value": f"+{age_coefficient:.2f}"})
             except:
                 pass
         
