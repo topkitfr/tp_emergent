@@ -276,7 +276,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
           </div>
 
           {/* Collection Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8">
             <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{ownedCount}</div>
               <div className="text-sm text-blue-700">Owned Kits</div>
@@ -286,12 +286,16 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
               <div className="text-sm text-red-700">Wanted Kits</div>
             </div>
             <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">€{collectionValue.total}</div>
-              <div className="text-sm text-green-700">Total Value</div>
+              <div className="text-2xl font-bold text-green-600">€{collectionValue.totalPurchase}</div>
+              <div className="text-sm text-green-700">Purchase Value</div>
             </div>
             <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">€{collectionValue.average}</div>
-              <div className="text-sm text-purple-700">Average Value</div>
+              <div className="text-2xl font-bold text-purple-600">€{collectionValue.totalEstimated}</div>
+              <div className="text-sm text-purple-700">Estimated Value</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">€{collectionValue.averageEstimated}</div>
+              <div className="text-sm text-yellow-700">Avg. Estimated</div>
             </div>
           </div>
         </div>
