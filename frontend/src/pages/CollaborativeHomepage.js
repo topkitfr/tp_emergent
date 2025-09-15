@@ -112,7 +112,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   {jersey.main_image_url ? (
                     <img 
                       src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
-                      alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
+                      alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -233,7 +233,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                     {jersey.main_image_url ? (
                       <img 
                         src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
-                        alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
+                        alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
                         className="w-full h-full object-contain"
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -277,7 +277,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   {jersey.main_image_url ? (
                     <img 
                       src={jersey.main_image_url.startsWith('data:') || jersey.main_image_url.startsWith('http') ? jersey.main_image_url : `${process.env.REACT_APP_BACKEND_URL}/${jersey.main_image_url}`}
-                      alt={`${jersey.team_info?.name || 'Team'} ${jersey.season}`}
+                      alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.target.style.display = 'none';
