@@ -195,7 +195,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
       if (response.ok) {
         console.log('✅ Collection item updated successfully');
-        await loadCollections(); // Reload collections
+        await loadCollections(); // Reload collections with price estimations
         setEditingItem(null);
         setEditFormData({});
         alert('Kit details updated successfully!');
