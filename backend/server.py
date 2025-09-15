@@ -1892,16 +1892,29 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
     """
     Calculate estimated price for a Master Kit with optional personal details
     
-    TOPKIT Jersey Price Estimation Coefficients:
+    TOPKIT Jersey Price Estimation Coefficients (Updated):
     Base Price: Authentic (€140), Replica (€90)
     
     Coefficients:
-    - Official name/number (flocking): +0.3 
-    - Competition patches: +0.5
-    - Match Issue (prepared for a match, unused): +1.0
-    - Match Worn (used in a match): +2.0
-    - Signed by a famous player: +2.0
-    - Age: +0.1 per year (max +3.0)
+    - Condition:
+      * Club Stock: +1.2
+      * Match Prepared: +0.8
+      * Match Worn: +1.5
+      * Training: +0.2
+    - Physical State:
+      * New with tags: +0.3
+      * Very good: +0.15
+      * Used: 0
+      * Damaged: -0.25
+      * Needs restoration: -0.4
+    - Flocking:
+      * Official name flocking: +0.15
+      * Official number flocking: +0.1
+      * Full flocking (name + number): +0.2
+    - Additional Features:
+      * Competition patches: +0.15
+      * Signed by a famous player: +1.0
+      * Age: +0.03 per year (max +0.6)
     
     Formula: Estimated Price = Base Price × (1 + sum of coefficients)
     """
@@ -1914,26 +1927,50 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
         
         # Personal details from collection item (if provided)
         if collection_item:
-            # Official name/number (flocking): +0.3
-            if collection_item.get('name_printing') or collection_item.get('number_printing'):
-                coefficients += 0.3
+            # Flocking coefficients (more granular)
+            has_name = bool(collection_item.get('name_printing'))
+            has_number = bool(collection_item.get('number_printing'))
+            
+            if has_name and has_number:
+                coefficients += 0.2  # Full flocking (name + number)
+            elif has_name:
+                coefficients += 0.15  # Official name flocking only
+            elif has_number:
+                coefficients += 0.1   # Official number flocking only
                 
-            # Competition patches: +0.5
+            # Competition patches (reduced coefficient)
             if collection_item.get('patches'):
-                coefficients += 0.5
+                coefficients += 0.15
                 
-            # Condition multipliers
+            # Condition multipliers (new values)
             condition = collection_item.get('condition')
-            if condition == 'match_prepared':  # Match Issue
-                coefficients += 1.0
-            elif condition == 'match_worn':    # Match Worn
-                coefficients += 2.0
+            if condition == 'club_stock':
+                coefficients += 1.2
+            elif condition == 'match_prepared':
+                coefficients += 0.8
+            elif condition == 'match_worn':
+                coefficients += 1.5
+            elif condition == 'training':
+                coefficients += 0.2
                 
-            # Signed by a famous player: +2.0
+            # Physical State multipliers (new category)
+            physical_state = collection_item.get('physical_state')
+            if physical_state == 'new_with_tags':
+                coefficients += 0.3
+            elif physical_state == 'very_good_condition':
+                coefficients += 0.15
+            elif physical_state == 'used':
+                coefficients += 0.0  # No change
+            elif physical_state == 'damaged':
+                coefficients -= 0.25  # Negative impact
+            elif physical_state == 'needs_restoration':
+                coefficients -= 0.4   # Significant negative impact
+                
+            # Signed by a famous player (reduced coefficient)
             if collection_item.get('is_signed') and collection_item.get('signed_by'):
-                coefficients += 2.0
+                coefficients += 1.0
         
-        # Age calculation from season (max +3.0)
+        # Age calculation from season (reduced coefficient and max)
         season = master_kit.get('season', '')
         if season and '-' in season:
             try:
@@ -1941,13 +1978,15 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
                 start_year = int(season.split('-')[0])
                 current_year = 2025  # Current year
                 age_years = current_year - start_year
-                age_coefficient = min(age_years * 0.1, 3.0)  # Max +3.0
+                age_coefficient = min(age_years * 0.03, 0.6)  # Max +0.6
                 coefficients += age_coefficient
             except (ValueError, IndexError):
                 pass  # Skip age calculation if season format is invalid
         
-        # Calculate final price
+        # Calculate final price (ensure minimum doesn't go below 50% of base price for damaged items)
         estimated_price = base_price * (1 + coefficients)
+        min_price = base_price * 0.5  # Minimum 50% of base price
+        estimated_price = max(estimated_price, min_price)
         
         return round(estimated_price, 2)
         
