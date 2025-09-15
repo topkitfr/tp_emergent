@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://kit-value-calc.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-collector-6.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
     "password": "TopKitSecure789#"
