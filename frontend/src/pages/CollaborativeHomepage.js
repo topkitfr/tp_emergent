@@ -23,7 +23,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
       <div 
         className="bg-white py-16 md:py-24 relative bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('https://customer-assets.emergentagent.com/job_footwear-collab/artifacts/3cir86pr_EmzagksXIAg35Ia.jpg')`
+          backgroundImage: `linear-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0)), url('https://customer-assets.emergentagent.com/job_footwear-collab/artifacts/3cir86pr_EmzagksXIAg35Ia.jpg')`
         }}
       >
         <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
