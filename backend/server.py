@@ -1885,6 +1885,183 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         return False
 
 # ================================
+# PRICE ESTIMATION SYSTEM
+# ================================
+
+def calculate_estimated_price(master_kit: dict, collection_item: dict = None) -> float:
+    """
+    Calculate estimated price for a Master Kit with optional personal details
+    
+    TOPKIT Jersey Price Estimation Coefficients:
+    Base Price: Authentic (€140), Replica (€90)
+    
+    Coefficients:
+    - Official name/number (flocking): +0.3 
+    - Competition patches: +0.5
+    - Match Issue (prepared for a match, unused): +1.0
+    - Match Worn (used in a match): +2.0
+    - Signed by a famous player: +2.0
+    - Age: +0.1 per year (max +3.0)
+    
+    Formula: Estimated Price = Base Price × (1 + sum of coefficients)
+    """
+    try:
+        # Base price from kit model
+        base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
+        
+        # Initialize coefficients
+        coefficients = 0.0
+        
+        # Personal details from collection item (if provided)
+        if collection_item:
+            # Official name/number (flocking): +0.3
+            if collection_item.get('name_printing') or collection_item.get('number_printing'):
+                coefficients += 0.3
+                
+            # Competition patches: +0.5
+            if collection_item.get('patches'):
+                coefficients += 0.5
+                
+            # Condition multipliers
+            condition = collection_item.get('condition')
+            if condition == 'match_prepared':  # Match Issue
+                coefficients += 1.0
+            elif condition == 'match_worn':    # Match Worn
+                coefficients += 2.0
+                
+            # Signed by a famous player: +2.0
+            if collection_item.get('is_signed') and collection_item.get('signed_by'):
+                coefficients += 2.0
+        
+        # Age calculation from season (max +3.0)
+        season = master_kit.get('season', '')
+        if season and '-' in season:
+            try:
+                # Extract start year from season (e.g., "2015-2016" -> 2015)
+                start_year = int(season.split('-')[0])
+                current_year = 2025  # Current year
+                age_years = current_year - start_year
+                age_coefficient = min(age_years * 0.1, 3.0)  # Max +3.0
+                coefficients += age_coefficient
+            except (ValueError, IndexError):
+                pass  # Skip age calculation if season format is invalid
+        
+        # Calculate final price
+        estimated_price = base_price * (1 + coefficients)
+        
+        return round(estimated_price, 2)
+        
+    except Exception as e:
+        logger.error(f"Error calculating estimated price: {str(e)}")
+        return 0.0
+
+@app.get("/api/price-estimation/{master_kit_id}")
+async def get_price_estimation(master_kit_id: str):
+    """Get price estimation for a Master Kit (basic estimation without personal details)"""
+    try:
+        master_kit = await db.master_kits.find_one({"id": master_kit_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        estimated_price = calculate_estimated_price(master_kit)
+        
+        return {
+            "master_kit_id": master_kit_id,
+            "estimated_price": estimated_price,
+            "base_price": 140.0 if master_kit.get('model') == 'authentic' else 90.0,
+            "model": master_kit.get('model'),
+            "calculation_details": {
+                "base_price": 140.0 if master_kit.get('model') == 'authentic' else 90.0,
+                "coefficients_applied": "Basic estimation without personal details",
+                "formula": "Base Price × (1 + age coefficient)"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in price estimation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/my-collection/{collection_id}/price-estimation")
+async def get_collection_item_price_estimation(
+    collection_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get detailed price estimation for a specific collection item with personal details"""
+    try:
+        # Find collection item
+        collection_item = await db.my_collection.find_one({
+            "id": collection_id,
+            "user_id": current_user["id"]
+        })
+        if not collection_item:
+            raise HTTPException(status_code=404, detail="Collection item not found")
+        
+        # Get master kit
+        master_kit = await db.master_kits.find_one({"id": collection_item["master_kit_id"]})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        # Calculate detailed price with personal details
+        estimated_price = calculate_estimated_price(master_kit, collection_item)
+        
+        # Build detailed breakdown
+        base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
+        coefficients = []
+        
+        if collection_item.get('name_printing') or collection_item.get('number_printing'):
+            coefficients.append({"factor": "Official name/number (flocking)", "value": "+0.3"})
+        
+        if collection_item.get('patches'):
+            coefficients.append({"factor": "Competition patches", "value": "+0.5"})
+        
+        condition = collection_item.get('condition')
+        if condition == 'match_prepared':
+            coefficients.append({"factor": "Match Issue (prepared for match, unused)", "value": "+1.0"})
+        elif condition == 'match_worn':
+            coefficients.append({"factor": "Match Worn (used in match)", "value": "+2.0"})
+        
+        if collection_item.get('is_signed') and collection_item.get('signed_by'):
+            coefficients.append({"factor": f"Signed by {collection_item['signed_by']}", "value": "+2.0"})
+        
+        # Age coefficient
+        season = master_kit.get('season', '')
+        if season and '-' in season:
+            try:
+                start_year = int(season.split('-')[0])
+                age_years = 2025 - start_year
+                age_coefficient = min(age_years * 0.1, 3.0)
+                coefficients.append({"factor": f"Age ({age_years} years)", "value": f"+{age_coefficient:.1f}"})
+            except:
+                pass
+        
+        return {
+            "collection_id": collection_id,
+            "master_kit_id": collection_item["master_kit_id"],
+            "estimated_price": estimated_price,
+            "base_price": base_price,
+            "model": master_kit.get('model'),
+            "calculation_details": {
+                "base_price": base_price,
+                "coefficients_applied": coefficients,
+                "formula": f"€{base_price} × (1 + coefficients) = €{estimated_price}",
+                "master_kit_details": {
+                    "club": master_kit.get('club'),
+                    "season": master_kit.get('season'),
+                    "kit_type": master_kit.get('kit_type'),
+                    "model": master_kit.get('model')
+                }
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in collection item price estimation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # STATS ENDPOINT
 # ================================
 
