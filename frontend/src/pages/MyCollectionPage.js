@@ -590,7 +590,10 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
               <div className="space-y-4">
                 {/* Name Printing */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name Printing</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name Printing 
+                    <span className="text-blue-600 ml-1" title="Adds +0.3 coefficient to estimated value">💰</span>
+                  </label>
                   <input
                     type="text"
                     value={editFormData.name_printing || ''}
@@ -598,11 +601,15 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Mbappé, Your Name"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Official flocking increases estimated value</p>
                 </div>
 
                 {/* Number Printing */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Number Printing</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number Printing
+                    <span className="text-blue-600 ml-1" title="Adds +0.3 coefficient to estimated value">💰</span>
+                  </label>
                   <input
                     type="text"
                     value={editFormData.number_printing || ''}
@@ -610,11 +617,15 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., 7, 10"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Official numbers increase estimated value</p>
                 </div>
 
                 {/* Patches */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Patches</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Patches
+                    <span className="text-blue-600 ml-1" title="Adds +0.5 coefficient to estimated value">💰</span>
+                  </label>
                   <select
                     value={editFormData.patches || ''}
                     onChange={(e) => setEditFormData({...editFormData, patches: e.target.value})}
@@ -627,6 +638,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     <option value="premier_league">Premier League</option>
                     <option value="other">Other</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">Competition patches significantly increase value</p>
                 </div>
 
                 {/* Signed Section */}
