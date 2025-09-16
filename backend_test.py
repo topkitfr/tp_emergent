@@ -27,7 +27,8 @@ class ContributionApprovalTester:
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
-        self.collection_items = []
+        self.contributions = []
+        self.master_kits = []
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
