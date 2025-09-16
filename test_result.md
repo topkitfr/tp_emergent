@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "Deployment infrastructure issue resolved - Production 500 errors fixed with backend environment variable configuration, Pydantic validation fixes, and frontend null reference handling"
+## user_problem_statement: "Contribution Image Update Bug - Uploaded jersey photos not displaying after approval on PGA jersey detail, kit area page, or homepage"
 
 frontend:
   - task: "Edit Kit Details Form Error Handling Bug Fix"
