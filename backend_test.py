@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Edit Kit Details Functionality Testing
-Testing the Edit Kit Details functionality that's failing with 422 Unprocessable Entity errors
+TopKit Backend Testing Suite - Contribution Approval System Testing
+Testing the contribution approval system specifically for image updates on master kits
+to identify the bug where new photos are not showing up after approval.
 """
 
 import requests
 import json
 import sys
+import os
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
 BACKEND_URL = "https://topkit-preview.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "password": "password123"
 }
 
-# Specific collection item ID from the review request
-FAILING_COLLECTION_ID = "892cd95b-1d6f-4ae2-a11a-e2b0d1f130e6"
+# Test focus: Contribution approval system for image updates
+FOCUS_ENTITY_TYPE = "master_kit"
 
 class EditKitDetailsTester:
     def __init__(self):
