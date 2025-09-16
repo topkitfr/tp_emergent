@@ -1787,6 +1787,17 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                     if image_path and isinstance(image_path, str):
                         contribution_images.append((field_name, image_path))
         
+        # CRITICAL FIX: Check for image fields directly in contribution data
+        # This handles the case where front_photo_url, logo_url, etc. are set in the contribution data
+        data = contribution.get("data", {})
+        image_fields = ["front_photo_url", "logo_url", "photo_url"]
+        
+        for field in image_fields:
+            if field in data and data[field] and isinstance(data[field], str):
+                if data[field].startswith("image_uploaded_"):
+                    contribution_images.append((field, data[field]))
+                    logger.info(f"Found image field {field} in contribution data: {data[field]}")
+        
         if not contribution_images:
             logger.info(f"No images found for contribution {contribution_id}")
             return True
