@@ -116,7 +116,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Standardized Form Structure Fix for Contribution Forms"
+    - "Contribution Image Update Bug - Master Kit Photo Not Displaying After Approval"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
