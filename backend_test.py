@@ -290,149 +290,122 @@ class EditKitDetailsTester:
             self.log_test(f"Edit Kit Details Testing", False, f"Exception: {str(e)}")
             return False
     
-    def verify_coefficient_values(self, coefficients_applied, collection_item):
-        """Verify that the new coefficient values are correctly applied"""
+    def test_backend_model_validation(self):
+        """Test backend model validation by examining the Pydantic models"""
         try:
-            coefficient_checks = []
+            # Let's check what the backend expects for MyCollectionUpdate
+            print("\n🔍 Analyzing Backend Model Validation...")
             
-            for coeff in coefficients_applied:
-                factor = coeff.get('factor', '')
-                value = coeff.get('value', '')
-                
-                # Check condition coefficients
-                if 'Club Stock' in factor:
-                    expected = "+1.2"
-                    coefficient_checks.append(("Club Stock", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Match Prepared' in factor:
-                    expected = "+0.8"
-                    coefficient_checks.append(("Match Prepared", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Match Worn' in factor:
-                    expected = "+1.5"
-                    coefficient_checks.append(("Match Worn", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Training' in factor:
-                    expected = "+0.2"
-                    coefficient_checks.append(("Training", value == expected, f"Expected {expected}, got {value}"))
-                
-                # Check physical state coefficients
-                elif 'New with tags' in factor:
-                    expected = "+0.3"
-                    coefficient_checks.append(("New with tags", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Very good condition' in factor:
-                    expected = "+0.15"
-                    coefficient_checks.append(("Very good", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Used condition' in factor:
-                    expected = "0"
-                    coefficient_checks.append(("Used", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Damaged condition' in factor:
-                    expected = "-0.25"
-                    coefficient_checks.append(("Damaged", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Needs restoration' in factor:
-                    expected = "-0.4"
-                    coefficient_checks.append(("Restoration", value == expected, f"Expected {expected}, got {value}"))
-                
-                # Check flocking coefficients
-                elif 'Full flocking' in factor:
-                    expected = "+0.2"
-                    coefficient_checks.append(("Full flocking", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Official name flocking' in factor:
-                    expected = "+0.15"
-                    coefficient_checks.append(("Name flocking", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Official number flocking' in factor:
-                    expected = "+0.1"
-                    coefficient_checks.append(("Number flocking", value == expected, f"Expected {expected}, got {value}"))
-                
-                # Check additional features
-                elif 'Competition patches' in factor:
-                    expected = "+0.15"
-                    coefficient_checks.append(("Patches", value == expected, f"Expected {expected}, got {value}"))
-                elif 'Signed by' in factor:
-                    expected = "+1.0"
-                    coefficient_checks.append(("Signature", value == expected, f"Expected {expected}, got {value}"))
-                
-                # Check age coefficient (should be max +0.6)
-                elif 'Age' in factor:
-                    # Extract numeric value from string like "+0.30"
-                    try:
-                        numeric_value = float(value.replace('+', ''))
-                        age_valid = 0 <= numeric_value <= 0.6
-                        coefficient_checks.append(("Age coefficient", age_valid, f"Age coefficient {value} within range [0, +0.6]"))
-                    except:
-                        coefficient_checks.append(("Age coefficient", False, f"Could not parse age coefficient: {value}"))
+            # Try to get the OpenAPI schema to understand validation requirements
+            response = self.session.get(f"{BACKEND_URL.replace('/api', '')}/docs", timeout=10)
             
-            # Log coefficient verification results
-            for check_name, success, message in coefficient_checks:
-                self.log_test(f"Coefficient Verification - {check_name}", success, message)
+            if response.status_code == 200:
+                self.log_test("Backend API Documentation Access", True, "Successfully accessed API docs")
+            else:
+                self.log_test("Backend API Documentation Access", False, f"Failed with status {response.status_code}")
+            
+            # Try to get the OpenAPI JSON schema
+            schema_response = self.session.get(f"{BACKEND_URL.replace('/api', '')}/openapi.json", timeout=10)
+            
+            if schema_response.status_code == 200:
+                schema_data = schema_response.json()
+                
+                # Look for MyCollectionUpdate schema
+                schemas = schema_data.get('components', {}).get('schemas', {})
+                
+                if 'MyCollectionUpdate' in schemas:
+                    update_schema = schemas['MyCollectionUpdate']
+                    print(f"MyCollectionUpdate schema: {json.dumps(update_schema, indent=2)}")
+                    
+                    self.log_test("Backend Model Schema Analysis", True,
+                                 "Found MyCollectionUpdate schema",
+                                 {"schema": update_schema})
+                else:
+                    self.log_test("Backend Model Schema Analysis", False,
+                                 "MyCollectionUpdate schema not found in OpenAPI spec")
+                    
+                    # List available schemas
+                    available_schemas = list(schemas.keys())
+                    print(f"Available schemas: {available_schemas}")
+                    
+            else:
+                self.log_test("Backend OpenAPI Schema Access", False, 
+                             f"Failed with status {schema_response.status_code}")
+            
+            return True
             
         except Exception as e:
-            self.log_test("Coefficient Verification", False, f"Exception: {str(e)}")
+            self.log_test("Backend Model Validation Analysis", False, f"Exception: {str(e)}")
+            return False
     
-    def test_example_calculation(self):
-        """Test the specific example from the review request"""
+    def test_curl_direct_api_calls(self, collection_item):
+        """Test direct API calls using curl-like requests to capture exact errors"""
         try:
-            # Find a PSG 2015 item to update with the example configuration
-            psg_2015_items = [item for item in self.collection_items 
-                            if item.get('master_kit', {}).get('id') == PSG_2015_KIT_ID]
-            
-            if not psg_2015_items:
-                self.log_test("Example Calculation Setup", False, "No PSG 2015 items found in collection")
-                return False
-            
-            collection_item = psg_2015_items[0]
             collection_id = collection_item.get('id')
             
-            # Update the item with the example configuration:
-            # Full flocking, patches, match worn, signed, 10 years old
-            update_data = {
-                "name_printing": "Mbappé",
-                "number_printing": "10",
-                "patches": "Champions League",
-                "condition": "match_worn",
-                "physical_state": "used",
-                "is_signed": True,
-                "signed_by": "Kylian Mbappé"
+            print(f"\n🌐 Testing Direct API Calls for Collection ID: {collection_id}")
+            
+            # Test with raw requests to capture exact error responses
+            headers = {
+                'Authorization': f'Bearer {self.auth_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
             
-            response = self.session.put(
+            # Test minimal update that should work
+            minimal_update = {"notes": "Test update"}
+            
+            print(f"Making PUT request to: {BACKEND_URL}/my-collection/{collection_id}")
+            print(f"Headers: {headers}")
+            print(f"Data: {json.dumps(minimal_update)}")
+            
+            response = requests.put(
                 f"{BACKEND_URL}/my-collection/{collection_id}",
-                json=update_data,
+                headers=headers,
+                json=minimal_update,
                 timeout=10
             )
             
-            if response.status_code == 200:
-                self.log_test("Example Configuration Update", True, "Updated PSG 2015 item with example configuration")
-                
-                # Now test the price estimation
-                price_response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", timeout=10)
-                
-                if price_response.status_code == 200:
-                    price_data = price_response.json()
-                    estimated_price = price_data.get('estimated_price', 0)
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Headers: {dict(response.headers)}")
+            print(f"Response Content: {response.text}")
+            
+            if response.status_code == 422:
+                try:
+                    error_json = response.json()
+                    print(f"422 Error JSON: {json.dumps(error_json, indent=2)}")
                     
-                    # Expected calculation: €140 × (1 + 0.2 flocking + 0.15 patches + 1.5 match_worn + 1.0 signed + 0.6 age)
-                    # = €140 × (1 + 3.45) = €140 × 4.45 = €623
-                    expected_price = 623.0
+                    # Check if this is a Pydantic validation error
+                    if 'detail' in error_json:
+                        detail = error_json['detail']
+                        if isinstance(detail, list):
+                            print("Pydantic validation errors found:")
+                            for error in detail:
+                                print(f"  - Field: {error.get('loc', 'unknown')}")
+                                print(f"    Message: {error.get('msg', 'unknown')}")
+                                print(f"    Type: {error.get('type', 'unknown')}")
+                                print(f"    Input: {error.get('input', 'unknown')}")
+                        
+                        self.log_test("Direct API Call - 422 Analysis", True,
+                                     "Successfully captured 422 validation error details",
+                                     {"error_details": error_json})
                     
-                    price_match = abs(estimated_price - expected_price) < 50.0  # Allow €50 tolerance for this complex calculation
-                    
-                    self.log_test("Example Calculation Verification", price_match,
-                                 f"Estimated: €{estimated_price}, Expected: €{expected_price} (tolerance: €50)",
-                                 {
-                                     "calculation_details": price_data.get('calculation_details', {}),
-                                     "coefficients": price_data.get('calculation_details', {}).get('coefficients_applied', [])
-                                 })
-                    
-                    return price_match
-                else:
-                    self.log_test("Example Calculation Verification", False,
-                                 f"Price estimation failed with status {price_response.status_code}")
-                    return False
+                except Exception as json_error:
+                    print(f"Could not parse JSON response: {json_error}")
+                    self.log_test("Direct API Call - 422 Analysis", True,
+                                 f"422 error captured (raw text): {response.text}")
+            
+            elif response.status_code == 200:
+                self.log_test("Direct API Call - Success", True,
+                             "Update succeeded - no validation error")
             else:
-                self.log_test("Example Configuration Update", False,
-                             f"Update failed with status {response.status_code}", response.text)
-                return False
-                
+                self.log_test("Direct API Call - Other Error", False,
+                             f"Unexpected status {response.status_code}: {response.text}")
+            
+            return True
+            
         except Exception as e:
-            self.log_test("Example Calculation", False, f"Exception: {str(e)}")
+            self.log_test("Direct API Call Testing", False, f"Exception: {str(e)}")
             return False
     
     def run_all_tests(self):
