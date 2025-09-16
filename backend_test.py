@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Contribution Approval System Testing
-Testing the contribution approval system specifically for image updates on master kits
-to identify the bug where new photos are not showing up after approval.
+TopKit Backend Testing Suite - Purchase Price and Purchase Date Validation Bug Fix Testing
+Testing the critical bug fix for Edit Kit Details functionality where users were getting validation errors:
+- Error: body.purchase_price: Input should be a valid number, unable to parse string as a number  
+- Error: body.purchase_date: Input should be a valid datetime or date, input is too short
 
-FOCUS: Testing the specific flow from contribution approval to master kit image update
-to identify where the process is failing.
+FOCUS: Testing the specific validation fix for purchase_price and purchase_date fields
+in the My Collection Edit Kit Details functionality.
 """
 
 import requests
