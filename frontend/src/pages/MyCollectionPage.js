@@ -195,28 +195,31 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
       if (response.ok) {
         console.log('✅ Collection item updated successfully');
-        await loadCollections(); // Reload collections with price estimations
+        
+        // Get the updated data from the response
+        const updatedItemData = await response.json();
+        
+        // Reload collections with price estimations
+        await loadCollections();
         
         // Update the editing item with new data to keep modal open
-        const updatedCollection = collections.find(c => c.id === editingItem.id);
-        if (updatedCollection) {
-          setEditingItem(updatedCollection);
-          // Update form data to reflect the saved changes
-          setEditFormData({
-            name_printing: updatedCollection.name_printing || '',
-            number_printing: updatedCollection.number_printing || '',
-            patches: updatedCollection.patches || '',
-            is_signed: updatedCollection.is_signed || false,
-            signed_by: updatedCollection.signed_by || '',
-            condition: updatedCollection.condition || '',
-            condition_other: updatedCollection.condition_other || '',
-            physical_state: updatedCollection.physical_state || '',
-            size: updatedCollection.size || '',
-            purchase_price: updatedCollection.purchase_price || '',
-            purchase_date: updatedCollection.purchase_date || '',
-            personal_notes: updatedCollection.personal_notes || ''
-          });
-        }
+        setEditingItem(updatedItemData);
+        
+        // Update form data to reflect the saved changes
+        setEditFormData({
+          name_printing: updatedItemData.name_printing || '',
+          number_printing: updatedItemData.number_printing || '',
+          patches: updatedItemData.patches || '',
+          is_signed: updatedItemData.is_signed || false,
+          signed_by: updatedItemData.signed_by || '',
+          condition: updatedItemData.condition || '',
+          condition_other: updatedItemData.condition_other || '',
+          physical_state: updatedItemData.physical_state || '',
+          size: updatedItemData.size || '',
+          purchase_price: updatedItemData.purchase_price || '',
+          purchase_date: updatedItemData.purchase_date || '',
+          personal_notes: updatedItemData.personal_notes || ''
+        });
         
         alert('✅ Kit details updated successfully! You can continue editing or close the modal.');
       } else {
