@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Purchase Price and Purchase Date Validation Bug Fix Testing
+TopKit Backend Testing Suite - Complete Edit Kit Details Form Validation Errors Testing
 Testing the critical bug fix for Edit Kit Details functionality where users were getting validation errors:
-- Error: body.purchase_price: Input should be a valid number, unable to parse string as a number  
-- Error: body.purchase_date: Input should be a valid datetime or date, input is too short
+- Error: body.condition: Input should be 'club_stock', 'match_prepared', 'match_worn', 'training' or 'other'  
+- Error: body.physical_state: Input should be 'new_with_tags', 'very_good_condition', 'used', 'damaged' or 'needs_restoration'
 
-FOCUS: Testing the specific validation fix for purchase_price and purchase_date fields
-in the My Collection Edit Kit Details functionality.
+EXPANDED FIX: Enhanced handleSaveEdit function to properly handle ALL optional fields:
+1. Only send fields that have actual values (not empty strings)
+2. Remove empty enum fields (condition, physical_state) to avoid validation errors  
+3. Remove empty text fields to prevent unnecessary data
+4. Convert purchase_price to float and purchase_date to ISO datetime
+5. Always include is_signed as boolean (required field)
+
+FOCUS: Testing comprehensive validation fix for ALL optional fields in Edit Kit Details form.
 """
 
 import requests
