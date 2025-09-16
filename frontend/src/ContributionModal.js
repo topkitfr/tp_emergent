@@ -129,62 +129,7 @@ const ContributionModal = ({
     }
   }, [formData, originalData, imageFiles, entity, title]);
 
-  // Image management functions
-  const handleImageUpload = (imageType, file) => {
-    if (!file) return;
-    
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
-      return;
-    }
-    
-    // Check size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must not exceed 5MB');
-      return;
-    }
-    
-    // Update files
-    setImageFiles(prev => ({
-      ...prev,
-      [imageType]: imageType === 'secondary_photos' 
-        ? [...prev.secondary_photos, file]
-        : file
-    }));
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreviews(prev => ({
-        ...prev,
-        [imageType]: imageType === 'secondary_photos'
-          ? [...prev.secondary_photos, e.target.result]
-          : e.target.result
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeSecondaryPhoto = (index) => {
-    setImageFiles(prev => ({
-      ...prev,
-      secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
-    }));
-    setImagePreviews(prev => ({
-      ...prev,
-      secondary_photos: prev.secondary_photos.filter((_, i) => i !== index)
-    }));
-  };
-
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
+  // Image management functions removed - now handled by UnifiedFieldRenderer
 
   const getFieldDisplayName = (field) => {
     const fieldNames = {
