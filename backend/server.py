@@ -1858,19 +1858,30 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                     logger.warning(f"Source image file not found: {full_source_path}")
                     continue
                 
-                # Get the legacy filename from the entity's current logo_url
+                # Get the legacy filename from the entity's current field or use the field name directly
                 legacy_filename = None
+                
+                # First, try to get the existing filename from the entity
                 if field_name in ["logo", "logo_url", "uploaded_file"] or field_name.endswith("_logo"):
                     legacy_filename = current_entity.get("logo_url", "")
-                elif field_name in ["photo", "photo_url", "primary_photo", "front_photo"]:
+                elif field_name in ["photo", "photo_url", "primary_photo", "front_photo", "front_photo_url"]:
                     if entity_type == "player":
                         legacy_filename = current_entity.get("photo_url", "")
                     elif entity_type == "master_kit":
                         legacy_filename = current_entity.get("front_photo_url", "")
                 
+                # If no existing filename or it doesn't start with image_uploaded_, use the source_path as filename
                 if not legacy_filename or not legacy_filename.startswith("image_uploaded_"):
-                    logger.warning(f"No legacy filename found for {field_name} in entity {entity_id}")
-                    continue
+                    # Use the source filename (which should be the image_uploaded_ value)
+                    if source_path.startswith("image_uploaded_"):
+                        legacy_filename = source_path
+                    else:
+                        # Extract filename from path
+                        legacy_filename = os.path.basename(source_path)
+                        if not legacy_filename.startswith("image_uploaded_"):
+                            logger.warning(f"Could not determine legacy filename for {field_name} in entity {entity_id}, using {legacy_filename}")
+                
+                logger.info(f"Using legacy filename: {legacy_filename} for field {field_name}")
                 
                 # Determine file extension from source file
                 file_extension = os.path.splitext(source_path)[1] or '.png'
