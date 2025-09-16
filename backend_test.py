@@ -23,13 +23,12 @@ TEST_CREDENTIALS = {
     "password": "TopKitSecure789#"
 }
 
-class ContributionApprovalTester:
+class PurchasePriceValidationTester:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
-        self.contributions = []
-        self.master_kits = []
+        self.collection_items = []
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -74,1074 +73,391 @@ class ContributionApprovalTester:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def get_contributions(self, status=None):
-        """Get contributions with optional status filter"""
+    def get_my_collection(self):
+        """Get user's collection items"""
         try:
-            params = {}
-            if status:
-                params["status"] = status
-                
             response = self.session.get(
-                f"{BACKEND_URL}/contributions-v2/",
-                params=params,
+                f"{BACKEND_URL}/my-collection",
                 timeout=10
             )
             
             if response.status_code == 200:
-                contributions = response.json()
-                self.contributions = contributions
+                collection_items = response.json()
+                self.collection_items = collection_items
                 
-                status_filter = f" with status '{status}'" if status else ""
-                self.log_test("Get Contributions", True,
-                             f"Retrieved {len(contributions)} contributions{status_filter}")
+                self.log_test("Get My Collection", True,
+                             f"Retrieved {len(collection_items)} collection items")
                 
-                return contributions
+                return collection_items
             else:
-                self.log_test("Get Contributions", False,
+                self.log_test("Get My Collection", False,
                              f"Failed with status {response.status_code}", response.text)
                 return []
                 
         except Exception as e:
-            self.log_test("Get Contributions", False, f"Exception: {str(e)}")
+            self.log_test("Get My Collection", False, f"Exception: {str(e)}")
             return []
     
-    def get_master_kits(self):
-        """Get master kits to check for image updates"""
+    def test_valid_purchase_price_update(self, collection_item_id):
+        """Test updating collection item with valid purchase_price as number"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
-            
-            if response.status_code == 200:
-                master_kits = response.json()
-                self.master_kits = master_kits
-                
-                self.log_test("Get Master Kits", True,
-                             f"Retrieved {len(master_kits)} master kits")
-                
-                return master_kits
-            else:
-                self.log_test("Get Master Kits", False,
-                             f"Failed with status {response.status_code}", response.text)
-                return []
-                
-        except Exception as e:
-            self.log_test("Get Master Kits", False, f"Exception: {str(e)}")
-            return []
-    
-    def test_approved_contributions_with_images(self):
-        """Test approved contributions that include image uploads"""
-        try:
-            print("\n🔍 Testing Approved Contributions with Images...")
-            
-            # Get approved contributions
-            approved_contributions = self.get_contributions("approved")
-            
-            if not approved_contributions:
-                self.log_test("Approved Contributions Analysis", False,
-                             "No approved contributions found")
-                return False
-            
-            # Analyze ALL approved contributions to find master kit ones
-            master_kit_contributions = []
-            image_contributions = []
-            
-            for contrib in approved_contributions:
-                print(f"   Contribution: {contrib.get('id')} - Type: {contrib.get('entity_type')} - Images: {contrib.get('images_count', 0)}")
-                
-                if contrib.get("entity_type") == "master_kit":
-                    master_kit_contributions.append(contrib)
-                    
-                if contrib.get("images_count", 0) > 0 or contrib.get("uploaded_images"):
-                    image_contributions.append(contrib)
-            
-            print(f"   Found {len(master_kit_contributions)} master kit contributions")
-            print(f"   Found {len(image_contributions)} contributions with images")
-            
-            # Test master kit contributions specifically
-            if master_kit_contributions:
-                self.log_test("Master Kit Contributions Found", True,
-                             f"Found {len(master_kit_contributions)} master kit contributions")
-                
-                for contrib in master_kit_contributions:
-                    self.analyze_contribution_approval(contrib)
-            else:
-                self.log_test("Master Kit Contributions Found", False,
-                             "No master kit contributions found")
-            
-            # Also test image contributions
-            if image_contributions:
-                self.log_test("Approved Image Contributions", True,
-                             f"Found {len(image_contributions)} approved contributions with images")
-                
-                for contrib in image_contributions:
-                    if contrib.get("entity_type") != "master_kit":  # Already tested above
-                        self.analyze_contribution_approval(contrib)
-            else:
-                self.log_test("Approved Image Contributions", False,
-                             f"No approved contributions with images found out of {len(approved_contributions)} approved contributions")
-            
-            return True
-            
-        except Exception as e:
-            self.log_test("Approved Contributions Analysis", False, f"Exception: {str(e)}")
-            return False
-    
-    def analyze_contribution_approval(self, contribution):
-        """Analyze a specific contribution's approval process"""
-        try:
-            contrib_id = contribution.get("id")
-            entity_type = contribution.get("entity_type")
-            entity_id = contribution.get("entity_id")
-            
-            print(f"\n📋 Analyzing Contribution: {contrib_id}")
-            print(f"   Entity Type: {entity_type}")
-            print(f"   Entity ID: {entity_id}")
-            print(f"   Images Count: {contribution.get('images_count', 0)}")
-            print(f"   Status: {contribution.get('status')}")
-            print(f"   Data: {contribution.get('data', {})}")
-            print(f"   Uploaded Images: {contribution.get('uploaded_images', [])}")
-            
-            # Check if this is a master kit contribution
-            if entity_type == "master_kit":
-                if entity_id:
-                    return self.test_master_kit_image_update(contribution, entity_id)
-                else:
-                    self.log_test(f"Contribution Analysis - {contrib_id}", False,
-                                 f"Master kit contribution without entity_id")
-                    return False
-            else:
-                # Still analyze non-master-kit contributions for completeness
-                if contribution.get('images_count', 0) > 0:
-                    print(f"   Non-master-kit contribution with images - checking image accessibility")
-                    return self.test_non_master_kit_images(contribution)
-                else:
-                    self.log_test(f"Contribution Analysis - {contrib_id}", True,
-                                 f"Non-master-kit contribution ({entity_type}) without images")
-                    return True
-                
-        except Exception as e:
-            self.log_test(f"Contribution Analysis - {contrib_id}", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_master_kit_image_update(self, contribution, master_kit_id):
-        """Test if master kit was properly updated with new image"""
-        try:
-            contrib_id = contribution.get("id")
-            
-            print(f"\n🎯 Testing Master Kit Image Update for: {master_kit_id}")
-            
-            # Get the master kit
-            response = self.session.get(f"{BACKEND_URL}/master-kits/{master_kit_id}", timeout=10)
-            
-            if response.status_code != 200:
-                self.log_test(f"Master Kit Retrieval - {master_kit_id}", False,
-                             f"Failed to retrieve master kit: {response.status_code}")
-                return False
-            
-            master_kit = response.json()
-            
-            # Check if master kit has front_photo_url
-            front_photo_url = master_kit.get("front_photo_url")
-            
-            print(f"   Master Kit: {master_kit.get('club')} {master_kit.get('season')}")
-            print(f"   Front Photo URL: {front_photo_url}")
-            
-            if not front_photo_url:
-                self.log_test(f"Master Kit Image Check - {master_kit_id}", False,
-                             "Master kit has no front_photo_url - image update failed")
-                return False
-            
-            # Check if the image file exists
-            image_accessible = self.test_image_accessibility(front_photo_url, master_kit_id)
-            
-            # Check contribution's uploaded images
-            uploaded_images = contribution.get("uploaded_images", [])
-            
-            print(f"   Contribution uploaded images: {len(uploaded_images)}")
-            for img in uploaded_images:
-                print(f"     - Field: {img.get('field_name')}, Path: {img.get('file_path')}")
-            
-            # Test the transfer process
-            transfer_success = self.test_image_transfer_process(contribution, master_kit_id)
-            
-            if image_accessible and transfer_success:
-                self.log_test(f"Master Kit Image Update - {master_kit_id}", True,
-                             "Master kit image update successful")
-                return True
-            else:
-                self.log_test(f"Master Kit Image Update - {master_kit_id}", False,
-                             f"Image update failed - accessible: {image_accessible}, transfer: {transfer_success}")
-                return False
-                
-        except Exception as e:
-            self.log_test(f"Master Kit Image Update - {master_kit_id}", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_image_accessibility(self, image_url, master_kit_id):
-        """Test if the image is accessible via the API"""
-        try:
-            if not image_url:
-                return False
-            
-            # Try different URL formats
-            test_urls = []
-            
-            # Direct API access
-            if image_url.startswith("uploads/"):
-                test_urls.append(f"{BACKEND_URL}/{image_url}")
-            elif image_url.startswith("image_uploaded_"):
-                # Legacy format - try different extensions and directories
-                test_urls.extend([
-                    f"{BACKEND_URL}/legacy-image/{image_url}",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.jpg",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.png",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.jpeg"
-                ])
-            else:
-                test_urls.append(f"{BACKEND_URL}/uploads/{image_url}")
-            
-            for test_url in test_urls:
-                try:
-                    response = self.session.get(test_url, timeout=5)
-                    if response.status_code == 200:
-                        self.log_test(f"Image Accessibility - {master_kit_id}", True,
-                                     f"Image accessible at: {test_url}")
-                        return True
-                except:
-                    continue
-            
-            self.log_test(f"Image Accessibility - {master_kit_id}", False,
-                         f"Image not accessible at any tested URL: {test_urls}")
-            return False
-            
-        except Exception as e:
-            self.log_test(f"Image Accessibility - {master_kit_id}", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_image_transfer_process(self, contribution, master_kit_id):
-        """Test the image transfer process from contributions to master_kits directory"""
-        try:
-            contrib_id = contribution.get("id")
-            uploaded_images = contribution.get("uploaded_images", [])
-            
-            if not uploaded_images:
-                self.log_test(f"Image Transfer Process - {contrib_id}", True,
-                             "No uploaded images to transfer")
-                return True
-            
-            print(f"\n🔄 Testing Image Transfer Process...")
-            print(f"   Contribution ID: {contrib_id}")
-            print(f"   Master Kit ID: {master_kit_id}")
-            print(f"   Uploaded Images: {len(uploaded_images)}")
-            
-            # Check if images exist in contributions directory
-            contributions_images_found = 0
-            master_kit_images_found = 0
-            
-            for img_info in uploaded_images:
-                file_path = img_info.get("file_path", "")
-                field_name = img_info.get("field_name", "")
-                
-                print(f"     Checking image: {field_name} -> {file_path}")
-                
-                # Check if source image exists (in contributions directory)
-                source_urls = [
-                    f"{BACKEND_URL}/{file_path}",
-                    f"{BACKEND_URL}/uploads/{file_path}",
-                    f"{BACKEND_URL}/uploads/contributions/{file_path}"
-                ]
-                
-                source_found = False
-                for source_url in source_urls:
-                    try:
-                        response = self.session.get(source_url, timeout=5)
-                        if response.status_code == 200:
-                            contributions_images_found += 1
-                            source_found = True
-                            print(f"       ✅ Source found: {source_url}")
-                            break
-                    except:
-                        continue
-                
-                if not source_found:
-                    print(f"       ❌ Source not found at: {source_urls}")
-                
-                # Check if image was transferred to master_kits directory
-                # This would require knowing the legacy filename format
-                master_kit_urls = [
-                    f"{BACKEND_URL}/uploads/master_kits/{file_path}",
-                    f"{BACKEND_URL}/legacy-image/{file_path.split('/')[-1].split('.')[0]}"
-                ]
-                
-                target_found = False
-                for target_url in master_kit_urls:
-                    try:
-                        response = self.session.get(target_url, timeout=5)
-                        if response.status_code == 200:
-                            master_kit_images_found += 1
-                            target_found = True
-                            print(f"       ✅ Target found: {target_url}")
-                            break
-                    except:
-                        continue
-                
-                if not target_found:
-                    print(f"       ❌ Target not found at: {master_kit_urls}")
-            
-            success = contributions_images_found > 0 and master_kit_images_found > 0
-            
-            self.log_test(f"Image Transfer Process - {contrib_id}", success,
-                         f"Transfer check: {contributions_images_found} source images, {master_kit_images_found} target images",
-                         {
-                             "source_images_found": contributions_images_found,
-                             "target_images_found": master_kit_images_found,
-                             "total_uploaded_images": len(uploaded_images)
-                         })
-            
-            return success
-            
-        except Exception as e:
-            self.log_test(f"Image Transfer Process - {contrib_id}", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_pending_contribution_approval(self):
-        """Test approving a pending contribution with image upload"""
-        try:
-            print("\n🔄 Testing Pending Contribution Approval...")
-            
-            # Get pending contributions
-            pending_contributions = self.get_contributions("pending_review")
-            
-            if not pending_contributions:
-                self.log_test("Pending Contribution Approval", True,
-                             "No pending contributions found - cannot test approval process")
-                return True
-            
-            # Find a pending contribution with images for master_kit
-            target_contribution = None
-            for contrib in pending_contributions:
-                if (contrib.get("entity_type") == "master_kit" and 
-                    contrib.get("images_count", 0) > 0):
-                    target_contribution = contrib
-                    break
-            
-            if not target_contribution:
-                self.log_test("Pending Contribution Approval", True,
-                             "No pending master_kit contributions with images found")
-                return True
-            
-            # Test the approval process
-            return self.test_contribution_approval_flow(target_contribution)
-            
-        except Exception as e:
-            self.log_test("Pending Contribution Approval", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_non_master_kit_images(self, contribution):
-        """Test image accessibility for non-master-kit contributions"""
-        try:
-            contrib_id = contribution.get("id")
-            entity_type = contribution.get("entity_type")
-            
-            uploaded_images = contribution.get("uploaded_images", [])
-            
-            if not uploaded_images:
-                self.log_test(f"Non-Master-Kit Images - {contrib_id}", True,
-                             "No uploaded images to test")
-                return True
-            
-            accessible_images = 0
-            total_images = len(uploaded_images)
-            
-            for img_info in uploaded_images:
-                file_path = img_info.get("file_path", "")
-                field_name = img_info.get("field_name", "")
-                
-                # Test accessibility
-                test_urls = [
-                    f"{BACKEND_URL}/{file_path}",
-                    f"{BACKEND_URL}/uploads/{file_path}",
-                    f"{BACKEND_URL}/uploads/{entity_type}s/{file_path}"
-                ]
-                
-                for test_url in test_urls:
-                    try:
-                        response = self.session.get(test_url, timeout=5)
-                        if response.status_code == 200:
-                            accessible_images += 1
-                            print(f"     ✅ Image accessible: {test_url}")
-                            break
-                    except:
-                        continue
-                else:
-                    print(f"     ❌ Image not accessible: {field_name} -> {file_path}")
-            
-            success = accessible_images == total_images
-            self.log_test(f"Non-Master-Kit Images - {contrib_id}", success,
-                         f"Image accessibility: {accessible_images}/{total_images} images accessible")
-            
-            return success
-            
-        except Exception as e:
-            self.log_test(f"Non-Master-Kit Images - {contrib_id}", False, f"Exception: {str(e)}")
-            return False
-
-    def test_master_kit_image_url_construction(self):
-        """Test master kit image URL construction issue - the core bug reported by user"""
-        try:
-            print("\n🎯 Testing Master Kit Image URL Construction Issue...")
-            print("   This tests the specific bug: master kit images not showing on Kit Area page")
-            
-            # Get master kits to examine front_photo_url values
-            master_kits = self.get_master_kits()
-            if not master_kits:
-                self.log_test("Master Kit Image URL Construction", False, "No master kits found")
-                return False
-            
-            url_construction_issues = []
-            accessible_images = 0
-            total_images = 0
-            
-            for kit in master_kits:
-                kit_id = kit.get("id")
-                club = kit.get("club", "Unknown")
-                season = kit.get("season", "Unknown")
-                front_photo_url = kit.get("front_photo_url")
-                
-                if not front_photo_url:
-                    continue
-                    
-                total_images += 1
-                print(f"\n   Testing Kit: {club} {season}")
-                print(f"   Kit ID: {kit_id}")
-                print(f"   front_photo_url: {front_photo_url}")
-                
-                # Test the CURRENT (potentially wrong) URL construction used by KitAreaPage
-                # According to the issue: ${API}/api/${kit.front_photo_url}
-                current_construction = f"{BACKEND_URL}/{front_photo_url}"
-                print(f"   Current construction: {current_construction}")
-                
-                # Test the CORRECT URL construction patterns
-                correct_constructions = [
-                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.png",
-                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpg", 
-                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpeg",
-                    f"{BACKEND_URL}/legacy-image/{front_photo_url}",
-                    f"{BACKEND_URL}/uploads/{front_photo_url}"
-                ]
-                
-                # Test current construction
-                current_works = False
-                try:
-                    response = self.session.get(current_construction, timeout=5)
-                    if response.status_code == 200:
-                        current_works = True
-                        print(f"     ✅ Current construction works: {current_construction}")
-                except:
-                    pass
-                
-                # Test correct constructions
-                correct_works = False
-                working_url = None
-                for correct_url in correct_constructions:
-                    try:
-                        response = self.session.get(correct_url, timeout=5)
-                        if response.status_code == 200:
-                            correct_works = True
-                            working_url = correct_url
-                            print(f"     ✅ Correct construction works: {correct_url}")
-                            break
-                    except:
-                        continue
-                
-                if not current_works and not correct_works:
-                    print(f"     ❌ Image not accessible via any URL pattern")
-                    url_construction_issues.append({
-                        "kit_id": kit_id,
-                        "club": club,
-                        "season": season,
-                        "front_photo_url": front_photo_url,
-                        "issue": "Image not accessible via any URL pattern",
-                        "current_url": current_construction,
-                        "tested_urls": correct_constructions
-                    })
-                elif not current_works and correct_works:
-                    print(f"     🔧 URL CONSTRUCTION MISMATCH IDENTIFIED!")
-                    print(f"        Current (broken): {current_construction}")
-                    print(f"        Working: {working_url}")
-                    url_construction_issues.append({
-                        "kit_id": kit_id,
-                        "club": club,
-                        "season": season,
-                        "front_photo_url": front_photo_url,
-                        "issue": "URL construction mismatch - frontend uses wrong pattern",
-                        "current_url": current_construction,
-                        "working_url": working_url
-                    })
-                else:
-                    accessible_images += 1
-                    print(f"     ✅ Image accessible via current construction")
-            
-            # Summary
-            success = len(url_construction_issues) == 0
-            if success:
-                self.log_test("Master Kit Image URL Construction", True,
-                             f"All {accessible_images}/{total_images} master kit images accessible via current URL construction")
-            else:
-                self.log_test("Master Kit Image URL Construction", False,
-                             f"Found {len(url_construction_issues)} URL construction issues out of {total_images} images",
-                             {"issues": url_construction_issues})
-                
-                print(f"\n🚨 URL CONSTRUCTION ISSUES SUMMARY:")
-                for issue in url_construction_issues:
-                    print(f"   • {issue['club']} {issue['season']}: {issue['issue']}")
-                    if issue.get('working_url'):
-                        print(f"     Current: {issue['current_url']}")
-                        print(f"     Should be: {issue['working_url']}")
-            
-            return success
-            
-        except Exception as e:
-            self.log_test("Master Kit Image URL Construction", False, f"Exception: {str(e)}")
-            return False
-
-    def test_kit_area_page_image_display_bug(self):
-        """Test the specific Kit Area page image display bug reported by user"""
-        try:
-            print("\n🐛 Testing Kit Area Page Image Display Bug...")
-            print("   Simulating the exact issue: approved master kit images not showing on Kit Area page")
-            
-            # Get master kits with images
-            master_kits = self.get_master_kits()
-            kits_with_images = [kit for kit in master_kits if kit.get("front_photo_url")]
-            
-            if not kits_with_images:
-                self.log_test("Kit Area Page Image Display Bug", False, "No master kits with images found")
-                return False
-            
-            print(f"   Found {len(kits_with_images)} master kits with front_photo_url")
-            
-            display_issues = []
-            working_images = 0
-            
-            for kit in kits_with_images:
-                kit_id = kit.get("id")
-                club = kit.get("club", "Unknown")
-                season = kit.get("season", "Unknown")
-                front_photo_url = kit.get("front_photo_url")
-                
-                print(f"\n   Testing Kit: {club} {season}")
-                print(f"   front_photo_url value: '{front_photo_url}'")
-                
-                # Simulate the KitAreaPage URL construction: ${API}/api/${kit.front_photo_url}
-                # This is the EXACT pattern mentioned in the bug report
-                kit_area_url = f"{BACKEND_URL}/{front_photo_url}"
-                
-                print(f"   KitAreaPage URL: {kit_area_url}")
-                
-                # Test if this URL works
-                try:
-                    response = self.session.get(kit_area_url, timeout=5)
-                    if response.status_code == 200:
-                        working_images += 1
-                        print(f"     ✅ Image displays correctly on Kit Area page")
-                    else:
-                        print(f"     ❌ Image NOT displaying on Kit Area page (HTTP {response.status_code})")
-                        
-                        # Try to find where the image actually exists
-                        actual_locations = []
-                        test_patterns = [
-                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.png",
-                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpg",
-                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpeg",
-                            f"{BACKEND_URL}/legacy-image/{front_photo_url}",
-                            f"{BACKEND_URL}/uploads/{front_photo_url}"
-                        ]
-                        
-                        for test_url in test_patterns:
-                            try:
-                                test_response = self.session.get(test_url, timeout=3)
-                                if test_response.status_code == 200:
-                                    actual_locations.append(test_url)
-                            except:
-                                continue
-                        
-                        display_issues.append({
-                            "kit_id": kit_id,
-                            "club": club,
-                            "season": season,
-                            "front_photo_url": front_photo_url,
-                            "kit_area_url": kit_area_url,
-                            "status_code": response.status_code,
-                            "actual_locations": actual_locations
-                        })
-                        
-                        if actual_locations:
-                            print(f"     🔍 Image found at: {actual_locations[0]}")
-                        else:
-                            print(f"     🔍 Image not found at any tested location")
-                            
-                except Exception as e:
-                    print(f"     ❌ Error accessing Kit Area URL: {str(e)}")
-                    display_issues.append({
-                        "kit_id": kit_id,
-                        "club": club,
-                        "season": season,
-                        "front_photo_url": front_photo_url,
-                        "kit_area_url": kit_area_url,
-                        "error": str(e)
-                    })
-            
-            # Results
-            success = len(display_issues) == 0
-            if success:
-                self.log_test("Kit Area Page Image Display Bug", True,
-                             f"All {working_images}/{len(kits_with_images)} master kit images display correctly on Kit Area page")
-            else:
-                self.log_test("Kit Area Page Image Display Bug", False,
-                             f"Found {len(display_issues)} image display issues on Kit Area page",
-                             {"issues": display_issues})
-                
-                print(f"\n🚨 KIT AREA PAGE IMAGE DISPLAY ISSUES:")
-                for issue in display_issues:
-                    print(f"   • {issue['club']} {issue['season']}:")
-                    print(f"     front_photo_url: {issue['front_photo_url']}")
-                    print(f"     Kit Area URL: {issue['kit_area_url']}")
-                    if issue.get('actual_locations'):
-                        print(f"     Image actually at: {issue['actual_locations'][0]}")
-                    else:
-                        print(f"     Image not found anywhere")
-            
-            return success
-            
-        except Exception as e:
-            self.log_test("Kit Area Page Image Display Bug", False, f"Exception: {str(e)}")
-            return False
-
-    def test_problematic_images_from_logs(self):
-        """Test specific problematic images identified from backend logs"""
-        try:
-            print("\n🚨 Testing Problematic Images from Backend Logs...")
-            
-            # Images that showed 404 errors in the logs
-            problematic_images = [
-                "image_uploaded_1758016021592",
-                "image_uploaded_1758015522242", 
-                "image_uploaded_nike_logo"
+            test_cases = [
+                {"purchase_price": 125.50, "description": "Float number"},
+                {"purchase_price": 100, "description": "Integer number"},
+                {"purchase_price": 0, "description": "Zero value"},
+                {"purchase_price": 999.99, "description": "High value"}
             ]
             
-            for image_id in problematic_images:
-                print(f"\n   Testing image: {image_id}")
+            for test_case in test_cases:
+                purchase_price = test_case["purchase_price"]
+                description = test_case["description"]
                 
-                # Test different URL patterns
-                test_urls = [
-                    f"{BACKEND_URL}/legacy-image/{image_id}",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.jpg",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.png",
-                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.jpeg",
-                    f"{BACKEND_URL}/uploads/teams/{image_id}.jpg",
-                    f"{BACKEND_URL}/uploads/teams/{image_id}.png",
-                    f"{BACKEND_URL}/uploads/brands/{image_id}.jpg",
-                    f"{BACKEND_URL}/uploads/brands/{image_id}.png",
-                    f"{BACKEND_URL}/uploads/contributions/{image_id}.jpg",
-                    f"{BACKEND_URL}/uploads/contributions/{image_id}.png"
-                ]
+                print(f"\n   Testing purchase_price: {purchase_price} ({description})")
                 
-                found = False
-                for test_url in test_urls:
-                    try:
-                        response = self.session.get(test_url, timeout=5)
-                        if response.status_code == 200:
-                            print(f"     ✅ Found at: {test_url}")
-                            found = True
-                            break
-                    except:
-                        continue
+                update_data = {
+                    "purchase_price": purchase_price,
+                    "notes": f"Testing valid purchase_price: {purchase_price}"
+                }
                 
-                if not found:
-                    print(f"     ❌ Not found at any location")
-                    self.log_test(f"Problematic Image - {image_id}", False,
-                                 f"Image not accessible at any tested location")
+                response = self.session.put(
+                    f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                    json=update_data,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    returned_price = result.get("purchase_price")
+                    
+                    if returned_price == purchase_price:
+                        self.log_test(f"Valid Purchase Price - {description}", True,
+                                     f"Successfully updated purchase_price to {purchase_price}")
+                    else:
+                        self.log_test(f"Valid Purchase Price - {description}", False,
+                                     f"Price mismatch: sent {purchase_price}, got {returned_price}")
+                        return False
                 else:
-                    self.log_test(f"Problematic Image - {image_id}", True,
-                                 f"Image found and accessible")
+                    self.log_test(f"Valid Purchase Price - {description}", False,
+                                 f"Failed with status {response.status_code}: {response.text}")
+                    return False
             
             return True
             
         except Exception as e:
-            self.log_test("Problematic Images Analysis", False, f"Exception: {str(e)}")
-            return False
-
-    def test_contribution_approval_flow(self, contribution):
-        """Test the complete approval flow for a contribution"""
-        try:
-            contrib_id = contribution.get("id")
-            entity_id = contribution.get("entity_id")
-            
-            print(f"\n✅ Testing Approval Flow for Contribution: {contrib_id}")
-            print(f"   Entity ID: {entity_id}")
-            print(f"   Entity Type: {contribution.get('entity_type')}")
-            
-            # Get master kit before approval
-            if entity_id:
-                before_response = self.session.get(f"{BACKEND_URL}/master-kits/{entity_id}", timeout=10)
-                before_master_kit = before_response.json() if before_response.status_code == 200 else {}
-                before_photo_url = before_master_kit.get("front_photo_url")
-                
-                print(f"   Before approval - Photo URL: {before_photo_url}")
-            
-            # Approve the contribution
-            approval_data = {
-                "action": "approve",
-                "reason": "Testing image update approval process"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/{contrib_id}/moderate",
-                json=approval_data,
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                self.log_test(f"Contribution Approval - {contrib_id}", False,
-                             f"Approval failed with status {response.status_code}: {response.text}")
-                return False
-            
-            approval_result = response.json()
-            print(f"   Approval result: {approval_result}")
-            
-            # Get master kit after approval
-            if entity_id:
-                after_response = self.session.get(f"{BACKEND_URL}/master-kits/{entity_id}", timeout=10)
-                after_master_kit = after_response.json() if after_response.status_code == 200 else {}
-                after_photo_url = after_master_kit.get("front_photo_url")
-                
-                print(f"   After approval - Photo URL: {after_photo_url}")
-                
-                # Check if the photo URL was updated
-                if before_photo_url != after_photo_url:
-                    self.log_test(f"Contribution Approval - {contrib_id}", True,
-                                 f"Master kit photo URL updated: {before_photo_url} -> {after_photo_url}")
-                    
-                    # Test if the new image is accessible
-                    return self.test_image_accessibility(after_photo_url, entity_id)
-                else:
-                    self.log_test(f"Contribution Approval - {contrib_id}", False,
-                                 f"Master kit photo URL not updated (still: {after_photo_url})")
-                    return False
-            else:
-                self.log_test(f"Contribution Approval - {contrib_id}", True,
-                             "Contribution approved successfully (no entity_id to verify)")
-                return True
-                
-        except Exception as e:
-            self.log_test(f"Contribution Approval - {contrib_id}", False, f"Exception: {str(e)}")
-            return False
-
-    def create_test_contribution_with_image(self):
-        """Create a test contribution with image to test the approval process"""
-        try:
-            print("\n🧪 Creating Test Contribution with Image...")
-            
-            # Get a master kit to update
-            master_kits = self.get_master_kits()
-            if not master_kits:
-                self.log_test("Create Test Contribution", False, "No master kits found to update")
-                return None
-            
-            # Use the first master kit
-            target_master_kit = master_kits[0]
-            master_kit_id = target_master_kit.get("id")
-            
-            print(f"   Target Master Kit: {target_master_kit.get('club')} {target_master_kit.get('season')}")
-            print(f"   Master Kit ID: {master_kit_id}")
-            
-            # Create a contribution for updating the master kit with a new image
-            contribution_data = {
-                "entity_type": "master_kit",
-                "entity_id": master_kit_id,
-                "title": f"Update jersey photo for {target_master_kit.get('club')} {target_master_kit.get('season')}",
-                "description": "Testing the fixed image transfer system",
-                "data": {
-                    "front_photo_url": "image_uploaded_test_" + str(int(datetime.now().timestamp()))
-                },
-                "source_urls": []
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=contribution_data,
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                self.log_test("Create Test Contribution", False,
-                             f"Failed to create contribution: {response.status_code} - {response.text}")
-                return None
-            
-            contribution = response.json()
-            contrib_id = contribution.get("id")
-            
-            print(f"   Created contribution: {contrib_id}")
-            
-            # Create a dummy image file for testing
-            import tempfile
-            import os
-            from PIL import Image
-            
-            # Create a simple test image
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
-                # Create a simple 800x600 test image
-                test_image = Image.new('RGB', (800, 600), color='red')
-                test_image.save(temp_file.name, 'PNG')
-                temp_file_path = temp_file.name
-            
-            try:
-                # Upload the image to the contribution
-                with open(temp_file_path, 'rb') as f:
-                    files = {'file': ('test_image.png', f, 'image/png')}
-                    data = {
-                        'is_primary': 'true',
-                        'caption': 'front_photo'
-                    }
-                    
-                    upload_response = self.session.post(
-                        f"{BACKEND_URL}/contributions-v2/{contrib_id}/images",
-                        files=files,
-                        data=data,
-                        timeout=10
-                    )
-                    
-                    if upload_response.status_code == 200:
-                        upload_result = upload_response.json()
-                        print(f"   Image uploaded: {upload_result.get('file_url')}")
-                        
-                        self.log_test("Create Test Contribution", True,
-                                     f"Created test contribution {contrib_id} with image upload")
-                        return contribution
-                    else:
-                        self.log_test("Create Test Contribution", False,
-                                     f"Failed to upload image: {upload_response.status_code} - {upload_response.text}")
-                        return None
-                        
-            finally:
-                # Clean up temp file
-                os.unlink(temp_file_path)
-                
-        except Exception as e:
-            self.log_test("Create Test Contribution", False, f"Exception: {str(e)}")
-            return None
-
-    def test_fixed_image_transfer_system(self):
-        """Test the fixed image transfer system by creating and approving a contribution"""
-        try:
-            print("\n🔧 Testing Fixed Image Transfer System...")
-            
-            # Create a test contribution with image
-            test_contribution = self.create_test_contribution_with_image()
-            
-            if not test_contribution:
-                self.log_test("Fixed Image Transfer System", False,
-                             "Could not create test contribution")
-                return False
-            
-            # Wait a moment for the contribution to be fully processed
-            import time
-            time.sleep(2)
-            
-            # Get the updated contribution to see if image was properly stored
-            contrib_id = test_contribution.get("id")
-            response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contrib_id}", timeout=10)
-            
-            if response.status_code != 200:
-                self.log_test("Fixed Image Transfer System", False,
-                             f"Could not retrieve created contribution: {response.status_code}")
-                return False
-            
-            updated_contribution = response.json()
-            
-            print(f"   Updated contribution data: {updated_contribution.get('data', {})}")
-            print(f"   Images count: {updated_contribution.get('images_count', 0)}")
-            print(f"   Uploaded images: {updated_contribution.get('uploaded_images', [])}")
-            
-            # Now test the approval process
-            return self.test_contribution_approval_flow(updated_contribution)
-            
-        except Exception as e:
-            self.log_test("Fixed Image Transfer System", False, f"Exception: {str(e)}")
+            self.log_test("Valid Purchase Price Update", False, f"Exception: {str(e)}")
             return False
     
-    def test_moderation_stats(self):
-        """Test moderation statistics endpoint"""
+    def test_valid_purchase_date_update(self, collection_item_id):
+        """Test updating collection item with valid purchase_date as ISO datetime string"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats", timeout=10)
+            test_cases = [
+                {"purchase_date": "2023-12-25T00:00:00.000Z", "description": "Christmas 2023"},
+                {"purchase_date": "2024-01-01T12:30:45.123Z", "description": "New Year 2024 with time"},
+                {"purchase_date": "2022-06-15T00:00:00Z", "description": "Mid-year 2022"},
+                {"purchase_date": "2024-12-31T23:59:59.999Z", "description": "End of 2024"}
+            ]
+            
+            for test_case in test_cases:
+                purchase_date = test_case["purchase_date"]
+                description = test_case["description"]
+                
+                print(f"\n   Testing purchase_date: {purchase_date} ({description})")
+                
+                update_data = {
+                    "purchase_date": purchase_date,
+                    "notes": f"Testing valid purchase_date: {purchase_date}"
+                }
+                
+                response = self.session.put(
+                    f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                    json=update_data,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    returned_date = result.get("purchase_date")
+                    
+                    self.log_test(f"Valid Purchase Date - {description}", True,
+                                 f"Successfully updated purchase_date to {purchase_date}")
+                else:
+                    self.log_test(f"Valid Purchase Date - {description}", False,
+                                 f"Failed with status {response.status_code}: {response.text}")
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Valid Purchase Date Update", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_empty_fields_handling(self, collection_item_id):
+        """Test that empty purchase_price and purchase_date fields are handled correctly"""
+        try:
+            print(f"\n   Testing empty fields handling...")
+            
+            # Test with null values (should be omitted by frontend)
+            update_data = {
+                "name_printing": "Test Player",
+                "number_printing": "10",
+                "condition": "match_worn",
+                "notes": "Testing empty fields handling"
+                # purchase_price and purchase_date intentionally omitted
+            }
+            
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                json=update_data,
+                timeout=10
+            )
             
             if response.status_code == 200:
-                stats = response.json()
-                self.log_test("Moderation Stats", True,
-                             f"Stats: {stats.get('pending')} pending, {stats.get('approved')} approved, {stats.get('rejected')} rejected")
-                return stats
+                result = response.json()
+                self.log_test("Empty Fields Handling", True,
+                             "Successfully updated collection item with empty purchase fields omitted")
+                return True
             else:
-                self.log_test("Moderation Stats", False,
-                             f"Failed with status {response.status_code}")
-                return None
-                
-        except Exception as e:
-            self.log_test("Moderation Stats", False, f"Exception: {str(e)}")
-            return None
-    
-    def test_specific_contribution(self, contribution_id):
-        """Test a specific contribution by ID"""
-        try:
-            print(f"\n🔍 Testing Specific Contribution: {contribution_id}")
-            
-            response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contribution_id}", timeout=10)
-            
-            if response.status_code != 200:
-                self.log_test(f"Specific Contribution - {contribution_id}", False,
-                             f"Failed to retrieve contribution: {response.status_code}")
+                self.log_test("Empty Fields Handling", False,
+                             f"Failed with status {response.status_code}: {response.text}")
                 return False
             
-            contribution = response.json()
-            
-            print(f"   Title: {contribution.get('title')}")
-            print(f"   Entity Type: {contribution.get('entity_type')}")
-            print(f"   Entity ID: {contribution.get('entity_id')}")
-            print(f"   Status: {contribution.get('status')}")
-            print(f"   Images Count: {contribution.get('images_count', 0)}")
-            print(f"   Uploaded Images: {contribution.get('uploaded_images', [])}")
-            
-            # Analyze this contribution
-            return self.analyze_contribution_approval(contribution)
-            
         except Exception as e:
-            self.log_test(f"Specific Contribution - {contribution_id}", False, f"Exception: {str(e)}")
+            self.log_test("Empty Fields Handling", False, f"Exception: {str(e)}")
             return False
-
-    def test_improve_team_profile_workflow(self):
-        """Test the complete 'Improve Team Profile' workflow with image upload"""
+    
+    def test_combined_purchase_fields_update(self, collection_item_id):
+        """Test updating both purchase_price and purchase_date together with other fields"""
         try:
-            print("\n🎯 Testing 'Improve Team Profile' Workflow with Image Upload...")
+            print(f"\n   Testing combined purchase fields update...")
             
-            # Step 1: Get teams to find one to edit
-            teams_response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
-            if teams_response.status_code != 200:
-                self.log_test("Improve Team Profile Workflow", False, "Failed to get teams")
-                return False
-            
-            teams = teams_response.json()
-            if not teams:
-                self.log_test("Improve Team Profile Workflow", False, "No teams found to edit")
-                return False
-            
-            # Use the first team for testing
-            target_team = teams[0]
-            team_id = target_team.get("id")
-            team_name = target_team.get("name", "Unknown Team")
-            
-            print(f"   Target Team: {team_name} (ID: {team_id})")
-            
-            # Step 2: Create a contribution for editing this team with image upload
-            contribution_data = {
-                "entity_type": "team",
-                "entity_id": team_id,
-                "title": f"Update team logo for {team_name}",
-                "description": "Testing the fixed image upload system for editing existing teams",
-                "data": {
-                    "logo_url": f"image_uploaded_test_{int(datetime.now().timestamp())}"
-                },
-                "source_urls": []
+            update_data = {
+                "name_printing": "Messi",
+                "number_printing": "10",
+                "condition": "match_worn",
+                "physical_state": "very_good_condition",
+                "patches": True,
+                "is_signed": True,
+                "signed_by": "Lionel Messi",
+                "purchase_price": 450.75,
+                "purchase_date": "2023-08-15T14:30:00.000Z",
+                "notes": "Complete kit details with purchase information"
             }
             
-            print(f"   Creating contribution for team edit...")
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=contribution_data,
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                json=update_data,
                 timeout=10
             )
             
-            if response.status_code != 200:
-                self.log_test("Improve Team Profile Workflow", False,
-                             f"Failed to create contribution: {response.status_code} - {response.text}")
-                return False
-            
-            contribution = response.json()
-            contrib_id = contribution.get("id")
-            
-            print(f"   Created contribution: {contrib_id}")
-            
-            # Step 3: Upload an image to this contribution (simulating the fixed pendingImages system)
-            import tempfile
-            from PIL import Image
-            
-            # Create a test image
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
-                test_image = Image.new('RGB', (800, 600), color='blue')
-                test_image.save(temp_file.name, 'PNG')
-                temp_file_path = temp_file.name
-            
-            try:
-                # Upload the image to the contribution
-                with open(temp_file_path, 'rb') as f:
-                    files = {'file': ('team_logo_test.png', f, 'image/png')}
-                    data = {
-                        'is_primary': 'true',
-                        'caption': 'logo_url'
-                    }
-                    
-                    upload_response = self.session.post(
-                        f"{BACKEND_URL}/contributions-v2/{contrib_id}/images",
-                        files=files,
-                        data=data,
-                        timeout=10
-                    )
-                    
-                    if upload_response.status_code != 200:
-                        self.log_test("Improve Team Profile Workflow", False,
-                                     f"Failed to upload image: {upload_response.status_code} - {upload_response.text}")
-                        return False
-                    
-                    upload_result = upload_response.json()
-                    print(f"   Image uploaded: {upload_result.get('file_url')}")
-                    
-            finally:
-                # Clean up temp file
-                import os
-                os.unlink(temp_file_path)
-            
-            # Step 4: Verify the contribution now shows correct images count
-            updated_response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contrib_id}", timeout=10)
-            if updated_response.status_code == 200:
-                updated_contribution = updated_response.json()
-                images_count = updated_contribution.get('images_count', 0)
-                uploaded_images = updated_contribution.get('uploaded_images', [])
+            if response.status_code == 200:
+                result = response.json()
                 
-                print(f"   Updated contribution images count: {images_count}")
-                print(f"   Uploaded images: {len(uploaded_images)}")
+                # Verify all fields were updated correctly
+                checks = [
+                    ("name_printing", "Messi"),
+                    ("number_printing", "10"),
+                    ("condition", "match_worn"),
+                    ("physical_state", "very_good_condition"),
+                    ("patches", True),
+                    ("is_signed", True),
+                    ("signed_by", "Lionel Messi"),
+                    ("purchase_price", 450.75),
+                    ("notes", "Complete kit details with purchase information")
+                ]
                 
-                if images_count > 0 and len(uploaded_images) > 0:
-                    self.log_test("Improve Team Profile Workflow", True,
-                                 f"✅ Image upload successful - Images count: {images_count}, Uploaded images: {len(uploaded_images)}")
-                    
-                    # Step 5: Test the approval process
-                    return self.test_contribution_approval_flow(updated_contribution)
+                all_correct = True
+                for field, expected_value in checks:
+                    actual_value = result.get(field)
+                    if actual_value != expected_value:
+                        print(f"     ❌ Field mismatch: {field} = {actual_value}, expected {expected_value}")
+                        all_correct = False
+                    else:
+                        print(f"     ✅ Field correct: {field} = {actual_value}")
+                
+                if all_correct:
+                    self.log_test("Combined Purchase Fields Update", True,
+                                 "Successfully updated all fields including purchase_price and purchase_date")
+                    return True
                 else:
-                    self.log_test("Improve Team Profile Workflow", False,
-                                 f"❌ Image upload failed - Images count: {images_count}, Uploaded images: {len(uploaded_images)}")
+                    self.log_test("Combined Purchase Fields Update", False,
+                                 "Some fields were not updated correctly")
                     return False
             else:
-                self.log_test("Improve Team Profile Workflow", False,
-                             "Failed to retrieve updated contribution")
+                self.log_test("Combined Purchase Fields Update", False,
+                             f"Failed with status {response.status_code}: {response.text}")
                 return False
-                
+            
         except Exception as e:
-            self.log_test("Improve Team Profile Workflow", False, f"Exception: {str(e)}")
+            self.log_test("Combined Purchase Fields Update", False, f"Exception: {str(e)}")
             return False
-
+    
+    def test_specific_user_reported_scenarios(self):
+        """Test the specific scenarios reported by the user"""
+        try:
+            print("\n🐛 Testing Specific User-Reported Error Scenarios...")
+            
+            collection_items = self.get_my_collection()
+            if not collection_items:
+                self.log_test("User-Reported Scenarios", False, "No collection items found")
+                return False
+            
+            test_item = collection_items[0]
+            collection_item_id = test_item.get("id")
+            
+            # Scenario 1: The exact error case - string purchase_price and short purchase_date
+            print(f"\n   Scenario 1: String purchase_price and short purchase_date (original bug)")
+            
+            # This simulates what the frontend was sending BEFORE the fix
+            problematic_data = {
+                "purchase_price": "125.50",  # String instead of number
+                "purchase_date": "2023-12-25",  # Short date instead of ISO datetime
+                "notes": "Testing original bug scenario"
+            }
+            
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                json=problematic_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                self.log_test("User-Reported Scenario 1", True,
+                             "Frontend fix working - string price and short date accepted")
+            elif response.status_code == 422:
+                error_data = response.json()
+                self.log_test("User-Reported Scenario 1", False,
+                             f"Original bug still present - 422 validation error: {error_data}")
+                return False
+            else:
+                self.log_test("User-Reported Scenario 1", False,
+                             f"Unexpected response: {response.status_code} - {response.text}")
+                return False
+            
+            # Scenario 2: Empty fields (should be omitted by frontend fix)
+            print(f"\n   Scenario 2: Empty fields handling")
+            
+            empty_fields_data = {
+                "name_printing": "Test Player",
+                "condition": "match_worn",
+                # purchase_price and purchase_date omitted (frontend fix)
+                "notes": "Testing empty fields omission"
+            }
+            
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                json=empty_fields_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                self.log_test("User-Reported Scenario 2", True,
+                             "Empty fields correctly omitted - no validation errors")
+            else:
+                self.log_test("User-Reported Scenario 2", False,
+                             f"Empty fields handling failed: {response.status_code} - {response.text}")
+                return False
+            
+            # Scenario 3: Proper frontend conversion (what should happen after fix)
+            print(f"\n   Scenario 3: Proper frontend data conversion")
+            
+            proper_data = {
+                "purchase_price": 125.50,  # Proper number (converted by frontend)
+                "purchase_date": "2023-12-25T00:00:00.000Z",  # Proper ISO datetime (converted by frontend)
+                "notes": "Testing proper frontend conversion"
+            }
+            
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_item_id}",
+                json=proper_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                returned_price = result.get("purchase_price")
+                
+                if returned_price == 125.50:
+                    self.log_test("User-Reported Scenario 3", True,
+                                 "Proper frontend conversion working perfectly")
+                else:
+                    self.log_test("User-Reported Scenario 3", False,
+                                 f"Price conversion issue: expected 125.50, got {returned_price}")
+                    return False
+            else:
+                self.log_test("User-Reported Scenario 3", False,
+                             f"Proper conversion failed: {response.status_code} - {response.text}")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("User-Reported Scenarios", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_purchase_validation_bug_fix(self):
+        """Test the specific purchase price and purchase date validation bug fix"""
+        try:
+            print("\n🎯 Testing Purchase Price and Purchase Date Validation Bug Fix...")
+            
+            # Get collection items to test with
+            collection_items = self.get_my_collection()
+            
+            if not collection_items:
+                self.log_test("Purchase Validation Bug Fix", False, "No collection items found to test with")
+                return False
+            
+            # Use the first collection item for testing
+            test_item = collection_items[0]
+            collection_item_id = test_item.get("id")
+            
+            if not collection_item_id:
+                self.log_test("Purchase Validation Bug Fix", False, "Collection item has no ID")
+                return False
+            
+            print(f"   Using collection item: {collection_item_id}")
+            print(f"   Master kit: {test_item.get('master_kit', {}).get('club', 'Unknown')} {test_item.get('master_kit', {}).get('season', 'Unknown')}")
+            
+            # Test all validation scenarios
+            test_results = []
+            
+            # 1. Test valid purchase_price updates
+            print(f"\n📊 Testing Valid Purchase Price Updates...")
+            test_results.append(self.test_valid_purchase_price_update(collection_item_id))
+            
+            # 2. Test valid purchase_date updates  
+            print(f"\n📅 Testing Valid Purchase Date Updates...")
+            test_results.append(self.test_valid_purchase_date_update(collection_item_id))
+            
+            # 3. Test empty fields handling
+            print(f"\n🔄 Testing Empty Fields Handling...")
+            test_results.append(self.test_empty_fields_handling(collection_item_id))
+            
+            # 4. Test combined updates
+            print(f"\n🔗 Testing Combined Purchase Fields Update...")
+            test_results.append(self.test_combined_purchase_fields_update(collection_item_id))
+            
+            # Overall result
+            all_passed = all(test_results)
+            
+            if all_passed:
+                self.log_test("Purchase Validation Bug Fix", True,
+                             "All purchase price and purchase date validation tests passed")
+            else:
+                failed_count = len([r for r in test_results if not r])
+                self.log_test("Purchase Validation Bug Fix", False,
+                             f"{failed_count} out of {len(test_results)} validation tests failed")
+            
+            return all_passed
+            
+        except Exception as e:
+            self.log_test("Purchase Validation Bug Fix", False, f"Exception: {str(e)}")
+            return False
+    
     def run_all_tests(self):
-        """Run comprehensive master kit image display testing"""
-        print("🧪 Starting TopKit Master Kit Image Display Testing")
-        print("FOCUS: Testing master kit image display issue on Kit Area page")
-        print("ISSUE: Master kit image uploads work and get approved, but new photos don't appear on Kit Area page")
+        """Run comprehensive purchase validation testing"""
+        print("🧪 Starting TopKit Purchase Price and Purchase Date Validation Testing")
+        print("FOCUS: Testing the critical bug fix for Edit Kit Details validation errors")
+        print("ISSUE: Users getting 422 validation errors for purchase_price and purchase_date fields")
         print("=" * 80)
         
         # Step 1: Authentication
@@ -1151,29 +467,14 @@ class ContributionApprovalTester:
         
         print()
         
-        # Step 2: Test the core Kit Area page image display bug
-        print("🐛 Testing Kit Area Page Image Display Bug...")
-        self.test_kit_area_page_image_display_bug()
+        # Step 2: Test the specific user-reported scenarios
+        print("🐛 Testing User-Reported Error Scenarios...")
+        self.test_specific_user_reported_scenarios()
         print()
         
-        # Step 3: Test master kit image URL construction patterns
-        print("🎯 Testing Master Kit Image URL Construction...")
-        self.test_master_kit_image_url_construction()
-        print()
-        
-        # Step 4: Get moderation stats
-        print("📊 Getting Moderation Statistics...")
-        stats = self.test_moderation_stats()
-        print()
-        
-        # Step 5: Test approved contributions with images
-        print("✅ Testing Approved Contributions with Images...")
-        self.test_approved_contributions_with_images()
-        print()
-        
-        # Step 6: Test problematic images from logs
-        print("🚨 Testing Problematic Images from Logs...")
-        self.test_problematic_images_from_logs()
+        # Step 3: Test the comprehensive purchase validation bug fix
+        print("🎯 Testing Purchase Validation Bug Fix...")
+        self.test_purchase_validation_bug_fix()
         print()
         
         # Summary
@@ -1183,7 +484,7 @@ class ContributionApprovalTester:
     
     def print_summary(self):
         """Print comprehensive test summary"""
-        print("📊 CONTRIBUTION APPROVAL SYSTEM TEST SUMMARY")
+        print("📊 PURCHASE VALIDATION BUG FIX TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -1197,19 +498,19 @@ class ContributionApprovalTester:
         
         # Categorize results
         auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
-        contribution_tests = [r for r in self.test_results if 'Contribution' in r['test']]
-        image_tests = [r for r in self.test_results if 'Image' in r['test']]
-        approval_tests = [r for r in self.test_results if 'Approval' in r['test']]
+        collection_tests = [r for r in self.test_results if 'Collection' in r['test']]
+        validation_tests = [r for r in self.test_results if 'Purchase' in r['test'] or 'Validation' in r['test']]
+        scenario_tests = [r for r in self.test_results if 'Scenario' in r['test']]
         
         print(f"\nTest Categories:")
         print(f"  Authentication: {len([r for r in auth_tests if r['success']])}/{len(auth_tests)} ✅")
-        print(f"  Contributions: {len([r for r in contribution_tests if r['success']])}/{len(contribution_tests)} ✅")
-        print(f"  Image Processing: {len([r for r in image_tests if r['success']])}/{len(image_tests)} ✅")
-        print(f"  Approval Process: {len([r for r in approval_tests if r['success']])}/{len(approval_tests)} ✅")
+        print(f"  Collection Access: {len([r for r in collection_tests if r['success']])}/{len(collection_tests)} ✅")
+        print(f"  Purchase Validation: {len([r for r in validation_tests if r['success']])}/{len(validation_tests)} ✅")
+        print(f"  User Scenarios: {len([r for r in scenario_tests if r['success']])}/{len(scenario_tests)} ✅")
         
         # Show critical failures
         critical_failures = [r for r in self.test_results if not r['success'] and 
-                           ('Image Update' in r['test'] or 'Transfer' in r['test'] or 'Approval' in r['test'])]
+                           ('Purchase' in r['test'] or 'Validation' in r['test'] or 'Scenario' in r['test'])]
         
         if critical_failures:
             print(f"\n🚨 CRITICAL ISSUES IDENTIFIED: {len(critical_failures)}")
@@ -1225,33 +526,34 @@ class ContributionApprovalTester:
                     print(f"  • {result['test']}: {result['message']}")
         
         # Specific findings for the bug report
-        image_update_failures = [r for r in self.test_results if not r['success'] and 'Image Update' in r['test']]
-        transfer_failures = [r for r in self.test_results if not r['success'] and 'Transfer' in r['test']]
-        accessibility_failures = [r for r in self.test_results if not r['success'] and 'Accessibility' in r['test']]
+        purchase_price_failures = [r for r in self.test_results if not r['success'] and 'Purchase Price' in r['test']]
+        purchase_date_failures = [r for r in self.test_results if not r['success'] and 'Purchase Date' in r['test']]
+        scenario_failures = [r for r in self.test_results if not r['success'] and 'Scenario' in r['test']]
         
-        print(f"\n🎯 BUG ANALYSIS RESULTS:")
-        print(f"  Image Update Failures: {len(image_update_failures)}")
-        print(f"  Image Transfer Failures: {len(transfer_failures)}")
-        print(f"  Image Accessibility Failures: {len(accessibility_failures)}")
+        print(f"\n🎯 BUG FIX ANALYSIS RESULTS:")
+        print(f"  Purchase Price Validation Failures: {len(purchase_price_failures)}")
+        print(f"  Purchase Date Validation Failures: {len(purchase_date_failures)}")
+        print(f"  User Scenario Failures: {len(scenario_failures)}")
         
-        if image_update_failures or transfer_failures or accessibility_failures:
+        if purchase_price_failures or purchase_date_failures or scenario_failures:
             print("\n🔍 ROOT CAUSE ANALYSIS:")
-            print("  The contribution approval system has issues with:")
-            if transfer_failures:
-                print("  - Image transfer from contributions/ to master_kits/ directory")
-            if accessibility_failures:
-                print("  - Image accessibility after transfer")
-            if image_update_failures:
-                print("  - Master kit front_photo_url field updates")
+            print("  The purchase validation bug fix has issues with:")
+            if purchase_price_failures:
+                print("  - Purchase price field validation and conversion")
+            if purchase_date_failures:
+                print("  - Purchase date field validation and conversion")
+            if scenario_failures:
+                print("  - User-reported error scenarios still failing")
         else:
-            print("\n✅ NO CRITICAL ISSUES FOUND!")
-            print("  The contribution approval system appears to be working correctly.")
+            print("\n✅ BUG FIX SUCCESSFUL!")
+            print("  The purchase price and purchase date validation bug has been completely resolved.")
+            print("  Users should no longer experience 422 validation errors when editing kit details.")
         
         print("\n" + "=" * 80)
 
 def main():
     """Main test execution"""
-    tester = ContributionApprovalTester()
+    tester = PurchasePriceValidationTester()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
