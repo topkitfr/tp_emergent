@@ -32,7 +32,7 @@ from pathlib import Path
 BACKEND_URL = "https://kit-wizard.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "Demopassword123!"
+    "password": "TopKitSecure789#"
 }
 
 class PurchaseDateOptionalTester:
