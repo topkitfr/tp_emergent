@@ -19,7 +19,7 @@ from pathlib import Path
 BACKEND_URL = "https://topkit-preview.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "password": "password123"
 }
 
 class ContributionApprovalTester:
