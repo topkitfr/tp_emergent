@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://image-path-solver.preview.emergentagent.com/api"
+BACKEND_URL = "https://kit-wizard.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
     "password": "TopKitSecure789#"
