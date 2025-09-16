@@ -118,11 +118,8 @@ class EditKitDetailsTester:
                 collection_data = response.json()
                 self.collection_items = collection_data
                 
-                psg_items = [item for item in collection_data 
-                           if item.get('master_kit', {}).get('id') in [PSG_2015_KIT_ID, PSG_2023_KIT_ID]]
-                
                 self.log_test("My Collection Retrieval", True,
-                             f"Retrieved {len(collection_data)} items, {len(psg_items)} PSG items found")
+                             f"Retrieved {len(collection_data)} collection items")
                 
                 return collection_data
                 
