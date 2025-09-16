@@ -222,7 +222,22 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       } else {
         const errorData = await response.json();
         console.error('❌ Update failed:', errorData);
-        alert(`Error: ${errorData.detail || 'Failed to update kit details'}`);
+        
+        // Handle different error formats
+        let errorMessage = 'Failed to update kit details';
+        if (errorData.detail) {
+          if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else if (Array.isArray(errorData.detail)) {
+            // Handle validation errors from Pydantic
+            errorMessage = errorData.detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join('\n');
+          } else if (typeof errorData.detail === 'object') {
+            // Handle object errors
+            errorMessage = JSON.stringify(errorData.detail, null, 2);
+          }
+        }
+        
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error updating collection item:', error);
