@@ -173,17 +173,7 @@ backend:
         - agent: "main" 
         - comment: "🎉 IMPROVE PROFILE FORM IMAGE UPLOAD BUG COMPLETELY FIXED! Implemented pendingImages system in ContributionModal.js: (1) Added pendingImages state to store images temporarily, (2) Fixed onImageUpload to queue images instead of immediate upload, (3) Added post-creation image upload after contribution creation, (4) Proper state management and cleanup. Backend testing confirmed 100% success rate - contributions now show correct images count (not 0) and images transfer properly on approval."
 
-  - task: "Fixed Image Upload System for 'Improve Team Profile' Form"
-    implemented: true
-    working: true
-    file: "ContributionModal.js, server.py"
-    stuck_count: 0
-    priority: "critical"
-    needs_retesting: false
-    status_history:
-        - working: true
-        - agent: "testing"
-        - comment: "🎉 FIXED IMAGE UPLOAD SYSTEM TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing confirms the user's reported bug is completely resolved: ✅ PENDING IMAGES SYSTEM (100%): New pendingImages state properly stores images temporarily, onImageUpload function correctly queues images, post-creation image upload works perfectly ✅ IMPROVE TEAM PROFILE WORKFLOW (100%): Successfully tested editing existing team with image upload, contributions show correct images count (1, not 0), images properly tracked and uploaded ✅ IMAGE TRANSFER SYSTEM (100%): Backend logs confirm successful transfers from contributions/ to appropriate directories, images properly copied with legacy filename handling ✅ CONTRIBUTION TRACKING (100%): Contributions show correct image count in moderation dashboard, uploaded_images array properly populated ✅ END-TO-END VERIFICATION (100%): Complete workflow from contribution creation → image upload → approval → transfer → accessibility all working. The user's reported issue where editing via 'Improve Team Profile' form showed 'Images: 0' in moderation dashboard has been completely fixed."
+# Duplicate task removed - consolidated into "Improve Team Profile Form Image Upload Bug Fix" above
 
 agent_communication:
     - agent: "main"
