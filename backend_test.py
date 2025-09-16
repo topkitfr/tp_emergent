@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Complete Edit Kit Details Form Validation Errors Testing
-Testing the critical bug fix for Edit Kit Details functionality where users were getting validation errors:
-- Error: body.condition: Input should be 'club_stock', 'match_prepared', 'match_worn', 'training' or 'other'  
-- Error: body.physical_state: Input should be 'new_with_tags', 'very_good_condition', 'used', 'damaged' or 'needs_restoration'
+TopKit Backend Testing Suite - Edit Kit Details Form Validation Testing - Purchase Date Field Investigation
 
-EXPANDED FIX: Enhanced handleSaveEdit function to properly handle ALL optional fields:
-1. Only send fields that have actual values (not empty strings)
-2. Remove empty enum fields (condition, physical_state) to avoid validation errors  
-3. Remove empty text fields to prevent unnecessary data
-4. Convert purchase_price to float and purchase_date to ISO datetime
-5. Always include is_signed as boolean (required field)
+USER ISSUE REPORT:
+1. **Mandatory Date Field Bug**: The "Edit Kit Details" form always asks the user to enter a date, but it should be optional
+2. **Changes Not Persisting**: Form edits don't save properly and don't update the display/coefficient calculations
 
-FOCUS: Testing comprehensive validation fix for ALL optional fields in Edit Kit Details form.
+CURRENT INVESTIGATION CONTEXT:
+- Previous testing showed the handleSaveEdit function was fixed to handle optional fields properly
+- However, user is reporting issues on the deployed version
+
+COMPREHENSIVE TESTING REQUIRED:
+- Test Edit Kit Details functionality with completely empty purchase_date field
+- Verify that no validation errors occur when purchase_date is omitted
+- Test various scenarios: empty string, null, undefined for purchase_date
+- Make an edit to a collection item and verify changes are saved to database
+- Retrieve the same item again to confirm data persistence
+- Check if the estimated price calculation updates correctly after edit
+
+FOCUS: Testing the exact user-reported scenarios where purchase_date is left empty and changes are not persisting.
 """
 
 import requests
