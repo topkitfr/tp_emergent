@@ -282,7 +282,10 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
           <div className="aspect-w-16 aspect-h-12 bg-gray-100">
             {kit.front_photo_url ? (
               <img
-                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : `${process.env.REACT_APP_BACKEND_URL}/api/${kit.front_photo_url}`}
+                src={kit.front_photo_url.startsWith('http') ? kit.front_photo_url : 
+                     kit.front_photo_url.startsWith('uploads/') ? 
+                     `${process.env.REACT_APP_BACKEND_URL}/api/${kit.front_photo_url}` :
+                     `${process.env.REACT_APP_BACKEND_URL}/api/uploads/master_kits/${kit.front_photo_url}.jpg`}
                 alt={`${kit.club} ${kit.season} ${kit.kit_type}`}
                 className="w-full h-48 object-cover"
               />
