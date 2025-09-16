@@ -173,7 +173,42 @@ const ContributionModal = ({
         const result = await response.json();
         console.log('Contribution submitted successfully:', result);
         
-        // Image uploads are now handled by UnifiedFieldRenderer
+        // Upload pending images after contribution creation
+        if (pendingImages.length > 0) {
+          console.log(`📷 Uploading ${pendingImages.length} pending images...`);
+          
+          for (const imageInfo of pendingImages) {
+            try {
+              const uploadFormData = new FormData();
+              uploadFormData.append('file', imageInfo.file);
+              uploadFormData.append('is_primary', 'true');
+              uploadFormData.append('caption', imageInfo.fieldKey);
+
+              const uploadResponse = await fetch(
+                `${API}/api/contributions-v2/${result.id}/images`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  },
+                  body: uploadFormData
+                }
+              );
+
+              if (uploadResponse.ok) {
+                const uploadResult = await uploadResponse.json();
+                console.log(`✅ Image uploaded successfully for ${imageInfo.fieldKey}:`, uploadResult);
+              } else {
+                console.error(`❌ Failed to upload image for ${imageInfo.fieldKey}:`, uploadResponse.status, await uploadResponse.text());
+              }
+            } catch (error) {
+              console.error(`❌ Error uploading image for ${imageInfo.fieldKey}:`, error);
+            }
+          }
+          
+          // Clear pending images
+          setPendingImages([]);
+        }
         
         alert('Contribution submitted successfully! It will be reviewed by the community.');
         
