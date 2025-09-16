@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "Master Kit Image Display Bug - Approved jersey photos not appearing on Kit Area page due to URL construction issues"
+## user_problem_statement: "Edit Kit Details Form Validation Errors - Purchase price and purchase date validation failures preventing successful form submission"
 
 frontend:
   - task: "Edit Kit Details Form Error Handling Bug Fix"
