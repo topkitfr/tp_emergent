@@ -465,7 +465,7 @@ class EditKitDetailsTester:
     
     def print_summary(self):
         """Print comprehensive test summary"""
-        print("📊 PRICING COEFFICIENTS TEST SUMMARY")
+        print("📊 EDIT KIT DETAILS TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -479,24 +479,41 @@ class EditKitDetailsTester:
         
         # Categorize results
         auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
-        price_tests = [r for r in self.test_results if 'Price Estimation' in r['test']]
-        coeff_tests = [r for r in self.test_results if 'Coefficient' in r['test']]
-        example_tests = [r for r in self.test_results if 'Example' in r['test']]
+        collection_tests = [r for r in self.test_results if 'Collection' in r['test']]
+        edit_tests = [r for r in self.test_results if 'Edit Kit Details' in r['test']]
+        api_tests = [r for r in self.test_results if 'API Call' in r['test']]
+        validation_tests = [r for r in self.test_results if 'Validation' in r['test'] or 'Model' in r['test']]
         
         print(f"\nTest Categories:")
         print(f"  Authentication: {len([r for r in auth_tests if r['success']])}/{len(auth_tests)} ✅")
-        print(f"  Price Estimation: {len([r for r in price_tests if r['success']])}/{len(price_tests)} ✅")
-        print(f"  Coefficient Verification: {len([r for r in coeff_tests if r['success']])}/{len(coeff_tests)} ✅")
-        print(f"  Example Calculation: {len([r for r in example_tests if r['success']])}/{len(example_tests)} ✅")
+        print(f"  Collection Access: {len([r for r in collection_tests if r['success']])}/{len(collection_tests)} ✅")
+        print(f"  Edit Kit Details: {len([r for r in edit_tests if r['success']])}/{len(edit_tests)} ✅")
+        print(f"  Direct API Calls: {len([r for r in api_tests if r['success']])}/{len(api_tests)} ✅")
+        print(f"  Validation Analysis: {len([r for r in validation_tests if r['success']])}/{len(validation_tests)} ✅")
+        
+        # Show 422 errors specifically
+        validation_errors = [r for r in self.test_results if '422' in r['message']]
+        if validation_errors:
+            print(f"\n🚨 422 VALIDATION ERRORS FOUND: {len(validation_errors)}")
+            for error in validation_errors:
+                print(f"  • {error['test']}: {error['message']}")
+                if error.get('details'):
+                    error_details = error['details']
+                    if isinstance(error_details, dict) and 'error_details' in error_details:
+                        print(f"    Details: {error_details['error_details']}")
         
         if failed_tests > 0:
             print("\n❌ FAILED TESTS:")
             for result in self.test_results:
-                if not result['success']:
+                if not result['success'] and '422' not in result['message']:
                     print(f"  • {result['test']}: {result['message']}")
+        
+        if validation_errors:
+            print("\n🎯 VALIDATION ERROR ANALYSIS COMPLETE!")
+            print("The 422 Unprocessable Entity errors have been captured and analyzed.")
         else:
-            print("\n🎉 ALL PRICING COEFFICIENT TESTS PASSED!")
-            print("The new TOPKIT pricing formula is working correctly with updated coefficients.")
+            print("\n✅ NO VALIDATION ERRORS FOUND!")
+            print("Edit Kit Details functionality appears to be working correctly.")
         
         print("\n" + "=" * 80)
 
