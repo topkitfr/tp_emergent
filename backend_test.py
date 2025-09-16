@@ -139,23 +139,44 @@ class ContributionApprovalTester:
                              "No approved contributions found")
                 return False
             
-            # Filter for contributions with images
+            # Analyze ALL approved contributions to find master kit ones
+            master_kit_contributions = []
             image_contributions = []
+            
             for contrib in approved_contributions:
+                print(f"   Contribution: {contrib.get('id')} - Type: {contrib.get('entity_type')} - Images: {contrib.get('images_count', 0)}")
+                
+                if contrib.get("entity_type") == "master_kit":
+                    master_kit_contributions.append(contrib)
+                    
                 if contrib.get("images_count", 0) > 0 or contrib.get("uploaded_images"):
                     image_contributions.append(contrib)
             
-            if not image_contributions:
+            print(f"   Found {len(master_kit_contributions)} master kit contributions")
+            print(f"   Found {len(image_contributions)} contributions with images")
+            
+            # Test master kit contributions specifically
+            if master_kit_contributions:
+                self.log_test("Master Kit Contributions Found", True,
+                             f"Found {len(master_kit_contributions)} master kit contributions")
+                
+                for contrib in master_kit_contributions:
+                    self.analyze_contribution_approval(contrib)
+            else:
+                self.log_test("Master Kit Contributions Found", False,
+                             "No master kit contributions found")
+            
+            # Also test image contributions
+            if image_contributions:
+                self.log_test("Approved Image Contributions", True,
+                             f"Found {len(image_contributions)} approved contributions with images")
+                
+                for contrib in image_contributions:
+                    if contrib.get("entity_type") != "master_kit":  # Already tested above
+                        self.analyze_contribution_approval(contrib)
+            else:
                 self.log_test("Approved Image Contributions", False,
                              f"No approved contributions with images found out of {len(approved_contributions)} approved contributions")
-                return False
-            
-            self.log_test("Approved Image Contributions", True,
-                         f"Found {len(image_contributions)} approved contributions with images")
-            
-            # Analyze each image contribution
-            for contrib in image_contributions:
-                self.analyze_contribution_approval(contrib)
             
             return True
             
