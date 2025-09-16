@@ -152,10 +152,32 @@ class EditKitDetailsTester:
                     }
                 },
                 {
-                    "name": "Condition Update",
+                    "name": "Invalid Condition Value",
+                    "data": {
+                        "condition": "invalid_condition_value",
+                        "physical_state": "very_good_condition"
+                    }
+                },
+                {
+                    "name": "Invalid Physical State Value",
                     "data": {
                         "condition": "match_worn",
-                        "physical_state": "very_good_condition"
+                        "physical_state": "invalid_physical_state"
+                    }
+                },
+                {
+                    "name": "Invalid Data Types",
+                    "data": {
+                        "purchase_price": "not_a_number",
+                        "is_signed": "not_a_boolean",
+                        "purchase_date": "invalid_date_format"
+                    }
+                },
+                {
+                    "name": "Missing Required Fields Test",
+                    "data": {
+                        "master_kit_id": None,
+                        "user_id": None
                     }
                 },
                 {
