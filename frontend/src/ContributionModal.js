@@ -141,21 +141,7 @@ const ContributionModal = ({
         }
       });
       
-      // Handle image changes specially since they're tracked differently
-      if (imageFiles.logo) {
-        // Map logo upload to correct field based on entity type
-        if (entityType === 'master_kit') {
-          changedFieldsData.front_photo_url = `image_uploaded_${Date.now()}`;
-        } else {
-          changedFieldsData.logo_url = `image_uploaded_${Date.now()}`;
-        }
-      }
-      if (imageFiles.primary_photo) {
-        changedFieldsData.primary_photo_url = `image_uploaded_${Date.now()}`;
-      }
-      if (imageFiles.secondary_photos.length > 0) {
-        changedFieldsData.secondary_photos = `${imageFiles.secondary_photos.length} new photos`;
-      }
+      // Image changes are now handled through regular form data
       
       console.log('Changed fields only:', changedFieldsData);
       console.log('All detected changes:', changes);
