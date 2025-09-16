@@ -56,17 +56,7 @@ const ContributionModal = ({
       setNewColor('');
       setNewName('');
       
-      // Reset image states
-      setImageFiles({
-        logo: null,
-        primary_photo: null,
-        secondary_photos: []
-      });
-      setImagePreviews({
-        logo: '',
-        primary_photo: '',
-        secondary_photos: []
-      });
+      // Image states no longer needed - handled by UnifiedFieldRenderer
     }
   }, [isOpen, entity, entityType]);
 
