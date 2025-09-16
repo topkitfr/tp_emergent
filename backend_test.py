@@ -603,6 +603,139 @@ class ContributionApprovalTester:
         except Exception as e:
             self.log_test(f"Contribution Approval - {contrib_id}", False, f"Exception: {str(e)}")
             return False
+
+    def create_test_contribution_with_image(self):
+        """Create a test contribution with image to test the approval process"""
+        try:
+            print("\n🧪 Creating Test Contribution with Image...")
+            
+            # Get a master kit to update
+            master_kits = self.get_master_kits()
+            if not master_kits:
+                self.log_test("Create Test Contribution", False, "No master kits found to update")
+                return None
+            
+            # Use the first master kit
+            target_master_kit = master_kits[0]
+            master_kit_id = target_master_kit.get("id")
+            
+            print(f"   Target Master Kit: {target_master_kit.get('club')} {target_master_kit.get('season')}")
+            print(f"   Master Kit ID: {master_kit_id}")
+            
+            # Create a contribution for updating the master kit with a new image
+            contribution_data = {
+                "entity_type": "master_kit",
+                "entity_id": master_kit_id,
+                "title": f"Update jersey photo for {target_master_kit.get('club')} {target_master_kit.get('season')}",
+                "description": "Testing the fixed image transfer system",
+                "data": {
+                    "front_photo_url": "image_uploaded_test_" + str(int(datetime.now().timestamp()))
+                },
+                "source_urls": []
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/",
+                json=contribution_data,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Create Test Contribution", False,
+                             f"Failed to create contribution: {response.status_code} - {response.text}")
+                return None
+            
+            contribution = response.json()
+            contrib_id = contribution.get("id")
+            
+            print(f"   Created contribution: {contrib_id}")
+            
+            # Create a dummy image file for testing
+            import tempfile
+            import os
+            from PIL import Image
+            
+            # Create a simple test image
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+                # Create a simple 800x600 test image
+                test_image = Image.new('RGB', (800, 600), color='red')
+                test_image.save(temp_file.name, 'PNG')
+                temp_file_path = temp_file.name
+            
+            try:
+                # Upload the image to the contribution
+                with open(temp_file_path, 'rb') as f:
+                    files = {'file': ('test_image.png', f, 'image/png')}
+                    data = {
+                        'is_primary': 'true',
+                        'caption': 'front_photo'
+                    }
+                    
+                    upload_response = self.session.post(
+                        f"{BACKEND_URL}/contributions-v2/{contrib_id}/images",
+                        files=files,
+                        data=data,
+                        timeout=10
+                    )
+                    
+                    if upload_response.status_code == 200:
+                        upload_result = upload_response.json()
+                        print(f"   Image uploaded: {upload_result.get('file_url')}")
+                        
+                        self.log_test("Create Test Contribution", True,
+                                     f"Created test contribution {contrib_id} with image upload")
+                        return contribution
+                    else:
+                        self.log_test("Create Test Contribution", False,
+                                     f"Failed to upload image: {upload_response.status_code} - {upload_response.text}")
+                        return None
+                        
+            finally:
+                # Clean up temp file
+                os.unlink(temp_file_path)
+                
+        except Exception as e:
+            self.log_test("Create Test Contribution", False, f"Exception: {str(e)}")
+            return None
+
+    def test_fixed_image_transfer_system(self):
+        """Test the fixed image transfer system by creating and approving a contribution"""
+        try:
+            print("\n🔧 Testing Fixed Image Transfer System...")
+            
+            # Create a test contribution with image
+            test_contribution = self.create_test_contribution_with_image()
+            
+            if not test_contribution:
+                self.log_test("Fixed Image Transfer System", False,
+                             "Could not create test contribution")
+                return False
+            
+            # Wait a moment for the contribution to be fully processed
+            import time
+            time.sleep(2)
+            
+            # Get the updated contribution to see if image was properly stored
+            contrib_id = test_contribution.get("id")
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contrib_id}", timeout=10)
+            
+            if response.status_code != 200:
+                self.log_test("Fixed Image Transfer System", False,
+                             f"Could not retrieve created contribution: {response.status_code}")
+                return False
+            
+            updated_contribution = response.json()
+            
+            print(f"   Updated contribution data: {updated_contribution.get('data', {})}")
+            print(f"   Images count: {updated_contribution.get('images_count', 0)}")
+            print(f"   Uploaded images: {updated_contribution.get('uploaded_images', [])}")
+            
+            # Now test the approval process
+            return self.test_contribution_approval_flow(updated_contribution)
+            
+        except Exception as e:
+            self.log_test("Fixed Image Transfer System", False, f"Exception: {str(e)}")
+            return False
     
     def test_moderation_stats(self):
         """Test moderation statistics endpoint"""
