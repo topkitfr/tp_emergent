@@ -17,6 +17,18 @@
 ## user_problem_statement: "Deployment infrastructure issue resolved - Production 500 errors fixed with backend environment variable configuration, Pydantic validation fixes, and frontend null reference handling"
 
 frontend:
+  - task: "Edit Kit Details Form Error Handling Bug Fix"
+    implemented: true
+    working: false
+    file: "MyCollectionPage.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "main"
+        - comment: "User reported error message showing '[object Object],[object Object],[object Object]' when trying to re-edit Kit Details form. Bug identified in error handling code where complex error objects are not properly converted to readable messages."
+        
   - task: "Frontend Null Reference Error Fixes"
     implemented: true
     working: true
