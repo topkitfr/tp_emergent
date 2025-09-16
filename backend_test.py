@@ -409,9 +409,9 @@ class EditKitDetailsTester:
             return False
     
     def run_all_tests(self):
-        """Run comprehensive pricing coefficient tests"""
-        print("🧪 Starting TopKit Pricing Coefficients Testing")
-        print("Testing the updated TOPKIT pricing formula with new coefficients")
+        """Run comprehensive Edit Kit Details functionality tests"""
+        print("🧪 Starting TopKit Edit Kit Details Testing")
+        print("Testing the Edit Kit Details functionality that's failing with 422 Unprocessable Entity errors")
         print("=" * 80)
         
         # Step 1: Authentication
@@ -421,32 +421,41 @@ class EditKitDetailsTester:
         
         print()
         
-        # Step 2: Test basic Master Kit price estimation
-        print("💰 Testing Basic Master Kit Price Estimation...")
-        self.test_basic_master_kit_price_estimation()
-        print()
-        
-        # Step 3: Get collection items
+        # Step 2: Get collection items
         print("📋 Retrieving My Collection...")
         collection_data = self.get_my_collection()
         print()
         
         if not collection_data:
-            print("❌ No collection data retrieved. Cannot proceed with detailed tests.")
+            print("❌ No collection data retrieved. Cannot proceed with tests.")
             return False
         
-        # Step 4: Test detailed collection price estimations
-        print("🔍 Testing Detailed Collection Price Estimations...")
-        psg_items = [item for item in collection_data 
-                    if item.get('master_kit', {}).get('id') in [PSG_2015_KIT_ID, PSG_2023_KIT_ID]]
-        
-        for item in psg_items:
-            self.test_detailed_collection_price_estimation(item)
+        # Step 3: Test getting the specific failing collection item
+        print(f"🎯 Testing Specific Collection Item: {FAILING_COLLECTION_ID}")
+        target_item = self.test_get_specific_collection_item(FAILING_COLLECTION_ID)
         print()
         
-        # Step 5: Test the specific example calculation
-        print("🎯 Testing Example Calculation from Review Request...")
-        self.test_example_calculation()
+        if not target_item:
+            print("❌ Could not find target collection item. Using first available item.")
+            target_item = collection_data[0] if collection_data else None
+        
+        if not target_item:
+            print("❌ No collection items available for testing.")
+            return False
+        
+        # Step 4: Test backend model validation analysis
+        print("🔍 Analyzing Backend Model Validation...")
+        self.test_backend_model_validation()
+        print()
+        
+        # Step 5: Test direct API calls to capture exact errors
+        print("🌐 Testing Direct API Calls...")
+        self.test_curl_direct_api_calls(target_item)
+        print()
+        
+        # Step 6: Test edit kit details with various scenarios
+        print("✏️ Testing Edit Kit Details Validation Errors...")
+        self.test_edit_kit_details_validation_error(target_item)
         print()
         
         # Summary
