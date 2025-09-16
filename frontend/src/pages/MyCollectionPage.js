@@ -157,6 +157,21 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
   const handleEditItem = (item) => {
     setEditingItem(item);
+    
+    // Convert purchase_date from ISO string to YYYY-MM-DD format for date input
+    let formattedPurchaseDate = '';
+    if (item.purchase_date) {
+      try {
+        const date = new Date(item.purchase_date);
+        if (!isNaN(date.getTime())) {
+          // Format as YYYY-MM-DD for HTML date input
+          formattedPurchaseDate = date.toISOString().split('T')[0];
+        }
+      } catch (error) {
+        console.warn('Invalid purchase_date format:', item.purchase_date);
+      }
+    }
+    
     setEditFormData({
       name_printing: item.name_printing || '',
       number_printing: item.number_printing || '',
@@ -168,7 +183,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       physical_state: item.physical_state || '',
       size: item.size || '',
       purchase_price: item.purchase_price || '',
-      purchase_date: item.purchase_date || '',
+      purchase_date: formattedPurchaseDate,
       personal_notes: item.personal_notes || ''
     });
   };
