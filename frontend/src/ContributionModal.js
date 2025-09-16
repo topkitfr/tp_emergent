@@ -123,8 +123,8 @@ const ContributionModal = ({
       return;
     }
 
-    if (changes.length === 0 && Object.values(imageFiles).every(f => !f || (Array.isArray(f) && f.length === 0))) {
-      alert('No changes detected. Please modify at least one field or add an image.');
+    if (changes.length === 0) {
+      alert('No changes detected. Please modify at least one field.');
       return;
     }
 
