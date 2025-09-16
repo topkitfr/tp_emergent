@@ -795,6 +795,11 @@ class ContributionApprovalTester:
         self.test_pending_contribution_approval()
         print()
         
+        # Step 7: Test the fixed image transfer system
+        print("🔧 Testing Fixed Image Transfer System...")
+        self.test_fixed_image_transfer_system()
+        print()
+        
         # Summary
         self.print_summary()
         
