@@ -484,6 +484,238 @@ class ContributionApprovalTester:
             self.log_test(f"Non-Master-Kit Images - {contrib_id}", False, f"Exception: {str(e)}")
             return False
 
+    def test_master_kit_image_url_construction(self):
+        """Test master kit image URL construction issue - the core bug reported by user"""
+        try:
+            print("\n🎯 Testing Master Kit Image URL Construction Issue...")
+            print("   This tests the specific bug: master kit images not showing on Kit Area page")
+            
+            # Get master kits to examine front_photo_url values
+            master_kits = self.get_master_kits()
+            if not master_kits:
+                self.log_test("Master Kit Image URL Construction", False, "No master kits found")
+                return False
+            
+            url_construction_issues = []
+            accessible_images = 0
+            total_images = 0
+            
+            for kit in master_kits:
+                kit_id = kit.get("id")
+                club = kit.get("club", "Unknown")
+                season = kit.get("season", "Unknown")
+                front_photo_url = kit.get("front_photo_url")
+                
+                if not front_photo_url:
+                    continue
+                    
+                total_images += 1
+                print(f"\n   Testing Kit: {club} {season}")
+                print(f"   Kit ID: {kit_id}")
+                print(f"   front_photo_url: {front_photo_url}")
+                
+                # Test the CURRENT (potentially wrong) URL construction used by KitAreaPage
+                # According to the issue: ${API}/api/${kit.front_photo_url}
+                current_construction = f"{BACKEND_URL}/{front_photo_url}"
+                print(f"   Current construction: {current_construction}")
+                
+                # Test the CORRECT URL construction patterns
+                correct_constructions = [
+                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.png",
+                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpg", 
+                    f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpeg",
+                    f"{BACKEND_URL}/legacy-image/{front_photo_url}",
+                    f"{BACKEND_URL}/uploads/{front_photo_url}"
+                ]
+                
+                # Test current construction
+                current_works = False
+                try:
+                    response = self.session.get(current_construction, timeout=5)
+                    if response.status_code == 200:
+                        current_works = True
+                        print(f"     ✅ Current construction works: {current_construction}")
+                except:
+                    pass
+                
+                # Test correct constructions
+                correct_works = False
+                working_url = None
+                for correct_url in correct_constructions:
+                    try:
+                        response = self.session.get(correct_url, timeout=5)
+                        if response.status_code == 200:
+                            correct_works = True
+                            working_url = correct_url
+                            print(f"     ✅ Correct construction works: {correct_url}")
+                            break
+                    except:
+                        continue
+                
+                if not current_works and not correct_works:
+                    print(f"     ❌ Image not accessible via any URL pattern")
+                    url_construction_issues.append({
+                        "kit_id": kit_id,
+                        "club": club,
+                        "season": season,
+                        "front_photo_url": front_photo_url,
+                        "issue": "Image not accessible via any URL pattern",
+                        "current_url": current_construction,
+                        "tested_urls": correct_constructions
+                    })
+                elif not current_works and correct_works:
+                    print(f"     🔧 URL CONSTRUCTION MISMATCH IDENTIFIED!")
+                    print(f"        Current (broken): {current_construction}")
+                    print(f"        Working: {working_url}")
+                    url_construction_issues.append({
+                        "kit_id": kit_id,
+                        "club": club,
+                        "season": season,
+                        "front_photo_url": front_photo_url,
+                        "issue": "URL construction mismatch - frontend uses wrong pattern",
+                        "current_url": current_construction,
+                        "working_url": working_url
+                    })
+                else:
+                    accessible_images += 1
+                    print(f"     ✅ Image accessible via current construction")
+            
+            # Summary
+            success = len(url_construction_issues) == 0
+            if success:
+                self.log_test("Master Kit Image URL Construction", True,
+                             f"All {accessible_images}/{total_images} master kit images accessible via current URL construction")
+            else:
+                self.log_test("Master Kit Image URL Construction", False,
+                             f"Found {len(url_construction_issues)} URL construction issues out of {total_images} images",
+                             {"issues": url_construction_issues})
+                
+                print(f"\n🚨 URL CONSTRUCTION ISSUES SUMMARY:")
+                for issue in url_construction_issues:
+                    print(f"   • {issue['club']} {issue['season']}: {issue['issue']}")
+                    if issue.get('working_url'):
+                        print(f"     Current: {issue['current_url']}")
+                        print(f"     Should be: {issue['working_url']}")
+            
+            return success
+            
+        except Exception as e:
+            self.log_test("Master Kit Image URL Construction", False, f"Exception: {str(e)}")
+            return False
+
+    def test_kit_area_page_image_display_bug(self):
+        """Test the specific Kit Area page image display bug reported by user"""
+        try:
+            print("\n🐛 Testing Kit Area Page Image Display Bug...")
+            print("   Simulating the exact issue: approved master kit images not showing on Kit Area page")
+            
+            # Get master kits with images
+            master_kits = self.get_master_kits()
+            kits_with_images = [kit for kit in master_kits if kit.get("front_photo_url")]
+            
+            if not kits_with_images:
+                self.log_test("Kit Area Page Image Display Bug", False, "No master kits with images found")
+                return False
+            
+            print(f"   Found {len(kits_with_images)} master kits with front_photo_url")
+            
+            display_issues = []
+            working_images = 0
+            
+            for kit in kits_with_images:
+                kit_id = kit.get("id")
+                club = kit.get("club", "Unknown")
+                season = kit.get("season", "Unknown")
+                front_photo_url = kit.get("front_photo_url")
+                
+                print(f"\n   Testing Kit: {club} {season}")
+                print(f"   front_photo_url value: '{front_photo_url}'")
+                
+                # Simulate the KitAreaPage URL construction: ${API}/api/${kit.front_photo_url}
+                # This is the EXACT pattern mentioned in the bug report
+                kit_area_url = f"{BACKEND_URL}/{front_photo_url}"
+                
+                print(f"   KitAreaPage URL: {kit_area_url}")
+                
+                # Test if this URL works
+                try:
+                    response = self.session.get(kit_area_url, timeout=5)
+                    if response.status_code == 200:
+                        working_images += 1
+                        print(f"     ✅ Image displays correctly on Kit Area page")
+                    else:
+                        print(f"     ❌ Image NOT displaying on Kit Area page (HTTP {response.status_code})")
+                        
+                        # Try to find where the image actually exists
+                        actual_locations = []
+                        test_patterns = [
+                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.png",
+                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpg",
+                            f"{BACKEND_URL}/uploads/master_kits/{front_photo_url}.jpeg",
+                            f"{BACKEND_URL}/legacy-image/{front_photo_url}",
+                            f"{BACKEND_URL}/uploads/{front_photo_url}"
+                        ]
+                        
+                        for test_url in test_patterns:
+                            try:
+                                test_response = self.session.get(test_url, timeout=3)
+                                if test_response.status_code == 200:
+                                    actual_locations.append(test_url)
+                            except:
+                                continue
+                        
+                        display_issues.append({
+                            "kit_id": kit_id,
+                            "club": club,
+                            "season": season,
+                            "front_photo_url": front_photo_url,
+                            "kit_area_url": kit_area_url,
+                            "status_code": response.status_code,
+                            "actual_locations": actual_locations
+                        })
+                        
+                        if actual_locations:
+                            print(f"     🔍 Image found at: {actual_locations[0]}")
+                        else:
+                            print(f"     🔍 Image not found at any tested location")
+                            
+                except Exception as e:
+                    print(f"     ❌ Error accessing Kit Area URL: {str(e)}")
+                    display_issues.append({
+                        "kit_id": kit_id,
+                        "club": club,
+                        "season": season,
+                        "front_photo_url": front_photo_url,
+                        "kit_area_url": kit_area_url,
+                        "error": str(e)
+                    })
+            
+            # Results
+            success = len(display_issues) == 0
+            if success:
+                self.log_test("Kit Area Page Image Display Bug", True,
+                             f"All {working_images}/{len(kits_with_images)} master kit images display correctly on Kit Area page")
+            else:
+                self.log_test("Kit Area Page Image Display Bug", False,
+                             f"Found {len(display_issues)} image display issues on Kit Area page",
+                             {"issues": display_issues})
+                
+                print(f"\n🚨 KIT AREA PAGE IMAGE DISPLAY ISSUES:")
+                for issue in display_issues:
+                    print(f"   • {issue['club']} {issue['season']}:")
+                    print(f"     front_photo_url: {issue['front_photo_url']}")
+                    print(f"     Kit Area URL: {issue['kit_area_url']}")
+                    if issue.get('actual_locations'):
+                        print(f"     Image actually at: {issue['actual_locations'][0]}")
+                    else:
+                        print(f"     Image not found anywhere")
+            
+            return success
+            
+        except Exception as e:
+            self.log_test("Kit Area Page Image Display Bug", False, f"Exception: {str(e)}")
+            return False
+
     def test_problematic_images_from_logs(self):
         """Test specific problematic images identified from backend logs"""
         try:
