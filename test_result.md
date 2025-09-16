@@ -116,7 +116,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fixed Image Upload System for 'Improve Team Profile' Form"
+    - "Master Kit Image Display Bug Investigation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
