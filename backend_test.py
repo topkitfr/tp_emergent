@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - Updated Pricing Coefficients System
-Testing the new TOPKIT pricing formula with updated coefficients
+TopKit Backend Testing Suite - Edit Kit Details Functionality Testing
+Testing the Edit Kit Details functionality that's failing with 422 Unprocessable Entity errors
 """
 
 import requests
@@ -13,8 +13,11 @@ from datetime import datetime
 BACKEND_URL = "https://topkit-preview.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "password": "password123"
 }
+
+# Specific collection item ID from the review request
+FAILING_COLLECTION_ID = "892cd95b-1d6f-4ae2-a11a-e2b0d1f130e6"
 
 # Test kit IDs from the review request - PSG collection items
 PSG_2015_KIT_ID = "802f4f1d-7b3c-47fe-969f-5d45ed615257"
