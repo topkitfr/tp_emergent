@@ -184,13 +184,44 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     }
 
     try {
+      // Prepare form data with proper type conversions
+      const processedFormData = { ...editFormData };
+      
+      // Convert purchase_price to float if provided
+      if (processedFormData.purchase_price && processedFormData.purchase_price !== '') {
+        const priceValue = parseFloat(processedFormData.purchase_price);
+        if (isNaN(priceValue)) {
+          alert('Error: Purchase price must be a valid number');
+          return;
+        }
+        processedFormData.purchase_price = priceValue;
+      } else {
+        // Remove empty purchase_price to avoid validation errors
+        delete processedFormData.purchase_price;
+      }
+      
+      // Convert purchase_date to ISO string if provided (YYYY-MM-DD format to ISO datetime)
+      if (processedFormData.purchase_date && processedFormData.purchase_date !== '') {
+        try {
+          // Create a date object from the YYYY-MM-DD string and convert to ISO string
+          const dateObj = new Date(processedFormData.purchase_date + 'T00:00:00.000Z');
+          processedFormData.purchase_date = dateObj.toISOString();
+        } catch (error) {
+          alert('Error: Purchase date must be a valid date');
+          return;
+        }
+      } else {
+        // Remove empty purchase_date to avoid validation errors
+        delete processedFormData.purchase_date;
+      }
+
       const response = await fetch(`${API}/api/my-collection/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(editFormData)
+        body: JSON.stringify(processedFormData)
       });
 
       if (response.ok) {
