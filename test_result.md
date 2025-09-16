@@ -116,7 +116,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Updated Pricing Coefficients System Testing"
+    - "Standardized Form Structure Fix for Contribution Forms"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
