@@ -241,7 +241,14 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       }
     } catch (error) {
       console.error('Error updating collection item:', error);
-      alert('Error updating kit details');
+      
+      // Handle network or unexpected errors
+      let errorMessage = 'Error updating kit details';
+      if (error.message) {
+        errorMessage = `Network error: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
