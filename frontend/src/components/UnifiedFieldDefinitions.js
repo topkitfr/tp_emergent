@@ -72,7 +72,7 @@ export const getUnifiedFieldsForEntityType = (type) => {
         { key: 'common_names', label: 'Alternative Names', type: 'text_list', placeholder: 'Add alternative competition names' },
         
         // Image fields
-        { key: 'logo', label: 'Competition Logo', type: 'image', required: false },
+        { key: 'logo_url', label: 'Competition Logo', type: 'image', required: false },
         { key: 'secondary_photos', label: 'Additional Photos', type: 'image_multiple' }
       ];
 
