@@ -1,82 +1,106 @@
 <analysis>
-The AI engineer's initial work involved stabilizing the application, implementing a jersey price estimation system, and fixing a UI bug on the homepage related to displaying Unknown team and placeholder images. Subsequently, the focus shifted to frontend design enhancements. The first major task was to replace the H1 font on the homepage with a custom font, Akira Expanded Demo.otf. This involved downloading the font, creating a CSS file with  definition, importing it, and applying a custom class. The process encountered issues with incorrect font file paths, leading to a blank page and compilation errors. After multiple debugging attempts, the font file was moved to , and the CSS path was corrected, resolving the issue.
+The AI engineer's work in this trajectory focused heavily on bug fixes and UI/UX improvements for the TopKit application. Initially, after stabilizing the application and implementing price estimation, the focus shifted to frontend design. This included successfully integrating a custom font (Akira Expanded Demo.otf), applying a linear gradient and background image to the homepage banner, and styling text with white background blocks.
 
-Following the font update, the user requested design changes to the homepage banner. This included adding a linear gradient and a background image. The AI successfully implemented this by modifying the  component's style property. Next, the user requested white background blocks behind the banner text with specific text colors. The AI achieved this by applying Tailwind CSS classes (, padding, ) and custom text colors to the relevant  elements. Further refinements involved adjusting the size and layout of these white background blocks based on user feedback, first making them larger and banner-like, and then making them fit tightly around the text content, avoiding container edges, to match the desired reference design.
+Subsequently, the engineer addressed several critical bugs reported by the user. The first bug involved an [object Object] error in the Edit Kit Details form, caused by improper frontend error handling of backend Pydantic validation responses and incorrect modal state management. This was fixed by enhancing error parsing in  and updating modal logic. The next major bug was inconsistent image upload forms between New Contribution and Improve Team Profile, leading to duplication and confusion. This was resolved by standardizing image sections across forms in  and .
+
+Finally, a complex bug related to image uploads for *editing* existing entities (including master kits) was tackled. The initial fix correctly handled new contributions but failed for edits because images weren't being uploaded post-contribution creation. This required significant refactoring in  to temporarily store images and then upload them after the contribution ID was available. A subsequent issue where master kit images didn't display correctly on various frontend pages (, , ) due to inconsistent  formats and faulty URL construction was also fully resolved.
 </analysis>
 
 <product_requirements>
-The TopKit application is a collaborative platform for football jersey collectors. Its core functionality revolves around a jersey price estimation system, calculating . Base prices are €140 (Authentic) and €90 (Replica), with coefficients for Official name/number, Competition patches, Condition (Match Issue, Match Worn), Signed by famous player, and Age. This system dynamically displays estimated prices in the user's collection view and updates live in the Edit Kit Details form, which was enhanced to remain open post-save, include a live price preview, and correct condition options. Granular coefficients for Condition, Physical State, Flocking, and Additional Features were integrated.
+The TopKit application aims to be a collaborative platform for football jersey collectors, centered around a detailed jersey price estimation system. This system calculates  using base prices (€140/Authentic, €90/Replica) and various coefficients (Official name/number, Competition patches, Condition, Signed by player, Age). The user's Edit Kit Details form was enhanced to remain open post-save, show live price previews, and include granular condition/physical state options.
 
-The most recent development cycles focused on:
-1.  **Homepage UI Fixes**: Correcting the homepage to display actual jersey names and photos from the Kit Area page, replacing Unknown team titles and fallback icons, ensuring correct data mapping (, ), and proper image serving via the  prefix.
-2.  **Custom Font Implementation**: Replacing the H1 font Value your collection of football kits on the homepage with a custom Akira Expanded Demo.otf font.
-3.  **Homepage Banner Styling**: Applying a  as the background image for the homepage banner.
-4.  **Text Background Blocks**: Adding white background blocks behind the homepage banner text, maintaining specific text colors:  for Value your collection and  for of football kits and the description text. The design required these blocks to fit tightly around the text content, not spanning the entire container width.
+Recent feature and bug resolution requests included:
+1.  **Homepage UI Fixes**: Display actual jersey names and photos from the Kit Area page, correcting Unknown team and fallback icons, ensuring  and  mapping, and proper  prefix for image URLs.
+2.  **Custom Font**: Replace the H1 font Value your collection of football kits with Akira Expanded Demo.otf on the homepage.
+3.  **Homepage Banner Styling**: Add a  background image to the homepage banner.
+4.  **Text Background Blocks**: Place white background blocks behind banner text (Value your collection, of football kits, description), with specific text colors ( and ), fitted tightly around text.
+5.  **Bug: Edit Kit Details Form Error**: Fix the  error when re-editing kit details, allowing multiple edits.
+6.  **Bug: Inconsistent Forms**: Standardize photo and other sections across New Contribution and Improve Team Profile forms (and other entities like Brand, Player, Competition) for consistency.
+7.  **Bug: Image Upload Failure for Edits**: Ensure uploaded photos for existing entities (including master kits) via Improve Profile forms appear correctly after approval on all relevant pages (PGA jersey detail, Kit Area, Homepage).
 </product_requirements>
 
 <key_technical_concepts>
-- **React/FastAPI/MongoDB Stack**: Core architecture.
-- **Pydantic Models**: Data validation.
-- **Tailwind CSS**: Utility-first CSS framework for styling.
-- **Custom Fonts ()**: Integrating custom font files into web applications.
-- **Frontend State Management**: React hooks for dynamic UI.
-- **File Serving**: Backend  endpoint for static assets.
+-   **React/FastAPI/MongoDB Stack**: Core application architecture.
+-   **Pydantic Models**: Data validation in FastAPI.
+-   **Tailwind CSS**: Utility-first CSS for frontend styling.
+-   **Custom Fonts ()**: Integrating custom fonts in React.
+-   **Frontend State Management**: React hooks for dynamic forms and asynchronous data.
+-   **Backend File Serving**: FastAPI endpoints () for static assets.
 </key_technical_concepts>
 
 <code_architecture>
-The application utilizes a React frontend, a FastAPI backend, and a MongoDB database. All backend APIs are prefixed with .
+The application uses a React frontend, FastAPI backend, and MongoDB database. All backend APIs are prefixed with .
 
 
 
-- ****:
-    - Importance: Main FastAPI server, orchestrates API routes, serves static files.
-    - Summary of previous changes: Extended for price estimation logic. Crucially, it hosts the  endpoint for serving images. The  endpoint returns  and  fields. No changes in the current trajectory.
-- ****:
-    - Importance: Defines Pydantic models for data validation.
-    - Summary of previous changes: Updated with granular pricing coefficients. Confirms data structure containing  and . No changes in the current trajectory.
-- ****:
-    - Importance: Renders user's personal collection, Edit Kit Details functionality.
-    - Summary of previous changes: Modified to display estimated prices, keep edit modal open, show live price previews, update dropdowns. No changes in the current trajectory.
-- ****:
-    - Importance: Renders sections of master jerseys on the main homepage.
-    - Summary of changes:
-        - **Previous Fixes:** Updated  for team names,  for images, and added  prefix for image URLs.
-        - **Current Trajectory Changes:**
-            - Added  class to the main H1 element.
-            - Applied inline  for the background image and linear gradient in the main banner .
-            - Wrapped text segments (Value your collection, of football kits, description) in  elements with , ,  classes, and specific  for text colors.
-- ****:
-    - Importance: Displays jerseys in the user's Kit Area.
-    - Summary of changes: No code changes during this trajectory, but it relies on images being present in the backend's  directory.
-- ****:
-    - Importance: Directory for master kit images.
-    - Summary of changes: Sample images were copied here to resolve missing image issues. No changes in the current trajectory.
-- ****:
-    - Importance: Defines custom font styles.
-    - Summary of changes: New file created. Contains  rule for 'Akira Expanded' font, pointing to , and a  class to apply the font.
-- ****:
-    - Importance: Main CSS file, imports global styles.
-    - Summary of changes: Added  to integrate the custom font definitions.
-- ****:
-    - Importance: New directory to store custom font files.
-    - Summary of changes: Created, and  was moved here from the  directory.
+-   ****:
+    -   Importance: Main FastAPI server, API routes, static file serving, contribution moderation.
+    -   Summary of changes:
+        -   Enhanced  to correctly check  fields, improved file path resolution, and better handling of legacy filenames during image transfer.
+        -   Added cascading update logic for master kits.
+-   ****:
+    -   Importance: Defines Pydantic models for data validation.
+    -   Summary of changes: No direct changes in this trajectory, but its validation errors were central to a frontend bug.
+-   ****:
+    -   Importance: Renders user's collection, includes Edit Kit Details form.
+    -   Summary of changes:
+        -   Enhanced error handling in the  function to parse complex 422 validation responses, extracting meaningful error messages from Pydantic  arrays.
+        -   Fixed modal state management to use  after  for consistent re-editing, replacing .
+        -   Updated image URL construction for master kits (lines 427-434) to handle , , and legacy  formats.
+-   ****:
+    -   Importance: Renders sections of master jerseys on the main homepage.
+    -   Summary of changes:
+        -   Applied custom font () to the main H1.
+        -   Added inline  for background image and linear gradient to the banner .
+        -   Wrapped banner text segments in  elements with , padding,  classes, and specific text colors.
+        -   Updated image URL construction for master kits to handle , , and legacy  formats.
+-   ****:
+    -   Importance: Displays jerseys in the user's Kit Area.
+    -   Summary of changes: Updated image URL construction (lines 285-288, 357-360) for master kits to handle , , and legacy  formats.
+-   ****:
+    -   Importance: Handles both New Contribution and Improve Profile forms.
+    -   Summary of changes:
+        -   Removed duplicate Image Upload Section to standardize form structure.
+        -   Added  state to temporarily store image files.
+        -   Modified  to queue images into  instead of attempting immediate upload.
+        -   Updated  to upload  to the backend *after* the contribution is successfully created, using the received .
+        -   Ensured  are cleared upon modal open/close (in ).
+-   ****:
+    -   Importance: Renders the New Contribution form.
+    -   Summary of changes: Enhanced image section for better clarity, ensuring consistency with .
+-   ****:
+    -   Importance: Reusable component for rendering various form fields, including image uploads.
+    -   Summary of changes: Handles all image uploads consistently, acting as an intermediary for  prop. No direct code edits shown in trajectory, but its role in passing  was key.
+-   ****:
+    -   Importance: Defines the structure and properties of form fields for different entity types.
+    -   Summary of changes: Standardized image field keys and labels across various entity types (Team, Brand, Player, Competition), ensuring consistent naming (e.g., Team Logo, Additional Photos).
+-   ****:
+    -   Importance: Defines custom font styles.
+    -   Summary of changes: New file created. Contains  rule for 'Akira Expanded' font, pointing to , and a  class to apply the font.
+-   ****:
+    -   Importance: Main CSS file, imports global styles.
+    -   Summary of changes: Added  to integrate custom font definitions.
+-   ****:
+    -   Importance: New directory to store custom font files.
+    -   Summary of changes: Created, and  was moved here.
 </code_architecture>
 
 <pending_tasks>
-- Await user review and feedback on the newly implemented, detailed pricing coefficients and the overall price estimation system.
-- No explicit pending development tasks related to the price estimation feature or its related edit functionality were identified before the current bug fix.
+-   No explicit pending development tasks related to new features.
+-   User review and feedback on the newly implemented, detailed pricing coefficients and the overall price estimation system.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer successfully implemented a series of design updates on the TopKit application's homepage banner based on explicit user requests. This involved:
+Immediately before this summary request, the AI engineer successfully resolved a critical bug where master kit images, uploaded and approved via the Improve Master Kit Profile form, were not displaying on frontend pages such as the Kit Area, Homepage, and My Collection page. The root cause was identified as inconsistent  formats (legacy vs. full path) and improper URL construction within the React frontend components.
 
-1.  **Custom Font Application**: The  font was integrated for the H1 heading VALUE YOUR COLLECTION OF FOOTBALL KITS in . This required downloading the font, placing it in , defining it via  in a new  file, and importing this into . The  class was then applied to the H1 element. This involved debugging multiple incorrect font path resolutions until a working setup with relative paths from the  directory was achieved.
+The fix involved modifying the image  attribute logic in , , and . The updated logic now correctly handles three different URL formats:
+1.  Direct HTTP URLs (used as-is).
+2.  Paths starting with  (prefixed with ).
+3.  Legacy format  (constructed into a full path: ).
 
-2.  **Banner Background Styling**: A  from white to transparent white, combined with a specific background image URL, was applied to the main banner  in  using inline  property.
-
-3.  **Text Background Blocks**: White background blocks with specific padding () and text colors were applied to the VALUE YOUR COLLECTION, OF FOOTBALL KITS, and the descriptive text elements within the homepage banner. These blocks were implemented as   elements, ensuring they fit tightly around their respective text content, avoiding the container edges, and maintaining the specified  for the first part of the H1 and  for the second part and the description. This design aims for enhanced readability and visual distinction against the background.
+This ensures that all master kit images, regardless of their  format in the database, are correctly resolved and displayed across the application, replacing placeholder emojis. The fix has been thoroughly tested, confirmed by both backend and frontend tests, and acknowledged as completely resolved by the user.
 </current_work>
 
 <optional_next_step>
-Await user feedback on the latest homepage banner design changes.
+Ask the user if there are any new features or improvements they would like to work on, as all reported bugs have been resolved.
 </optional_next_step>
