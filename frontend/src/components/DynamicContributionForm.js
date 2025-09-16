@@ -396,40 +396,48 @@ const DynamicContributionForm = ({
             </select>
           </div>
 
-          {/* Dynamic Fields */}
+          {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {renderFields(fields)}
           </div>
 
-          {/* Image Previews */}
-          {previewImages.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image Previews
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {previewImages.map((preview, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={preview.preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                    >
-                      ×
-                    </button>
-                    <p className="text-xs text-gray-500 mt-1 truncate">
-                      {preview.fieldKey || 'General'}
-                    </p>
-                  </div>
-                ))}
-              </div>
+          {/* Images Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Images</h3>
+            <div className="text-sm text-gray-600 mb-4">
+              Upload images using the fields above. All images are optional unless marked as required.
             </div>
-          )}
+            
+            {/* Image Previews */}
+            {previewImages.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Uploaded Images ({previewImages.length})
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {previewImages.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {preview.fieldKey || 'General'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Source URLs */}
           <div>
