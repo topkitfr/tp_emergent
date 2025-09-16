@@ -122,6 +122,18 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Master Kit Image Display Bug Investigation"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 MASTER KIT IMAGE DISPLAY BUG CONFIRMED - CRITICAL FRONTEND URL CONSTRUCTION ISSUE! Testing identified the exact problem: Frontend constructs URLs as `${API}/api/${front_photo_url}` but master kits store values like 'image_uploaded_1758024489645' (without path). This creates broken URLs like '/api/image_uploaded_1758024489645' instead of '/api/uploads/master_kits/image_uploaded_1758024489645.jpg'. ❌ SPECIFIC FAILURE: PSG 2020-2021 kit (front_photo_url='image_uploaded_1758024489645') returns 404 when accessed via frontend URL construction. Image actually exists at correct backend path. ✅ WORKING EXAMPLES: Kits with proper front_photo_url values like 'uploads/master_kits/psg_2023_away.jpg' work correctly. ❌ BACKEND LOGS CONFIRM: Multiple 404 errors for 'GET /api/image_uploaded_1758024489645' requests. 🎯 ROOT CAUSE: Inconsistent front_photo_url storage format - some use legacy format 'image_uploaded_XXXXX' while others use full path 'uploads/master_kits/filename.ext'. Frontend needs URL construction logic to handle both formats."
+
   - task: "Updated Pricing Coefficients System Testing"
     implemented: true
     working: true
