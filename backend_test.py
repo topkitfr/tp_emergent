@@ -3,6 +3,9 @@
 TopKit Backend Testing Suite - Contribution Approval System Testing
 Testing the contribution approval system specifically for image updates on master kits
 to identify the bug where new photos are not showing up after approval.
+
+FOCUS: Testing the specific flow from contribution approval to master kit image update
+to identify where the process is failing.
 """
 
 import requests
@@ -18,9 +21,6 @@ TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
     "password": "password123"
 }
-
-# Test focus: Contribution approval system for image updates
-FOCUS_ENTITY_TYPE = "master_kit"
 
 class ContributionApprovalTester:
     def __init__(self):
@@ -73,332 +73,425 @@ class ContributionApprovalTester:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_get_specific_collection_item(self, collection_id):
-        """Test getting a specific collection item by ID"""
+    def get_contributions(self, status=None):
+        """Get contributions with optional status filter"""
         try:
-            # First try to get the specific collection item from the failing ID
-            response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            params = {}
+            if status:
+                params["status"] = status
+                
+            response = self.session.get(
+                f"{BACKEND_URL}/contributions-v2/",
+                params=params,
+                timeout=10
+            )
             
             if response.status_code == 200:
-                collection_data = response.json()
+                contributions = response.json()
+                self.contributions = contributions
                 
-                # Find the specific item
-                target_item = None
-                for item in collection_data:
-                    if item.get('id') == collection_id:
-                        target_item = item
-                        break
+                status_filter = f" with status '{status}'" if status else ""
+                self.log_test("Get Contributions", True,
+                             f"Retrieved {len(contributions)} contributions{status_filter}")
                 
-                if target_item:
-                    self.log_test("Get Specific Collection Item", True,
-                                 f"Found collection item {collection_id}")
-                    return target_item
-                else:
-                    # If specific ID not found, use any available item for testing
-                    if collection_data:
-                        target_item = collection_data[0]
-                        self.log_test("Get Specific Collection Item", True,
-                                     f"Specific ID {collection_id} not found, using {target_item.get('id')} for testing")
-                        return target_item
-                    else:
-                        self.log_test("Get Specific Collection Item", False,
-                                     "No collection items found")
-                        return None
+                return contributions
             else:
-                self.log_test("Get Specific Collection Item", False,
-                             f"Failed with status {response.status_code}", response.text)
-                return None
-                
-        except Exception as e:
-            self.log_test("Get Specific Collection Item", False, f"Exception: {str(e)}")
-            return None
-    
-    def get_my_collection(self):
-        """Get user's collection items"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-            
-            if response.status_code == 200:
-                collection_data = response.json()
-                self.collection_items = collection_data
-                
-                self.log_test("My Collection Retrieval", True,
-                             f"Retrieved {len(collection_data)} collection items")
-                
-                return collection_data
-                
-            else:
-                self.log_test("My Collection Retrieval", False,
+                self.log_test("Get Contributions", False,
                              f"Failed with status {response.status_code}", response.text)
                 return []
                 
         except Exception as e:
-            self.log_test("My Collection Retrieval", False, f"Exception: {str(e)}")
+            self.log_test("Get Contributions", False, f"Exception: {str(e)}")
             return []
     
-    def test_edit_kit_details_validation_error(self, collection_item):
-        """Test editing kit details to identify the 422 validation error"""
+    def get_master_kits(self):
+        """Get master kits to check for image updates"""
         try:
-            collection_id = collection_item.get('id')
-            master_kit = collection_item.get('master_kit', {})
-            kit_name = f"{master_kit.get('club', 'Unknown')} {master_kit.get('season', 'Unknown')}"
-            
-            print(f"\n🔍 Testing Edit Kit Details for: {kit_name} (ID: {collection_id})")
-            print(f"Current item data: {json.dumps(collection_item, indent=2, default=str)}")
-            
-            # Test with various update scenarios to identify validation issues
-            test_scenarios = [
-                {
-                    "name": "Basic Update - Name and Number",
-                    "data": {
-                        "name_printing": "Messi",
-                        "number_printing": "10"
-                    }
-                },
-                {
-                    "name": "Invalid Condition Value",
-                    "data": {
-                        "condition": "invalid_condition_value",
-                        "physical_state": "very_good_condition"
-                    }
-                },
-                {
-                    "name": "Invalid Physical State Value",
-                    "data": {
-                        "condition": "match_worn",
-                        "physical_state": "invalid_physical_state"
-                    }
-                },
-                {
-                    "name": "Invalid Data Types",
-                    "data": {
-                        "purchase_price": "not_a_number",
-                        "is_signed": "not_a_boolean",
-                        "purchase_date": "invalid_date_format"
-                    }
-                },
-                {
-                    "name": "Missing Required Fields Test",
-                    "data": {
-                        "master_kit_id": None,
-                        "user_id": None
-                    }
-                },
-                {
-                    "name": "Full Update with All Fields",
-                    "data": {
-                        "name_printing": "Mbappé",
-                        "number_printing": "7",
-                        "condition": "match_prepared",
-                        "physical_state": "new_with_tags",
-                        "patches": "Champions League",
-                        "is_signed": True,
-                        "signed_by": "Kylian Mbappé",
-                        "purchase_price": 150.0,
-                        "purchase_date": "2023-01-15",
-                        "notes": "Excellent condition jersey"
-                    }
-                },
-                {
-                    "name": "Minimal Update - Single Field",
-                    "data": {
-                        "notes": "Updated notes"
-                    }
-                }
-            ]
-            
-            for scenario in test_scenarios:
-                print(f"\n📝 Testing scenario: {scenario['name']}")
-                print(f"Update data: {json.dumps(scenario['data'], indent=2)}")
-                
-                response = self.session.put(
-                    f"{BACKEND_URL}/my-collection/{collection_id}",
-                    json=scenario['data'],
-                    timeout=10
-                )
-                
-                print(f"Response status: {response.status_code}")
-                print(f"Response headers: {dict(response.headers)}")
-                
-                if response.status_code == 422:
-                    # This is the error we're looking for!
-                    try:
-                        error_data = response.json()
-                        print(f"422 Validation Error Details: {json.dumps(error_data, indent=2)}")
-                        
-                        self.log_test(f"Edit Kit Details - {scenario['name']}", False,
-                                     f"422 Validation Error: {error_data}",
-                                     {
-                                         "status_code": response.status_code,
-                                         "error_details": error_data,
-                                         "update_data": scenario['data']
-                                     })
-                    except:
-                        error_text = response.text
-                        print(f"422 Error Response Text: {error_text}")
-                        
-                        self.log_test(f"Edit Kit Details - {scenario['name']}", False,
-                                     f"422 Validation Error (raw): {error_text}",
-                                     {
-                                         "status_code": response.status_code,
-                                         "error_text": error_text,
-                                         "update_data": scenario['data']
-                                     })
-                    
-                    # Continue testing other scenarios to see if all fail or just specific ones
-                    continue
-                    
-                elif response.status_code == 200:
-                    updated_data = response.json()
-                    self.log_test(f"Edit Kit Details - {scenario['name']}", True,
-                                 f"Successfully updated collection item",
-                                 {
-                                     "updated_data": updated_data,
-                                     "update_data": scenario['data']
-                                 })
-                else:
-                    try:
-                        error_data = response.json()
-                        print(f"Error Response: {json.dumps(error_data, indent=2)}")
-                    except:
-                        print(f"Error Response Text: {response.text}")
-                    
-                    self.log_test(f"Edit Kit Details - {scenario['name']}", False,
-                                 f"Failed with status {response.status_code}",
-                                 {
-                                     "status_code": response.status_code,
-                                     "response_text": response.text,
-                                     "update_data": scenario['data']
-                                 })
-            
-            return True
-                
-        except Exception as e:
-            self.log_test(f"Edit Kit Details Testing", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_backend_model_validation(self):
-        """Test backend model validation by examining the Pydantic models"""
-        try:
-            # Let's check what the backend expects for MyCollectionUpdate
-            print("\n🔍 Analyzing Backend Model Validation...")
-            
-            # Try to get the OpenAPI schema to understand validation requirements
-            response = self.session.get(f"{BACKEND_URL.replace('/api', '')}/docs", timeout=10)
+            response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
             
             if response.status_code == 200:
-                self.log_test("Backend API Documentation Access", True, "Successfully accessed API docs")
-            else:
-                self.log_test("Backend API Documentation Access", False, f"Failed with status {response.status_code}")
-            
-            # Try to get the OpenAPI JSON schema
-            schema_response = self.session.get(f"{BACKEND_URL.replace('/api', '')}/openapi.json", timeout=10)
-            
-            if schema_response.status_code == 200:
-                schema_data = schema_response.json()
+                master_kits = response.json()
+                self.master_kits = master_kits
                 
-                # Look for MyCollectionUpdate schema
-                schemas = schema_data.get('components', {}).get('schemas', {})
+                self.log_test("Get Master Kits", True,
+                             f"Retrieved {len(master_kits)} master kits")
                 
-                if 'MyCollectionUpdate' in schemas:
-                    update_schema = schemas['MyCollectionUpdate']
-                    print(f"MyCollectionUpdate schema: {json.dumps(update_schema, indent=2)}")
-                    
-                    self.log_test("Backend Model Schema Analysis", True,
-                                 "Found MyCollectionUpdate schema",
-                                 {"schema": update_schema})
-                else:
-                    self.log_test("Backend Model Schema Analysis", False,
-                                 "MyCollectionUpdate schema not found in OpenAPI spec")
-                    
-                    # List available schemas
-                    available_schemas = list(schemas.keys())
-                    print(f"Available schemas: {available_schemas}")
-                    
+                return master_kits
             else:
-                self.log_test("Backend OpenAPI Schema Access", False, 
-                             f"Failed with status {schema_response.status_code}")
+                self.log_test("Get Master Kits", False,
+                             f"Failed with status {response.status_code}", response.text)
+                return []
+                
+        except Exception as e:
+            self.log_test("Get Master Kits", False, f"Exception: {str(e)}")
+            return []
+    
+    def test_approved_contributions_with_images(self):
+        """Test approved contributions that include image uploads"""
+        try:
+            print("\n🔍 Testing Approved Contributions with Images...")
+            
+            # Get approved contributions
+            approved_contributions = self.get_contributions("approved")
+            
+            if not approved_contributions:
+                self.log_test("Approved Contributions Analysis", False,
+                             "No approved contributions found")
+                return False
+            
+            # Filter for contributions with images
+            image_contributions = []
+            for contrib in approved_contributions:
+                if contrib.get("images_count", 0) > 0 or contrib.get("uploaded_images"):
+                    image_contributions.append(contrib)
+            
+            if not image_contributions:
+                self.log_test("Approved Image Contributions", False,
+                             f"No approved contributions with images found out of {len(approved_contributions)} approved contributions")
+                return False
+            
+            self.log_test("Approved Image Contributions", True,
+                         f"Found {len(image_contributions)} approved contributions with images")
+            
+            # Analyze each image contribution
+            for contrib in image_contributions:
+                self.analyze_contribution_approval(contrib)
             
             return True
             
         except Exception as e:
-            self.log_test("Backend Model Validation Analysis", False, f"Exception: {str(e)}")
+            self.log_test("Approved Contributions Analysis", False, f"Exception: {str(e)}")
             return False
     
-    def test_curl_direct_api_calls(self, collection_item):
-        """Test direct API calls using curl-like requests to capture exact errors"""
+    def analyze_contribution_approval(self, contribution):
+        """Analyze a specific contribution's approval process"""
         try:
-            collection_id = collection_item.get('id')
+            contrib_id = contribution.get("id")
+            entity_type = contribution.get("entity_type")
+            entity_id = contribution.get("entity_id")
             
-            print(f"\n🌐 Testing Direct API Calls for Collection ID: {collection_id}")
+            print(f"\n📋 Analyzing Contribution: {contrib_id}")
+            print(f"   Entity Type: {entity_type}")
+            print(f"   Entity ID: {entity_id}")
+            print(f"   Images Count: {contribution.get('images_count', 0)}")
+            print(f"   Status: {contribution.get('status')}")
             
-            # Test with raw requests to capture exact error responses
-            headers = {
-                'Authorization': f'Bearer {self.auth_token}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+            # Check if this is a master kit contribution
+            if entity_type == "master_kit" and entity_id:
+                return self.test_master_kit_image_update(contribution, entity_id)
+            else:
+                self.log_test(f"Contribution Analysis - {contrib_id}", True,
+                             f"Non-master-kit contribution ({entity_type}) - skipping detailed analysis")
+                return True
+                
+        except Exception as e:
+            self.log_test(f"Contribution Analysis - {contrib_id}", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_master_kit_image_update(self, contribution, master_kit_id):
+        """Test if master kit was properly updated with new image"""
+        try:
+            contrib_id = contribution.get("id")
+            
+            print(f"\n🎯 Testing Master Kit Image Update for: {master_kit_id}")
+            
+            # Get the master kit
+            response = self.session.get(f"{BACKEND_URL}/master-kits/{master_kit_id}", timeout=10)
+            
+            if response.status_code != 200:
+                self.log_test(f"Master Kit Retrieval - {master_kit_id}", False,
+                             f"Failed to retrieve master kit: {response.status_code}")
+                return False
+            
+            master_kit = response.json()
+            
+            # Check if master kit has front_photo_url
+            front_photo_url = master_kit.get("front_photo_url")
+            
+            print(f"   Master Kit: {master_kit.get('club')} {master_kit.get('season')}")
+            print(f"   Front Photo URL: {front_photo_url}")
+            
+            if not front_photo_url:
+                self.log_test(f"Master Kit Image Check - {master_kit_id}", False,
+                             "Master kit has no front_photo_url - image update failed")
+                return False
+            
+            # Check if the image file exists
+            image_accessible = self.test_image_accessibility(front_photo_url, master_kit_id)
+            
+            # Check contribution's uploaded images
+            uploaded_images = contribution.get("uploaded_images", [])
+            
+            print(f"   Contribution uploaded images: {len(uploaded_images)}")
+            for img in uploaded_images:
+                print(f"     - Field: {img.get('field_name')}, Path: {img.get('file_path')}")
+            
+            # Test the transfer process
+            transfer_success = self.test_image_transfer_process(contribution, master_kit_id)
+            
+            if image_accessible and transfer_success:
+                self.log_test(f"Master Kit Image Update - {master_kit_id}", True,
+                             "Master kit image update successful")
+                return True
+            else:
+                self.log_test(f"Master Kit Image Update - {master_kit_id}", False,
+                             f"Image update failed - accessible: {image_accessible}, transfer: {transfer_success}")
+                return False
+                
+        except Exception as e:
+            self.log_test(f"Master Kit Image Update - {master_kit_id}", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_accessibility(self, image_url, master_kit_id):
+        """Test if the image is accessible via the API"""
+        try:
+            if not image_url:
+                return False
+            
+            # Try different URL formats
+            test_urls = []
+            
+            # Direct API access
+            if image_url.startswith("uploads/"):
+                test_urls.append(f"{BACKEND_URL}/{image_url}")
+            elif image_url.startswith("image_uploaded_"):
+                # Legacy format - try different extensions and directories
+                test_urls.extend([
+                    f"{BACKEND_URL}/legacy-image/{image_url}",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.jpg",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.png",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_url}.jpeg"
+                ])
+            else:
+                test_urls.append(f"{BACKEND_URL}/uploads/{image_url}")
+            
+            for test_url in test_urls:
+                try:
+                    response = self.session.get(test_url, timeout=5)
+                    if response.status_code == 200:
+                        self.log_test(f"Image Accessibility - {master_kit_id}", True,
+                                     f"Image accessible at: {test_url}")
+                        return True
+                except:
+                    continue
+            
+            self.log_test(f"Image Accessibility - {master_kit_id}", False,
+                         f"Image not accessible at any tested URL: {test_urls}")
+            return False
+            
+        except Exception as e:
+            self.log_test(f"Image Accessibility - {master_kit_id}", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_transfer_process(self, contribution, master_kit_id):
+        """Test the image transfer process from contributions to master_kits directory"""
+        try:
+            contrib_id = contribution.get("id")
+            uploaded_images = contribution.get("uploaded_images", [])
+            
+            if not uploaded_images:
+                self.log_test(f"Image Transfer Process - {contrib_id}", True,
+                             "No uploaded images to transfer")
+                return True
+            
+            print(f"\n🔄 Testing Image Transfer Process...")
+            print(f"   Contribution ID: {contrib_id}")
+            print(f"   Master Kit ID: {master_kit_id}")
+            print(f"   Uploaded Images: {len(uploaded_images)}")
+            
+            # Check if images exist in contributions directory
+            contributions_images_found = 0
+            master_kit_images_found = 0
+            
+            for img_info in uploaded_images:
+                file_path = img_info.get("file_path", "")
+                field_name = img_info.get("field_name", "")
+                
+                print(f"     Checking image: {field_name} -> {file_path}")
+                
+                # Check if source image exists (in contributions directory)
+                source_urls = [
+                    f"{BACKEND_URL}/{file_path}",
+                    f"{BACKEND_URL}/uploads/{file_path}",
+                    f"{BACKEND_URL}/uploads/contributions/{file_path}"
+                ]
+                
+                source_found = False
+                for source_url in source_urls:
+                    try:
+                        response = self.session.get(source_url, timeout=5)
+                        if response.status_code == 200:
+                            contributions_images_found += 1
+                            source_found = True
+                            print(f"       ✅ Source found: {source_url}")
+                            break
+                    except:
+                        continue
+                
+                if not source_found:
+                    print(f"       ❌ Source not found at: {source_urls}")
+                
+                # Check if image was transferred to master_kits directory
+                # This would require knowing the legacy filename format
+                master_kit_urls = [
+                    f"{BACKEND_URL}/uploads/master_kits/{file_path}",
+                    f"{BACKEND_URL}/legacy-image/{file_path.split('/')[-1].split('.')[0]}"
+                ]
+                
+                target_found = False
+                for target_url in master_kit_urls:
+                    try:
+                        response = self.session.get(target_url, timeout=5)
+                        if response.status_code == 200:
+                            master_kit_images_found += 1
+                            target_found = True
+                            print(f"       ✅ Target found: {target_url}")
+                            break
+                    except:
+                        continue
+                
+                if not target_found:
+                    print(f"       ❌ Target not found at: {master_kit_urls}")
+            
+            success = contributions_images_found > 0 and master_kit_images_found > 0
+            
+            self.log_test(f"Image Transfer Process - {contrib_id}", success,
+                         f"Transfer check: {contributions_images_found} source images, {master_kit_images_found} target images",
+                         {
+                             "source_images_found": contributions_images_found,
+                             "target_images_found": master_kit_images_found,
+                             "total_uploaded_images": len(uploaded_images)
+                         })
+            
+            return success
+            
+        except Exception as e:
+            self.log_test(f"Image Transfer Process - {contrib_id}", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_pending_contribution_approval(self):
+        """Test approving a pending contribution with image upload"""
+        try:
+            print("\n🔄 Testing Pending Contribution Approval...")
+            
+            # Get pending contributions
+            pending_contributions = self.get_contributions("pending_review")
+            
+            if not pending_contributions:
+                self.log_test("Pending Contribution Approval", True,
+                             "No pending contributions found - cannot test approval process")
+                return True
+            
+            # Find a pending contribution with images for master_kit
+            target_contribution = None
+            for contrib in pending_contributions:
+                if (contrib.get("entity_type") == "master_kit" and 
+                    contrib.get("images_count", 0) > 0):
+                    target_contribution = contrib
+                    break
+            
+            if not target_contribution:
+                self.log_test("Pending Contribution Approval", True,
+                             "No pending master_kit contributions with images found")
+                return True
+            
+            # Test the approval process
+            return self.test_contribution_approval_flow(target_contribution)
+            
+        except Exception as e:
+            self.log_test("Pending Contribution Approval", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_contribution_approval_flow(self, contribution):
+        """Test the complete approval flow for a contribution"""
+        try:
+            contrib_id = contribution.get("id")
+            entity_id = contribution.get("entity_id")
+            
+            print(f"\n✅ Testing Approval Flow for Contribution: {contrib_id}")
+            print(f"   Entity ID: {entity_id}")
+            print(f"   Entity Type: {contribution.get('entity_type')}")
+            
+            # Get master kit before approval
+            if entity_id:
+                before_response = self.session.get(f"{BACKEND_URL}/master-kits/{entity_id}", timeout=10)
+                before_master_kit = before_response.json() if before_response.status_code == 200 else {}
+                before_photo_url = before_master_kit.get("front_photo_url")
+                
+                print(f"   Before approval - Photo URL: {before_photo_url}")
+            
+            # Approve the contribution
+            approval_data = {
+                "action": "approve",
+                "reason": "Testing image update approval process"
             }
             
-            # Test minimal update that should work
-            minimal_update = {"notes": "Test update"}
-            
-            print(f"Making PUT request to: {BACKEND_URL}/my-collection/{collection_id}")
-            print(f"Headers: {headers}")
-            print(f"Data: {json.dumps(minimal_update)}")
-            
-            response = requests.put(
-                f"{BACKEND_URL}/my-collection/{collection_id}",
-                headers=headers,
-                json=minimal_update,
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/{contrib_id}/moderate",
+                json=approval_data,
                 timeout=10
             )
             
-            print(f"Response Status: {response.status_code}")
-            print(f"Response Headers: {dict(response.headers)}")
-            print(f"Response Content: {response.text}")
+            if response.status_code != 200:
+                self.log_test(f"Contribution Approval - {contrib_id}", False,
+                             f"Approval failed with status {response.status_code}: {response.text}")
+                return False
             
-            if response.status_code == 422:
-                try:
-                    error_json = response.json()
-                    print(f"422 Error JSON: {json.dumps(error_json, indent=2)}")
-                    
-                    # Check if this is a Pydantic validation error
-                    if 'detail' in error_json:
-                        detail = error_json['detail']
-                        if isinstance(detail, list):
-                            print("Pydantic validation errors found:")
-                            for error in detail:
-                                print(f"  - Field: {error.get('loc', 'unknown')}")
-                                print(f"    Message: {error.get('msg', 'unknown')}")
-                                print(f"    Type: {error.get('type', 'unknown')}")
-                                print(f"    Input: {error.get('input', 'unknown')}")
-                        
-                        self.log_test("Direct API Call - 422 Analysis", True,
-                                     "Successfully captured 422 validation error details",
-                                     {"error_details": error_json})
-                    
-                except Exception as json_error:
-                    print(f"Could not parse JSON response: {json_error}")
-                    self.log_test("Direct API Call - 422 Analysis", True,
-                                 f"422 error captured (raw text): {response.text}")
+            approval_result = response.json()
+            print(f"   Approval result: {approval_result}")
             
-            elif response.status_code == 200:
-                self.log_test("Direct API Call - Success", True,
-                             "Update succeeded - no validation error")
+            # Get master kit after approval
+            if entity_id:
+                after_response = self.session.get(f"{BACKEND_URL}/master-kits/{entity_id}", timeout=10)
+                after_master_kit = after_response.json() if after_response.status_code == 200 else {}
+                after_photo_url = after_master_kit.get("front_photo_url")
+                
+                print(f"   After approval - Photo URL: {after_photo_url}")
+                
+                # Check if the photo URL was updated
+                if before_photo_url != after_photo_url:
+                    self.log_test(f"Contribution Approval - {contrib_id}", True,
+                                 f"Master kit photo URL updated: {before_photo_url} -> {after_photo_url}")
+                    
+                    # Test if the new image is accessible
+                    return self.test_image_accessibility(after_photo_url, entity_id)
+                else:
+                    self.log_test(f"Contribution Approval - {contrib_id}", False,
+                                 f"Master kit photo URL not updated (still: {after_photo_url})")
+                    return False
             else:
-                self.log_test("Direct API Call - Other Error", False,
-                             f"Unexpected status {response.status_code}: {response.text}")
-            
-            return True
-            
+                self.log_test(f"Contribution Approval - {contrib_id}", True,
+                             "Contribution approved successfully (no entity_id to verify)")
+                return True
+                
         except Exception as e:
-            self.log_test("Direct API Call Testing", False, f"Exception: {str(e)}")
+            self.log_test(f"Contribution Approval - {contrib_id}", False, f"Exception: {str(e)}")
             return False
     
+    def test_moderation_stats(self):
+        """Test moderation statistics endpoint"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats", timeout=10)
+            
+            if response.status_code == 200:
+                stats = response.json()
+                self.log_test("Moderation Stats", True,
+                             f"Stats: {stats.get('pending')} pending, {stats.get('approved')} approved, {stats.get('rejected')} rejected")
+                return stats
+            else:
+                self.log_test("Moderation Stats", False,
+                             f"Failed with status {response.status_code}")
+                return None
+                
+        except Exception as e:
+            self.log_test("Moderation Stats", False, f"Exception: {str(e)}")
+            return None
+    
     def run_all_tests(self):
-        """Run comprehensive Edit Kit Details functionality tests"""
-        print("🧪 Starting TopKit Edit Kit Details Testing")
-        print("Testing the Edit Kit Details functionality that's failing with 422 Unprocessable Entity errors")
+        """Run comprehensive contribution approval system tests"""
+        print("🧪 Starting TopKit Contribution Approval System Testing")
+        print("Testing the contribution approval system for image updates on master kits")
+        print("FOCUS: Identifying why new photos are not showing up after approval")
         print("=" * 80)
         
         # Step 1: Authentication
@@ -408,41 +501,24 @@ class ContributionApprovalTester:
         
         print()
         
-        # Step 2: Get collection items
-        print("📋 Retrieving My Collection...")
-        collection_data = self.get_my_collection()
+        # Step 2: Get moderation stats
+        print("📊 Getting Moderation Statistics...")
+        stats = self.test_moderation_stats()
         print()
         
-        if not collection_data:
-            print("❌ No collection data retrieved. Cannot proceed with tests.")
-            return False
-        
-        # Step 3: Test getting the specific failing collection item
-        print(f"🎯 Testing Specific Collection Item: {FAILING_COLLECTION_ID}")
-        target_item = self.test_get_specific_collection_item(FAILING_COLLECTION_ID)
+        # Step 3: Get master kits for reference
+        print("🎯 Getting Master Kits...")
+        master_kits = self.get_master_kits()
         print()
         
-        if not target_item:
-            print("❌ Could not find target collection item. Using first available item.")
-            target_item = collection_data[0] if collection_data else None
-        
-        if not target_item:
-            print("❌ No collection items available for testing.")
-            return False
-        
-        # Step 4: Test backend model validation analysis
-        print("🔍 Analyzing Backend Model Validation...")
-        self.test_backend_model_validation()
+        # Step 4: Test approved contributions with images
+        print("✅ Testing Approved Contributions with Images...")
+        self.test_approved_contributions_with_images()
         print()
         
-        # Step 5: Test direct API calls to capture exact errors
-        print("🌐 Testing Direct API Calls...")
-        self.test_curl_direct_api_calls(target_item)
-        print()
-        
-        # Step 6: Test edit kit details with various scenarios
-        print("✏️ Testing Edit Kit Details Validation Errors...")
-        self.test_edit_kit_details_validation_error(target_item)
+        # Step 5: Test pending contribution approval (if any)
+        print("🔄 Testing Pending Contribution Approval...")
+        self.test_pending_contribution_approval()
         print()
         
         # Summary
@@ -452,7 +528,7 @@ class ContributionApprovalTester:
     
     def print_summary(self):
         """Print comprehensive test summary"""
-        print("📊 EDIT KIT DETAILS TEST SUMMARY")
+        print("📊 CONTRIBUTION APPROVAL SYSTEM TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -466,47 +542,61 @@ class ContributionApprovalTester:
         
         # Categorize results
         auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
-        collection_tests = [r for r in self.test_results if 'Collection' in r['test']]
-        edit_tests = [r for r in self.test_results if 'Edit Kit Details' in r['test']]
-        api_tests = [r for r in self.test_results if 'API Call' in r['test']]
-        validation_tests = [r for r in self.test_results if 'Validation' in r['test'] or 'Model' in r['test']]
+        contribution_tests = [r for r in self.test_results if 'Contribution' in r['test']]
+        image_tests = [r for r in self.test_results if 'Image' in r['test']]
+        approval_tests = [r for r in self.test_results if 'Approval' in r['test']]
         
         print(f"\nTest Categories:")
         print(f"  Authentication: {len([r for r in auth_tests if r['success']])}/{len(auth_tests)} ✅")
-        print(f"  Collection Access: {len([r for r in collection_tests if r['success']])}/{len(collection_tests)} ✅")
-        print(f"  Edit Kit Details: {len([r for r in edit_tests if r['success']])}/{len(edit_tests)} ✅")
-        print(f"  Direct API Calls: {len([r for r in api_tests if r['success']])}/{len(api_tests)} ✅")
-        print(f"  Validation Analysis: {len([r for r in validation_tests if r['success']])}/{len(validation_tests)} ✅")
+        print(f"  Contributions: {len([r for r in contribution_tests if r['success']])}/{len(contribution_tests)} ✅")
+        print(f"  Image Processing: {len([r for r in image_tests if r['success']])}/{len(image_tests)} ✅")
+        print(f"  Approval Process: {len([r for r in approval_tests if r['success']])}/{len(approval_tests)} ✅")
         
-        # Show 422 errors specifically
-        validation_errors = [r for r in self.test_results if '422' in r['message']]
-        if validation_errors:
-            print(f"\n🚨 422 VALIDATION ERRORS FOUND: {len(validation_errors)}")
-            for error in validation_errors:
-                print(f"  • {error['test']}: {error['message']}")
-                if error.get('details'):
-                    error_details = error['details']
-                    if isinstance(error_details, dict) and 'error_details' in error_details:
-                        print(f"    Details: {error_details['error_details']}")
+        # Show critical failures
+        critical_failures = [r for r in self.test_results if not r['success'] and 
+                           ('Image Update' in r['test'] or 'Transfer' in r['test'] or 'Approval' in r['test'])]
+        
+        if critical_failures:
+            print(f"\n🚨 CRITICAL ISSUES IDENTIFIED: {len(critical_failures)}")
+            for failure in critical_failures:
+                print(f"  • {failure['test']}: {failure['message']}")
+                if failure.get('details'):
+                    print(f"    Details: {failure['details']}")
         
         if failed_tests > 0:
-            print("\n❌ FAILED TESTS:")
+            print("\n❌ ALL FAILED TESTS:")
             for result in self.test_results:
-                if not result['success'] and '422' not in result['message']:
+                if not result['success']:
                     print(f"  • {result['test']}: {result['message']}")
         
-        if validation_errors:
-            print("\n🎯 VALIDATION ERROR ANALYSIS COMPLETE!")
-            print("The 422 Unprocessable Entity errors have been captured and analyzed.")
+        # Specific findings for the bug report
+        image_update_failures = [r for r in self.test_results if not r['success'] and 'Image Update' in r['test']]
+        transfer_failures = [r for r in self.test_results if not r['success'] and 'Transfer' in r['test']]
+        accessibility_failures = [r for r in self.test_results if not r['success'] and 'Accessibility' in r['test']]
+        
+        print(f"\n🎯 BUG ANALYSIS RESULTS:")
+        print(f"  Image Update Failures: {len(image_update_failures)}")
+        print(f"  Image Transfer Failures: {len(transfer_failures)}")
+        print(f"  Image Accessibility Failures: {len(accessibility_failures)}")
+        
+        if image_update_failures or transfer_failures or accessibility_failures:
+            print("\n🔍 ROOT CAUSE ANALYSIS:")
+            print("  The contribution approval system has issues with:")
+            if transfer_failures:
+                print("  - Image transfer from contributions/ to master_kits/ directory")
+            if accessibility_failures:
+                print("  - Image accessibility after transfer")
+            if image_update_failures:
+                print("  - Master kit front_photo_url field updates")
         else:
-            print("\n✅ NO VALIDATION ERRORS FOUND!")
-            print("Edit Kit Details functionality appears to be working correctly.")
+            print("\n✅ NO CRITICAL ISSUES FOUND!")
+            print("  The contribution approval system appears to be working correctly.")
         
         print("\n" + "=" * 80)
 
 def main():
     """Main test execution"""
-    tester = EditKitDetailsTester()
+    tester = ContributionApprovalTester()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
