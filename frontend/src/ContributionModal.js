@@ -235,11 +235,44 @@ const ContributionModal = ({
                   masterKits={masterKits}
                   referenceKits={referenceKits}
                   players={players}
-                  onImageUpload={(event, fieldKey) => {
+                  onImageUpload={async (event, fieldKey) => {
                     // Handle image upload for edit forms
                     const files = Array.from(event.target.files);
-                    if (files.length > 0) {
-                      setFormData(prev => ({ ...prev, [fieldKey]: `image_uploaded_${Date.now()}` }));
+                    if (files.length > 0 && contributionId) {
+                      const file = files[0];
+                      
+                      try {
+                        // Upload the image to the contribution
+                        const uploadFormData = new FormData();
+                        uploadFormData.append('file', file);
+                        uploadFormData.append('is_primary', 'true');
+                        uploadFormData.append('caption', fieldKey);
+
+                        const uploadResponse = await fetch(
+                          `${API}/api/contributions-v2/${contributionId}/images`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: uploadFormData
+                          }
+                        );
+
+                        if (uploadResponse.ok) {
+                          const uploadResult = await uploadResponse.json();
+                          console.log('✅ Image uploaded successfully:', uploadResult);
+                          
+                          // Update form data with the uploaded image reference
+                          setFormData(prev => ({ ...prev, [fieldKey]: `image_uploaded_${Date.now()}` }));
+                        } else {
+                          console.error('❌ Image upload failed:', uploadResponse.status, await uploadResponse.text());
+                          alert('Failed to upload image. Please try again.');
+                        }
+                      } catch (error) {
+                        console.error('❌ Image upload error:', error);
+                        alert('Error uploading image. Please try again.');
+                      }
                     }
                   }}
                   API={API}
