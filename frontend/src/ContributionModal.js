@@ -91,7 +91,7 @@ const ContributionModal = ({
         }
       }
     }
-  }, [formData, originalData, imageFiles, entity, title]);
+  }, [formData, originalData, entity, title]);
 
   // Image management functions removed - now handled by UnifiedFieldRenderer
 
