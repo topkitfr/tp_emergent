@@ -598,7 +598,12 @@ class ContributionApprovalTester:
         self.test_approved_contributions_with_images()
         print()
         
-        # Step 5: Test pending contribution approval (if any)
+        # Step 5: Test specific problematic images from logs
+        print("🚨 Testing Problematic Images from Logs...")
+        self.test_problematic_images_from_logs()
+        print()
+        
+        # Step 6: Test pending contribution approval (if any)
         print("🔄 Testing Pending Contribution Approval...")
         self.test_pending_contribution_approval()
         print()
