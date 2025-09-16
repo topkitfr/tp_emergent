@@ -13,7 +13,7 @@ from datetime import datetime
 BACKEND_URL = "https://topkit-preview.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
-    "password": "password123"
+    "password": "TopKitSecure789#"
 }
 
 # Specific collection item ID from the review request
