@@ -237,14 +237,19 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
       
       // Convert purchase_date to ISO string if provided (YYYY-MM-DD format to ISO datetime)
       if (editFormData.purchase_date && editFormData.purchase_date !== '') {
+        console.log('🗓️ Processing purchase_date:', editFormData.purchase_date);
         try {
           // Create a date object from the YYYY-MM-DD string and convert to ISO string
           const dateObj = new Date(editFormData.purchase_date + 'T00:00:00.000Z');
           processedFormData.purchase_date = dateObj.toISOString();
+          console.log('✅ Converted purchase_date to ISO:', processedFormData.purchase_date);
         } catch (error) {
+          console.error('❌ Error converting purchase_date:', error);
           alert('Error: Purchase date must be a valid date');
           return;
         }
+      } else {
+        console.log('📝 Purchase date is empty, will be omitted from request');
       }
 
       const response = await fetch(`${API}/api/my-collection/${editingItem.id}`, {
