@@ -19,42 +19,6 @@ TEST_CREDENTIALS = {
 # Specific collection item ID from the review request
 FAILING_COLLECTION_ID = "892cd95b-1d6f-4ae2-a11a-e2b0d1f130e6"
 
-# Test kit IDs from the review request - PSG collection items
-PSG_2015_KIT_ID = "802f4f1d-7b3c-47fe-969f-5d45ed615257"
-PSG_2023_KIT_ID = "1fe4787a-a0c0-4bb3-959d-931857745a2b"
-
-# New coefficient values to test (from review request)
-NEW_COEFFICIENTS = {
-    "condition": {
-        "club_stock": 1.2,
-        "match_prepared": 0.8,
-        "match_worn": 1.5,
-        "training": 0.2
-    },
-    "physical_state": {
-        "new_with_tags": 0.3,
-        "very_good_condition": 0.15,
-        "used": 0.0,
-        "damaged": -0.25,
-        "needs_restoration": -0.4
-    },
-    "flocking": {
-        "name_only": 0.15,
-        "number_only": 0.1,
-        "full_flocking": 0.2
-    },
-    "additional_features": {
-        "patches": 0.15,
-        "signed": 1.0
-    },
-    "age_per_year": 0.03,
-    "age_max": 0.6
-}
-
-# Expected calculation example from review request:
-# PSG 2015 authentic with full flocking, patches, match worn, signed, 10 years old
-# Expected: €140 × (1 + 0.2 flocking + 0.15 patches + 1.5 match_worn + 1.0 signed + 0.6 age) = €140 × 4.45 = €623
-
 class EditKitDetailsTester:
     def __init__(self):
         self.session = requests.Session()
