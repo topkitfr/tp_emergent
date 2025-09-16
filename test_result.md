@@ -116,7 +116,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Contribution Image Update Bug - Master Kit Photo Not Displaying After Approval"
+    - "Fixed Image Upload System for 'Improve Team Profile' Form"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
