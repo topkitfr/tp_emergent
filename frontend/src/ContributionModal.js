@@ -23,17 +23,7 @@ const ContributionModal = ({
   const [loading, setLoading] = useState(false);
   const [changes, setChanges] = useState([]);
   
-  // Image management states
-  const [imageFiles, setImageFiles] = useState({
-    logo: null,
-    primary_photo: null,
-    secondary_photos: []
-  });
-  const [imagePreviews, setImagePreviews] = useState({
-    logo: '',
-    primary_photo: '',
-    secondary_photos: []
-  });
+  // Image management is now handled by UnifiedFieldRenderer
   
   // State for new field types
   const [newColor, setNewColor] = useState('');
