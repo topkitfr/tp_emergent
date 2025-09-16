@@ -435,6 +435,55 @@ class ContributionApprovalTester:
             self.log_test("Pending Contribution Approval", False, f"Exception: {str(e)}")
             return False
     
+    def test_non_master_kit_images(self, contribution):
+        """Test image accessibility for non-master-kit contributions"""
+        try:
+            contrib_id = contribution.get("id")
+            entity_type = contribution.get("entity_type")
+            
+            uploaded_images = contribution.get("uploaded_images", [])
+            
+            if not uploaded_images:
+                self.log_test(f"Non-Master-Kit Images - {contrib_id}", True,
+                             "No uploaded images to test")
+                return True
+            
+            accessible_images = 0
+            total_images = len(uploaded_images)
+            
+            for img_info in uploaded_images:
+                file_path = img_info.get("file_path", "")
+                field_name = img_info.get("field_name", "")
+                
+                # Test accessibility
+                test_urls = [
+                    f"{BACKEND_URL}/{file_path}",
+                    f"{BACKEND_URL}/uploads/{file_path}",
+                    f"{BACKEND_URL}/uploads/{entity_type}s/{file_path}"
+                ]
+                
+                for test_url in test_urls:
+                    try:
+                        response = self.session.get(test_url, timeout=5)
+                        if response.status_code == 200:
+                            accessible_images += 1
+                            print(f"     ✅ Image accessible: {test_url}")
+                            break
+                    except:
+                        continue
+                else:
+                    print(f"     ❌ Image not accessible: {field_name} -> {file_path}")
+            
+            success = accessible_images == total_images
+            self.log_test(f"Non-Master-Kit Images - {contrib_id}", success,
+                         f"Image accessibility: {accessible_images}/{total_images} images accessible")
+            
+            return success
+            
+        except Exception as e:
+            self.log_test(f"Non-Master-Kit Images - {contrib_id}", False, f"Exception: {str(e)}")
+            return False
+
     def test_contribution_approval_flow(self, contribution):
         """Test the complete approval flow for a contribution"""
         try:
