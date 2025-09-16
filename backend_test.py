@@ -484,6 +484,60 @@ class ContributionApprovalTester:
             self.log_test(f"Non-Master-Kit Images - {contrib_id}", False, f"Exception: {str(e)}")
             return False
 
+    def test_problematic_images_from_logs(self):
+        """Test specific problematic images identified from backend logs"""
+        try:
+            print("\n🚨 Testing Problematic Images from Backend Logs...")
+            
+            # Images that showed 404 errors in the logs
+            problematic_images = [
+                "image_uploaded_1758016021592",
+                "image_uploaded_1758015522242", 
+                "image_uploaded_nike_logo"
+            ]
+            
+            for image_id in problematic_images:
+                print(f"\n   Testing image: {image_id}")
+                
+                # Test different URL patterns
+                test_urls = [
+                    f"{BACKEND_URL}/legacy-image/{image_id}",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.jpg",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.png",
+                    f"{BACKEND_URL}/uploads/master_kits/{image_id}.jpeg",
+                    f"{BACKEND_URL}/uploads/teams/{image_id}.jpg",
+                    f"{BACKEND_URL}/uploads/teams/{image_id}.png",
+                    f"{BACKEND_URL}/uploads/brands/{image_id}.jpg",
+                    f"{BACKEND_URL}/uploads/brands/{image_id}.png",
+                    f"{BACKEND_URL}/uploads/contributions/{image_id}.jpg",
+                    f"{BACKEND_URL}/uploads/contributions/{image_id}.png"
+                ]
+                
+                found = False
+                for test_url in test_urls:
+                    try:
+                        response = self.session.get(test_url, timeout=5)
+                        if response.status_code == 200:
+                            print(f"     ✅ Found at: {test_url}")
+                            found = True
+                            break
+                    except:
+                        continue
+                
+                if not found:
+                    print(f"     ❌ Not found at any location")
+                    self.log_test(f"Problematic Image - {image_id}", False,
+                                 f"Image not accessible at any tested location")
+                else:
+                    self.log_test(f"Problematic Image - {image_id}", True,
+                                 f"Image found and accessible")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Problematic Images Analysis", False, f"Exception: {str(e)}")
+            return False
+
     def test_contribution_approval_flow(self, contribution):
         """Test the complete approval flow for a contribution"""
         try:
