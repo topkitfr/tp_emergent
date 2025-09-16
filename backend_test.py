@@ -55,7 +55,7 @@ NEW_COEFFICIENTS = {
 # PSG 2015 authentic with full flocking, patches, match worn, signed, 10 years old
 # Expected: €140 × (1 + 0.2 flocking + 0.15 patches + 1.5 match_worn + 1.0 signed + 0.6 age) = €140 × 4.45 = €623
 
-class TopKitPricingTester:
+class EditKitDetailsTester:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
