@@ -158,6 +158,18 @@ backend:
         - agent: "testing"
         - comment: "🎉 STANDARDIZED FORM STRUCTURE FIX TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing of contribution forms shows: ✅ NEW CONTRIBUTION FORM (100%): Successfully accessed /contributions-v2 page, found 'New Contribution' button, form opens with standardized structure using UnifiedFieldRenderer. ✅ CONSISTENT IMAGE FIELDS (100%): All entity types have consistent image field structure - Team: 'Team Logo' + 'Additional Photos', Brand: 'Brand Logo' + 'Additional Photos', Player: 'Player Photo' + 'Additional Photos', Competition: 'Competition Logo' + 'Additional Photos'. ✅ NO DUPLICATE IMAGE SECTIONS (100%): No duplicate image upload areas detected, dedicated 'Images' section present, clear separation of image fields. ✅ UNIFIED FIELD RENDERER (100%): All entity types use UnifiedFieldRenderer ensuring consistency, consistent field labeling across entity types, proper form structure maintained. ✅ USER EXPERIENCE IMPROVED (100%): Users will no longer be confused about which image field to use, both New Contribution and Improve Profile forms have identical image structures, professional and consistent appearance across all forms. CONCLUSION: The standardized form structure fix is working perfectly - both forms now have consistent image sections with clear labeling, eliminating user confusion about image upload locations."
 
+  - task: "Contribution Image Update Bug - Master Kit Photo Not Displaying After Approval"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL BUG IDENTIFIED - CONTRIBUTION IMAGE APPROVAL SYSTEM FAILURE! Comprehensive testing of contribution approval system reveals: ❌ ROOT CAUSE IDENTIFIED (100%): The `transfer_contribution_images_to_entity` function is not working correctly for master kit image updates. When users upload new jersey photos through contributions, the system fails to properly track and transfer the images. ❌ SPECIFIC ISSUES FOUND: 1) Contributions have `images_count: 0` even when images are uploaded, 2) No `uploaded_images` array in contribution documents - image info only stored in `data.front_photo_url`, 3) `transfer_contribution_images_to_entity` function expects `uploaded_images` array but it doesn't exist, 4) Master kit `front_photo_url` field gets updated with legacy filename (e.g., 'image_uploaded_1758015522242') but actual image files are not accessible. ❌ TESTING RESULTS: Found 4 master kit contributions, 3 with image update failures. Images like 'image_uploaded_1758015522242', 'image_uploaded_1758016021592' are not accessible via API. Backend logs show 'No images found for contribution' messages. ❌ USER IMPACT: After contribution approval, new jersey photos do not display on PGA jersey detail page, kit area page, or homepage because image files are not properly transferred from contributions/ to master_kits/ directory. CONCLUSION: The contribution approval system has a critical flaw in the image upload and transfer process for master kits, causing user-uploaded jersey photos to disappear after approval."
+
 agent_communication:
     - agent: "main"
     - message: "Deployment infrastructure issue resolved - Production 500 errors fixed with backend environment variable configuration, Pydantic validation fixes, and frontend null reference handling"
