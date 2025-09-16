@@ -1844,15 +1844,30 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
         
         for field_name, source_path in contribution_images:
             try:
-                # Construct full source path
+                # Construct full source path - try multiple locations
+                possible_paths = []
+                
                 if source_path.startswith("/"):
-                    full_source_path = source_path
+                    possible_paths.append(source_path)
                 elif source_path.startswith("uploads/"):
-                    full_source_path = f"/app/backend/{source_path}"
+                    possible_paths.append(f"/app/backend/{source_path}")
                 elif source_path.startswith("contributions/"):
-                    full_source_path = f"/app/backend/uploads/{source_path}"
+                    possible_paths.append(f"/app/backend/uploads/{source_path}")
                 else:
-                    full_source_path = f"/app/backend/uploads/contributions/{source_path}"
+                    # Try multiple possible locations for the image file
+                    possible_paths.extend([
+                        f"/app/backend/uploads/contributions/{source_path}",
+                        f"/app/backend/uploads/contributions/{source_path}.png",
+                        f"/app/backend/uploads/contributions/{source_path}.jpg",
+                        f"/app/backend/uploads/contributions/{source_path}.jpeg"
+                    ])
+                
+                # Find the first existing file
+                full_source_path = None
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        full_source_path = path
+                        break
                 
                 if not os.path.exists(full_source_path):
                     logger.warning(f"Source image file not found: {full_source_path}")
