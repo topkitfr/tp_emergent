@@ -14,7 +14,7 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: "Contribution Image Update Bug - Uploaded jersey photos not displaying after approval on PGA jersey detail, kit area page, or homepage"
+## user_problem_statement: "Master Kit Image Display Bug - Approved jersey photos not appearing on Kit Area page due to URL construction issues"
 
 frontend:
   - task: "Edit Kit Details Form Error Handling Bug Fix"
