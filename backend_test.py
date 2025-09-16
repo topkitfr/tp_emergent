@@ -22,7 +22,7 @@ TEST_CREDENTIALS = {
 # Test focus: Contribution approval system for image updates
 FOCUS_ENTITY_TYPE = "master_kit"
 
-class EditKitDetailsTester:
+class ContributionApprovalTester:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
