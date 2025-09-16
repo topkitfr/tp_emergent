@@ -1014,7 +1014,7 @@ async def login(login_data: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         # Verify password using bcrypt
-        if not pwd_context.verify(login_data.password, user.get("password")):
+        if not pwd_context.verify(login_data.password, user.get("password_hash")):
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         # Generate JWT token
