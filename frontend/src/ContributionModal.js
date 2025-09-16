@@ -172,45 +172,7 @@ const ContributionModal = ({
         const result = await response.json();
         console.log('Contribution submitted successfully:', result);
         
-        // Upload images if any exist
-        const allImages = [];
-        if (imageFiles.logo) {
-          // Map fieldKey based on entity type
-          const fieldKey = entityType === 'master_kit' ? 'front_photo' : 'logo';
-          allImages.push({ file: imageFiles.logo, fieldKey });
-        }
-        if (imageFiles.primary_photo) allImages.push({ file: imageFiles.primary_photo, fieldKey: 'primary_photo' });
-        if (imageFiles.secondary_photos.length > 0) {
-          imageFiles.secondary_photos.forEach((file, index) => {
-            allImages.push({ file, fieldKey: `secondary_photo_${index}` });
-          });
-        }
-
-        // Upload images if any
-        if (allImages.length > 0) {
-          for (let i = 0; i < allImages.length; i++) {
-            const { file, fieldKey } = allImages[i];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('is_primary', i === 0 ? 'true' : 'false');
-            formData.append('caption', fieldKey || '');
-
-            const imageResponse = await fetch(
-              `${API}/api/contributions-v2/${result.id}/images`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: formData
-              }
-            );
-
-            if (!imageResponse.ok) {
-              console.warn(`Failed to upload image ${i + 1}`);
-            }
-          }
-        }
+        // Image uploads are now handled by UnifiedFieldRenderer
         
         alert('Contribution submitted successfully! It will be reviewed by the community.');
         
