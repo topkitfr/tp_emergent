@@ -56,8 +56,7 @@ const ContributionModal = ({
       setChanges([]);
       setNewColor('');
       setNewName('');
-      
-      // Image states no longer needed - handled by UnifiedFieldRenderer
+      setPendingImages([]); // Clear pending images when modal opens/closes
     }
   }, [isOpen, entity, entityType]);
 
