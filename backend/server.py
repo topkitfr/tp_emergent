@@ -209,51 +209,7 @@ async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fie
         logger.error(f"Error in cascading updates for {entity_type} entity {entity_id}: {str(e)}")
         # Don't raise the exception to avoid breaking the main update operation
 
-async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fields: dict):
-    """Trigger cascading updates for related entities when an entity is updated"""
-    try:
-        logger.info(f"Triggering cascading updates for {entity_type} entity {entity_id}")
-        
-        # This is a placeholder for cascading update logic
-        # In a real implementation, this would update related entities
-        # For example, if a team name changes, update all master kits that reference it
-        
-        if entity_type == "team":
-            # Update master kits that reference this team
-            if "name" in update_fields:
-                await db.master_kits.update_many(
-                    {"club_id": entity_id},
-                    {"$set": {"club": update_fields["name"]}}
-                )
-                logger.info(f"Updated master kits referencing team {entity_id}")
-                
-        elif entity_type == "brand":
-            # Update master kits that reference this brand
-            if "name" in update_fields:
-                await db.master_kits.update_many(
-                    {"brand_id": entity_id},
-                    {"$set": {"brand": update_fields["name"]}}
-                )
-                await db.master_kits.update_many(
-                    {"main_sponsor_id": entity_id},
-                    {"$set": {"main_sponsor": update_fields["name"]}}
-                )
-                logger.info(f"Updated master kits referencing brand {entity_id}")
-                
-        elif entity_type == "competition":
-            # Update master kits that reference this competition
-            if "competition_name" in update_fields:
-                await db.master_kits.update_many(
-                    {"competition_id": entity_id},
-                    {"$set": {"competition": update_fields["competition_name"]}}
-                )
-                logger.info(f"Updated master kits referencing competition {entity_id}")
-        
-        logger.info(f"Completed cascading updates for {entity_type} entity {entity_id}")
-        
-    except Exception as e:
-        logger.error(f"Error in cascading updates for {entity_type} entity {entity_id}: {str(e)}")
-        # Don't raise the exception to avoid breaking the main update operation
+# Duplicate function removed - using the first implementation above
 
 # ================================
 # BASIC ENDPOINTS FOR FRONTEND COMPATIBILITY
