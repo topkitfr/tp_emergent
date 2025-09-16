@@ -22,6 +22,7 @@ const ContributionModal = ({
   const [sourceUrls, setSourceUrls] = useState(['']);
   const [loading, setLoading] = useState(false);
   const [changes, setChanges] = useState([]);
+  const [pendingImages, setPendingImages] = useState([]); // Store images to upload after contribution creation
   
   // Image management is now handled by UnifiedFieldRenderer
   
