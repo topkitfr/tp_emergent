@@ -184,35 +184,52 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     }
 
     try {
-      // Prepare form data with proper type conversions
-      const processedFormData = { ...editFormData };
+      // Prepare form data with proper type conversions and empty field handling
+      const processedFormData = {};
+      
+      // Helper function to add non-empty values to processed data
+      const addFieldIfNotEmpty = (fieldName, value) => {
+        if (value !== null && value !== undefined && value !== '') {
+          processedFormData[fieldName] = value;
+        }
+      };
+      
+      // Process text fields - only add if not empty
+      addFieldIfNotEmpty('name_printing', editFormData.name_printing);
+      addFieldIfNotEmpty('number_printing', editFormData.number_printing);
+      addFieldIfNotEmpty('patches', editFormData.patches);
+      addFieldIfNotEmpty('signed_by', editFormData.signed_by);
+      addFieldIfNotEmpty('condition_other', editFormData.condition_other);
+      addFieldIfNotEmpty('size', editFormData.size);
+      addFieldIfNotEmpty('personal_notes', editFormData.personal_notes);
+      
+      // Process enum fields - only add if not empty (to avoid sending empty strings to backend)
+      addFieldIfNotEmpty('condition', editFormData.condition);
+      addFieldIfNotEmpty('physical_state', editFormData.physical_state);
+      
+      // Process boolean field - always include (backend expects boolean)
+      processedFormData.is_signed = editFormData.is_signed || false;
       
       // Convert purchase_price to float if provided
-      if (processedFormData.purchase_price && processedFormData.purchase_price !== '') {
-        const priceValue = parseFloat(processedFormData.purchase_price);
+      if (editFormData.purchase_price && editFormData.purchase_price !== '') {
+        const priceValue = parseFloat(editFormData.purchase_price);
         if (isNaN(priceValue)) {
           alert('Error: Purchase price must be a valid number');
           return;
         }
         processedFormData.purchase_price = priceValue;
-      } else {
-        // Remove empty purchase_price to avoid validation errors
-        delete processedFormData.purchase_price;
       }
       
       // Convert purchase_date to ISO string if provided (YYYY-MM-DD format to ISO datetime)
-      if (processedFormData.purchase_date && processedFormData.purchase_date !== '') {
+      if (editFormData.purchase_date && editFormData.purchase_date !== '') {
         try {
           // Create a date object from the YYYY-MM-DD string and convert to ISO string
-          const dateObj = new Date(processedFormData.purchase_date + 'T00:00:00.000Z');
+          const dateObj = new Date(editFormData.purchase_date + 'T00:00:00.000Z');
           processedFormData.purchase_date = dateObj.toISOString();
         } catch (error) {
           alert('Error: Purchase date must be a valid date');
           return;
         }
-      } else {
-        // Remove empty purchase_date to avoid validation errors
-        delete processedFormData.purchase_date;
       }
 
       const response = await fetch(`${API}/api/my-collection/${editingItem.id}`, {
