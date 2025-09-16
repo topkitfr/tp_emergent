@@ -196,14 +196,26 @@ class ContributionApprovalTester:
             print(f"   Entity ID: {entity_id}")
             print(f"   Images Count: {contribution.get('images_count', 0)}")
             print(f"   Status: {contribution.get('status')}")
+            print(f"   Data: {contribution.get('data', {})}")
+            print(f"   Uploaded Images: {contribution.get('uploaded_images', [])}")
             
             # Check if this is a master kit contribution
-            if entity_type == "master_kit" and entity_id:
-                return self.test_master_kit_image_update(contribution, entity_id)
+            if entity_type == "master_kit":
+                if entity_id:
+                    return self.test_master_kit_image_update(contribution, entity_id)
+                else:
+                    self.log_test(f"Contribution Analysis - {contrib_id}", False,
+                                 f"Master kit contribution without entity_id")
+                    return False
             else:
-                self.log_test(f"Contribution Analysis - {contrib_id}", True,
-                             f"Non-master-kit contribution ({entity_type}) - skipping detailed analysis")
-                return True
+                # Still analyze non-master-kit contributions for completeness
+                if contribution.get('images_count', 0) > 0:
+                    print(f"   Non-master-kit contribution with images - checking image accessibility")
+                    return self.test_non_master_kit_images(contribution)
+                else:
+                    self.log_test(f"Contribution Analysis - {contrib_id}", True,
+                                 f"Non-master-kit contribution ({entity_type}) without images")
+                    return True
                 
         except Exception as e:
             self.log_test(f"Contribution Analysis - {contrib_id}", False, f"Exception: {str(e)}")
