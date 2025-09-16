@@ -171,45 +171,124 @@ class EditKitDetailsTester:
             self.log_test("My Collection Retrieval", False, f"Exception: {str(e)}")
             return []
     
-    def test_detailed_collection_price_estimation(self, collection_item):
-        """Test detailed price estimation with new coefficients"""
+    def test_edit_kit_details_validation_error(self, collection_item):
+        """Test editing kit details to identify the 422 validation error"""
         try:
             collection_id = collection_item.get('id')
             master_kit = collection_item.get('master_kit', {})
             kit_name = f"{master_kit.get('club', 'Unknown')} {master_kit.get('season', 'Unknown')}"
             
-            response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", timeout=10)
+            print(f"\n🔍 Testing Edit Kit Details for: {kit_name} (ID: {collection_id})")
+            print(f"Current item data: {json.dumps(collection_item, indent=2, default=str)}")
             
-            if response.status_code == 200:
-                price_data = response.json()
-                estimated_price = price_data.get('estimated_price', 0)
-                base_price = price_data.get('base_price', 0)
-                coefficients_applied = price_data.get('calculation_details', {}).get('coefficients_applied', [])
+            # Test with various update scenarios to identify validation issues
+            test_scenarios = [
+                {
+                    "name": "Basic Update - Name and Number",
+                    "data": {
+                        "name_printing": "Messi",
+                        "number_printing": "10"
+                    }
+                },
+                {
+                    "name": "Condition Update",
+                    "data": {
+                        "condition": "match_worn",
+                        "physical_state": "very_good_condition"
+                    }
+                },
+                {
+                    "name": "Full Update with All Fields",
+                    "data": {
+                        "name_printing": "Mbappé",
+                        "number_printing": "7",
+                        "condition": "match_prepared",
+                        "physical_state": "new_with_tags",
+                        "patches": "Champions League",
+                        "is_signed": True,
+                        "signed_by": "Kylian Mbappé",
+                        "purchase_price": 150.0,
+                        "purchase_date": "2023-01-15",
+                        "notes": "Excellent condition jersey"
+                    }
+                },
+                {
+                    "name": "Minimal Update - Single Field",
+                    "data": {
+                        "notes": "Updated notes"
+                    }
+                }
+            ]
+            
+            for scenario in test_scenarios:
+                print(f"\n📝 Testing scenario: {scenario['name']}")
+                print(f"Update data: {json.dumps(scenario['data'], indent=2)}")
                 
-                # Verify coefficient breakdown is present and detailed
-                has_detailed_breakdown = len(coefficients_applied) > 0
+                response = self.session.put(
+                    f"{BACKEND_URL}/my-collection/{collection_id}",
+                    json=scenario['data'],
+                    timeout=10
+                )
                 
-                self.log_test(f"Detailed Price Estimation ({kit_name})", has_detailed_breakdown,
-                             f"Price: €{estimated_price}, Base: €{base_price}, Coefficients: {len(coefficients_applied)}",
-                             {
-                                 "estimated_price": estimated_price,
-                                 "coefficients": coefficients_applied,
-                                 "formula": price_data.get('calculation_details', {}).get('formula', '')
-                             })
+                print(f"Response status: {response.status_code}")
+                print(f"Response headers: {dict(response.headers)}")
                 
-                # Test specific coefficient values if present
-                self.verify_coefficient_values(coefficients_applied, collection_item)
-                
-                return price_data
-                
-            else:
-                self.log_test(f"Detailed Price Estimation ({kit_name})", False,
-                             f"Failed with status {response.status_code}", response.text)
-                return None
+                if response.status_code == 422:
+                    # This is the error we're looking for!
+                    try:
+                        error_data = response.json()
+                        print(f"422 Validation Error Details: {json.dumps(error_data, indent=2)}")
+                        
+                        self.log_test(f"Edit Kit Details - {scenario['name']}", False,
+                                     f"422 Validation Error: {error_data}",
+                                     {
+                                         "status_code": response.status_code,
+                                         "error_details": error_data,
+                                         "update_data": scenario['data']
+                                     })
+                    except:
+                        error_text = response.text
+                        print(f"422 Error Response Text: {error_text}")
+                        
+                        self.log_test(f"Edit Kit Details - {scenario['name']}", False,
+                                     f"422 Validation Error (raw): {error_text}",
+                                     {
+                                         "status_code": response.status_code,
+                                         "error_text": error_text,
+                                         "update_data": scenario['data']
+                                     })
+                    
+                    # Continue testing other scenarios to see if all fail or just specific ones
+                    continue
+                    
+                elif response.status_code == 200:
+                    updated_data = response.json()
+                    self.log_test(f"Edit Kit Details - {scenario['name']}", True,
+                                 f"Successfully updated collection item",
+                                 {
+                                     "updated_data": updated_data,
+                                     "update_data": scenario['data']
+                                 })
+                else:
+                    try:
+                        error_data = response.json()
+                        print(f"Error Response: {json.dumps(error_data, indent=2)}")
+                    except:
+                        print(f"Error Response Text: {response.text}")
+                    
+                    self.log_test(f"Edit Kit Details - {scenario['name']}", False,
+                                 f"Failed with status {response.status_code}",
+                                 {
+                                     "status_code": response.status_code,
+                                     "response_text": response.text,
+                                     "update_data": scenario['data']
+                                 })
+            
+            return True
                 
         except Exception as e:
-            self.log_test(f"Detailed Price Estimation", False, f"Exception: {str(e)}")
-            return None
+            self.log_test(f"Edit Kit Details Testing", False, f"Exception: {str(e)}")
+            return False
     
     def verify_coefficient_values(self, coefficients_applied, collection_item):
         """Verify that the new coefficient values are correctly applied"""
