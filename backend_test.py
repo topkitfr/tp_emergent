@@ -1137,10 +1137,10 @@ class ContributionApprovalTester:
             return False
 
     def run_all_tests(self):
-        """Run comprehensive contribution approval system tests"""
-        print("🧪 Starting TopKit Image Upload System Testing")
-        print("Testing the fixed image upload system for 'Improve Team Profile' form")
-        print("FOCUS: Verifying the user's reported bug is resolved")
+        """Run comprehensive master kit image display testing"""
+        print("🧪 Starting TopKit Master Kit Image Display Testing")
+        print("FOCUS: Testing master kit image display issue on Kit Area page")
+        print("ISSUE: Master kit image uploads work and get approved, but new photos don't appear on Kit Area page")
         print("=" * 80)
         
         # Step 1: Authentication
@@ -1150,30 +1150,19 @@ class ContributionApprovalTester:
         
         print()
         
-        # Step 2: Get moderation stats
+        # Step 2: Test the core Kit Area page image display bug
+        print("🐛 Testing Kit Area Page Image Display Bug...")
+        self.test_kit_area_page_image_display_bug()
+        print()
+        
+        # Step 3: Test master kit image URL construction patterns
+        print("🎯 Testing Master Kit Image URL Construction...")
+        self.test_master_kit_image_url_construction()
+        print()
+        
+        # Step 4: Get moderation stats
         print("📊 Getting Moderation Statistics...")
         stats = self.test_moderation_stats()
-        print()
-        
-        # Step 3: Test the specific contribution mentioned by user (TK-CONTRIB-24325C)
-        print("🔍 Testing Specific Contribution TK-CONTRIB-24325C...")
-        # First try to find this contribution
-        all_contributions = self.get_contributions()
-        target_contribution = None
-        for contrib in all_contributions:
-            if contrib.get('topkit_reference') == 'TK-CONTRIB-24325C':
-                target_contribution = contrib
-                break
-        
-        if target_contribution:
-            self.test_specific_contribution(target_contribution.get('id'))
-        else:
-            print("   TK-CONTRIB-24325C not found in current contributions")
-        print()
-        
-        # Step 4: Test the complete 'Improve Team Profile' workflow
-        print("🎯 Testing Complete 'Improve Team Profile' Workflow...")
-        self.test_improve_team_profile_workflow()
         print()
         
         # Step 5: Test approved contributions with images
@@ -1181,9 +1170,9 @@ class ContributionApprovalTester:
         self.test_approved_contributions_with_images()
         print()
         
-        # Step 6: Test the fixed image transfer system
-        print("🔧 Testing Fixed Image Transfer System...")
-        self.test_fixed_image_transfer_system()
+        # Step 6: Test problematic images from logs
+        print("🚨 Testing Problematic Images from Logs...")
+        self.test_problematic_images_from_logs()
         print()
         
         # Summary
