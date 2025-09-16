@@ -1869,8 +1869,8 @@ async def transfer_contribution_images_to_entity(contribution: dict, entity_id: 
                         full_source_path = path
                         break
                 
-                if not os.path.exists(full_source_path):
-                    logger.warning(f"Source image file not found: {full_source_path}")
+                if not full_source_path:
+                    logger.warning(f"Source image file not found in any of these locations: {possible_paths}")
                     continue
                 
                 # Get the legacy filename from the entity's current field or use the field name directly
