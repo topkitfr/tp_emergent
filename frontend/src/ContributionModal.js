@@ -239,41 +239,26 @@ const ContributionModal = ({
                   onImageUpload={async (event, fieldKey) => {
                     // Handle image upload for edit forms
                     const files = Array.from(event.target.files);
-                    if (files.length > 0 && contributionId) {
+                    if (files.length > 0) {
                       const file = files[0];
                       
-                      try {
-                        // Upload the image to the contribution
-                        const uploadFormData = new FormData();
-                        uploadFormData.append('file', file);
-                        uploadFormData.append('is_primary', 'true');
-                        uploadFormData.append('caption', fieldKey);
-
-                        const uploadResponse = await fetch(
-                          `${API}/api/contributions-v2/${contributionId}/images`,
-                          {
-                            method: 'POST',
-                            headers: {
-                              'Authorization': `Bearer ${localStorage.getItem('token')}`
-                            },
-                            body: uploadFormData
-                          }
-                        );
-
-                        if (uploadResponse.ok) {
-                          const uploadResult = await uploadResponse.json();
-                          console.log('✅ Image uploaded successfully:', uploadResult);
-                          
-                          // Update form data with the uploaded image reference
-                          setFormData(prev => ({ ...prev, [fieldKey]: `image_uploaded_${Date.now()}` }));
-                        } else {
-                          console.error('❌ Image upload failed:', uploadResponse.status, await uploadResponse.text());
-                          alert('Failed to upload image. Please try again.');
-                        }
-                      } catch (error) {
-                        console.error('❌ Image upload error:', error);
-                        alert('Error uploading image. Please try again.');
-                      }
+                      // Store the image file to upload after contribution creation
+                      const imageUploadInfo = {
+                        file: file,
+                        fieldKey: fieldKey,
+                        timestamp: Date.now()
+                      };
+                      
+                      setPendingImages(prev => {
+                        // Remove any existing image for the same field
+                        const filtered = prev.filter(img => img.fieldKey !== fieldKey);
+                        return [...filtered, imageUploadInfo];
+                      });
+                      
+                      // Update form data with the image reference
+                      setFormData(prev => ({ ...prev, [fieldKey]: `image_uploaded_${imageUploadInfo.timestamp}` }));
+                      
+                      console.log(`📷 Image queued for upload: ${file.name} (field: ${fieldKey})`);
                     }
                   }}
                   API={API}
