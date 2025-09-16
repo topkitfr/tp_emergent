@@ -76,33 +76,7 @@ const ContributionModal = ({
         }
       });
       
-      // Check for new images
-      if (imageFiles.logo) {
-        detectedChanges.push({
-          field: 'logo',
-          from: 'Current photo',
-          to: 'New photo',
-          type: 'update'
-        });
-      }
-      
-      if (imageFiles.primary_photo) {
-        detectedChanges.push({
-          field: 'primary_photo',
-          from: 'Current photo',
-          to: 'New photo',
-          type: 'update'
-        });
-      }
-      
-      if (imageFiles.secondary_photos.length > 0) {
-        detectedChanges.push({
-          field: 'secondary_photos',
-          from: 'Current photos',
-          to: `${imageFiles.secondary_photos.length} new photo(s)`,
-          type: 'add'
-        });
-      }
+      // Image changes are now detected through form data changes
       
       setChanges(detectedChanges);
       
