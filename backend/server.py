@@ -202,6 +202,18 @@ async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fie
                     {"$set": {"competition": update_fields["competition_name"]}}
                 )
                 logger.info(f"Updated {result.modified_count} master kits referencing competition {entity_id}")
+                
+        elif entity_type == "master_kit":
+            # For master_kit updates, we should refresh collection items that reference this kit
+            # Find all collection items that reference this master kit
+            collection_items = await db.my_collection.find({"master_kit_id": entity_id}).to_list(length=None)
+            
+            if collection_items:
+                logger.info(f"Found {len(collection_items)} collection items referencing updated master kit {entity_id}")
+                
+                # If front_photo_url was updated, we might want to invalidate caches or trigger notifications
+                if "front_photo_url" in update_fields:
+                    logger.info(f"Master kit {entity_id} photo was updated - collection items may need refreshing")
         
         logger.info(f"Completed cascading updates for {entity_type} entity {entity_id}")
         
