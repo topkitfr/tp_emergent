@@ -268,7 +268,20 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         // Update the editing item with new data to keep modal open
         setEditingItem(updatedItemData);
         
-        // Update form data to reflect the saved changes
+        // Update form data to reflect the saved changes with proper date formatting
+        let formattedUpdatedPurchaseDate = '';
+        if (updatedItemData.purchase_date) {
+          try {
+            const date = new Date(updatedItemData.purchase_date);
+            if (!isNaN(date.getTime())) {
+              // Format as YYYY-MM-DD for HTML date input
+              formattedUpdatedPurchaseDate = date.toISOString().split('T')[0];
+            }
+          } catch (error) {
+            console.warn('Invalid updated purchase_date format:', updatedItemData.purchase_date);
+          }
+        }
+        
         setEditFormData({
           name_printing: updatedItemData.name_printing || '',
           number_printing: updatedItemData.number_printing || '',
@@ -280,7 +293,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
           physical_state: updatedItemData.physical_state || '',
           size: updatedItemData.size || '',
           purchase_price: updatedItemData.purchase_price || '',
-          purchase_date: updatedItemData.purchase_date || '',
+          purchase_date: formattedUpdatedPurchaseDate,
           personal_notes: updatedItemData.personal_notes || ''
         });
         
