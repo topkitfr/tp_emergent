@@ -235,7 +235,7 @@ class PurchasePriceValidationTester:
                 "number_printing": "10",
                 "condition": "match_worn",
                 "physical_state": "very_good_condition",
-                "patches": True,
+                "patches": "Champions League",
                 "is_signed": True,
                 "signed_by": "Lionel Messi",
                 "purchase_price": 450.75,
