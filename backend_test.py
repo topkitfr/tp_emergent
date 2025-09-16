@@ -519,7 +519,7 @@ class EditKitDetailsTester:
 
 def main():
     """Main test execution"""
-    tester = TopKitPricingTester()
+    tester = EditKitDetailsTester()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
