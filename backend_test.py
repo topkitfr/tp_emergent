@@ -756,11 +756,159 @@ class ContributionApprovalTester:
             self.log_test("Moderation Stats", False, f"Exception: {str(e)}")
             return None
     
+    def test_specific_contribution(self, contribution_id):
+        """Test a specific contribution by ID"""
+        try:
+            print(f"\n🔍 Testing Specific Contribution: {contribution_id}")
+            
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contribution_id}", timeout=10)
+            
+            if response.status_code != 200:
+                self.log_test(f"Specific Contribution - {contribution_id}", False,
+                             f"Failed to retrieve contribution: {response.status_code}")
+                return False
+            
+            contribution = response.json()
+            
+            print(f"   Title: {contribution.get('title')}")
+            print(f"   Entity Type: {contribution.get('entity_type')}")
+            print(f"   Entity ID: {contribution.get('entity_id')}")
+            print(f"   Status: {contribution.get('status')}")
+            print(f"   Images Count: {contribution.get('images_count', 0)}")
+            print(f"   Uploaded Images: {contribution.get('uploaded_images', [])}")
+            
+            # Analyze this contribution
+            return self.analyze_contribution_approval(contribution)
+            
+        except Exception as e:
+            self.log_test(f"Specific Contribution - {contribution_id}", False, f"Exception: {str(e)}")
+            return False
+
+    def test_improve_team_profile_workflow(self):
+        """Test the complete 'Improve Team Profile' workflow with image upload"""
+        try:
+            print("\n🎯 Testing 'Improve Team Profile' Workflow with Image Upload...")
+            
+            # Step 1: Get teams to find one to edit
+            teams_response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
+            if teams_response.status_code != 200:
+                self.log_test("Improve Team Profile Workflow", False, "Failed to get teams")
+                return False
+            
+            teams = teams_response.json()
+            if not teams:
+                self.log_test("Improve Team Profile Workflow", False, "No teams found to edit")
+                return False
+            
+            # Use the first team for testing
+            target_team = teams[0]
+            team_id = target_team.get("id")
+            team_name = target_team.get("name", "Unknown Team")
+            
+            print(f"   Target Team: {team_name} (ID: {team_id})")
+            
+            # Step 2: Create a contribution for editing this team with image upload
+            contribution_data = {
+                "entity_type": "team",
+                "entity_id": team_id,
+                "title": f"Update team logo for {team_name}",
+                "description": "Testing the fixed image upload system for editing existing teams",
+                "data": {
+                    "logo_url": f"image_uploaded_test_{int(datetime.now().timestamp())}"
+                },
+                "source_urls": []
+            }
+            
+            print(f"   Creating contribution for team edit...")
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/",
+                json=contribution_data,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Improve Team Profile Workflow", False,
+                             f"Failed to create contribution: {response.status_code} - {response.text}")
+                return False
+            
+            contribution = response.json()
+            contrib_id = contribution.get("id")
+            
+            print(f"   Created contribution: {contrib_id}")
+            
+            # Step 3: Upload an image to this contribution (simulating the fixed pendingImages system)
+            import tempfile
+            from PIL import Image
+            
+            # Create a test image
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+                test_image = Image.new('RGB', (800, 600), color='blue')
+                test_image.save(temp_file.name, 'PNG')
+                temp_file_path = temp_file.name
+            
+            try:
+                # Upload the image to the contribution
+                with open(temp_file_path, 'rb') as f:
+                    files = {'file': ('team_logo_test.png', f, 'image/png')}
+                    data = {
+                        'is_primary': 'true',
+                        'caption': 'logo_url'
+                    }
+                    
+                    upload_response = self.session.post(
+                        f"{BACKEND_URL}/contributions-v2/{contrib_id}/images",
+                        files=files,
+                        data=data,
+                        timeout=10
+                    )
+                    
+                    if upload_response.status_code != 200:
+                        self.log_test("Improve Team Profile Workflow", False,
+                                     f"Failed to upload image: {upload_response.status_code} - {upload_response.text}")
+                        return False
+                    
+                    upload_result = upload_response.json()
+                    print(f"   Image uploaded: {upload_result.get('file_url')}")
+                    
+            finally:
+                # Clean up temp file
+                import os
+                os.unlink(temp_file_path)
+            
+            # Step 4: Verify the contribution now shows correct images count
+            updated_response = self.session.get(f"{BACKEND_URL}/contributions-v2/{contrib_id}", timeout=10)
+            if updated_response.status_code == 200:
+                updated_contribution = updated_response.json()
+                images_count = updated_contribution.get('images_count', 0)
+                uploaded_images = updated_contribution.get('uploaded_images', [])
+                
+                print(f"   Updated contribution images count: {images_count}")
+                print(f"   Uploaded images: {len(uploaded_images)}")
+                
+                if images_count > 0 and len(uploaded_images) > 0:
+                    self.log_test("Improve Team Profile Workflow", True,
+                                 f"✅ Image upload successful - Images count: {images_count}, Uploaded images: {len(uploaded_images)}")
+                    
+                    # Step 5: Test the approval process
+                    return self.test_contribution_approval_flow(updated_contribution)
+                else:
+                    self.log_test("Improve Team Profile Workflow", False,
+                                 f"❌ Image upload failed - Images count: {images_count}, Uploaded images: {len(uploaded_images)}")
+                    return False
+            else:
+                self.log_test("Improve Team Profile Workflow", False,
+                             "Failed to retrieve updated contribution")
+                return False
+                
+        except Exception as e:
+            self.log_test("Improve Team Profile Workflow", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run comprehensive contribution approval system tests"""
-        print("🧪 Starting TopKit Contribution Approval System Testing")
-        print("Testing the contribution approval system for image updates on master kits")
-        print("FOCUS: Identifying why new photos are not showing up after approval")
+        print("🧪 Starting TopKit Image Upload System Testing")
+        print("Testing the fixed image upload system for 'Improve Team Profile' form")
+        print("FOCUS: Verifying the user's reported bug is resolved")
         print("=" * 80)
         
         # Step 1: Authentication
@@ -775,27 +923,33 @@ class ContributionApprovalTester:
         stats = self.test_moderation_stats()
         print()
         
-        # Step 3: Get master kits for reference
-        print("🎯 Getting Master Kits...")
-        master_kits = self.get_master_kits()
+        # Step 3: Test the specific contribution mentioned by user (TK-CONTRIB-24325C)
+        print("🔍 Testing Specific Contribution TK-CONTRIB-24325C...")
+        # First try to find this contribution
+        all_contributions = self.get_contributions()
+        target_contribution = None
+        for contrib in all_contributions:
+            if contrib.get('topkit_reference') == 'TK-CONTRIB-24325C':
+                target_contribution = contrib
+                break
+        
+        if target_contribution:
+            self.test_specific_contribution(target_contribution.get('id'))
+        else:
+            print("   TK-CONTRIB-24325C not found in current contributions")
         print()
         
-        # Step 4: Test approved contributions with images
+        # Step 4: Test the complete 'Improve Team Profile' workflow
+        print("🎯 Testing Complete 'Improve Team Profile' Workflow...")
+        self.test_improve_team_profile_workflow()
+        print()
+        
+        # Step 5: Test approved contributions with images
         print("✅ Testing Approved Contributions with Images...")
         self.test_approved_contributions_with_images()
         print()
         
-        # Step 5: Test specific problematic images from logs
-        print("🚨 Testing Problematic Images from Logs...")
-        self.test_problematic_images_from_logs()
-        print()
-        
-        # Step 6: Test pending contribution approval (if any)
-        print("🔄 Testing Pending Contribution Approval...")
-        self.test_pending_contribution_approval()
-        print()
-        
-        # Step 7: Test the fixed image transfer system
+        # Step 6: Test the fixed image transfer system
         print("🔧 Testing Fixed Image Transfer System...")
         self.test_fixed_image_transfer_system()
         print()
