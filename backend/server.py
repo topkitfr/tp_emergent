@@ -1092,6 +1092,138 @@ async def login(login_data: LoginRequest):
         logger.error(f"Error during login: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/auth/google/session", response_model=LoginResponse)
+async def google_session_auth(request: GoogleSessionRequest, response: Response):
+    """Handle Google OAuth session authentication via Emergent Auth"""
+    try:
+        # Call Emergent Auth API to get session data
+        session_url = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+        headers = {"X-Session-ID": request.session_id}
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(session_url, headers=headers) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=401, detail="Invalid session ID")
+                
+                session_data = await resp.json()
+        
+        # Extract user data from session
+        google_user_id = session_data.get("id")
+        email = session_data.get("email")
+        name = session_data.get("name")
+        picture = session_data.get("picture")
+        session_token = session_data.get("session_token")
+        
+        if not all([google_user_id, email, name, session_token]):
+            raise HTTPException(status_code=400, detail="Invalid session data")
+        
+        # Check if user exists, if not create new user
+        user = await db.users.find_one({"email": email})
+        
+        if not user:
+            # Create new user for Google OAuth
+            user_id = str(uuid.uuid4())
+            new_user = {
+                "id": user_id,
+                "name": name,
+                "email": email,
+                "google_id": google_user_id,
+                "picture": picture,
+                "role": "user",
+                "created_at": datetime.now(timezone.utc),
+                "auth_type": "google"
+            }
+            await db.users.insert_one(new_user)
+            user = new_user
+        
+        # Store session in database with timezone-aware expiry
+        session_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+        session_record = {
+            "session_token": session_token,
+            "user_id": user["id"],
+            "expires_at": session_expiry,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        # Remove any existing sessions for this user
+        await db.sessions.delete_many({"user_id": user["id"]})
+        
+        # Insert new session
+        await db.sessions.insert_one(session_record)
+        
+        # Set httpOnly cookie
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            max_age=7 * 24 * 60 * 60,  # 7 days in seconds
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/"
+        )
+        
+        # Generate JWT token for compatibility
+        token_data = {"sub": user["id"]}
+        jwt_token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+        
+        # Return response
+        user_response = UserResponse(
+            id=user["id"],
+            name=user["name"],
+            email=user["email"],
+            role=user.get("role", "user"),
+            created_at=user.get("created_at", datetime.now(timezone.utc))
+        )
+        
+        return LoginResponse(token=jwt_token, user=user_response)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error during Google OAuth: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout user and clear session"""
+    try:
+        # Get session token from cookie
+        session_token = request.cookies.get("session_token")
+        
+        if session_token:
+            # Delete session from database
+            await db.sessions.delete_one({"session_token": session_token})
+        
+        # Clear cookie
+        response.delete_cookie(
+            key="session_token",
+            path="/",
+            secure=True,
+            samesite="none"
+        )
+        
+        return {"message": "Logged out successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def get_current_user_profile(current_user: dict = Depends(get_current_user_flexible)):
+    """Get current user profile (works with both JWT and session token)"""
+    try:
+        user_response = UserResponse(
+            id=current_user["id"],
+            name=current_user["name"],
+            email=current_user["email"],
+            role=current_user.get("role", "user"),
+            created_at=current_user.get("created_at", datetime.now(timezone.utc))
+        )
+        return user_response
+    except Exception as e:
+        logger.error(f"Error getting user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/auth/register", response_model=LoginResponse)
 async def register(register_data: RegisterRequest):
     """Register new user"""
