@@ -31,6 +31,8 @@ from pymongo.errors import DuplicateKeyError
 import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field, ValidationError
+import aiohttp
+import json
 import aiofiles
 import shutil
 from PIL import Image
