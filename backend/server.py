@@ -101,7 +101,7 @@ asyncio.create_task(verify_database_connection())
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
 ALGORITHM = "HS256"
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)  # Make it optional
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # File upload settings
