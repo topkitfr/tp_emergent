@@ -22,7 +22,7 @@ from pathlib import Path
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query, Request, status
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
