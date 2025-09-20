@@ -116,6 +116,9 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Get current authenticated user"""
     try:
+        if credentials is None:
+            raise HTTPException(status_code=401, detail="Authorization header required")
+        
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
