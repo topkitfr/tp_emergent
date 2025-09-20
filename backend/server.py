@@ -136,6 +136,50 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
+async def get_current_user_flexible(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Get current authenticated user - supports both JWT tokens and session tokens"""
+    try:
+        # First try JWT token from Authorization header
+        if credentials:
+            token = credentials.credentials
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id:
+                user = await db.users.find_one({"id": user_id})
+                if user:
+                    return user
+        
+        # If JWT fails, try session token from cookie
+        session_token = request.cookies.get("session_token")
+        if session_token:
+            # Find session in database
+            session = await db.sessions.find_one({"session_token": session_token})
+            if session:
+                # Check if session is still valid
+                if session.get("expires_at") and session["expires_at"] > datetime.now(timezone.utc):
+                    # Get user from session
+                    user = await db.users.find_one({"id": session["user_id"]})
+                    if user:
+                        return user
+                else:
+                    # Session expired, clean it up
+                    await db.sessions.delete_one({"session_token": session_token})
+        
+        # If both methods fail, raise authentication error
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+        
+    except jwt.PyJWTError:
+        # JWT failed, try session token as fallback
+        session_token = request.cookies.get("session_token")
+        if session_token:
+            session = await db.sessions.find_one({"session_token": session_token})
+            if session and session.get("expires_at") and session["expires_at"] > datetime.now(timezone.utc):
+                user = await db.users.find_one({"id": session["user_id"]})
+                if user:
+                    return user
+        
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+
 # ================================
 # UTILITY FUNCTIONS
 # ================================
