@@ -1007,6 +1007,9 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
 
+class GoogleSessionRequest(BaseModel):
+    session_id: str
+
 class LoginResponse(BaseModel):
     token: str
     user: UserResponse
