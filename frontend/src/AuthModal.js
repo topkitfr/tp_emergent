@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +16,76 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+  
+  // Get API URL from environment
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
+
+  // Handle Google OAuth session on component mount
+  useEffect(() => {
+    const handleGoogleSession = async () => {
+      // Check for session_id in URL fragment
+      const hash = window.location.hash;
+      const sessionMatch = hash.match(/session_id=([^&]+)/);
+      
+      if (sessionMatch) {
+        const sessionId = sessionMatch[1];
+        setGoogleLoading(true);
+        
+        try {
+          console.log('🔑 Processing Google OAuth session:', sessionId);
+          
+          const response = await fetch(`${API}/api/auth/google/session`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ session_id: sessionId })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Google OAuth successful');
+            
+            // Clean URL fragment
+            window.history.replaceState(null, null, window.location.pathname + window.location.search);
+            
+            // Store user data and token
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // Close modal and trigger success callback
+            onClose();
+            if (onLoginSuccess) {
+              onLoginSuccess(data);
+            }
+          } else {
+            console.error('❌ Google OAuth failed:', response.status);
+            setError('Google authentication failed. Please try again.');
+          }
+        } catch (error) {
+          console.error('❌ Google OAuth error:', error);
+          setError('Google authentication error. Please try again.');
+        } finally {
+          setGoogleLoading(false);
+        }
+      }
+    };
+
+    if (isOpen) {
+      handleGoogleSession();
+    }
+  }, [isOpen, API, onClose, onLoginSuccess]);
+
+  // Google OAuth login function
+  const handleGoogleLogin = () => {
+    console.log('🔍 Starting Google OAuth...');
+    const redirectUrl = encodeURIComponent(window.location.origin + '/');
+    const googleAuthUrl = `https://auth.emergentagent.com/?redirect=${redirectUrl}`;
+    
+    console.log('🌐 Redirecting to:', googleAuthUrl);
+    window.location.href = googleAuthUrl;
+  };
   
   // Password validation helper
   const validatePassword = (password) => {
