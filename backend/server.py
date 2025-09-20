@@ -1043,6 +1043,53 @@ async def login(login_data: LoginRequest):
         logger.error(f"Error during login: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/auth/register", response_model=LoginResponse)
+async def register(register_data: RegisterRequest):
+    """Register new user"""
+    try:
+        # Check if user already exists
+        existing_user = await db.users.find_one({"email": register_data.email})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Hash password
+        password_hash = pwd_context.hash(register_data.password)
+        
+        # Create new user
+        user_id = str(uuid.uuid4())
+        new_user = {
+            "id": user_id,
+            "name": register_data.name,
+            "email": register_data.email,
+            "password_hash": password_hash,
+            "role": "user",
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        # Save to database
+        await db.users.insert_one(new_user)
+        
+        # Generate JWT token
+        token_data = {"sub": user_id}
+        token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+        
+        # Return response
+        user_response = UserResponse(
+            id=user_id,
+            name=register_data.name,
+            email=register_data.email,
+            role="user",
+            created_at=new_user["created_at"]
+        )
+        
+        return LoginResponse(token=token, user=user_response)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error during registration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ================================
 # DATABASE CLEANUP ENDPOINT
 # ================================
