@@ -136,7 +136,7 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
-async def get_current_user_flexible(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+async def get_current_user_flexible(request: Request, credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> dict:
     """Get current authenticated user - supports both JWT tokens and session tokens"""
     try:
         # First try JWT token from Authorization header
