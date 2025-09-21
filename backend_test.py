@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - URGENT TOPKITFR@GMAIL.COM ACCOUNT SEARCH
+TopKit Backend Testing Suite - URGENT GAMIFICATION BUG INVESTIGATION
 
-USER REQUEST:
-User believes topkitfr@gmail.com account existed before and wants comprehensive search
+USER REPORT:
+- Created team contribution: TK-CONTRIB-4DADAC  
+- Team approved and exists in database: TK-TEAM-AAD28D
+- BUT no XP gained on ranking page
+- No progression visible on profile page
 
 INVESTIGATION REQUIRED:
-1. Search users collection for any account with email containing "topkitfr" or "topkit"
-2. Look for any user with admin role
-3. Check for variations of the email (with/without @gmail.com, different domain)
-4. Show all admin users found in the database
-5. Try login with topkitfr@gmail.com and common passwords: topkit123, admin123, password123, TopKitSecure789#
-6. Verify emergency.admin@topkit.test account status
+1. Find the user who made this contribution (likely emergency.admin@topkit.test)
+2. Check if contribution TK-CONTRIB-4DADAC exists and was approved
+3. Verify XP was awarded during approval process
+4. Check user's current XP in database vs what should be expected
+5. Test the complete approval workflow: contribution creation → approval → XP awarding
+6. Check if there are any errors in the gamification system
+7. Verify all gamification endpoints are working correctly
 
-CRITICAL: Comprehensive database search to find the original topkitfr@gmail.com account.
+CRITICAL: The gamification system appears to be broken despite previous successful testing.
 """
 
 import requests
