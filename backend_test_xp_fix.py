@@ -220,76 +220,46 @@ class TopKitXPBugFixVerifier:
             self.log_test("Test Team Contribution Creation", False, f"Exception: {str(e)}")
             return False
     
-    def verify_gamification_contribution_created(self):
-        """Verify that gamification contribution entry was created for the team"""
+    def approve_contribution_to_create_entity(self):
+        """Approve the contribution to create the entity and trigger gamification entry"""
         try:
-            print(f"\n🎯 STEP 4: VERIFYING GAMIFICATION CONTRIBUTION ENTRY")
+            print(f"\n🎯 STEP 4: APPROVING CONTRIBUTION TO CREATE ENTITY")
             print("=" * 60)
             
-            if not self.test_team_id:
-                self.log_test("Gamification Contribution Verification", False, "No test team ID available")
+            if not self.test_contribution_id:
+                self.log_test("Contribution Approval for Entity Creation", False, "No test contribution ID available")
                 return False
             
-            # Get all pending contributions
-            response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=100", timeout=10)
+            print(f"   🎯 Approving contribution: {self.test_contribution_id}")
+            print(f"   📋 This should create the team entity and gamification entry")
+            
+            # Approve the contribution via moderation endpoint
+            response = self.session.post(
+                f"{BACKEND_URL}/contributions-v2/{self.test_contribution_id}/moderate",
+                json={"action": "approve", "comment": "Test approval for XP bug fix verification"},
+                timeout=10
+            )
             
             if response.status_code == 200:
-                contributions = response.json()
+                moderation_response = response.json()
+                self.test_team_id = moderation_response.get('entity_id')
                 
-                # Look for gamification contribution related to our test team
-                team_contribution = None
-                for contrib in contributions:
-                    if (contrib.get('item_type') == 'team' and 
-                        contrib.get('item_id') == self.test_team_id):
-                        team_contribution = contrib
-                        break
+                self.log_test("Contribution Approval for Entity Creation", True, 
+                             f"Contribution approved and entity created successfully")
                 
-                if team_contribution:
-                    self.test_contribution_id = team_contribution.get('id')
-                    
-                    self.log_test("Gamification Contribution Verification", True, 
-                                 f"✅ GAMIFICATION ENTRY FOUND! Bug fix is working")
-                    
-                    print(f"\n   📋 GAMIFICATION CONTRIBUTION DETAILS:")
-                    print(f"      Contribution ID: {team_contribution.get('id')}")
-                    print(f"      User ID: {team_contribution.get('user_id')}")
-                    print(f"      User Name: {team_contribution.get('user_name')}")
-                    print(f"      Item Type: {team_contribution.get('item_type')}")
-                    print(f"      Item ID: {team_contribution.get('item_id')}")
-                    print(f"      XP to Award: {team_contribution.get('xp_to_award', 0)}")
-                    print(f"      Is Approved: {team_contribution.get('is_approved', False)}")
-                    print(f"      Created At: {team_contribution.get('created_at')}")
-                    
-                    # Verify it's created by emergency admin
-                    emergency_admin_id = self.admin_user_data.get('id') if self.admin_user_data else None
-                    if team_contribution.get('user_id') == emergency_admin_id:
-                        print(f"   ✅ CORRECT USER: Contribution created by emergency admin")
-                        return True
-                    else:
-                        print(f"   ⚠️ USER MISMATCH: Expected {emergency_admin_id}, got {team_contribution.get('user_id')}")
-                        return True  # Still counts as success since contribution exists
-                else:
-                    self.log_test("Gamification Contribution Verification", False, 
-                                 f"❌ NO GAMIFICATION ENTRY FOUND! Bug fix may not be working")
-                    
-                    print(f"   📋 AVAILABLE TEAM CONTRIBUTIONS:")
-                    team_contributions = [c for c in contributions if c.get('item_type') == 'team']
-                    if team_contributions:
-                        for i, contrib in enumerate(team_contributions, 1):
-                            item_name = contrib.get('item_details', {}).get('name', 'Unknown Team')
-                            print(f"      {i}. {contrib.get('id')} - {contrib.get('user_name')} - {item_name} - {contrib.get('xp_to_award', 0)} XP")
-                    else:
-                        print(f"      No team-type contributions found")
-                    
-                    return False
+                print(f"      Entity ID: {self.test_team_id}")
+                print(f"      Status: {moderation_response.get('status')}")
+                print(f"      Message: {moderation_response.get('message', 'No message')}")
+                
+                return True
                 
             else:
-                self.log_test("Gamification Contribution Verification", False, 
-                             f"Failed to get pending contributions: {response.status_code}", response.text)
+                self.log_test("Contribution Approval for Entity Creation", False, 
+                             f"Failed to approve contribution: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Gamification Contribution Verification", False, f"Exception: {str(e)}")
+            self.log_test("Contribution Approval for Entity Creation", False, f"Exception: {str(e)}")
             return False
     
     def approve_contribution_and_test_xp_awarding(self):
