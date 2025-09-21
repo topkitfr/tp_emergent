@@ -24,9 +24,9 @@ from pathlib import Path
 # Configuration
 BACKEND_URL = "https://jersey-levels.preview.emergentagent.com/api"
 
-# New Admin Credentials to Create
+# New Admin Credentials to Create - CORRECTED EMAIL
 NEW_ADMIN_CREDENTIALS = {
-    "email": "topkitfr@gmail.fr",
+    "email": "topkitfr@gmail.com",  # CORRECTED: .com instead of .fr
     "password": "TopKitAdmin2025!",
     "name": "TopKit Admin"
 }
