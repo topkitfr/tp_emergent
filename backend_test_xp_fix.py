@@ -333,20 +333,21 @@ class TopKitXPBugFixVerifier:
         except Exception as e:
             self.log_test("Gamification Contribution Verification", False, f"Exception: {str(e)}")
             return False
-        """Approve the contribution and verify XP is awarded correctly"""
+    def approve_gamification_contribution_and_test_xp_awarding(self):
+        """Approve the gamification contribution and verify XP is awarded correctly"""
         try:
-            print(f"\n⚡ STEP 5: APPROVING CONTRIBUTION AND TESTING XP AWARDING")
+            print(f"\n⚡ STEP 6: APPROVING GAMIFICATION CONTRIBUTION AND TESTING XP AWARDING")
             print("=" * 60)
             
-            if not self.test_contribution_id:
-                self.log_test("Contribution Approval and XP Award", False, "No test contribution ID available")
+            if not hasattr(self, 'gamification_contribution_id') or not self.gamification_contribution_id:
+                self.log_test("Gamification Contribution Approval and XP Award", False, "No gamification contribution ID available")
                 return False
             
             print(f"   📊 XP BEFORE APPROVAL: {self.initial_xp}")
-            print(f"   🎯 Approving contribution: {self.test_contribution_id}")
+            print(f"   🎯 Approving gamification contribution: {self.gamification_contribution_id}")
             
-            # Approve the contribution
-            approval_data = {"contribution_id": self.test_contribution_id}
+            # Approve the gamification contribution
+            approval_data = {"contribution_id": self.gamification_contribution_id}
             response = self.session.post(
                 f"{BACKEND_URL}/admin/approve-contribution",
                 data=approval_data,
@@ -356,8 +357,8 @@ class TopKitXPBugFixVerifier:
             if response.status_code == 200:
                 approval_response = response.json()
                 
-                self.log_test("Contribution Approval and XP Award", True, 
-                             f"Contribution approved and XP awarded successfully")
+                self.log_test("Gamification Contribution Approval and XP Award", True, 
+                             f"Gamification contribution approved and XP awarded successfully")
                 
                 print(f"\n   ✅ APPROVAL RESPONSE:")
                 print(f"      Message: {approval_response.get('message')}")
@@ -375,12 +376,12 @@ class TopKitXPBugFixVerifier:
                     return True  # Still success, just unexpected amount
                 
             else:
-                self.log_test("Contribution Approval and XP Award", False, 
-                             f"Failed to approve contribution: {response.status_code}", response.text)
+                self.log_test("Gamification Contribution Approval and XP Award", False, 
+                             f"Failed to approve gamification contribution: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Contribution Approval and XP Award", False, f"Exception: {str(e)}")
+            self.log_test("Gamification Contribution Approval and XP Award", False, f"Exception: {str(e)}")
             return False
     
     def verify_final_xp_status(self):
