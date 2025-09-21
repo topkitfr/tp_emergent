@@ -407,18 +407,68 @@ class ContributionSummary(BaseModel):
 # USER SYSTEM (SIMPLIFIED)
 # ================================
 
+class UserLevel(str, Enum):
+    REMPLACANT = "Remplaçant"  # 0-100 XP
+    TITULAIRE = "Titulaire"    # 100-500 XP
+    LEGENDE = "Légende"        # 500-2000 XP
+    BALLON_DOR = "Ballon d'Or" # 2000+ XP
+
 class User(BaseModel):
-    """User model"""
+    """User model with gamification"""
     id: str
     name: str
     email: str
     role: str = "user"  # "user" or "admin"
     created_at: datetime
+    # Gamification fields
+    xp: int = 0
+    level: UserLevel = UserLevel.REMPLACANT
+    xp_daily_total: int = 0  # For daily limits
+    xp_daily_date: Optional[datetime] = None  # Track daily reset
 
 class UserResponse(BaseModel):
-    """User response model"""
+    """User response model with gamification"""
     id: str
     name: str
     email: str
     role: str
     created_at: datetime
+    xp: int = 0
+    level: UserLevel = UserLevel.REMPLACANT
+    
+class UserGamificationResponse(BaseModel):
+    """Extended user response with gamification details"""
+    id: str
+    name: str
+    email: str
+    role: str
+    created_at: datetime
+    xp: int
+    level: UserLevel
+    level_emoji: str
+    xp_to_next_level: int
+    next_level: Optional[UserLevel]
+    progress_percentage: int
+    
+class ContributionEntry(BaseModel):
+    """Track contributions for XP awarding"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    item_type: str  # 'team', 'brand', 'player', 'competition', 'jersey'
+    item_id: str  # ID of the created item
+    is_approved: bool = False
+    xp_awarded: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[str] = None  # Moderator who approved
+    
+class XPTransaction(BaseModel):
+    """Track XP changes for audit"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    contribution_id: str
+    xp_amount: int
+    item_type: str
+    item_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: str  # Admin/system who awarded XP
