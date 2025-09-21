@@ -684,9 +684,14 @@ class TopKitAdminAccountManager:
         management_results.append(True)  # This step always succeeds
         
         # Step 5: Create new admin account (if needed)
-        if not target_exists:
+        if target_exists == False:
             print("\n5️⃣ Creating New Admin Account...")
             management_results.append(self.create_new_admin_account())
+        elif target_exists == "exists_wrong_password":
+            print("\n5️⃣ Account Exists with Wrong Password - Manual Password Reset Required...")
+            print("      📝 MANUAL ACTION REQUIRED: Reset password for topkitfr@gmail.com")
+            print("      UPDATE users SET password_hash = [bcrypt_hash_of_TopKitAdmin2025!] WHERE email = 'topkitfr@gmail.com';")
+            management_results.append(False)
         else:
             print("\n5️⃣ Skipping Account Creation (Already Exists)...")
             management_results.append(True)
