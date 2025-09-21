@@ -47,7 +47,7 @@ from collaborative_models import (
     # Existing entities (unchanged)
     Team, Brand, Player, Competition, ContributionStatus, VerificationLevel, EntityType,
     ContributionSummary, ContributionStatusV2,
-    User, UserResponse
+    User, UserResponse, UserLevel, UserGamificationResponse, ContributionEntry, XPTransaction
 )
 
 # Configure logging
