@@ -53,6 +53,7 @@ class TopKitXPBugFixVerifier:
         self.final_xp_data = None
         self.test_team_id = None
         self.test_contribution_id = None
+        self.gamification_contribution_id = None
         self.initial_xp = 0
         self.final_xp = 0
         
