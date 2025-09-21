@@ -29,8 +29,8 @@ import uuid
 # Configuration
 BACKEND_URL = "https://topkit-auth-fix-1.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
-    "email": "topkitfr@gmail.com",
-    "password": "TopKitSecure789#"
+    "email": "gamification.admin@topkit.fr",
+    "password": "GamificationAdmin123!"
 }
 
 class GamificationTester:
