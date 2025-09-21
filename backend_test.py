@@ -267,51 +267,80 @@ class TopKitGamificationFollowUpInvestigator:
             self.log_test("Admin Accounts Identification", False, f"Exception: {str(e)}")
             return False
     
-    def create_test_team_contribution(self):
-        """Create a test team contribution to verify the workflow"""
+    def create_test_master_kit_contribution(self):
+        """Create a test master kit contribution to verify the workflow"""
         try:
-            print(f"\n🏗️ CREATING TEST TEAM CONTRIBUTION")
+            print(f"\n🏗️ CREATING TEST MASTER KIT CONTRIBUTION")
             print("=" * 60)
             
-            # Generate unique team data
-            team_name = f"Test Team {datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            team_data = {
-                "name": team_name,
-                "country": "Test Country",
-                "founded_year": 2025,
-                "league": "Test League",
-                "city": "Test City"
+            # First, get available teams, brands, and competitions for the master kit
+            teams_response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
+            brands_response = self.session.get(f"{BACKEND_URL}/brands", timeout=10)
+            competitions_response = self.session.get(f"{BACKEND_URL}/competitions", timeout=10)
+            
+            if teams_response.status_code != 200 or brands_response.status_code != 200 or competitions_response.status_code != 200:
+                self.log_test("Test Master Kit Creation", False, "Failed to get required data for master kit creation")
+                return False
+            
+            teams = teams_response.json()
+            brands = brands_response.json()
+            competitions = competitions_response.json()
+            
+            if not teams or not brands or not competitions:
+                self.log_test("Test Master Kit Creation", False, "No teams, brands, or competitions available")
+                return False
+            
+            # Use the first available team, brand, and competition
+            team = teams[0]
+            brand = brands[0]
+            competition = competitions[0]
+            
+            # Generate unique master kit data
+            kit_name = f"Test Kit {datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            master_kit_data = {
+                "club_id": team.get('id'),
+                "brand_id": brand.get('id'),
+                "competition_id": competition.get('id'),
+                "season": "2025-26",
+                "kit_type": "home",
+                "gender": "man",
+                "kit_model": "authentic",
+                "primary_color": "Test Blue",
+                "secondary_color": "Test White",
+                "front_photo_url": "test_image.jpg"
             }
             
-            print(f"   📋 Creating test team: {team_name}")
+            print(f"   📋 Creating test master kit for: {team.get('name')} {master_kit_data['season']}")
             
-            # Create team via teams endpoint
+            # Create master kit
             response = self.session.post(
-                f"{BACKEND_URL}/teams",
-                json=team_data,
+                f"{BACKEND_URL}/master-kits",
+                json=master_kit_data,
                 timeout=10
             )
             
-            if response.status_code == 201:
-                team_response = response.json()
-                self.test_team_id = team_response.get('id')
+            if response.status_code == 200:
+                kit_response = response.json()
+                self.test_team_id = kit_response.get('id')  # Using team_id variable for the kit ID
                 
-                self.log_test("Test Team Creation", True, 
-                             f"Test team created successfully: {team_name}")
+                self.log_test("Test Master Kit Creation", True, 
+                             f"Test master kit created successfully")
                 
-                print(f"      Team ID: {self.test_team_id}")
-                print(f"      Team Name: {team_response.get('name')}")
-                print(f"      Created By: {team_response.get('created_by')}")
+                print(f"      Kit ID: {self.test_team_id}")
+                print(f"      Club: {kit_response.get('club')}")
+                print(f"      Season: {kit_response.get('season')}")
+                print(f"      Kit Type: {kit_response.get('kit_type')}")
+                print(f"      Created By: {kit_response.get('created_by')}")
                 
                 return True
                 
             else:
-                self.log_test("Test Team Creation", False, 
-                             f"Failed to create test team: {response.status_code}", response.text)
+                self.log_test("Test Master Kit Creation", False, 
+                             f"Failed to create test master kit: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Test Team Creation", False, f"Exception: {str(e)}")
+            self.log_test("Test Master Kit Creation", False, f"Exception: {str(e)}")
             return False
     
     def check_gamification_contribution_created(self):
