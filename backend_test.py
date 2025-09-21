@@ -262,6 +262,216 @@ class TopKitGamificationFollowUpInvestigator:
             self.log_test("Admin Accounts Identification", False, f"Exception: {str(e)}")
             return False
     
+    def search_for_reported_team(self):
+        """Search for the specific team TK-TEAM-018D25 reported by user"""
+        try:
+            print(f"\n🔍 SEARCHING FOR REPORTED TEAM: TK-TEAM-018D25")
+            print("=" * 60)
+            
+            # Get all teams to search for the specific team
+            response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
+            
+            if response.status_code == 200:
+                teams = response.json()
+                
+                # Search for the specific team by reference or ID
+                reported_team = None
+                for team in teams:
+                    team_ref = team.get('topkit_reference', '')
+                    team_id = team.get('id', '')
+                    team_name = team.get('name', '')
+                    
+                    if ('TK-TEAM-018D25' in team_ref or 
+                        'TK-TEAM-018D25' in team_id or
+                        '018D25' in team_ref or
+                        '018D25' in team_id):
+                        reported_team = team
+                        break
+                
+                if reported_team:
+                    self.log_test("Reported Team Search", True, 
+                                 f"Found reported team TK-TEAM-018D25")
+                    
+                    print(f"\n   📋 REPORTED TEAM DETAILS:")
+                    print(f"      Team ID: {reported_team.get('id')}")
+                    print(f"      Name: {reported_team.get('name')}")
+                    print(f"      TopKit Reference: {reported_team.get('topkit_reference')}")
+                    print(f"      Created By: {reported_team.get('created_by')}")
+                    print(f"      Created At: {reported_team.get('created_at')}")
+                    print(f"      Country: {reported_team.get('country', 'Unknown')}")
+                    
+                    return reported_team
+                else:
+                    self.log_test("Reported Team Search", False, 
+                                 f"Team TK-TEAM-018D25 not found in database")
+                    
+                    print(f"   📋 RECENT TEAMS (showing first 10):")
+                    for i, team in enumerate(teams[:10], 1):
+                        team_ref = team.get('topkit_reference', 'No Reference')
+                        team_name = team.get('name', 'No Name')
+                        created_by = team.get('created_by', 'Unknown')
+                        print(f"      {i:2d}. {team_ref} - {team_name} (by {created_by})")
+                    
+                    return None
+                
+            else:
+                self.log_test("Reported Team Search", False, 
+                             f"Failed to get teams: {response.status_code}", response.text)
+                return None
+                
+        except Exception as e:
+            self.log_test("Reported Team Search", False, f"Exception: {str(e)}")
+            return None
+    
+    def check_gamification_contribution_for_team(self, team_data):
+        """Check if gamification contribution exists for the reported team"""
+        try:
+            print(f"\n🎯 CHECKING GAMIFICATION CONTRIBUTION FOR REPORTED TEAM")
+            print("=" * 60)
+            
+            if not team_data:
+                self.log_test("Team Gamification Contribution Check", False, "No team data provided")
+                return None
+            
+            team_id = team_data.get('id')
+            team_name = team_data.get('name', 'Unknown Team')
+            
+            # Get all contributions (both pending and approved)
+            pending_response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=100", timeout=10)
+            
+            if pending_response.status_code != 200:
+                self.log_test("Team Gamification Contribution Check", False, 
+                             f"Failed to get contributions: {pending_response.status_code}")
+                return None
+            
+            all_contributions = pending_response.json()
+            
+            # Look for contribution related to the reported team
+            team_contribution = None
+            for contrib in all_contributions:
+                if (contrib.get('item_type') == 'team' and 
+                    contrib.get('item_id') == team_id):
+                    team_contribution = contrib
+                    break
+            
+            if team_contribution:
+                self.log_test("Team Gamification Contribution Check", True, 
+                             f"Found gamification contribution for team {team_name}")
+                
+                print(f"\n   📋 TEAM GAMIFICATION CONTRIBUTION:")
+                print(f"      Contribution ID: {team_contribution.get('id')}")
+                print(f"      User ID: {team_contribution.get('user_id')}")
+                print(f"      User Name: {team_contribution.get('user_name')}")
+                print(f"      Item Type: {team_contribution.get('item_type')}")
+                print(f"      Item ID: {team_contribution.get('item_id')}")
+                print(f"      XP to Award: {team_contribution.get('xp_to_award', 0)}")
+                print(f"      Is Approved: {team_contribution.get('is_approved', False)}")
+                print(f"      Created At: {team_contribution.get('created_at')}")
+                print(f"      Approved At: {team_contribution.get('approved_at', 'Not approved')}")
+                print(f"      Approved By: {team_contribution.get('approved_by', 'Not approved')}")
+                
+                # Check if this contribution was created by emergency admin
+                emergency_admin_id = self.admin_user_data.get('id') if self.admin_user_data else None
+                if team_contribution.get('user_id') == emergency_admin_id:
+                    print(f"   ✅ MATCH: This contribution was created by emergency admin!")
+                else:
+                    print(f"   ⚠️ MISMATCH: This contribution was NOT created by emergency admin")
+                    print(f"      Expected User ID: {emergency_admin_id}")
+                    print(f"      Actual User ID: {team_contribution.get('user_id')}")
+                
+                return team_contribution
+            else:
+                self.log_test("Team Gamification Contribution Check", False, 
+                             f"No gamification contribution found for team {team_name}")
+                
+                print(f"   📋 TEAM-TYPE CONTRIBUTIONS (showing all):")
+                team_contributions = [c for c in all_contributions if c.get('item_type') == 'team']
+                if team_contributions:
+                    for i, contrib in enumerate(team_contributions, 1):
+                        print(f"      {i}. {contrib.get('id', 'No ID')} - {contrib.get('user_name')} - {contrib.get('item_details', {}).get('name', 'Unknown Team')} - {contrib.get('xp_to_award', 0)} XP")
+                else:
+                    print(f"      No team-type contributions found")
+                
+                return None
+                
+        except Exception as e:
+            self.log_test("Team Gamification Contribution Check", False, f"Exception: {str(e)}")
+            return None
+    
+    def investigate_xp_awarding_bug(self, team_contribution):
+        """Investigate why XP was not awarded for the team contribution"""
+        try:
+            print(f"\n🐛 INVESTIGATING XP AWARDING BUG")
+            print("=" * 60)
+            
+            if not team_contribution:
+                self.log_test("XP Awarding Bug Investigation", False, "No team contribution data provided")
+                return False
+            
+            contribution_id = team_contribution.get('id')
+            is_approved = team_contribution.get('is_approved', False)
+            xp_awarded = team_contribution.get('xp_awarded', 0)
+            user_id = team_contribution.get('user_id')
+            
+            print(f"   📋 CONTRIBUTION STATUS:")
+            print(f"      Contribution ID: {contribution_id}")
+            print(f"      Is Approved: {is_approved}")
+            print(f"      XP Awarded: {xp_awarded}")
+            print(f"      User ID: {user_id}")
+            
+            # Check if contribution is approved but XP not awarded
+            if is_approved and xp_awarded == 0:
+                self.log_test("XP Awarding Bug Investigation", False, 
+                             "🚨 BUG CONFIRMED: Contribution is approved but XP was not awarded!")
+                
+                print(f"\n   🚨 CRITICAL BUG IDENTIFIED:")
+                print(f"      - Contribution is marked as approved")
+                print(f"      - But XP awarded field is 0")
+                print(f"      - This indicates the XP awarding mechanism failed")
+                
+                return False
+                
+            elif is_approved and xp_awarded > 0:
+                self.log_test("XP Awarding Bug Investigation", True, 
+                             f"Contribution is approved and XP was awarded ({xp_awarded} XP)")
+                
+                print(f"\n   ✅ XP AWARDING WORKING:")
+                print(f"      - Contribution is approved")
+                print(f"      - XP was awarded: {xp_awarded}")
+                
+                # But check if the user actually received the XP
+                if user_id == self.admin_user_data.get('id'):
+                    current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
+                    if current_xp >= xp_awarded:
+                        print(f"      - User has {current_xp} XP (includes awarded XP)")
+                        return True
+                    else:
+                        print(f"      - 🚨 USER HAS ONLY {current_xp} XP (less than awarded {xp_awarded})")
+                        print(f"      - This suggests XP was awarded but not properly added to user")
+                        return False
+                else:
+                    print(f"      - Contribution was made by different user")
+                    return True
+                
+            elif not is_approved:
+                self.log_test("XP Awarding Bug Investigation", True, 
+                             "Contribution is not yet approved - XP awarding pending")
+                
+                print(f"\n   ⏳ CONTRIBUTION PENDING:")
+                print(f"      - Contribution is not yet approved")
+                print(f"      - XP will be awarded upon approval")
+                print(f"      - This is normal behavior")
+                
+                return True
+            else:
+                self.log_test("XP Awarding Bug Investigation", False, 
+                             "Unknown contribution state")
+                return False
+                
+        except Exception as e:
+            self.log_test("XP Awarding Bug Investigation", False, f"Exception: {str(e)}")
+            return False
+    
     def create_test_master_kit_contribution(self):
         """Create a test master kit contribution to verify the workflow"""
         try:
