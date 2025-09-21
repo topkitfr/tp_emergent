@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - URGENT GAMIFICATION BUG INVESTIGATION
+TopKit Backend Testing Suite - FOLLOW-UP GAMIFICATION INVESTIGATION
 
-USER REPORT:
-- Created team contribution: TK-CONTRIB-4DADAC  
-- Team approved and exists in database: TK-TEAM-AAD28D
-- BUT no XP gained on ranking page
-- No progression visible on profile page
+USER FOLLOW-UP REQUEST:
+Based on previous findings, I need to:
+1. Check which user account (emergency.admin@topkit.test) currently has how much XP
+2. Verify the contribution creation and approval workflow is working
+3. Test creating a new contribution as emergency.admin@topkit.test to confirm XP awarding works
+4. Check if there are multiple admin accounts causing confusion
 
-INVESTIGATION REQUIRED:
-1. Find the user who made this contribution (likely emergency.admin@topkit.test)
-2. Check if contribution TK-CONTRIB-4DADAC exists and was approved
-3. Verify XP was awarded during approval process
-4. Check user's current XP in database vs what should be expected
-5. Test the complete approval workflow: contribution creation → approval → XP awarding
-6. Check if there are any errors in the gamification system
-7. Verify all gamification endpoints are working correctly
+Specifically test:
+- Login as emergency.admin@topkit.test
+- Check current XP for this account  
+- Create a test team contribution
+- Check if the contribution gets proper gamification tracking
+- Test the approval process and XP awarding
 
-CRITICAL: The gamification system appears to be broken despite previous successful testing.
+The user reported creating TK-CONTRIB-4DADAC and expected XP but didn't see it. I need to verify if:
+1. The emergency admin account is the one that should have received XP
+2. The XP awarding workflow is working for new contributions
+3. There's any issue with the specific user account they're using
+
+PREVIOUS FINDINGS:
+- Two different admin users exist - 'Gamification Admin' (40 XP) and 'Emergency Admin' (0 XP)
+- User confusion between accounts was identified as root cause
+- Gamification system was found to be working correctly
 """
 
 import requests
