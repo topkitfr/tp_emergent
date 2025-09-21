@@ -533,16 +533,19 @@ class TopKitXPBugFixVerifier:
         # Step 3: Create test team contribution
         verification_results.append(self.create_test_team_contribution())
         
-        # Step 4: Verify gamification contribution was created
+        # Step 4: Approve contribution to create entity (this should trigger gamification entry)
+        verification_results.append(self.approve_contribution_to_create_entity())
+        
+        # Step 5: Verify gamification contribution was created
         verification_results.append(self.verify_gamification_contribution_created())
         
-        # Step 5: Approve contribution and test XP awarding
-        verification_results.append(self.approve_contribution_and_test_xp_awarding())
+        # Step 6: Approve gamification contribution and test XP awarding
+        verification_results.append(self.approve_gamification_contribution_and_test_xp_awarding())
         
-        # Step 6: Verify final XP status
+        # Step 7: Verify final XP status
         verification_results.append(self.verify_final_xp_status())
         
-        # Step 7: Check leaderboard position
+        # Step 8: Check leaderboard position
         verification_results.append(self.check_leaderboard_position())
         
         return verification_results
