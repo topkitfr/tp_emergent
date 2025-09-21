@@ -520,6 +520,65 @@ class TopKitAdminAccountManager:
         except Exception as e:
             self.log_test("Incorrect Account Detection", False, f"Exception: {str(e)}")
             return False
+    
+    def verify_single_admin_status(self):
+        """Verify that the new account is the only admin account"""
+        try:
+            print(f"\n👑 VERIFYING SINGLE ADMIN STATUS")
+            print("=" * 60)
+            
+            # Get updated user list
+            response = self.session.get(f"{BACKEND_URL}/leaderboard?limit=100", timeout=10)
+            
+            if response.status_code == 200:
+                all_users = response.json()
+                
+                # Count admin accounts
+                current_admin_accounts = []
+                for user in all_users:
+                    username = user.get('username', '').lower()
+                    if 'admin' in username:
+                        current_admin_accounts.append(user)
+                
+                print(f"   Current admin accounts found: {len(current_admin_accounts)}")
+                
+                target_admin_found = False
+                for admin in current_admin_accounts:
+                    username = admin.get('username', 'Unknown')
+                    print(f"      - {username}")
+                    
+                    if NEW_ADMIN_CREDENTIALS['email'].lower() in username.lower() or \
+                       NEW_ADMIN_CREDENTIALS['name'].lower() in username.lower():
+                        target_admin_found = True
+                        print(f"        ✅ This is our target admin account")
+                    else:
+                        print(f"        ⚠️ This is an existing admin that should be demoted")
+                
+                if len(current_admin_accounts) == 1 and target_admin_found:
+                    self.log_test("Single Admin Status Verification", True, 
+                                 f"✅ Only one admin account exists - the target account")
+                    return True
+                elif target_admin_found and len(current_admin_accounts) > 1:
+                    self.log_test("Single Admin Status Verification", False, 
+                                 f"Target admin exists but {len(current_admin_accounts)-1} other admin accounts still exist")
+                    return False
+                elif not target_admin_found:
+                    self.log_test("Single Admin Status Verification", False, 
+                                 f"Target admin account not found in admin list")
+                    return False
+                else:
+                    self.log_test("Single Admin Status Verification", False, 
+                                 f"Unexpected admin account state")
+                    return False
+                
+            else:
+                self.log_test("Single Admin Status Verification", False, 
+                             f"Failed to get user list: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Single Admin Status Verification", False, f"Exception: {str(e)}")
+            return False
         """Verify that the new account is the only admin account"""
         try:
             print(f"\n👑 VERIFYING SINGLE ADMIN STATUS")
