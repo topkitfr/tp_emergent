@@ -29,7 +29,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://kit-wizard.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-auth-fix-1.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "topkitfr@gmail.com",
     "password": "TopKitSecure789#"
