@@ -1,30 +1,25 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - FOLLOW-UP GAMIFICATION INVESTIGATION
+TopKit Backend Testing Suite - CRITICAL GAMIFICATION BUG INVESTIGATION
 
-USER FOLLOW-UP REQUEST:
-Based on previous findings, I need to:
-1. Check which user account (emergency.admin@topkit.test) currently has how much XP
-2. Verify the contribution creation and approval workflow is working
-3. Test creating a new contribution as emergency.admin@topkit.test to confirm XP awarding works
-4. Check if there are multiple admin accounts causing confusion
+CRITICAL GAMIFICATION BUG - XP NOT AWARDED AFTER TEAM APPROVAL
 
-Specifically test:
-- Login as emergency.admin@topkit.test
-- Check current XP for this account  
-- Create a test team contribution
-- Check if the contribution gets proper gamification tracking
-- Test the approval process and XP awarding
+USER SPECIFIC REPORT:
+- Created team: TK-TEAM-018D25
+- Used account: emergency.admin@topkit.test  
+- Team was approved but NO XP awarded
+- Profile progress not updating
 
-The user reported creating TK-CONTRIB-4DADAC and expected XP but didn't see it. I need to verify if:
-1. The emergency admin account is the one that should have received XP
-2. The XP awarding workflow is working for new contributions
-3. There's any issue with the specific user account they're using
+IMMEDIATE INVESTIGATION REQUIRED:
+1. Login as emergency.admin@topkit.test and check current XP
+2. Find the specific team TK-TEAM-018D25 in database
+3. Check if gamification contribution was created for this team
+4. Verify the approval process and if XP was supposed to be awarded
+5. Test the complete team creation → contribution tracking → approval → XP awarding workflow
+6. Check backend logs for any errors during approval process
+7. Identify exactly where the XP awarding system is failing
 
-PREVIOUS FINDINGS:
-- Two different admin users exist - 'Gamification Admin' (40 XP) and 'Emergency Admin' (0 XP)
-- User confusion between accounts was identified as root cause
-- Gamification system was found to be working correctly
+CRITICAL: This is a confirmed bug in the gamification system. The XP awarding mechanism is broken and needs immediate fixing.
 """
 
 import requests
