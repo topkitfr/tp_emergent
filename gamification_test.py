@@ -214,7 +214,7 @@ class GamificationTester:
                                  f"Invalid XP value: {user_data.get('xp')}")
                     return False
                 
-                if user_data.get('level') not in ['remplacant', 'titulaire', 'legende', 'ballon_dor']:
+                if user_data.get('level') not in ['Remplaçant', 'Titulaire', 'Légende', "Ballon d'Or"]:
                     self.log_test("User Gamification Level", False,
                                  f"Invalid level: {user_data.get('level')}")
                     return False
