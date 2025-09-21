@@ -586,16 +586,16 @@ class GamificationTester:
                     expected_emoji = None
                     
                     if current_xp <= 99:
-                        expected_level = 'remplacant'
+                        expected_level = 'Remplaçant'
                         expected_emoji = '👕'
                     elif current_xp <= 499:
-                        expected_level = 'titulaire'
+                        expected_level = 'Titulaire'
                         expected_emoji = '⚽'
                     elif current_xp <= 1999:
-                        expected_level = 'legende'
+                        expected_level = 'Légende'
                         expected_emoji = '🏆'
                     else:
-                        expected_level = 'ballon_dor'
+                        expected_level = "Ballon d'Or"
                         expected_emoji = '🔥'
                     
                     if current_level == expected_level and current_emoji == expected_emoji:
