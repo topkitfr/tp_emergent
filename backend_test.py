@@ -524,8 +524,8 @@ class TopKitAdminAccountManager:
     
     def run_admin_account_management(self):
         """Run comprehensive admin account management"""
-        print("\n👑 ADMIN ACCOUNT CREATION AND MANAGEMENT")
-        print("Creating topkitfr@gmail.fr as the ONLY admin account")
+        print("\n👑 ADMIN ACCOUNT EMAIL CORRECTION")
+        print("Creating topkitfr@gmail.com as the ONLY admin account (CORRECTED EMAIL)")
         print("=" * 80)
         
         management_results = []
