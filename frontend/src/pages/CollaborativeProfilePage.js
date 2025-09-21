@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UserSettingsPanel from '../UserSettingsPanel';
 import ProfilePictureModal from '../ProfilePictureModal';
+import GamificationProfile from '../components/GamificationProfile';
 
 const CollaborativeProfilePage = ({ user, API }) => {
   const [userProfile, setUserProfile] = useState(null);
