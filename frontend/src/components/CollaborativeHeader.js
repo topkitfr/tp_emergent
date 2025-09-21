@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ProfilePictureModal from '../ProfilePictureModal';
+import GamificationProfile from './GamificationProfile';
 
 const CollaborativeHeader = ({ 
   user, 
