@@ -463,7 +463,63 @@ class TopKitAdminAccountManager:
             self.log_test("Admin Privileges Verification", False, f"Exception: {str(e)}")
             return False
     
-    def verify_single_admin_status(self):
+    def check_and_delete_incorrect_account(self):
+        """Check for and delete the incorrect admin account (topkitfr@gmail.fr)"""
+        try:
+            print(f"\n🗑️ CHECKING FOR INCORRECT ADMIN ACCOUNT TO DELETE")
+            print("=" * 60)
+            
+            incorrect_email = "topkitfr@gmail.fr"
+            print(f"   Incorrect Email to Delete: {incorrect_email}")
+            
+            # Try to login with the incorrect account to see if it exists
+            response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json={
+                    "email": incorrect_email,
+                    "password": NEW_ADMIN_CREDENTIALS['password']  # Same password
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                user_data = data.get('user', {})
+                incorrect_user_id = user_data.get('id')
+                
+                self.log_test("Incorrect Account Detection", True, 
+                             f"Found incorrect account {incorrect_email} - needs deletion")
+                
+                print(f"      Incorrect Account Found:")
+                print(f"         User ID: {incorrect_user_id}")
+                print(f"         Name: {user_data.get('name')}")
+                print(f"         Role: {user_data.get('role')}")
+                print(f"         Email: {user_data.get('email')}")
+                
+                # Note: In a real scenario, this would require direct database access
+                print(f"      📝 MANUAL ACTION REQUIRED: Delete incorrect account from database")
+                print(f"         DELETE FROM users WHERE id = '{incorrect_user_id}';")
+                print(f"         DELETE FROM sessions WHERE user_id = '{incorrect_user_id}';")
+                print(f"         DELETE FROM contributions_gamification WHERE user_id = '{incorrect_user_id}';")
+                
+                self.log_test("Incorrect Account Deletion", False, 
+                             f"Manual database deletion required for {incorrect_email}")
+                return False
+                
+            elif response.status_code == 401:
+                self.log_test("Incorrect Account Detection", True, 
+                             f"Incorrect account {incorrect_email} does not exist - good!")
+                print(f"      ✅ Incorrect account does not exist")
+                return True
+                
+            else:
+                self.log_test("Incorrect Account Detection", False, 
+                             f"Unexpected response when checking incorrect account: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Incorrect Account Detection", False, f"Exception: {str(e)}")
+            return False
         """Verify that the new account is the only admin account"""
         try:
             print(f"\n👑 VERIFYING SINGLE ADMIN STATUS")
