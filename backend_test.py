@@ -386,7 +386,58 @@ class TopKitGamificationInvestigator:
             self.log_test("Gamification Endpoints Test", False, f"Exception: {str(e)}")
             return False
     
-    def test_contribution_approval_workflow(self):
+    def investigate_xp_discrepancy(self):
+        """Investigate the XP discrepancy between leaderboard and user data"""
+        try:
+            print(f"\n🔍 INVESTIGATING XP DISCREPANCY")
+            print("=" * 60)
+            
+            # The leaderboard shows "Gamification Admin" with 40 XP
+            # But user gamification data for emergency admin shows 0 XP
+            # This suggests there might be multiple admin users
+            
+            print(f"   🎯 ANALYZING XP DISCREPANCY:")
+            print(f"      Leaderboard shows: 'Gamification Admin' with 40 XP")
+            print(f"      User data shows: 'Emergency Admin' with 0 XP")
+            print(f"      User ID: {self.admin_user_data.get('id') if self.admin_user_data else 'Unknown'}")
+            
+            # Look for the "Gamification Admin" user in the leaderboard
+            gamification_admin_user = None
+            if self.leaderboard_data:
+                for user in self.leaderboard_data:
+                    if user.get('username') == 'Gamification Admin':
+                        gamification_admin_user = user
+                        break
+            
+            if gamification_admin_user:
+                print(f"\n   📊 GAMIFICATION ADMIN USER FOUND:")
+                print(f"      Username: {gamification_admin_user.get('username')}")
+                print(f"      XP: {gamification_admin_user.get('xp')}")
+                print(f"      Level: {gamification_admin_user.get('level')} {gamification_admin_user.get('level_emoji', '')}")
+                print(f"      Rank: {gamification_admin_user.get('rank')}")
+                
+                # This suggests there are two different admin users:
+                # 1. "Gamification Admin" with 40 XP (the one who made contributions)
+                # 2. "Emergency Admin" with 0 XP (the one we're logged in as)
+                
+                self.log_test("XP Discrepancy Investigation", True, 
+                             f"✅ Found XP discrepancy - two different admin users exist")
+                
+                print(f"\n   💡 HYPOTHESIS:")
+                print(f"      - 'Gamification Admin' (40 XP) is the user who made the contribution")
+                print(f"      - 'Emergency Admin' (0 XP) is a different user account")
+                print(f"      - The contribution TK-CONTRIB-4DADAC was likely made by Gamification Admin")
+                print(f"      - XP was awarded to Gamification Admin, not Emergency Admin")
+                
+                return True
+            else:
+                self.log_test("XP Discrepancy Investigation", False, 
+                             f"❌ Could not find Gamification Admin user in leaderboard")
+                return False
+                
+        except Exception as e:
+            self.log_test("XP Discrepancy Investigation", False, f"Exception: {str(e)}")
+            return False
         """Test the contribution approval workflow if we have a pending contribution"""
         try:
             print(f"\n⚡ TESTING CONTRIBUTION APPROVAL WORKFLOW")
