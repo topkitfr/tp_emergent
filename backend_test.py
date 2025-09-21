@@ -656,7 +656,7 @@ class TopKitGamificationFollowUpInvestigator:
         
         if contribution_created and gamification_tracked and approval_worked:
             print(f"  ✅ WORKFLOW CONFIRMED: Complete contribution → XP workflow is working")
-            print(f"     - Team creation triggers gamification contribution")
+            print(f"     - Master kit creation triggers gamification contribution")
             print(f"     - Approval process awards XP correctly")
             print(f"     - The system is functioning as intended")
         
