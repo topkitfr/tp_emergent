@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - FINAL ADMIN ACCOUNT VERIFICATION
+TopKit Backend Testing Suite - ADMIN ACCOUNT EMAIL CORRECTION
 
-FINAL VERIFICATION - Single Admin Account Status
+CRITICAL EMAIL CORRECTION REQUIRED:
+- User created wrong email: topkitfr@gmail.fr (WRONG)
+- User wants: topkitfr@gmail.com (CORRECT)
 
-VERIFICATION REQUIRED:
-1. Test login with topkitfr@gmail.fr / TopKitAdmin2025!
-2. Verify it has full admin privileges 
-3. Confirm it's the ONLY admin account on the site
-4. Test all admin functions work correctly
+ACTIONS REQUIRED:
+1. Create new admin account: topkitfr@gmail.com
+2. Set password: TopKitAdmin2025!
+3. Set name: TopKit Admin
+4. Set role: admin
+5. Delete the incorrect account: topkitfr@gmail.fr
+6. Make sure topkitfr@gmail.com is the ONLY admin account
 
-This is the final verification that the user's request has been completed successfully.
+CRITICAL: Fix the email address error and create the correct admin account.
 """
 
 import requests
