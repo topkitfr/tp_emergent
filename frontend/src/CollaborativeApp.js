@@ -67,6 +67,7 @@ const AppContent = () => {
     if (path === '/master-kits') return 'master-kits';
     if (path === '/profile') return 'profile';
     if (path === '/admin') return 'admin';
+    if (path === '/leaderboard') return 'leaderboard';
     return 'home';
   };
 
