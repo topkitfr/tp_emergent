@@ -234,6 +234,36 @@ class TopKitGamificationInvestigator:
                     for i, contrib in enumerate(contributions[:10], 1):
                         print(f"      {i:2d}. {contrib.get('id', 'No ID')} - {contrib.get('item_type')} - {contrib.get('user_name')} - {contrib.get('xp_to_award', 0)} XP")
                     
+                    # Also check contributions-v2 system which might be where the contribution actually exists
+                    print(f"\n   🔍 CHECKING CONTRIBUTIONS-V2 SYSTEM...")
+                    try:
+                        v2_response = self.session.get(f"{BACKEND_URL}/contributions-v2/?page=1&limit=100", timeout=10)
+                        if v2_response.status_code == 200:
+                            v2_contributions = v2_response.json()
+                            contributions_list = v2_contributions.get('contributions', [])
+                            print(f"   Found {len(contributions_list)} contributions in v2 system")
+                            
+                            # Look for the specific contribution in v2 system
+                            for contrib in contributions_list:
+                                if contrib.get('id') == 'TK-CONTRIB-4DADAC' or contrib.get('topkit_reference') == 'TK-CONTRIB-4DADAC':
+                                    print(f"\n   ✅ FOUND IN V2 SYSTEM:")
+                                    print(f"      ID: {contrib.get('id')}")
+                                    print(f"      TopKit Reference: {contrib.get('topkit_reference')}")
+                                    print(f"      Status: {contrib.get('status')}")
+                                    print(f"      Entity Type: {contrib.get('entity_type')}")
+                                    print(f"      Created By: {contrib.get('created_by')}")
+                                    print(f"      Created At: {contrib.get('created_at')}")
+                                    self.contribution_data = contrib
+                                    return True
+                            
+                            print(f"   ❌ Not found in v2 system either")
+                            print(f"   📋 RECENT V2 CONTRIBUTIONS (showing first 5):")
+                            for i, contrib in enumerate(contributions_list[:5], 1):
+                                print(f"      {i}. {contrib.get('topkit_reference', 'No Ref')} - {contrib.get('entity_type')} - {contrib.get('status')}")
+                        
+                    except Exception as v2_error:
+                        print(f"   ❌ Error checking v2 system: {str(v2_error)}")
+                    
                     return False
                 
             else:
