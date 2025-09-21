@@ -1,29 +1,23 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - CRITICAL GAMIFICATION BUG FIX VERIFICATION
+TopKit Backend Testing Suite - ADMIN ACCOUNT MANAGEMENT TESTING
 
-CRITICAL BUG FIX VERIFICATION - Test XP Awarding for Team Contributions
+ADMIN ACCOUNT CREATION AND PRIVILEGE MANAGEMENT
 
-MAIN AGENT REPORTED FIX:
-- Fixed gamification bug by adding create_contribution_entry() calls for all entity types
-- Updated create_entity_from_contribution() function to include gamification tracking
-- Teams, brands, players, and competitions should now create gamification entries
+USER REQUEST:
+- Create admin account for: topkitfr@gmail.fr
+- Make it the ONLY admin account on the site (remove admin privileges from others)
 
-VERIFICATION REQUIRED:
-1. Login as emergency.admin@topkit.test
-2. Check current XP status (should be 20 XP from previous tests)
-3. Create a new team contribution 
-4. Verify that gamification contribution entry is created automatically
-5. Approve the contribution and verify XP is awarded correctly
-6. Check final XP status and leaderboard position
+REQUIRED ACTIONS:
+1. Create new user account: topkitfr@gmail.fr
+2. Set password to a secure default (TopKitAdmin2025!)
+3. Set role to "admin"
+4. Set name to "TopKit Admin" 
+5. Find all existing admin accounts and change their role to "user"
+6. Verify the new account can login
+7. Confirm it has admin privileges and is the only admin
 
-SPECIFIC TEST:
-- Create test team with name "XP Test Team" 
-- Verify contribution entry exists in gamification system
-- Test complete workflow: creation → gamification tracking → approval → XP award
-- Confirm emergency admin gains 10 XP for team contribution (as per XP rules)
-
-CRITICAL: This test verifies the fix for the bug where teams, brands, players, and competitions weren't creating gamification contribution entries for XP awarding.
+CRITICAL: This creates a single admin account and removes admin privileges from all other accounts as requested.
 """
 
 import requests
