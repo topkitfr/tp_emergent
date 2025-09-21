@@ -301,10 +301,10 @@ class TopKitGamificationFollowUpInvestigator:
                 "club_id": team.get('id'),
                 "brand_id": brand.get('id'),
                 "competition_id": competition.get('id'),
-                "season": "2025-26",
+                "season": "2025-2026",  # Fixed format
                 "kit_type": "home",
                 "gender": "man",
-                "kit_model": "authentic",
+                "model": "authentic",  # Fixed field name
                 "primary_color": "Test Blue",
                 "secondary_color": "Test White",
                 "front_photo_url": "test_image.jpg"
