@@ -98,6 +98,205 @@ async def verify_database_connection():
 import asyncio
 asyncio.create_task(verify_database_connection())
 
+# ================================
+# GAMIFICATION SYSTEM UTILITIES
+# ================================
+
+# XP Rules Configuration
+XP_RULES = {
+    'team': 10,
+    'brand': 10,
+    'player': 10,
+    'competition': 10,
+    'jersey': 20  # Master kit creation
+}
+
+# Level thresholds and emojis
+LEVEL_THRESHOLDS = {
+    UserLevel.REMPLACANT: {'min_xp': 0, 'max_xp': 99, 'emoji': '👕'},
+    UserLevel.TITULAIRE: {'min_xp': 100, 'max_xp': 499, 'emoji': '⚽'},
+    UserLevel.LEGENDE: {'min_xp': 500, 'max_xp': 1999, 'emoji': '🏆'},
+    UserLevel.BALLON_DOR: {'min_xp': 2000, 'max_xp': float('inf'), 'emoji': '🔥'}
+}
+
+# Daily XP limit for anti-farming
+DAILY_XP_LIMIT = 100
+
+async def calculate_user_level(xp: int) -> UserLevel:
+    """Calculate user level based on XP"""
+    for level, thresholds in LEVEL_THRESHOLDS.items():
+        if thresholds['min_xp'] <= xp <= thresholds['max_xp']:
+            return level
+    return UserLevel.BALLON_DOR  # Default to highest level if XP exceeds all thresholds
+
+def get_level_emoji(level: UserLevel) -> str:
+    """Get emoji for level"""
+    return LEVEL_THRESHOLDS[level]['emoji']
+
+def get_xp_to_next_level(current_xp: int, current_level: UserLevel) -> tuple[int, Optional[UserLevel]]:
+    """Calculate XP needed for next level and what that level would be"""
+    levels_list = list(LEVEL_THRESHOLDS.keys())
+    current_index = levels_list.index(current_level)
+    
+    # If already at max level
+    if current_index == len(levels_list) - 1:
+        return 0, None
+    
+    next_level = levels_list[current_index + 1]
+    next_level_min_xp = LEVEL_THRESHOLDS[next_level]['min_xp']
+    xp_needed = next_level_min_xp - current_xp
+    
+    return max(0, xp_needed), next_level
+
+def calculate_progress_percentage(current_xp: int, current_level: UserLevel) -> int:
+    """Calculate progress percentage within current level"""
+    level_min_xp = LEVEL_THRESHOLDS[current_level]['min_xp']
+    level_max_xp = LEVEL_THRESHOLDS[current_level]['max_xp']
+    
+    # Handle infinite max (Ballon d'Or level)
+    if level_max_xp == float('inf'):
+        return 100
+    
+    level_range = level_max_xp - level_min_xp + 1  # +1 because ranges are inclusive
+    progress_in_level = current_xp - level_min_xp
+    
+    return min(100, int((progress_in_level / level_range) * 100))
+
+async def check_daily_xp_limit(user_id: str, xp_to_add: int) -> bool:
+    """Check if user can receive XP without exceeding daily limit"""
+    today = datetime.now(timezone.utc).date()
+    
+    # Get user's current daily XP
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return False
+    
+    user_daily_date = user.get('xp_daily_date')
+    user_daily_total = user.get('xp_daily_total', 0)
+    
+    # Reset daily total if it's a new day
+    if not user_daily_date or user_daily_date.date() != today:
+        user_daily_total = 0
+    
+    # Check if adding XP would exceed daily limit
+    return (user_daily_total + xp_to_add) <= DAILY_XP_LIMIT
+
+async def award_xp(user_id: str, contribution_id: str, item_type: str, item_id: str, approved_by: str) -> dict:
+    """Award XP to user for approved contribution"""
+    try:
+        # Check if contribution exists and hasn't been rewarded
+        contribution = await db.contributions_gamification.find_one({
+            "id": contribution_id,
+            "user_id": user_id,
+            "is_approved": False
+        })
+        
+        if not contribution:
+            return {"success": False, "message": "Contribution not found or already rewarded"}
+        
+        # Get XP amount for item type
+        xp_amount = XP_RULES.get(item_type, 0)
+        if xp_amount == 0:
+            return {"success": False, "message": f"No XP rule for item type: {item_type}"}
+        
+        # Check daily XP limit
+        if not await check_daily_xp_limit(user_id, xp_amount):
+            return {"success": False, "message": "Daily XP limit would be exceeded"}
+        
+        # Get user current data
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            return {"success": False, "message": "User not found"}
+        
+        current_xp = user.get('xp', 0)
+        current_level = UserLevel(user.get('level', UserLevel.REMPLACANT))
+        daily_total = user.get('xp_daily_total', 0)
+        daily_date = user.get('xp_daily_date')
+        
+        # Reset daily total if new day
+        today = datetime.now(timezone.utc)
+        if not daily_date or daily_date.date() != today.date():
+            daily_total = 0
+        
+        # Calculate new totals
+        new_xp = current_xp + xp_amount
+        new_daily_total = daily_total + xp_amount
+        new_level = await calculate_user_level(new_xp)
+        level_changed = new_level != current_level
+        
+        # Update user XP and level
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "xp": new_xp,
+                "level": new_level,
+                "xp_daily_total": new_daily_total,
+                "xp_daily_date": today
+            }}
+        )
+        
+        # Mark contribution as approved and rewarded
+        await db.contributions_gamification.update_one(
+            {"id": contribution_id},
+            {"$set": {
+                "is_approved": True,
+                "xp_awarded": xp_amount,
+                "approved_at": today,
+                "approved_by": approved_by
+            }}
+        )
+        
+        # Create XP transaction record for audit
+        xp_transaction = XPTransaction(
+            user_id=user_id,
+            contribution_id=contribution_id,
+            xp_amount=xp_amount,
+            item_type=item_type,
+            item_id=item_id,
+            created_by=approved_by
+        )
+        await db.xp_transactions.insert_one(xp_transaction.dict())
+        
+        return {
+            "success": True,
+            "xp_awarded": xp_amount,
+            "new_xp": new_xp,
+            "new_level": new_level,
+            "level_changed": level_changed,
+            "level_emoji": get_level_emoji(new_level)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error awarding XP: {str(e)}")
+        return {"success": False, "message": f"Error awarding XP: {str(e)}"}
+
+async def create_contribution_entry(user_id: str, item_type: str, item_id: str) -> str:
+    """Create a contribution entry for potential XP award"""
+    try:
+        # Check for duplicate contributions
+        existing = await db.contributions_gamification.find_one({
+            "user_id": user_id,
+            "item_type": item_type,
+            "item_id": item_id
+        })
+        
+        if existing:
+            return existing["id"]  # Return existing ID
+        
+        contribution = ContributionEntry(
+            user_id=user_id,
+            item_type=item_type,
+            item_id=item_id
+        )
+        
+        await db.contributions_gamification.insert_one(contribution.dict())
+        logger.info(f"Created contribution entry for user {user_id}, {item_type} {item_id}")
+        return contribution.id
+        
+    except Exception as e:
+        logger.error(f"Error creating contribution entry: {str(e)}")
+        return ""
+
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', "topkit_secret_key_2024")
 ALGORITHM = "HS256"
