@@ -2201,6 +2201,17 @@ async def create_entity_from_contribution(contribution: dict) -> str:
             entity["topkit_reference"] = f"TK-MASTER-{uuid.uuid4().hex[:6].upper()}"
             await db.master_kits.insert_one(entity)
         
+        # Create gamification contribution entry for XP awarding (CRITICAL FIX)
+        try:
+            contribution_id = await create_contribution_entry(
+                user_id=contribution.get("created_by"),
+                item_type=entity_type,  # team, brand, player, competition, or master_kit
+                item_id=entity_id
+            )
+            logger.info(f"Created gamification contribution entry: {contribution_id} for {entity_type}: {entity_id}")
+        except Exception as contrib_error:
+            logger.warning(f"Failed to create gamification contribution entry: {str(contrib_error)}")
+        
         logger.info(f"Created {entity_type} entity {entity_id} from contribution {contribution['id']}")
         return entity_id
         
