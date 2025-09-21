@@ -387,7 +387,7 @@ class TopKitXPBugFixVerifier:
     def verify_final_xp_status(self):
         """Verify final XP status and calculate XP gained"""
         try:
-            print(f"\n🎯 STEP 6: VERIFYING FINAL XP STATUS AND LEADERBOARD POSITION")
+            print(f"\n🎯 STEP 7: VERIFYING FINAL XP STATUS AND LEADERBOARD POSITION")
             print("=" * 60)
             
             if not self.admin_user_data:
