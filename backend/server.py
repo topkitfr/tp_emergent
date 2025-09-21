@@ -383,6 +383,157 @@ async def get_current_user_flexible(request: Request, credentials: Optional[HTTP
         raise HTTPException(status_code=401, detail="Invalid authentication")
 
 # ================================
+# GAMIFICATION API ENDPOINTS
+# ================================
+
+@app.get("/api/leaderboard")
+async def get_leaderboard(limit: int = Query(50, le=100)):
+    """Get user leaderboard ranked by XP"""
+    try:
+        cursor = db.users.find({}, {"_id": 0}).sort("xp", -1).limit(limit)
+        users = await cursor.to_list(length=None)
+        
+        leaderboard = []
+        for i, user in enumerate(users, 1):
+            user_data = {
+                "rank": i,
+                "username": user.get("name", "Unknown"),
+                "xp": user.get("xp", 0),
+                "level": user.get("level", UserLevel.REMPLACANT),
+                "level_emoji": get_level_emoji(UserLevel(user.get("level", UserLevel.REMPLACANT)))
+            }
+            leaderboard.append(user_data)
+        
+        return leaderboard
+    except Exception as e:
+        logger.error(f"Error fetching leaderboard: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/gamification", response_model=UserGamificationResponse)
+async def get_user_gamification_data(user_id: str):
+    """Get detailed gamification data for a user"""
+    try:
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        current_xp = user.get("xp", 0)
+        current_level = UserLevel(user.get("level", UserLevel.REMPLACANT))
+        
+        xp_to_next, next_level = get_xp_to_next_level(current_xp, current_level)
+        progress_percentage = calculate_progress_percentage(current_xp, current_level)
+        
+        return UserGamificationResponse(
+            id=user["id"],
+            name=user["name"],
+            email=user["email"],
+            role=user["role"],
+            created_at=user["created_at"],
+            xp=current_xp,
+            level=current_level,
+            level_emoji=get_level_emoji(current_level),
+            xp_to_next_level=xp_to_next,
+            next_level=next_level,
+            progress_percentage=progress_percentage
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching user gamification data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/approve-contribution")
+async def approve_contribution(
+    contribution_id: str = Form(...),
+    admin_user: dict = Depends(get_admin_user)
+):
+    """Admin endpoint to approve contribution and award XP"""
+    try:
+        # Get contribution details
+        contribution = await db.contributions_gamification.find_one({"id": contribution_id})
+        if not contribution:
+            raise HTTPException(status_code=404, detail="Contribution not found")
+        
+        if contribution.get("is_approved"):
+            raise HTTPException(status_code=400, detail="Contribution already approved")
+        
+        # Award XP
+        result = await award_xp(
+            user_id=contribution["user_id"],
+            contribution_id=contribution_id,
+            item_type=contribution["item_type"],
+            item_id=contribution["item_id"],
+            approved_by=admin_user["id"]
+        )
+        
+        if result["success"]:
+            return {
+                "message": "Contribution approved and XP awarded",
+                "xp_awarded": result["xp_awarded"],
+                "new_level": result["new_level"],
+                "level_changed": result["level_changed"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error approving contribution: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/pending-contributions")
+async def get_pending_contributions(
+    admin_user: dict = Depends(get_admin_user),
+    limit: int = Query(50, le=100)
+):
+    """Admin endpoint to get pending contributions for approval"""
+    try:
+        cursor = db.contributions_gamification.find(
+            {"is_approved": False}
+        ).sort("created_at", -1).limit(limit)
+        
+        contributions = await cursor.to_list(length=None)
+        
+        # Enhance with user and item details
+        enhanced_contributions = []
+        for contrib in contributions:
+            user = await db.users.find_one({"id": contrib["user_id"]})
+            
+            # Get item details based on type
+            item_details = {}
+            if contrib["item_type"] == "team":
+                item = await db.teams.find_one({"id": contrib["item_id"]})
+                item_details = {"name": item.get("name") if item else "Unknown Team"}
+            elif contrib["item_type"] == "brand":
+                item = await db.brands.find_one({"id": contrib["item_id"]})
+                item_details = {"name": item.get("name") if item else "Unknown Brand"}
+            elif contrib["item_type"] == "player":
+                item = await db.players.find_one({"id": contrib["item_id"]})
+                item_details = {"name": item.get("display_name") if item else "Unknown Player"}
+            elif contrib["item_type"] == "competition":
+                item = await db.competitions.find_one({"id": contrib["item_id"]})
+                item_details = {"name": item.get("competition_name") if item else "Unknown Competition"}
+            elif contrib["item_type"] == "jersey":
+                item = await db.master_kits.find_one({"id": contrib["item_id"]})
+                item_details = {"name": f"{item.get('club')} {item.get('season')}" if item else "Unknown Jersey"}
+            
+            enhanced_contrib = {
+                **contrib,
+                "_id": None,  # Remove MongoDB ObjectId
+                "user_name": user.get("name") if user else "Unknown User",
+                "item_details": item_details,
+                "xp_to_award": XP_RULES.get(contrib["item_type"], 0)
+            }
+            enhanced_contributions.append(enhanced_contrib)
+        
+        return enhanced_contributions
+        
+    except Exception as e:
+        logger.error(f"Error fetching pending contributions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # UTILITY FUNCTIONS
 # ================================
 
