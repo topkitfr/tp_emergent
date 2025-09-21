@@ -387,6 +387,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
               <div className="p-6">
                 {activeTab === 'overview' && (
                   <div className="space-y-6">
+                    <GamificationProfile user={user} API={API} />
                     <ContributionQuality />
                     <BadgesAchievements />
                   </div>
