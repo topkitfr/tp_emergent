@@ -612,7 +612,7 @@ class TopKitGamificationFollowUpInvestigator:
             print(f"  ❌ XP STATUS: Could not retrieve XP data")
         
         # Contribution workflow
-        contribution_created = any(r['success'] for r in self.test_results if 'Test Team Creation' in r['test'])
+        contribution_created = any(r['success'] for r in self.test_results if 'Test Master Kit Creation' in r['test'])
         gamification_tracked = any(r['success'] for r in self.test_results if 'Gamification Contribution Check' in r['test'])
         approval_worked = any(r['success'] for r in self.test_results if 'Contribution Approval Test' in r['test'])
         
