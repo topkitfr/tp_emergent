@@ -270,17 +270,98 @@ const CollaborativeProfilePage = ({ user, API }) => {
     );
   };
 
-  // Badges & Achievements Component
+  // Enhanced Badges & Achievements Component with Gamification Rewards
   const BadgesAchievements = () => {
+    const [gamificationData, setGamificationData] = useState(null);
     const badges = [];
     
-    // Add badges based on achievements
+    // Load gamification data for XP-based badges  
+    useEffect(() => {
+      const loadGamificationData = async () => {
+        if (!user?.id) return;
+        try {
+          const response = await fetch(`${API}/api/users/${user.id}/gamification`);
+          if (response.ok) {
+            const data = await response.json();
+            setGamificationData(data);
+          }
+        } catch (error) {
+          console.error('Error loading gamification data:', error);
+        }
+      };
+      loadGamificationData();
+    }, [user]);
+
+    // XP-based Level Badges (Gamification Rewards)
+    if (gamificationData?.xp >= 100) {
+      badges.push({
+        title: '⚽ Titulaire',
+        description: 'Atteint le niveau Titulaire (100+ XP)',
+        icon: '⚽',
+        color: 'bg-blue-100 text-blue-800',
+        category: 'level'
+      });
+    }
+    
+    if (gamificationData?.xp >= 500) {
+      badges.push({
+        title: '🏆 Légende',
+        description: 'Atteint le niveau Légende (500+ XP)',
+        icon: '🏆',
+        color: 'bg-purple-100 text-purple-800',
+        category: 'level'
+      });
+    }
+    
+    if (gamificationData?.xp >= 2000) {
+      badges.push({
+        title: '🔥 Ballon d\'Or',
+        description: 'Atteint le niveau suprême (2000+ XP)',
+        icon: '🔥',
+        color: 'bg-yellow-100 text-yellow-800',
+        category: 'level'
+      });
+    }
+
+    // XP Milestone Badges
+    if (gamificationData?.xp >= 50) {
+      badges.push({
+        title: 'Rising Star',
+        description: 'Gagné 50+ XP',
+        icon: '⭐',
+        color: 'bg-indigo-100 text-indigo-800',
+        category: 'xp'
+      });
+    }
+    
+    if (gamificationData?.xp >= 200) {
+      badges.push({
+        title: 'Dedicated Player',
+        description: 'Gagné 200+ XP',
+        icon: '💎',
+        color: 'bg-cyan-100 text-cyan-800',
+        category: 'xp'
+      });
+    }
+    
+    if (gamificationData?.xp >= 1000) {
+      badges.push({
+        title: 'XP Master',
+        description: 'Gagné 1000+ XP',
+        icon: '👑',
+        color: 'bg-amber-100 text-amber-800',
+        category: 'xp'
+      });
+    }
+
+    // Contribution-based Achievement Badges
     if (userStats?.contributions_approved >= 1) {
       badges.push({
         title: 'First Contribution',
         description: 'Made your first contribution',
         icon: '🌟',
-        color: 'bg-blue-100 text-blue-800'
+        color: 'bg-green-100 text-green-800',
+        category: 'contribution'
       });
     }
     
@@ -289,7 +370,8 @@ const CollaborativeProfilePage = ({ user, API }) => {
         title: 'Contributor',
         description: '5+ approved contributions',
         icon: '📝',
-        color: 'bg-green-100 text-green-800'
+        color: 'bg-green-100 text-green-800',
+        category: 'contribution'
       });
     }
     
@@ -297,41 +379,169 @@ const CollaborativeProfilePage = ({ user, API }) => {
       badges.push({
         title: 'Expert Contributor',
         description: '10+ approved contributions',
-        icon: '🏆',
-        color: 'bg-purple-100 text-purple-800'
+        icon: '🏅',
+        color: 'bg-purple-100 text-purple-800',
+        category: 'contribution'
       });
     }
     
+    if (userStats?.contributions_approved >= 25) {
+      badges.push({
+        title: 'Elite Contributor',
+        description: '25+ approved contributions',
+        icon: '🎖️',
+        color: 'bg-red-100 text-red-800',
+        category: 'contribution'
+      });
+    }
+    
+    // Activity-based Badges
     if (userStats?.votes_count >= 20) {
       badges.push({
         title: 'Active Voter',
         description: '20+ votes cast',
         icon: '🗳️',
-        color: 'bg-yellow-100 text-yellow-800'
+        color: 'bg-yellow-100 text-yellow-800',
+        category: 'activity'
+      });
+    }
+    
+    if (userStats?.jerseys_added >= 5) {
+      badges.push({
+        title: 'Kit Collector',
+        description: '5+ kits created',
+        icon: '👕',
+        color: 'bg-teal-100 text-teal-800',
+        category: 'activity'
       });
     }
 
+    // Quality-based Badges
+    if (userStats && (userStats.contributions_approved + userStats.contributions_rejected) > 0) {
+      const approvalRate = Math.round(
+        (userStats.contributions_approved / 
+         (userStats.contributions_approved + userStats.contributions_rejected)) * 100
+      );
+      
+      if (approvalRate >= 90 && userStats.contributions_approved >= 5) {
+        badges.push({
+          title: 'Quality Contributor',
+          description: '90%+ approval rate (5+ contributions)',
+          icon: '✨',
+          color: 'bg-pink-100 text-pink-800',
+          category: 'quality'
+        });
+      }
+    }
+
+    // Group badges by category
+    const badgesByCategory = {
+      level: badges.filter(b => b.category === 'level'),
+      xp: badges.filter(b => b.category === 'xp'),
+      contribution: badges.filter(b => b.category === 'contribution'),
+      activity: badges.filter(b => b.category === 'activity'),
+      quality: badges.filter(b => b.category === 'quality')
+    };
+
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">Badges & Achievements</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Badges & Achievements</h2>
+          <div className="text-sm text-gray-500">
+            {badges.length} badge{badges.length !== 1 ? 's' : ''} earned
+          </div>
+        </div>
         
         {badges.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
-            Start contributing to earn your first badge!
-          </p>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2">🏆</div>
+            <p className="text-gray-500 mb-2">Start contributing to earn your first badge!</p>
+            <p className="text-xs text-gray-400">Badges are earned based on XP, contributions, and activity</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {badges.map((badge, index) => (
-              <div key={index} className={`p-3 rounded-lg ${badge.color}`}>
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{badge.icon}</span>
-                  <div>
-                    <h4 className="font-medium">{badge.title}</h4>
-                    <p className="text-sm opacity-75">{badge.description}</p>
-                  </div>
+          <div className="space-y-6">
+            {/* Level Badges */}
+            {badgesByCategory.level.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                  <span className="mr-2">🏆</span>Level Rewards
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {badgesByCategory.level.map((badge, index) => (
+                    <div key={`level-${index}`} className={`p-3 rounded-lg ${badge.color} border-l-4 border-current`}>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{badge.icon}</span>
+                        <div>
+                          <h4 className="font-medium">{badge.title}</h4>
+                          <p className="text-sm opacity-75">{badge.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* XP Milestone Badges */}
+            {badgesByCategory.xp.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                  <span className="mr-2">⭐</span>XP Milestones
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {badgesByCategory.xp.map((badge, index) => (
+                    <div key={`xp-${index}`} className={`p-3 rounded-lg ${badge.color}`}>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{badge.icon}</span>
+                        <div>
+                          <h4 className="font-medium">{badge.title}</h4>
+                          <p className="text-sm opacity-75">{badge.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other Categories */}
+            {(badgesByCategory.contribution.length > 0 || badgesByCategory.activity.length > 0 || badgesByCategory.quality.length > 0) && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                  <span className="mr-2">🎯</span>Achievements
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[...badgesByCategory.contribution, ...badgesByCategory.activity, ...badgesByCategory.quality].map((badge, index) => (
+                    <div key={`other-${index}`} className={`p-3 rounded-lg ${badge.color}`}>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{badge.icon}</span>
+                        <div>
+                          <h4 className="font-medium">{badge.title}</h4>
+                          <p className="text-sm opacity-75">{badge.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Progress Hint */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">💡 Earn More Rewards</h4>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div>• Contribute kits, teams, players to earn XP and level up</div>
+                  <div>• Maintain high approval rates for quality badges</div>
+                  <div>• Stay active with voting and community participation</div>
+                  {gamificationData?.xp < 100 && (
+                    <div className="text-blue-600 font-medium">
+                      • {100 - gamificationData.xp} XP until Titulaire level ⚽
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
