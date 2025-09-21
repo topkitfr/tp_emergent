@@ -544,8 +544,12 @@ class TopKitGamificationInvestigator:
         print("\n6️⃣ Testing Gamification Endpoints...")
         investigation_results.append(self.test_gamification_endpoints())
         
-        # Step 7: Test contribution approval workflow
-        print("\n7️⃣ Testing Contribution Approval Workflow...")
+        # Step 7: Investigate XP discrepancy
+        print("\n7️⃣ Investigating XP Discrepancy...")
+        investigation_results.append(self.investigate_xp_discrepancy())
+        
+        # Step 8: Test contribution approval workflow
+        print("\n8️⃣ Testing Contribution Approval Workflow...")
         investigation_results.append(self.test_contribution_approval_workflow())
         
         return investigation_results
