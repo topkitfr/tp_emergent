@@ -152,7 +152,7 @@ class TopKitAdminAccountManager:
             return False
     
     def check_if_target_account_exists(self):
-        """Check if topkitfr@gmail.fr account already exists"""
+        """Check if topkitfr@gmail.com account already exists"""
         try:
             print(f"\n🔍 CHECKING IF TARGET ACCOUNT ALREADY EXISTS")
             print("=" * 60)
@@ -184,10 +184,27 @@ class TopKitAdminAccountManager:
                 return True
                 
             elif response.status_code == 401:
-                self.log_test("Target Account Existence Check", True, 
-                             f"Account {NEW_ADMIN_CREDENTIALS['email']} does not exist - will create new")
-                print(f"      Account does not exist - proceeding with creation")
-                return False
+                # Account might exist but with different password, let's try to register to check
+                register_response = self.session.post(
+                    f"{BACKEND_URL}/auth/register",
+                    json={
+                        "name": NEW_ADMIN_CREDENTIALS['name'],
+                        "email": NEW_ADMIN_CREDENTIALS['email'],
+                        "password": NEW_ADMIN_CREDENTIALS['password']
+                    },
+                    timeout=10
+                )
+                
+                if register_response.status_code == 400 and "Email already registered" in register_response.text:
+                    self.log_test("Target Account Existence Check", True, 
+                                 f"Account {NEW_ADMIN_CREDENTIALS['email']} exists but password is different")
+                    print(f"      Account exists but password doesn't match - may need password reset")
+                    return "exists_wrong_password"
+                else:
+                    self.log_test("Target Account Existence Check", True, 
+                                 f"Account {NEW_ADMIN_CREDENTIALS['email']} does not exist - will create new")
+                    print(f"      Account does not exist - proceeding with creation")
+                    return False
                 
             else:
                 self.log_test("Target Account Existence Check", False, 
