@@ -15,6 +15,7 @@ import ContributionsV2Page from './pages/ContributionsV2Page';
 import ModerationDashboard from './pages/ModerationDashboard';
 import CollaborativeProfilePage from './pages/CollaborativeProfilePage';
 import AdminDashboard from './pages/AdminDashboard';
+import LeaderboardPage from './pages/LeaderboardPage';
 // Import nouvelles pages détaillées
 import TeamDetailPage from './pages/TeamDetailPage';
 import BrandDetailPage from './pages/BrandDetailPage';
