@@ -598,37 +598,41 @@ class TopKitAdminAccountManager:
         print("\n2️⃣ Identifying Existing Admin Accounts...")
         management_results.append(self.get_all_users_and_identify_admins())
         
-        # Step 3: Check if target account already exists
-        print("\n3️⃣ Checking if Target Account Already Exists...")
+        # Step 3: Check for and delete incorrect account
+        print("\n3️⃣ Checking for Incorrect Account to Delete...")
+        management_results.append(self.check_and_delete_incorrect_account())
+        
+        # Step 4: Check if target account already exists
+        print("\n4️⃣ Checking if Target Account Already Exists...")
         target_exists = self.check_if_target_account_exists()
         management_results.append(True)  # This step always succeeds
         
-        # Step 4: Create new admin account (if needed)
+        # Step 5: Create new admin account (if needed)
         if not target_exists:
-            print("\n4️⃣ Creating New Admin Account...")
+            print("\n5️⃣ Creating New Admin Account...")
             management_results.append(self.create_new_admin_account())
         else:
-            print("\n4️⃣ Skipping Account Creation (Already Exists)...")
+            print("\n5️⃣ Skipping Account Creation (Already Exists)...")
             management_results.append(True)
         
-        # Step 5: Upgrade account to admin role
-        print("\n5️⃣ Upgrading Account to Admin Role...")
+        # Step 6: Upgrade account to admin role
+        print("\n6️⃣ Upgrading Account to Admin Role...")
         management_results.append(self.upgrade_account_to_admin_role())
         
-        # Step 6: Demote existing admin accounts
-        print("\n6️⃣ Demoting Existing Admin Accounts...")
+        # Step 7: Demote existing admin accounts
+        print("\n7️⃣ Demoting Existing Admin Accounts...")
         management_results.append(self.demote_existing_admin_accounts())
         
-        # Step 7: Verify new admin login
-        print("\n7️⃣ Verifying New Admin Login...")
+        # Step 8: Verify new admin login
+        print("\n8️⃣ Verifying New Admin Login...")
         management_results.append(self.verify_new_admin_login())
         
-        # Step 8: Verify admin privileges
-        print("\n8️⃣ Verifying Admin Privileges...")
+        # Step 9: Verify admin privileges
+        print("\n9️⃣ Verifying Admin Privileges...")
         management_results.append(self.verify_admin_privileges())
         
-        # Step 9: Verify single admin status
-        print("\n9️⃣ Verifying Single Admin Status...")
+        # Step 10: Verify single admin status
+        print("\n🔟 Verifying Single Admin Status...")
         management_results.append(self.verify_single_admin_status())
         
         return management_results
