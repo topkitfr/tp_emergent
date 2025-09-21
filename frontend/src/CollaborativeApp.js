@@ -283,6 +283,7 @@ const AppContent = () => {
           <Route path="/master-kits" element={<CollaborativeMasterJerseyPage {...commonProps} />} />
           <Route path="/profile" element={<CollaborativeProfilePage {...commonProps} />} />
           <Route path="/admin" element={<AdminDashboard user={user} API={API} />} />
+          <Route path="/leaderboard" element={<LeaderboardPage {...commonProps} />} />
           
           {/* Routes pour les pages détaillées */}
           <Route path="/teams/:teamId" element={<TeamDetailPage {...commonProps} />} />
