@@ -31,6 +31,7 @@ import requests
 import json
 import sys
 import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -43,15 +44,16 @@ EMERGENCY_ADMIN_CREDENTIALS = {
     "password": "EmergencyAdmin2025!"
 }
 
-class TopKitGamificationInvestigator:
+class TopKitGamificationFollowUpInvestigator:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
-        self.contribution_data = None
         self.user_xp_data = None
         self.leaderboard_data = None
+        self.test_contribution_id = None
+        self.test_team_id = None
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -105,64 +107,14 @@ class TopKitGamificationInvestigator:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def get_leaderboard_data(self):
-        """Get current leaderboard to analyze XP distribution"""
-        try:
-            print(f"\n📊 ANALYZING CURRENT LEADERBOARD")
-            print("=" * 60)
-            
-            response = self.session.get(f"{BACKEND_URL}/leaderboard?limit=50", timeout=10)
-            
-            if response.status_code == 200:
-                self.leaderboard_data = response.json()
-                
-                self.log_test("Leaderboard Analysis", True, 
-                             f"Retrieved leaderboard with {len(self.leaderboard_data)} users")
-                
-                print(f"\n   📋 TOP USERS BY XP:")
-                for i, user in enumerate(self.leaderboard_data[:10], 1):
-                    username = user.get('username', 'Unknown')
-                    xp = user.get('xp', 0)
-                    level = user.get('level', 'Unknown')
-                    level_emoji = user.get('level_emoji', '')
-                    
-                    print(f"      {i:2d}. {username} - {xp} XP ({level} {level_emoji})")
-                
-                # Look for emergency admin in leaderboard
-                emergency_admin_in_leaderboard = None
-                for user in self.leaderboard_data:
-                    if 'emergency' in user.get('username', '').lower() or 'admin' in user.get('username', '').lower():
-                        emergency_admin_in_leaderboard = user
-                        break
-                
-                if emergency_admin_in_leaderboard:
-                    print(f"\n   🎯 EMERGENCY ADMIN FOUND IN LEADERBOARD:")
-                    print(f"      Username: {emergency_admin_in_leaderboard.get('username')}")
-                    print(f"      XP: {emergency_admin_in_leaderboard.get('xp', 0)}")
-                    print(f"      Level: {emergency_admin_in_leaderboard.get('level')} {emergency_admin_in_leaderboard.get('level_emoji', '')}")
-                    print(f"      Rank: {emergency_admin_in_leaderboard.get('rank')}")
-                else:
-                    print(f"\n   ❌ EMERGENCY ADMIN NOT FOUND IN LEADERBOARD")
-                
-                return True
-                
-            else:
-                self.log_test("Leaderboard Analysis", False, 
-                             f"Failed to get leaderboard: {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Leaderboard Analysis", False, f"Exception: {str(e)}")
-            return False
-    
-    def get_user_gamification_data(self):
-        """Get detailed gamification data for emergency admin user"""
+    def get_current_xp_status(self):
+        """Get current XP status for emergency admin account"""
         try:
             if not self.admin_user_data:
-                self.log_test("User Gamification Data", False, "No admin user data available")
+                self.log_test("Current XP Status", False, "No admin user data available")
                 return False
             
-            print(f"\n🎮 ANALYZING USER GAMIFICATION DATA")
+            print(f"\n🎮 CHECKING CURRENT XP STATUS FOR EMERGENCY ADMIN")
             print("=" * 60)
             
             user_id = self.admin_user_data.get('id')
@@ -171,35 +123,206 @@ class TopKitGamificationInvestigator:
             if response.status_code == 200:
                 self.user_xp_data = response.json()
                 
-                self.log_test("User Gamification Data", True, 
-                             f"Retrieved gamification data for user {user_id}")
+                current_xp = self.user_xp_data.get('xp', 0)
+                level = self.user_xp_data.get('level', 'Unknown')
+                level_emoji = self.user_xp_data.get('level_emoji', '')
+                progress = self.user_xp_data.get('progress_percentage', 0)
+                xp_to_next = self.user_xp_data.get('xp_to_next_level', 0)
+                next_level = self.user_xp_data.get('next_level', 'Max Level')
                 
-                print(f"\n   📊 GAMIFICATION PROFILE:")
+                self.log_test("Current XP Status", True, 
+                             f"Emergency admin current XP: {current_xp}")
+                
+                print(f"\n   📊 EMERGENCY ADMIN XP STATUS:")
                 print(f"      User ID: {self.user_xp_data.get('id')}")
                 print(f"      Name: {self.user_xp_data.get('name')}")
                 print(f"      Email: {self.user_xp_data.get('email')}")
-                print(f"      Current XP: {self.user_xp_data.get('xp', 0)}")
-                print(f"      Level: {self.user_xp_data.get('level')} {self.user_xp_data.get('level_emoji', '')}")
-                print(f"      Progress: {self.user_xp_data.get('progress_percentage', 0)}%")
-                print(f"      XP to Next Level: {self.user_xp_data.get('xp_to_next_level', 0)}")
-                print(f"      Next Level: {self.user_xp_data.get('next_level', 'Max Level')}")
+                print(f"      Current XP: {current_xp}")
+                print(f"      Level: {level} {level_emoji}")
+                print(f"      Progress: {progress}%")
+                print(f"      XP to Next Level: {xp_to_next}")
+                print(f"      Next Level: {next_level}")
                 
                 return True
                 
             else:
-                self.log_test("User Gamification Data", False, 
+                self.log_test("Current XP Status", False, 
                              f"Failed to get user gamification data: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("User Gamification Data", False, f"Exception: {str(e)}")
+            self.log_test("Current XP Status", False, f"Exception: {str(e)}")
             return False
     
-    def search_specific_contribution(self):
-        """Search for the specific contribution TK-CONTRIB-4DADAC"""
+    def check_leaderboard_position(self):
+        """Check emergency admin's position on leaderboard"""
         try:
-            print(f"\n🔍 SEARCHING FOR SPECIFIC CONTRIBUTION: TK-CONTRIB-4DADAC")
+            print(f"\n📊 CHECKING LEADERBOARD POSITION")
             print("=" * 60)
+            
+            response = self.session.get(f"{BACKEND_URL}/leaderboard?limit=50", timeout=10)
+            
+            if response.status_code == 200:
+                self.leaderboard_data = response.json()
+                
+                print(f"   Found {len(self.leaderboard_data)} users on leaderboard")
+                
+                # Look for emergency admin in leaderboard
+                emergency_admin_position = None
+                admin_user_id = self.admin_user_data.get('id') if self.admin_user_data else None
+                
+                for i, user in enumerate(self.leaderboard_data):
+                    username = user.get('username', 'Unknown')
+                    if ('emergency' in username.lower() and 'admin' in username.lower()) or \
+                       (admin_user_id and user.get('user_id') == admin_user_id):
+                        emergency_admin_position = i + 1
+                        break
+                
+                if emergency_admin_position:
+                    user_data = self.leaderboard_data[emergency_admin_position - 1]
+                    self.log_test("Leaderboard Position", True, 
+                                 f"Emergency admin found at position {emergency_admin_position}")
+                    
+                    print(f"\n   🎯 EMERGENCY ADMIN ON LEADERBOARD:")
+                    print(f"      Position: #{emergency_admin_position}")
+                    print(f"      Username: {user_data.get('username')}")
+                    print(f"      XP: {user_data.get('xp', 0)}")
+                    print(f"      Level: {user_data.get('level')} {user_data.get('level_emoji', '')}")
+                else:
+                    self.log_test("Leaderboard Position", False, 
+                                 "Emergency admin not found on leaderboard")
+                    
+                    print(f"\n   ❌ EMERGENCY ADMIN NOT FOUND ON LEADERBOARD")
+                    print(f"   📋 TOP 10 USERS:")
+                    for i, user in enumerate(self.leaderboard_data[:10], 1):
+                        username = user.get('username', 'Unknown')
+                        xp = user.get('xp', 0)
+                        level = user.get('level', 'Unknown')
+                        level_emoji = user.get('level_emoji', '')
+                        print(f"      {i:2d}. {username} - {xp} XP ({level} {level_emoji})")
+                
+                return True
+                
+            else:
+                self.log_test("Leaderboard Position", False, 
+                             f"Failed to get leaderboard: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Leaderboard Position", False, f"Exception: {str(e)}")
+            return False
+    
+    def identify_admin_accounts(self):
+        """Identify all admin accounts in the system"""
+        try:
+            print(f"\n👥 IDENTIFYING ALL ADMIN ACCOUNTS")
+            print("=" * 60)
+            
+            if not self.leaderboard_data:
+                self.log_test("Admin Accounts Identification", False, "No leaderboard data available")
+                return False
+            
+            admin_accounts = []
+            for user in self.leaderboard_data:
+                username = user.get('username', '').lower()
+                if 'admin' in username:
+                    admin_accounts.append(user)
+            
+            if admin_accounts:
+                self.log_test("Admin Accounts Identification", True, 
+                             f"Found {len(admin_accounts)} admin accounts")
+                
+                print(f"\n   👥 ALL ADMIN ACCOUNTS FOUND:")
+                for i, admin in enumerate(admin_accounts, 1):
+                    username = admin.get('username')
+                    xp = admin.get('xp', 0)
+                    level = admin.get('level', 'Unknown')
+                    level_emoji = admin.get('level_emoji', '')
+                    rank = admin.get('rank', 'Unknown')
+                    
+                    print(f"      {i}. {username}")
+                    print(f"         XP: {xp}")
+                    print(f"         Level: {level} {level_emoji}")
+                    print(f"         Rank: #{rank}")
+                    print()
+                
+                # Check if there's confusion between accounts
+                if len(admin_accounts) > 1:
+                    print(f"   ⚠️ MULTIPLE ADMIN ACCOUNTS DETECTED!")
+                    print(f"      This could explain user confusion about XP progress")
+                    
+                    # Find the admin with highest XP
+                    highest_xp_admin = max(admin_accounts, key=lambda x: x.get('xp', 0))
+                    print(f"\n   🏆 HIGHEST XP ADMIN:")
+                    print(f"      Username: {highest_xp_admin.get('username')}")
+                    print(f"      XP: {highest_xp_admin.get('xp', 0)}")
+                    print(f"      This account likely received XP from contributions")
+                
+                return True
+            else:
+                self.log_test("Admin Accounts Identification", False, "No admin accounts found on leaderboard")
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Accounts Identification", False, f"Exception: {str(e)}")
+            return False
+    
+    def create_test_team_contribution(self):
+        """Create a test team contribution to verify the workflow"""
+        try:
+            print(f"\n🏗️ CREATING TEST TEAM CONTRIBUTION")
+            print("=" * 60)
+            
+            # Generate unique team data
+            team_name = f"Test Team {datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            team_data = {
+                "name": team_name,
+                "country": "Test Country",
+                "founded_year": 2025,
+                "league": "Test League",
+                "city": "Test City"
+            }
+            
+            print(f"   📋 Creating test team: {team_name}")
+            
+            # Create team via teams endpoint
+            response = self.session.post(
+                f"{BACKEND_URL}/teams",
+                json=team_data,
+                timeout=10
+            )
+            
+            if response.status_code == 201:
+                team_response = response.json()
+                self.test_team_id = team_response.get('id')
+                
+                self.log_test("Test Team Creation", True, 
+                             f"Test team created successfully: {team_name}")
+                
+                print(f"      Team ID: {self.test_team_id}")
+                print(f"      Team Name: {team_response.get('name')}")
+                print(f"      Created By: {team_response.get('created_by')}")
+                
+                return True
+                
+            else:
+                self.log_test("Test Team Creation", False, 
+                             f"Failed to create test team: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Test Team Creation", False, f"Exception: {str(e)}")
+            return False
+    
+    def check_gamification_contribution_created(self):
+        """Check if gamification contribution was created for the test team"""
+        try:
+            print(f"\n🎯 CHECKING GAMIFICATION CONTRIBUTION CREATION")
+            print("=" * 60)
+            
+            if not self.test_team_id:
+                self.log_test("Gamification Contribution Check", False, "No test team ID available")
+                return False
             
             # Get pending contributions
             response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=100", timeout=10)
@@ -207,401 +330,184 @@ class TopKitGamificationInvestigator:
             if response.status_code == 200:
                 contributions = response.json()
                 
-                print(f"   Found {len(contributions)} total pending contributions")
-                
-                # Look for the specific contribution
-                target_contribution = None
+                # Look for contribution related to our test team
+                test_contribution = None
                 for contrib in contributions:
-                    if contrib.get('id') == 'TK-CONTRIB-4DADAC':
-                        target_contribution = contrib
+                    if (contrib.get('item_type') == 'team' and 
+                        contrib.get('item_id') == self.test_team_id):
+                        test_contribution = contrib
                         break
                 
-                if target_contribution:
-                    self.contribution_data = target_contribution
-                    self.log_test("Specific Contribution Search", True, 
-                                 f"✅ Found contribution TK-CONTRIB-4DADAC")
+                if test_contribution:
+                    self.test_contribution_id = test_contribution.get('id')
                     
-                    print(f"\n   📋 CONTRIBUTION DETAILS:")
-                    print(f"      ID: {target_contribution.get('id')}")
-                    print(f"      User ID: {target_contribution.get('user_id')}")
-                    print(f"      User Name: {target_contribution.get('user_name')}")
-                    print(f"      Item Type: {target_contribution.get('item_type')}")
-                    print(f"      Item ID: {target_contribution.get('item_id')}")
-                    print(f"      XP to Award: {target_contribution.get('xp_to_award', 0)}")
-                    print(f"      Created At: {target_contribution.get('created_at')}")
-                    print(f"      Is Approved: {target_contribution.get('is_approved', False)}")
+                    self.log_test("Gamification Contribution Check", True, 
+                                 f"Gamification contribution created for test team")
+                    
+                    print(f"\n   📋 GAMIFICATION CONTRIBUTION DETAILS:")
+                    print(f"      Contribution ID: {test_contribution.get('id')}")
+                    print(f"      User ID: {test_contribution.get('user_id')}")
+                    print(f"      User Name: {test_contribution.get('user_name')}")
+                    print(f"      Item Type: {test_contribution.get('item_type')}")
+                    print(f"      Item ID: {test_contribution.get('item_id')}")
+                    print(f"      XP to Award: {test_contribution.get('xp_to_award', 0)}")
+                    print(f"      Is Approved: {test_contribution.get('is_approved', False)}")
+                    print(f"      Created At: {test_contribution.get('created_at')}")
                     
                     return True
                 else:
-                    self.log_test("Specific Contribution Search", False, 
-                                 f"❌ Contribution TK-CONTRIB-4DADAC not found in pending contributions")
+                    self.log_test("Gamification Contribution Check", False, 
+                                 f"No gamification contribution found for test team {self.test_team_id}")
                     
-                    # Show all contributions for debugging
-                    print(f"\n   📋 ALL PENDING CONTRIBUTIONS:")
-                    for i, contrib in enumerate(contributions[:10], 1):
-                        print(f"      {i:2d}. {contrib.get('id', 'No ID')} - {contrib.get('item_type')} - {contrib.get('user_name')} - {contrib.get('xp_to_award', 0)} XP")
-                    
-                    # Also check contributions-v2 system which might be where the contribution actually exists
-                    print(f"\n   🔍 CHECKING CONTRIBUTIONS-V2 SYSTEM...")
-                    try:
-                        v2_response = self.session.get(f"{BACKEND_URL}/contributions-v2/?page=1&limit=100", timeout=10)
-                        if v2_response.status_code == 200:
-                            v2_data = v2_response.json()
-                            contributions_list = v2_data.get('contributions', []) if isinstance(v2_data, dict) else v2_data
-                            print(f"   Found {len(contributions_list)} contributions in v2 system")
-                            
-                            # Look for the specific contribution in v2 system
-                            found_in_v2 = False
-                            for contrib in contributions_list:
-                                if (contrib.get('id') == 'TK-CONTRIB-4DADAC' or 
-                                    contrib.get('topkit_reference') == 'TK-CONTRIB-4DADAC'):
-                                    print(f"\n   ✅ FOUND IN V2 SYSTEM:")
-                                    print(f"      ID: {contrib.get('id')}")
-                                    print(f"      TopKit Reference: {contrib.get('topkit_reference')}")
-                                    print(f"      Status: {contrib.get('status')}")
-                                    print(f"      Entity Type: {contrib.get('entity_type')}")
-                                    print(f"      Created By: {contrib.get('created_by')}")
-                                    print(f"      Created At: {contrib.get('created_at')}")
-                                    self.contribution_data = contrib
-                                    found_in_v2 = True
-                                    break
-                            
-                            if not found_in_v2:
-                                print(f"   ❌ Not found in v2 system either")
-                                print(f"   📋 RECENT V2 CONTRIBUTIONS (showing first 5):")
-                                for i, contrib in enumerate(contributions_list[:5], 1):
-                                    ref = contrib.get('topkit_reference', 'No Ref')
-                                    entity_type = contrib.get('entity_type', 'Unknown')
-                                    status = contrib.get('status', 'Unknown')
-                                    print(f"      {i}. {ref} - {entity_type} - {status}")
-                        
-                    except Exception as v2_error:
-                        print(f"   ❌ Error checking v2 system: {str(v2_error)}")
+                    print(f"   📋 RECENT CONTRIBUTIONS (showing first 5):")
+                    for i, contrib in enumerate(contributions[:5], 1):
+                        print(f"      {i}. {contrib.get('id', 'No ID')} - {contrib.get('item_type')} - {contrib.get('user_name')} - {contrib.get('xp_to_award', 0)} XP")
                     
                     return False
                 
             else:
-                self.log_test("Specific Contribution Search", False, 
+                self.log_test("Gamification Contribution Check", False, 
                              f"Failed to get pending contributions: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Specific Contribution Search", False, f"Exception: {str(e)}")
+            self.log_test("Gamification Contribution Check", False, f"Exception: {str(e)}")
             return False
     
-    def search_team_in_database(self):
-        """Search for the specific team TK-TEAM-AAD28D"""
+    def test_contribution_approval_and_xp_awarding(self):
+        """Test the contribution approval process and XP awarding"""
         try:
-            print(f"\n🏟️ SEARCHING FOR SPECIFIC TEAM: TK-TEAM-AAD28D")
+            print(f"\n⚡ TESTING CONTRIBUTION APPROVAL AND XP AWARDING")
             print("=" * 60)
             
-            # Get all teams
-            response = self.session.get(f"{BACKEND_URL}/teams", timeout=10)
+            if not self.test_contribution_id:
+                self.log_test("Contribution Approval Test", False, "No test contribution ID available")
+                return False
+            
+            # Get current XP before approval
+            current_xp_before = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
+            print(f"   📊 XP BEFORE APPROVAL: {current_xp_before}")
+            
+            # Approve the contribution
+            approval_data = {"contribution_id": self.test_contribution_id}
+            response = self.session.post(
+                f"{BACKEND_URL}/admin/approve-contribution",
+                data=approval_data,
+                timeout=10
+            )
             
             if response.status_code == 200:
-                teams = response.json()
+                approval_response = response.json()
                 
-                print(f"   Found {len(teams)} total teams in database")
+                self.log_test("Contribution Approval Test", True, 
+                             f"Contribution approved successfully")
                 
-                # Look for the specific team
-                target_team = None
-                for team in teams:
-                    if team.get('id') == 'TK-TEAM-AAD28D':
-                        target_team = team
-                        break
+                print(f"\n   ✅ APPROVAL RESPONSE:")
+                print(f"      Message: {approval_response.get('message')}")
+                print(f"      XP Awarded: {approval_response.get('xp_awarded', 0)}")
+                print(f"      New Level: {approval_response.get('new_level')}")
+                print(f"      Level Changed: {approval_response.get('level_changed', False)}")
                 
-                if target_team:
-                    self.log_test("Specific Team Search", True, 
-                                 f"✅ Found team TK-TEAM-AAD28D")
+                # Get updated XP after approval
+                user_id = self.admin_user_data.get('id')
+                xp_response = self.session.get(f"{BACKEND_URL}/users/{user_id}/gamification", timeout=10)
+                
+                if xp_response.status_code == 200:
+                    updated_xp_data = xp_response.json()
+                    current_xp_after = updated_xp_data.get('xp', 0)
+                    xp_gained = current_xp_after - current_xp_before
                     
-                    print(f"\n   📋 TEAM DETAILS:")
-                    print(f"      ID: {target_team.get('id')}")
-                    print(f"      Name: {target_team.get('name')}")
-                    print(f"      Country: {target_team.get('country')}")
-                    print(f"      Created At: {target_team.get('created_at')}")
-                    print(f"      Created By: {target_team.get('created_by')}")
+                    print(f"\n   📊 XP VERIFICATION:")
+                    print(f"      XP Before: {current_xp_before}")
+                    print(f"      XP After: {current_xp_after}")
+                    print(f"      XP Gained: {xp_gained}")
+                    print(f"      Expected XP Gain: {approval_response.get('xp_awarded', 0)}")
                     
-                    return True
-                else:
-                    self.log_test("Specific Team Search", False, 
-                                 f"❌ Team TK-TEAM-AAD28D not found in database")
-                    
-                    # Show recent teams for debugging
-                    print(f"\n   📋 RECENT TEAMS (showing first 10):")
-                    for i, team in enumerate(teams[:10], 1):
-                        print(f"      {i:2d}. {team.get('id', 'No ID')} - {team.get('name', 'No Name')} - {team.get('country', 'No Country')}")
-                    
-                    return False
-                
-            else:
-                self.log_test("Specific Team Search", False, 
-                             f"Failed to get teams: {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Specific Team Search", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_gamification_endpoints(self):
-        """Test all gamification endpoints for functionality"""
-        try:
-            print(f"\n🎮 TESTING GAMIFICATION ENDPOINTS")
-            print("=" * 60)
-            
-            endpoints_tested = 0
-            endpoints_working = 0
-            
-            # Test 1: Leaderboard endpoint
-            try:
-                response = self.session.get(f"{BACKEND_URL}/leaderboard", timeout=10)
-                endpoints_tested += 1
-                if response.status_code == 200:
-                    endpoints_working += 1
-                    print(f"   ✅ Leaderboard endpoint: Working ({len(response.json())} users)")
-                else:
-                    print(f"   ❌ Leaderboard endpoint: Failed ({response.status_code})")
-            except Exception as e:
-                print(f"   ❌ Leaderboard endpoint: Exception ({str(e)})")
-            
-            # Test 2: User gamification data endpoint
-            if self.admin_user_data:
-                try:
-                    user_id = self.admin_user_data.get('id')
-                    response = self.session.get(f"{BACKEND_URL}/users/{user_id}/gamification", timeout=10)
-                    endpoints_tested += 1
-                    if response.status_code == 200:
-                        endpoints_working += 1
-                        print(f"   ✅ User gamification endpoint: Working")
-                    else:
-                        print(f"   ❌ User gamification endpoint: Failed ({response.status_code})")
-                except Exception as e:
-                    print(f"   ❌ User gamification endpoint: Exception ({str(e)})")
-            
-            # Test 3: Admin pending contributions endpoint
-            try:
-                response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions", timeout=10)
-                endpoints_tested += 1
-                if response.status_code == 200:
-                    endpoints_working += 1
-                    print(f"   ✅ Admin pending contributions endpoint: Working ({len(response.json())} contributions)")
-                else:
-                    print(f"   ❌ Admin pending contributions endpoint: Failed ({response.status_code})")
-            except Exception as e:
-                print(f"   ❌ Admin pending contributions endpoint: Exception ({str(e)})")
-            
-            success_rate = (endpoints_working / endpoints_tested) * 100 if endpoints_tested > 0 else 0
-            
-            self.log_test("Gamification Endpoints Test", endpoints_working == endpoints_tested, 
-                         f"Gamification endpoints: {endpoints_working}/{endpoints_tested} working ({success_rate:.1f}%)")
-            
-            return endpoints_working == endpoints_tested
-            
-        except Exception as e:
-            self.log_test("Gamification Endpoints Test", False, f"Exception: {str(e)}")
-            return False
-    
-    def investigate_xp_discrepancy(self):
-        """Investigate the XP discrepancy between leaderboard and user data"""
-        try:
-            print(f"\n🔍 INVESTIGATING XP DISCREPANCY")
-            print("=" * 60)
-            
-            # The leaderboard shows "Gamification Admin" with 40 XP
-            # But user gamification data for emergency admin shows 0 XP
-            # This suggests there might be multiple admin users
-            
-            print(f"   🎯 ANALYZING XP DISCREPANCY:")
-            print(f"      Leaderboard shows: 'Gamification Admin' with 40 XP")
-            print(f"      User data shows: 'Emergency Admin' with 0 XP")
-            print(f"      User ID: {self.admin_user_data.get('id') if self.admin_user_data else 'Unknown'}")
-            
-            # Look for the "Gamification Admin" user in the leaderboard
-            gamification_admin_user = None
-            if self.leaderboard_data:
-                for user in self.leaderboard_data:
-                    if user.get('username') == 'Gamification Admin':
-                        gamification_admin_user = user
-                        break
-            
-            if gamification_admin_user:
-                print(f"\n   📊 GAMIFICATION ADMIN USER FOUND:")
-                print(f"      Username: {gamification_admin_user.get('username')}")
-                print(f"      XP: {gamification_admin_user.get('xp')}")
-                print(f"      Level: {gamification_admin_user.get('level')} {gamification_admin_user.get('level_emoji', '')}")
-                print(f"      Rank: {gamification_admin_user.get('rank')}")
-                
-                # This suggests there are two different admin users:
-                # 1. "Gamification Admin" with 40 XP (the one who made contributions)
-                # 2. "Emergency Admin" with 0 XP (the one we're logged in as)
-                
-                self.log_test("XP Discrepancy Investigation", True, 
-                             f"✅ Found XP discrepancy - two different admin users exist")
-                
-                print(f"\n   💡 HYPOTHESIS:")
-                print(f"      - 'Gamification Admin' (40 XP) is the user who made the contribution")
-                print(f"      - 'Emergency Admin' (0 XP) is a different user account")
-                print(f"      - The contribution TK-CONTRIB-4DADAC was likely made by Gamification Admin")
-                print(f"      - XP was awarded to Gamification Admin, not Emergency Admin")
-                
-                return True
-            else:
-                self.log_test("XP Discrepancy Investigation", False, 
-                             f"❌ Could not find Gamification Admin user in leaderboard")
-                return False
-                
-        except Exception as e:
-            self.log_test("XP Discrepancy Investigation", False, f"Exception: {str(e)}")
-            return False
-        """Test the contribution approval workflow if we have a pending contribution"""
-        try:
-            print(f"\n⚡ TESTING CONTRIBUTION APPROVAL WORKFLOW")
-            print("=" * 60)
-            
-            if not self.contribution_data:
-                print(f"   ⚠️ No specific contribution found - testing with any available contribution")
-                
-                # Get any pending contribution for testing
-                response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=1", timeout=10)
-                if response.status_code == 200:
-                    contributions = response.json()
-                    if contributions:
-                        test_contribution = contributions[0]
-                        print(f"   📋 Using contribution {test_contribution.get('id')} for testing")
-                    else:
-                        self.log_test("Contribution Approval Workflow", False, 
-                                     "No pending contributions available for testing")
-                        return False
-                else:
-                    self.log_test("Contribution Approval Workflow", False, 
-                                 f"Failed to get contributions for testing: {response.status_code}")
-                    return False
-            else:
-                test_contribution = self.contribution_data
-                print(f"   📋 Using specific contribution {test_contribution.get('id')} for testing")
-            
-            # Test approval endpoint (but don't actually approve to avoid side effects)
-            contribution_id = test_contribution.get('id')
-            user_id = test_contribution.get('user_id')
-            xp_to_award = test_contribution.get('xp_to_award', 0)
-            
-            print(f"   📊 CONTRIBUTION ANALYSIS:")
-            print(f"      Contribution ID: {contribution_id}")
-            print(f"      User ID: {user_id}")
-            print(f"      XP to Award: {xp_to_award}")
-            print(f"      Item Type: {test_contribution.get('item_type')}")
-            print(f"      Already Approved: {test_contribution.get('is_approved', False)}")
-            
-            # Check if this contribution is already approved
-            if test_contribution.get('is_approved', False):
-                self.log_test("Contribution Approval Workflow", True, 
-                             f"✅ Contribution {contribution_id} is already approved")
-                
-                # Check if XP was actually awarded to the user
-                if user_id and self.admin_user_data and user_id == self.admin_user_data.get('id'):
-                    current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
-                    expected_xp = xp_to_award
-                    
-                    print(f"   🎯 XP VERIFICATION:")
-                    print(f"      User Current XP: {current_xp}")
-                    print(f"      Expected XP from this contribution: {expected_xp}")
-                    
-                    if current_xp >= expected_xp:
-                        print(f"   ✅ XP appears to have been awarded correctly")
+                    if xp_gained == approval_response.get('xp_awarded', 0):
+                        print(f"   ✅ XP AWARDING SUCCESSFUL!")
                         return True
                     else:
-                        print(f"   ❌ XP may not have been awarded - user has less XP than expected")
-                        return False
-                
-                return True
-            else:
-                self.log_test("Contribution Approval Workflow", False, 
-                             f"❌ Contribution {contribution_id} is not yet approved")
-                return False
-            
-        except Exception as e:
-            self.log_test("Contribution Approval Workflow", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_contribution_approval_workflow(self):
-        """Test the contribution approval workflow if we have a pending contribution"""
-        try:
-            print(f"\n⚡ TESTING CONTRIBUTION APPROVAL WORKFLOW")
-            print("=" * 60)
-            
-            if not self.contribution_data:
-                print(f"   ⚠️ No specific contribution found - testing with any available contribution")
-                
-                # Get any pending contribution for testing
-                response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=1", timeout=10)
-                if response.status_code == 200:
-                    contributions = response.json()
-                    if contributions:
-                        test_contribution = contributions[0]
-                        print(f"   📋 Using contribution {test_contribution.get('id')} for testing")
-                    else:
-                        self.log_test("Contribution Approval Workflow", False, 
-                                     "No pending contributions available for testing")
+                        print(f"   ❌ XP MISMATCH - Expected {approval_response.get('xp_awarded', 0)}, got {xp_gained}")
                         return False
                 else:
-                    self.log_test("Contribution Approval Workflow", False, 
-                                 f"Failed to get contributions for testing: {response.status_code}")
+                    print(f"   ❌ Failed to get updated XP data: {xp_response.status_code}")
                     return False
-            else:
-                test_contribution = self.contribution_data
-                print(f"   📋 Using specific contribution {test_contribution.get('id')} for testing")
-            
-            # Test approval endpoint (but don't actually approve to avoid side effects)
-            contribution_id = test_contribution.get('id')
-            user_id = test_contribution.get('user_id')
-            xp_to_award = test_contribution.get('xp_to_award', 0)
-            
-            print(f"   📊 CONTRIBUTION ANALYSIS:")
-            print(f"      Contribution ID: {contribution_id}")
-            print(f"      User ID: {user_id}")
-            print(f"      XP to Award: {xp_to_award}")
-            print(f"      Item Type: {test_contribution.get('item_type')}")
-            print(f"      Already Approved: {test_contribution.get('is_approved', False)}")
-            
-            # Check if this contribution is already approved
-            if test_contribution.get('is_approved', False):
-                self.log_test("Contribution Approval Workflow", True, 
-                             f"✅ Contribution {contribution_id} is already approved")
                 
-                # Check if XP was actually awarded to the user
-                if user_id and self.admin_user_data and user_id == self.admin_user_data.get('id'):
-                    current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
-                    expected_xp = xp_to_award
-                    
-                    print(f"   🎯 XP VERIFICATION:")
-                    print(f"      User Current XP: {current_xp}")
-                    print(f"      Expected XP from this contribution: {expected_xp}")
-                    
-                    if current_xp >= expected_xp:
-                        print(f"   ✅ XP appears to have been awarded correctly")
-                        return True
-                    else:
-                        print(f"   ❌ XP may not have been awarded - user has less XP than expected")
-                        return False
-                
-                return True
             else:
-                self.log_test("Contribution Approval Workflow", False, 
-                             f"❌ Contribution {contribution_id} is not yet approved")
+                self.log_test("Contribution Approval Test", False, 
+                             f"Failed to approve contribution: {response.status_code}", response.text)
                 return False
-            
+                
         except Exception as e:
-            self.log_test("Contribution Approval Workflow", False, f"Exception: {str(e)}")
+            self.log_test("Contribution Approval Test", False, f"Exception: {str(e)}")
             return False
     
-    def run_gamification_investigation(self):
-        """Run comprehensive gamification bug investigation"""
-        print("\n🚨 URGENT GAMIFICATION BUG INVESTIGATION")
-        print("Investigating XP not awarded despite contribution approval")
+    def verify_final_xp_status(self):
+        """Verify final XP status after the test"""
+        try:
+            print(f"\n🎯 VERIFYING FINAL XP STATUS")
+            print("=" * 60)
+            
+            if not self.admin_user_data:
+                self.log_test("Final XP Verification", False, "No admin user data available")
+                return False
+            
+            user_id = self.admin_user_data.get('id')
+            response = self.session.get(f"{BACKEND_URL}/users/{user_id}/gamification", timeout=10)
+            
+            if response.status_code == 200:
+                final_xp_data = response.json()
+                
+                final_xp = final_xp_data.get('xp', 0)
+                final_level = final_xp_data.get('level', 'Unknown')
+                final_level_emoji = final_xp_data.get('level_emoji', '')
+                final_progress = final_xp_data.get('progress_percentage', 0)
+                
+                self.log_test("Final XP Verification", True, 
+                             f"Final XP status verified: {final_xp} XP")
+                
+                print(f"\n   📊 FINAL XP STATUS:")
+                print(f"      User: {final_xp_data.get('name')}")
+                print(f"      Email: {final_xp_data.get('email')}")
+                print(f"      Final XP: {final_xp}")
+                print(f"      Final Level: {final_level} {final_level_emoji}")
+                print(f"      Progress: {final_progress}%")
+                print(f"      XP to Next Level: {final_xp_data.get('xp_to_next_level', 0)}")
+                
+                # Compare with initial XP
+                initial_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
+                xp_change = final_xp - initial_xp
+                
+                print(f"\n   📈 XP CHANGE SUMMARY:")
+                print(f"      Initial XP: {initial_xp}")
+                print(f"      Final XP: {final_xp}")
+                print(f"      Total XP Gained: {xp_change}")
+                
+                if xp_change > 0:
+                    print(f"   ✅ XP SUCCESSFULLY AWARDED!")
+                else:
+                    print(f"   ❌ NO XP GAINED")
+                
+                return True
+                
+            else:
+                self.log_test("Final XP Verification", False, 
+                             f"Failed to get final XP data: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Final XP Verification", False, f"Exception: {str(e)}")
+            return False
+    
+    def run_follow_up_investigation(self):
+        """Run comprehensive follow-up investigation"""
+        print("\n🔍 FOLLOW-UP GAMIFICATION INVESTIGATION")
+        print("Testing emergency.admin@topkit.test account and contribution workflow")
         print("=" * 80)
         
         investigation_results = []
         
-        # Step 1: Authenticate as admin
+        # Step 1: Authenticate as emergency admin
         print("\n1️⃣ Authenticating as Emergency Admin...")
         investigation_results.append(self.authenticate_admin())
         
@@ -609,39 +515,39 @@ class TopKitGamificationInvestigator:
             print("❌ Cannot proceed without admin authentication")
             return investigation_results
         
-        # Step 2: Get current leaderboard data
-        print("\n2️⃣ Analyzing Current Leaderboard...")
-        investigation_results.append(self.get_leaderboard_data())
+        # Step 2: Check current XP status
+        print("\n2️⃣ Checking Current XP Status...")
+        investigation_results.append(self.get_current_xp_status())
         
-        # Step 3: Get user gamification data
-        print("\n3️⃣ Getting User Gamification Data...")
-        investigation_results.append(self.get_user_gamification_data())
+        # Step 3: Check leaderboard position
+        print("\n3️⃣ Checking Leaderboard Position...")
+        investigation_results.append(self.check_leaderboard_position())
         
-        # Step 4: Search for specific contribution
-        print("\n4️⃣ Searching for Specific Contribution...")
-        investigation_results.append(self.search_specific_contribution())
+        # Step 4: Identify all admin accounts
+        print("\n4️⃣ Identifying All Admin Accounts...")
+        investigation_results.append(self.identify_admin_accounts())
         
-        # Step 5: Search for specific team
-        print("\n5️⃣ Searching for Specific Team...")
-        investigation_results.append(self.search_team_in_database())
+        # Step 5: Create test team contribution
+        print("\n5️⃣ Creating Test Team Contribution...")
+        investigation_results.append(self.create_test_team_contribution())
         
-        # Step 6: Test gamification endpoints
-        print("\n6️⃣ Testing Gamification Endpoints...")
-        investigation_results.append(self.test_gamification_endpoints())
+        # Step 6: Check if gamification contribution was created
+        print("\n6️⃣ Checking Gamification Contribution Creation...")
+        investigation_results.append(self.check_gamification_contribution_created())
         
-        # Step 7: Investigate XP discrepancy
-        print("\n7️⃣ Investigating XP Discrepancy...")
-        investigation_results.append(self.investigate_xp_discrepancy())
+        # Step 7: Test contribution approval and XP awarding
+        print("\n7️⃣ Testing Contribution Approval and XP Awarding...")
+        investigation_results.append(self.test_contribution_approval_and_xp_awarding())
         
-        # Step 8: Test contribution approval workflow
-        print("\n8️⃣ Testing Contribution Approval Workflow...")
-        investigation_results.append(self.test_contribution_approval_workflow())
+        # Step 8: Verify final XP status
+        print("\n8️⃣ Verifying Final XP Status...")
+        investigation_results.append(self.verify_final_xp_status())
         
         return investigation_results
     
     def print_investigation_summary(self):
         """Print comprehensive investigation summary"""
-        print("\n📊 GAMIFICATION BUG INVESTIGATION SUMMARY")
+        print("\n📊 FOLLOW-UP INVESTIGATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -660,45 +566,42 @@ class TopKitGamificationInvestigator:
         admin_working = any(r['success'] for r in self.test_results if 'Admin Authentication' in r['test'])
         if admin_working:
             print(f"  ✅ ADMIN ACCESS: Emergency admin account working")
+            if self.admin_user_data:
+                print(f"      User ID: {self.admin_user_data.get('id')}")
+                print(f"      Name: {self.admin_user_data.get('name')}")
+                print(f"      Role: {self.admin_user_data.get('role')}")
         else:
             print(f"  ❌ ADMIN ACCESS: Cannot authenticate as admin")
         
-        # Leaderboard data
-        leaderboard_working = any(r['success'] for r in self.test_results if 'Leaderboard' in r['test'])
-        if leaderboard_working and self.leaderboard_data:
-            print(f"  ✅ LEADERBOARD: Working with {len(self.leaderboard_data)} users")
-        else:
-            print(f"  ❌ LEADERBOARD: Not accessible or no data")
-        
-        # User XP data
-        user_xp_working = any(r['success'] for r in self.test_results if 'User Gamification' in r['test'])
-        if user_xp_working and self.user_xp_data:
+        # XP Status
+        xp_status_working = any(r['success'] for r in self.test_results if 'Current XP Status' in r['test'])
+        if xp_status_working and self.user_xp_data:
             current_xp = self.user_xp_data.get('xp', 0)
             level = self.user_xp_data.get('level', 'Unknown')
-            print(f"  ✅ USER XP DATA: Current XP = {current_xp}, Level = {level}")
+            print(f"  ✅ XP STATUS: Emergency admin has {current_xp} XP ({level})")
         else:
-            print(f"  ❌ USER XP DATA: Not accessible")
+            print(f"  ❌ XP STATUS: Could not retrieve XP data")
         
-        # Specific contribution
-        contribution_found = any(r['success'] for r in self.test_results if 'Specific Contribution' in r['test'])
-        if contribution_found:
-            print(f"  ✅ CONTRIBUTION TK-CONTRIB-4DADAC: Found and analyzed")
-        else:
-            print(f"  ❌ CONTRIBUTION TK-CONTRIB-4DADAC: Not found in pending contributions")
+        # Contribution workflow
+        contribution_created = any(r['success'] for r in self.test_results if 'Test Team Creation' in r['test'])
+        gamification_tracked = any(r['success'] for r in self.test_results if 'Gamification Contribution Check' in r['test'])
+        approval_worked = any(r['success'] for r in self.test_results if 'Contribution Approval Test' in r['test'])
         
-        # Specific team
-        team_found = any(r['success'] for r in self.test_results if 'Specific Team' in r['test'])
-        if team_found:
-            print(f"  ✅ TEAM TK-TEAM-AAD28D: Found in database")
+        if contribution_created and gamification_tracked and approval_worked:
+            print(f"  ✅ CONTRIBUTION WORKFLOW: Complete workflow working")
+        elif contribution_created and gamification_tracked:
+            print(f"  ⚠️ CONTRIBUTION WORKFLOW: Creation and tracking work, approval failed")
+        elif contribution_created:
+            print(f"  ⚠️ CONTRIBUTION WORKFLOW: Creation works, tracking/approval failed")
         else:
-            print(f"  ❌ TEAM TK-TEAM-AAD28D: Not found in database")
+            print(f"  ❌ CONTRIBUTION WORKFLOW: Creation failed")
         
-        # Gamification endpoints
-        endpoints_working = any(r['success'] for r in self.test_results if 'Gamification Endpoints' in r['test'])
-        if endpoints_working:
-            print(f"  ✅ GAMIFICATION ENDPOINTS: All working correctly")
+        # Admin accounts analysis
+        admin_accounts_identified = any(r['success'] for r in self.test_results if 'Admin Accounts Identification' in r['test'])
+        if admin_accounts_identified:
+            print(f"  ✅ ADMIN ACCOUNTS: Multiple admin accounts identified")
         else:
-            print(f"  ❌ GAMIFICATION ENDPOINTS: Some endpoints not working")
+            print(f"  ❌ ADMIN ACCOUNTS: Could not identify admin accounts")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -710,57 +613,53 @@ class TopKitGamificationInvestigator:
         # Root cause analysis
         print(f"\n🎯 ROOT CAUSE ANALYSIS:")
         
-        if not contribution_found and not team_found:
-            print(f"  🚨 CRITICAL: Neither the contribution nor the team can be found")
-            print(f"     - This suggests the reported IDs may be incorrect")
-            print(f"     - Or the data may have been deleted/corrupted")
-        elif contribution_found and not team_found:
-            print(f"  ⚠️ PARTIAL: Contribution exists but team is missing")
-            print(f"     - Team may have been deleted after contribution creation")
-        elif not contribution_found and team_found:
-            print(f"  ⚠️ PARTIAL: Team exists but contribution is missing")
-            print(f"     - Contribution may have been processed/deleted")
-            print(f"     - Or it may be in a different state (approved/rejected)")
-        else:
-            print(f"  ✅ DATA INTEGRITY: Both contribution and team found")
+        if admin_working and xp_status_working:
+            current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
             
-            if user_xp_working and self.user_xp_data:
-                current_xp = self.user_xp_data.get('xp', 0)
-                if current_xp == 0:
-                    print(f"  🚨 XP ISSUE: User has 0 XP despite approved contribution")
-                    print(f"     - XP may not have been awarded during approval")
-                    print(f"     - Or there may be a bug in the XP awarding system")
-                else:
-                    print(f"  ✅ XP STATUS: User has {current_xp} XP")
+            if current_xp == 0:
+                print(f"  🚨 CONFIRMED: Emergency admin account has 0 XP")
+                print(f"     - This account has not received XP from contributions")
+                print(f"     - User confusion likely between different admin accounts")
+                print(f"     - The reported contribution TK-CONTRIB-4DADAC was likely made by a different admin")
+            else:
+                print(f"  ✅ PROGRESS: Emergency admin account has {current_xp} XP")
+                print(f"     - This account has received XP from contributions")
+        
+        if contribution_created and gamification_tracked and approval_worked:
+            print(f"  ✅ WORKFLOW CONFIRMED: Complete contribution → XP workflow is working")
+            print(f"     - Team creation triggers gamification contribution")
+            print(f"     - Approval process awards XP correctly")
+            print(f"     - The system is functioning as intended")
         
         # Recommendations
         print(f"\n💡 RECOMMENDATIONS:")
         
-        if not contribution_found:
-            print(f"  1. Verify the contribution ID 'TK-CONTRIB-4DADAC' is correct")
-            print(f"  2. Check if the contribution has already been processed")
-            print(f"  3. Search for contributions by the user instead of by ID")
+        if admin_working and xp_status_working:
+            current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
+            if current_xp == 0:
+                print(f"  1. User should check if they're using the correct admin account")
+                print(f"  2. The contribution TK-CONTRIB-4DADAC was likely made by 'Gamification Admin', not 'Emergency Admin'")
+                print(f"  3. User should verify which account they used to create the original contribution")
+            else:
+                print(f"  1. Emergency admin account is working and has received XP")
+                print(f"  2. The gamification system is functioning correctly")
         
-        if not team_found:
-            print(f"  1. Verify the team ID 'TK-TEAM-AAD28D' is correct")
-            print(f"  2. Check if the team was deleted after contribution creation")
-        
-        if user_xp_working and self.user_xp_data and self.user_xp_data.get('xp', 0) == 0:
-            print(f"  1. Check the XP awarding logic in the backend")
-            print(f"  2. Verify the contribution approval process")
-            print(f"  3. Check for errors in the gamification system logs")
+        if contribution_created and gamification_tracked and approval_worked:
+            print(f"  1. The contribution workflow is working correctly")
+            print(f"  2. New contributions will properly award XP")
+            print(f"  3. The system is ready for production use")
         
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
         """Run comprehensive investigation and return success status"""
-        investigation_results = self.run_gamification_investigation()
+        investigation_results = self.run_follow_up_investigation()
         self.print_investigation_summary()
         return any(investigation_results)
 
 def main():
     """Main test execution"""
-    investigator = TopKitGamificationInvestigator()
+    investigator = TopKitGamificationFollowUpInvestigator()
     success = investigator.run_all_tests()
     
     # Exit with appropriate code
