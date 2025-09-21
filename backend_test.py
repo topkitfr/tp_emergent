@@ -802,7 +802,7 @@ class TopKitGamificationFollowUpInvestigator:
     
     def print_investigation_summary(self):
         """Print comprehensive investigation summary"""
-        print("\n📊 FOLLOW-UP INVESTIGATION SUMMARY")
+        print("\n📊 CRITICAL GAMIFICATION BUG INVESTIGATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -836,6 +836,27 @@ class TopKitGamificationFollowUpInvestigator:
             print(f"  ✅ XP STATUS: Emergency admin has {current_xp} XP ({level})")
         else:
             print(f"  ❌ XP STATUS: Could not retrieve XP data")
+        
+        # Reported team search
+        reported_team_found = any(r['success'] for r in self.test_results if 'Reported Team Search' in r['test'])
+        if reported_team_found:
+            print(f"  ✅ REPORTED TEAM: Found team TK-TEAM-018D25 in database")
+        else:
+            print(f"  ❌ REPORTED TEAM: Team TK-TEAM-018D25 not found in database")
+        
+        # Team contribution check
+        team_contribution_found = any(r['success'] for r in self.test_results if 'Team Gamification Contribution Check' in r['test'])
+        if team_contribution_found:
+            print(f"  ✅ TEAM CONTRIBUTION: Found gamification contribution for reported team")
+        else:
+            print(f"  ❌ TEAM CONTRIBUTION: No gamification contribution found for reported team")
+        
+        # XP awarding bug investigation
+        xp_bug_investigated = any(r['success'] for r in self.test_results if 'XP Awarding Bug Investigation' in r['test'])
+        if xp_bug_investigated:
+            print(f"  ✅ XP BUG INVESTIGATION: XP awarding mechanism working correctly")
+        else:
+            print(f"  🚨 XP BUG INVESTIGATION: XP awarding mechanism has issues")
         
         # Contribution workflow
         contribution_created = any(r['success'] for r in self.test_results if 'Test Master Kit Creation' in r['test'])
@@ -871,38 +892,48 @@ class TopKitGamificationFollowUpInvestigator:
         if admin_working and xp_status_working:
             current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
             
-            if current_xp == 0:
-                print(f"  🚨 CONFIRMED: Emergency admin account has 0 XP")
-                print(f"     - This account has not received XP from contributions")
-                print(f"     - User confusion likely between different admin accounts")
-                print(f"     - The reported contribution TK-CONTRIB-4DADAC was likely made by a different admin")
+            if not reported_team_found:
+                print(f"  🚨 TEAM NOT FOUND: The reported team TK-TEAM-018D25 does not exist in database")
+                print(f"     - Team may have been deleted or reference is incorrect")
+                print(f"     - User may have misremembered the team reference")
+            elif not team_contribution_found:
+                print(f"  🚨 CONTRIBUTION MISSING: No gamification contribution found for the team")
+                print(f"     - Team creation may not have triggered gamification tracking")
+                print(f"     - This indicates a bug in the contribution creation process")
+            elif not xp_bug_investigated:
+                print(f"  🚨 XP AWARDING BUG: XP was not awarded despite team approval")
+                print(f"     - This confirms the user's report of the XP awarding bug")
+                print(f"     - The approval process is not properly awarding XP")
             else:
-                print(f"  ✅ PROGRESS: Emergency admin account has {current_xp} XP")
-                print(f"     - This account has received XP from contributions")
+                print(f"  ✅ SYSTEM WORKING: All components appear to be functioning correctly")
+                print(f"     - The issue may be user confusion or a resolved bug")
         
         if contribution_created and gamification_tracked and approval_worked:
             print(f"  ✅ WORKFLOW CONFIRMED: Complete contribution → XP workflow is working")
-            print(f"     - Master kit creation triggers gamification contribution")
+            print(f"     - New contributions properly trigger gamification tracking")
             print(f"     - Approval process awards XP correctly")
-            print(f"     - The system is functioning as intended")
+            print(f"     - The system is functioning as intended for new contributions")
         
         # Recommendations
         print(f"\n💡 RECOMMENDATIONS:")
         
-        if admin_working and xp_status_working:
-            current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
-            if current_xp == 0:
-                print(f"  1. User should check if they're using the correct admin account")
-                print(f"  2. The contribution TK-CONTRIB-4DADAC was likely made by 'Gamification Admin', not 'Emergency Admin'")
-                print(f"  3. User should verify which account they used to create the original contribution")
-            else:
-                print(f"  1. Emergency admin account is working and has received XP")
-                print(f"  2. The gamification system is functioning correctly")
+        if not reported_team_found:
+            print(f"  1. Verify the correct team reference - TK-TEAM-018D25 may be incorrect")
+            print(f"  2. Check if the team was created under a different admin account")
+            print(f"  3. Search for teams created around the same time period")
+        elif not team_contribution_found:
+            print(f"  1. 🚨 CRITICAL BUG: Team creation is not triggering gamification contributions")
+            print(f"  2. The create_contribution_entry function may not be called for teams")
+            print(f"  3. Check the team creation endpoint for gamification integration")
+        elif not xp_bug_investigated:
+            print(f"  1. 🚨 CRITICAL BUG: XP awarding mechanism is broken")
+            print(f"  2. The award_xp function may have issues")
+            print(f"  3. Check the contribution approval process for XP awarding")
         
         if contribution_created and gamification_tracked and approval_worked:
-            print(f"  1. The contribution workflow is working correctly")
-            print(f"  2. New contributions will properly award XP")
-            print(f"  3. The system is ready for production use")
+            print(f"  1. The contribution workflow is working correctly for new contributions")
+            print(f"  2. The issue may be specific to team contributions vs master kit contributions")
+            print(f"  3. Consider testing team creation specifically")
         
         print("\n" + "=" * 80)
     
