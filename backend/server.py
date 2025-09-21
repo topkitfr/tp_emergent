@@ -804,7 +804,18 @@ async def create_master_kit(
         result = await db.master_kits.insert_one(master_kit.dict())
         
         if result.inserted_id:
-            # Create a contribution entry for the Master Kit creation
+            # Create a gamification contribution entry for approval
+            try:
+                contribution_id = await create_contribution_entry(
+                    user_id=current_user["id"],
+                    item_type="jersey",
+                    item_id=master_kit.id
+                )
+                logger.info(f"Created gamification contribution entry: {contribution_id} for Master Kit: {master_kit.id}")
+            except Exception as contrib_error:
+                logger.warning(f"Failed to create gamification contribution entry: {str(contrib_error)}")
+            
+            # Create a contribution entry for the Master Kit creation (existing system)
             try:
                 contribution_data = {
                     "id": str(uuid.uuid4()),
