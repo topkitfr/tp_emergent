@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - URGENT EMERGENCY ADMIN ACCESS INVESTIGATION
+TopKit Backend Testing Suite - URGENT TOPKITFR@GMAIL.COM ACCOUNT SEARCH
 
-URGENT USER ISSUE REPORT:
-User reports that topkitfr@gmail.com login no longer works, account may be corrupted
-Emergency admin access needed for gamification system testing
+USER REQUEST:
+User believes topkitfr@gmail.com account existed before and wants comprehensive search
 
 INVESTIGATION REQUIRED:
-1. Test Emergency Admin Login (emergency.admin@topkit.test / EmergencyAdmin2025!)
-2. Investigate Corrupted topkitfr@gmail.com Account
-3. Database User Analysis - List all users and their roles
-4. Admin Functionality Verification with emergency admin
-5. Account Recovery Options
+1. Search users collection for any account with email containing "topkitfr" or "topkit"
+2. Look for any user with admin role
+3. Check for variations of the email (with/without @gmail.com, different domain)
+4. Show all admin users found in the database
+5. Try login with topkitfr@gmail.com and common passwords: topkit123, admin123, password123, TopKitSecure789#
+6. Verify emergency.admin@topkit.test account status
 
-CRITICAL: This needs to be resolved immediately as it blocks testing of the gamification system.
+CRITICAL: Comprehensive database search to find the original topkitfr@gmail.com account.
 """
 
 import requests
