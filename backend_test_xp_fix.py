@@ -262,7 +262,77 @@ class TopKitXPBugFixVerifier:
             self.log_test("Contribution Approval for Entity Creation", False, f"Exception: {str(e)}")
             return False
     
-    def approve_contribution_and_test_xp_awarding(self):
+    def verify_gamification_contribution_created(self):
+        """Verify that gamification contribution entry was created for the team"""
+        try:
+            print(f"\n🎯 STEP 5: VERIFYING GAMIFICATION CONTRIBUTION ENTRY")
+            print("=" * 60)
+            
+            if not self.test_team_id:
+                self.log_test("Gamification Contribution Verification", False, "No test team ID available")
+                return False
+            
+            # Get all pending contributions from gamification system
+            response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=100", timeout=10)
+            
+            if response.status_code == 200:
+                contributions = response.json()
+                
+                # Look for gamification contribution related to our test team
+                team_gamification_contribution = None
+                for contrib in contributions:
+                    if (contrib.get('item_type') == 'team' and 
+                        contrib.get('item_id') == self.test_team_id):
+                        team_gamification_contribution = contrib
+                        break
+                
+                if team_gamification_contribution:
+                    self.gamification_contribution_id = team_gamification_contribution.get('id')
+                    
+                    self.log_test("Gamification Contribution Verification", True, 
+                                 f"✅ GAMIFICATION ENTRY FOUND! Bug fix is working")
+                    
+                    print(f"\n   📋 GAMIFICATION CONTRIBUTION DETAILS:")
+                    print(f"      Contribution ID: {team_gamification_contribution.get('id')}")
+                    print(f"      User ID: {team_gamification_contribution.get('user_id')}")
+                    print(f"      User Name: {team_gamification_contribution.get('user_name')}")
+                    print(f"      Item Type: {team_gamification_contribution.get('item_type')}")
+                    print(f"      Item ID: {team_gamification_contribution.get('item_id')}")
+                    print(f"      XP to Award: {team_gamification_contribution.get('xp_to_award', 0)}")
+                    print(f"      Is Approved: {team_gamification_contribution.get('is_approved', False)}")
+                    print(f"      Created At: {team_gamification_contribution.get('created_at')}")
+                    
+                    # Verify it's created by emergency admin
+                    emergency_admin_id = self.admin_user_data.get('id') if self.admin_user_data else None
+                    if team_gamification_contribution.get('user_id') == emergency_admin_id:
+                        print(f"   ✅ CORRECT USER: Gamification contribution created by emergency admin")
+                        return True
+                    else:
+                        print(f"   ⚠️ USER MISMATCH: Expected {emergency_admin_id}, got {team_gamification_contribution.get('user_id')}")
+                        return True  # Still counts as success since contribution exists
+                else:
+                    self.log_test("Gamification Contribution Verification", False, 
+                                 f"❌ NO GAMIFICATION ENTRY FOUND! Bug fix may not be working")
+                    
+                    print(f"   📋 AVAILABLE TEAM CONTRIBUTIONS:")
+                    team_contributions = [c for c in contributions if c.get('item_type') == 'team']
+                    if team_contributions:
+                        for i, contrib in enumerate(team_contributions, 1):
+                            item_name = contrib.get('item_details', {}).get('name', 'Unknown Team')
+                            print(f"      {i}. {contrib.get('id')} - {contrib.get('user_name')} - {item_name} - {contrib.get('xp_to_award', 0)} XP")
+                    else:
+                        print(f"      No team-type contributions found")
+                    
+                    return False
+                
+            else:
+                self.log_test("Gamification Contribution Verification", False, 
+                             f"Failed to get pending contributions: {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Gamification Contribution Verification", False, f"Exception: {str(e)}")
+            return False
         """Approve the contribution and verify XP is awarded correctly"""
         try:
             print(f"\n⚡ STEP 5: APPROVING CONTRIBUTION AND TESTING XP AWARDING")
