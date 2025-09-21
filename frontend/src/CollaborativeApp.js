@@ -231,7 +231,8 @@ const AppContent = () => {
       'competitions': '/competitions',
       'master-kits': '/master-kits',
       'profile': '/profile',
-      'admin': '/admin'
+      'admin': '/admin',
+      'leaderboard': '/leaderboard'
     };
     
     const route = routes[viewName] || '/';
