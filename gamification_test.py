@@ -621,7 +621,7 @@ class GamificationTester:
                     xp_to_next = user_data.get('xp_to_next_level', 0)
                     next_level = user_data.get('next_level')
                     
-                    if current_level == 'ballon_dor':
+                    if current_level == "Ballon d'Or":
                         if xp_to_next == 0 and next_level is None:
                             self.log_test("Max Level Handling", True,
                                          "Max level (Ballon d'Or) correctly handled")
