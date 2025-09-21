@@ -156,9 +156,9 @@ class TopKitXPBugFixVerifier:
             return False
     
     def create_test_team_contribution(self):
-        """Create a new test team to verify gamification tracking"""
+        """Create a new test team contribution to verify gamification tracking"""
         try:
-            print(f"\n🏗️ STEP 3: CREATING TEST TEAM 'XP Test Team'")
+            print(f"\n🏗️ STEP 3: CREATING TEST TEAM CONTRIBUTION 'XP Test Team'")
             print("=" * 60)
             
             # Generate unique team name with timestamp
@@ -171,48 +171,53 @@ class TopKitXPBugFixVerifier:
                 "country": "France",
                 "city": "Paris",
                 "founded_year": 2025,
-                "league": "Test League",
-                "stadium": "Test Stadium",
-                "description": f"Test team created for XP bug fix verification at {datetime.now().isoformat()}"
+                "colors": ["Blue", "White"],
+                "short_name": "XTT",
+                "logo_url": "",
+                "secondary_photos": ""
             }
             
-            print(f"   📋 Creating team: {team_name}")
+            print(f"   📋 Creating team contribution: {team_name}")
             print(f"   📍 Country: {team_data['country']}")
-            print(f"   🏟️ Stadium: {team_data['stadium']}")
+            print(f"   🏙️ City: {team_data['city']}")
             
-            # Create team via contributions endpoint (this should trigger gamification tracking)
+            # Create team contribution via contributions-v2 endpoint
+            contribution_data = {
+                "entity_type": "team",
+                "entity_id": None,  # New entity
+                "title": f"New Team: {team_name}",
+                "description": "Test team for XP bug fix verification",
+                "data": team_data,
+                "source_urls": []
+            }
+            
             response = self.session.post(
-                f"{BACKEND_URL}/contributions",
-                json={
-                    "entity_type": "team",
-                    "data": team_data,
-                    "title": f"New Team: {team_name}",
-                    "description": "Test team for XP bug fix verification"
-                },
+                f"{BACKEND_URL}/contributions-v2/",
+                json=contribution_data,
                 timeout=10
             )
             
             if response.status_code == 200:
                 contribution_response = response.json()
-                self.test_team_id = contribution_response.get('entity_id')
+                self.test_contribution_id = contribution_response.get('id')
                 
-                self.log_test("Test Team Creation", True, 
-                             f"Test team '{team_name}' created successfully")
+                self.log_test("Test Team Contribution Creation", True, 
+                             f"Test team contribution '{team_name}' created successfully")
                 
-                print(f"      Team ID: {self.test_team_id}")
-                print(f"      Contribution ID: {contribution_response.get('id')}")
+                print(f"      Contribution ID: {self.test_contribution_id}")
+                print(f"      TopKit Reference: {contribution_response.get('topkit_reference')}")
                 print(f"      Status: {contribution_response.get('status')}")
                 print(f"      Created By: {contribution_response.get('created_by')}")
                 
                 return True
                 
             else:
-                self.log_test("Test Team Creation", False, 
-                             f"Failed to create test team: {response.status_code}", response.text)
+                self.log_test("Test Team Contribution Creation", False, 
+                             f"Failed to create test team contribution: {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Test Team Creation", False, f"Exception: {str(e)}")
+            self.log_test("Test Team Contribution Creation", False, f"Exception: {str(e)}")
             return False
     
     def verify_gamification_contribution_created(self):
