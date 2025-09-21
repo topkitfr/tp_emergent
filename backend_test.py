@@ -344,13 +344,13 @@ class TopKitGamificationFollowUpInvestigator:
             return False
     
     def check_gamification_contribution_created(self):
-        """Check if gamification contribution was created for the test team"""
+        """Check if gamification contribution was created for the test master kit"""
         try:
             print(f"\n🎯 CHECKING GAMIFICATION CONTRIBUTION CREATION")
             print("=" * 60)
             
             if not self.test_team_id:
-                self.log_test("Gamification Contribution Check", False, "No test team ID available")
+                self.log_test("Gamification Contribution Check", False, "No test master kit ID available")
                 return False
             
             # Get pending contributions
@@ -359,10 +359,10 @@ class TopKitGamificationFollowUpInvestigator:
             if response.status_code == 200:
                 contributions = response.json()
                 
-                # Look for contribution related to our test team
+                # Look for contribution related to our test master kit
                 test_contribution = None
                 for contrib in contributions:
-                    if (contrib.get('item_type') == 'team' and 
+                    if (contrib.get('item_type') == 'jersey' and 
                         contrib.get('item_id') == self.test_team_id):
                         test_contribution = contrib
                         break
@@ -371,7 +371,7 @@ class TopKitGamificationFollowUpInvestigator:
                     self.test_contribution_id = test_contribution.get('id')
                     
                     self.log_test("Gamification Contribution Check", True, 
-                                 f"Gamification contribution created for test team")
+                                 f"Gamification contribution created for test master kit")
                     
                     print(f"\n   📋 GAMIFICATION CONTRIBUTION DETAILS:")
                     print(f"      Contribution ID: {test_contribution.get('id')}")
@@ -386,7 +386,7 @@ class TopKitGamificationFollowUpInvestigator:
                     return True
                 else:
                     self.log_test("Gamification Contribution Check", False, 
-                                 f"No gamification contribution found for test team {self.test_team_id}")
+                                 f"No gamification contribution found for test master kit {self.test_team_id}")
                     
                     print(f"   📋 RECENT CONTRIBUTIONS (showing first 5):")
                     for i, contrib in enumerate(contributions[:5], 1):
