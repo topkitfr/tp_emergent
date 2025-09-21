@@ -24,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://topkit-auth-fix-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-levels.preview.emergentagent.com/api"
 
 # Emergency Admin Credentials (PRIMARY TEST TARGET)
 EMERGENCY_ADMIN_CREDENTIALS = {
