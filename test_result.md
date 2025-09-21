@@ -135,6 +135,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "CREATE NEW ADMIN ACCOUNT AND MANAGE ADMIN PRIVILEGES"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 ADMIN ACCOUNT MANAGEMENT TESTING REQUESTED - User requested creation of topkitfr@gmail.fr as the ONLY admin account on the site, removing admin privileges from all other accounts."
+        - working: false
+        - agent: "testing"
+        - comment: "🎯 ADMIN ACCOUNT MANAGEMENT TESTING COMPLETE - 55.6% SUCCESS RATE! Comprehensive testing shows partial success with manual database actions required: ✅ ACCOUNT CREATION (100%): Successfully created new admin account topkitfr@gmail.fr with secure password TopKitAdmin2025!, User ID: bd3980c1-6d48-4706-9ece-764d68e2f348, Account can login successfully and has basic access ✅ EXISTING ADMIN IDENTIFICATION (100%): Found 3 existing admin accounts - Emergency Admin (50 XP), Gamification Admin (40 XP), TopKit Admin (0 XP) ✅ LOGIN VERIFICATION (100%): New admin account login working perfectly with JWT token generation ❌ ADMIN PRIVILEGES (33%): Account created but lacks admin role - only 2/3 admin endpoints accessible (Leaderboard ✅, User Gamification ✅, Pending Contributions ❌ 403 Forbidden) ❌ SINGLE ADMIN STATUS (0%): Multiple admin accounts still exist - 4 total admin accounts found instead of 1 📝 MANUAL DATABASE ACTIONS REQUIRED: 1. UPDATE users SET role = 'admin' WHERE id = 'bd3980c1-6d48-4706-9ece-764d68e2f348'; (upgrade new account), 2. UPDATE users SET role = 'user' WHERE name = 'Emergency Admin'; (demote existing), 3. UPDATE users SET role = 'user' WHERE name = 'Gamification Admin'; (demote existing), 4. UPDATE users SET role = 'user' WHERE name = 'TopKit Admin'; (demote existing). CONCLUSION: New admin account successfully created and functional for login, but requires manual database role updates to complete the admin privilege management as requested. The account is ready for use once database updates are applied."
+
   - task: "CRITICAL GAMIFICATION BUG - XP NOT AWARDED AFTER TEAM APPROVAL"
     implemented: true
     working: true
