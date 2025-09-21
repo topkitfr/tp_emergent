@@ -447,7 +447,7 @@ class TopKitXPBugFixVerifier:
     def check_leaderboard_position(self):
         """Check emergency admin's updated position on leaderboard"""
         try:
-            print(f"\n📊 STEP 7: CHECKING UPDATED LEADERBOARD POSITION")
+            print(f"\n📊 STEP 8: CHECKING UPDATED LEADERBOARD POSITION")
             print("=" * 60)
             
             response = self.session.get(f"{BACKEND_URL}/leaderboard?limit=20", timeout=10)
