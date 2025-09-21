@@ -735,8 +735,8 @@ class TopKitGamificationFollowUpInvestigator:
     
     def run_follow_up_investigation(self):
         """Run comprehensive follow-up investigation"""
-        print("\n🔍 FOLLOW-UP GAMIFICATION INVESTIGATION")
-        print("Testing emergency.admin@topkit.test account and contribution workflow")
+        print("\n🔍 CRITICAL GAMIFICATION BUG INVESTIGATION")
+        print("Investigating team TK-TEAM-018D25 and XP awarding failure")
         print("=" * 80)
         
         investigation_results = []
@@ -761,20 +761,41 @@ class TopKitGamificationFollowUpInvestigator:
         print("\n4️⃣ Identifying All Admin Accounts...")
         investigation_results.append(self.identify_admin_accounts())
         
-        # Step 5: Create test master kit contribution
-        print("\n5️⃣ Creating Test Master Kit Contribution...")
+        # Step 5: Search for the reported team TK-TEAM-018D25
+        print("\n5️⃣ Searching for Reported Team TK-TEAM-018D25...")
+        reported_team = self.search_for_reported_team()
+        investigation_results.append(reported_team is not None)
+        
+        # Step 6: Check gamification contribution for the reported team
+        print("\n6️⃣ Checking Gamification Contribution for Reported Team...")
+        team_contribution = None
+        if reported_team:
+            team_contribution = self.check_gamification_contribution_for_team(reported_team)
+            investigation_results.append(team_contribution is not None)
+        else:
+            investigation_results.append(False)
+        
+        # Step 7: Investigate XP awarding bug
+        print("\n7️⃣ Investigating XP Awarding Bug...")
+        if team_contribution:
+            investigation_results.append(self.investigate_xp_awarding_bug(team_contribution))
+        else:
+            investigation_results.append(False)
+        
+        # Step 8: Create test master kit contribution to verify workflow
+        print("\n8️⃣ Creating Test Master Kit Contribution...")
         investigation_results.append(self.create_test_master_kit_contribution())
         
-        # Step 6: Check if gamification contribution was created
-        print("\n6️⃣ Checking Gamification Contribution Creation...")
+        # Step 9: Check if gamification contribution was created for test
+        print("\n9️⃣ Checking Gamification Contribution Creation for Test...")
         investigation_results.append(self.check_gamification_contribution_created())
         
-        # Step 7: Test contribution approval and XP awarding
-        print("\n7️⃣ Testing Contribution Approval and XP Awarding...")
+        # Step 10: Test contribution approval and XP awarding
+        print("\n🔟 Testing Contribution Approval and XP Awarding...")
         investigation_results.append(self.test_contribution_approval_and_xp_awarding())
         
-        # Step 8: Verify final XP status
-        print("\n8️⃣ Verifying Final XP Status...")
+        # Step 11: Verify final XP status
+        print("\n1️⃣1️⃣ Verifying Final XP Status...")
         investigation_results.append(self.verify_final_xp_status())
         
         return investigation_results
