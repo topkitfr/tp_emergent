@@ -508,6 +508,77 @@ class TopKitGamificationInvestigator:
             self.log_test("Contribution Approval Workflow", False, f"Exception: {str(e)}")
             return False
     
+    def test_contribution_approval_workflow(self):
+        """Test the contribution approval workflow if we have a pending contribution"""
+        try:
+            print(f"\n⚡ TESTING CONTRIBUTION APPROVAL WORKFLOW")
+            print("=" * 60)
+            
+            if not self.contribution_data:
+                print(f"   ⚠️ No specific contribution found - testing with any available contribution")
+                
+                # Get any pending contribution for testing
+                response = self.session.get(f"{BACKEND_URL}/admin/pending-contributions?limit=1", timeout=10)
+                if response.status_code == 200:
+                    contributions = response.json()
+                    if contributions:
+                        test_contribution = contributions[0]
+                        print(f"   📋 Using contribution {test_contribution.get('id')} for testing")
+                    else:
+                        self.log_test("Contribution Approval Workflow", False, 
+                                     "No pending contributions available for testing")
+                        return False
+                else:
+                    self.log_test("Contribution Approval Workflow", False, 
+                                 f"Failed to get contributions for testing: {response.status_code}")
+                    return False
+            else:
+                test_contribution = self.contribution_data
+                print(f"   📋 Using specific contribution {test_contribution.get('id')} for testing")
+            
+            # Test approval endpoint (but don't actually approve to avoid side effects)
+            contribution_id = test_contribution.get('id')
+            user_id = test_contribution.get('user_id')
+            xp_to_award = test_contribution.get('xp_to_award', 0)
+            
+            print(f"   📊 CONTRIBUTION ANALYSIS:")
+            print(f"      Contribution ID: {contribution_id}")
+            print(f"      User ID: {user_id}")
+            print(f"      XP to Award: {xp_to_award}")
+            print(f"      Item Type: {test_contribution.get('item_type')}")
+            print(f"      Already Approved: {test_contribution.get('is_approved', False)}")
+            
+            # Check if this contribution is already approved
+            if test_contribution.get('is_approved', False):
+                self.log_test("Contribution Approval Workflow", True, 
+                             f"✅ Contribution {contribution_id} is already approved")
+                
+                # Check if XP was actually awarded to the user
+                if user_id and self.admin_user_data and user_id == self.admin_user_data.get('id'):
+                    current_xp = self.user_xp_data.get('xp', 0) if self.user_xp_data else 0
+                    expected_xp = xp_to_award
+                    
+                    print(f"   🎯 XP VERIFICATION:")
+                    print(f"      User Current XP: {current_xp}")
+                    print(f"      Expected XP from this contribution: {expected_xp}")
+                    
+                    if current_xp >= expected_xp:
+                        print(f"   ✅ XP appears to have been awarded correctly")
+                        return True
+                    else:
+                        print(f"   ❌ XP may not have been awarded - user has less XP than expected")
+                        return False
+                
+                return True
+            else:
+                self.log_test("Contribution Approval Workflow", False, 
+                             f"❌ Contribution {contribution_id} is not yet approved")
+                return False
+            
+        except Exception as e:
+            self.log_test("Contribution Approval Workflow", False, f"Exception: {str(e)}")
+            return False
+    
     def run_gamification_investigation(self):
         """Run comprehensive gamification bug investigation"""
         print("\n🚨 URGENT GAMIFICATION BUG INVESTIGATION")
