@@ -100,6 +100,11 @@ const CollaborativeHeader = ({
             {user ? (
               <div className="relative">
                 <div className="flex items-center space-x-2">
+                  {/* Compact Gamification Profile Badge */}
+                  <div className="hidden lg:block">
+                    <GamificationProfile user={user} API={API} isCompact={true} />
+                  </div>
+                  
                   {/* Profile Picture - Display only */}
                   <div className="w-8 h-8 rounded-full overflow-hidden">
                     {user.profile_picture_url ? (
