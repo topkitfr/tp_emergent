@@ -556,9 +556,9 @@ class TopKitGamificationFollowUpInvestigator:
         print("\n4️⃣ Identifying All Admin Accounts...")
         investigation_results.append(self.identify_admin_accounts())
         
-        # Step 5: Create test team contribution
-        print("\n5️⃣ Creating Test Team Contribution...")
-        investigation_results.append(self.create_test_team_contribution())
+        # Step 5: Create test master kit contribution
+        print("\n5️⃣ Creating Test Master Kit Contribution...")
+        investigation_results.append(self.create_test_master_kit_contribution())
         
         # Step 6: Check if gamification contribution was created
         print("\n6️⃣ Checking Gamification Contribution Creation...")
