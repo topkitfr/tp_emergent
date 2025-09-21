@@ -135,6 +135,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "CRITICAL EMAIL CORRECTION - CREATE CORRECT ADMIN ACCOUNT"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 ADMIN ACCOUNT EMAIL CORRECTION TESTING REQUESTED - User created wrong email topkitfr@gmail.fr instead of correct topkitfr@gmail.com. Need to create correct admin account and delete incorrect one."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL ADMIN ACCOUNT EMAIL CORRECTION REQUIRED - 40.0% SUCCESS RATE! Comprehensive testing reveals the exact admin account situation: ✅ INCORRECT ACCOUNT IDENTIFIED (100%): Found topkitfr@gmail.fr account that needs deletion (User ID: bd3980c1-6d48-4706-9ece-764d68e2f348, Role: admin) ✅ CORRECT ACCOUNT EXISTS (100%): topkitfr@gmail.com account exists but has wrong password - needs password reset to TopKitAdmin2025! ✅ EMERGENCY ADMIN ACCESS (100%): emergency.admin@topkit.test working perfectly for system management ❌ MULTIPLE ADMIN ACCOUNTS (0%): Found 4 admin accounts instead of 1 - Emergency Admin (50 XP), Gamification Admin (40 XP), 2x TopKit Admin (0 XP each) ❌ PASSWORD MISMATCH (0%): Correct email account exists but password doesn't match TopKitAdmin2025! ❌ ADMIN ROLE ISSUES (0%): Cannot verify admin privileges due to login failure 📝 CRITICAL MANUAL DATABASE ACTIONS REQUIRED: 1. DELETE FROM users WHERE id = 'bd3980c1-6d48-4706-9ece-764d68e2f348'; (delete incorrect topkitfr@gmail.fr account), 2. UPDATE users SET password_hash = [bcrypt_hash_of_TopKitAdmin2025!] WHERE email = 'topkitfr@gmail.com'; (fix password for correct account), 3. UPDATE users SET role = 'admin' WHERE email = 'topkitfr@gmail.com'; (ensure admin role), 4. UPDATE users SET role = 'user' WHERE name IN ('Emergency Admin', 'Gamification Admin', 'TopKit Admin') AND email != 'topkitfr@gmail.com'; (demote other admin accounts). CONCLUSION: The email correction requires manual database intervention. The correct account exists but needs password reset and role verification, while the incorrect account needs deletion."
+
   - task: "CREATE NEW ADMIN ACCOUNT AND MANAGE ADMIN PRIVILEGES"
     implemented: true
     working: true
