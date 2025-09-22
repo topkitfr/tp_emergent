@@ -209,7 +209,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Latest contributions Section */}
+      {/* Latest database contributions Section - Updated to show recent master kits */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
@@ -217,55 +217,45 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
               Latest database contributions 🔥
             </h2>
             <button
-              onClick={() => onViewChange('teams')}
+              onClick={() => onViewChange('kit-area')}
               className="text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              View contributions
+              View all kits
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {recentTeams.slice(0, 2).map((team, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {recentMasterKits.slice(0, 6).map((kit, index) => (
               <div
-                key={team.id}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group"
-                onClick={() => onViewChange('teams')}
+                key={kit.id || index}
+                className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100"
+                onClick={() => onViewChange('kit-area')}
               >
-                <div className="flex items-center p-6">
-                  <div className="flex-shrink-0 mr-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                      {team.logo_url ? (
-                        <img 
-                          src={team.logo_url.startsWith('data:') || team.logo_url.startsWith('http') 
-                            ? team.logo_url 
-                            : team.logo_url.startsWith('image_uploaded_')
-                              ? `${process.env.REACT_APP_BACKEND_URL}/api/legacy-image/${team.logo_url}`
-                              : `${process.env.REACT_APP_BACKEND_URL}/api/${team.logo_url}`}
-                          alt={team.name || 'Unknown Team'}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <span className="text-2xl" style={{display: team.logo_url ? 'none' : 'flex'}}>⚽</span>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">
-                      Jan
-                      <br />
-                      {15 + index}
-                    </div>
-                  </div>
-                  <div className="flex-2">
-                    <h3 className="font-semibold text-gray-900 mb-1">{team.name || 'Unknown Team'}</h3>
-                    <p className="text-sm text-gray-500 mb-2">New team documented</p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      <span className="text-green-600">+5 kits referenced</span>
-                    </p>
-                  </div>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {kit.front_photo_url ? (
+                    <img 
+                      src={kit.front_photo_url.startsWith('data:') || kit.front_photo_url.startsWith('http') ? kit.front_photo_url : 
+                           kit.front_photo_url.startsWith('uploads/') ? 
+                           `${API}/api/${kit.front_photo_url}` :
+                           `${API}/api/uploads/master_kits/${kit.front_photo_url}.jpg`}
+                      alt={`${kit.club_name || kit.club || 'Team'} ${kit.season}`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className="text-4xl" style={{display: kit.front_photo_url ? 'none' : 'flex'}}>👕</span>
+                </div>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
+                    {kit.club_name || kit.club || 'Unknown team'}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-2">{kit.season}</p>
+                  <p className="text-sm text-green-600">
+                    <span className="text-lg font-bold">Recently added ✓</span>
+                  </p>
                 </div>
               </div>
             ))}
