@@ -47,6 +47,21 @@ export const getUnifiedFieldsForEntityType = (type) => {
         { key: 'birth_date', label: 'Birth Date', type: 'date' },
         { key: 'position', label: 'Position', type: 'select', options: ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'] },
         
+        // Player Type with Coefficient (NEW FIELD)
+        { 
+          key: 'player_type', 
+          label: 'Player Type', 
+          type: 'select', 
+          required: true,
+          options: [
+            { value: 'showdown_legend', label: 'Showdown Legend (3.00x)', coefficient: 3.00 },
+            { value: 'superstar', label: 'Superstar (2.00x)', coefficient: 2.00 },
+            { value: 'star', label: 'Star (1.00x)', coefficient: 1.00 },
+            { value: 'good_player', label: 'Good Player (0.5x)', coefficient: 0.50 },
+            { value: 'none', label: 'None (0.00x)', coefficient: 0.00 }
+          ]
+        },
+        
         // Enhanced fields
         { key: 'current_team', label: 'Current Team', type: 'text' },
         { key: 'jersey_number', label: 'Jersey Number', type: 'number' },
