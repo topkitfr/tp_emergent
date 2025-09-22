@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GamificationProfile from '../components/GamificationProfile';
+import SocialFeatures from '../components/SocialFeatures';
+import CollectionStats from '../components/CollectionStats';
+import UserActivityFeed from '../components/UserActivityFeed';
 
 const PublicProfilePage = ({ user, API }) => {
   const { userId } = useParams();
