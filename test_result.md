@@ -134,6 +134,22 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+backend:
+  - task: "New Homepage Endpoints Testing - Expensive Kits, Recent Master Kits, Recent Contributions, Public Profile"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 NEW HOMEPAGE ENDPOINTS TESTING REQUESTED - User requested comprehensive testing of 4 new homepage endpoints: /api/homepage/expensive-kits (top 5 most expensive kits from collections with user info and estimated prices), /api/homepage/recent-master-kits (recently uploaded master kits sorted by created_at descending), /api/homepage/recent-contributions (recently approved contributions for teams/brands/players/competitions with entity and user info), /api/users/{user_id}/public-profile (public profile data requiring authentication with privacy settings)."
+        - working: true
+        - agent: "testing"
+        - comment: "🎉 NEW HOMEPAGE ENDPOINTS TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing of all 4 new homepage endpoints shows excellent functionality: ✅ AUTHENTICATION (100%): Emergency admin authentication working perfectly for protected endpoints ✅ EXPENSIVE KITS ENDPOINT (100%): /api/homepage/expensive-kits working correctly - returns top expensive kits from collections with proper price sorting (€466.2 top kit: Paris Saint-Germain 2024-2025 owned by TopKit Admin), includes complete master kit info with populated club/brand/competition names, user information properly included, estimated price calculations accurate ✅ RECENT MASTER KITS ENDPOINT (100%): /api/homepage/recent-master-kits working correctly - returns recently uploaded master kits sorted by creation date descending, proper response structure with populated club/competition/brand names, most recent kit: FC Barcelona 2025-2026, all required fields present including club names (fixed missing club field issue) ✅ RECENT CONTRIBUTIONS ENDPOINT (100%): /api/homepage/recent-contributions working correctly - returns recently approved contributions (teams, brands, players, competitions), includes entity and user information, XP awarded data present, proper filtering for approved contributions only, 1 recent team contribution found with Emergency Admin contributor ✅ PUBLIC PROFILE ENDPOINT (100%): /api/users/{user_id}/public-profile working correctly - requires authentication (401 without token), returns comprehensive profile data (name, role, XP: 50, level: Remplaçant, collections: 0, contributions: 3), respects privacy settings, proper error handling for non-existent users ✅ CRITICAL FIXES APPLIED (100%): Fixed MongoDB ObjectId serialization issues causing 500 errors, added proper club/brand/competition name population for master kits, removed _id fields to prevent JSON serialization errors, enhanced data quality with complete entity information. CONCLUSION: All 4 new homepage endpoints are fully operational with 100% success rate, providing rich data for homepage display with proper authentication, sorting, and complete entity information."
+
 frontend:
   - task: "Database & Contributions Merged Page Functionality Testing"
     implemented: true
