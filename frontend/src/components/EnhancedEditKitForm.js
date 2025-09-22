@@ -54,10 +54,6 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
 
   const handleFileUpload = (files) => {
     const fileArray = Array.from(files);
-    if (fileUploads.photos.length + fileArray.length < 3) {
-      alert('Minimum 3 photos required (front, back, details)');
-      return;
-    }
     
     setFileUploads(prev => ({
       ...prev,
