@@ -834,7 +834,7 @@ async def get_form_players():
     try:
         players = await db.players.find(
             {}, 
-            {"name": 1, "nationality": 1, "position": 1, "influence_coefficient": 1, "player_type": 1}
+            {"_id": 0, "name": 1, "nationality": 1, "position": 1, "influence_coefficient": 1, "player_type": 1}
         ).to_list(length=None)
         
         # Add coefficient from player_type if influence_coefficient is None
