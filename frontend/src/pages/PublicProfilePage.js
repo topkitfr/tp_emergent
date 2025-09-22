@@ -111,6 +111,9 @@ const PublicProfilePage = ({ user, API }) => {
     navigate(`/users/${userId}/collection`); // You may need to create this route
   };
 
+  const memberSinceDate = profileData.created_at ? 
+    new Date(profileData.created_at).toLocaleDateString() : 'Unknown';
+
   const tabs = [
     { id: 'social', label: 'Social', icon: '👥' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
