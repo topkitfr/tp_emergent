@@ -340,32 +340,22 @@ class TopKitMasterKitTesting:
                 self.log_test("Master Kit Creation Valid", False, "❌ Missing form data (clubs/brands) for Master Kit creation")
                 return False
             
-            # Get first club, brand, and competition for testing
+            # Get first club and brand for testing
             test_club = self.form_data['clubs'][0]
             test_brand = self.form_data['brands'][0]
-            test_competition = self.form_data.get('competitions', [{}])[0] if self.form_data.get('competitions') else None
             
-            # Create valid Master Kit data
+            # Create valid Master Kit data (based on MasterKitCreate model)
             master_kit_data = {
                 "kit_type": "authentic",  # Should be 'authentic' or 'replica'
                 "club_id": test_club['id'],
-                "brand_id": test_brand['id'],
+                "brand_id": test_brand['id'],  # Optional but including it
                 "season": "2024/2025",
                 "kit_style": "home",  # Should be 'home', 'away', 'third', 'fourth', 'gk' or 'special'
-                "gender": "man",
-                "primary_color": "Red",
-                "secondary_color": "White"
             }
-            
-            # Add competition_id if available
-            if test_competition and test_competition.get('id'):
-                master_kit_data["competition_id"] = test_competition['id']
             
             print(f"      Creating Master Kit with data:")
             print(f"         Club: {test_club['name']} (ID: {test_club['id']})")
             print(f"         Brand: {test_brand['name']} (ID: {test_brand['id']})")
-            if test_competition and test_competition.get('name'):
-                print(f"         Competition: {test_competition['name']} (ID: {test_competition['id']})")
             print(f"         Season: {master_kit_data['season']}")
             print(f"         Kit Type: {master_kit_data['kit_type']}")
             print(f"         Kit Style: {master_kit_data['kit_style']}")
