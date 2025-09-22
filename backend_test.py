@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - FINAL ADMIN ACCOUNT VERIFICATION
+TopKit Backend Testing Suite - NEW HOMEPAGE ENDPOINTS TESTING
 
-VÉRIFICATION FINALE - COMPTE ADMIN CORRIGÉ
+Testing the new homepage endpoints implemented:
+1. /api/homepage/expensive-kits - Top 5 most expensive kits from collections
+2. /api/homepage/recent-master-kits - Recently uploaded master kits
+3. /api/homepage/recent-contributions - Recently approved contributions
+4. /api/users/{user_id}/public-profile - Public profile data with authentication
 
-VÉRIFIER:
-1. Connexion avec topkitfr@gmail.com / TopKitAdmin2025!
-2. Vérifier les privilèges d'administrateur
-3. Confirmer que c'est le SEUL compte admin sur le site
-4. Tester toutes les fonctions admin
-
-CRITIQUE: Vérification que la correction d'email a été effectuée avec succès.
+CRITICAL: Testing all new homepage endpoints with current database data.
 """
 
 import requests
