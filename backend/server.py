@@ -1695,7 +1695,7 @@ class ContributionResponse(BaseModel):
     
     # Old format fields (for backward compatibility)
     entity_id: Optional[str] = None
-    change_summary: Optional[dict] = {}
+    created_by: Optional[str] = None  # User ID who created the contribution
     
     status: str = "pending_review"
     upvotes: int = 0
