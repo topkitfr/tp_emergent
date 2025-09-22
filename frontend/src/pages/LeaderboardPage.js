@@ -207,8 +207,13 @@ const LeaderboardPage = ({ user, API, setShowAuthModal }) => {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {entry.username}
+                            <div className="text-sm font-medium">
+                              <button
+                                onClick={() => handleUserClick(entry.user_id, entry.username)}
+                                className="text-gray-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                              >
+                                {entry.username}
+                              </button>
                               {user && entry.username === user.name && (
                                 <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                   Vous
