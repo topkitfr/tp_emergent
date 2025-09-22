@@ -2864,10 +2864,9 @@ async def get_user_public_profile(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # For now, all profiles are public
-        # In the future, add privacy settings check here
-        # if user.get("profile_private", False) and user_id != current_user["id"]:
-        #     raise HTTPException(status_code=403, detail="Profile is private")
+        # Check privacy settings
+        if user.get("profile_private", False) and user_id != current_user["id"]:
+            raise HTTPException(status_code=403, detail="This profile is private")
         
         # Get user statistics
         collections_count = await db.my_collection.count_documents({"user_id": user_id})
