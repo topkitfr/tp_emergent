@@ -117,7 +117,7 @@ const ProfilePictureModal = ({ user, onClose, onUpdate }) => {
             <div className="w-32 h-32 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
               {user.profile_picture_url ? (
                 <img 
-                  src={`${API}/${user.profile_picture_url}`}
+                  src={`${API}/api/uploads/${user.profile_picture_url}`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
