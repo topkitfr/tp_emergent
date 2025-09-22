@@ -151,7 +151,7 @@ const PublicProfilePage = ({ user, API }) => {
               <div className="flex-shrink-0">
                 {profileData.profile_picture_url ? (
                   <img 
-                    src={`${API}/${profileData.profile_picture_url}`}
+                    src={`${API}/api/uploads/${profileData.profile_picture_url}`}
                     alt="Profile"
                     className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                   />
