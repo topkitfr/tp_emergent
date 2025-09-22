@@ -180,7 +180,7 @@ class TopKitEnhancedEditFormTesting:
                 # photos field intentionally omitted to test photo requirement removal
                 
                 # E. Technical Details
-                "patches": ["champions_league"],
+                "patches": "champions_league",  # Fixed: should be string, not array
                 "is_signed": True,
                 "signed_by": "Lionel Messi",
                 
