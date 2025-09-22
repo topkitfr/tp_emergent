@@ -144,29 +144,51 @@ class MyCollection(BaseModel):
     # Collection Type (REQUIRED)
     collection_type: CollectionType = Field(..., description="Collection type (owned/wanted)")
     
-    # Personal Kit Form Fields (as specified) - mostly for owned items
+    # A. Basic Information
+    gender: Optional[str] = None  # Men/Women/Children
+    size: Optional[str] = None  # XS/S/M/L/XL/XXL
+    
+    # B. Player & Printing
+    associated_player_id: Optional[str] = None  # Player with coefficient
     name_printing: Optional[str] = None  # e.g., "Mbappé"
     number_printing: Optional[str] = None  # e.g., "7"
-    patches: Optional[str] = None  # dropdown: Ligue 1/Champions League/etc.
     
-    # Signed section
+    # C. Origin & Authenticity
+    origin_type: Optional[str] = None  # standard/match_issued/match_worn
+    competition: Optional[str] = None  # Required if match-issued/match-worn
+    authenticity_proof: List[str] = []  # match_photos/certificate/no_proof
+    match_date: Optional[datetime] = None  # Required if match-issued/match-worn
+    opponent_id: Optional[str] = None  # Required if match-issued/match-worn
+    
+    # D. Physical Condition
+    general_condition: Optional[str] = None  # new_with_tags/very_good/used/damaged/needs_restoration
+    photo_urls: List[str] = []  # Minimum 3 photos (front, back, details)
+    
+    # E. Technical Details
+    patches: List[str] = []  # Multiple selection
+    other_patches: Optional[str] = None  # If "other" selected
+    signature: bool = False  # +2.0 coefficient
+    signature_player_id: Optional[str] = None  # Required if signed
+    signature_certificate: Optional[str] = None  # yes/no
+    
+    # F. User Estimate
+    user_estimate: Optional[float] = None  # User's price estimate
+    
+    # G. Comments
+    comments: Optional[str] = None  # Free text
+    
+    # Legacy fields (keep for backward compatibility)
+    patches_legacy: Optional[str] = None  # Old single patch field
     is_signed: bool = False
-    signed_by: Optional[str] = None  # Player name(s)
-    certificate_url: Optional[str] = None  # Certificate upload
-    
-    # Condition
+    signed_by: Optional[str] = None
+    certificate_url: Optional[str] = None
     condition: Optional[KitCondition] = None
-    condition_other: Optional[str] = None  # Free text if "Other" selected
-    
-    # Physical State
-    physical_state: Optional[PhysicalState] = None  
-    
-    # Size and Purchase Info
-    size: Optional[str] = None  # S/M/L/XL/etc.
-    purchase_price: Optional[float] = None  # €
-    purchase_date: Optional[datetime] = None  # DD/MM/YYYY
-    proof_of_purchase_url: Optional[str] = None  # File upload
-    personal_notes: Optional[str] = None  # Free text
+    condition_other: Optional[str] = None
+    physical_state: Optional[PhysicalState] = None
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[datetime] = None
+    proof_of_purchase_url: Optional[str] = None
+    personal_notes: Optional[str] = None
     
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
