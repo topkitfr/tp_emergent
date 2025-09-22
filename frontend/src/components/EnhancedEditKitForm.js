@@ -191,7 +191,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   <option value="">Select player</option>
                   {players.map(player => (
                     <option key={player.id} value={player.id}>
-                      {player.name} {player.influence_coefficient && `(×${player.influence_coefficient})`}
+                      {player.name} {(player.coefficient || player.influence_coefficient) && `(×${player.coefficient || player.influence_coefficient})`}
                     </option>
                   ))}
                 </select>
