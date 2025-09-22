@@ -385,9 +385,9 @@ class TopKitMasterKitTesting:
             
             # Create Master Kit data with missing required fields
             incomplete_data = {
-                "kit_type": "home",
+                "kit_type": "authentic",
                 # Missing club_id, brand_id, season
-                "kit_style": "classic"
+                "kit_style": "home"
             }
             
             print(f"      Testing with incomplete data (missing club_id, brand_id, season)")
