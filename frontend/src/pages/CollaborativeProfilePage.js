@@ -149,7 +149,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
             <div className="relative">
               {user.profile_picture_url ? (
                 <img 
-                  src={`${API}/${user.profile_picture_url}`}
+                  src={`${API}/api/uploads/${user.profile_picture_url}`}
                   alt="Profile"
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-gray-200"
                 />
