@@ -278,39 +278,120 @@ const AppContent = () => {
       {/* Main Content */}
       <div>
         <Routes>
+          {/* Public Routes - No Authentication Required */}
           <Route path="/" element={<CollaborativeHomepage {...commonProps} onViewChange={handleViewChange} />} />
-          <Route path="/explore" element={<CollaborativeExplorePage {...commonProps} />} />
-          <Route path="/catalogue" element={<CataloguePage {...commonProps} />} />
-          <Route path="/database-contributions" element={<DatabaseContributionsPage {...commonProps} />} />
           <Route path="/kit-area" element={<KitAreaPage {...commonProps} />} />
-          <Route path="/my-collection" element={<MyCollectionPage {...commonProps} />} />
-          <Route path="/contributions-v2" element={<ContributionsV2Page {...commonProps} />} />
-          <Route path="/moderation" element={<ModerationDashboard {...commonProps} />} />
-          <Route path="/teams" element={<CollaborativeTeamsPage {...commonProps} />} />
-          <Route path="/brands" element={<CollaborativeBrandsPage {...commonProps} />} />
-          <Route path="/players" element={<CollaborativePlayersPage {...commonProps} />} />
-          <Route path="/competitions" element={<CollaborativeCompetitionsPage {...commonProps} />} />
-          <Route path="/master-kits" element={<CollaborativeMasterJerseyPage {...commonProps} />} />
-          <Route path="/profile" element={<CollaborativeProfilePage {...commonProps} />} />
-          <Route path="/profile/:userId" element={<PublicProfilePage {...commonProps} />} />
-          <Route path="/admin" element={<AdminDashboard user={user} API={API} />} />
-          <Route path="/leaderboard" element={<LeaderboardPage {...commonProps} />} />
+          <Route path="/database-contributions" element={<DatabaseContributionsPage {...commonProps} />} />
           
-          {/* Routes pour les pages détaillées */}
-          <Route path="/teams/:teamId" element={<TeamDetailPage {...commonProps} />} />
-          <Route path="/brands/:brandId" element={<BrandDetailPage {...commonProps} />} />
-          <Route path="/competitions/:competitionId" element={<CompetitionDetailPage {...commonProps} />} />
-          <Route path="/players/:playerId" element={<PlayerDetailPage {...commonProps} />} />
-          <Route path="/master-kits/:jerseyId" element={<MasterJerseyDetailPage {...commonProps} />} />
+          {/* Protected Routes - Authentication Required */}
+          <Route path="/explore" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeExplorePage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/catalogue" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CataloguePage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-collection" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <MyCollectionPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/contributions-v2" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <ContributionsV2Page {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/moderation" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <ModerationDashboard {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/teams" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeTeamsPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/brands" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeBrandsPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/players" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativePlayersPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/competitions" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeCompetitionsPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/master-kits" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeMasterJerseyPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollaborativeProfilePage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile/:userId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <PublicProfilePage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <AdminDashboard user={user} API={API} />
+            </ProtectedRoute>
+          } />
+          <Route path="/leaderboard" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <LeaderboardPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          
+          {/* Protected Routes pour les pages détaillées */}
+          <Route path="/teams/:teamId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <TeamDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/brands/:brandId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <BrandDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/competitions/:competitionId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CompetitionDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/players/:playerId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <PlayerDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
+          <Route path="/master-kits/:jerseyId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <MasterJerseyDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
           <Route path="/contributions-v2/:contributionId" element={
-            <ContributionDetailPage 
-              {...commonProps} 
-              contributionId={window.location.pathname.split('/contributions-v2/')[1]}
-              onNavigateBack={() => navigate('/contributions-v2')}
-            />
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <ContributionDetailPage 
+                {...commonProps} 
+                contributionId={window.location.pathname.split('/contributions-v2/')[1]}
+                onNavigateBack={() => navigate('/contributions-v2')}
+              />
+            </ProtectedRoute>
           } />
 
-          {/* Kit Area routes (Discogs-like structure) */}
+          {/* Kit Area routes (Public routes) */}
           <Route path="/kit-area/master/:id" element={<MasterJerseyDetailPage {...commonProps} />} />
           <Route path="/kit-area/master/:id/versions" element={<AllVersionsPage {...commonProps} />} />
           <Route path="/kit-area/version/:id" element={<VersionDetailPage {...commonProps} />} />
