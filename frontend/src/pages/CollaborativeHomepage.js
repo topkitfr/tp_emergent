@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ClickableUsername from '../components/ClickableUsername';
 
-const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, onViewChange, API }) => {
+const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, onViewChange, API, setShowAuthModal }) => {
   const navigate = useNavigate();
   
   // New state for dynamic homepage data
