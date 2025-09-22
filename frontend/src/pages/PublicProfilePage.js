@@ -106,8 +106,10 @@ const PublicProfilePage = ({ user, API }) => {
     );
   }
 
-  const memberSinceDate = profileData.created_at ? 
-    new Date(profileData.created_at).toLocaleDateString() : 'Unknown';
+  const handleViewMoreCollection = () => {
+    // Navigate to user's collection or switch to a collection tab if implemented
+    navigate(`/users/${userId}/collection`); // You may need to create this route
+  };
 
   const tabs = [
     { id: 'social', label: 'Social', icon: '👥' },
