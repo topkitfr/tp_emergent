@@ -27,7 +27,7 @@ const CollaborativeHeader = ({
     { id: 'home', label: 'Home', icon: '🏠', requiresAuth: false },
     { id: 'kit-area', label: 'Kit Area', icon: '👕', requiresAuth: false },
     { id: 'database-contributions', label: 'Database & Contributions', icon: '🔍', requiresAuth: false },
-    { id: 'leaderboard', label: 'Le Classement', icon: '🏆', requiresAuth: false }
+    { id: 'leaderboard', label: 'Le Classement', icon: '🏆', requiresAuth: true }
   ];
 
   // Filter navigation items based on authentication
