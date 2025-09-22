@@ -169,10 +169,12 @@ metadata:
 
 test_plan:
   current_focus: 
+    - "Authentication System State Management Bug Fix"
     - "Enhanced Edit Kit Form Testing"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Enhanced Edit Kit Form Testing - New Comprehensive Form Sections Verification"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
 backend:
   - task: "Enhanced Edit Kit Form Photo Requirement Removal Testing"
