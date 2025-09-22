@@ -2803,10 +2803,28 @@ async def get_recent_master_kits(limit: int = Query(6, le=20)):
         cursor = db.master_kits.find({}).sort("created_at", -1).limit(limit)
         master_kits = await cursor.to_list(length=None)
         
-        # Remove MongoDB _id field
+        # Remove MongoDB _id field and populate club names
         for kit in master_kits:
             if "_id" in kit:
                 del kit["_id"]
+                
+            # Populate club name if missing
+            if not kit.get("club") and kit.get("club_id"):
+                club = await db.teams.find_one({"id": kit["club_id"]})
+                if club:
+                    kit["club"] = club.get("name", "Unknown Club")
+            
+            # Populate competition name if missing
+            if not kit.get("competition") and kit.get("competition_id"):
+                competition = await db.competitions.find_one({"id": kit["competition_id"]})
+                if competition:
+                    kit["competition"] = competition.get("competition_name", "Unknown Competition")
+            
+            # Populate brand name if missing
+            if not kit.get("brand") and kit.get("brand_id"):
+                brand = await db.brands.find_one({"id": kit["brand_id"]})
+                if brand:
+                    kit["brand"] = brand.get("name", "Unknown Brand")
                 
         return master_kits
         
