@@ -728,6 +728,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
                           </label>
                           <input
                             type="text"
+                            name="instagram_username"
                             value={settingsData.instagram_username}
                             onChange={(e) => setSettingsData(prev => ({...prev, instagram_username: e.target.value}))}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
@@ -741,6 +742,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
                           </label>
                           <input
                             type="text"
+                            name="twitter_username"
                             value={settingsData.twitter_username}
                             onChange={(e) => setSettingsData(prev => ({...prev, twitter_username: e.target.value}))}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
