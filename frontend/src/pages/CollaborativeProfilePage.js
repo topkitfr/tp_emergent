@@ -78,6 +78,11 @@ const CollaborativeProfilePage = ({ user, API }) => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
+  const handleProfileUpdate = (updatedProfile) => {
+    setUserProfile(updatedProfile);
+    // Update user context if needed
+  };
+
   const handleSettingsFieldFocus = (fieldName) => {
     // Switch to settings tab and focus on specific field
     setActiveTab('settings');
