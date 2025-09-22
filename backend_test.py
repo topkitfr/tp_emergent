@@ -493,9 +493,7 @@ class TopKitMasterKitTesting:
                 "club_id": test_club['id'],
                 "brand_id": test_brand['id'],
                 "season": "2024-2025",  # Invalid format (should be 2024/2025)
-                "kit_style": "home",
-                "gender": "man",
-                "primary_color": "Red"
+                "kit_style": "home"
             }
             
             print(f"      Testing with invalid season format: '2024-2025' (should be '2024/2025')")
