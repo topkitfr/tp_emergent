@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - BUG FIXES TESTING
+TopKit Backend Testing Suite - PROFILE PICTURE FUNCTIONALITY TESTING
 
-Testing the 4 specific bug fixes that were just implemented:
-1. **Endpoint de mise à jour du profil** - PUT /api/users/{user_id}/profile pour corriger l'erreur "Not Found" du formulaire account settings
-2. **Endpoint de recent collection** - GET /api/users/{user_id}/recent-collection pour afficher les 5 derniers maillots
-3. **Endpoint d'upload de photo de profil** - POST /api/users/profile/picture pour corriger l'upload de photo
-4. **Endpoint d'images optimisées** - GET /api/uploads/{file_path} avec paramètres w, h, q pour l'optimisation d'images
+Testing the profile picture upload and delete functionality:
+1. **Profile Picture Upload Test** - POST /api/users/profile/picture endpoint
+2. **Profile Picture Delete Test** - DELETE /api/users/profile/picture endpoint
 
-CRITICAL: Testing specific bug fixes with emergency.admin@topkit.test / EmergencyAdmin2025! account.
+CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
+Verifying file upload to uploads/profile_pictures directory and proper cleanup.
 """
 
 import requests
