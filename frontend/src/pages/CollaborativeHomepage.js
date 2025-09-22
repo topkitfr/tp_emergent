@@ -331,47 +331,84 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Latest documentation */}
+      {/* Latest documentation - Updated to show recent contributions */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
             Latest documentation 📋
           </h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentMasterJerseys.slice(0, 6).map((jersey, index) => (
-              <div
-                key={jersey.id || index}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100"
-                onClick={() => onViewChange('kit-area')}
-              >
-                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {jersey.front_photo_url ? (
-                    <img 
-                      src={jersey.front_photo_url.startsWith('data:') || jersey.front_photo_url.startsWith('http') ? jersey.front_photo_url : 
-                           jersey.front_photo_url.startsWith('uploads/') ? 
-                           `${process.env.REACT_APP_BACKEND_URL}/api/${jersey.front_photo_url}` :
-                           `${process.env.REACT_APP_BACKEND_URL}/api/uploads/master_kits/${jersey.front_photo_url}.jpg`}
-                      alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <span className="text-4xl" style={{display: jersey.front_photo_url ? 'none' : 'flex'}}>👕</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {recentContributions.slice(0, 4).map((contrib, index) => {
+              const entity = contrib.entity;
+              const entityType = contrib.item_type;
+              
+              return (
+                <div
+                  key={contrib.contribution_id || index}
+                  className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100"
+                  onClick={() => onViewChange(entityType === 'team' ? 'teams' : 
+                                            entityType === 'brand' ? 'brands' : 
+                                            entityType === 'player' ? 'players' : 'competitions')}
+                >
+                  <div className="flex items-center p-6">
+                    <div className="flex-shrink-0 mr-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                        {entity.logo_url ? (
+                          <img 
+                            src={entity.logo_url.startsWith('data:') || entity.logo_url.startsWith('http') 
+                              ? entity.logo_url 
+                              : entity.logo_url.startsWith('image_uploaded_')
+                                ? `${API}/api/legacy-image/${entity.logo_url}`
+                                : `${API}/api/${entity.logo_url}`}
+                            alt={entity.name || 'Unknown'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <span className="text-2xl" style={{display: entity.logo_url ? 'none' : 'flex'}}>
+                          {entityType === 'team' ? '⚽' : 
+                           entityType === 'brand' ? '👕' : 
+                           entityType === 'player' ? '👤' : '🏆'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">
+                        {contrib.approved_at ? 
+                          new Date(contrib.approved_at).toLocaleDateString() : 
+                          'Recently'}
+                      </div>
+                    </div>
+                    <div className="flex-2">
+                      <h3 className="font-semibold text-gray-900 mb-1">{entity.name || 'Unknown'}</h3>
+                      <p className="text-sm text-gray-500 mb-2">
+                        New {entityType} documented
+                        {contrib.user && (
+                          <span> by{' '}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUserClick(contrib.user.id);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                            >
+                              {contrib.user.name}
+                            </button>
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        <span className="text-green-600">+{contrib.xp_awarded} XP awarded ✓</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
-                    {jersey.club_name || jersey.club || 'Unknown team'} {jersey.season}
-                  </h3>
-                  <p className="text-sm text-green-600">
-                    <span className="text-lg font-bold">Documented ✓</span>
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
