@@ -28,6 +28,22 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
     other_photos: []
   });
 
+  // Kit Type options with base prices
+  const kitTypeOptions = [
+    { value: 'replica', label: 'Replica (€90)', basePrice: 90 },
+    { value: 'authentic', label: 'Authentic (€140)', basePrice: 140 }
+  ];
+
+  // Kit Style options
+  const kitStyleOptions = [
+    { value: 'home', label: 'Home' },
+    { value: 'away', label: 'Away' },
+    { value: 'third', label: 'Third' },
+    { value: 'fourth', label: 'Fourth' },
+    { value: 'goalkeeper', label: 'Goalkeeper' },
+    { value: 'special', label: 'Special' }
+  ];
+
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
@@ -38,41 +54,39 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
 
   const resetForm = () => {
     setFormData({
-      club_id: '',
-      season: '',
       kit_type: '',
-      competition_id: '',
-      model: '',
+      club_id: '',
+      kit_style: '',
       brand_id: '',
-      sku_code: '',
-      main_sponsor_id: '',
-      gender: '',
-      primary_color: '',
-      secondary_colors: [],
-      pattern_description: ''
+      primary_sponsor_id: '',
+      secondary_sponsor_ids: [],
+      season: '',
+      front_photo: null,
+      back_photo: null,
+      other_photos: []
     });
-    setFrontPhoto(null);
-    setFrontPhotoPreview(null);
     setErrors({});
-    setNewSecondaryColor('');
+    setPreviewImages({
+      front_photo: null,
+      back_photo: null,
+      other_photos: []
+    });
   };
 
   const loadFormData = async () => {
     try {
-      const [clubsRes, competitionsRes, brandsRes] = await Promise.all([
+      const [clubsRes, brandsRes] = await Promise.all([
         fetch(`${API}/api/form-data/clubs`),
-        fetch(`${API}/api/form-data/competitions`),
         fetch(`${API}/api/form-data/brands`)
       ]);
 
-      if (clubsRes.ok && competitionsRes.ok && brandsRes.ok) {
-        const [clubs, competitions, brands] = await Promise.all([
+      if (clubsRes.ok && brandsRes.ok) {
+        const [clubs, brands] = await Promise.all([
           clubsRes.json(),
-          competitionsRes.json(),
           brandsRes.json()
         ]);
 
-        setFormOptions({ clubs, competitions, brands });
+        setFormOptions({ clubs, brands });
       }
     } catch (error) {
       console.error('Error loading form data:', error);
