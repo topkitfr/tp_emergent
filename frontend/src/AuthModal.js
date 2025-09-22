@@ -318,11 +318,16 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
   };
 
   const handleInputChange = (field, value) => {
-    console.log(`📝 Input change - ${field}:`, value ? 'VALUE_SET' : 'EMPTY');
-    setFormData(prev => ({
-      ...prev,
+    console.log(`📝 Input change - ${field}:`, value || 'EMPTY_VALUE');
+    console.log('📊 Previous formData:', formData);
+    
+    const newFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+    
+    console.log('📊 New formData:', newFormData);
+    setFormData(newFormData);
   };
 
   const handleModalClick = (e) => {
