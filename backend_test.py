@@ -698,12 +698,15 @@ class TopKitMasterKitTesting:
         # Form Data Endpoints
         clubs_working = any(r['success'] for r in self.test_results if 'Form Data Clubs Endpoint' in r['test'])
         brands_working = any(r['success'] for r in self.test_results if 'Form Data Brands Endpoint' in r['test'])
+        competitions_working = any(r['success'] for r in self.test_results if 'Form Data Competitions Endpoint' in r['test'])
         players_working = any(r['success'] for r in self.test_results if 'Form Data Players Endpoint' in r['test'])
         
-        if clubs_working and brands_working and players_working:
+        if clubs_working and brands_working and competitions_working and players_working:
             print(f"  ✅ FORM DATA ENDPOINTS: All form data endpoints working correctly")
+        elif clubs_working and brands_working and competitions_working:
+            print(f"  ⚠️ FORM DATA ENDPOINTS: Clubs, brands, and competitions working, players may have issues")
         elif clubs_working and brands_working:
-            print(f"  ⚠️ FORM DATA ENDPOINTS: Clubs and brands working, players may have issues")
+            print(f"  ⚠️ FORM DATA ENDPOINTS: Clubs and brands working, competitions/players may have issues")
         else:
             print(f"  ❌ FORM DATA ENDPOINTS: Issues with form data endpoints")
         
