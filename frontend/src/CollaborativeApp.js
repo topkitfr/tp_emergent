@@ -133,6 +133,9 @@ const AppContent = () => {
           window.dispatchEvent(new CustomEvent('addToWantList', { 
             detail: { masterKit: pendingAction.masterKit } 
           }));
+        } else if (pendingAction.action === 'viewProfile' && pendingAction.userId) {
+          // Handle profile viewing after login
+          navigate(`/profile/${pendingAction.userId}`);
         }
       } catch (error) {
         console.error('Error handling pending action:', error);
