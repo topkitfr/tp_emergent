@@ -350,6 +350,8 @@ class Player(BaseModel):
     current_team_id: Optional[str] = None
     team_history: List[Dict[str, Any]] = []
     profile_picture_url: Optional[str] = None
+    # New field for player influence coefficient
+    influence_coefficient: Optional[float] = None  # For price calculation (e.g., 4.6 for Mbappé)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
