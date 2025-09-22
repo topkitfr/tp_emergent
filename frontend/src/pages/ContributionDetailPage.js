@@ -360,24 +360,34 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack, set
               </h1>
               
               <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full overflow-hidden">
-                    {contribution.user_profile_picture ? (
-                      <img 
-                        src={`${API}/${contribution.user_profile_picture}`}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">
-                          {contribution.user_name?.charAt(0).toUpperCase() || 'U'}
-                        </span>
+                  <div className="flex items-center space-x-2">
+                    <ClickableUsername
+                      userId={contribution.created_by}
+                      username={contribution.user_name}
+                      currentUser={user}
+                      setShowAuthModal={setShowAuthModal}
+                      className="text-gray-600 hover:text-blue-600 hover:underline transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 rounded-full overflow-hidden">
+                          {contribution.user_profile_picture ? (
+                            <img 
+                              src={`${API}/${contribution.user_profile_picture}`}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-white">
+                                {contribution.user_name?.charAt(0).toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <span>par {contribution.user_name}</span>
                       </div>
-                    )}
+                    </ClickableUsername>
                   </div>
-                  <span>par {contribution.user_name}</span>
-                </div>
                 <span>•</span>
                 <span>{new Date(contribution.created_at).toLocaleDateString('fr-FR', { 
                   year: 'numeric', 
