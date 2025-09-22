@@ -316,15 +316,13 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                   {/* User info with clickable profile */}
                   <div className="text-xs text-gray-500">
                     Owned by{' '}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUserClick(item.user.id);
-                      }}
+                    <ClickableUsername
+                      userId={item.user.id}
+                      username={item.user.name}
+                      currentUser={user}
+                      setShowAuthModal={setShowAuthModal}
                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                    >
-                      {item.user.name}
-                    </button>
+                    />
                   </div>
                 </div>
               </div>
