@@ -73,8 +73,9 @@ const CollaborativeProfilePage = ({ user, API }) => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '👤' },
-    { id: 'contributions', label: 'Contributions', icon: '📝' },
-    { id: 'activity', label: 'Activity', icon: '📈' },
+    { id: 'social', label: 'Social', icon: '👥' },
+    { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'activity', label: 'Activity', icon: '📝' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
