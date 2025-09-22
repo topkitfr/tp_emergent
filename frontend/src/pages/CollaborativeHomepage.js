@@ -1,8 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, onViewChange }) => {
+const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, onViewChange, API }) => {
   const navigate = useNavigate();
+  
+  // New state for dynamic homepage data
+  const [expensiveKits, setExpensiveKits] = useState([]);
+  const [recentMasterKits, setRecentMasterKits] = useState([]);
+  const [recentContributions, setRecentContributions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Load dynamic homepage data
+  useEffect(() => {
+    loadHomepageData();
+  }, []);
+
+  const loadHomepageData = async () => {
+    setLoading(true);
+    try {
+      const [expensiveRes, recentMasterRes, recentContribRes] = await Promise.all([
+        fetch(`${API}/api/homepage/expensive-kits?limit=5`),
+        fetch(`${API}/api/homepage/recent-master-kits?limit=6`),
+        fetch(`${API}/api/homepage/recent-contributions?limit=10`)
+      ]);
+
+      if (expensiveRes.ok) {
+        const expensiveData = await expensiveRes.json();
+        setExpensiveKits(expensiveData);
+      }
+
+      if (recentMasterRes.ok) {
+        const recentMasterData = await recentMasterRes.json();
+        setRecentMasterKits(recentMasterData);
+      }
+
+      if (recentContribRes.ok) {
+        const recentContribData = await recentContribRes.json();
+        setRecentContributions(recentContribData);
+      }
+    } catch (error) {
+      console.error('Error loading homepage data:', error);
+    }
+    setLoading(false);
+  };
+
+  // Handle user profile click
+  const handleUserClick = (userId) => {
+    if (user) {
+      navigate(`/profile/${userId}`);
+    } else {
+      // Store the intended action and show login modal
+      localStorage.setItem('pendingAction', JSON.stringify({
+        action: 'viewProfile',
+        userId: userId
+      }));
+      navigate('/'); // Or trigger login modal
+    }
+  };
   
   // Statistics
   const stats = [
