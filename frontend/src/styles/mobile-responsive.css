@@ -1,0 +1,246 @@
+/* Mobile Responsive Optimizations for Google Pixel 9 (393x852px) */
+
+/* Profile Page Mobile Optimizations */
+@media (max-width: 480px) {
+  /* Profile Header */
+  .profile-header {
+    padding: 1rem !important;
+  }
+  
+  .profile-header h1 {
+    font-size: 1.5rem !important;
+    line-height: 1.3;
+  }
+  
+  /* User Info Card Mobile */
+  .user-info-card {
+    flex-direction: column !important;
+    text-align: center;
+  }
+  
+  .user-info-card .user-details {
+    margin-top: 1rem;
+  }
+  
+  .user-info-card .profile-picture {
+    align-self: center;
+  }
+  
+  /* Stats Cards Mobile Grid */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .stats-card {
+    padding: 0.75rem !important;
+    text-align: center;
+  }
+  
+  .stats-card .stat-value {
+    font-size: 1.25rem !important;
+  }
+  
+  .stats-card .stat-label {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Tabs Mobile */
+  .profile-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .profile-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .profile-tab {
+    min-width: 120px !important;
+    flex-shrink: 0;
+    font-size: 0.875rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  /* Social Features Mobile */
+  .followers-following-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .follow-button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .social-user-list {
+    max-height: 200px !important;
+  }
+  
+  /* Collection Stats Mobile */
+  .collection-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .rarity-score-breakdown {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  /* Activity Feed Mobile */
+  .activity-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  .activity-icon {
+    margin-bottom: 0.5rem;
+  }
+  
+  .activity-content {
+    width: 100%;
+  }
+  
+  .activity-timestamp {
+    align-self: flex-end;
+    margin-top: 0.5rem;
+  }
+  
+  /* Profile Completeness Mobile */
+  .completeness-badges {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .completeness-badge {
+    width: 100% !important;
+    text-align: center;
+  }
+  
+  /* Forms Mobile */
+  .settings-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-input, .form-textarea, .form-select {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+  
+  /* Modal Mobile */
+  .modal-content {
+    margin: 1rem !important;
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto;
+  }
+  
+  /* Leaderboard Mobile */
+  .leaderboard-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .leaderboard-card {
+    min-width: 280px;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Homepage Mobile */
+  .homepage-section {
+    padding: 1rem !important;
+  }
+  
+  .kit-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .kit-card {
+    padding: 0.75rem !important;
+  }
+  
+  .kit-card img {
+    height: 120px !important;
+  }
+  
+  /* Database & Contributions Mobile */
+  .database-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .database-tab {
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+  
+  .entity-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .entity-card {
+    padding: 1rem !important;
+  }
+}
+
+/* Tablet specific optimizations */
+@media (min-width: 481px) and (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  
+  .kit-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  .collection-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .interactive-element {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .button {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+  
+  .clickable {
+    padding: 0.5rem !important;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  /* Reduce animations on mobile */
+  .animate-pulse {
+    animation-duration: 1.5s !important;
+  }
+  
+  /* Optimize image loading */
+  .lazy-image {
+    loading: lazy;
+  }
+  
+  /* Reduce shadow complexity */
+  .shadow-lg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .shadow-xl {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  }
+}
