@@ -44,7 +44,7 @@ from PIL import Image
 from collaborative_models import (
     # New Simplified Kit System (2-Type System)
     MasterKit, MyCollection, KitType, KitModel, Gender, KitCondition, PhysicalState,
-    CollectionType,
+    CollectionType, PlayerType,
     MasterKitCreate, MyCollectionCreate, MyCollectionUpdate,
     MasterKitResponse, MyCollectionResponse,
     # Existing entities (unchanged)
