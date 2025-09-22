@@ -1380,7 +1380,246 @@ async def upload_proof_of_purchase(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ================================
-# FILE SERVING
+# PERFORMANCE OPTIMIZATIONS
+# ================================
+
+from PIL import Image as PILImage
+import io
+
+@app.get("/api/uploads/{file_path:path}")
+async def serve_optimized_file(
+    file_path: str,
+    w: Optional[int] = Query(None, description="Width for image resizing"),
+    h: Optional[int] = Query(None, description="Height for image resizing"),
+    q: Optional[int] = Query(75, ge=10, le=100, description="Quality for image compression")
+):
+    """Serve uploaded files with optional optimization"""
+    try:
+        full_path = UPLOAD_DIR / file_path
+        if not full_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Determine content type
+        content_type, _ = mimetypes.guess_type(str(full_path))
+        if not content_type:
+            content_type = "application/octet-stream"
+        
+        # If it's an image and optimization parameters are provided
+        if content_type.startswith('image/') and (w or h or q < 75):
+            try:
+                with PILImage.open(full_path) as img:
+                    # Convert to RGB if necessary
+                    if img.mode in ('RGBA', 'P', 'LA'):
+                        rgb_img = PILImage.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'RGBA':
+                            rgb_img.paste(img, mask=img.split()[-1])
+                        else:
+                            rgb_img.paste(img)
+                        img = rgb_img
+                    
+                    # Resize if dimensions provided
+                    if w or h:
+                        original_width, original_height = img.size
+                        
+                        if w and h:
+                            # Both dimensions provided
+                            img = img.resize((w, h), PILImage.Resampling.LANCZOS)
+                        elif w:
+                            # Only width provided, maintain aspect ratio
+                            aspect_ratio = original_height / original_width
+                            new_height = int(w * aspect_ratio)
+                            img = img.resize((w, new_height), PILImage.Resampling.LANCZOS)
+                        elif h:
+                            # Only height provided, maintain aspect ratio
+                            aspect_ratio = original_width / original_height
+                            new_width = int(h * aspect_ratio)
+                            img = img.resize((new_width, h), PILImage.Resampling.LANCZOS)
+                    
+                    # Save optimized image to memory
+                    img_buffer = io.BytesIO()
+                    img.save(img_buffer, format='JPEG', quality=q, optimize=True)
+                    img_buffer.seek(0)
+                    
+                    return Response(
+                        content=img_buffer.getvalue(),
+                        media_type="image/jpeg",
+                        headers={
+                            "Cache-Control": "public, max-age=31536000",  # Cache for 1 year
+                            "ETag": f'"{hash(file_path + str(w) + str(h) + str(q))}"'
+                        }
+                    )
+            except Exception as img_error:
+                logger.warning(f"Image optimization failed for {file_path}: {str(img_error)}")
+                # Fall back to serving original file
+        
+        # Serve original file with caching headers
+        return FileResponse(
+            path=str(full_path),
+            media_type=content_type,
+            headers={
+                "Cache-Control": "public, max-age=31536000",  # Cache for 1 year
+                "ETag": f'"{hash(file_path)}"'
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving file {file_path}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add pagination to large endpoints
+@app.get("/api/master-kits-paginated")
+async def get_master_kits_paginated(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page"),
+    club: Optional[str] = None,
+    season: Optional[str] = None,
+    kit_type: Optional[KitType] = None,
+    brand: Optional[str] = None
+):
+    """Get Master Kits with efficient pagination"""
+    try:
+        # Build filter query
+        filter_query = {}
+        if club:
+            filter_query["club"] = {"$regex": club, "$options": "i"}
+        if season:
+            filter_query["season"] = season
+        if kit_type:
+            filter_query["kit_type"] = kit_type
+        if brand:
+            filter_query["brand"] = {"$regex": brand, "$options": "i"}
+        
+        # Calculate skip value
+        skip = (page - 1) * per_page
+        
+        # Get total count for pagination info
+        total_count = await db.master_kits.count_documents(filter_query)
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        # Query database with pagination
+        cursor = db.master_kits.find(filter_query).skip(skip).limit(per_page)
+        master_kits = await cursor.to_list(length=None)
+        
+        # Convert to response format
+        response_kits = []
+        for kit in master_kits:
+            try:
+                # Handle gender enum conversion for backward compatibility
+                if kit.get("gender") == "men":
+                    kit["gender"] = "man"
+                elif kit.get("gender") == "women":
+                    kit["gender"] = "woman"
+                    
+                # Remove MongoDB ObjectId
+                if "_id" in kit:
+                    del kit["_id"]
+                    
+                response_kits.append(MasterKitResponse(**kit))
+            except Exception as kit_error:
+                logger.warning(f"Error processing kit {kit.get('id', 'unknown')}: {str(kit_error)}")
+                continue
+        
+        return {
+            "items": response_kits,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total_items": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching paginated master kits: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/leaderboard-paginated")
+async def get_leaderboard_paginated(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(50, ge=1, le=100, description="Items per page")
+):
+    """Get user leaderboard with pagination"""
+    try:
+        skip = (page - 1) * per_page
+        
+        # Get total count
+        total_count = await db.users.count_documents({})
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        cursor = db.users.find({}, {"_id": 0}).sort("xp", -1).skip(skip).limit(per_page)
+        users = await cursor.to_list(length=None)
+        
+        leaderboard = []
+        for i, user in enumerate(users, skip + 1):
+            user_data = {
+                "rank": i,
+                "user_id": user.get("id"),
+                "username": user.get("name", "Unknown"),
+                "xp": user.get("xp", 0),
+                "level": user.get("level", UserLevel.REMPLACANT),
+                "level_emoji": get_level_emoji(UserLevel(user.get("level", UserLevel.REMPLACANT)))
+            }
+            leaderboard.append(user_data)
+        
+        return {
+            "items": leaderboard,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total_items": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching paginated leaderboard: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add database indexing hints for better performance
+async def ensure_database_indexes():
+    """Ensure proper database indexes for performance"""
+    try:
+        # User indexes
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("xp", background=True)  # For leaderboard
+        await db.users.create_index("id", unique=True)
+        
+        # Master kit indexes
+        await db.master_kits.create_index("id", unique=True)
+        await db.master_kits.create_index("club_id", background=True)
+        await db.master_kits.create_index("season", background=True)
+        await db.master_kits.create_index("created_at", background=True)
+        await db.master_kits.create_index([("club", "text"), ("brand", "text")])  # Text search
+        
+        # Collection indexes
+        await db.my_collection.create_index([("user_id", 1), ("master_kit_id", 1)], unique=True)
+        await db.my_collection.create_index("user_id", background=True)
+        await db.my_collection.create_index("created_at", background=True)
+        
+        # Gamification indexes
+        await db.contributions_gamification.create_index([("user_id", 1), ("item_type", 1), ("item_id", 1)])
+        await db.contributions_gamification.create_index("is_approved", background=True)
+        
+        # Social features indexes
+        await db.user_follows.create_index([("follower_id", 1), ("following_id", 1)], unique=True)
+        await db.user_follows.create_index("follower_id", background=True)
+        await db.user_follows.create_index("following_id", background=True)
+        
+        logger.info("✅ Database indexes ensured for optimal performance")
+        
+    except Exception as e:
+        logger.warning(f"Could not create some database indexes: {str(e)}")
+
+# Call index creation on startup
+asyncio.create_task(ensure_database_indexes())
+
+# ================================
+# ORIGINAL FILE SERVING (keeping for backward compatibility)
 # ================================
 
 @app.get("/api/uploads/{file_path:path}")
