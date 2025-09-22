@@ -35,6 +35,9 @@ import aiohttp
 import json
 import aiofiles
 import shutil
+import mimetypes
+from PIL import Image as PILImage
+import io
 from PIL import Image
 
 # Import new simplified models
