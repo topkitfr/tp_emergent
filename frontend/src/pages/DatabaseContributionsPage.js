@@ -19,8 +19,15 @@ const DatabaseContributionsPage = ({
   onDataUpdate, 
   searchQuery 
 }) => {
-  // Main tab state (Database vs Contributions)
+  // Main tab state (Database vs Contributions) - default to database for non-logged users
   const [mainTab, setMainTab] = useState('database');
+  
+  // Redirect non-logged users away from contributions tab
+  useEffect(() => {
+    if (!user && mainTab === 'contributions') {
+      setMainTab('database');
+    }
+  }, [user, mainTab]);
   
   // Database tab state
   const [databaseActiveTab, setDatabaseActiveTab] = useState('teams');
