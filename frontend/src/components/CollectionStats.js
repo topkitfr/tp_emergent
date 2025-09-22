@@ -137,10 +137,10 @@ const CollectionStats = ({ user, targetUserId, API }) => {
           </div>
         </div>
         <div className="text-sm font-medium text-gray-800 mb-1">
-          {stats.rarity_score.level}
+          {stats.rarity_score?.level || 'Unknown Level'}
         </div>
         <div className="text-sm text-gray-600 mb-3">
-          {stats.rarity_score.description}
+          {stats.rarity_score?.description || 'No description available'}
         </div>
         
         {/* Rarity Breakdown */}
