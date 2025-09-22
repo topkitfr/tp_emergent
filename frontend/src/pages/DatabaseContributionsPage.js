@@ -311,10 +311,70 @@ const DatabaseContributionsPage = ({
           </div>
         </div>
       );
+    } else {
+      // List view
+      return (
+        <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-900">{contribution.title}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[contribution.status] || statusColors.draft}`}>
+                      {formatStatus(contribution.status)}
+                    </span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                      {formatEntityType(contribution.entity_type)}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    {getContributionPreview(contribution)}
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                    <span>Ref: {contribution.topkit_reference}</span>
+                    <span>Created: {new Date(contribution.created_at).toLocaleDateString()}</span>
+                    {contribution.images_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <ImageIcon className="w-3 h-3" />
+                        {contribution.images_count} image{contribution.images_count !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Voting Section - Right side for list view */}
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                onClick={() => handleVote(contribution.id, 'upvote')}
+                disabled={votingStates[contribution.id]}
+                className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-green-50 text-green-600"
+              >
+                <ThumbsUp className="w-4 h-4" />
+                <span>{contribution.upvotes || 0}</span>
+              </button>
+              <button
+                onClick={() => handleVote(contribution.id, 'downvote')}
+                disabled={votingStates[contribution.id]}
+                className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-red-50 text-red-600"
+              >
+                <ThumbsDown className="w-4 h-4" />
+                <span>{contribution.downvotes || 0}</span>
+              </button>
+              <button
+                onClick={() => window.open(`/contributions-v2/${contribution.id}`, '_blank')}
+                className="flex items-center gap-1 px-2 py-1 rounded text-sm hover:bg-blue-50 text-blue-600"
+              >
+                <Eye className="w-4 h-4" />
+                View
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
-
-    // Add list view if needed
-    return renderContributionCard(contribution);
   };
 
   return (
