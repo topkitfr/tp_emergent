@@ -40,7 +40,8 @@ class TopKitMasterKitTesting:
         self.form_data = {
             'clubs': [],
             'brands': [],
-            'players': []
+            'players': [],
+            'competitions': []
         }
         
     def log_test(self, test_name, success, message, details=None):
