@@ -26,9 +26,8 @@ const CollaborativeHeader = ({
   const navigationItems = [
     { id: 'home', label: 'Home', icon: '🏠', requiresAuth: false },
     { id: 'kit-area', label: 'Kit Area', icon: '👕', requiresAuth: false },
-    { id: 'catalogue', label: 'Database', icon: '📚', requiresAuth: false },
-    { id: 'leaderboard', label: 'Le Classement', icon: '🏆', requiresAuth: false },
-    { id: 'contributions-v2', label: 'Contributions', icon: '🎯', requiresAuth: true }
+    { id: 'database-contributions', label: 'Database & Contributions', icon: '🔍', requiresAuth: false },
+    { id: 'leaderboard', label: 'Le Classement', icon: '🏆', requiresAuth: false }
   ];
 
   // Filter navigation items based on authentication
