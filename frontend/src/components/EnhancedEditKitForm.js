@@ -75,11 +75,8 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
   const validateForm = () => {
     const newErrors = {};
     
-    // Validate minimum photo requirement
-    if (fileUploads.photos.length < 3) {
-      newErrors.photos = 'Minimum 3 photos required (front, back, details)';
-    }
-
+    // Note: Photos are optional, no validation required
+    
     // Validate required conditional fields
     if ((formData.origin_type === 'match_issued' || formData.origin_type === 'match_worn') && !formData.competition) {
       newErrors.competition = 'Competition is required for match-issued or match-worn kits';
