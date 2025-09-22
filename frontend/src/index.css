@@ -5,6 +5,9 @@
 /* Import custom fonts */
 @import url('./styles/fonts.css');
 
+/* Import mobile responsive styles */
+@import url('./styles/mobile-responsive.css');
+
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
