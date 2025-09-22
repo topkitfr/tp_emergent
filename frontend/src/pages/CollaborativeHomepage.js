@@ -389,15 +389,13 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                         New {entityType} documented
                         {contrib.user && (
                           <span> by{' '}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUserClick(contrib.user.id);
-                              }}
+                            <ClickableUsername
+                              userId={contrib.user.id}
+                              username={contrib.user.name}
+                              currentUser={user}
+                              setShowAuthModal={setShowAuthModal}
                               className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                            >
-                              {contrib.user.name}
-                            </button>
+                            />
                           </span>
                         )}
                       </p>
