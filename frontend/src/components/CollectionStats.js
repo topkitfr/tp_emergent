@@ -132,8 +132,8 @@ const CollectionStats = ({ user, targetUserId, API }) => {
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-semibold text-gray-900">Rarity Score</h4>
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${getRarityColor(stats.rarity_score.score)}`}>
-            {stats.rarity_score.score}%
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${getRarityColor(stats.rarity_score?.score || 0)}`}>
+            {stats.rarity_score?.score || 0}%
           </div>
         </div>
         <div className="text-sm font-medium text-gray-800 mb-1">
