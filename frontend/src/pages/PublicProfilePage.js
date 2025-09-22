@@ -110,7 +110,6 @@ const PublicProfilePage = ({ user, API }) => {
     new Date(profileData.created_at).toLocaleDateString() : 'Unknown';
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '👤' },
     { id: 'social', label: 'Social', icon: '👥' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'activity', label: 'Activity', icon: '📝' }
