@@ -248,9 +248,22 @@ const UnifiedFieldRenderer = ({
             required={field.required}
           >
             <option value="">Select {field.label}</option>
-            {field.options?.map(option => (
-              <option key={option} value={option.toLowerCase()}>{option}</option>
-            ))}
+            {field.options?.map(option => {
+              // Handle both simple strings and complex objects
+              if (typeof option === 'object' && option.value && option.label) {
+                return (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                );
+              } else {
+                return (
+                  <option key={option} value={option.toLowerCase()}>
+                    {option}
+                  </option>
+                );
+              }
+            })}
           </select>
         );
 
