@@ -263,6 +263,69 @@ const PublicProfilePage = ({ user, API }) => {
             API={API} 
           />
 
+          {/* Tabs */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="border-b border-gray-200">
+              <div className="flex space-x-0">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                      activeTab === tab.id
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="mr-2">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Overview</h3>
+                    <p className="text-gray-600">Basic profile information and statistics</p>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'social' && (
+                <div className="space-y-6">
+                  <SocialFeatures 
+                    user={user} 
+                    targetUserId={profileData.id} 
+                    API={API} 
+                  />
+                </div>
+              )}
+              
+              {activeTab === 'analytics' && (
+                <div className="space-y-6">
+                  <CollectionStats 
+                    user={user} 
+                    targetUserId={profileData.id} 
+                    API={API} 
+                  />
+                </div>
+              )}
+              
+              {activeTab === 'activity' && (
+                <div className="space-y-6">
+                  <UserActivityFeed 
+                    user={user} 
+                    targetUserId={profileData.id} 
+                    API={API} 
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Note about limited profile access */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start">
