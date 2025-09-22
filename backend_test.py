@@ -248,7 +248,8 @@ class TopKitMasterKitTesting:
         except Exception as e:
             self.log_test("Form Data Competitions Endpoint", False, f"Exception: {str(e)}")
             return False
-        """Test GET /api/form-data/players endpoint with influence_coefficient field"""
+    
+    def test_form_data_players_endpoint(self):
         try:
             print(f"\n⚽ TESTING FORM DATA PLAYERS ENDPOINT")
             print("=" * 60)
