@@ -594,19 +594,20 @@ const CollaborativeProfilePage = ({ user, API }) => {
             {/* Tabs Navigation */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="border-b border-gray-200">
-                <div className="flex space-x-0">
+                <div className="flex space-x-0 overflow-x-auto profile-tabs">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                      className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-all profile-tab whitespace-nowrap ${
                         activeTab === tab.id
                           ? 'border-blue-600 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
-                      <span className="mr-2">{tab.icon}</span>
-                      {tab.label}
+                      <span className="mr-1 sm:mr-2">{tab.icon}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                     </button>
                   ))}
                 </div>
