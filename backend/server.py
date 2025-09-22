@@ -3632,6 +3632,95 @@ async def get_recent_contributions(limit: int = Query(10, le=20)):
         logger.error(f"Error fetching recent contributions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/users/{user_id}/profile")
+async def update_user_profile(user_id: str, profile_data: dict, current_user: dict = Depends(get_current_user)):
+    """Update user profile"""
+    try:
+        # Check if user is updating their own profile or is admin
+        if current_user["id"] != user_id and current_user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized to update this profile")
+        
+        # Validate and sanitize profile data
+        allowed_fields = [
+            'name', 'bio', 'favorite_club', 'instagram_username', 
+            'twitter_username', 'website', 'profile_private', 'is_public_profile'
+        ]
+        
+        update_data = {}
+        for field in allowed_fields:
+            if field in profile_data:
+                value = profile_data[field]
+                if field in ['instagram_username', 'twitter_username'] and value:
+                    # Remove @ if present
+                    value = value.lstrip('@')
+                update_data[field] = value
+        
+        # Update user in database
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get updated user data
+        updated_user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="User not found after update")
+        
+        return {
+            "message": "Profile updated successfully",
+            "user": updated_user
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/recent-collection")
+async def get_user_recent_collection(
+    user_id: str, 
+    current_user: dict = Depends(get_current_user),
+    limit: int = Query(5, ge=1, le=20)
+):
+    """Get user's recent collection items"""
+    try:
+        # Get recent collection items
+        cursor = db.my_collection.find({
+            "user_id": user_id
+        }).sort("created_at", -1).limit(limit)
+        
+        collection_items = await cursor.to_list(length=None)
+        recent_items = []
+        
+        for item in collection_items:
+            # Get master kit details
+            master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
+            if master_kit:
+                recent_items.append({
+                    "collection_id": item["id"],
+                    "master_kit_id": item["master_kit_id"],
+                    "collection_type": item.get("collection_type", "owned"),
+                    "created_at": item["created_at"],
+                    "master_kit": {
+                        "id": master_kit["id"],
+                        "club": master_kit.get("club", "Unknown"),
+                        "season": master_kit.get("season", "Unknown"),
+                        "kit_type": master_kit.get("kit_type", "home"),
+                        "image_url": master_kit.get("image_url"),
+                        "brand": master_kit.get("brand", "Unknown")
+                    }
+                })
+        
+        return recent_items
+        
+    except Exception as e:
+        logger.error(f"Error getting recent collection: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/users/{user_id}/public-profile")
 async def get_user_public_profile(
     user_id: str, 
