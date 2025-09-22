@@ -295,11 +295,11 @@ class TopKitMasterKitTesting:
             
             # Create valid Master Kit data
             master_kit_data = {
-                "kit_type": "home",
+                "kit_type": "authentic",  # Should be 'authentic' or 'replica'
                 "club_id": test_club['id'],
                 "brand_id": test_brand['id'],
                 "season": "2024/2025",
-                "kit_style": "classic",
+                "kit_style": "home",  # Should be 'home', 'away', 'third', 'fourth', 'gk' or 'special'
                 "gender": "man",
                 "primary_color": "Red",
                 "secondary_color": "White"
