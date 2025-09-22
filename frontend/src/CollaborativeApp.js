@@ -223,6 +223,7 @@ const AppContent = () => {
       'home': '/',
       'explore': '/explore',
       'catalogue': '/catalogue',
+      'database-contributions': '/database-contributions',
       'kit-area': '/kit-area',
       'my-collection': '/my-collection',
       'contributions-v2': '/contributions-v2',
