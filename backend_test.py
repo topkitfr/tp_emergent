@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - PROFILE PICTURE FUNCTIONALITY TESTING
+TopKit Backend Testing Suite - MASTER KIT CREATION FUNCTIONALITY TESTING
 
-Testing the profile picture upload and delete functionality:
-1. **Profile Picture Upload Test** - POST /api/users/profile/picture endpoint
-2. **Profile Picture Delete Test** - DELETE /api/users/profile/picture endpoint
+Testing the new Master Kit creation functionality and form data endpoints:
+1. **Master Kit Creation Test** - POST /api/master-kits endpoint
+2. **Form Data Endpoints Test** - GET /api/form-data/clubs, brands, players
+3. **Validation Tests** - Missing fields and invalid season format validation
 
 CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
-Verifying file upload to uploads/profile_pictures directory and proper cleanup.
+Verifying Master Kit form backend functionality according to new specifications.
 """
 
 import requests
