@@ -169,10 +169,11 @@ metadata:
 
 test_plan:
   current_focus: 
+    - "Player Type Feature Comprehensive Testing - COMPLETED"
     - "Enhanced Edit Kit Form Testing - New Comprehensive Form Sections Verification"
   stuck_tasks: []
   test_all: false
-  test_priority: "critical_first"
+  test_priority: "high_first"
 
 backend:
   - task: "Player Type Feature Comprehensive Testing"
