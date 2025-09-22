@@ -353,7 +353,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
               {/* Photos */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Photos (minimum 3: front, back, details)
+                  Photos (Optional - Recommended: front, back, details)
                 </label>
                 <input
                   type="file"
@@ -383,7 +383,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   </div>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  {fileUploads.photos.length} photos uploaded (minimum 3 required)
+                  {fileUploads.photos.length} photos uploaded (photos are optional but recommended for better documentation)
                 </p>
                 {errors.photos && (
                   <p className="text-red-500 text-sm mt-1 flex items-center">
