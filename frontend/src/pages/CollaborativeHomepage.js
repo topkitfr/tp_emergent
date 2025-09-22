@@ -55,10 +55,8 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         action: 'viewProfile',
         userId: userId
       }));
-      // Trigger login modal via parent component
-      if (typeof onViewChange === 'function') {
-        // For now, navigate to home and let user manually login
-        navigate('/');
+      if (setShowAuthModal) {
+        setShowAuthModal(true);
       }
     }
   };
