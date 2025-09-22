@@ -29,6 +29,7 @@ import KitAreaPage from './pages/KitAreaPage';
 import AllVersionsPage from './pages/AllVersionsPage';
 import VersionDetailPage from './pages/VersionDetailPage';
 import AuthModal from './AuthModal';
+import XPNotification from './components/XPNotification';
 
 // Get the backend URL from environment variables
 const API = process.env.REACT_APP_BACKEND_URL;
