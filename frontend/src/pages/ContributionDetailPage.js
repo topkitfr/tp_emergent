@@ -705,7 +705,13 @@ const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack, set
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {contribution.user_name}
+                      <ClickableUsername
+                        userId={contribution.created_by}
+                        username={contribution.user_name}
+                        currentUser={user}
+                        setShowAuthModal={setShowAuthModal}
+                        className="text-gray-900 hover:text-blue-600 hover:underline transition-colors"
+                      />
                     </h3>
                     <div className="flex items-center space-x-3">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium bg-${contributorStats.levelColor}-100 text-${contributorStats.levelColor}-800`}>
