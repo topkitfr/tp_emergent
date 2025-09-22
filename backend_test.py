@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - NEW HOMEPAGE ENDPOINTS TESTING
+TopKit Backend Testing Suite - ENHANCED PROFILE FUNCTIONALITY TESTING
 
-Testing the new homepage endpoints implemented:
-1. /api/homepage/expensive-kits - Top 5 most expensive kits from collections
-2. /api/homepage/recent-master-kits - Recently uploaded master kits
-3. /api/homepage/recent-contributions - Recently approved contributions
-4. /api/users/{user_id}/public-profile - Public profile data with authentication
+Testing the new enhanced profile functionality backend endpoints:
+1. Profile completeness endpoint - GET /api/users/{user_id}/profile-completeness
+2. Follow/unfollow system:
+   - POST /api/users/{user_id}/follow
+   - DELETE /api/users/{user_id}/follow  
+   - GET /api/users/{user_id}/follow-status
+3. Social endpoints:
+   - GET /api/users/{user_id}/followers
+   - GET /api/users/{user_id}/following
+4. Activity feed - GET /api/users/{user_id}/activity-feed
+5. Collection statistics - GET /api/users/{user_id}/collection-stats
+6. Performance optimized endpoints:
+   - GET /api/master-kits-paginated
+   - GET /api/leaderboard-paginated
+   - GET /api/uploads/{file_path} with optimization parameters (w, h, q)
 
-CRITICAL: Testing all new homepage endpoints with current database data.
+CRITICAL: Testing all new enhanced profile endpoints with proper authentication.
 """
 
 import requests
