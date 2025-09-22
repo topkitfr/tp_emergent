@@ -241,8 +241,13 @@ class TopKitPlayerTypeFeatureTesting:
             
             # Test player creation through contribution system
             response = self.session.post(
-                f"{BACKEND_URL}/contributions/players",
-                json=test_player_data,
+                f"{BACKEND_URL}/contributions-v2/",
+                json={
+                    "entity_type": "player",
+                    "title": f"Test Player Contribution - {test_player_data['name']}",
+                    "description": "Testing player contribution creation with player_type",
+                    "data": test_player_data
+                },
                 timeout=15
             )
             
