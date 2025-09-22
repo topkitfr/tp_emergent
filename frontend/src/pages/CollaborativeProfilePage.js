@@ -615,27 +615,44 @@ const CollaborativeProfilePage = ({ user, API }) => {
               <div className="p-6">
                 {activeTab === 'overview' && (
                   <div className="space-y-6">
+                    <ProfileCompleteness 
+                      user={user} 
+                      API={API} 
+                      onFieldClick={handleSettingsFieldFocus} 
+                    />
                     <GamificationProfile user={user} API={API} />
                     <ContributionQuality />
                     <BadgesAchievements />
                   </div>
                 )}
                 
-                {activeTab === 'contributions' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">My Contributions</h3>
-                    <p className="text-gray-600">
-                      This section will display the detailed history of your contributions
-                    </p>
+                {activeTab === 'social' && (
+                  <div className="space-y-6">
+                    <SocialFeatures 
+                      user={user} 
+                      targetUserId={user.id} 
+                      API={API} 
+                    />
+                  </div>
+                )}
+                
+                {activeTab === 'analytics' && (
+                  <div className="space-y-6">
+                    <CollectionStats 
+                      user={user} 
+                      targetUserId={user.id} 
+                      API={API} 
+                    />
                   </div>
                 )}
                 
                 {activeTab === 'activity' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Recent Activity</h3>
-                    <p className="text-gray-600">
-                      This section will display your recent activity on the platform
-                    </p>
+                  <div className="space-y-6">
+                    <UserActivityFeed 
+                      user={user} 
+                      targetUserId={user.id} 
+                      API={API} 
+                    />
                   </div>
                 )}
                 
