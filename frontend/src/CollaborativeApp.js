@@ -57,6 +57,7 @@ const AppContent = () => {
     if (path === '/') return 'home';
     if (path === '/explore') return 'explore';
     if (path === '/catalogue') return 'catalogue';
+    if (path === '/database-contributions') return 'database-contributions';
     if (path === '/kit-area') return 'kit-area';
     if (path === '/my-collection') return 'my-collection';
     if (path === '/contributions-v2') return 'contributions-v2';
