@@ -393,13 +393,14 @@ class TopKitEnhancedProfileTesting:
                     if len(data) > 0:
                         # Check first activity item structure
                         first_item = data[0]
-                        required_fields = ['activity_type', 'created_at']
+                        required_fields = ['type', 'action', 'timestamp']
                         missing_fields = [field for field in required_fields if field not in first_item]
                         
                         if not missing_fields:
                             print(f"      ✅ Response structure valid")
-                            print(f"      ✅ Latest activity: {first_item.get('activity_type', 'Unknown')}")
-                            print(f"         Created: {first_item.get('created_at', 'Unknown')}")
+                            print(f"      ✅ Latest activity: {first_item.get('action', 'Unknown')}")
+                            print(f"         Type: {first_item.get('type', 'Unknown')}")
+                            print(f"         Timestamp: {first_item.get('timestamp', 'Unknown')}")
                             
                             self.log_test("Activity Feed Endpoint", True, 
                                          f"✅ Endpoint working correctly - {len(data)} activity items returned")
