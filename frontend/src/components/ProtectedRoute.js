@@ -1,18 +1,41 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ user, setShowAuthModal, children }) => {
   const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      // Redirect to home and show login modal
-      navigate('/');
-      if (setShowAuthModal) {
-        setShowAuthModal(true);
+    // Add a small delay to allow for authentication check to complete
+    const timer = setTimeout(() => {
+      setIsChecking(false);
+      
+      if (!user) {
+        console.log('🔒 ProtectedRoute: No user found, redirecting to home');
+        // Redirect to home and show login modal
+        navigate('/');
+        if (setShowAuthModal) {
+          setShowAuthModal(true);
+        }
+      } else {
+        console.log('✅ ProtectedRoute: User authenticated:', user.email);
       }
-    }
+    }, 500); // Small delay to allow authentication state to settle
+
+    return () => clearTimeout(timer);
   }, [user, navigate, setShowAuthModal]);
+
+  // Show loading state while checking authentication
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If user is not logged in, show login required message
   if (!user) {
