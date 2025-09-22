@@ -1453,6 +1453,457 @@ async def serve_legacy_image(image_id: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 # ================================
+# ENHANCED PROFILE FUNCTIONALITY
+# ================================
+
+@app.get("/api/users/{user_id}/profile-completeness")
+async def get_profile_completeness(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get profile completeness percentage and missing fields"""
+    try:
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Profile completeness criteria
+        required_fields = ['name', 'email', 'bio', 'favorite_club', 'profile_picture_url']
+        optional_fields = ['instagram_username', 'twitter_username', 'website']
+        
+        completed_required = sum(1 for field in required_fields if user.get(field))
+        completed_optional = sum(1 for field in optional_fields if user.get(field))
+        
+        total_fields = len(required_fields) + len(optional_fields)
+        completed_fields = completed_required + completed_optional
+        
+        completeness_percentage = int((completed_fields / total_fields) * 100)
+        
+        missing_required = [field for field in required_fields if not user.get(field)]
+        missing_optional = [field for field in optional_fields if not user.get(field)]
+        
+        return {
+            "completeness_percentage": completeness_percentage,
+            "completed_required": completed_required,
+            "total_required": len(required_fields),
+            "completed_optional": completed_optional,
+            "total_optional": len(optional_fields),
+            "missing_required": missing_required,
+            "missing_optional": missing_optional,
+            "suggestions": _get_completion_suggestions(missing_required, missing_optional)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting profile completeness: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def _get_completion_suggestions(missing_required: List[str], missing_optional: List[str]) -> List[str]:
+    """Generate helpful suggestions for profile completion"""
+    suggestions = []
+    
+    if 'bio' in missing_required:
+        suggestions.append("Add a bio to tell others about your passion for football kits")
+    if 'favorite_club' in missing_required:
+        suggestions.append("Set your favorite club to personalize your experience")
+    if 'profile_picture_url' in missing_required:
+        suggestions.append("Upload a profile picture to make your profile more personal")
+    if 'instagram_username' in missing_optional:
+        suggestions.append("Connect your Instagram to showcase your kit collection")
+    if 'website' in missing_optional:
+        suggestions.append("Add your website or blog to share your kit expertise")
+        
+    return suggestions
+
+@app.post("/api/users/{user_id}/follow")
+async def follow_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Follow a user"""
+    try:
+        if user_id == current_user["id"]:
+            raise HTTPException(status_code=400, detail="Cannot follow yourself")
+            
+        # Check if target user exists
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if already following
+        existing_follow = await db.user_follows.find_one({
+            "follower_id": current_user["id"],
+            "following_id": user_id
+        })
+        
+        if existing_follow:
+            raise HTTPException(status_code=400, detail="Already following this user")
+        
+        # Create follow relationship
+        follow_data = {
+            "id": str(uuid.uuid4()),
+            "follower_id": current_user["id"],
+            "following_id": user_id,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await db.user_follows.insert_one(follow_data)
+        
+        # Update follow counts
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"following_count": 1}}
+        )
+        await db.users.update_one(
+            {"id": user_id},
+            {"$inc": {"followers_count": 1}}
+        )
+        
+        return {"message": "Successfully followed user", "following": True}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error following user: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/users/{user_id}/follow")
+async def unfollow_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Unfollow a user"""
+    try:
+        # Remove follow relationship
+        result = await db.user_follows.delete_one({
+            "follower_id": current_user["id"],
+            "following_id": user_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=400, detail="Not following this user")
+        
+        # Update follow counts
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"following_count": -1}}
+        )
+        await db.users.update_one(
+            {"id": user_id},
+            {"$inc": {"followers_count": -1}}
+        )
+        
+        return {"message": "Successfully unfollowed user", "following": False}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unfollowing user: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/followers")
+async def get_user_followers(
+    user_id: str, 
+    current_user: dict = Depends(get_current_user),
+    limit: int = Query(20, le=50),
+    skip: int = Query(0, ge=0)
+):
+    """Get list of user's followers"""
+    try:
+        # Get followers
+        cursor = db.user_follows.find({"following_id": user_id}).skip(skip).limit(limit)
+        follows = await cursor.to_list(length=None)
+        
+        followers = []
+        for follow in follows:
+            user = await db.users.find_one({"id": follow["follower_id"]})
+            if user:
+                # Check if current user is following this follower
+                is_following = await db.user_follows.find_one({
+                    "follower_id": current_user["id"],
+                    "following_id": user["id"]
+                }) is not None
+                
+                followers.append({
+                    "id": user["id"],
+                    "name": user["name"],
+                    "profile_picture_url": user.get("profile_picture_url"),
+                    "xp": user.get("xp", 0),
+                    "level": user.get("level", "Remplaçant"),
+                    "is_following": is_following,
+                    "followed_at": follow["created_at"]
+                })
+        
+        return followers
+        
+    except Exception as e:
+        logger.error(f"Error getting followers: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/following")
+async def get_user_following(
+    user_id: str, 
+    current_user: dict = Depends(get_current_user),
+    limit: int = Query(20, le=50),
+    skip: int = Query(0, ge=0)
+):
+    """Get list of users that this user is following"""
+    try:
+        # Get following
+        cursor = db.user_follows.find({"follower_id": user_id}).skip(skip).limit(limit)
+        follows = await cursor.to_list(length=None)
+        
+        following = []
+        for follow in follows:
+            user = await db.users.find_one({"id": follow["following_id"]})
+            if user:
+                # Check if current user is following this user
+                is_following = await db.user_follows.find_one({
+                    "follower_id": current_user["id"],
+                    "following_id": user["id"]
+                }) is not None
+                
+                following.append({
+                    "id": user["id"],
+                    "name": user["name"],
+                    "profile_picture_url": user.get("profile_picture_url"),
+                    "xp": user.get("xp", 0),
+                    "level": user.get("level", "Remplaçant"),
+                    "is_following": is_following,
+                    "followed_at": follow["created_at"]
+                })
+        
+        return following
+        
+    except Exception as e:
+        logger.error(f"Error getting following: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/follow-status")
+async def get_follow_status(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Check if current user is following the specified user"""
+    try:
+        if user_id == current_user["id"]:
+            return {"is_following": False, "can_follow": False, "message": "Cannot follow yourself"}
+        
+        follow_record = await db.user_follows.find_one({
+            "follower_id": current_user["id"],
+            "following_id": user_id
+        })
+        
+        return {
+            "is_following": follow_record is not None,
+            "can_follow": True,
+            "followed_at": follow_record["created_at"] if follow_record else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error checking follow status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/activity-feed")
+async def get_user_activity_feed(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+    limit: int = Query(20, le=50),
+    skip: int = Query(0, ge=0)
+):
+    """Get user's recent activity feed"""
+    try:
+        activities = []
+        
+        # Get recent contributions
+        contributions_cursor = db.contributions_gamification.find({
+            "user_id": user_id,
+            "is_approved": True
+        }).sort("approved_at", -1).limit(limit)
+        
+        contributions = await contributions_cursor.to_list(length=None)
+        
+        for contrib in contributions:
+            activity = {
+                "id": contrib["id"],
+                "type": "contribution",
+                "action": f"contributed a new {contrib['item_type']}",
+                "item_type": contrib["item_type"],
+                "item_id": contrib["item_id"],
+                "xp_awarded": contrib.get("xp_awarded", 0),
+                "timestamp": contrib.get("approved_at", contrib["created_at"])
+            }
+            
+            # Get item details
+            if contrib["item_type"] == "team":
+                item = await db.teams.find_one({"id": contrib["item_id"]})
+                activity["item_name"] = item.get("name") if item else "Unknown Team"
+            elif contrib["item_type"] == "brand":
+                item = await db.brands.find_one({"id": contrib["item_id"]})
+                activity["item_name"] = item.get("name") if item else "Unknown Brand"
+            elif contrib["item_type"] == "player":
+                item = await db.players.find_one({"id": contrib["item_id"]})
+                activity["item_name"] = item.get("name") if item else "Unknown Player"
+            elif contrib["item_type"] == "competition":
+                item = await db.competitions.find_one({"id": contrib["item_id"]})
+                activity["item_name"] = item.get("competition_name") if item else "Unknown Competition"
+            elif contrib["item_type"] == "jersey":
+                item = await db.master_kits.find_one({"id": contrib["item_id"]})
+                activity["item_name"] = f"{item.get('club')} {item.get('season')}" if item else "Unknown Kit"
+            
+            activities.append(activity)
+        
+        # Get recent collection additions (limit to recent items)
+        collection_cursor = db.my_collection.find({
+            "user_id": user_id
+        }).sort("created_at", -1).limit(10)
+        
+        collection_items = await collection_cursor.to_list(length=None)
+        
+        for item in collection_items:
+            master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
+            if master_kit:
+                activities.append({
+                    "id": f"collection_{item['id']}",
+                    "type": "collection",
+                    "action": f"added to {item.get('collection_type', 'owned')} collection",
+                    "item_name": f"{master_kit.get('club')} {master_kit.get('season')} {master_kit.get('kit_type')}",
+                    "timestamp": item["created_at"]
+                })
+        
+        # Sort all activities by timestamp
+        activities.sort(key=lambda x: x["timestamp"], reverse=True)
+        
+        return activities[:limit]
+        
+    except Exception as e:
+        logger.error(f"Error getting activity feed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/collection-stats")
+async def get_user_collection_stats(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get detailed collection statistics for a user"""
+    try:
+        # Basic collection counts
+        owned_count = await db.my_collection.count_documents({
+            "user_id": user_id,
+            "collection_type": "owned"
+        })
+        
+        wanted_count = await db.my_collection.count_documents({
+            "user_id": user_id,
+            "collection_type": "wanted"
+        })
+        
+        # Get owned collection for detailed stats
+        owned_cursor = db.my_collection.find({
+            "user_id": user_id,
+            "collection_type": "owned"
+        })
+        owned_items = await owned_cursor.to_list(length=None)
+        
+        # Calculate collection value and statistics
+        total_estimated_value = 0
+        total_purchase_value = 0
+        signed_kits = 0
+        vintage_kits = 0  # Kits older than 10 years
+        rare_kits = 0  # Kits with less than 10 collectors
+        
+        kit_types = {}
+        clubs = {}
+        brands = {}
+        current_year = datetime.now().year
+        
+        for item in owned_items:
+            master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
+            if master_kit:
+                # Calculate estimated value using the same function as collection items
+                estimated_price = await calculate_estimated_price_internal(item, master_kit)
+                total_estimated_value += estimated_price
+                
+                if item.get("purchase_price"):
+                    total_purchase_value += item["purchase_price"]
+                
+                if item.get("is_signed"):
+                    signed_kits += 1
+                
+                # Check if vintage (assuming season format YYYY-YYYY)
+                season = master_kit.get("season", "")
+                try:
+                    season_year = int(season.split("-")[0])
+                    if current_year - season_year >= 10:
+                        vintage_kits += 1
+                except:
+                    pass
+                
+                # Check if rare
+                if master_kit.get("total_collectors", 0) < 10:
+                    rare_kits += 1
+                
+                # Count by categories
+                kit_type = master_kit.get("kit_type", "unknown")
+                kit_types[kit_type] = kit_types.get(kit_type, 0) + 1
+                
+                club = master_kit.get("club", "unknown")
+                clubs[club] = clubs.get(club, 0) + 1
+                
+                brand = master_kit.get("brand", "unknown")
+                brands[brand] = brands.get(brand, 0) + 1
+        
+        # Get top categories
+        top_kit_types = sorted(kit_types.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_clubs = sorted(clubs.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_brands = sorted(brands.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        return {
+            "owned_count": owned_count,
+            "wanted_count": wanted_count,
+            "total_estimated_value": round(total_estimated_value, 2),
+            "total_purchase_value": round(total_purchase_value, 2),
+            "value_gain": round(total_estimated_value - total_purchase_value, 2) if total_purchase_value > 0 else 0,
+            "signed_kits": signed_kits,
+            "vintage_kits": vintage_kits,
+            "rare_kits": rare_kits,
+            "categories": {
+                "kit_types": dict(top_kit_types),
+                "clubs": dict(top_clubs),
+                "brands": dict(top_brands)
+            },
+            "rarity_score": calculate_rarity_score(rare_kits, vintage_kits, signed_kits, owned_count)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting collection stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def calculate_rarity_score(rare_kits: int, vintage_kits: int, signed_kits: int, total_kits: int) -> dict:
+    """Calculate a rarity score for the collection"""
+    if total_kits == 0:
+        return {"score": 0, "level": "Beginner", "description": "Start collecting to build your rarity score!"}
+    
+    # Calculate percentages
+    rare_percentage = (rare_kits / total_kits) * 100
+    vintage_percentage = (vintage_kits / total_kits) * 100
+    signed_percentage = (signed_kits / total_kits) * 100
+    
+    # Weighted score calculation
+    score = (rare_percentage * 0.4) + (vintage_percentage * 0.3) + (signed_percentage * 0.3)
+    
+    if score >= 80:
+        level = "Legendary Collector"
+        description = "You have an exceptional collection of rare and unique kits!"
+    elif score >= 60:
+        level = "Expert Collector"
+        description = "Your collection shows serious dedication to rare finds!"
+    elif score >= 40:
+        level = "Advanced Collector"
+        description = "You're building an impressive collection of special items!"
+    elif score >= 20:
+        level = "Dedicated Collector"
+        description = "You're developing a good eye for quality pieces!"
+    else:
+        level = "Aspiring Collector"
+        description = "Keep collecting to increase your rarity score!"
+    
+    return {
+        "score": round(score, 1),
+        "level": level,
+        "description": description,
+        "breakdown": {
+            "rare_kits": f"{rare_percentage:.1f}%",
+            "vintage_kits": f"{vintage_percentage:.1f}%",
+            "signed_kits": f"{signed_percentage:.1f}%"
+        }
+    }
+
+# ================================
 # BASIC AUTH ENDPOINTS (placeholder)
 # ================================
 
