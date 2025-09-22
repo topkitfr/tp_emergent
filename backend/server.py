@@ -397,6 +397,7 @@ async def get_leaderboard(limit: int = Query(50, le=100)):
         for i, user in enumerate(users, 1):
             user_data = {
                 "rank": i,
+                "user_id": user.get("id"),  # Add user ID for profile links
                 "username": user.get("name", "Unknown"),
                 "xp": user.get("xp", 0),
                 "level": user.get("level", UserLevel.REMPLACANT),
