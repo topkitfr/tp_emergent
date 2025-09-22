@@ -643,6 +643,9 @@ class TopKitMasterKitTesting:
         brands_success = self.test_form_data_brands_endpoint()
         test_results.append(brands_success)
         
+        competitions_success = self.test_form_data_competitions_endpoint()
+        test_results.append(competitions_success)
+        
         players_success = self.test_form_data_players_endpoint()
         test_results.append(players_success)
         
