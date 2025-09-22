@@ -275,6 +275,7 @@ const AppContent = () => {
           <Route path="/" element={<CollaborativeHomepage {...commonProps} onViewChange={handleViewChange} />} />
           <Route path="/explore" element={<CollaborativeExplorePage {...commonProps} />} />
           <Route path="/catalogue" element={<CataloguePage {...commonProps} />} />
+          <Route path="/database-contributions" element={<DatabaseContributionsPage {...commonProps} />} />
           <Route path="/kit-area" element={<KitAreaPage {...commonProps} />} />
           <Route path="/my-collection" element={<MyCollectionPage {...commonProps} />} />
           <Route path="/contributions-v2" element={<ContributionsV2Page {...commonProps} />} />
