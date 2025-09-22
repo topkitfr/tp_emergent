@@ -195,33 +195,33 @@ const CollaborativeProfilePage = ({ user, API }) => {
   // Stats Cards Component
   const StatsCards = () => {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 stats-grid">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 text-center stats-card">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600 stat-value">
             {userStats?.collections_count || 0}
           </div>
-          <div className="text-sm text-gray-600">Collections</div>
+          <div className="text-xs sm:text-sm text-gray-600 stat-label">Collections</div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 text-center stats-card">
+          <div className="text-xl sm:text-2xl font-bold text-green-600 stat-value">
             {userStats?.contributions_count || 0}
           </div>
-          <div className="text-sm text-gray-600">Contributions</div>
+          <div className="text-xs sm:text-sm text-gray-600 stat-label">Contributions</div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 text-center stats-card">
+          <div className="text-xl sm:text-2xl font-bold text-purple-600 stat-value">
             {userStats?.votes_count || 0}
           </div>
-          <div className="text-sm text-gray-600">Votes Cast</div>
+          <div className="text-xs sm:text-sm text-gray-600 stat-label">Votes Cast</div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
-          <div className="text-2xl font-bold text-orange-600">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 text-center stats-card">
+          <div className="text-xl sm:text-2xl font-bold text-orange-600 stat-value">
             {userStats?.jerseys_added || 0}
           </div>
-          <div className="text-sm text-gray-600">Kits Created</div>
+          <div className="text-xs sm:text-sm text-gray-600 stat-label">Kits Created</div>
         </div>
       </div>
     );
