@@ -663,8 +663,8 @@ const CollaborativeProfilePage = ({ user, API }) => {
                     
                     <form onSubmit={handleSettingsUpdate} className="space-y-6">
                       {/* Basic Information */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 settings-form-grid">
+                        <div className="form-group">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Full Name
                           </label>
@@ -673,11 +673,11 @@ const CollaborativeProfilePage = ({ user, API }) => {
                             name="name"
                             value={settingsData.name}
                             onChange={(e) => setSettingsData(prev => ({...prev, name: e.target.value}))}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 form-input"
                           />
                         </div>
                         
-                        <div>
+                        <div className="form-group">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Email Address
                           </label>
@@ -686,7 +686,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
                             name="email"
                             value={settingsData.email}
                             onChange={(e) => setSettingsData(prev => ({...prev, email: e.target.value}))}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 form-input"
                           />
                         </div>
                       </div>
