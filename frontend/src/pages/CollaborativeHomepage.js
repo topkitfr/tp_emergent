@@ -54,9 +54,17 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         action: 'viewProfile',
         userId: userId
       }));
-      navigate('/'); // Or trigger login modal
+      // Trigger login modal via parent component
+      if (typeof onViewChange === 'function') {
+        // For now, navigate to home and let user manually login
+        navigate('/');
+      }
     }
   };
+
+  const recentTeams = teams?.slice().reverse().slice(0, 10) || []; // Show latest teams first (reverse order)
+  const recentBrands = brands?.slice(0, 4) || [];
+  const recentMasterJerseys = masterJerseys?.slice(0, 12) || [];
   
   // Statistics
   const stats = [
