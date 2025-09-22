@@ -815,6 +815,19 @@ async def get_brands_for_form():
         logger.error(f"Error fetching brands: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/form-data/players")
+async def get_form_players():
+    """Get all players for form dropdowns with influence coefficients"""
+    try:
+        players = await db.players.find(
+            {}, 
+            {"name": 1, "nationality": 1, "position": 1, "influence_coefficient": 1}
+        ).to_list(length=None)
+        return players
+    except Exception as e:
+        logger.error(f"Error fetching players: {str(e)}")
+        return []
+
 # ================================
 # MASTER KIT ENDPOINTS
 # ================================
