@@ -125,6 +125,19 @@ LEVEL_THRESHOLDS = {
 # Daily XP limit for anti-farming
 DAILY_XP_LIMIT = 100
 
+# Player Type Coefficients
+PLAYER_TYPE_COEFFICIENTS = {
+    PlayerType.SHOWDOWN_LEGEND: 3.00,
+    PlayerType.SUPERSTAR: 2.00,
+    PlayerType.STAR: 1.00,
+    PlayerType.GOOD_PLAYER: 0.50,
+    PlayerType.NONE: 0.00
+}
+
+def get_player_type_coefficient(player_type: PlayerType) -> float:
+    """Get coefficient for player type"""
+    return PLAYER_TYPE_COEFFICIENTS.get(player_type, 0.00)
+
 async def calculate_user_level(xp: int) -> UserLevel:
     """Calculate user level based on XP"""
     for level, thresholds in LEVEL_THRESHOLDS.items():
