@@ -567,6 +567,55 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "general") -> st
     # Return relative path for storage in database
     return f"uploads/{subfolder}/{unique_filename}"
 
+async def calculate_estimated_price_internal(collection_item: dict, master_kit: dict) -> float:
+    """Calculate estimated price for a collection item based on various factors"""
+    try:
+        # Base price calculation logic
+        base_price = 50.0  # Default base price
+        
+        # Factor in kit age (vintage kits are more valuable)
+        current_year = datetime.now().year
+        season = master_kit.get("season", "")
+        try:
+            season_year = int(season.split("-")[0])
+            age_factor = max(1.0, (current_year - season_year) * 0.1)
+            base_price *= age_factor
+        except:
+            pass
+        
+        # Factor in rarity (fewer collectors = higher price)
+        total_collectors = master_kit.get("total_collectors", 1)
+        rarity_factor = max(1.0, 100 / max(total_collectors, 1))
+        base_price *= min(rarity_factor, 5.0)  # Cap at 5x multiplier
+        
+        # Factor in condition
+        condition = collection_item.get("condition")
+        condition_multipliers = {
+            "mint": 1.5,
+            "excellent": 1.3,
+            "very_good": 1.1,
+            "good": 1.0,
+            "fair": 0.8,
+            "poor": 0.6
+        }
+        base_price *= condition_multipliers.get(condition, 1.0)
+        
+        # Factor in if it's signed
+        if collection_item.get("is_signed"):
+            base_price *= 2.0
+        
+        # Factor in size (popular sizes are more valuable)
+        size = collection_item.get("size", "")
+        popular_sizes = ["M", "L", "XL"]
+        if size in popular_sizes:
+            base_price *= 1.2
+        
+        return round(base_price, 2)
+        
+    except Exception as e:
+        logger.error(f"Error calculating estimated price: {str(e)}")
+        return 50.0  # Return default price on error
+
 async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fields: dict):
     """Trigger cascading updates for related entities when an entity is updated"""
     try:
