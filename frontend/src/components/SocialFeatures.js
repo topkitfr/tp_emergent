@@ -197,7 +197,7 @@ const SocialFeatures = ({ user, targetUserId, API }) => {
               <div className="flex-shrink-0">
                 {person.profile_picture_url ? (
                   <img
-                    src={`${API}/${person.profile_picture_url}`}
+                    src={`${API}/api/uploads/${person.profile_picture_url}`}
                     alt={person.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
