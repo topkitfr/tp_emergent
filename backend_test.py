@@ -197,7 +197,56 @@ class TopKitMasterKitTesting:
             self.log_test("Form Data Brands Endpoint", False, f"Exception: {str(e)}")
             return False
     
-    def test_form_data_players_endpoint(self):
+    def test_form_data_competitions_endpoint(self):
+        """Test GET /api/form-data/competitions endpoint"""
+        try:
+            print(f"\n🏆 TESTING FORM DATA COMPETITIONS ENDPOINT")
+            print("=" * 60)
+            print("Testing: GET /api/form-data/competitions - Verify competitions data returned")
+            
+            response = self.session.get(
+                f"{BACKEND_URL}/form-data/competitions",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                competitions_data = response.json()
+                print(f"      ✅ Competitions endpoint accessible")
+                print(f"         Found {len(competitions_data)} competitions")
+                
+                if len(competitions_data) > 0:
+                    # Store competitions data for Master Kit creation
+                    self.form_data['competitions'] = competitions_data
+                    
+                    # Verify data structure
+                    sample_competition = competitions_data[0]
+                    required_fields = ['id', 'name']
+                    
+                    if all(field in sample_competition for field in required_fields):
+                        print(f"      ✅ Competitions data structure correct (id, name fields present)")
+                        print(f"         Sample competition: {sample_competition.get('name')} (ID: {sample_competition.get('id')})")
+                        
+                        self.log_test("Form Data Competitions Endpoint", True, 
+                                     f"✅ Competitions endpoint working correctly - {len(competitions_data)} competitions returned with proper structure")
+                        return True
+                    else:
+                        self.log_test("Form Data Competitions Endpoint", False, 
+                                     "❌ Competitions data missing required fields (id, name)")
+                        return False
+                else:
+                    print(f"      ⚠️ No competitions data returned (may be expected)")
+                    self.log_test("Form Data Competitions Endpoint", True, 
+                                 "✅ Competitions endpoint accessible (no data returned)")
+                    return True
+                    
+            else:
+                self.log_test("Form Data Competitions Endpoint", False, 
+                             f"❌ Competitions endpoint failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Form Data Competitions Endpoint", False, f"Exception: {str(e)}")
+            return False
         """Test GET /api/form-data/players endpoint with influence_coefficient field"""
         try:
             print(f"\n⚽ TESTING FORM DATA PLAYERS ENDPOINT")
