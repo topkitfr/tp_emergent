@@ -89,7 +89,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{os.environ.get('FRONTEND_URL', 'https://xp-tracking.preview.emergentagent.com')}/anniversary-gift" 
+            <a href="{os.environ.get('FRONTEND_URL', 'https://user-connect-hub.preview.emergentagent.com')}/anniversary-gift" 
                style="background-color: #ff6b35; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">
                 🎁 Récupérer mon cadeau
             </a>
@@ -192,7 +192,7 @@ L'équipe {self.app_name}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{os.environ.get("FRONTEND_URL", "https://xp-tracking.preview.emergentagent.com")}}" 
+            <a href="{{os.environ.get("FRONTEND_URL", "https://user-connect-hub.preview.emergentagent.com")}}" 
                style="background-color: #1a56db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 🔍 Découvrir les nouveautés
             </a>
@@ -203,7 +203,7 @@ L'équipe {self.app_name}
         <div style="text-align: center; color: #666; font-size: 14px;">
             <p>À la semaine prochaine !<br><strong>L'équipe {self.app_name}</strong></p>
             <p style="font-size: 12px;">© 2024 {self.app_name}. Tous droits réservés.</p>
-            <p style="font-size: 11px;"><a href="{{os.environ.get("FRONTEND_URL", "https://xp-tracking.preview.emergentagent.com")}}/unsubscribe" style="color: #999;">Se désinscrire</a></p>
+            <p style="font-size: 11px;"><a href="{{os.environ.get("FRONTEND_URL", "https://user-connect-hub.preview.emergentagent.com")}}/unsubscribe" style="color: #999;">Se désinscrire</a></p>
         </div>
     </div>
 </body>
