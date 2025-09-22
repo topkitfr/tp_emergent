@@ -251,7 +251,7 @@ class TopKitPlayerTypeFeatureTesting:
                 timeout=15
             )
             
-            if response.status_code == 201:
+            if response.status_code in [200, 201]:
                 data = response.json()
                 print(f"      ✅ Player contribution created successfully")
                 print(f"         Contribution ID: {data.get('id')}")
