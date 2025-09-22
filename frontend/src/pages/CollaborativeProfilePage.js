@@ -17,7 +17,8 @@ const CollaborativeProfilePage = ({ user, API }) => {
     favorite_club: '',
     instagram_username: '',
     twitter_username: '',
-    website: ''
+    website: '',
+    profile_private: false
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
 
