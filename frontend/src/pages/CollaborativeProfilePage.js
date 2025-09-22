@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import UserSettingsPanel from '../UserSettingsPanel';
 import ProfilePictureModal from '../ProfilePictureModal';
 import GamificationProfile from '../components/GamificationProfile';
+import ProfileCompleteness from '../components/ProfileCompleteness';
+import SocialFeatures from '../components/SocialFeatures';
+import CollectionStats from '../components/CollectionStats';
+import UserActivityFeed from '../components/UserActivityFeed';
 
 const CollaborativeProfilePage = ({ user, API }) => {
   const [userProfile, setUserProfile] = useState(null);
