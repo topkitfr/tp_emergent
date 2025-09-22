@@ -145,16 +145,16 @@ const CollaborativeProfilePage = ({ user, API }) => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 user-info-card">
         <div className="flex flex-col sm:flex-row items-start sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
           {/* Profile Picture */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 profile-picture">
             <div className="relative">
               {user.profile_picture_url ? (
                 <img 
                   src={`${API}/${user.profile_picture_url}`}
                   alt="Profile"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-gray-200"
                 />
               ) : (
-                <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-bold text-gray-600">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-gray-600">
                   {user.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
@@ -171,15 +171,15 @@ const CollaborativeProfilePage = ({ user, API }) => {
           </div>
           
           {/* User Details */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
-                <p className="text-gray-600 mb-2">{user.email}</p>
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+          <div className="flex-1 user-details">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-center sm:text-left">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{user.name}</h2>
+                <p className="text-gray-600 mb-2 text-sm sm:text-base">{user.email}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs sm:text-sm text-gray-500 space-y-1 sm:space-y-0">
                   <span>Member since {memberSinceDate}</span>
                   {user.role === 'admin' && (
-                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium inline-block">
                       Admin
                     </span>
                   )}
