@@ -108,6 +108,13 @@ const PublicProfilePage = ({ user, API }) => {
   const memberSinceDate = profileData.created_at ? 
     new Date(profileData.created_at).toLocaleDateString() : 'Unknown';
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: '👤' },
+    { id: 'social', label: 'Social', icon: '👥' },
+    { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'activity', label: 'Activity', icon: '📝' }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
