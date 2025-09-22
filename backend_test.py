@@ -1,24 +1,14 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - ENHANCED PROFILE FUNCTIONALITY TESTING
+TopKit Backend Testing Suite - BUG FIXES TESTING
 
-Testing the new enhanced profile functionality backend endpoints:
-1. Profile completeness endpoint - GET /api/users/{user_id}/profile-completeness
-2. Follow/unfollow system:
-   - POST /api/users/{user_id}/follow
-   - DELETE /api/users/{user_id}/follow  
-   - GET /api/users/{user_id}/follow-status
-3. Social endpoints:
-   - GET /api/users/{user_id}/followers
-   - GET /api/users/{user_id}/following
-4. Activity feed - GET /api/users/{user_id}/activity-feed
-5. Collection statistics - GET /api/users/{user_id}/collection-stats
-6. Performance optimized endpoints:
-   - GET /api/master-kits-paginated
-   - GET /api/leaderboard-paginated
-   - GET /api/uploads/{file_path} with optimization parameters (w, h, q)
+Testing the 4 specific bug fixes that were just implemented:
+1. **Endpoint de mise à jour du profil** - PUT /api/users/{user_id}/profile pour corriger l'erreur "Not Found" du formulaire account settings
+2. **Endpoint de recent collection** - GET /api/users/{user_id}/recent-collection pour afficher les 5 derniers maillots
+3. **Endpoint d'upload de photo de profil** - POST /api/users/profile/picture pour corriger l'upload de photo
+4. **Endpoint d'images optimisées** - GET /api/uploads/{file_path} avec paramètres w, h, q pour l'optimisation d'images
 
-CRITICAL: Testing all new enhanced profile endpoints with proper authentication.
+CRITICAL: Testing specific bug fixes with emergency.admin@topkit.test / EmergencyAdmin2025! account.
 """
 
 import requests
