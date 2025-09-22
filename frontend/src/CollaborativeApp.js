@@ -76,7 +76,7 @@ const AppContent = () => {
     return 'home';
   };
 
-  // Authentication check
+  // Authentication check with improved loading state
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -86,13 +86,47 @@ const AppContent = () => {
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
       
+      console.log('🔍 Checking auth status:', { hasToken: !!token, hasUserData: !!userData });
+      
       if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser({ ...parsedUser, token });
-        console.log('User authenticated:', parsedUser);
+        try {
+          const parsedUser = JSON.parse(userData);
+          
+          // Validate token by making a test API call
+          const response = await fetch(`${API}/api/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const currentUserData = await response.json();
+            const authenticatedUser = { ...currentUserData, token };
+            
+            // Update localStorage with fresh user data
+            localStorage.setItem('user', JSON.stringify(currentUserData));
+            setUser(authenticatedUser);
+            
+            console.log('✅ User authenticated with fresh data:', currentUserData.email);
+          } else {
+            console.log('❌ Token validation failed, clearing auth data');
+            // Token is invalid, clear auth data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        } catch (parseError) {
+          console.error('❌ Error parsing user data:', parseError);
+          // Clear corrupted data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      } else {
+        console.log('🔓 No authentication data found');
+        setUser(null);
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('❌ Error checking auth status:', error);
+      setUser(null);
     }
   };
 
