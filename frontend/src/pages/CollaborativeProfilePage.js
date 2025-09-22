@@ -142,8 +142,8 @@ const CollaborativeProfilePage = ({ user, API }) => {
     const memberSinceDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown';
     
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-start space-x-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 user-info-card">
+        <div className="flex flex-col sm:flex-row items-start sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
           {/* Profile Picture */}
           <div className="flex-shrink-0">
             <div className="relative">
