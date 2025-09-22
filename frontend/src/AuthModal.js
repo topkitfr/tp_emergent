@@ -105,12 +105,25 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     e.stopPropagation();
     
     console.log('🚀 AuthModal - Form submission started');
-    console.log('📧 Email from state:', formData.email);
+    console.log('📊 Current formData state:', formData);
+    console.log('📧 Email from state:', formData.email || 'UNDEFINED');
+    console.log('🔑 Password from state:', formData.password || 'UNDEFINED');
     console.log('🔑 Password provided:', !!formData.password);
     console.log('🔄 Is login mode:', isLogin);
 
+    // Also check DOM values for debugging
+    const emailField = document.getElementById('auth-email-field');
+    const passwordField = document.getElementById('auth-password-field');
+    
+    if (emailField && passwordField) {
+      console.log('📧 Email from DOM:', emailField.value || 'EMPTY');
+      console.log('🔑 Password from DOM:', passwordField.value || 'EMPTY');
+    }
+
     if (!formData.email || !formData.password) {
-      console.error('❌ Missing required fields');
+      console.error('❌ Missing required fields in formData state');
+      console.error('❌ formData.email:', formData.email);
+      console.error('❌ formData.password:', formData.password);
       setError('Email and password are required');
       return;
     }
