@@ -164,14 +164,15 @@ class TopKitEnhancedProfileTesting:
                 print(f"      ✅ Endpoint accessible - profile completeness data returned")
                 
                 # Validate response structure
-                required_fields = ['completeness_percentage', 'missing_fields', 'completed_fields']
+                required_fields = ['completeness_percentage', 'missing_required', 'missing_optional']
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
                     print(f"      ✅ Response structure valid")
                     print(f"      ✅ Profile completeness: {data.get('completeness_percentage', 0)}%")
-                    print(f"         Completed fields: {len(data.get('completed_fields', []))}")
-                    print(f"         Missing fields: {len(data.get('missing_fields', []))}")
+                    print(f"         Completed required: {data.get('completed_required', 0)}/{data.get('total_required', 0)}")
+                    print(f"         Missing required: {len(data.get('missing_required', []))}")
+                    print(f"         Missing optional: {len(data.get('missing_optional', []))}")
                     
                     # Validate percentage is between 0 and 100
                     percentage = data.get('completeness_percentage', 0)
