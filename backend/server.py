@@ -2910,7 +2910,9 @@ async def create_entity_from_contribution(contribution: dict) -> str:
                 "nationality": entity_data.get("nationality", ""),
                 "position": entity_data.get("position", ""),
                 "birth_date": entity_data.get("birth_date", ""),
-                "photo_url": photo_url
+                "photo_url": photo_url,
+                "player_type": entity_data.get("player_type", PlayerType.NONE),  # Add player type
+                "created_by": entity_data.get("created_by", "system")  # Add created_by field
             })
             await db.players.insert_one(entity)
             
