@@ -757,6 +757,7 @@ const CollaborativeProfilePage = ({ user, API }) => {
                         </label>
                         <input
                           type="url"
+                          name="website"
                           value={settingsData.website}
                           onChange={(e) => setSettingsData(prev => ({...prev, website: e.target.value}))}
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
