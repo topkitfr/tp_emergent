@@ -12,7 +12,7 @@ const PublicProfilePage = ({ user, API }) => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('social');
 
   useEffect(() => {
     // Check if user is logged in
