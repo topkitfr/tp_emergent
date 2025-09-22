@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ClickableUsername from '../components/ClickableUsername';
 
 const LeaderboardPage = ({ user, API, setShowAuthModal }) => {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -7,28 +8,6 @@ const LeaderboardPage = ({ user, API, setShowAuthModal }) => {
   const [error, setError] = useState(null);
   const [currentUserRank, setCurrentUserRank] = useState(null);
   const navigate = useNavigate();
-
-  // Handle user profile click
-  const handleUserClick = (userId, username) => {
-    if (user) {
-      // If it's the current user, redirect to their own profile page
-      if (username === user.name) {
-        navigate('/profile');
-      } else {
-        // Navigate to public profile
-        navigate(`/profile/${userId}`);
-      }
-    } else {
-      // Store the intended action and trigger login modal
-      localStorage.setItem('pendingAction', JSON.stringify({
-        action: 'viewProfile',
-        userId: userId
-      }));
-      if (setShowAuthModal) {
-        setShowAuthModal(true);
-      }
-    }
-  };
 
   useEffect(() => {
     fetchLeaderboard();
