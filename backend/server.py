@@ -2762,6 +2762,10 @@ async def get_expensive_kits(limit: int = Query(5, le=10)):
             if not master_kit:
                 continue
                 
+            # Remove MongoDB ObjectId to prevent serialization issues
+            if "_id" in master_kit:
+                del master_kit["_id"]
+                
             # Get user info
             user = await db.users.find_one({"id": item["user_id"]})
             if not user:
