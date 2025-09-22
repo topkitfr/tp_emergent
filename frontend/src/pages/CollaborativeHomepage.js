@@ -263,7 +263,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
         </div>
       </div>
 
-      {/* Rare and sought-after kits */}
+      {/* Rare and sought-after kits - Updated to show most expensive from collections */}
       <div className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
@@ -276,49 +276,57 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
             </button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentMasterJerseys.slice(0, 6).map((jersey, index) => {
-              const rareValues = [450, 680, 1200, 350, 890, 750];
-              const rareValue = rareValues[index % 6];
-              
-              return (
-                <div
-                  key={jersey.id || index}
-                  className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100 relative"
-                  onClick={() => onViewChange('kit-area')}
-                >
-                  <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
-                    RARE
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {expensiveKits.map((item, index) => (
+              <div
+                key={item.collection_id || index}
+                className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer group border border-gray-100 relative"
+                onClick={() => onViewChange('kit-area')}
+              >
+                <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
+                  RARE
+                </div>
+                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {item.master_kit.front_photo_url ? (
+                    <img 
+                      src={item.master_kit.front_photo_url.startsWith('data:') || item.master_kit.front_photo_url.startsWith('http') ? item.master_kit.front_photo_url : 
+                         item.master_kit.front_photo_url.startsWith('uploads/') ? 
+                         `${API}/api/${item.master_kit.front_photo_url}` :
+                         `${API}/api/uploads/master_kits/${item.master_kit.front_photo_url}.jpg`}
+                      alt={`${item.master_kit.club_name || item.master_kit.club || 'Team'} ${item.master_kit.season}`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className="text-4xl" style={{display: item.master_kit.front_photo_url ? 'none' : 'flex'}}>👕</span>
+                </div>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
+                    {item.master_kit.club_name || item.master_kit.club || 'Unknown team'}
+                  </h3>
+                  <div className="flex items-baseline space-x-2 mb-2">
+                    <span className="text-lg font-bold text-gray-900">€{Math.round(item.estimated_price)}</span>
+                    <span className="text-xs text-orange-600">Estimate</span>
                   </div>
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
-                    {jersey.front_photo_url ? (
-                      <img 
-                        src={jersey.front_photo_url.startsWith('data:') || jersey.front_photo_url.startsWith('http') ? jersey.front_photo_url : 
-                           jersey.front_photo_url.startsWith('uploads/') ? 
-                           `${process.env.REACT_APP_BACKEND_URL}/api/${jersey.front_photo_url}` :
-                           `${process.env.REACT_APP_BACKEND_URL}/api/uploads/master_kits/${jersey.front_photo_url}.jpg`}
-                        alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <span className="text-4xl" style={{display: jersey.front_photo_url ? 'none' : 'flex'}}>👕</span>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
-                      {jersey.club_name || jersey.club || 'Unknown team'}
-                    </h3>
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-lg font-bold text-gray-900">{rareValue}€</span>
-                      <span className="text-xs text-orange-600">Estimate</span>
-                    </div>
+                  {/* User info with clickable profile */}
+                  <div className="text-xs text-gray-500">
+                    Owned by{' '}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUserClick(item.user.id);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    >
+                      {item.user.name}
+                    </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
