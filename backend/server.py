@@ -2766,6 +2766,24 @@ async def get_expensive_kits(limit: int = Query(5, le=10)):
             if "_id" in master_kit:
                 del master_kit["_id"]
                 
+            # Populate club name if missing
+            if not master_kit.get("club") and master_kit.get("club_id"):
+                club = await db.teams.find_one({"id": master_kit["club_id"]})
+                if club:
+                    master_kit["club"] = club.get("name", "Unknown Club")
+            
+            # Populate competition name if missing
+            if not master_kit.get("competition") and master_kit.get("competition_id"):
+                competition = await db.competitions.find_one({"id": master_kit["competition_id"]})
+                if competition:
+                    master_kit["competition"] = competition.get("competition_name", "Unknown Competition")
+            
+            # Populate brand name if missing
+            if not master_kit.get("brand") and master_kit.get("brand_id"):
+                brand = await db.brands.find_one({"id": master_kit["brand_id"]})
+                if brand:
+                    master_kit["brand"] = brand.get("name", "Unknown Brand")
+                
             # Get user info
             user = await db.users.find_one({"id": item["user_id"]})
             if not user:
