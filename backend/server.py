@@ -1409,10 +1409,10 @@ async def serve_optimized_file(
         # If it's an image and optimization parameters are provided
         if content_type.startswith('image/') and (w or h or q < 75):
             try:
-                with PILImage.open(full_path) as img:
+                with Image.open(full_path) as img:
                     # Convert to RGB if necessary
                     if img.mode in ('RGBA', 'P', 'LA'):
-                        rgb_img = PILImage.new('RGB', img.size, (255, 255, 255))
+                        rgb_img = Image.new('RGB', img.size, (255, 255, 255))
                         if img.mode == 'RGBA':
                             rgb_img.paste(img, mask=img.split()[-1])
                         else:
@@ -1425,17 +1425,17 @@ async def serve_optimized_file(
                         
                         if w and h:
                             # Both dimensions provided
-                            img = img.resize((w, h), PILImage.Resampling.LANCZOS)
+                            img = img.resize((w, h), Image.Resampling.LANCZOS)
                         elif w:
                             # Only width provided, maintain aspect ratio
                             aspect_ratio = original_height / original_width
                             new_height = int(w * aspect_ratio)
-                            img = img.resize((w, new_height), PILImage.Resampling.LANCZOS)
+                            img = img.resize((w, new_height), Image.Resampling.LANCZOS)
                         elif h:
                             # Only height provided, maintain aspect ratio
                             aspect_ratio = original_width / original_height
                             new_width = int(h * aspect_ratio)
-                            img = img.resize((new_width, h), PILImage.Resampling.LANCZOS)
+                            img = img.resize((new_width, h), Image.Resampling.LANCZOS)
                     
                     # Save optimized image to memory
                     img_buffer = io.BytesIO()
