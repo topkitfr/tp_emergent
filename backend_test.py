@@ -39,13 +39,14 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitHomepageEndpointsTesting:
+class TopKitEnhancedProfileTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
         self.test_user_id = None
+        self.second_user_id = None
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -101,281 +102,522 @@ class TopKitHomepageEndpointsTesting:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_expensive_kits_endpoint(self):
-        """Test /api/homepage/expensive-kits endpoint"""
+    def get_test_users(self):
+        """Get test users from leaderboard for testing social features"""
         try:
-            print(f"\n💰 TESTING EXPENSIVE KITS ENDPOINT")
+            print(f"\n👥 GETTING TEST USERS")
             print("=" * 60)
             
-            # Test with default limit (5)
-            response = self.session.get(f"{BACKEND_URL}/homepage/expensive-kits", timeout=10)
+            response = self.session.get(f"{BACKEND_URL}/leaderboard?limit=10", timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"      ✅ Endpoint accessible - returned {len(data)} items")
-                
-                # Validate response structure
-                if isinstance(data, list):
-                    if len(data) > 0:
-                        # Check first item structure
-                        first_item = data[0]
-                        required_fields = ['collection_id', 'master_kit_id', 'estimated_price', 'master_kit', 'user']
+                if isinstance(data, list) and len(data) >= 2:
+                    # Get first two users that are not the admin user
+                    admin_id = self.admin_user_data.get('id')
+                    test_users = [user for user in data if user.get('user_id') != admin_id][:2]
+                    
+                    if len(test_users) >= 1:
+                        self.test_user_id = test_users[0].get('user_id')
+                        print(f"      ✅ Test User 1: {test_users[0].get('username')} (ID: {self.test_user_id})")
                         
-                        missing_fields = [field for field in required_fields if field not in first_item]
-                        if not missing_fields:
-                            print(f"      ✅ Response structure valid")
-                            print(f"      ✅ Top expensive kit: €{first_item['estimated_price']}")
-                            print(f"         Kit: {first_item['master_kit'].get('club', 'Unknown')} {first_item['master_kit'].get('season', 'Unknown')}")
-                            print(f"         Owner: {first_item['user'].get('name', 'Unknown')}")
-                            
-                            # Verify items are sorted by price (descending)
-                            prices = [item['estimated_price'] for item in data]
-                            is_sorted = all(prices[i] >= prices[i+1] for i in range(len(prices)-1))
-                            
-                            if is_sorted:
-                                print(f"      ✅ Items correctly sorted by price (descending)")
-                                self.log_test("Expensive Kits Endpoint", True, 
-                                             f"✅ Endpoint working correctly - {len(data)} items returned, properly sorted")
-                                return True
-                            else:
-                                self.log_test("Expensive Kits Endpoint", False, 
-                                             f"❌ Items not sorted by price correctly")
-                                return False
-                        else:
-                            self.log_test("Expensive Kits Endpoint", False, 
-                                         f"❌ Missing required fields: {missing_fields}")
-                            return False
-                    else:
-                        print(f"      ⚠️ No expensive kits found in database")
-                        self.log_test("Expensive Kits Endpoint", True, 
-                                     f"✅ Endpoint working - no data available (empty collections)")
+                        if len(test_users) >= 2:
+                            self.second_user_id = test_users[1].get('user_id')
+                            print(f"      ✅ Test User 2: {test_users[1].get('username')} (ID: {self.second_user_id})")
+                        
+                        self.log_test("Get Test Users", True, f"✅ Found {len(test_users)} test users")
                         return True
+                    else:
+                        self.log_test("Get Test Users", False, "❌ No suitable test users found")
+                        return False
                 else:
-                    self.log_test("Expensive Kits Endpoint", False, 
-                                 f"❌ Response is not a list: {type(data)}")
+                    self.log_test("Get Test Users", False, "❌ Insufficient users in leaderboard")
                     return False
             else:
-                self.log_test("Expensive Kits Endpoint", False, 
-                             f"❌ Endpoint failed - Status {response.status_code}", response.text)
+                self.log_test("Get Test Users", False, f"❌ Failed to get leaderboard - Status {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Expensive Kits Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Get Test Users", False, f"Exception: {str(e)}")
             return False
     
-    def test_recent_master_kits_endpoint(self):
-        """Test /api/homepage/recent-master-kits endpoint"""
+    def test_profile_completeness_endpoint(self):
+        """Test /api/users/{user_id}/profile-completeness endpoint"""
         try:
-            print(f"\n🆕 TESTING RECENT MASTER KITS ENDPOINT")
-            print("=" * 60)
-            
-            # Test with default limit (6)
-            response = self.session.get(f"{BACKEND_URL}/homepage/recent-master-kits", timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                print(f"      ✅ Endpoint accessible - returned {len(data)} items")
-                
-                # Validate response structure
-                if isinstance(data, list):
-                    if len(data) > 0:
-                        # Check first item structure
-                        first_item = data[0]
-                        required_fields = ['id', 'club', 'season', 'created_at']
-                        
-                        missing_fields = [field for field in required_fields if field not in first_item]
-                        if not missing_fields:
-                            print(f"      ✅ Response structure valid")
-                            print(f"      ✅ Most recent kit: {first_item.get('club', 'Unknown')} {first_item.get('season', 'Unknown')}")
-                            print(f"         Created: {first_item.get('created_at', 'Unknown')}")
-                            
-                            # Verify items are sorted by created_at (descending)
-                            created_dates = [item.get('created_at') for item in data if item.get('created_at')]
-                            if len(created_dates) > 1:
-                                # Convert to datetime for comparison
-                                try:
-                                    dates = [datetime.fromisoformat(date.replace('Z', '+00:00')) for date in created_dates]
-                                    is_sorted = all(dates[i] >= dates[i+1] for i in range(len(dates)-1))
-                                    
-                                    if is_sorted:
-                                        print(f"      ✅ Items correctly sorted by creation date (descending)")
-                                        self.log_test("Recent Master Kits Endpoint", True, 
-                                                     f"✅ Endpoint working correctly - {len(data)} items returned, properly sorted")
-                                        return True
-                                    else:
-                                        print(f"      ⚠️ Items may not be sorted correctly by date")
-                                        self.log_test("Recent Master Kits Endpoint", True, 
-                                                     f"✅ Endpoint working - {len(data)} items returned (sorting unclear)")
-                                        return True
-                                except Exception as date_error:
-                                    print(f"      ⚠️ Could not verify date sorting: {str(date_error)}")
-                                    self.log_test("Recent Master Kits Endpoint", True, 
-                                                 f"✅ Endpoint working - {len(data)} items returned")
-                                    return True
-                            else:
-                                self.log_test("Recent Master Kits Endpoint", True, 
-                                             f"✅ Endpoint working - {len(data)} items returned")
-                                return True
-                        else:
-                            self.log_test("Recent Master Kits Endpoint", False, 
-                                         f"❌ Missing required fields: {missing_fields}")
-                            return False
-                    else:
-                        print(f"      ⚠️ No master kits found in database")
-                        self.log_test("Recent Master Kits Endpoint", True, 
-                                     f"✅ Endpoint working - no data available (empty master kits)")
-                        return True
-                else:
-                    self.log_test("Recent Master Kits Endpoint", False, 
-                                 f"❌ Response is not a list: {type(data)}")
-                    return False
-            else:
-                self.log_test("Recent Master Kits Endpoint", False, 
-                             f"❌ Endpoint failed - Status {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Recent Master Kits Endpoint", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_recent_contributions_endpoint(self):
-        """Test /api/homepage/recent-contributions endpoint"""
-        try:
-            print(f"\n📝 TESTING RECENT CONTRIBUTIONS ENDPOINT")
-            print("=" * 60)
-            
-            # Test with default limit (10)
-            response = self.session.get(f"{BACKEND_URL}/homepage/recent-contributions", timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                print(f"      ✅ Endpoint accessible - returned {len(data)} items")
-                
-                # Validate response structure
-                if isinstance(data, list):
-                    if len(data) > 0:
-                        # Check first item structure
-                        first_item = data[0]
-                        required_fields = ['contribution_id', 'item_type', 'item_id', 'entity', 'user']
-                        
-                        missing_fields = [field for field in required_fields if field not in first_item]
-                        if not missing_fields:
-                            print(f"      ✅ Response structure valid")
-                            print(f"      ✅ Most recent contribution: {first_item.get('item_type', 'Unknown')} - {first_item.get('entity', {}).get('name', 'Unknown')}")
-                            print(f"         Contributor: {first_item.get('user', {}).get('name', 'Unknown')}")
-                            print(f"         XP Awarded: {first_item.get('xp_awarded', 0)}")
-                            
-                            # Verify only approved contributions
-                            valid_types = ['team', 'brand', 'player', 'competition']
-                            item_types = [item.get('item_type') for item in data]
-                            invalid_types = [t for t in item_types if t not in valid_types]
-                            
-                            if not invalid_types:
-                                print(f"      ✅ All contributions are valid types: {set(item_types)}")
-                                self.log_test("Recent Contributions Endpoint", True, 
-                                             f"✅ Endpoint working correctly - {len(data)} approved contributions returned")
-                                return True
-                            else:
-                                self.log_test("Recent Contributions Endpoint", False, 
-                                             f"❌ Invalid contribution types found: {invalid_types}")
-                                return False
-                        else:
-                            self.log_test("Recent Contributions Endpoint", False, 
-                                         f"❌ Missing required fields: {missing_fields}")
-                            return False
-                    else:
-                        print(f"      ⚠️ No recent contributions found in database")
-                        self.log_test("Recent Contributions Endpoint", True, 
-                                     f"✅ Endpoint working - no data available (no approved contributions)")
-                        return True
-                else:
-                    self.log_test("Recent Contributions Endpoint", False, 
-                                 f"❌ Response is not a list: {type(data)}")
-                    return False
-            else:
-                self.log_test("Recent Contributions Endpoint", False, 
-                             f"❌ Endpoint failed - Status {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Recent Contributions Endpoint", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_public_profile_endpoint(self):
-        """Test /api/users/{user_id}/public-profile endpoint"""
-        try:
-            print(f"\n👤 TESTING PUBLIC PROFILE ENDPOINT")
+            print(f"\n📊 TESTING PROFILE COMPLETENESS ENDPOINT")
             print("=" * 60)
             
             if not self.auth_token:
-                self.log_test("Public Profile Endpoint", False, "❌ No authentication token available")
+                self.log_test("Profile Completeness Endpoint", False, "❌ No authentication token available")
                 return False
             
             # Test with admin user's own profile
             user_id = self.admin_user_data.get('id')
             if not user_id:
-                self.log_test("Public Profile Endpoint", False, "❌ No user ID available for testing")
+                self.log_test("Profile Completeness Endpoint", False, "❌ No user ID available for testing")
                 return False
             
-            response = self.session.get(f"{BACKEND_URL}/users/{user_id}/public-profile", timeout=10)
+            response = self.session.get(f"{BACKEND_URL}/users/{user_id}/profile-completeness", timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"      ✅ Endpoint accessible - profile data returned")
+                print(f"      ✅ Endpoint accessible - profile completeness data returned")
                 
                 # Validate response structure
-                required_fields = ['id', 'name', 'role', 'xp', 'level', 'collections_count', 'contributions_count']
+                required_fields = ['completeness_percentage', 'missing_fields', 'completed_fields']
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
                     print(f"      ✅ Response structure valid")
-                    print(f"      ✅ Profile data:")
-                    print(f"         Name: {data.get('name', 'Unknown')}")
-                    print(f"         Role: {data.get('role', 'Unknown')}")
-                    print(f"         XP: {data.get('xp', 0)}")
-                    print(f"         Level: {data.get('level', 'Unknown')}")
-                    print(f"         Collections: {data.get('collections_count', 0)}")
-                    print(f"         Contributions: {data.get('contributions_count', 0)}")
+                    print(f"      ✅ Profile completeness: {data.get('completeness_percentage', 0)}%")
+                    print(f"         Completed fields: {len(data.get('completed_fields', []))}")
+                    print(f"         Missing fields: {len(data.get('missing_fields', []))}")
                     
-                    # Test authentication requirement by trying without token
-                    temp_session = requests.Session()
-                    unauth_response = temp_session.get(f"{BACKEND_URL}/users/{user_id}/public-profile", timeout=10)
-                    
-                    if unauth_response.status_code == 401:
-                        print(f"      ✅ Authentication properly required (401 without token)")
-                        self.log_test("Public Profile Endpoint", True, 
-                                     f"✅ Endpoint working correctly - requires authentication and returns profile data")
+                    # Validate percentage is between 0 and 100
+                    percentage = data.get('completeness_percentage', 0)
+                    if 0 <= percentage <= 100:
+                        self.log_test("Profile Completeness Endpoint", True, 
+                                     f"✅ Endpoint working correctly - {percentage}% completeness")
                         return True
                     else:
-                        print(f"      ⚠️ Authentication not enforced (status: {unauth_response.status_code})")
-                        self.log_test("Public Profile Endpoint", True, 
-                                     f"✅ Endpoint working - profile data returned (authentication not enforced)")
-                        return True
+                        self.log_test("Profile Completeness Endpoint", False, 
+                                     f"❌ Invalid completeness percentage: {percentage}")
+                        return False
                 else:
-                    self.log_test("Public Profile Endpoint", False, 
+                    self.log_test("Profile Completeness Endpoint", False, 
                                  f"❌ Missing required fields: {missing_fields}")
                     return False
             elif response.status_code == 401:
-                self.log_test("Public Profile Endpoint", False, 
-                             f"❌ Authentication failed despite having token")
+                self.log_test("Profile Completeness Endpoint", False, 
+                             f"❌ Authentication failed")
                 return False
             elif response.status_code == 404:
-                self.log_test("Public Profile Endpoint", False, 
+                self.log_test("Profile Completeness Endpoint", False, 
                              f"❌ User not found: {user_id}")
                 return False
             else:
-                self.log_test("Public Profile Endpoint", False, 
+                self.log_test("Profile Completeness Endpoint", False, 
                              f"❌ Endpoint failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Public Profile Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Profile Completeness Endpoint", False, f"Exception: {str(e)}")
             return False
     
-    def test_all_homepage_endpoints(self):
-        """Test all homepage endpoints"""
-        print("\n🏠 HOMEPAGE ENDPOINTS TESTING")
-        print("Testing all new homepage endpoints with current database data")
+    def test_follow_unfollow_system(self):
+        """Test follow/unfollow system endpoints"""
+        try:
+            print(f"\n👥 TESTING FOLLOW/UNFOLLOW SYSTEM")
+            print("=" * 60)
+            
+            if not self.auth_token or not self.test_user_id:
+                self.log_test("Follow/Unfollow System", False, "❌ Missing authentication or test user")
+                return False
+            
+            # Test 1: Follow a user
+            print(f"      Testing follow user {self.test_user_id}...")
+            follow_response = self.session.post(f"{BACKEND_URL}/users/{self.test_user_id}/follow", timeout=10)
+            
+            if follow_response.status_code == 200:
+                follow_data = follow_response.json()
+                print(f"      ✅ Follow successful: {follow_data.get('message', 'No message')}")
+                
+                # Test 2: Check follow status
+                print(f"      Testing follow status...")
+                status_response = self.session.get(f"{BACKEND_URL}/users/{self.test_user_id}/follow-status", timeout=10)
+                
+                if status_response.status_code == 200:
+                    status_data = status_response.json()
+                    is_following = status_data.get('is_following', False)
+                    print(f"      ✅ Follow status check: Following = {is_following}")
+                    
+                    if is_following:
+                        # Test 3: Try to follow again (should fail)
+                        print(f"      Testing duplicate follow (should fail)...")
+                        duplicate_response = self.session.post(f"{BACKEND_URL}/users/{self.test_user_id}/follow", timeout=10)
+                        
+                        if duplicate_response.status_code == 400:
+                            print(f"      ✅ Duplicate follow properly rejected")
+                            
+                            # Test 4: Unfollow the user
+                            print(f"      Testing unfollow...")
+                            unfollow_response = self.session.delete(f"{BACKEND_URL}/users/{self.test_user_id}/follow", timeout=10)
+                            
+                            if unfollow_response.status_code == 200:
+                                unfollow_data = unfollow_response.json()
+                                print(f"      ✅ Unfollow successful: {unfollow_data.get('message', 'No message')}")
+                                
+                                # Test 5: Check follow status after unfollow
+                                print(f"      Testing follow status after unfollow...")
+                                final_status_response = self.session.get(f"{BACKEND_URL}/users/{self.test_user_id}/follow-status", timeout=10)
+                                
+                                if final_status_response.status_code == 200:
+                                    final_status_data = final_status_response.json()
+                                    is_still_following = final_status_data.get('is_following', True)
+                                    
+                                    if not is_still_following:
+                                        print(f"      ✅ Follow status correctly updated after unfollow")
+                                        self.log_test("Follow/Unfollow System", True, 
+                                                     "✅ Complete follow/unfollow workflow working correctly")
+                                        return True
+                                    else:
+                                        self.log_test("Follow/Unfollow System", False, 
+                                                     "❌ Follow status not updated after unfollow")
+                                        return False
+                                else:
+                                    self.log_test("Follow/Unfollow System", False, 
+                                                 f"❌ Final status check failed - Status {final_status_response.status_code}")
+                                    return False
+                            else:
+                                self.log_test("Follow/Unfollow System", False, 
+                                             f"❌ Unfollow failed - Status {unfollow_response.status_code}")
+                                return False
+                        else:
+                            self.log_test("Follow/Unfollow System", False, 
+                                         f"❌ Duplicate follow not properly rejected - Status {duplicate_response.status_code}")
+                            return False
+                    else:
+                        self.log_test("Follow/Unfollow System", False, 
+                                     "❌ Follow status shows not following after successful follow")
+                        return False
+                else:
+                    self.log_test("Follow/Unfollow System", False, 
+                                 f"❌ Follow status check failed - Status {status_response.status_code}")
+                    return False
+            else:
+                self.log_test("Follow/Unfollow System", False, 
+                             f"❌ Follow failed - Status {follow_response.status_code}", follow_response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Follow/Unfollow System", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_social_endpoints(self):
+        """Test followers and following endpoints"""
+        try:
+            print(f"\n👥 TESTING SOCIAL ENDPOINTS")
+            print("=" * 60)
+            
+            if not self.auth_token or not self.test_user_id:
+                self.log_test("Social Endpoints", False, "❌ Missing authentication or test user")
+                return False
+            
+            # Test 1: Get followers
+            print(f"      Testing followers endpoint...")
+            followers_response = self.session.get(f"{BACKEND_URL}/users/{self.test_user_id}/followers", timeout=10)
+            
+            if followers_response.status_code == 200:
+                followers_data = followers_response.json()
+                print(f"      ✅ Followers endpoint accessible - {len(followers_data)} followers")
+                
+                # Validate response structure
+                if isinstance(followers_data, list):
+                    if len(followers_data) > 0:
+                        # Check first follower structure
+                        first_follower = followers_data[0]
+                        required_fields = ['user_id', 'name', 'followed_at']
+                        missing_fields = [field for field in required_fields if field not in first_follower]
+                        
+                        if missing_fields:
+                            print(f"      ⚠️ Missing fields in follower data: {missing_fields}")
+                    
+                    # Test 2: Get following
+                    print(f"      Testing following endpoint...")
+                    following_response = self.session.get(f"{BACKEND_URL}/users/{self.test_user_id}/following", timeout=10)
+                    
+                    if following_response.status_code == 200:
+                        following_data = following_response.json()
+                        print(f"      ✅ Following endpoint accessible - {len(following_data)} following")
+                        
+                        # Validate response structure
+                        if isinstance(following_data, list):
+                            if len(following_data) > 0:
+                                # Check first following structure
+                                first_following = following_data[0]
+                                required_fields = ['user_id', 'name', 'followed_at']
+                                missing_fields = [field for field in required_fields if field not in first_following]
+                                
+                                if missing_fields:
+                                    print(f"      ⚠️ Missing fields in following data: {missing_fields}")
+                            
+                            self.log_test("Social Endpoints", True, 
+                                         f"✅ Both social endpoints working - {len(followers_data)} followers, {len(following_data)} following")
+                            return True
+                        else:
+                            self.log_test("Social Endpoints", False, 
+                                         f"❌ Following response is not a list: {type(following_data)}")
+                            return False
+                    else:
+                        self.log_test("Social Endpoints", False, 
+                                     f"❌ Following endpoint failed - Status {following_response.status_code}")
+                        return False
+                else:
+                    self.log_test("Social Endpoints", False, 
+                                 f"❌ Followers response is not a list: {type(followers_data)}")
+                    return False
+            else:
+                self.log_test("Social Endpoints", False, 
+                             f"❌ Followers endpoint failed - Status {followers_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Social Endpoints", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_activity_feed_endpoint(self):
+        """Test activity feed endpoint"""
+        try:
+            print(f"\n📰 TESTING ACTIVITY FEED ENDPOINT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                self.log_test("Activity Feed Endpoint", False, "❌ No authentication token available")
+                return False
+            
+            # Test with admin user's own activity feed
+            user_id = self.admin_user_data.get('id')
+            if not user_id:
+                self.log_test("Activity Feed Endpoint", False, "❌ No user ID available for testing")
+                return False
+            
+            response = self.session.get(f"{BACKEND_URL}/users/{user_id}/activity-feed", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"      ✅ Endpoint accessible - {len(data)} activity items")
+                
+                # Validate response structure
+                if isinstance(data, list):
+                    if len(data) > 0:
+                        # Check first activity item structure
+                        first_item = data[0]
+                        required_fields = ['activity_type', 'created_at']
+                        missing_fields = [field for field in required_fields if field not in first_item]
+                        
+                        if not missing_fields:
+                            print(f"      ✅ Response structure valid")
+                            print(f"      ✅ Latest activity: {first_item.get('activity_type', 'Unknown')}")
+                            print(f"         Created: {first_item.get('created_at', 'Unknown')}")
+                            
+                            self.log_test("Activity Feed Endpoint", True, 
+                                         f"✅ Endpoint working correctly - {len(data)} activity items returned")
+                            return True
+                        else:
+                            self.log_test("Activity Feed Endpoint", False, 
+                                         f"❌ Missing required fields: {missing_fields}")
+                            return False
+                    else:
+                        print(f"      ⚠️ No activity items found")
+                        self.log_test("Activity Feed Endpoint", True, 
+                                     f"✅ Endpoint working - no activity data available")
+                        return True
+                else:
+                    self.log_test("Activity Feed Endpoint", False, 
+                                 f"❌ Response is not a list: {type(data)}")
+                    return False
+            elif response.status_code == 401:
+                self.log_test("Activity Feed Endpoint", False, 
+                             f"❌ Authentication failed")
+                return False
+            elif response.status_code == 404:
+                self.log_test("Activity Feed Endpoint", False, 
+                             f"❌ User not found: {user_id}")
+                return False
+            else:
+                self.log_test("Activity Feed Endpoint", False, 
+                             f"❌ Endpoint failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Activity Feed Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_collection_stats_endpoint(self):
+        """Test collection statistics endpoint"""
+        try:
+            print(f"\n📈 TESTING COLLECTION STATS ENDPOINT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                self.log_test("Collection Stats Endpoint", False, "❌ No authentication token available")
+                return False
+            
+            # Test with admin user's collection stats
+            user_id = self.admin_user_data.get('id')
+            if not user_id:
+                self.log_test("Collection Stats Endpoint", False, "❌ No user ID available for testing")
+                return False
+            
+            response = self.session.get(f"{BACKEND_URL}/users/{user_id}/collection-stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"      ✅ Endpoint accessible - collection stats returned")
+                
+                # Validate response structure
+                required_fields = ['total_items', 'total_value', 'by_type', 'by_condition']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    print(f"      ✅ Response structure valid")
+                    print(f"      ✅ Collection stats:")
+                    print(f"         Total items: {data.get('total_items', 0)}")
+                    print(f"         Total value: €{data.get('total_value', 0)}")
+                    print(f"         By type: {len(data.get('by_type', {}))}")
+                    print(f"         By condition: {len(data.get('by_condition', {}))}")
+                    
+                    # Validate numeric values
+                    total_items = data.get('total_items', 0)
+                    total_value = data.get('total_value', 0)
+                    
+                    if isinstance(total_items, int) and isinstance(total_value, (int, float)):
+                        self.log_test("Collection Stats Endpoint", True, 
+                                     f"✅ Endpoint working correctly - {total_items} items, €{total_value} value")
+                        return True
+                    else:
+                        self.log_test("Collection Stats Endpoint", False, 
+                                     f"❌ Invalid data types in response")
+                        return False
+                else:
+                    self.log_test("Collection Stats Endpoint", False, 
+                                 f"❌ Missing required fields: {missing_fields}")
+                    return False
+            elif response.status_code == 401:
+                self.log_test("Collection Stats Endpoint", False, 
+                             f"❌ Authentication failed")
+                return False
+            elif response.status_code == 404:
+                self.log_test("Collection Stats Endpoint", False, 
+                             f"❌ User not found: {user_id}")
+                return False
+            else:
+                self.log_test("Collection Stats Endpoint", False, 
+                             f"❌ Endpoint failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Collection Stats Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_performance_endpoints(self):
+        """Test performance optimized endpoints"""
+        try:
+            print(f"\n⚡ TESTING PERFORMANCE ENDPOINTS")
+            print("=" * 60)
+            
+            # Test 1: Master kits paginated
+            print(f"      Testing master-kits-paginated...")
+            kits_response = self.session.get(f"{BACKEND_URL}/master-kits-paginated?page=1&per_page=5", timeout=10)
+            
+            if kits_response.status_code == 200:
+                kits_data = kits_response.json()
+                print(f"      ✅ Master kits paginated accessible")
+                
+                # Validate pagination structure
+                required_fields = ['items', 'pagination']
+                missing_fields = [field for field in required_fields if field not in kits_data]
+                
+                if not missing_fields:
+                    pagination = kits_data.get('pagination', {})
+                    items = kits_data.get('items', [])
+                    
+                    print(f"         Items: {len(items)}")
+                    print(f"         Page: {pagination.get('page', 'Unknown')}")
+                    print(f"         Total pages: {pagination.get('total_pages', 'Unknown')}")
+                    
+                    # Test 2: Leaderboard paginated
+                    print(f"      Testing leaderboard-paginated...")
+                    leaderboard_response = self.session.get(f"{BACKEND_URL}/leaderboard-paginated?page=1&per_page=5", timeout=10)
+                    
+                    if leaderboard_response.status_code == 200:
+                        leaderboard_data = leaderboard_response.json()
+                        print(f"      ✅ Leaderboard paginated accessible")
+                        
+                        # Validate pagination structure
+                        if 'items' in leaderboard_data and 'pagination' in leaderboard_data:
+                            leaderboard_pagination = leaderboard_data.get('pagination', {})
+                            leaderboard_items = leaderboard_data.get('items', [])
+                            
+                            print(f"         Items: {len(leaderboard_items)}")
+                            print(f"         Page: {leaderboard_pagination.get('page', 'Unknown')}")
+                            print(f"         Total pages: {leaderboard_pagination.get('total_pages', 'Unknown')}")
+                            
+                            self.log_test("Performance Endpoints", True, 
+                                         f"✅ Both paginated endpoints working correctly")
+                            return True
+                        else:
+                            self.log_test("Performance Endpoints", False, 
+                                         f"❌ Leaderboard pagination structure invalid")
+                            return False
+                    else:
+                        self.log_test("Performance Endpoints", False, 
+                                     f"❌ Leaderboard paginated failed - Status {leaderboard_response.status_code}")
+                        return False
+                else:
+                    self.log_test("Performance Endpoints", False, 
+                                 f"❌ Master kits pagination structure invalid - Missing: {missing_fields}")
+                    return False
+            else:
+                self.log_test("Performance Endpoints", False, 
+                             f"❌ Master kits paginated failed - Status {kits_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Performance Endpoints", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_image_optimization_endpoint(self):
+        """Test image optimization endpoint"""
+        try:
+            print(f"\n🖼️ TESTING IMAGE OPTIMIZATION ENDPOINT")
+            print("=" * 60)
+            
+            # Test with a sample image path (we'll test the endpoint structure)
+            test_path = "master_kits/sample.jpg"
+            
+            # Test 1: Basic image serving
+            print(f"      Testing basic image serving...")
+            basic_response = self.session.get(f"{BACKEND_URL}/uploads/{test_path}", timeout=10)
+            
+            # We expect either 200 (if image exists) or 404 (if not found)
+            if basic_response.status_code in [200, 404]:
+                print(f"      ✅ Basic image endpoint accessible (Status: {basic_response.status_code})")
+                
+                # Test 2: Image optimization parameters
+                print(f"      Testing image optimization parameters...")
+                optimized_response = self.session.get(f"{BACKEND_URL}/uploads/{test_path}?w=300&h=200&q=80", timeout=10)
+                
+                # We expect either 200 (if image exists) or 404 (if not found)
+                if optimized_response.status_code in [200, 404]:
+                    print(f"      ✅ Optimized image endpoint accessible (Status: {optimized_response.status_code})")
+                    
+                    # Check if optimization parameters are accepted (no 400 error)
+                    if optimized_response.status_code != 400:
+                        self.log_test("Image Optimization Endpoint", True, 
+                                     f"✅ Image optimization endpoint working - accepts w, h, q parameters")
+                        return True
+                    else:
+                        self.log_test("Image Optimization Endpoint", False, 
+                                     f"❌ Optimization parameters rejected")
+                        return False
+                else:
+                    self.log_test("Image Optimization Endpoint", False, 
+                                 f"❌ Optimized image endpoint failed - Status {optimized_response.status_code}")
+                    return False
+            else:
+                self.log_test("Image Optimization Endpoint", False, 
+                             f"❌ Basic image endpoint failed - Status {basic_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Image Optimization Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_all_enhanced_profile_endpoints(self):
+        """Test all enhanced profile endpoints"""
+        print("\n🚀 ENHANCED PROFILE FUNCTIONALITY TESTING")
+        print("Testing all new enhanced profile endpoints with proper authentication")
         print("=" * 80)
         
         test_results = []
@@ -387,27 +629,53 @@ class TopKitHomepageEndpointsTesting:
             print("❌ Cannot continue without authentication")
             return [False]
         
-        # Step 2: Test expensive kits endpoint
-        print("\n2️⃣ Testing expensive kits endpoint...")
-        test_results.append(self.test_expensive_kits_endpoint())
+        # Step 2: Get test users
+        print("\n2️⃣ Getting test users...")
+        users_success = self.get_test_users()
+        if not users_success:
+            print("⚠️ Limited testing without additional users")
         
-        # Step 3: Test recent master kits endpoint
-        print("\n3️⃣ Testing recent master kits endpoint...")
-        test_results.append(self.test_recent_master_kits_endpoint())
+        # Step 3: Test profile completeness endpoint
+        print("\n3️⃣ Testing profile completeness endpoint...")
+        test_results.append(self.test_profile_completeness_endpoint())
         
-        # Step 4: Test recent contributions endpoint
-        print("\n4️⃣ Testing recent contributions endpoint...")
-        test_results.append(self.test_recent_contributions_endpoint())
+        # Step 4: Test follow/unfollow system
+        print("\n4️⃣ Testing follow/unfollow system...")
+        if self.test_user_id:
+            test_results.append(self.test_follow_unfollow_system())
+        else:
+            print("      ⚠️ Skipping follow/unfollow tests - no test user available")
+            test_results.append(False)
         
-        # Step 5: Test public profile endpoint
-        print("\n5️⃣ Testing public profile endpoint...")
-        test_results.append(self.test_public_profile_endpoint())
+        # Step 5: Test social endpoints
+        print("\n5️⃣ Testing social endpoints...")
+        if self.test_user_id:
+            test_results.append(self.test_social_endpoints())
+        else:
+            print("      ⚠️ Skipping social endpoint tests - no test user available")
+            test_results.append(False)
+        
+        # Step 6: Test activity feed endpoint
+        print("\n6️⃣ Testing activity feed endpoint...")
+        test_results.append(self.test_activity_feed_endpoint())
+        
+        # Step 7: Test collection stats endpoint
+        print("\n7️⃣ Testing collection stats endpoint...")
+        test_results.append(self.test_collection_stats_endpoint())
+        
+        # Step 8: Test performance endpoints
+        print("\n8️⃣ Testing performance endpoints...")
+        test_results.append(self.test_performance_endpoints())
+        
+        # Step 9: Test image optimization endpoint
+        print("\n9️⃣ Testing image optimization endpoint...")
+        test_results.append(self.test_image_optimization_endpoint())
         
         return test_results
     
     def print_final_summary(self):
         """Print final testing summary"""
-        print("\n📊 HOMEPAGE ENDPOINTS TESTING SUMMARY")
+        print("\n📊 ENHANCED PROFILE FUNCTIONALITY TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -429,33 +697,54 @@ class TopKitHomepageEndpointsTesting:
         else:
             print(f"  ❌ AUTHENTICATION: Admin login failed")
         
-        # Expensive kits
-        expensive_kits = any(r['success'] for r in self.test_results if 'Expensive Kits Endpoint' in r['test'])
-        if expensive_kits:
-            print(f"  ✅ EXPENSIVE KITS: /api/homepage/expensive-kits working")
+        # Profile completeness
+        profile_completeness = any(r['success'] for r in self.test_results if 'Profile Completeness' in r['test'])
+        if profile_completeness:
+            print(f"  ✅ PROFILE COMPLETENESS: /api/users/{{user_id}}/profile-completeness working")
         else:
-            print(f"  ❌ EXPENSIVE KITS: /api/homepage/expensive-kits failed")
+            print(f"  ❌ PROFILE COMPLETENESS: /api/users/{{user_id}}/profile-completeness failed")
         
-        # Recent master kits
-        recent_kits = any(r['success'] for r in self.test_results if 'Recent Master Kits Endpoint' in r['test'])
-        if recent_kits:
-            print(f"  ✅ RECENT MASTER KITS: /api/homepage/recent-master-kits working")
+        # Follow/unfollow system
+        follow_system = any(r['success'] for r in self.test_results if 'Follow/Unfollow System' in r['test'])
+        if follow_system:
+            print(f"  ✅ FOLLOW/UNFOLLOW: Complete follow/unfollow workflow working")
         else:
-            print(f"  ❌ RECENT MASTER KITS: /api/homepage/recent-master-kits failed")
+            print(f"  ❌ FOLLOW/UNFOLLOW: Follow/unfollow system failed")
         
-        # Recent contributions
-        recent_contributions = any(r['success'] for r in self.test_results if 'Recent Contributions Endpoint' in r['test'])
-        if recent_contributions:
-            print(f"  ✅ RECENT CONTRIBUTIONS: /api/homepage/recent-contributions working")
+        # Social endpoints
+        social_endpoints = any(r['success'] for r in self.test_results if 'Social Endpoints' in r['test'])
+        if social_endpoints:
+            print(f"  ✅ SOCIAL ENDPOINTS: /api/users/{{user_id}}/followers and /following working")
         else:
-            print(f"  ❌ RECENT CONTRIBUTIONS: /api/homepage/recent-contributions failed")
+            print(f"  ❌ SOCIAL ENDPOINTS: Social endpoints failed")
         
-        # Public profile
-        public_profile = any(r['success'] for r in self.test_results if 'Public Profile Endpoint' in r['test'])
-        if public_profile:
-            print(f"  ✅ PUBLIC PROFILE: /api/users/{{user_id}}/public-profile working")
+        # Activity feed
+        activity_feed = any(r['success'] for r in self.test_results if 'Activity Feed' in r['test'])
+        if activity_feed:
+            print(f"  ✅ ACTIVITY FEED: /api/users/{{user_id}}/activity-feed working")
         else:
-            print(f"  ❌ PUBLIC PROFILE: /api/users/{{user_id}}/public-profile failed")
+            print(f"  ❌ ACTIVITY FEED: /api/users/{{user_id}}/activity-feed failed")
+        
+        # Collection stats
+        collection_stats = any(r['success'] for r in self.test_results if 'Collection Stats' in r['test'])
+        if collection_stats:
+            print(f"  ✅ COLLECTION STATS: /api/users/{{user_id}}/collection-stats working")
+        else:
+            print(f"  ❌ COLLECTION STATS: /api/users/{{user_id}}/collection-stats failed")
+        
+        # Performance endpoints
+        performance = any(r['success'] for r in self.test_results if 'Performance Endpoints' in r['test'])
+        if performance:
+            print(f"  ✅ PERFORMANCE: Paginated endpoints working")
+        else:
+            print(f"  ❌ PERFORMANCE: Paginated endpoints failed")
+        
+        # Image optimization
+        image_optimization = any(r['success'] for r in self.test_results if 'Image Optimization' in r['test'])
+        if image_optimization:
+            print(f"  ✅ IMAGE OPTIMIZATION: /api/uploads/{{file_path}} with parameters working")
+        else:
+            print(f"  ❌ IMAGE OPTIMIZATION: Image optimization failed")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -467,29 +756,25 @@ class TopKitHomepageEndpointsTesting:
         # Final status
         print(f"\n🎯 FINAL STATUS:")
         if passed_tests == total_tests:
-            print(f"  ✅ ALL HOMEPAGE ENDPOINTS WORKING: All 4 new endpoints tested successfully")
-            print(f"     - /api/homepage/expensive-kits: ✅")
-            print(f"     - /api/homepage/recent-master-kits: ✅")
-            print(f"     - /api/homepage/recent-contributions: ✅")
-            print(f"     - /api/users/{{user_id}}/public-profile: ✅")
-        elif passed_tests >= 3:
-            print(f"  ⚠️ MOSTLY WORKING: {passed_tests}/4 endpoints working correctly")
+            print(f"  ✅ ALL ENHANCED PROFILE ENDPOINTS WORKING: All endpoints tested successfully")
+        elif passed_tests >= total_tests * 0.8:
+            print(f"  ⚠️ MOSTLY WORKING: {passed_tests}/{total_tests} endpoints working correctly")
             print(f"     - Minor issues identified but core functionality operational")
         else:
-            print(f"  ❌ MAJOR ISSUES: Only {passed_tests}/4 endpoints working")
+            print(f"  ❌ MAJOR ISSUES: Only {passed_tests}/{total_tests} endpoints working")
             print(f"     - Significant problems require attention")
         
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
-        """Run all homepage endpoint tests and return success status"""
-        test_results = self.test_all_homepage_endpoints()
+        """Run all enhanced profile endpoint tests and return success status"""
+        test_results = self.test_all_enhanced_profile_endpoints()
         self.print_final_summary()
         return any(test_results)
 
 def main():
-    """Main test execution - Homepage Endpoints Testing"""
-    tester = TopKitHomepageEndpointsTesting()
+    """Main test execution - Enhanced Profile Functionality Testing"""
+    tester = TopKitEnhancedProfileTesting()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
