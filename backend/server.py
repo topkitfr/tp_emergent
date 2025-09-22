@@ -2740,6 +2740,163 @@ async def get_collection_item_price_estimation(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ================================
+# HOMEPAGE & PUBLIC PROFILES ENDPOINTS
+# ================================
+
+@app.get("/api/homepage/expensive-kits")
+async def get_expensive_kits(limit: int = Query(5, le=10)):
+    """Get the most expensive kits from public collections for homepage"""
+    try:
+        # First, we need to add a way to determine if a collection is public
+        # For now, let's get all collections and sort by estimated price
+        
+        # Get all collection items with their master kit info
+        cursor = db.my_collection.find({})
+        collection_items = await cursor.to_list(length=None)
+        
+        expensive_items = []
+        
+        for item in collection_items:
+            # Get master kit info
+            master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
+            if not master_kit:
+                continue
+                
+            # Get user info
+            user = await db.users.find_one({"id": item["user_id"]})
+            if not user:
+                continue
+                
+            # For now, consider all collections as public
+            # In the future, add a "is_public_collection" field to users
+            
+            # Calculate estimated price
+            estimated_price = calculate_estimated_price(master_kit, item)
+            
+            expensive_items.append({
+                "collection_id": item["id"],
+                "master_kit_id": item["master_kit_id"],
+                "estimated_price": estimated_price,
+                "master_kit": master_kit,
+                "user": {
+                    "id": user["id"],
+                    "name": user["name"]
+                }
+            })
+        
+        # Sort by estimated price (descending) and take top items
+        expensive_items.sort(key=lambda x: x["estimated_price"], reverse=True)
+        return expensive_items[:limit]
+        
+    except Exception as e:
+        logger.error(f"Error fetching expensive kits: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/homepage/recent-master-kits")
+async def get_recent_master_kits(limit: int = Query(6, le=20)):
+    """Get recently uploaded master kits for homepage 'Latest database contributions' section"""
+    try:
+        cursor = db.master_kits.find({}).sort("created_at", -1).limit(limit)
+        master_kits = await cursor.to_list(length=None)
+        
+        # Remove MongoDB _id field
+        for kit in master_kits:
+            if "_id" in kit:
+                del kit["_id"]
+                
+        return master_kits
+        
+    except Exception as e:
+        logger.error(f"Error fetching recent master kits: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/homepage/recent-contributions")
+async def get_recent_contributions(limit: int = Query(10, le=20)):
+    """Get recently approved contributions (teams, brands, players, competitions) for homepage 'Latest documentation' section"""
+    try:
+        # Get recent contributions from the gamification contributions table
+        cursor = db.contributions_gamification.find({
+            "is_approved": True,
+            "item_type": {"$in": ["team", "brand", "player", "competition"]}
+        }).sort("approved_at", -1).limit(limit)
+        
+        contributions = await cursor.to_list(length=None)
+        
+        result = []
+        for contrib in contributions:
+            # Get the actual entity data
+            collection_name = f"{contrib['item_type']}s"  # teams, brands, players, competitions
+            entity = await db[collection_name].find_one({"id": contrib["item_id"]})
+            
+            if entity:
+                # Get user info
+                user = await db.users.find_one({"id": contrib["user_id"]})
+                
+                result.append({
+                    "contribution_id": contrib["id"],
+                    "item_type": contrib["item_type"], 
+                    "item_id": contrib["item_id"],
+                    "entity": entity,
+                    "user": {"id": user["id"], "name": user["name"]} if user else None,
+                    "approved_at": contrib.get("approved_at"),
+                    "xp_awarded": contrib.get("xp_awarded", 0)
+                })
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error fetching recent contributions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/users/{user_id}/public-profile")
+async def get_user_public_profile(
+    user_id: str, 
+    current_user: dict = Depends(get_current_user)  # Require login
+):
+    """Get public profile of another user (only for logged-in users)"""
+    try:
+        # Check if requesting user is logged in
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        # Find the target user
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # For now, all profiles are public
+        # In the future, add privacy settings check here
+        # if user.get("profile_private", False) and user_id != current_user["id"]:
+        #     raise HTTPException(status_code=403, detail="Profile is private")
+        
+        # Get user statistics
+        collections_count = await db.my_collection.count_documents({"user_id": user_id})
+        contributions_count = await db.contributions_gamification.count_documents({"user_id": user_id})
+        
+        return {
+            "id": user["id"],
+            "name": user["name"],
+            "created_at": user.get("created_at"),
+            "role": user.get("role", "user"),
+            "xp": user.get("xp", 0),
+            "level": user.get("level", "Remplaçant"),
+            "collections_count": collections_count,
+            "contributions_count": contributions_count,
+            "profile_picture_url": user.get("profile_picture_url"),
+            "bio": user.get("bio"),
+            "favorite_club": user.get("favorite_club"),
+            "instagram_username": user.get("instagram_username"),
+            "twitter_username": user.get("twitter_username"),
+            "website": user.get("website")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching user public profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # STATS ENDPOINT
 # ================================
 
