@@ -147,15 +147,15 @@ const CollectionStats = ({ user, targetUserId, API }) => {
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-gray-600">Rare Kits:</span>
-            <span className="font-medium">{stats.rarity_score.breakdown.rare_kits}</span>
+            <span className="font-medium">{stats.rarity_score?.breakdown?.rare_kits || '0%'}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-gray-600">Vintage Kits:</span>
-            <span className="font-medium">{stats.rarity_score.breakdown.vintage_kits}</span>
+            <span className="font-medium">{stats.rarity_score?.breakdown?.vintage_kits || '0%'}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-gray-600">Signed Kits:</span>
-            <span className="font-medium">{stats.rarity_score.breakdown.signed_kits}</span>
+            <span className="font-medium">{stats.rarity_score?.breakdown?.signed_kits || '0%'}</span>
           </div>
         </div>
       </div>
