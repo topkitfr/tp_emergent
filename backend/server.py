@@ -3681,6 +3681,40 @@ async def upload_profile_picture(file: UploadFile, current_user: dict = Depends(
         logger.error(f"Error uploading profile picture: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/users/profile/picture")
+async def delete_profile_picture(current_user: dict = Depends(get_current_user)):
+    """Delete user profile picture"""
+    try:
+        # Get current user data
+        user = await db.users.find_one({"id": current_user["id"]})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # If user has a profile picture, try to delete the file
+        if user.get("profile_picture_url"):
+            try:
+                file_path = UPLOAD_DIR / user["profile_picture_url"]
+                if file_path.exists():
+                    file_path.unlink()  # Delete the file
+            except Exception as file_error:
+                logger.warning(f"Could not delete profile picture file: {str(file_error)}")
+        
+        # Remove profile picture URL from user record
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$unset": {"profile_picture_url": ""}}
+        )
+        
+        return {
+            "message": "Profile picture deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting profile picture: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/users/{user_id}/profile")
 async def update_user_profile(user_id: str, profile_data: dict, current_user: dict = Depends(get_current_user)):
     """Update user profile"""
