@@ -458,24 +458,25 @@ class TopKitEnhancedProfileTesting:
                 print(f"      ✅ Endpoint accessible - collection stats returned")
                 
                 # Validate response structure
-                required_fields = ['total_items', 'total_value', 'by_type', 'by_condition']
+                required_fields = ['owned_count', 'wanted_count', 'total_estimated_value', 'categories']
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
                     print(f"      ✅ Response structure valid")
                     print(f"      ✅ Collection stats:")
-                    print(f"         Total items: {data.get('total_items', 0)}")
-                    print(f"         Total value: €{data.get('total_value', 0)}")
-                    print(f"         By type: {len(data.get('by_type', {}))}")
-                    print(f"         By condition: {len(data.get('by_condition', {}))}")
+                    print(f"         Owned items: {data.get('owned_count', 0)}")
+                    print(f"         Wanted items: {data.get('wanted_count', 0)}")
+                    print(f"         Total estimated value: €{data.get('total_estimated_value', 0)}")
+                    print(f"         Signed kits: {data.get('signed_kits', 0)}")
+                    print(f"         Rarity score: {data.get('rarity_score', {}).get('score', 0)}")
                     
                     # Validate numeric values
-                    total_items = data.get('total_items', 0)
-                    total_value = data.get('total_value', 0)
+                    owned_count = data.get('owned_count', 0)
+                    total_value = data.get('total_estimated_value', 0)
                     
-                    if isinstance(total_items, int) and isinstance(total_value, (int, float)):
+                    if isinstance(owned_count, int) and isinstance(total_value, (int, float)):
                         self.log_test("Collection Stats Endpoint", True, 
-                                     f"✅ Endpoint working correctly - {total_items} items, €{total_value} value")
+                                     f"✅ Endpoint working correctly - {owned_count} owned items, €{total_value} value")
                         return True
                     else:
                         self.log_test("Collection Stats Endpoint", False, 
