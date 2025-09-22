@@ -703,6 +703,21 @@ const CollaborativeProfilePage = ({ user, API }) => {
                         />
                       </div>
 
+                      {/* Favorite Club */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Favorite Club
+                        </label>
+                        <input
+                          type="text"
+                          name="favorite_club"
+                          value={settingsData.favorite_club}
+                          onChange={(e) => setSettingsData(prev => ({...prev, favorite_club: e.target.value}))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., FC Barcelona, PSG, Manchester United"
+                        />
+                      </div>
+
                       {/* Social Links */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
