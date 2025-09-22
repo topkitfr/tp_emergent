@@ -3734,6 +3734,7 @@ async def create_master_kit(
     except Exception as e:
         logger.error(f"Error creating master kit: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+@app.post("/api/users/profile/picture")
 async def upload_profile_picture(file: UploadFile, current_user: dict = Depends(get_current_user)):
     """Upload and update user profile picture"""
     try:
