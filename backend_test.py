@@ -441,11 +441,11 @@ class TopKitMasterKitTesting:
             
             # Create Master Kit data with invalid season format
             invalid_season_data = {
-                "kit_type": "home",
+                "kit_type": "authentic",
                 "club_id": test_club['id'],
                 "brand_id": test_brand['id'],
                 "season": "2024-2025",  # Invalid format (should be 2024/2025)
-                "kit_style": "classic",
+                "kit_style": "home",
                 "gender": "man",
                 "primary_color": "Red"
             }
