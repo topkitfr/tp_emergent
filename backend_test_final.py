@@ -22,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://kit-showcase-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-jersey.preview.emergentagent.com/api"
 
 # Target Admin Credentials for Final Verification
 TARGET_ADMIN_CREDENTIALS = {

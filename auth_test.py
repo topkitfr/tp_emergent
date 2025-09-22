@@ -56,7 +56,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://kit-showcase-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-jersey.preview.emergentagent.com/api"
 
 class AuthenticationSystemTester:
     def __init__(self):

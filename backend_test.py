@@ -22,7 +22,7 @@ from pathlib import Path
 import io
 
 # Configuration
-BACKEND_URL = "https://kit-showcase-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-jersey.preview.emergentagent.com/api"
 
 # Test Admin Credentials for authentication
 ADMIN_CREDENTIALS = {
