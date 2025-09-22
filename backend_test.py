@@ -22,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://jersey-levels.preview.emergentagent.com/api"
+BACKEND_URL = "https://xp-tracking.preview.emergentagent.com/api"
 
 # Target Admin Credentials - CORRECTED EMAIL
 TARGET_ADMIN_CREDENTIALS = {
