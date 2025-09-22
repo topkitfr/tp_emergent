@@ -830,12 +830,21 @@ async def get_brands_for_form():
 
 @app.get("/api/form-data/players")
 async def get_form_players():
-    """Get all players for form dropdowns with influence coefficients"""
+    """Get all players for form dropdowns with influence coefficients and player types"""
     try:
         players = await db.players.find(
             {}, 
-            {"name": 1, "nationality": 1, "position": 1, "influence_coefficient": 1}
+            {"name": 1, "nationality": 1, "position": 1, "influence_coefficient": 1, "player_type": 1}
         ).to_list(length=None)
+        
+        # Add coefficient from player_type if influence_coefficient is None
+        for player in players:
+            if not player.get("influence_coefficient") and player.get("player_type"):
+                player_type = PlayerType(player["player_type"])
+                player["coefficient"] = get_player_type_coefficient(player_type)
+            else:
+                player["coefficient"] = player.get("influence_coefficient", 0.0)
+        
         return players
     except Exception as e:
         logger.error(f"Error fetching players: {str(e)}")
