@@ -414,7 +414,7 @@ class UserLevel(str, Enum):
     BALLON_DOR = "Ballon d'Or" # 2000+ XP
 
 class User(BaseModel):
-    """User model with gamification"""
+    """User model with gamification and social features"""
     id: str
     name: str
     email: str
@@ -422,6 +422,17 @@ class User(BaseModel):
     created_at: datetime
     # Privacy settings
     profile_private: bool = False  # Whether profile is private
+    is_public_profile: bool = True  # For public profile viewing
+    # Profile information
+    bio: Optional[str] = None
+    favorite_club: Optional[str] = None
+    instagram_username: Optional[str] = None
+    twitter_username: Optional[str] = None
+    website: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    # Social features
+    followers_count: int = 0
+    following_count: int = 0
     # Gamification fields
     xp: int = 0
     level: UserLevel = UserLevel.REMPLACANT
