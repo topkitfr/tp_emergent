@@ -79,9 +79,33 @@ const CollaborativeProfilePage = ({ user, API }) => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
-  const handleProfileUpdate = (updatedProfile) => {
-    setUserProfile(updatedProfile);
-    // Update user context if needed
+  const handleProfileUpdate = async () => {
+    // Reload user profile and refresh the user data from localStorage
+    try {
+      const token = localStorage.getItem('token');
+      if (token && user) {
+        // Fetch fresh user data from backend
+        const response = await fetch(`${API}/api/users/${user.id}/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const updatedUserData = await response.json();
+          
+          // Update localStorage with fresh user data
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const updatedUser = { ...currentUser, ...updatedUserData };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          // Force page reload to get fresh user data
+          window.location.reload();
+        }
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      // Force reload even if there's an error to refresh the UI
+      window.location.reload();
+    }
   };
 
   const handleSettingsFieldFocus = (fieldName) => {
