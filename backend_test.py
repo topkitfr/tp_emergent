@@ -466,8 +466,13 @@ class TopKitPlayerTypeFeatureTesting:
             
             print(f"      Testing default player_type assignment (no player_type provided)")
             response = self.session.post(
-                f"{BACKEND_URL}/contributions/players",
-                json=default_player_data,
+                f"{BACKEND_URL}/contributions-v2/",
+                json={
+                    "entity_type": "player",
+                    "title": "Test Default Player",
+                    "description": "Testing default player_type assignment",
+                    "data": default_player_data
+                },
                 timeout=10
             )
             
