@@ -428,10 +428,14 @@ class TopKitPlayerTypeFeatureTesting:
                 
                 print(f"      Testing player_type: {player_type}")
                 
-                # Test player creation with this player_type
                 response = self.session.post(
-                    f"{BACKEND_URL}/contributions/players",
-                    json=test_player_data,
+                    f"{BACKEND_URL}/contributions-v2/",
+                    json={
+                        "entity_type": "player",
+                        "title": f"Test {player_type.title()} Player",
+                        "description": f"Testing {player_type} player type validation",
+                        "data": test_player_data
+                    },
                     timeout=10
                 )
                 
