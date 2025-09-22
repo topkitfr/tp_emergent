@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Edit, Trash2, Search } from 'lucide-react';
+import EnhancedEditKitForm from '../components/EnhancedEditKitForm';
 
 const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const [collections, setCollections] = useState([]);
