@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import CollaborativeHeader from './components/CollaborativeHeader';
+import ProtectedRoute from './components/ProtectedRoute';
 import CollaborativeHomepage from './pages/CollaborativeHomepage';
 import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
 import CataloguePage from './pages/CataloguePage';
