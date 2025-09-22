@@ -3635,7 +3635,105 @@ async def get_recent_contributions(limit: int = Query(10, le=20)):
         logger.error(f"Error fetching recent contributions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/users/profile/picture")
+@app.post("/api/master-kits")
+async def create_master_kit(
+    kit_type: str = Form(...),
+    club_id: str = Form(...),
+    kit_style: str = Form(...),
+    season: str = Form(...),
+    brand_id: Optional[str] = Form(None),
+    primary_sponsor_id: Optional[str] = Form(None),
+    secondary_sponsor_ids: Optional[str] = Form(None),  # JSON string
+    front_photo: UploadFile = File(...),
+    back_photo: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new Master Kit with photos"""
+    try:
+        # Validate required fields
+        if not kit_type or not club_id or not kit_style or not season:
+            raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        # Validate season format (YYYY/YYYY)
+        import re
+        if not re.match(r'^\d{4}\/\d{4}$', season):
+            raise HTTPException(status_code=400, detail="Season must be in YYYY/YYYY format (e.g., 2023/2024)")
+        
+        # Validate file types
+        for file in [front_photo, back_photo]:
+            if not file.content_type.startswith('image/'):
+                raise HTTPException(status_code=400, detail=f"File {file.filename} must be an image")
+        
+        # Create master_kits directory if it doesn't exist
+        master_kits_dir = UPLOAD_DIR / "master_kits"
+        master_kits_dir.mkdir(exist_ok=True)
+        
+        # Generate unique ID for this master kit
+        master_kit_id = str(uuid.uuid4())
+        
+        # Save front photo
+        front_filename = f"{master_kit_id}_front.jpg"
+        front_path = master_kits_dir / front_filename
+        with open(front_path, "wb") as buffer:
+            shutil.copyfileobj(front_photo.file, buffer)
+        
+        # Save back photo
+        back_filename = f"{master_kit_id}_back.jpg"
+        back_path = master_kits_dir / back_filename
+        with open(back_path, "wb") as buffer:
+            shutil.copyfileobj(back_photo.file, buffer)
+        
+        # Handle other photos if provided
+        other_photo_urls = []
+        for i in range(3):  # Max 3 other photos
+            other_photo_key = f"other_photo_{i}"
+            # This would be handled if other photos are sent
+            
+        # Parse secondary sponsors if provided
+        secondary_sponsors = []
+        if secondary_sponsor_ids:
+            try:
+                secondary_sponsors = json.loads(secondary_sponsor_ids)
+            except json.JSONDecodeError:
+                pass
+        
+        # Generate topkit reference
+        topkit_reference = f"TK-MASTER-{str(random.randint(100000, 999999))}"
+        
+        # Create master kit data
+        master_kit_data = {
+            "id": master_kit_id,
+            "kit_type": kit_type,
+            "club_id": club_id,
+            "kit_style": kit_style,
+            "season": season,
+            "brand_id": brand_id,
+            "primary_sponsor_id": primary_sponsor_id,
+            "secondary_sponsor_ids": secondary_sponsors,
+            "front_photo_url": f"master_kits/{front_filename}",
+            "back_photo_url": f"master_kits/{back_filename}",
+            "other_photo_urls": other_photo_urls,
+            "created_by": current_user["id"],
+            "topkit_reference": topkit_reference,
+            "created_at": datetime.now(),
+            "verified_level": "unverified",
+            "total_collectors": 0
+        }
+        
+        # Insert into database
+        result = await db.master_kits.insert_one(master_kit_data)
+        
+        return {
+            "message": "Master Kit created successfully",
+            "id": master_kit_id,
+            "topkit_reference": topkit_reference
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating master kit: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 async def upload_profile_picture(file: UploadFile, current_user: dict = Depends(get_current_user)):
     """Upload and update user profile picture"""
     try:
