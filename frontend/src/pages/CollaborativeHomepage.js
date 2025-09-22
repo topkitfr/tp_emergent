@@ -65,7 +65,6 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
   const recentTeams = teams?.slice().reverse().slice(0, 10) || []; // Show latest teams first (reverse order)
   const recentBrands = brands?.slice(0, 4) || [];
   const recentMasterJerseys = masterJerseys?.slice(0, 12) || [];
-  
   // Statistics
   const stats = [
     { label: 'Teams', value: teams?.length || 0, icon: '⚽', color: 'text-gray-900' },
@@ -73,10 +72,6 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
     { label: 'Players', value: players?.length || 0, icon: '👤', color: 'text-gray-900' },
     { label: 'Kits', value: masterJerseys?.length || 0, icon: '📋', color: 'text-gray-900' }
   ];
-
-  const recentTeams = teams?.slice().reverse().slice(0, 10) || []; // Show latest teams first (reverse order)
-  const recentBrands = brands?.slice(0, 4) || [];
-  const recentMasterJerseys = masterJerseys?.slice(0, 12) || [];
 
   return (
     <div className="min-h-screen bg-white">
