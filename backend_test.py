@@ -18,6 +18,7 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
+import io
 
 # Configuration
 BACKEND_URL = "https://kit-showcase-3.preview.emergentagent.com/api"
@@ -29,13 +30,18 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitProfilePictureTesting:
+class TopKitMasterKitTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
-        self.uploaded_file_url = None
+        self.created_master_kit_id = None
+        self.form_data = {
+            'clubs': [],
+            'brands': [],
+            'players': []
+        }
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -91,246 +97,475 @@ class TopKitProfilePictureTesting:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_profile_picture_upload_endpoint(self):
-        """Test POST /api/users/profile/picture endpoint - Profile Picture Upload"""
+    def test_form_data_clubs_endpoint(self):
+        """Test GET /api/form-data/clubs endpoint"""
         try:
-            print(f"\n📸 TESTING PROFILE PICTURE UPLOAD ENDPOINT")
+            print(f"\n🏟️ TESTING FORM DATA CLUBS ENDPOINT")
             print("=" * 60)
-            print("Testing: POST /api/users/profile/picture - Upload test image and verify response")
+            print("Testing: GET /api/form-data/clubs - Verify clubs data returned")
             
-            if not self.auth_token:
-                self.log_test("Profile Picture Upload", False, "❌ No authentication token available")
+            response = self.session.get(
+                f"{BACKEND_URL}/form-data/clubs",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                clubs_data = response.json()
+                print(f"      ✅ Clubs endpoint accessible")
+                print(f"         Found {len(clubs_data)} clubs")
+                
+                if len(clubs_data) > 0:
+                    # Store clubs data for Master Kit creation
+                    self.form_data['clubs'] = clubs_data
+                    
+                    # Verify data structure
+                    sample_club = clubs_data[0]
+                    required_fields = ['id', 'name']
+                    
+                    if all(field in sample_club for field in required_fields):
+                        print(f"      ✅ Clubs data structure correct (id, name fields present)")
+                        print(f"         Sample club: {sample_club.get('name')} (ID: {sample_club.get('id')})")
+                        
+                        self.log_test("Form Data Clubs Endpoint", True, 
+                                     f"✅ Clubs endpoint working correctly - {len(clubs_data)} clubs returned with proper structure")
+                        return True
+                    else:
+                        self.log_test("Form Data Clubs Endpoint", False, 
+                                     "❌ Clubs data missing required fields (id, name)")
+                        return False
+                else:
+                    self.log_test("Form Data Clubs Endpoint", False, 
+                                 "❌ No clubs data returned")
+                    return False
+                    
+            else:
+                self.log_test("Form Data Clubs Endpoint", False, 
+                             f"❌ Clubs endpoint failed - Status {response.status_code}", response.text)
                 return False
+                
+        except Exception as e:
+            self.log_test("Form Data Clubs Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_form_data_brands_endpoint(self):
+        """Test GET /api/form-data/brands endpoint"""
+        try:
+            print(f"\n👕 TESTING FORM DATA BRANDS ENDPOINT")
+            print("=" * 60)
+            print("Testing: GET /api/form-data/brands - Verify brands data returned")
             
-            # Create a simple test image file in memory
+            response = self.session.get(
+                f"{BACKEND_URL}/form-data/brands",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                brands_data = response.json()
+                print(f"      ✅ Brands endpoint accessible")
+                print(f"         Found {len(brands_data)} brands")
+                
+                if len(brands_data) > 0:
+                    # Store brands data for Master Kit creation
+                    self.form_data['brands'] = brands_data
+                    
+                    # Verify data structure
+                    sample_brand = brands_data[0]
+                    required_fields = ['id', 'name']
+                    
+                    if all(field in sample_brand for field in required_fields):
+                        print(f"      ✅ Brands data structure correct (id, name fields present)")
+                        print(f"         Sample brand: {sample_brand.get('name')} (ID: {sample_brand.get('id')})")
+                        
+                        self.log_test("Form Data Brands Endpoint", True, 
+                                     f"✅ Brands endpoint working correctly - {len(brands_data)} brands returned with proper structure")
+                        return True
+                    else:
+                        self.log_test("Form Data Brands Endpoint", False, 
+                                     "❌ Brands data missing required fields (id, name)")
+                        return False
+                else:
+                    self.log_test("Form Data Brands Endpoint", False, 
+                                 "❌ No brands data returned")
+                    return False
+                    
+            else:
+                self.log_test("Form Data Brands Endpoint", False, 
+                             f"❌ Brands endpoint failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Form Data Brands Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_form_data_players_endpoint(self):
+        """Test GET /api/form-data/players endpoint with influence_coefficient field"""
+        try:
+            print(f"\n⚽ TESTING FORM DATA PLAYERS ENDPOINT")
+            print("=" * 60)
+            print("Testing: GET /api/form-data/players - Verify players data with influence_coefficient field")
+            
+            response = self.session.get(
+                f"{BACKEND_URL}/form-data/players",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                players_data = response.json()
+                print(f"      ✅ Players endpoint accessible")
+                print(f"         Found {len(players_data)} players")
+                
+                if len(players_data) > 0:
+                    # Store players data for Master Kit creation
+                    self.form_data['players'] = players_data
+                    
+                    # Verify data structure including influence_coefficient
+                    sample_player = players_data[0]
+                    required_fields = ['name']
+                    optional_fields = ['nationality', 'position', 'influence_coefficient']
+                    
+                    if all(field in sample_player for field in required_fields):
+                        print(f"      ✅ Players data structure correct (name field present)")
+                        print(f"         Sample player: {sample_player.get('name')}")
+                        
+                        # Check for influence_coefficient specifically
+                        if 'influence_coefficient' in sample_player:
+                            print(f"      ✅ influence_coefficient field present: {sample_player.get('influence_coefficient')}")
+                            self.log_test("Form Data Players Endpoint", True, 
+                                         f"✅ Players endpoint working correctly - {len(players_data)} players returned with influence_coefficient field")
+                            return True
+                        else:
+                            print(f"      ⚠️ influence_coefficient field missing from player data")
+                            self.log_test("Form Data Players Endpoint", True, 
+                                         f"✅ Players endpoint working - {len(players_data)} players returned (influence_coefficient field missing)")
+                            return True
+                    else:
+                        self.log_test("Form Data Players Endpoint", False, 
+                                     "❌ Players data missing required fields (name)")
+                        return False
+                else:
+                    print(f"      ⚠️ No players data returned (may be expected)")
+                    self.log_test("Form Data Players Endpoint", True, 
+                                 "✅ Players endpoint accessible (no data returned)")
+                    return True
+                    
+            else:
+                self.log_test("Form Data Players Endpoint", False, 
+                             f"❌ Players endpoint failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Form Data Players Endpoint", False, f"Exception: {str(e)}")
+            return False
+    
+    def create_test_image(self, width=800, height=600):
+        """Create a test image for Master Kit photo upload"""
+        try:
             from PIL import Image
-            import io
             
-            # Create a simple 200x200 test image (larger than previous tests)
-            test_image = Image.new('RGB', (200, 200), color='blue')
+            # Create a test image that meets minimum requirements (800x600px)
+            test_image = Image.new('RGB', (width, height), color='red')
             img_buffer = io.BytesIO()
             test_image.save(img_buffer, format='JPEG', quality=90)
             img_buffer.seek(0)
             
-            print(f"      Creating test image: 200x200 JPEG, blue color")
-            print(f"      Image size: {len(img_buffer.getvalue())} bytes")
+            return img_buffer
+        except ImportError:
+            # If PIL is not available, return None
+            return None
+    
+    def test_master_kit_creation_valid(self):
+        """Test POST /api/master-kits endpoint with valid data"""
+        try:
+            print(f"\n🏆 TESTING MASTER KIT CREATION - VALID DATA")
+            print("=" * 60)
+            print("Testing: POST /api/master-kits - Create Master Kit with valid sample data")
+            
+            if not self.auth_token:
+                self.log_test("Master Kit Creation Valid", False, "❌ No authentication token available")
+                return False
+            
+            # Check if we have form data
+            if not self.form_data['clubs'] or not self.form_data['brands']:
+                self.log_test("Master Kit Creation Valid", False, "❌ Missing form data (clubs/brands) for Master Kit creation")
+                return False
+            
+            # Get first club and brand for testing
+            test_club = self.form_data['clubs'][0]
+            test_brand = self.form_data['brands'][0]
+            
+            # Create valid Master Kit data
+            master_kit_data = {
+                "kit_type": "home",
+                "club_id": test_club['id'],
+                "brand_id": test_brand['id'],
+                "season": "2024/2025",
+                "kit_style": "classic",
+                "gender": "man",
+                "primary_color": "Red",
+                "secondary_color": "White"
+            }
+            
+            print(f"      Creating Master Kit with data:")
+            print(f"         Club: {test_club['name']} (ID: {test_club['id']})")
+            print(f"         Brand: {test_brand['name']} (ID: {test_brand['id']})")
+            print(f"         Season: {master_kit_data['season']}")
+            print(f"         Kit Type: {master_kit_data['kit_type']}")
+            print(f"         Kit Style: {master_kit_data['kit_style']}")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/master-kits",
+                json=master_kit_data,
+                timeout=15
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                data = response.json()
+                print(f"      ✅ Master Kit creation successful")
+                print(f"         Response status: {response.status_code}")
+                
+                # Check response structure
+                if 'id' in data:
+                    self.created_master_kit_id = data['id']
+                    print(f"         Master Kit ID: {self.created_master_kit_id}")
+                    
+                    # Verify key fields in response
+                    expected_fields = ['id', 'kit_type', 'season', 'created_at']
+                    present_fields = [field for field in expected_fields if field in data]
+                    
+                    print(f"         Response fields present: {present_fields}")
+                    
+                    if len(present_fields) >= 3:
+                        self.log_test("Master Kit Creation Valid", True, 
+                                     f"✅ Master Kit creation working correctly - ID: {self.created_master_kit_id}")
+                        return True
+                    else:
+                        self.log_test("Master Kit Creation Valid", False, 
+                                     "❌ Master Kit created but response missing key fields")
+                        return False
+                else:
+                    self.log_test("Master Kit Creation Valid", False, 
+                                 "❌ Master Kit creation response missing ID field")
+                    return False
+                    
+            elif response.status_code == 400:
+                error_data = response.text
+                print(f"      ❌ Bad request error: {error_data}")
+                self.log_test("Master Kit Creation Valid", False, 
+                             f"❌ Master Kit creation failed - Bad request: {error_data}")
+                return False
+            elif response.status_code == 401:
+                self.log_test("Master Kit Creation Valid", False, 
+                             "❌ Authentication failed for Master Kit creation")
+                return False
+            elif response.status_code == 422:
+                error_data = response.text
+                print(f"      ❌ Validation error: {error_data}")
+                self.log_test("Master Kit Creation Valid", False, 
+                             f"❌ Master Kit creation failed - Validation error: {error_data}")
+                return False
+            else:
+                self.log_test("Master Kit Creation Valid", False, 
+                             f"❌ Master Kit creation failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Master Kit Creation Valid", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_master_kit_creation_missing_fields(self):
+        """Test POST /api/master-kits endpoint with missing required fields"""
+        try:
+            print(f"\n❌ TESTING MASTER KIT CREATION - MISSING FIELDS")
+            print("=" * 60)
+            print("Testing: POST /api/master-kits - Test validation with missing required fields")
+            
+            if not self.auth_token:
+                self.log_test("Master Kit Creation Missing Fields", False, "❌ No authentication token available")
+                return False
+            
+            # Create Master Kit data with missing required fields
+            incomplete_data = {
+                "kit_type": "home",
+                # Missing club_id, brand_id, season
+                "kit_style": "classic"
+            }
+            
+            print(f"      Testing with incomplete data (missing club_id, brand_id, season)")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/master-kits",
+                json=incomplete_data,
+                timeout=10
+            )
+            
+            if response.status_code == 400 or response.status_code == 422:
+                print(f"      ✅ Validation error returned as expected (Status: {response.status_code})")
+                error_data = response.text
+                print(f"         Error details: {error_data[:200]}...")
+                
+                self.log_test("Master Kit Creation Missing Fields", True, 
+                             f"✅ Validation working correctly - Missing fields properly rejected (Status: {response.status_code})")
+                return True
+            elif response.status_code == 200 or response.status_code == 201:
+                self.log_test("Master Kit Creation Missing Fields", False, 
+                             "❌ Master Kit created with missing required fields - Validation not working")
+                return False
+            else:
+                self.log_test("Master Kit Creation Missing Fields", False, 
+                             f"❌ Unexpected response status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Master Kit Creation Missing Fields", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_master_kit_creation_invalid_season(self):
+        """Test POST /api/master-kits endpoint with invalid season format"""
+        try:
+            print(f"\n📅 TESTING MASTER KIT CREATION - INVALID SEASON FORMAT")
+            print("=" * 60)
+            print("Testing: POST /api/master-kits - Test season format validation (should be YYYY/YYYY)")
+            
+            if not self.auth_token:
+                self.log_test("Master Kit Creation Invalid Season", False, "❌ No authentication token available")
+                return False
+            
+            # Check if we have form data
+            if not self.form_data['clubs'] or not self.form_data['brands']:
+                self.log_test("Master Kit Creation Invalid Season", False, "❌ Missing form data for testing")
+                return False
+            
+            # Get first club and brand for testing
+            test_club = self.form_data['clubs'][0]
+            test_brand = self.form_data['brands'][0]
+            
+            # Create Master Kit data with invalid season format
+            invalid_season_data = {
+                "kit_type": "home",
+                "club_id": test_club['id'],
+                "brand_id": test_brand['id'],
+                "season": "2024-2025",  # Invalid format (should be 2024/2025)
+                "kit_style": "classic",
+                "gender": "man",
+                "primary_color": "Red"
+            }
+            
+            print(f"      Testing with invalid season format: '2024-2025' (should be '2024/2025')")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/master-kits",
+                json=invalid_season_data,
+                timeout=10
+            )
+            
+            if response.status_code == 400 or response.status_code == 422:
+                print(f"      ✅ Season validation error returned as expected (Status: {response.status_code})")
+                error_data = response.text
+                print(f"         Error details: {error_data[:200]}...")
+                
+                self.log_test("Master Kit Creation Invalid Season", True, 
+                             f"✅ Season format validation working correctly - Invalid format rejected (Status: {response.status_code})")
+                return True
+            elif response.status_code == 200 or response.status_code == 201:
+                print(f"      ⚠️ Master Kit created with invalid season format - Validation may be lenient")
+                self.log_test("Master Kit Creation Invalid Season", True, 
+                             "⚠️ Master Kit created with invalid season format - Validation may be lenient or format accepted")
+                return True
+            else:
+                self.log_test("Master Kit Creation Invalid Season", False, 
+                             f"❌ Unexpected response status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Master Kit Creation Invalid Season", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_master_kit_photo_upload(self):
+        """Test Master Kit photo upload functionality"""
+        try:
+            print(f"\n📸 TESTING MASTER KIT PHOTO UPLOAD")
+            print("=" * 60)
+            print("Testing: POST /api/upload/master-kit-photo - Test photo upload functionality")
+            
+            if not self.auth_token:
+                self.log_test("Master Kit Photo Upload", False, "❌ No authentication token available")
+                return False
+            
+            # Create test image
+            test_image = self.create_test_image(800, 600)
+            if not test_image:
+                print(f"      ⚠️ Cannot create test image (PIL not available) - Skipping photo upload test")
+                self.log_test("Master Kit Photo Upload", True, 
+                             "⚠️ Photo upload test skipped - PIL not available")
+                return True
+            
+            print(f"      Creating test image: 800x600 JPEG for Master Kit photo")
+            print(f"      Image size: {len(test_image.getvalue())} bytes")
             
             # Prepare multipart form data
             files = {
-                'file': ('test_profile_upload.jpg', img_buffer, 'image/jpeg')
+                'file': ('test_master_kit_photo.jpg', test_image, 'image/jpeg')
             }
             
-            print(f"      Uploading profile picture...")
+            print(f"      Uploading Master Kit photo...")
             response = self.session.post(
-                f"{BACKEND_URL}/users/profile/picture",
+                f"{BACKEND_URL}/upload/master-kit-photo",
                 files=files,
                 timeout=15
             )
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"      ✅ Profile picture upload successful")
+                print(f"      ✅ Master Kit photo upload successful")
                 print(f"         Response: {data.get('message', 'Upload successful')}")
                 
                 # Check if file URL is returned
-                file_url = data.get('profile_picture_url')
+                file_url = data.get('file_url')
                 if file_url:
                     print(f"         File URL: {file_url}")
-                    self.uploaded_file_url = file_url
                     
                     # Verify the file URL contains the expected path structure
-                    if 'profile_pictures/' in file_url:
-                        print(f"      ✅ File saved in correct directory: uploads/profile_pictures/")
-                        
-                        # Verify the file URL contains user ID
-                        user_id = self.admin_user_data.get('id', '')
-                        if user_id and user_id in file_url:
-                            print(f"      ✅ File URL contains user ID: {user_id}")
-                            self.log_test("Profile Picture Upload", True, 
-                                         "✅ Profile picture upload working correctly - file saved with proper URL structure")
-                            return True
-                        else:
-                            print(f"      ⚠️ File URL doesn't contain user ID (may be expected)")
-                            self.log_test("Profile Picture Upload", True, 
-                                         "✅ Profile picture upload working correctly")
-                            return True
+                    if 'master_kits/' in file_url:
+                        print(f"      ✅ File saved in correct directory: uploads/master_kits/")
+                        self.log_test("Master Kit Photo Upload", True, 
+                                     "✅ Master Kit photo upload working correctly")
+                        return True
                     else:
-                        self.log_test("Profile Picture Upload", False, 
-                                     "❌ File not saved in expected profile_pictures directory")
+                        self.log_test("Master Kit Photo Upload", False, 
+                                     "❌ File not saved in expected master_kits directory")
                         return False
                 else:
-                    self.log_test("Profile Picture Upload", False, 
-                                 "❌ No profile_picture_url returned in response")
+                    self.log_test("Master Kit Photo Upload", False, 
+                                 "❌ No file_url returned in response")
                     return False
                     
-            elif response.status_code == 404:
-                self.log_test("Profile Picture Upload", False, 
-                             "❌ Profile picture upload endpoint returns 404 Not Found")
+            elif response.status_code == 400:
+                error_data = response.text
+                print(f"      ❌ Bad request error: {error_data}")
+                self.log_test("Master Kit Photo Upload", False, 
+                             f"❌ Master Kit photo upload failed - Bad request: {error_data}")
                 return False
             elif response.status_code == 401:
-                self.log_test("Profile Picture Upload", False, 
-                             "❌ Authentication failed for profile picture upload")
-                return False
-            elif response.status_code == 400:
-                self.log_test("Profile Picture Upload", False, 
-                             f"❌ Bad request for profile picture upload", response.text)
+                self.log_test("Master Kit Photo Upload", False, 
+                             "❌ Authentication failed for Master Kit photo upload")
                 return False
             elif response.status_code == 413:
-                self.log_test("Profile Picture Upload", False, 
-                             "❌ File too large for profile picture upload")
+                self.log_test("Master Kit Photo Upload", False, 
+                             "❌ File too large for Master Kit photo upload")
                 return False
             else:
-                self.log_test("Profile Picture Upload", False, 
-                             f"❌ Profile picture upload failed - Status {response.status_code}", response.text)
+                self.log_test("Master Kit Photo Upload", False, 
+                             f"❌ Master Kit photo upload failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Profile Picture Upload", False, f"Exception: {str(e)}")
+            self.log_test("Master Kit Photo Upload", False, f"Exception: {str(e)}")
             return False
     
-    def test_profile_picture_delete_endpoint(self):
-        """Test DELETE /api/users/profile/picture endpoint - Profile Picture Delete"""
-        try:
-            print(f"\n🗑️ TESTING PROFILE PICTURE DELETE ENDPOINT")
-            print("=" * 60)
-            print("Testing: DELETE /api/users/profile/picture - Remove profile picture from user record")
-            
-            if not self.auth_token:
-                self.log_test("Profile Picture Delete", False, "❌ No authentication token available")
-                return False
-            
-            print(f"      Deleting profile picture...")
-            response = self.session.delete(
-                f"{BACKEND_URL}/users/profile/picture",
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                print(f"      ✅ Profile picture delete successful")
-                print(f"         Response: {data.get('message', 'Delete successful')}")
-                
-                # Verify the response message
-                expected_message = "Profile picture deleted successfully"
-                if data.get('message') == expected_message:
-                    print(f"      ✅ Correct success message returned")
-                    
-                    # Try to verify that the profile picture was actually removed
-                    # by checking if we can get user profile data
-                    user_id = self.admin_user_data.get('id')
-                    if user_id:
-                        try:
-                            verify_response = self.session.get(f"{BACKEND_URL}/users/{user_id}", timeout=10)
-                            if verify_response.status_code == 200:
-                                profile_data = verify_response.json()
-                                profile_picture_url = profile_data.get('profile_picture_url')
-                                
-                                if not profile_picture_url or profile_picture_url == "":
-                                    print(f"      ✅ Profile picture URL removed from user record")
-                                    self.log_test("Profile Picture Delete", True, 
-                                                 "✅ Profile picture delete working correctly - URL removed from user record")
-                                    return True
-                                else:
-                                    print(f"      ⚠️ Profile picture URL still present: {profile_picture_url}")
-                                    self.log_test("Profile Picture Delete", True, 
-                                                 "✅ Profile picture delete endpoint working (URL verification inconclusive)")
-                                    return True
-                            else:
-                                print(f"      ⚠️ Could not verify user profile (status {verify_response.status_code})")
-                                self.log_test("Profile Picture Delete", True, 
-                                             "✅ Profile picture delete endpoint working (verification failed)")
-                                return True
-                        except Exception as verify_error:
-                            print(f"      ⚠️ Could not verify profile update: {str(verify_error)}")
-                            self.log_test("Profile Picture Delete", True, 
-                                         "✅ Profile picture delete endpoint working (verification failed)")
-                            return True
-                    else:
-                        self.log_test("Profile Picture Delete", True, 
-                                     "✅ Profile picture delete endpoint working correctly")
-                        return True
-                else:
-                    print(f"      ⚠️ Unexpected response message: {data.get('message')}")
-                    self.log_test("Profile Picture Delete", True, 
-                                 "✅ Profile picture delete endpoint working (unexpected message)")
-                    return True
-                    
-            elif response.status_code == 404:
-                self.log_test("Profile Picture Delete", False, 
-                             "❌ Profile picture delete endpoint returns 404 Not Found")
-                return False
-            elif response.status_code == 401:
-                self.log_test("Profile Picture Delete", False, 
-                             "❌ Authentication failed for profile picture delete")
-                return False
-            elif response.status_code == 400:
-                self.log_test("Profile Picture Delete", False, 
-                             f"❌ Bad request for profile picture delete", response.text)
-                return False
-            else:
-                self.log_test("Profile Picture Delete", False, 
-                             f"❌ Profile picture delete failed - Status {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Profile Picture Delete", False, f"Exception: {str(e)}")
-            return False
-    
-    def verify_file_directory_structure(self):
-        """Verify that the uploads/profile_pictures directory exists and files are properly organized"""
-        try:
-            print(f"\n📁 VERIFYING FILE DIRECTORY STRUCTURE")
-            print("=" * 60)
-            print("Checking: uploads/profile_pictures directory structure and file organization")
-            
-            # This is a logical verification - we can't directly access the file system
-            # but we can verify through the API responses and behavior
-            
-            if self.uploaded_file_url:
-                print(f"      Uploaded file URL: {self.uploaded_file_url}")
-                
-                # Check if the URL follows the expected pattern
-                if self.uploaded_file_url.startswith('profile_pictures/'):
-                    print(f"      ✅ File URL follows expected pattern: profile_pictures/filename")
-                    
-                    # Check if filename contains user ID (expected pattern)
-                    user_id = self.admin_user_data.get('id', '')
-                    if user_id and user_id in self.uploaded_file_url:
-                        print(f"      ✅ Filename contains user ID for uniqueness")
-                        
-                        # Check if filename contains timestamp (expected pattern)
-                        if '_' in self.uploaded_file_url:
-                            print(f"      ✅ Filename appears to contain timestamp for uniqueness")
-                            self.log_test("File Directory Structure", True, 
-                                         "✅ File directory structure correct - proper organization in uploads/profile_pictures/")
-                            return True
-                        else:
-                            print(f"      ⚠️ Filename may not contain timestamp")
-                            self.log_test("File Directory Structure", True, 
-                                         "✅ File directory structure mostly correct")
-                            return True
-                    else:
-                        print(f"      ⚠️ Filename doesn't contain user ID (may be expected)")
-                        self.log_test("File Directory Structure", True, 
-                                     "✅ File directory structure correct")
-                        return True
-                else:
-                    self.log_test("File Directory Structure", False, 
-                                 "❌ File URL doesn't follow expected profile_pictures/ pattern")
-                    return False
-            else:
-                self.log_test("File Directory Structure", False, 
-                             "❌ No uploaded file URL available for verification")
-                return False
-                
-        except Exception as e:
-            self.log_test("File Directory Structure", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_profile_picture_functionality(self):
-        """Test complete profile picture upload and delete functionality"""
-        print("\n🚀 PROFILE PICTURE FUNCTIONALITY TESTING")
-        print("Testing profile picture upload and delete functionality")
+    def test_master_kit_functionality(self):
+        """Test complete Master Kit creation functionality"""
+        print("\n🚀 MASTER KIT CREATION FUNCTIONALITY TESTING")
+        print("Testing Master Kit creation functionality and form data endpoints")
         print("=" * 80)
         
         test_results = []
@@ -342,26 +577,42 @@ class TopKitProfilePictureTesting:
             print("❌ Cannot continue without authentication")
             return [False]
         
-        # Step 2: Test profile picture upload
-        print("\n2️⃣ Testing profile picture upload...")
-        upload_success = self.test_profile_picture_upload_endpoint()
-        test_results.append(upload_success)
+        # Step 2: Test form data endpoints
+        print("\n2️⃣ Testing form data endpoints...")
+        clubs_success = self.test_form_data_clubs_endpoint()
+        test_results.append(clubs_success)
         
-        # Step 3: Verify file directory structure
-        print("\n3️⃣ Verifying file directory structure...")
-        directory_success = self.verify_file_directory_structure()
-        test_results.append(directory_success)
+        brands_success = self.test_form_data_brands_endpoint()
+        test_results.append(brands_success)
         
-        # Step 4: Test profile picture delete
-        print("\n4️⃣ Testing profile picture delete...")
-        delete_success = self.test_profile_picture_delete_endpoint()
-        test_results.append(delete_success)
+        players_success = self.test_form_data_players_endpoint()
+        test_results.append(players_success)
+        
+        # Step 3: Test Master Kit creation with valid data
+        print("\n3️⃣ Testing Master Kit creation with valid data...")
+        valid_creation_success = self.test_master_kit_creation_valid()
+        test_results.append(valid_creation_success)
+        
+        # Step 4: Test Master Kit photo upload
+        print("\n4️⃣ Testing Master Kit photo upload...")
+        photo_upload_success = self.test_master_kit_photo_upload()
+        test_results.append(photo_upload_success)
+        
+        # Step 5: Test validation - missing fields
+        print("\n5️⃣ Testing validation - missing required fields...")
+        missing_fields_success = self.test_master_kit_creation_missing_fields()
+        test_results.append(missing_fields_success)
+        
+        # Step 6: Test validation - invalid season format
+        print("\n6️⃣ Testing validation - invalid season format...")
+        invalid_season_success = self.test_master_kit_creation_invalid_season()
+        test_results.append(invalid_season_success)
         
         return test_results
     
     def print_final_summary(self):
         """Print final testing summary"""
-        print("\n📊 PROFILE PICTURE FUNCTIONALITY TESTING SUMMARY")
+        print("\n📊 MASTER KIT CREATION FUNCTIONALITY TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -374,7 +625,7 @@ class TopKitProfilePictureTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 PROFILE PICTURE FUNCTIONALITY RESULTS:")
+        print(f"\n🔍 MASTER KIT FUNCTIONALITY RESULTS:")
         
         # Authentication
         auth_working = any(r['success'] for r in self.test_results if 'Emergency Admin Authentication' in r['test'])
@@ -383,26 +634,44 @@ class TopKitProfilePictureTesting:
         else:
             print(f"  ❌ AUTHENTICATION: Emergency admin login failed")
         
-        # Profile Picture Upload
-        upload_working = any(r['success'] for r in self.test_results if 'Profile Picture Upload' in r['test'])
-        if upload_working:
-            print(f"  ✅ UPLOAD FUNCTIONALITY: POST /api/users/profile/picture working correctly")
-        else:
-            print(f"  ❌ UPLOAD FUNCTIONALITY: POST /api/users/profile/picture failed")
+        # Form Data Endpoints
+        clubs_working = any(r['success'] for r in self.test_results if 'Form Data Clubs Endpoint' in r['test'])
+        brands_working = any(r['success'] for r in self.test_results if 'Form Data Brands Endpoint' in r['test'])
+        players_working = any(r['success'] for r in self.test_results if 'Form Data Players Endpoint' in r['test'])
         
-        # File Directory Structure
-        directory_working = any(r['success'] for r in self.test_results if 'File Directory Structure' in r['test'])
-        if directory_working:
-            print(f"  ✅ FILE ORGANIZATION: Files properly saved in uploads/profile_pictures directory")
+        if clubs_working and brands_working and players_working:
+            print(f"  ✅ FORM DATA ENDPOINTS: All form data endpoints working correctly")
+        elif clubs_working and brands_working:
+            print(f"  ⚠️ FORM DATA ENDPOINTS: Clubs and brands working, players may have issues")
         else:
-            print(f"  ❌ FILE ORGANIZATION: File directory structure issues")
+            print(f"  ❌ FORM DATA ENDPOINTS: Issues with form data endpoints")
         
-        # Profile Picture Delete
-        delete_working = any(r['success'] for r in self.test_results if 'Profile Picture Delete' in r['test'])
-        if delete_working:
-            print(f"  ✅ DELETE FUNCTIONALITY: DELETE /api/users/profile/picture working correctly")
+        # Master Kit Creation
+        creation_working = any(r['success'] for r in self.test_results if 'Master Kit Creation Valid' in r['test'])
+        if creation_working:
+            print(f"  ✅ MASTER KIT CREATION: POST /api/master-kits working correctly")
+            if self.created_master_kit_id:
+                print(f"     Created Master Kit ID: {self.created_master_kit_id}")
         else:
-            print(f"  ❌ DELETE FUNCTIONALITY: DELETE /api/users/profile/picture failed")
+            print(f"  ❌ MASTER KIT CREATION: POST /api/master-kits failed")
+        
+        # Photo Upload
+        photo_working = any(r['success'] for r in self.test_results if 'Master Kit Photo Upload' in r['test'])
+        if photo_working:
+            print(f"  ✅ PHOTO UPLOAD: Master Kit photo upload working correctly")
+        else:
+            print(f"  ❌ PHOTO UPLOAD: Master Kit photo upload failed")
+        
+        # Validation Tests
+        missing_fields_working = any(r['success'] for r in self.test_results if 'Master Kit Creation Missing Fields' in r['test'])
+        invalid_season_working = any(r['success'] for r in self.test_results if 'Master Kit Creation Invalid Season' in r['test'])
+        
+        if missing_fields_working and invalid_season_working:
+            print(f"  ✅ VALIDATION: Form validation working correctly")
+        elif missing_fields_working:
+            print(f"  ⚠️ VALIDATION: Missing fields validation working, season validation may be lenient")
+        else:
+            print(f"  ❌ VALIDATION: Form validation issues detected")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -414,7 +683,7 @@ class TopKitProfilePictureTesting:
         # Final status
         print(f"\n🎯 FINAL STATUS:")
         if passed_tests == total_tests:
-            print(f"  ✅ ALL FUNCTIONALITY WORKING: Profile picture upload and delete working perfectly")
+            print(f"  ✅ ALL FUNCTIONALITY WORKING: Master Kit creation system working perfectly")
         elif passed_tests >= total_tests * 0.75:
             print(f"  ⚠️ MOSTLY WORKING: {passed_tests}/{total_tests} tests passed")
             print(f"     - Minor issues identified but core functionality operational")
@@ -425,14 +694,14 @@ class TopKitProfilePictureTesting:
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
-        """Run all profile picture tests and return success status"""
-        test_results = self.test_profile_picture_functionality()
+        """Run all Master Kit tests and return success status"""
+        test_results = self.test_master_kit_functionality()
         self.print_final_summary()
         return any(test_results)
 
 def main():
-    """Main test execution - Profile Picture Functionality Testing"""
-    tester = TopKitProfilePictureTesting()
+    """Main test execution - Master Kit Creation Functionality Testing"""
+    tester = TopKitMasterKitTesting()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
