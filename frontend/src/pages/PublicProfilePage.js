@@ -262,6 +262,14 @@ const PublicProfilePage = ({ user, API }) => {
             </div>
           </div>
 
+          {/* Recent Collection */}
+          <RecentCollection 
+            user={user} 
+            targetUserId={profileData.id} 
+            API={API}
+            onViewMore={handleViewMoreCollection}
+          />
+
           {/* Gamification Profile */}
           <GamificationProfile 
             user={{ id: profileData.id, token: user.token }} 
@@ -290,15 +298,6 @@ const PublicProfilePage = ({ user, API }) => {
             </div>
             
             <div className="p-6">
-              {activeTab === 'overview' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Overview</h3>
-                    <p className="text-gray-600">Basic profile information and statistics</p>
-                  </div>
-                </div>
-              )}
-              
               {activeTab === 'social' && (
                 <div className="space-y-6">
                   <SocialFeatures 
