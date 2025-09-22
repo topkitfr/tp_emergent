@@ -65,6 +65,13 @@ class PhysicalState(str, Enum):
     DAMAGED = "damaged"
     NEEDS_RESTORATION = "needs_restoration"
 
+class PlayerType(str, Enum):
+    SHOWDOWN_LEGEND = "showdown_legend"  # 3.00x coefficient
+    SUPERSTAR = "superstar"              # 2.00x coefficient  
+    STAR = "star"                        # 1.00x coefficient
+    GOOD_PLAYER = "good_player"          # 0.5x coefficient
+    NONE = "none"                        # 0.00x coefficient
+
 # ================================
 # MASTER KIT - OFFICIAL REFERENCE
 # ================================
