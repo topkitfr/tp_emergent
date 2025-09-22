@@ -2833,6 +2833,10 @@ async def get_recent_contributions(limit: int = Query(10, le=20)):
             entity = await db[collection_name].find_one({"id": contrib["item_id"]})
             
             if entity:
+                # Remove MongoDB ObjectId to prevent serialization issues
+                if "_id" in entity:
+                    del entity["_id"]
+                    
                 # Get user info
                 user = await db.users.find_one({"id": contrib["user_id"]})
                 
