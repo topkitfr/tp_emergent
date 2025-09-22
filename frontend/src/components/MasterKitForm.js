@@ -1,33 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { X, Upload, AlertCircle } from 'lucide-react';
 
 const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
   const [formData, setFormData] = useState({
-    club_id: '',
-    season: '',
     kit_type: '',
-    competition_id: '',
-    model: '',
+    club_id: '',
+    kit_style: '',
     brand_id: '',
-    sku_code: '',
-    main_sponsor_id: '',
-    gender: '',
-    primary_color: '',
-    secondary_colors: [],
-    pattern_description: ''
+    primary_sponsor_id: '',
+    secondary_sponsor_ids: [],
+    season: '',
+    front_photo: null,
+    back_photo: null,
+    other_photos: []
   });
   
   const [formOptions, setFormOptions] = useState({
     clubs: [],
-    competitions: [],
     brands: []
   });
   
-  const [frontPhoto, setFrontPhoto] = useState(null);
-  const [frontPhotoPreview, setFrontPhotoPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const [newSecondaryColor, setNewSecondaryColor] = useState('');
+  const [previewImages, setPreviewImages] = useState({
+    front_photo: null,
+    back_photo: null,
+    other_photos: []
+  });
 
   // Reset form when modal opens/closes
   useEffect(() => {
