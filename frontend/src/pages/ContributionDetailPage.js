@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ClickableUsername from '../components/ClickableUsername';
 
-const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack }) => {
+const ContributionDetailPage = ({ contributionId, user, API, onNavigateBack, setShowAuthModal }) => {
   const [contribution, setContribution] = useState(null);
   const [currentData, setCurrentData] = useState(null);
   const [loading, setLoading] = useState(true);
