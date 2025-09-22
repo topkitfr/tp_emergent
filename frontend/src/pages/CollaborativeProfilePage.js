@@ -78,9 +78,16 @@ const CollaborativeProfilePage = ({ user, API }) => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
-  const handleProfileUpdate = (updatedProfile) => {
-    setUserProfile(updatedProfile);
-    // Update user context if needed
+  const handleSettingsFieldFocus = (fieldName) => {
+    // Switch to settings tab and focus on specific field
+    setActiveTab('settings');
+    setTimeout(() => {
+      const field = document.querySelector(`[name="${fieldName}"]`);
+      if (field) {
+        field.focus();
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const handleSettingsUpdate = async (e) => {
