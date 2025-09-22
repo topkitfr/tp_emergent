@@ -420,6 +420,8 @@ class User(BaseModel):
     email: str
     role: str = "user"  # "user" or "admin"
     created_at: datetime
+    # Privacy settings
+    profile_private: bool = False  # Whether profile is private
     # Gamification fields
     xp: int = 0
     level: UserLevel = UserLevel.REMPLACANT
