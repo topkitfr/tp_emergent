@@ -161,7 +161,7 @@ const LeaderboardPage = ({ user, API, setShowAuthModal }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {leaderboard.map((entry, index) => (
                     <tr 
-                      key={entry.username}
+                      key={entry.user_id || entry.username}
                       className={`
                         ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                         ${user && entry.username === user.name ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
