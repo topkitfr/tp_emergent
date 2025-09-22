@@ -3632,6 +3632,53 @@ async def get_recent_contributions(limit: int = Query(10, le=20)):
         logger.error(f"Error fetching recent contributions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/users/profile/picture")
+async def upload_profile_picture(file: UploadFile, current_user: dict = Depends(get_current_user)):
+    """Upload and update user profile picture"""
+    try:
+        # Validate file type
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Check file size (max 5MB)
+        file_content = await file.read()
+        if len(file_content) > 5 * 1024 * 1024:  # 5MB
+            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+        
+        # Reset file pointer
+        await file.seek(0)
+        
+        # Create profile pictures directory if it doesn't exist
+        profile_pics_dir = UPLOAD_DIR / "profile_pictures"
+        profile_pics_dir.mkdir(exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+        filename = f"{current_user['id']}_{int(datetime.now().timestamp())}.{file_extension}"
+        file_path = profile_pics_dir / filename
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Update user profile with new picture URL
+        relative_path = f"profile_pictures/{filename}"
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": {"profile_picture_url": relative_path}}
+        )
+        
+        return {
+            "message": "Profile picture updated successfully",
+            "profile_picture_url": relative_path
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading profile picture: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/users/{user_id}/profile")
 async def update_user_profile(user_id: str, profile_data: dict, current_user: dict = Depends(get_current_user)):
     """Update user profile"""
