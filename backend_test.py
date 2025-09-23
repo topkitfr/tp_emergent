@@ -462,14 +462,14 @@ class TopKitMasterKitFormTesting:
             
             # Create Master Kit to test response format
             master_kit_data = {
-                "kit_type": "third",
+                "kit_type": "authentic",  # KitModel: authentic or replica
                 "club_id": club['id'],
-                "kit_style": "short_sleeve",
+                "kit_style": "third",  # KitType: home, away, third, fourth, gk, special
                 "season": "2024/2025",
+                "competition_id": competition['id'],
                 "front_photo": "test_response_front.jpg",
                 "back_photo": "test_response_back.jpg",
-                "brand_id": brand['id'],
-                "competition_id": competition['id']
+                "brand_id": brand['id']
             }
             
             response = self.session.post(
