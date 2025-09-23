@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - PLAYER TYPE FEATURE COMPREHENSIVE TESTING
+TopKit Backend Testing Suite - MASTER KIT & BRAND FORM PRIORITY CHANGES TESTING
 
-Testing the new Player Type feature implementation:
-1. **Player Type System Testing** - Test GET /api/form-data/players endpoint to verify player_type and coefficient data
-2. **Player Type Coefficients** - Verify coefficients are correctly calculated (Showdown Legend: 3.00x, Superstar: 2.00x, Star: 1.00x, Good Player: 0.50x, None: 0.00x)
-3. **Player Contribution Creation** - Test player contribution creation through existing contribution system
-4. **Authentication System** - Login with emergency.admin@topkit.test / EmergencyAdmin2025! credentials
-5. **Edit Kit Form Integration** - Test that players with player_type return proper coefficient values
-6. **Backend Model Validation** - Test PlayerType enum values and player creation
+Testing the priority changes implemented for Master Kit and Brand forms:
+1. **Master Kit Form Updates** - Verify "Improve Master Kit Profile" form fields match "Create New Master Kit" form structure
+2. **Master Kit Database Cleanup** - Verify Master Kits database cleanup (should be empty now)
+3. **Brand Form Updates** - Test "New Contribution - Brand" form with updated fields:
+   - "Name" field (previously "Brand Name")
+   - "Type" dropdown with Brand/Sponsor options (previously "Official Name")
+   - Verify removal of "Alternative Name" and "Additional Logo" fields
+4. **Backend Model Validation** - Test BrandType enum (brand/sponsor)
+5. **Brand Entity Creation** - Verify brand creation through contribution system includes type field
+6. **Form Data Endpoints** - Test GET /api/form-data/brands returns brands with type field
 
 CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
-Focus on verifying the player type coefficients are properly integrated into the existing pricing system.
+Focus on verifying the form structure changes and brand type functionality work correctly.
 """
 
 import requests
