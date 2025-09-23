@@ -367,21 +367,6 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         purchase_date: editFormData.match_date || null
       };
 
-      // Helper functions to map enum values (update mapping)
-      const mapConditionValue = (value) => {
-        if (!value) return null;
-        
-        // Map origin_type to condition enum values
-        const mapping = {
-          'standard': null, // Standard doesn't need special condition
-          'match_issued': 'match_prepared',  
-          'match_worn': 'match_worn',
-          'training': 'training'
-        };
-        
-        return mapping[value] || null;
-      };
-
       console.log('Sending collection data:', collectionData);
 
       // Final data sanitization - ensure no arrays are sent to backend
