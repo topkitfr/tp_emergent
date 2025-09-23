@@ -2702,7 +2702,7 @@ async def moderate_contribution(
             if entity_id:
                 await transfer_contribution_images_to_entity(contribution, entity_id)
         
-        await db.contributions.update_one(
+        await db.contributions_v2.update_one(
             {"id": contribution_id},
             {
                 "$set": {
