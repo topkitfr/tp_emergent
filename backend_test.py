@@ -137,6 +137,115 @@ class TopKitMasterKitFormTesting:
             self.log_test("Get Form Data", False, f"Exception: {str(e)}")
             return False
     
+    def create_test_image(self, width=800, height=600, filename="test_image.jpg"):
+        """Create a test image for FormData upload"""
+        try:
+            # Create a simple test image
+            img = Image.new('RGB', (width, height), color='red')
+            img_buffer = BytesIO()
+            img.save(img_buffer, format='JPEG')
+            img_buffer.seek(0)
+            return img_buffer
+        except Exception as e:
+            print(f"Error creating test image: {str(e)}")
+            return None
+    
+    def test_master_kit_formdata_submission(self):
+        """Test Master Kit creation via FormData with file uploads"""
+        try:
+            print(f"\n📤 TESTING MASTER KIT FORMDATA SUBMISSION")
+            print("=" * 60)
+            print("Testing Master Kit creation via FormData with file uploads...")
+            
+            if not self.auth_token:
+                self.log_test("Master Kit FormData Submission", False, "❌ No authentication token available")
+                return False
+            
+            if not self.form_data:
+                self.log_test("Master Kit FormData Submission", False, "❌ No form data available")
+                return False
+            
+            # Select first available club, brand, and competition
+            if not self.form_data['clubs'] or not self.form_data['brands'] or not self.form_data['competitions']:
+                self.log_test("Master Kit FormData Submission", False, "❌ Insufficient form data for testing")
+                return False
+            
+            club = self.form_data['clubs'][0]
+            brand = self.form_data['brands'][0]
+            competition = self.form_data['competitions'][0]
+            
+            # Create test images
+            front_image = self.create_test_image(800, 600, "front_test.jpg")
+            back_image = self.create_test_image(800, 600, "back_test.jpg")
+            
+            if not front_image or not back_image:
+                self.log_test("Master Kit FormData Submission", False, "❌ Failed to create test images")
+                return False
+            
+            # Prepare FormData
+            files = {
+                'front_photo': ('front_test.jpg', front_image, 'image/jpeg'),
+                'back_photo': ('back_test.jpg', back_image, 'image/jpeg')
+            }
+            
+            data = {
+                'kit_type': 'authentic',
+                'club_id': club['id'],
+                'kit_style': 'home',
+                'season': '2024/2025',
+                'competition_id': competition['id'],
+                'brand_id': brand['id']
+            }
+            
+            print(f"      Creating Master Kit via FormData:")
+            print(f"         Club: {club['name']} ({club['id']})")
+            print(f"         Brand: {brand['name']} ({brand['id']})")
+            print(f"         Competition: {competition['name']} ({competition['id']})")
+            print(f"         Kit Type: {data['kit_type']}")
+            print(f"         Season: {data['season']}")
+            print(f"         Files: front_photo, back_photo")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/master-kits",
+                files=files,
+                data=data,
+                timeout=20
+            )
+            
+            if response.status_code in [200, 201]:
+                response_data = response.json()
+                self.created_master_kit_id = response_data.get('id')
+                
+                print(f"         ✅ Master Kit created via FormData successfully")
+                print(f"            Master Kit ID: {self.created_master_kit_id}")
+                print(f"            TopKit Reference: {response_data.get('topkit_reference')}")
+                print(f"            Status: {response_data.get('status', 'N/A')}")
+                
+                # Verify response structure
+                required_response_fields = ['id', 'topkit_reference']
+                missing_fields = [field for field in required_response_fields if field not in response_data]
+                
+                if not missing_fields:
+                    self.log_test("Master Kit FormData Submission", True, 
+                                 f"✅ Master Kit created via FormData with file uploads successfully")
+                    return True
+                else:
+                    self.log_test("Master Kit FormData Submission", False, 
+                                 f"❌ Master Kit created but response missing fields: {missing_fields}")
+                    return False
+                    
+            else:
+                error_text = response.text
+                print(f"         ❌ Master Kit FormData creation failed - Status {response.status_code}")
+                print(f"            Error: {error_text}")
+                self.log_test("Master Kit FormData Submission", False, 
+                             f"❌ Master Kit FormData creation failed - Status {response.status_code}", error_text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Master Kit FormData Submission", False, f"Exception: {str(e)}")
+            return False
+    
     def test_master_kit_creation_required_fields(self):
         """Test Master Kit creation with required fields only"""
         try:
