@@ -345,15 +345,19 @@ class TopKitMasterKitFormTesting:
                     missing_fields = [field for field in required_fields if field not in contribution]
                     
                     if not missing_fields:
-                        # Check if status is "pending"
-                        if contribution.get('status') == 'pending':
+                        # Check if status is "pending_review" (NEW REQUIREMENT)
+                        if contribution.get('status') == 'pending_review':
                             self.log_test("Contribution Creation for Moderation", True, 
-                                         f"✅ Master Kit contribution created with pending status for moderation")
+                                         f"✅ Master Kit contribution created with pending_review status for moderation dashboard")
                             return True
+                        elif contribution.get('status') == 'pending':
+                            self.log_test("Contribution Creation for Moderation", False, 
+                                         f"❌ Master Kit contribution has old 'pending' status instead of 'pending_review'")
+                            return False
                         else:
-                            self.log_test("Contribution Creation for Moderation", True, 
-                                         f"✅ Master Kit contribution created with status: {contribution.get('status')}")
-                            return True
+                            self.log_test("Contribution Creation for Moderation", False, 
+                                         f"❌ Master Kit contribution has unexpected status: {contribution.get('status')} (expected 'pending_review')")
+                            return False
                     else:
                         self.log_test("Contribution Creation for Moderation", False, 
                                      f"❌ Contribution missing required fields: {missing_fields}")
