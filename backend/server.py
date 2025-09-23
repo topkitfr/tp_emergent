@@ -2687,7 +2687,7 @@ async def moderate_contribution(
 ):
     """Moderate a contribution (admin only)"""
     try:
-        contribution = await db.contributions.find_one({"id": contribution_id})
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
         if not contribution:
             raise HTTPException(status_code=404, detail="Contribution not found")
         
