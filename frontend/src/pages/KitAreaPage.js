@@ -383,7 +383,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(collectionData)
+        body: JSON.stringify(sanitizedData)
       });
 
       if (!response.ok) {
