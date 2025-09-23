@@ -887,10 +887,10 @@ async def create_master_kit(
         
         # Validate sponsor if provided
         main_sponsor = None
-        if master_kit_data.main_sponsor_id:
-            main_sponsor = await db.brands.find_one({"id": master_kit_data.main_sponsor_id})
+        if master_kit_data.primary_sponsor_id:
+            main_sponsor = await db.brands.find_one({"id": master_kit_data.primary_sponsor_id})
             if not main_sponsor:
-                raise HTTPException(status_code=400, detail="Main sponsor not found")
+                raise HTTPException(status_code=400, detail="Primary sponsor not found")
         
         # Generate new Master Kit
         master_kit = MasterKit(
