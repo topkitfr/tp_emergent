@@ -312,13 +312,23 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         return mapping[value] || null;
       };
 
-      // Convert patches array to string if it exists
+      // Convert patches array to string if it exists - with detailed logging
       let patchesString = null;
-      if (editFormData.patches && Array.isArray(editFormData.patches)) {
-        patchesString = editFormData.patches.join(', ');
-      } else if (editFormData.patches && typeof editFormData.patches === 'string') {
-        patchesString = editFormData.patches;
+      console.log('Raw patches from form:', editFormData.patches, 'Type:', typeof editFormData.patches);
+      
+      if (editFormData.patches) {
+        if (Array.isArray(editFormData.patches)) {
+          // Filter out any empty values and join with comma
+          const validPatches = editFormData.patches.filter(p => p && p.trim() !== '');
+          patchesString = validPatches.length > 0 ? validPatches.join(', ') : null;
+          console.log('Converted patches array to string:', patchesString);
+        } else if (typeof editFormData.patches === 'string' && editFormData.patches.trim() !== '') {
+          patchesString = editFormData.patches.trim();
+          console.log('Using patches as string:', patchesString);
+        }
       }
+      
+      console.log('Final patches value:', patchesString, 'Type:', typeof patchesString);
 
       // Map EnhancedEditKitForm fields to MyCollectionCreate fields
       const collectionData = {
