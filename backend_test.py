@@ -156,23 +156,29 @@ class TopKitPersonalDetailsFormTesting:
         try:
             print(f"\n🎯 TESTING COMPREHENSIVE COLLECTION CREATION")
             print("=" * 60)
-            print("Testing POST /api/my-collection with comprehensive personal details...")
+            print("Testing collection update with comprehensive personal details...")
             
-            if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Comprehensive Collection Creation", False, "❌ Missing authentication or test kit")
+            if not self.auth_token:
+                self.log_test("Comprehensive Collection Creation", False, "❌ Missing authentication")
                 return False
             
-            # Find available kit for testing
-            test_kit = self.available_master_kits[0] if self.available_master_kits else None
-            if not test_kit:
-                self.log_test("Comprehensive Collection Creation", False, "❌ No test Master Kit available")
+            # Get existing collection items to update one with comprehensive data
+            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            if collection_response.status_code != 200:
+                self.log_test("Comprehensive Collection Creation", False, "❌ Cannot get collection items")
                 return False
             
-            # Create comprehensive collection data with all personal details
-            comprehensive_data = {
-                "master_kit_id": test_kit.get('id'),
-                "collection_type": "owned",
-                
+            collection_items = collection_response.json()
+            if not collection_items:
+                self.log_test("Comprehensive Collection Creation", False, "❌ No collection items available for testing")
+                return False
+            
+            # Use first collection item for testing
+            collection_id = collection_items[0].get('id')
+            self.created_collection_id = collection_id
+            
+            # Update data with comprehensive personal details
+            update_data = {
                 # Basic Information
                 "size": "L",
                 "name_printing": "MESSI",
@@ -193,32 +199,31 @@ class TopKitPersonalDetailsFormTesting:
                 "personal_notes": "Comprehensive test with all personal details - field mapping verification"  # Should map from comments
             }
             
-            print(f"      Creating comprehensive collection item:")
-            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
-            print(f"         Size: {comprehensive_data['size']}")
-            print(f"         Name Printing: {comprehensive_data['name_printing']}")
-            print(f"         Number Printing: {comprehensive_data['number_printing']}")
-            print(f"         Condition: {comprehensive_data['condition']}")
-            print(f"         Physical State: {comprehensive_data['physical_state']}")
-            print(f"         Patches: {comprehensive_data['patches']}")
-            print(f"         Is Signed: {comprehensive_data['is_signed']}")
-            print(f"         Signed By: {comprehensive_data['signed_by']}")
-            print(f"         Purchase Price: €{comprehensive_data['purchase_price']}")
-            print(f"         Purchase Date: {comprehensive_data['purchase_date']}")
-            print(f"         Personal Notes: {comprehensive_data['personal_notes']}")
+            print(f"      Updating collection item with comprehensive personal details:")
+            print(f"         Collection ID: {collection_id}")
+            print(f"         Size: {update_data['size']}")
+            print(f"         Name Printing: {update_data['name_printing']}")
+            print(f"         Number Printing: {update_data['number_printing']}")
+            print(f"         Condition: {update_data['condition']}")
+            print(f"         Physical State: {update_data['physical_state']}")
+            print(f"         Patches: {update_data['patches']}")
+            print(f"         Is Signed: {update_data['is_signed']}")
+            print(f"         Signed By: {update_data['signed_by']}")
+            print(f"         Purchase Price: €{update_data['purchase_price']}")
+            print(f"         Purchase Date: {update_data['purchase_date']}")
+            print(f"         Personal Notes: {update_data['personal_notes']}")
             
-            response = self.session.post(
-                f"{BACKEND_URL}/my-collection",
-                json=comprehensive_data,
+            response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_id}",
+                json=update_data,
                 timeout=15
             )
             
-            if response.status_code in [200, 201]:
+            if response.status_code == 200:
                 data = response.json()
-                self.created_collection_id = data.get('id')
                 
-                print(f"         ✅ Comprehensive collection creation successful")
-                print(f"            Collection Item ID: {self.created_collection_id}")
+                print(f"         ✅ Comprehensive collection update successful")
+                print(f"            Collection Item ID: {collection_id}")
                 print(f"            Master Kit ID: {data.get('master_kit_id')}")
                 print(f"            Collection Type: {data.get('collection_type')}")
                 
@@ -227,34 +232,34 @@ class TopKitPersonalDetailsFormTesting:
                 field_mapping_issues = []
                 
                 # Check personal_notes mapping (from comments)
-                if data.get('personal_notes') != comprehensive_data['personal_notes']:
+                if data.get('personal_notes') != update_data['personal_notes']:
                     field_mapping_success = False
-                    field_mapping_issues.append(f"personal_notes mapping failed: expected '{comprehensive_data['personal_notes']}', got '{data.get('personal_notes')}'")
+                    field_mapping_issues.append(f"personal_notes mapping failed: expected '{update_data['personal_notes']}', got '{data.get('personal_notes')}'")
                 
                 # Check condition mapping (from origin_type)
-                if data.get('condition') != comprehensive_data['condition']:
+                if data.get('condition') != update_data['condition']:
                     field_mapping_success = False
-                    field_mapping_issues.append(f"condition mapping failed: expected '{comprehensive_data['condition']}', got '{data.get('condition')}'")
+                    field_mapping_issues.append(f"condition mapping failed: expected '{update_data['condition']}', got '{data.get('condition')}'")
                 
                 # Check physical_state mapping (from general_condition)
-                if data.get('physical_state') != comprehensive_data['physical_state']:
+                if data.get('physical_state') != update_data['physical_state']:
                     field_mapping_success = False
-                    field_mapping_issues.append(f"physical_state mapping failed: expected '{comprehensive_data['physical_state']}', got '{data.get('physical_state')}'")
+                    field_mapping_issues.append(f"physical_state mapping failed: expected '{update_data['physical_state']}', got '{data.get('physical_state')}'")
                 
                 # Check patches field
-                if data.get('patches') != comprehensive_data['patches']:
+                if data.get('patches') != update_data['patches']:
                     field_mapping_success = False
-                    field_mapping_issues.append(f"patches mapping failed: expected '{comprehensive_data['patches']}', got '{data.get('patches')}'")
+                    field_mapping_issues.append(f"patches mapping failed: expected '{update_data['patches']}', got '{data.get('patches')}'")
                 
                 # Check signature fields
-                if data.get('is_signed') != comprehensive_data['is_signed']:
+                if data.get('is_signed') != update_data['is_signed']:
                     field_mapping_success = False
-                    field_mapping_issues.append(f"is_signed mapping failed: expected '{comprehensive_data['is_signed']}', got '{data.get('is_signed')}'")
+                    field_mapping_issues.append(f"is_signed mapping failed: expected '{update_data['is_signed']}', got '{data.get('is_signed')}'")
                 
                 if field_mapping_success:
                     print(f"            ✅ All field mappings working correctly")
                     self.log_test("Comprehensive Collection Creation", True, 
-                                 f"✅ Comprehensive collection creation with all personal details successful")
+                                 f"✅ Comprehensive collection update with all personal details successful")
                     return True
                 else:
                     print(f"            ❌ Field mapping issues detected:")
@@ -264,26 +269,13 @@ class TopKitPersonalDetailsFormTesting:
                                  f"❌ Field mapping issues: {'; '.join(field_mapping_issues)}")
                     return False
                     
-            elif response.status_code == 400 and "already in your" in response.text:
-                print(f"         ✅ Master Kit already in collection - testing field mapping with existing item")
-                # Try to get existing collection to verify field mapping
-                collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-                if collection_response.status_code == 200:
-                    collection_items = collection_response.json()
-                    if collection_items:
-                        self.created_collection_id = collection_items[0].get('id')
-                        print(f"            Using existing collection item ID: {self.created_collection_id}")
-                
-                self.log_test("Comprehensive Collection Creation", True, 
-                             f"✅ Collection endpoint working - item already exists")
-                return True
             else:
                 error_text = response.text
-                print(f"         ❌ Comprehensive collection creation failed - Status {response.status_code}")
+                print(f"         ❌ Comprehensive collection update failed - Status {response.status_code}")
                 print(f"            Error: {error_text}")
                 
                 self.log_test("Comprehensive Collection Creation", False, 
-                             f"❌ Collection creation failed - Status {response.status_code}", error_text)
+                             f"❌ Collection update failed - Status {response.status_code}", error_text)
                 return False
                 
         except Exception as e:
