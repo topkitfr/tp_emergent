@@ -551,6 +551,87 @@ async def get_pending_contributions(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ================================
+# ADMIN DATA MANAGEMENT ENDPOINTS
+# ================================
+
+@app.delete("/api/admin/clear-master-kits")
+async def clear_all_master_kits(admin_user: dict = Depends(get_admin_user)):
+    """Admin endpoint to clear all master kits from the database"""
+    try:
+        # Count existing master kits before deletion
+        count_before = await db.master_kits.count_documents({})
+        
+        # Delete all master kits
+        delete_result = await db.master_kits.delete_many({})
+        
+        logger.info(f"Admin {admin_user['id']} deleted {delete_result.deleted_count} master kits")
+        
+        return {
+            "message": "All master kits cleared successfully",
+            "deleted_count": delete_result.deleted_count,
+            "count_before": count_before
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing master kits: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/clear-personal-collections")
+async def clear_all_personal_collections(admin_user: dict = Depends(get_admin_user)):
+    """Admin endpoint to clear all personal collection items from the database"""
+    try:
+        # Count existing collection items before deletion
+        count_before = await db.my_collection.count_documents({})
+        
+        # Delete all personal collection items
+        delete_result = await db.my_collection.delete_many({})
+        
+        logger.info(f"Admin {admin_user['id']} deleted {delete_result.deleted_count} personal collection items")
+        
+        return {
+            "message": "All personal collection items cleared successfully", 
+            "deleted_count": delete_result.deleted_count,
+            "count_before": count_before
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing personal collections: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/clear-all-kits")
+async def clear_all_kits_and_collections(admin_user: dict = Depends(get_admin_user)):
+    """Admin endpoint to clear both master kits and personal collections"""
+    try:
+        # Count before deletion
+        master_kits_count = await db.master_kits.count_documents({})
+        collections_count = await db.my_collection.count_documents({})
+        
+        # Delete master kits
+        master_kits_result = await db.master_kits.delete_many({})
+        
+        # Delete personal collections
+        collections_result = await db.my_collection.delete_many({})
+        
+        total_deleted = master_kits_result.deleted_count + collections_result.deleted_count
+        
+        logger.info(f"Admin {admin_user['id']} cleared all kits: {master_kits_result.deleted_count} master kits, {collections_result.deleted_count} personal collection items")
+        
+        return {
+            "message": "All master kits and personal collections cleared successfully",
+            "master_kits_deleted": master_kits_result.deleted_count,
+            "collections_deleted": collections_result.deleted_count, 
+            "total_deleted": total_deleted,
+            "counts_before": {
+                "master_kits": master_kits_count,
+                "collections": collections_count
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing all kits and collections: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # UTILITY FUNCTIONS
 # ================================
 
