@@ -534,9 +534,9 @@ class TopKitMasterKitFormTesting:
             # Test with missing required fields
             invalid_data_tests = [
                 ({}, "Empty data"),
-                ({"kit_type": "home"}, "Missing club_id"),
-                ({"kit_type": "home", "club_id": "test-club-id"}, "Missing season"),
-                ({"kit_type": "home", "club_id": "test-club-id", "season": "invalid-season"}, "Invalid season format")
+                ({"kit_type": "authentic"}, "Missing club_id"),
+                ({"kit_type": "authentic", "club_id": "test-club-id"}, "Missing season"),
+                ({"kit_type": "authentic", "club_id": "test-club-id", "season": "invalid-season"}, "Invalid season format")
             ]
             
             validation_results = []
