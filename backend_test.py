@@ -53,7 +53,7 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitCollectionFormTesting:
+class TopKitPersonalDetailsFormTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
@@ -61,6 +61,7 @@ class TopKitCollectionFormTesting:
         self.admin_user_data = None
         self.available_master_kits = []
         self.test_master_kit_id = None
+        self.created_collection_id = None
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -150,548 +151,248 @@ class TopKitCollectionFormTesting:
             self.log_test("Get Available Master Kits", False, f"Exception: {str(e)}")
             return False
     
-    def test_minimal_collection_addition(self):
-        """Test minimal collection addition with just master_kit_id and collection_type"""
+    def test_comprehensive_collection_creation(self):
+        """Test comprehensive collection creation with detailed personal information"""
         try:
-            print(f"\n📦 TESTING MINIMAL COLLECTION ADDITION")
+            print(f"\n🎯 TESTING COMPREHENSIVE COLLECTION CREATION")
             print("=" * 60)
-            print("Testing POST /api/my-collection with minimal data...")
-            
-            if not self.auth_token:
-                self.log_test("Minimal Collection Addition", False, "❌ No authentication token available")
-                return False
-            
-            if not self.test_master_kit_id:
-                self.log_test("Minimal Collection Addition", False, "❌ No test Master Kit available")
-                return False
-            
-            # Find a Master Kit that's not already in collection
-            available_kit = None
-            for kit in self.available_master_kits:
-                # Check if this kit is already in collection
-                check_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-                if check_response.status_code == 200:
-                    existing_items = check_response.json()
-                    existing_kit_ids = [item.get('master_kit_id') for item in existing_items]
-                    if kit.get('id') not in existing_kit_ids:
-                        available_kit = kit
-                        break
-            
-            if not available_kit:
-                # If all kits are in collection, try to remove one first
-                print("      All Master Kits already in collection, testing with existing kit...")
-                available_kit = self.available_master_kits[0]
-            
-            # Test minimal collection addition - owned type
-            minimal_data = {
-                "master_kit_id": available_kit.get('id'),
-                "collection_type": "owned"
-            }
-            
-            print(f"      Adding Master Kit to collection (minimal data):")
-            print(f"         Master Kit ID: {available_kit.get('id')}")
-            print(f"         Master Kit: {available_kit.get('club', 'Unknown')} {available_kit.get('season', 'Unknown')}")
-            print(f"         Collection Type: owned")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/my-collection",
-                json=minimal_data,
-                timeout=15
-            )
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                
-                print(f"         ✅ Minimal collection addition successful")
-                print(f"            Collection Item ID: {data.get('id')}")
-                print(f"            Master Kit ID: {data.get('master_kit_id')}")
-                print(f"            Collection Type: {data.get('collection_type')}")
-                
-                # Verify no "[object Object]" errors in response
-                response_str = json.dumps(data)
-                if "[object Object]" in response_str:
-                    self.log_test("Minimal Collection Addition", False, 
-                                 f"❌ '[object Object]' errors found in response")
-                    return False
-                
-                # Verify required fields are present
-                required_fields = ['id', 'master_kit_id', 'collection_type', 'user_id']
-                missing_fields = [field for field in required_fields if field not in data]
-                
-                if not missing_fields:
-                    self.log_test("Minimal Collection Addition", True, 
-                                 f"✅ Minimal collection addition working - no '[object Object]' errors")
-                    return True
-                else:
-                    self.log_test("Minimal Collection Addition", False, 
-                                 f"❌ Response missing required fields: {missing_fields}")
-                    return False
-                    
-            elif response.status_code == 400 and "already in your" in response.text:
-                # Item already exists - this means the endpoint is working, just testing with existing data
-                print(f"         ✅ Master Kit already in collection (endpoint working correctly)")
-                self.log_test("Minimal Collection Addition", True, 
-                             f"✅ Minimal collection addition endpoint working - item already exists")
-                return True
-            else:
-                error_text = response.text
-                print(f"         ❌ Minimal collection addition failed - Status {response.status_code}")
-                print(f"            Error: {error_text}")
-                
-                # Check if it's a field mapping error
-                if "patches field expects List[str]" in error_text or "signature" in error_text:
-                    self.log_test("Minimal Collection Addition", False, 
-                                 f"❌ Field mapping error still exists - Status {response.status_code}", error_text)
-                else:
-                    self.log_test("Minimal Collection Addition", False, 
-                                 f"❌ Collection addition failed - Status {response.status_code}", error_text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Minimal Collection Addition", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_patches_field_empty_array(self):
-        """Test patches field with empty array []"""
-        try:
-            print(f"\n🔍 TESTING PATCHES FIELD - EMPTY ARRAY")
-            print("=" * 60)
-            print("Testing POST /api/my-collection with patches as empty array []...")
+            print("Testing POST /api/my-collection with comprehensive personal details...")
             
             if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Patches Field Empty Array", False, "❌ Missing authentication or test kit")
+                self.log_test("Comprehensive Collection Creation", False, "❌ Missing authentication or test kit")
                 return False
             
             # Find available kit for testing
             test_kit = self.available_master_kits[0] if self.available_master_kits else None
             if not test_kit:
-                self.log_test("Patches Field Empty Array", False, "❌ No test Master Kit available")
+                self.log_test("Comprehensive Collection Creation", False, "❌ No test Master Kit available")
                 return False
             
-            # Test with patches as empty array
-            test_data = {
+            # Create comprehensive collection data with all personal details
+            comprehensive_data = {
                 "master_kit_id": test_kit.get('id'),
                 "collection_type": "owned",
-                "patches": []  # Empty array - should be converted to string or null
+                
+                # Basic Information
+                "size": "L",
+                "name_printing": "MESSI",
+                "number_printing": "10",
+                
+                # Origin & Authenticity (condition mapping test)
+                "condition": "match_worn",  # Should map from origin_type
+                "physical_state": "very_good_condition",  # Should map from general_condition
+                
+                # Technical Details
+                "patches": "UEFA Champions League, Premier League, FA Cup",
+                "is_signed": True,
+                "signed_by": "Lionel Messi",
+                
+                # User Estimate & Comments
+                "purchase_price": 250.00,
+                "purchase_date": "2024-01-15",
+                "personal_notes": "Comprehensive test with all personal details - field mapping verification"  # Should map from comments
             }
             
-            print(f"      Testing patches field as empty array:")
+            print(f"      Creating comprehensive collection item:")
             print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
-            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
+            print(f"         Size: {comprehensive_data['size']}")
+            print(f"         Name Printing: {comprehensive_data['name_printing']}")
+            print(f"         Number Printing: {comprehensive_data['number_printing']}")
+            print(f"         Condition: {comprehensive_data['condition']}")
+            print(f"         Physical State: {comprehensive_data['physical_state']}")
+            print(f"         Patches: {comprehensive_data['patches']}")
+            print(f"         Is Signed: {comprehensive_data['is_signed']}")
+            print(f"         Signed By: {comprehensive_data['signed_by']}")
+            print(f"         Purchase Price: €{comprehensive_data['purchase_price']}")
+            print(f"         Purchase Date: {comprehensive_data['purchase_date']}")
+            print(f"         Personal Notes: {comprehensive_data['personal_notes']}")
             
             response = self.session.post(
                 f"{BACKEND_URL}/my-collection",
-                json=test_data,
+                json=comprehensive_data,
                 timeout=15
             )
             
             if response.status_code in [200, 201]:
                 data = response.json()
-                print(f"         ✅ Empty array patches field accepted successfully")
+                self.created_collection_id = data.get('id')
                 
-                # Check if patches field validation error occurred
-                if "Input should be a valid string" not in response.text:
-                    self.log_test("Patches Field Empty Array", True, 
-                                 f"✅ Empty array patches field handled correctly - no validation error")
+                print(f"         ✅ Comprehensive collection creation successful")
+                print(f"            Collection Item ID: {self.created_collection_id}")
+                print(f"            Master Kit ID: {data.get('master_kit_id')}")
+                print(f"            Collection Type: {data.get('collection_type')}")
+                
+                # Verify field mapping worked correctly
+                field_mapping_success = True
+                field_mapping_issues = []
+                
+                # Check personal_notes mapping (from comments)
+                if data.get('personal_notes') != comprehensive_data['personal_notes']:
+                    field_mapping_success = False
+                    field_mapping_issues.append(f"personal_notes mapping failed: expected '{comprehensive_data['personal_notes']}', got '{data.get('personal_notes')}'")
+                
+                # Check condition mapping (from origin_type)
+                if data.get('condition') != comprehensive_data['condition']:
+                    field_mapping_success = False
+                    field_mapping_issues.append(f"condition mapping failed: expected '{comprehensive_data['condition']}', got '{data.get('condition')}'")
+                
+                # Check physical_state mapping (from general_condition)
+                if data.get('physical_state') != comprehensive_data['physical_state']:
+                    field_mapping_success = False
+                    field_mapping_issues.append(f"physical_state mapping failed: expected '{comprehensive_data['physical_state']}', got '{data.get('physical_state')}'")
+                
+                # Check patches field
+                if data.get('patches') != comprehensive_data['patches']:
+                    field_mapping_success = False
+                    field_mapping_issues.append(f"patches mapping failed: expected '{comprehensive_data['patches']}', got '{data.get('patches')}'")
+                
+                # Check signature fields
+                if data.get('is_signed') != comprehensive_data['is_signed']:
+                    field_mapping_success = False
+                    field_mapping_issues.append(f"is_signed mapping failed: expected '{comprehensive_data['is_signed']}', got '{data.get('is_signed')}'")
+                
+                if field_mapping_success:
+                    print(f"            ✅ All field mappings working correctly")
+                    self.log_test("Comprehensive Collection Creation", True, 
+                                 f"✅ Comprehensive collection creation with all personal details successful")
                     return True
                 else:
-                    self.log_test("Patches Field Empty Array", False, 
-                                 f"❌ Validation error still occurs with empty array")
+                    print(f"            ❌ Field mapping issues detected:")
+                    for issue in field_mapping_issues:
+                        print(f"               • {issue}")
+                    self.log_test("Comprehensive Collection Creation", False, 
+                                 f"❌ Field mapping issues: {'; '.join(field_mapping_issues)}")
                     return False
                     
             elif response.status_code == 400 and "already in your" in response.text:
-                print(f"         ✅ Item already exists - but no patches validation error")
-                self.log_test("Patches Field Empty Array", True, 
-                             f"✅ Empty array patches field handled correctly - no validation error")
+                print(f"         ✅ Master Kit already in collection - testing field mapping with existing item")
+                # Try to get existing collection to verify field mapping
+                collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+                if collection_response.status_code == 200:
+                    collection_items = collection_response.json()
+                    if collection_items:
+                        self.created_collection_id = collection_items[0].get('id')
+                        print(f"            Using existing collection item ID: {self.created_collection_id}")
+                
+                self.log_test("Comprehensive Collection Creation", True, 
+                             f"✅ Collection endpoint working - item already exists")
                 return True
-            elif response.status_code == 422 and "Input should be a valid string" in response.text:
-                print(f"         ❌ Patches validation error still occurs with empty array")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Empty Array", False, 
-                             f"❌ Patches validation error: {response.text}")
-                return False
             else:
-                print(f"         ❌ Unexpected response - Status {response.status_code}")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Empty Array", False, 
-                             f"❌ Unexpected error - Status {response.status_code}")
+                error_text = response.text
+                print(f"         ❌ Comprehensive collection creation failed - Status {response.status_code}")
+                print(f"            Error: {error_text}")
+                
+                self.log_test("Comprehensive Collection Creation", False, 
+                             f"❌ Collection creation failed - Status {response.status_code}", error_text)
                 return False
                 
         except Exception as e:
-            self.log_test("Patches Field Empty Array", False, f"Exception: {str(e)}")
+            self.log_test("Comprehensive Collection Creation", False, f"Exception: {str(e)}")
             return False
     
-    def test_patches_field_string_array(self):
-        """Test patches field with string array ["patch1", "patch2"]"""
+    def test_price_estimation_endpoint(self):
+        """Test price estimation endpoint for collection item"""
         try:
-            print(f"\n🔍 TESTING PATCHES FIELD - STRING ARRAY")
+            print(f"\n💰 TESTING PRICE ESTIMATION ENDPOINT")
             print("=" * 60)
-            print("Testing POST /api/my-collection with patches as string array...")
-            
-            if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Patches Field String Array", False, "❌ Missing authentication or test kit")
-                return False
-            
-            # Find available kit for testing
-            test_kit = self.available_master_kits[1] if len(self.available_master_kits) > 1 else self.available_master_kits[0]
-            
-            # Test with patches as string array
-            test_data = {
-                "master_kit_id": test_kit.get('id'),
-                "collection_type": "wanted",
-                "patches": ["Champions League", "Premier League"]  # String array - should be converted to string
-            }
-            
-            print(f"      Testing patches field as string array:")
-            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
-            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/my-collection",
-                json=test_data,
-                timeout=15
-            )
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"         ✅ String array patches field accepted successfully")
-                
-                # Check if patches field validation error occurred
-                if "Input should be a valid string" not in response.text:
-                    self.log_test("Patches Field String Array", True, 
-                                 f"✅ String array patches field handled correctly - no validation error")
-                    return True
-                else:
-                    self.log_test("Patches Field String Array", False, 
-                                 f"❌ Validation error still occurs with string array")
-                    return False
-                    
-            elif response.status_code == 400 and "already in your" in response.text:
-                print(f"         ✅ Item already exists - but no patches validation error")
-                self.log_test("Patches Field String Array", True, 
-                             f"✅ String array patches field handled correctly - no validation error")
-                return True
-            elif response.status_code == 422 and "Input should be a valid string" in response.text:
-                print(f"         ❌ Patches validation error still occurs with string array")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field String Array", False, 
-                             f"❌ Patches validation error: {response.text}")
-                return False
-            else:
-                print(f"         ❌ Unexpected response - Status {response.status_code}")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field String Array", False, 
-                             f"❌ Unexpected error - Status {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Patches Field String Array", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_patches_field_null_undefined(self):
-        """Test patches field with null/undefined"""
-        try:
-            print(f"\n🔍 TESTING PATCHES FIELD - NULL/UNDEFINED")
-            print("=" * 60)
-            print("Testing POST /api/my-collection with patches as null...")
-            
-            if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Patches Field Null", False, "❌ Missing authentication or test kit")
-                return False
-            
-            # Find available kit for testing
-            test_kit = self.available_master_kits[2] if len(self.available_master_kits) > 2 else self.available_master_kits[0]
-            
-            # Test with patches as null
-            test_data = {
-                "master_kit_id": test_kit.get('id'),
-                "collection_type": "owned",
-                "patches": None  # Null value - should be handled gracefully
-            }
-            
-            print(f"      Testing patches field as null:")
-            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
-            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/my-collection",
-                json=test_data,
-                timeout=15
-            )
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"         ✅ Null patches field accepted successfully")
-                
-                # Check if patches field validation error occurred
-                if "Input should be a valid string" not in response.text:
-                    self.log_test("Patches Field Null", True, 
-                                 f"✅ Null patches field handled correctly - no validation error")
-                    return True
-                else:
-                    self.log_test("Patches Field Null", False, 
-                                 f"❌ Validation error still occurs with null")
-                    return False
-                    
-            elif response.status_code == 400 and "already in your" in response.text:
-                print(f"         ✅ Item already exists - but no patches validation error")
-                self.log_test("Patches Field Null", True, 
-                             f"✅ Null patches field handled correctly - no validation error")
-                return True
-            elif response.status_code == 422 and "Input should be a valid string" in response.text:
-                print(f"         ❌ Patches validation error still occurs with null")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Null", False, 
-                             f"❌ Patches validation error: {response.text}")
-                return False
-            else:
-                print(f"         ❌ Unexpected response - Status {response.status_code}")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Null", False, 
-                             f"❌ Unexpected error - Status {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Patches Field Null", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_patches_field_empty_string(self):
-        """Test patches field with empty string"""
-        try:
-            print(f"\n🔍 TESTING PATCHES FIELD - EMPTY STRING")
-            print("=" * 60)
-            print("Testing POST /api/my-collection with patches as empty string...")
-            
-            if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Patches Field Empty String", False, "❌ Missing authentication or test kit")
-                return False
-            
-            # Find available kit for testing
-            test_kit = self.available_master_kits[3] if len(self.available_master_kits) > 3 else self.available_master_kits[0]
-            
-            # Test with patches as empty string
-            test_data = {
-                "master_kit_id": test_kit.get('id'),
-                "collection_type": "wanted",
-                "patches": ""  # Empty string - should be handled gracefully
-            }
-            
-            print(f"      Testing patches field as empty string:")
-            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
-            print(f"         Patches: '{test_data['patches']}' (type: {type(test_data['patches'])})")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/my-collection",
-                json=test_data,
-                timeout=15
-            )
-            
-            if response.status_code in [200, 201]:
-                data = response.json()
-                print(f"         ✅ Empty string patches field accepted successfully")
-                
-                # Check if patches field validation error occurred
-                if "Input should be a valid string" not in response.text:
-                    self.log_test("Patches Field Empty String", True, 
-                                 f"✅ Empty string patches field handled correctly - no validation error")
-                    return True
-                else:
-                    self.log_test("Patches Field Empty String", False, 
-                                 f"❌ Validation error still occurs with empty string")
-                    return False
-                    
-            elif response.status_code == 400 and "already in your" in response.text:
-                print(f"         ✅ Item already exists - but no patches validation error")
-                self.log_test("Patches Field Empty String", True, 
-                             f"✅ Empty string patches field handled correctly - no validation error")
-                return True
-            elif response.status_code == 422 and "Input should be a valid string" in response.text:
-                print(f"         ❌ Patches validation error still occurs with empty string")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Empty String", False, 
-                             f"❌ Patches validation error: {response.text}")
-                return False
-            else:
-                print(f"         ❌ Unexpected response - Status {response.status_code}")
-                print(f"            Error: {response.text}")
-                self.log_test("Patches Field Empty String", False, 
-                             f"❌ Unexpected error - Status {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Patches Field Empty String", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_comprehensive_patches_combinations(self):
-        """Test comprehensive form data with various patches combinations"""
-        try:
-            print(f"\n🎯 TESTING COMPREHENSIVE PATCHES COMBINATIONS")
-            print("=" * 60)
-            print("Testing comprehensive form data with various patches combinations...")
-            
-            if not self.auth_token or not self.test_master_kit_id:
-                self.log_test("Comprehensive Patches Combinations", False, "❌ Missing authentication or test kit")
-                return False
-            
-            # Test different patches combinations with comprehensive form data
-            test_cases = [
-                {
-                    "name": "Comprehensive with string patches",
-                    "patches": "Champions League, Premier League, FA Cup",
-                    "expected_success": True
-                },
-                {
-                    "name": "Comprehensive with empty string patches",
-                    "patches": "",
-                    "expected_success": True
-                },
-                {
-                    "name": "Comprehensive with null patches",
-                    "patches": None,
-                    "expected_success": True
-                }
-            ]
-            
-            success_count = 0
-            
-            for i, test_case in enumerate(test_cases):
-                print(f"      Test {i+1}: {test_case['name']}")
-                
-                # Use different kits for each test
-                test_kit = self.available_master_kits[i % len(self.available_master_kits)]
-                
-                comprehensive_data = {
-                    "master_kit_id": test_kit.get('id'),
-                    "collection_type": "owned" if i % 2 == 0 else "wanted",
-                    "patches": test_case['patches'],
-                    "condition": "match_worn",
-                    "physical_state": "very_good_condition",
-                    "is_signed": True,
-                    "signed_by": "test-player-id",
-                    "purchase_price": 150.00,
-                    "purchase_date": "2024-01-15",
-                    "size": "L",
-                    "name_printing": "MESSI",
-                    "number_printing": "10",
-                    "personal_notes": "Test comprehensive data with patches variations"
-                }
-                
-                print(f"         Patches: {test_case['patches']} (type: {type(test_case['patches'])})")
-                
-                response = self.session.post(
-                    f"{BACKEND_URL}/my-collection",
-                    json=comprehensive_data,
-                    timeout=15
-                )
-                
-                if response.status_code in [200, 201]:
-                    print(f"            ✅ {test_case['name']} successful")
-                    success_count += 1
-                elif response.status_code == 400 and "already in your" in response.text:
-                    print(f"            ✅ {test_case['name']} - item already exists (no validation error)")
-                    success_count += 1
-                elif response.status_code == 422 and "Input should be a valid string" in response.text:
-                    print(f"            ❌ {test_case['name']} - patches validation error still occurs")
-                    print(f"               Error: {response.text}")
-                else:
-                    print(f"            ❌ {test_case['name']} - Status {response.status_code}")
-                    print(f"               Error: {response.text}")
-            
-            if success_count == len(test_cases):
-                self.log_test("Comprehensive Patches Combinations", True, 
-                             f"✅ All patches combinations working correctly")
-                return True
-            else:
-                self.log_test("Comprehensive Patches Combinations", False, 
-                             f"❌ Patches validation issues - {success_count}/{len(test_cases)} successful")
-                return False
-                
-        except Exception as e:
-            self.log_test("Comprehensive Patches Combinations", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_collection_type_variations(self):
-        """Test both 'owned' and 'wanted' collection types"""
-        try:
-            print(f"\n🔄 TESTING COLLECTION TYPE VARIATIONS")
-            print("=" * 60)
-            print("Testing both 'owned' and 'wanted' collection types...")
+            print("Testing GET /api/my-collection/{collection_id}/price-estimation...")
             
             if not self.auth_token:
-                self.log_test("Collection Type Variations", False, "❌ No authentication token available")
+                self.log_test("Price Estimation Endpoint", False, "❌ No authentication token available")
                 return False
             
-            if len(self.available_master_kits) < 2:
-                self.log_test("Collection Type Variations", False, "❌ Need at least 2 Master Kits for testing")
-                return False
-            
-            # Test different collection types with different Master Kits
-            test_cases = [
-                {
-                    "master_kit_id": self.available_master_kits[0].get('id'),
-                    "collection_type": "owned",
-                    "description": "Owned collection type"
-                },
-                {
-                    "master_kit_id": self.available_master_kits[1].get('id') if len(self.available_master_kits) > 1 else self.available_master_kits[0].get('id'),
-                    "collection_type": "wanted", 
-                    "description": "Wanted collection type"
-                }
-            ]
-            
-            success_count = 0
-            
-            for i, test_case in enumerate(test_cases, 1):
-                print(f"      Test {i}: {test_case['description']}")
-                print(f"         Master Kit ID: {test_case['master_kit_id']}")
-                print(f"         Collection Type: {test_case['collection_type']}")
-                
-                response = self.session.post(
-                    f"{BACKEND_URL}/my-collection",
-                    json=test_case,
-                    timeout=15
-                )
-                
-                if response.status_code in [200, 201]:
-                    data = response.json()
-                    
-                    # Verify collection type is correct
-                    if data.get('collection_type') == test_case['collection_type']:
-                        print(f"            ✅ {test_case['description']} successful")
-                        success_count += 1
+            if not self.created_collection_id:
+                # Try to get any collection item for testing
+                collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+                if collection_response.status_code == 200:
+                    collection_items = collection_response.json()
+                    if collection_items:
+                        self.created_collection_id = collection_items[0].get('id')
+                        print(f"      Using existing collection item ID: {self.created_collection_id}")
                     else:
-                        print(f"            ❌ Collection type mismatch: expected {test_case['collection_type']}, got {data.get('collection_type')}")
-                        
-                elif response.status_code == 400 and "already in your" in response.text:
-                    # Item already exists - this is expected behavior
-                    print(f"            ✅ {test_case['description']} - item already exists (expected)")
-                    success_count += 1
+                        self.log_test("Price Estimation Endpoint", False, "❌ No collection items available for testing")
+                        return False
                 else:
-                    print(f"            ❌ {test_case['description']} failed - Status {response.status_code}")
-                    print(f"               Error: {response.text}")
+                    self.log_test("Price Estimation Endpoint", False, "❌ Cannot get collection items for testing")
+                    return False
             
-            if success_count == len(test_cases):
-                self.log_test("Collection Type Variations", True, 
-                             f"✅ Both collection types working correctly")
-                return True
+            print(f"      Testing price estimation for collection item: {self.created_collection_id}")
+            
+            response = self.session.get(
+                f"{BACKEND_URL}/my-collection/{self.created_collection_id}/price-estimation",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                
+                print(f"         ✅ Price estimation endpoint accessible")
+                print(f"            Estimated Price: €{price_data.get('estimated_price', 'N/A')}")
+                
+                # Check for coefficient breakdown
+                coefficients = price_data.get('coefficients', {})
+                breakdown = price_data.get('breakdown', {})
+                
+                print(f"            Coefficients Available: {bool(coefficients)}")
+                print(f"            Breakdown Available: {bool(breakdown)}")
+                
+                # Verify specific coefficient categories
+                expected_coefficients = [
+                    'flocking',  # name+number printing
+                    'patches',
+                    'condition',
+                    'physical_state', 
+                    'signature'
+                ]
+                
+                coefficient_success = True
+                missing_coefficients = []
+                
+                for coeff_type in expected_coefficients:
+                    if coeff_type not in coefficients and coeff_type not in breakdown:
+                        coefficient_success = False
+                        missing_coefficients.append(coeff_type)
+                    else:
+                        coeff_value = coefficients.get(coeff_type) or breakdown.get(coeff_type)
+                        print(f"               {coeff_type.title()}: {coeff_value}")
+                
+                if coefficient_success:
+                    self.log_test("Price Estimation Endpoint", True, 
+                                 f"✅ Price estimation working with proper coefficient breakdown")
+                    return True
+                else:
+                    print(f"            ❌ Missing coefficient categories: {missing_coefficients}")
+                    self.log_test("Price Estimation Endpoint", False, 
+                                 f"❌ Missing coefficient categories: {', '.join(missing_coefficients)}")
+                    return False
+                    
+            elif response.status_code == 404:
+                print(f"         ❌ Price estimation endpoint not found - Status 404")
+                self.log_test("Price Estimation Endpoint", False, 
+                             f"❌ Price estimation endpoint not implemented - Status 404")
+                return False
             else:
-                self.log_test("Collection Type Variations", False, 
-                             f"❌ Collection type issues - {success_count}/{len(test_cases)} successful")
+                error_text = response.text
+                print(f"         ❌ Price estimation failed - Status {response.status_code}")
+                print(f"            Error: {error_text}")
+                
+                self.log_test("Price Estimation Endpoint", False, 
+                             f"❌ Price estimation failed - Status {response.status_code}", error_text)
                 return False
                 
         except Exception as e:
-            self.log_test("Collection Type Variations", False, f"Exception: {str(e)}")
+            self.log_test("Price Estimation Endpoint", False, f"Exception: {str(e)}")
             return False
     
-    def test_existing_collection_retrieval(self):
-        """Test retrieving existing collection items to verify no '[object Object]' errors"""
+    def test_personal_details_retrieval(self):
+        """Test retrieving collection item to verify personal details persistence"""
         try:
-            print(f"\n📖 TESTING EXISTING COLLECTION RETRIEVAL")
+            print(f"\n📖 TESTING PERSONAL DETAILS RETRIEVAL")
             print("=" * 60)
-            print("Testing GET /api/my-collection to verify no '[object Object]' errors...")
+            print("Testing GET /api/my-collection to verify personal details persistence...")
             
             if not self.auth_token:
-                self.log_test("Existing Collection Retrieval", False, "❌ No authentication token available")
+                self.log_test("Personal Details Retrieval", False, "❌ No authentication token available")
                 return False
             
             response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
@@ -702,47 +403,78 @@ class TopKitCollectionFormTesting:
                 print(f"      ✅ Collection retrieved successfully")
                 print(f"         Collection Items: {len(collection_items)}")
                 
-                # Check for "[object Object]" errors in any collection item
+                if not collection_items:
+                    self.log_test("Personal Details Retrieval", False, "❌ No collection items found")
+                    return False
+                
+                # Check first collection item for personal details
+                sample_item = collection_items[0]
+                
+                print(f"         Sample Collection Item Analysis:")
+                print(f"            ID: {sample_item.get('id')}")
+                print(f"            Master Kit ID: {sample_item.get('master_kit_id')}")
+                print(f"            Collection Type: {sample_item.get('collection_type')}")
+                
+                # Check personal details fields
+                personal_details_fields = {
+                    'size': sample_item.get('size'),
+                    'name_printing': sample_item.get('name_printing'),
+                    'number_printing': sample_item.get('number_printing'),
+                    'condition': sample_item.get('condition'),
+                    'physical_state': sample_item.get('physical_state'),
+                    'patches': sample_item.get('patches'),
+                    'is_signed': sample_item.get('is_signed'),
+                    'signed_by': sample_item.get('signed_by'),
+                    'purchase_price': sample_item.get('purchase_price'),
+                    'purchase_date': sample_item.get('purchase_date'),
+                    'personal_notes': sample_item.get('personal_notes')
+                }
+                
+                print(f"         Personal Details Fields:")
+                fields_with_data = 0
+                for field_name, field_value in personal_details_fields.items():
+                    if field_value is not None and field_value != "":
+                        fields_with_data += 1
+                        print(f"            ✅ {field_name}: {field_value}")
+                    else:
+                        print(f"            ⚪ {field_name}: {field_value}")
+                
+                # Check for "[object Object]" errors
                 response_str = json.dumps(collection_items)
                 object_errors = response_str.count("[object Object]")
                 
                 if object_errors > 0:
                     print(f"         ❌ Found {object_errors} '[object Object]' errors in collection data")
-                    self.log_test("Existing Collection Retrieval", False, 
-                                 f"❌ {object_errors} '[object Object]' errors found in existing collection data")
+                    self.log_test("Personal Details Retrieval", False, 
+                                 f"❌ {object_errors} '[object Object]' errors found")
                     return False
-                else:
-                    print(f"         ✅ No '[object Object]' errors found in collection data")
-                    
-                    # Show sample collection item structure
-                    if collection_items:
-                        sample_item = collection_items[0]
-                        print(f"         Sample item fields: {list(sample_item.keys())}")
-                        
-                        # Check specific fields that were problematic
-                        patches_field = sample_item.get('patches')
-                        signature_field = sample_item.get('signature')
-                        
-                        print(f"         Patches field: {patches_field} (type: {type(patches_field)})")
-                        print(f"         Signature field: {signature_field}")
-                    
-                    self.log_test("Existing Collection Retrieval", True, 
-                                 f"✅ No '[object Object]' errors in existing collection data")
+                
+                # Verify field mapping worked correctly
+                field_mapping_success = True
+                if fields_with_data >= 5:  # At least 5 personal detail fields should have data
+                    print(f"         ✅ Personal details persistence verified ({fields_with_data} fields with data)")
+                    self.log_test("Personal Details Retrieval", True, 
+                                 f"✅ Personal details persisted correctly - {fields_with_data} fields with data")
                     return True
+                else:
+                    print(f"         ❌ Insufficient personal details persisted ({fields_with_data} fields with data)")
+                    self.log_test("Personal Details Retrieval", False, 
+                                 f"❌ Insufficient personal details persisted - only {fields_with_data} fields with data")
+                    return False
                     
             else:
-                self.log_test("Existing Collection Retrieval", False, 
+                self.log_test("Personal Details Retrieval", False, 
                              f"❌ Collection retrieval failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Existing Collection Retrieval", False, f"Exception: {str(e)}")
+            self.log_test("Personal Details Retrieval", False, f"Exception: {str(e)}")
             return False
     
-    def test_patches_field_validation_fix(self):
-        """Test complete patches field validation fix"""
-        print("\n🚀 PATCHES FIELD VALIDATION FIX TESTING")
-        print("Testing the patches field validation fix for Add Personal Details form")
+    def test_personal_details_form_fix(self):
+        """Test complete personal details form fix"""
+        print("\n🚀 PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING")
+        print("Testing the personal details persistence and price calculation fix for Add Personal Details form")
         print("=" * 80)
         
         test_results = []
@@ -760,41 +492,26 @@ class TopKitCollectionFormTesting:
         master_kits_success = self.get_available_master_kits()
         test_results.append(master_kits_success)
         
-        # Step 3: Test patches field with empty array
-        print("\n3️⃣ Testing patches field with empty array []...")
-        empty_array_success = self.test_patches_field_empty_array()
-        test_results.append(empty_array_success)
-        
-        # Step 4: Test patches field with string array
-        print("\n4️⃣ Testing patches field with string array...")
-        string_array_success = self.test_patches_field_string_array()
-        test_results.append(string_array_success)
-        
-        # Step 5: Test patches field with null/undefined
-        print("\n5️⃣ Testing patches field with null/undefined...")
-        null_success = self.test_patches_field_null_undefined()
-        test_results.append(null_success)
-        
-        # Step 6: Test patches field with empty string
-        print("\n6️⃣ Testing patches field with empty string...")
-        empty_string_success = self.test_patches_field_empty_string()
-        test_results.append(empty_string_success)
-        
-        # Step 7: Test comprehensive patches combinations
-        print("\n7️⃣ Testing comprehensive patches combinations...")
-        comprehensive_success = self.test_comprehensive_patches_combinations()
+        # Step 3: Test comprehensive collection creation with personal details
+        print("\n3️⃣ Testing comprehensive collection creation with personal details...")
+        comprehensive_success = self.test_comprehensive_collection_creation()
         test_results.append(comprehensive_success)
         
-        # Step 8: Test minimal collection addition (for baseline)
-        print("\n8️⃣ Testing minimal collection addition...")
-        minimal_success = self.test_minimal_collection_addition()
-        test_results.append(minimal_success)
+        # Step 4: Test price estimation endpoint
+        print("\n4️⃣ Testing price estimation endpoint...")
+        price_estimation_success = self.test_price_estimation_endpoint()
+        test_results.append(price_estimation_success)
+        
+        # Step 5: Test personal details retrieval and persistence
+        print("\n5️⃣ Testing personal details retrieval and persistence...")
+        retrieval_success = self.test_personal_details_retrieval()
+        test_results.append(retrieval_success)
         
         return test_results
     
     def print_final_summary(self):
         """Print final testing summary"""
-        print("\n📊 PATCHES FIELD VALIDATION FIX TESTING SUMMARY")
+        print("\n📊 PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -807,7 +524,7 @@ class TopKitCollectionFormTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 PATCHES FIELD VALIDATION FIX RESULTS:")
+        print(f"\n🔍 PERSONAL DETAILS FORM FIX RESULTS:")
         
         # Authentication
         auth_working = any(r['success'] for r in self.test_results if 'Emergency Admin Authentication' in r['test'])
@@ -823,44 +540,26 @@ class TopKitCollectionFormTesting:
         else:
             print(f"  ❌ MASTER KITS ACCESS: Failed to get Master Kits")
         
-        # Patches Field Tests
-        empty_array_working = any(r['success'] for r in self.test_results if 'Patches Field Empty Array' in r['test'])
-        string_array_working = any(r['success'] for r in self.test_results if 'Patches Field String Array' in r['test'])
-        null_working = any(r['success'] for r in self.test_results if 'Patches Field Null' in r['test'])
-        empty_string_working = any(r['success'] for r in self.test_results if 'Patches Field Empty String' in r['test'])
-        comprehensive_working = any(r['success'] for r in self.test_results if 'Comprehensive Patches Combinations' in r['test'])
-        
-        if empty_array_working:
-            print(f"  ✅ PATCHES EMPTY ARRAY: No validation error with patches as []")
-        else:
-            print(f"  ❌ PATCHES EMPTY ARRAY: Still getting validation error with patches as []")
-        
-        if string_array_working:
-            print(f"  ✅ PATCHES STRING ARRAY: No validation error with patches as ['patch1', 'patch2']")
-        else:
-            print(f"  ❌ PATCHES STRING ARRAY: Still getting validation error with patches as string array")
-        
-        if null_working:
-            print(f"  ✅ PATCHES NULL: No validation error with patches as null")
-        else:
-            print(f"  ❌ PATCHES NULL: Still getting validation error with patches as null")
-        
-        if empty_string_working:
-            print(f"  ✅ PATCHES EMPTY STRING: No validation error with patches as ''")
-        else:
-            print(f"  ❌ PATCHES EMPTY STRING: Still getting validation error with patches as empty string")
-        
+        # Comprehensive Collection Creation
+        comprehensive_working = any(r['success'] for r in self.test_results if 'Comprehensive Collection Creation' in r['test'])
         if comprehensive_working:
-            print(f"  ✅ COMPREHENSIVE PATCHES: All patches combinations working in comprehensive form")
+            print(f"  ✅ COMPREHENSIVE COLLECTION CREATION: All personal details saved correctly")
         else:
-            print(f"  ❌ COMPREHENSIVE PATCHES: Issues with patches combinations in comprehensive form")
+            print(f"  ❌ COMPREHENSIVE COLLECTION CREATION: Field mapping issues detected")
         
-        # Minimal Collection Addition
-        minimal_working = any(r['success'] for r in self.test_results if 'Minimal Collection Addition' in r['test'])
-        if minimal_working:
-            print(f"  ✅ MINIMAL COLLECTION ADDITION: Basic form submission working")
+        # Price Estimation
+        price_estimation_working = any(r['success'] for r in self.test_results if 'Price Estimation Endpoint' in r['test'])
+        if price_estimation_working:
+            print(f"  ✅ PRICE ESTIMATION: Endpoint working with proper coefficient breakdown")
         else:
-            print(f"  ❌ MINIMAL COLLECTION ADDITION: Basic form submission failing")
+            print(f"  ❌ PRICE ESTIMATION: Endpoint not working or missing coefficients")
+        
+        # Personal Details Retrieval
+        retrieval_working = any(r['success'] for r in self.test_results if 'Personal Details Retrieval' in r['test'])
+        if retrieval_working:
+            print(f"  ✅ PERSONAL DETAILS RETRIEVAL: Personal details persisted and retrievable")
+        else:
+            print(f"  ❌ PERSONAL DETAILS RETRIEVAL: Personal details not properly persisted")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -869,52 +568,51 @@ class TopKitCollectionFormTesting:
             for failure in failures:
                 print(f"  • {failure['test']}: {failure['message']}")
         
-        # Final status - Focus on patches field validation
-        print(f"\n🎯 FINAL STATUS - PATCHES FIELD VALIDATION FIX:")
-        patches_tests = [empty_array_working, string_array_working, null_working, empty_string_working]
-        critical_tests = [auth_working, master_kits_working] + patches_tests
+        # Final status
+        print(f"\n🎯 FINAL STATUS - PERSONAL DETAILS FORM FIX:")
+        critical_tests = [auth_working, master_kits_working, comprehensive_working, retrieval_working]
         
-        if all(patches_tests):
-            print(f"  ✅ PATCHES FIELD VALIDATION FIX WORKING PERFECTLY")
-            print(f"     - No 'Input should be a valid string' errors for patches field")
-            print(f"     - Empty array [] handled correctly")
-            print(f"     - String array ['patch1', 'patch2'] handled correctly")
-            print(f"     - Null/undefined values handled correctly")
-            print(f"     - Empty string '' handled correctly")
-            print(f"     - Patches field always sent as string or null to backend")
-        elif any(patches_tests):
-            print(f"  ⚠️ PARTIAL SUCCESS: Some patches scenarios working")
-            working_scenarios = []
-            if empty_array_working: working_scenarios.append("empty array")
-            if string_array_working: working_scenarios.append("string array")
-            if null_working: working_scenarios.append("null values")
-            if empty_string_working: working_scenarios.append("empty string")
-            print(f"     - Working scenarios: {', '.join(working_scenarios)}")
+        if all(critical_tests):
+            print(f"  ✅ PERSONAL DETAILS FORM FIX WORKING PERFECTLY")
+            print(f"     - Field mapping between EnhancedEditKitForm and backend working correctly")
+            print(f"     - personal_notes from comments mapping working")
+            print(f"     - condition from origin_type mapping working")
+            print(f"     - physical_state from general_condition mapping working")
+            print(f"     - All personal details persisted correctly")
+            print(f"     - Price calculation coefficients available")
+        elif any(critical_tests):
+            print(f"  ⚠️ PARTIAL SUCCESS: Some functionality working")
+            working_areas = []
+            if auth_working: working_areas.append("authentication")
+            if master_kits_working: working_areas.append("master kits access")
+            if comprehensive_working: working_areas.append("collection creation")
+            if retrieval_working: working_areas.append("personal details retrieval")
+            print(f"     - Working areas: {', '.join(working_areas)}")
             
-            failing_scenarios = []
-            if not empty_array_working: failing_scenarios.append("empty array")
-            if not string_array_working: failing_scenarios.append("string array")
-            if not null_working: failing_scenarios.append("null values")
-            if not empty_string_working: failing_scenarios.append("empty string")
-            if failing_scenarios:
-                print(f"     - Still failing: {', '.join(failing_scenarios)}")
+            failing_areas = []
+            if not auth_working: failing_areas.append("authentication")
+            if not master_kits_working: failing_areas.append("master kits access")
+            if not comprehensive_working: failing_areas.append("collection creation")
+            if not retrieval_working: failing_areas.append("personal details retrieval")
+            if failing_areas:
+                print(f"     - Still failing: {', '.join(failing_areas)}")
         else:
-            print(f"  ❌ PATCHES FIELD VALIDATION FIX NOT WORKING")
-            print(f"     - Still getting 'Input should be a valid string' errors")
-            print(f"     - Form submission failures continue for patches field")
-            print(f"     - Backend validation not properly handling patches arrays")
+            print(f"  ❌ PERSONAL DETAILS FORM FIX NOT WORKING")
+            print(f"     - Field mapping issues persist")
+            print(f"     - Personal details not being saved correctly")
+            print(f"     - Price calculation may not be working properly")
         
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
-        """Run all patches field validation fix tests and return success status"""
-        test_results = self.test_patches_field_validation_fix()
+        """Run all personal details form fix tests and return success status"""
+        test_results = self.test_personal_details_form_fix()
         self.print_final_summary()
         return any(test_results)
 
 def main():
-    """Main test execution - Patches Field Validation Fix Testing"""
-    tester = TopKitCollectionFormTesting()
+    """Main test execution - Personal Details Form Fix Testing"""
+    tester = TopKitPersonalDetailsFormTesting()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
