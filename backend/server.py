@@ -2590,7 +2590,7 @@ async def vote_on_contribution(
                 }
         
         # Get updated contribution
-        updated_contribution = await db.contributions.find_one({"id": contribution_id})
+        updated_contribution = await db.contributions_v2.find_one({"id": contribution_id})
         
         return {
             "message": "Vote recorded",
