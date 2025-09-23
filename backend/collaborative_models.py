@@ -256,6 +256,23 @@ class MyCollectionUpdate(BaseModel):
     purchase_price: Optional[float] = None
     purchase_date: Optional[datetime] = None
     personal_notes: Optional[str] = None
+    
+    @validator('patches', pre=True)
+    def convert_patches_to_string(cls, v):
+        """Convert patches array to string for backend compatibility"""
+        if v is None:
+            return None
+        elif isinstance(v, list):
+            # Convert array to comma-separated string
+            if len(v) == 0:
+                return None  # Empty array becomes None
+            return ", ".join(str(item) for item in v if item)  # Join non-empty items
+        elif isinstance(v, str):
+            # Already a string, return as-is (handle empty string)
+            return v if v.strip() else None
+        else:
+            # Convert other types to string
+            return str(v) if v else None
 
 # ================================
 # RESPONSE MODELS
