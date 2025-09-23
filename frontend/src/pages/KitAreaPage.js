@@ -288,22 +288,44 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         return;
       }
 
-      // Prepare collection data similar to PersonalDetailsForm
+      console.log('Form data being processed:', editFormData);
+
+      // Convert patches array to string if it exists
+      let patchesString = null;
+      if (editFormData.patches && Array.isArray(editFormData.patches)) {
+        patchesString = editFormData.patches.join(', ');
+      } else if (editFormData.patches && typeof editFormData.patches === 'string') {
+        patchesString = editFormData.patches;
+      }
+
+      // Map EnhancedEditKitForm fields to MyCollectionCreate fields
       const collectionData = {
         master_kit_id: selectedMasterKit.id,
         collection_type: selectedCollectionType,
+        
+        // Basic fields - direct mapping
         name_printing: editFormData.name_printing || null,
         number_printing: editFormData.number_printing || null,
-        patches: editFormData.patches || null,
+        size: editFormData.size || null,
+        personal_notes: editFormData.comments || null,
+        
+        // Patches - convert array to string
+        patches: patchesString,
+        
+        // Signature fields
         is_signed: editFormData.signature || false,
-        signed_by: editFormData.signature ? editFormData.signature_player : null,
+        signed_by: editFormData.signature && editFormData.signature_player ? editFormData.signature_player : null,
+        
+        // Condition mapping - use the exact enum values the backend expects
         condition: editFormData.general_condition || null,
         physical_state: editFormData.general_condition || null,
-        size: editFormData.size || null,
+        
+        // Price and date fields
         purchase_price: editFormData.user_estimate ? parseFloat(editFormData.user_estimate) : null,
-        purchase_date: editFormData.match_date || null,
-        personal_notes: editFormData.comments || null
+        purchase_date: editFormData.match_date || null
       };
+
+      console.log('Sending collection data:', collectionData);
 
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/my-collection`, {
         method: 'POST',
@@ -316,8 +338,23 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to add to collection');
+        console.error('API Error Response:', errorData);
+        
+        // Handle validation errors properly
+        if (errorData.detail && Array.isArray(errorData.detail)) {
+          const errorMessages = errorData.detail.map(err => 
+            `${err.loc ? err.loc.join('.') : 'Field'}: ${err.msg}`
+          ).join('\n');
+          throw new Error(`Validation errors:\n${errorMessages}`);
+        } else if (errorData.detail) {
+          throw new Error(errorData.detail);
+        } else {
+          throw new Error(`Failed to add to collection (${response.status})`);
+        }
       }
+
+      const result = await response.json();
+      console.log('Success response:', result);
 
       const successMessage = selectedCollectionType === 'owned' 
         ? 'Master Kit added to your collection successfully!' 
