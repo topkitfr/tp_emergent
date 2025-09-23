@@ -2379,6 +2379,122 @@ const AppContent = () => {
       }
     };
 
+    // Data management functions
+    const clearAllMasterKits = async () => {
+      const confirm = window.confirm(
+        '🚨 ATTENTION: Cette action va supprimer TOUS les Master Kits de la base de données.\n\n' +
+        'Cela inclut:\n' +
+        '- Tous les Master Kits\n' +
+        '- Toutes les références de la base de données\n\n' +
+        'Cette action est IRRÉVERSIBLE.\n\n' +
+        'Êtes-vous absolument sûr de vouloir continuer ?'
+      );
+      if (!confirm) return;
+
+      setClearingData(true);
+      try {
+        const response = await fetch(`${API}/api/admin/clear-master-kits`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert(`✅ Suppression réussie!\n\n` +
+                `Master Kits supprimés: ${result.deleted_count}\n` +
+                `Total avant suppression: ${result.count_before}`);
+        } else {
+          alert('❌ Erreur lors de la suppression des Master Kits');
+        }
+      } catch (error) {
+        console.error('Error clearing master kits:', error);
+        alert('❌ Erreur de connexion');
+      } finally {
+        setClearingData(false);
+      }
+    };
+
+    const clearAllPersonalCollections = async () => {
+      const confirm = window.confirm(
+        '🚨 ATTENTION: Cette action va supprimer TOUTES les collections personnelles de la base de données.\n\n' +
+        'Cela inclut:\n' +
+        '- Toutes les collections personnelles des utilisateurs\n' +
+        '- Tous les détails personnels ajoutés\n' +
+        '- Toutes les estimations de prix personnalisées\n\n' +
+        'Cette action est IRRÉVERSIBLE.\n\n' +
+        'Êtes-vous absolument sûr de vouloir continuer ?'
+      );
+      if (!confirm) return;
+
+      setClearingData(true);
+      try {
+        const response = await fetch(`${API}/api/admin/clear-personal-collections`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert(`✅ Suppression réussie!\n\n` +
+                `Collections personnelles supprimées: ${result.deleted_count}\n` +
+                `Total avant suppression: ${result.count_before}`);
+        } else {
+          alert('❌ Erreur lors de la suppression des collections personnelles');
+        }
+      } catch (error) {
+        console.error('Error clearing personal collections:', error);
+        alert('❌ Erreur de connexion');
+      } finally {
+        setClearingData(false);
+      }
+    };
+
+    const clearAllKitsAndCollections = async () => {
+      const confirm = window.confirm(
+        '🚨 DANGER EXTRÊME: Cette action va supprimer TOUS les kits ET TOUTES les collections de la base de données.\n\n' +
+        'Cela inclut:\n' +
+        '- TOUS les Master Kits\n' +
+        '- TOUTES les collections personnelles\n' +
+        '- TOUS les détails personnels\n' +
+        '- TOUTES les estimations\n\n' +
+        'Cette action est COMPLÈTEMENT IRRÉVERSIBLE et remettra la base de données à zéro.\n\n' +
+        'Tapez "SUPPRIMER TOUT" pour confirmer:'
+      );
+      if (!confirm) return;
+
+      const confirmText = prompt('Tapez exactement "SUPPRIMER TOUT" pour confirmer:');
+      if (confirmText !== 'SUPPRIMER TOUT') {
+        alert('❌ Confirmation annulée. Texte incorrect.');
+        return;
+      }
+
+      setClearingData(true);
+      try {
+        const response = await fetch(`${API}/api/admin/clear-all-kits`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert(`✅ Suppression totale réussie!\n\n` +
+                `Master Kits supprimés: ${result.master_kits_deleted}\n` +
+                `Collections supprimées: ${result.collections_deleted}\n` +
+                `Total supprimé: ${result.total_deleted}\n\n` +
+                `Compteurs avant suppression:\n` +
+                `- Master Kits: ${result.counts_before.master_kits}\n` +
+                `- Collections: ${result.counts_before.collections}`);
+        } else {
+          alert('❌ Erreur lors de la suppression complète');
+        }
+      } catch (error) {
+        console.error('Error clearing all kits and collections:', error);
+        alert('❌ Erreur de connexion');
+      } finally {
+        setClearingData(false);
+      }
+    };
+
     return (
       <div className="min-h-screen bg-white text-black p-4">
         <div className="max-w-6xl mx-auto">
