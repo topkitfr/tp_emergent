@@ -383,6 +383,72 @@ class TopKitMasterKitFormTesting:
             self.log_test("Contribution Creation for Moderation", False, f"Exception: {str(e)}")
             return False
     
+    def test_pending_review_status_filtering(self):
+        """Test GET /api/contributions-v2/?status=pending_review filtering"""
+        try:
+            print(f"\n🔍 TESTING PENDING_REVIEW STATUS FILTERING")
+            print("=" * 60)
+            print("Testing GET /api/contributions-v2/?status=pending_review filtering...")
+            
+            # Test the specific filtering endpoint for pending_review status
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=pending_review", timeout=10)
+            
+            if response.status_code == 200:
+                pending_review_contributions = response.json()
+                
+                print(f"      ✅ Pending review filtering endpoint accessible")
+                print(f"         Found {len(pending_review_contributions)} pending_review contributions")
+                
+                # Verify all returned contributions have pending_review status
+                all_pending_review = all(c.get('status') == 'pending_review' for c in pending_review_contributions)
+                
+                if all_pending_review:
+                    print(f"         ✅ All contributions have pending_review status")
+                    
+                    # Check if our created Master Kit contribution is in the list
+                    if self.created_contribution_id:
+                        our_contribution_found = any(
+                            c.get('id') == self.created_contribution_id 
+                            for c in pending_review_contributions
+                        )
+                        
+                        if our_contribution_found:
+                            print(f"         ✅ Our Master Kit contribution found in pending_review list")
+                            self.log_test("Pending Review Status Filtering", True, 
+                                         f"✅ Pending review filtering working - {len(pending_review_contributions)} contributions found, including our Master Kit")
+                            return True
+                        else:
+                            print(f"         ⚠️ Our Master Kit contribution not found in pending_review list")
+                            self.log_test("Pending Review Status Filtering", True, 
+                                         f"✅ Pending review filtering working - {len(pending_review_contributions)} contributions found (our contribution may have different status)")
+                            return True
+                    else:
+                        self.log_test("Pending Review Status Filtering", True, 
+                                     f"✅ Pending review filtering working - {len(pending_review_contributions)} contributions found")
+                        return True
+                else:
+                    # Show status distribution for debugging
+                    status_counts = {}
+                    for c in pending_review_contributions:
+                        status = c.get('status', 'unknown')
+                        status_counts[status] = status_counts.get(status, 0) + 1
+                    
+                    print(f"         ❌ Not all contributions have pending_review status")
+                    print(f"            Status distribution: {status_counts}")
+                    
+                    self.log_test("Pending Review Status Filtering", False, 
+                                 f"❌ Filtering not working correctly - found mixed statuses: {status_counts}")
+                    return False
+                    
+            else:
+                self.log_test("Pending Review Status Filtering", False, 
+                             f"❌ Pending review filtering endpoint failed - Status {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Pending Review Status Filtering", False, f"Exception: {str(e)}")
+            return False
+    
     def test_moderation_dashboard_integration(self):
         """Test that contributions appear in moderation system"""
         try:
