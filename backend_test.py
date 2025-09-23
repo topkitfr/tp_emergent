@@ -389,7 +389,7 @@ class TopKitMasterKitFormTesting:
                 return False
             
             # Test GET /api/contributions-v2 includes the new master kit contribution
-            response = self.session.get(f"{BACKEND_URL}/contributions-v2", timeout=10)
+            response = self.session.get(f"{BACKEND_URL}/contributions-v2/", timeout=10)
             
             if response.status_code == 200:
                 contributions = response.json()
