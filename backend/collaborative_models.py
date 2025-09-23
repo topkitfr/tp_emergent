@@ -117,10 +117,15 @@ class MasterKitCreate(BaseModel):
     club_id: str = Field(..., min_length=1, description="Club ID is required")
     kit_style: KitType = Field(..., description="Kit style is required")
     season: str = Field(..., min_length=1, description="Season is required (YYYY/YYYY format)")
+    competition_id: str = Field(..., min_length=1, description="Competition ID is required")
+    
+    # Photo URLs (required)
+    front_photo: str = Field(..., min_length=1, description="Front photo is required")
+    back_photo: str = Field(..., min_length=1, description="Back photo is required")
     
     # Optional fields
     brand_id: Optional[str] = None
-    primary_sponsor_id: Optional[str] = None
+    main_sponsor_id: Optional[str] = None  # Changed from primary_sponsor_id to match server expectation
     secondary_sponsor_ids: List[str] = []
 
     @validator('season')
