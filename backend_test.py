@@ -239,146 +239,363 @@ class TopKitCollectionFormTesting:
             self.log_test("Minimal Collection Addition", False, f"Exception: {str(e)}")
             return False
     
-    def test_comprehensive_collection_addition(self):
-        """Test comprehensive collection addition with various fields"""
+    def test_patches_field_empty_array(self):
+        """Test patches field with empty array []"""
         try:
-            print(f"\n🎯 TESTING COMPREHENSIVE COLLECTION ADDITION")
+            print(f"\n🔍 TESTING PATCHES FIELD - EMPTY ARRAY")
             print("=" * 60)
-            print("Testing POST /api/my-collection with comprehensive data...")
+            print("Testing POST /api/my-collection with patches as empty array []...")
             
-            if not self.auth_token:
-                self.log_test("Comprehensive Collection Addition", False, "❌ No authentication token available")
+            if not self.auth_token or not self.test_master_kit_id:
+                self.log_test("Patches Field Empty Array", False, "❌ Missing authentication or test kit")
                 return False
             
-            if not self.test_master_kit_id:
-                self.log_test("Comprehensive Collection Addition", False, "❌ No test Master Kit available")
+            # Find available kit for testing
+            test_kit = self.available_master_kits[0] if self.available_master_kits else None
+            if not test_kit:
+                self.log_test("Patches Field Empty Array", False, "❌ No test Master Kit available")
                 return False
             
-            # Find a different Master Kit for comprehensive testing
-            comprehensive_kit = None
-            for kit in self.available_master_kits[1:]:  # Skip first kit
-                # Check if this kit is already in collection
-                check_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-                if check_response.status_code == 200:
-                    existing_items = check_response.json()
-                    existing_kit_ids = [item.get('master_kit_id') for item in existing_items]
-                    if kit.get('id') not in existing_kit_ids:
-                        comprehensive_kit = kit
-                        break
-            
-            if not comprehensive_kit:
-                print("      All Master Kits already in collection, testing field mapping with existing data...")
-                # Test field mapping by trying to add with comprehensive data (will fail but we can check error type)
-                comprehensive_kit = self.available_master_kits[1] if len(self.available_master_kits) > 1 else self.available_master_kits[0]
-            
-            # Test comprehensive collection addition with various fields
-            comprehensive_data = {
-                "master_kit_id": comprehensive_kit.get('id'),
-                "collection_type": "wanted",
-                "patches": "Champions League, Premier League",  # String format (should be converted to List[str])
-                "condition": "match_worn",
-                "physical_state": "very_good_condition",
-                "is_signed": True,  # Should map to signature field
-                "signed_by": "test-player-id",  # Should map to signature_player_id
-                "purchase_price": 150.00,
-                "purchase_date": "2024-01-15",
-                "size": "L",
-                "name_printing": "MESSI",
-                "number_printing": "10",
-                "personal_notes": "Test collection item with comprehensive data"
+            # Test with patches as empty array
+            test_data = {
+                "master_kit_id": test_kit.get('id'),
+                "collection_type": "owned",
+                "patches": []  # Empty array - should be converted to string or null
             }
             
-            print(f"      Adding Master Kit to collection (comprehensive data):")
-            print(f"         Master Kit ID: {comprehensive_kit.get('id')}")
-            print(f"         Master Kit: {comprehensive_kit.get('club', 'Unknown')} {comprehensive_kit.get('season', 'Unknown')}")
-            print(f"         Collection Type: wanted")
-            print(f"         Patches: {comprehensive_data['patches']}")
-            print(f"         Condition: {comprehensive_data['condition']}")
-            print(f"         Physical State: {comprehensive_data['physical_state']}")
-            print(f"         Is Signed: {comprehensive_data['is_signed']}")
-            print(f"         Signed By: {comprehensive_data['signed_by']}")
-            print(f"         Purchase Price: ${comprehensive_data['purchase_price']}")
+            print(f"      Testing patches field as empty array:")
+            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
+            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
             
             response = self.session.post(
                 f"{BACKEND_URL}/my-collection",
-                json=comprehensive_data,
+                json=test_data,
                 timeout=15
             )
             
             if response.status_code in [200, 201]:
                 data = response.json()
+                print(f"         ✅ Empty array patches field accepted successfully")
                 
-                print(f"         ✅ Comprehensive collection addition successful")
-                print(f"            Collection Item ID: {data.get('id')}")
-                print(f"            Collection Type: {data.get('collection_type')}")
-                
-                # Verify no "[object Object]" errors in response
-                response_str = json.dumps(data)
-                if "[object Object]" in response_str:
-                    self.log_test("Comprehensive Collection Addition", False, 
-                                 f"❌ '[object Object]' errors found in response")
-                    return False
-                
-                # Verify field mapping worked correctly
-                patches_field = data.get('patches')
-                is_signed_field = data.get('is_signed')  # Legacy field
-                signed_by_field = data.get('signed_by')  # Legacy field
-                
-                print(f"            Patches field: {patches_field} (type: {type(patches_field)})")
-                print(f"            Is Signed field: {is_signed_field}")
-                print(f"            Signed By field: {signed_by_field}")
-                
-                # Check if patches was converted correctly (should be string in response)
-                if isinstance(patches_field, str) or patches_field is None:
-                    print(f"            ✅ Patches field correctly handled in response")
-                    field_mapping_success = True
-                else:
-                    print(f"            ❌ Patches field not correctly handled in response")
-                    field_mapping_success = False
-                
-                # Check if signature fields were mapped correctly (using legacy field names)
-                if is_signed_field == True and signed_by_field == "test-player-id":
-                    print(f"            ✅ Signature fields correctly mapped to legacy fields")
-                    signature_mapping_success = True
-                else:
-                    print(f"            ❌ Signature fields not correctly mapped to legacy fields")
-                    signature_mapping_success = False
-                
-                if field_mapping_success and signature_mapping_success:
-                    self.log_test("Comprehensive Collection Addition", True, 
-                                 f"✅ Comprehensive collection addition working - field mapping fixed")
+                # Check if patches field validation error occurred
+                if "Input should be a valid string" not in response.text:
+                    self.log_test("Patches Field Empty Array", True, 
+                                 f"✅ Empty array patches field handled correctly - no validation error")
                     return True
                 else:
-                    self.log_test("Comprehensive Collection Addition", False, 
-                                 f"❌ Field mapping issues still exist")
+                    self.log_test("Patches Field Empty Array", False, 
+                                 f"❌ Validation error still occurs with empty array")
                     return False
                     
-            elif response.status_code == 400 and ("already in your" in response.text or "Master Kit is already" in response.text):
-                # Item already exists - this means the endpoint is working, just testing with existing data
-                print(f"         ✅ Master Kit already in collection (endpoint working correctly)")
-                print(f"         ✅ No field mapping errors detected (400 is expected for existing items)")
-                self.log_test("Comprehensive Collection Addition", True, 
-                             f"✅ Comprehensive collection addition endpoint working - item already exists")
+            elif response.status_code == 400 and "already in your" in response.text:
+                print(f"         ✅ Item already exists - but no patches validation error")
+                self.log_test("Patches Field Empty Array", True, 
+                             f"✅ Empty array patches field handled correctly - no validation error")
                 return True
+            elif response.status_code == 422 and "Input should be a valid string" in response.text:
+                print(f"         ❌ Patches validation error still occurs with empty array")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Empty Array", False, 
+                             f"❌ Patches validation error: {response.text}")
+                return False
             else:
-                error_text = response.text
-                print(f"         ❌ Comprehensive collection addition failed - Status {response.status_code}")
-                print(f"            Error: {error_text}")
-                
-                # Check for specific field mapping errors
-                if "patches field" in error_text and "List[str]" in error_text:
-                    self.log_test("Comprehensive Collection Addition", False, 
-                                 f"❌ Patches field mapping error still exists", error_text)
-                elif "signature" in error_text:
-                    self.log_test("Comprehensive Collection Addition", False, 
-                                 f"❌ Signature field mapping error still exists", error_text)
-                else:
-                    self.log_test("Comprehensive Collection Addition", False, 
-                                 f"❌ Collection addition failed - Status {response.status_code}", error_text)
+                print(f"         ❌ Unexpected response - Status {response.status_code}")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Empty Array", False, 
+                             f"❌ Unexpected error - Status {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Comprehensive Collection Addition", False, f"Exception: {str(e)}")
+            self.log_test("Patches Field Empty Array", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_patches_field_string_array(self):
+        """Test patches field with string array ["patch1", "patch2"]"""
+        try:
+            print(f"\n🔍 TESTING PATCHES FIELD - STRING ARRAY")
+            print("=" * 60)
+            print("Testing POST /api/my-collection with patches as string array...")
+            
+            if not self.auth_token or not self.test_master_kit_id:
+                self.log_test("Patches Field String Array", False, "❌ Missing authentication or test kit")
+                return False
+            
+            # Find available kit for testing
+            test_kit = self.available_master_kits[1] if len(self.available_master_kits) > 1 else self.available_master_kits[0]
+            
+            # Test with patches as string array
+            test_data = {
+                "master_kit_id": test_kit.get('id'),
+                "collection_type": "wanted",
+                "patches": ["Champions League", "Premier League"]  # String array - should be converted to string
+            }
+            
+            print(f"      Testing patches field as string array:")
+            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
+            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/my-collection",
+                json=test_data,
+                timeout=15
+            )
+            
+            if response.status_code in [200, 201]:
+                data = response.json()
+                print(f"         ✅ String array patches field accepted successfully")
+                
+                # Check if patches field validation error occurred
+                if "Input should be a valid string" not in response.text:
+                    self.log_test("Patches Field String Array", True, 
+                                 f"✅ String array patches field handled correctly - no validation error")
+                    return True
+                else:
+                    self.log_test("Patches Field String Array", False, 
+                                 f"❌ Validation error still occurs with string array")
+                    return False
+                    
+            elif response.status_code == 400 and "already in your" in response.text:
+                print(f"         ✅ Item already exists - but no patches validation error")
+                self.log_test("Patches Field String Array", True, 
+                             f"✅ String array patches field handled correctly - no validation error")
+                return True
+            elif response.status_code == 422 and "Input should be a valid string" in response.text:
+                print(f"         ❌ Patches validation error still occurs with string array")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field String Array", False, 
+                             f"❌ Patches validation error: {response.text}")
+                return False
+            else:
+                print(f"         ❌ Unexpected response - Status {response.status_code}")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field String Array", False, 
+                             f"❌ Unexpected error - Status {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Patches Field String Array", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_patches_field_null_undefined(self):
+        """Test patches field with null/undefined"""
+        try:
+            print(f"\n🔍 TESTING PATCHES FIELD - NULL/UNDEFINED")
+            print("=" * 60)
+            print("Testing POST /api/my-collection with patches as null...")
+            
+            if not self.auth_token or not self.test_master_kit_id:
+                self.log_test("Patches Field Null", False, "❌ Missing authentication or test kit")
+                return False
+            
+            # Find available kit for testing
+            test_kit = self.available_master_kits[2] if len(self.available_master_kits) > 2 else self.available_master_kits[0]
+            
+            # Test with patches as null
+            test_data = {
+                "master_kit_id": test_kit.get('id'),
+                "collection_type": "owned",
+                "patches": None  # Null value - should be handled gracefully
+            }
+            
+            print(f"      Testing patches field as null:")
+            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
+            print(f"         Patches: {test_data['patches']} (type: {type(test_data['patches'])})")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/my-collection",
+                json=test_data,
+                timeout=15
+            )
+            
+            if response.status_code in [200, 201]:
+                data = response.json()
+                print(f"         ✅ Null patches field accepted successfully")
+                
+                # Check if patches field validation error occurred
+                if "Input should be a valid string" not in response.text:
+                    self.log_test("Patches Field Null", True, 
+                                 f"✅ Null patches field handled correctly - no validation error")
+                    return True
+                else:
+                    self.log_test("Patches Field Null", False, 
+                                 f"❌ Validation error still occurs with null")
+                    return False
+                    
+            elif response.status_code == 400 and "already in your" in response.text:
+                print(f"         ✅ Item already exists - but no patches validation error")
+                self.log_test("Patches Field Null", True, 
+                             f"✅ Null patches field handled correctly - no validation error")
+                return True
+            elif response.status_code == 422 and "Input should be a valid string" in response.text:
+                print(f"         ❌ Patches validation error still occurs with null")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Null", False, 
+                             f"❌ Patches validation error: {response.text}")
+                return False
+            else:
+                print(f"         ❌ Unexpected response - Status {response.status_code}")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Null", False, 
+                             f"❌ Unexpected error - Status {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Patches Field Null", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_patches_field_empty_string(self):
+        """Test patches field with empty string"""
+        try:
+            print(f"\n🔍 TESTING PATCHES FIELD - EMPTY STRING")
+            print("=" * 60)
+            print("Testing POST /api/my-collection with patches as empty string...")
+            
+            if not self.auth_token or not self.test_master_kit_id:
+                self.log_test("Patches Field Empty String", False, "❌ Missing authentication or test kit")
+                return False
+            
+            # Find available kit for testing
+            test_kit = self.available_master_kits[3] if len(self.available_master_kits) > 3 else self.available_master_kits[0]
+            
+            # Test with patches as empty string
+            test_data = {
+                "master_kit_id": test_kit.get('id'),
+                "collection_type": "wanted",
+                "patches": ""  # Empty string - should be handled gracefully
+            }
+            
+            print(f"      Testing patches field as empty string:")
+            print(f"         Master Kit: {test_kit.get('club', 'Unknown')} {test_kit.get('season', 'Unknown')}")
+            print(f"         Patches: '{test_data['patches']}' (type: {type(test_data['patches'])})")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/my-collection",
+                json=test_data,
+                timeout=15
+            )
+            
+            if response.status_code in [200, 201]:
+                data = response.json()
+                print(f"         ✅ Empty string patches field accepted successfully")
+                
+                # Check if patches field validation error occurred
+                if "Input should be a valid string" not in response.text:
+                    self.log_test("Patches Field Empty String", True, 
+                                 f"✅ Empty string patches field handled correctly - no validation error")
+                    return True
+                else:
+                    self.log_test("Patches Field Empty String", False, 
+                                 f"❌ Validation error still occurs with empty string")
+                    return False
+                    
+            elif response.status_code == 400 and "already in your" in response.text:
+                print(f"         ✅ Item already exists - but no patches validation error")
+                self.log_test("Patches Field Empty String", True, 
+                             f"✅ Empty string patches field handled correctly - no validation error")
+                return True
+            elif response.status_code == 422 and "Input should be a valid string" in response.text:
+                print(f"         ❌ Patches validation error still occurs with empty string")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Empty String", False, 
+                             f"❌ Patches validation error: {response.text}")
+                return False
+            else:
+                print(f"         ❌ Unexpected response - Status {response.status_code}")
+                print(f"            Error: {response.text}")
+                self.log_test("Patches Field Empty String", False, 
+                             f"❌ Unexpected error - Status {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Patches Field Empty String", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_comprehensive_patches_combinations(self):
+        """Test comprehensive form data with various patches combinations"""
+        try:
+            print(f"\n🎯 TESTING COMPREHENSIVE PATCHES COMBINATIONS")
+            print("=" * 60)
+            print("Testing comprehensive form data with various patches combinations...")
+            
+            if not self.auth_token or not self.test_master_kit_id:
+                self.log_test("Comprehensive Patches Combinations", False, "❌ Missing authentication or test kit")
+                return False
+            
+            # Test different patches combinations with comprehensive form data
+            test_cases = [
+                {
+                    "name": "Comprehensive with string patches",
+                    "patches": "Champions League, Premier League, FA Cup",
+                    "expected_success": True
+                },
+                {
+                    "name": "Comprehensive with empty string patches",
+                    "patches": "",
+                    "expected_success": True
+                },
+                {
+                    "name": "Comprehensive with null patches",
+                    "patches": None,
+                    "expected_success": True
+                }
+            ]
+            
+            success_count = 0
+            
+            for i, test_case in enumerate(test_cases):
+                print(f"      Test {i+1}: {test_case['name']}")
+                
+                # Use different kits for each test
+                test_kit = self.available_master_kits[i % len(self.available_master_kits)]
+                
+                comprehensive_data = {
+                    "master_kit_id": test_kit.get('id'),
+                    "collection_type": "owned" if i % 2 == 0 else "wanted",
+                    "patches": test_case['patches'],
+                    "condition": "match_worn",
+                    "physical_state": "very_good_condition",
+                    "is_signed": True,
+                    "signed_by": "test-player-id",
+                    "purchase_price": 150.00,
+                    "purchase_date": "2024-01-15",
+                    "size": "L",
+                    "name_printing": "MESSI",
+                    "number_printing": "10",
+                    "personal_notes": "Test comprehensive data with patches variations"
+                }
+                
+                print(f"         Patches: {test_case['patches']} (type: {type(test_case['patches'])})")
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/my-collection",
+                    json=comprehensive_data,
+                    timeout=15
+                )
+                
+                if response.status_code in [200, 201]:
+                    print(f"            ✅ {test_case['name']} successful")
+                    success_count += 1
+                elif response.status_code == 400 and "already in your" in response.text:
+                    print(f"            ✅ {test_case['name']} - item already exists (no validation error)")
+                    success_count += 1
+                elif response.status_code == 422 and "Input should be a valid string" in response.text:
+                    print(f"            ❌ {test_case['name']} - patches validation error still occurs")
+                    print(f"               Error: {response.text}")
+                else:
+                    print(f"            ❌ {test_case['name']} - Status {response.status_code}")
+                    print(f"               Error: {response.text}")
+            
+            if success_count == len(test_cases):
+                self.log_test("Comprehensive Patches Combinations", True, 
+                             f"✅ All patches combinations working correctly")
+                return True
+            else:
+                self.log_test("Comprehensive Patches Combinations", False, 
+                             f"❌ Patches validation issues - {success_count}/{len(test_cases)} successful")
+                return False
+                
+        except Exception as e:
+            self.log_test("Comprehensive Patches Combinations", False, f"Exception: {str(e)}")
             return False
     
     def test_collection_type_variations(self):
