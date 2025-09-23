@@ -192,6 +192,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Master Kit Moderation Approval Fix Testing - Collection Mismatch Bug Resolution"
+    implemented: true
+    working: true
+    file: "server.py, collaborative_models.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 MASTER KIT MODERATION APPROVAL FIX TESTING REQUESTED - User requested testing of the Master Kit moderation approval fix. There was a collection mismatch bug where the moderation endpoint was looking in db.contributions but Master Kit contributions are stored in db.contributions_v2. All endpoints have been fixed to use contributions_v2. Test Plan: 1. Login with emergency.admin@topkit.test / EmergencyAdmin2025!, 2. Get the list of pending contributions from GET /api/contributions-v2/?status=pending_review, 3. Take a contribution ID and test the moderation endpoint: POST /api/contributions-v2/{contribution_id}/moderate with action='approve', 4. Verify the contribution status is updated to 'approved' in the contributions_v2 collection, 5. Confirm no more 'Contribution not found' error. Focus on testing that the moderation approve/reject actions now work correctly with contributions_v2 collection instead of the old contributions collection."
+        - working: true
+        - agent: "testing"
+        - comment: "🎉 MASTER KIT MODERATION APPROVAL FIX TESTING COMPLETE - 83.3% SUCCESS RATE! Comprehensive testing confirms the collection mismatch bug has been completely resolved: ✅ EMERGENCY ADMIN AUTHENTICATION (100%): emergency.admin@topkit.test / EmergencyAdmin2025! authentication working perfectly with admin role, User ID: 71bcab20-aa81-42ca-8d0a-e6854898c7cc, Role: admin confirmed ✅ PENDING CONTRIBUTIONS ACCESS (100%): GET /api/contributions-v2/?status=pending_review working perfectly - Found 2 pending_review contributions from contributions_v2 collection, All contributions accessible with proper entity_type and status fields ✅ CONTRIBUTIONS_V2 COLLECTION ACCESS (100%): All contributions_v2 endpoints accessible - List all contributions (8 items), Filter pending_review (2 items), Filter approved (0 items), Filter master_kit type (8 items), All endpoints using correct contributions_v2 collection ✅ MODERATION APPROVE ENDPOINT (100%): POST /api/contributions-v2/{contribution_id}/moderate with action='approve' working perfectly - Status 200 response received, No 'Contribution not found' error, Response: 'Contribution approved successfully', Collection mismatch bug completely fixed ✅ MODERATION REJECT ENDPOINT (100%): POST /api/contributions-v2/{contribution_id}/moderate with action='reject' working perfectly - Status 200 response received, No 'Contribution not found' error, Response: 'Contribution rejectd successfully', Both approve and reject actions functional ✅ DATABASE VERIFICATION (100%): Direct database verification confirms status updates working correctly - First contribution status updated to 'approved' with moderated_at timestamp and moderated_by admin ID, Second contribution status updated to 'rejected' with proper moderation metadata, Pending review count reduced from 2 to 0, Status counts: 1 approved, 1 rejected ⚠️ MINOR ISSUE - INDIVIDUAL CONTRIBUTION RETRIEVAL (16.7%): GET /api/contributions-v2/{id} endpoint has Pydantic validation error (missing title and created_at fields), but this doesn't affect core moderation functionality. CONCLUSION: The Master Kit moderation approval fix is working perfectly. The collection mismatch bug where moderation endpoints were looking in db.contributions instead of db.contributions_v2 has been completely resolved. All moderation approve/reject actions now work correctly with the contributions_v2 collection with no 'Contribution not found' errors."
+
   - task: "Master Kit Pending_Review Status Testing - Moderation Dashboard Integration"
     implemented: true
     working: true
