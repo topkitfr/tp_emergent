@@ -2670,6 +2670,117 @@ const AppContent = () => {
                   )}
                 </div>
               )}
+
+              {/* Data Management */}
+              {adminActiveTab === 'data' && (
+                <div className="space-y-6">
+                  {/* Warning Section */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center mb-3">
+                      <span className="text-2xl mr-3">⚠️</span>
+                      <h2 className="text-xl font-bold text-red-800">Zone Dangereuse - Gestion des Données</h2>
+                    </div>
+                    <p className="text-red-700">
+                      <strong>ATTENTION:</strong> Les actions ci-dessous suppriment définitivement des données de la base. 
+                      Ces actions sont <strong>IRRÉVERSIBLES</strong>. Utilisez avec précaution.
+                    </p>
+                  </div>
+
+                  {/* Data Clearing Actions */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-bold text-black mb-4">Actions de suppression des données</h3>
+                    
+                    <div className="space-y-4">
+                      {/* Clear Master Kits Only */}
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-orange-800 mb-2">🏷️ Supprimer tous les Master Kits</h4>
+                            <p className="text-sm text-orange-700">
+                              Supprime tous les Master Kits de la base de données, mais conserve les collections personnelles des utilisateurs.
+                            </p>
+                          </div>
+                          <button
+                            onClick={clearAllMasterKits}
+                            disabled={clearingData}
+                            className={`${
+                              clearingData 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-orange-500 hover:bg-orange-600'
+                            } text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-3 md:mt-0 md:ml-4`}
+                          >
+                            {clearingData ? '⏳ Suppression...' : '🗑️ Supprimer Master Kits'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Clear Personal Collections Only */}
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-orange-800 mb-2">👤 Supprimer toutes les collections personnelles</h4>
+                            <p className="text-sm text-orange-700">
+                              Supprime toutes les collections personnelles des utilisateurs, mais conserve les Master Kits de référence.
+                            </p>
+                          </div>
+                          <button
+                            onClick={clearAllPersonalCollections}
+                            disabled={clearingData}
+                            className={`${
+                              clearingData 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-orange-500 hover:bg-orange-600'
+                            } text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-3 md:mt-0 md:ml-4`}
+                          >
+                            {clearingData ? '⏳ Suppression...' : '🗑️ Supprimer Collections'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Clear Everything */}
+                      <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-red-800 mb-2">💥 SUPPRIMER TOUT - Master Kits ET Collections</h4>
+                            <p className="text-sm text-red-700">
+                              <strong>ACTION EXTRÊME:</strong> Supprime TOUS les Master Kits ET TOUTES les collections personnelles. 
+                              Remet complètement à zéro la base de données des kits.
+                            </p>
+                            <p className="text-xs text-red-600 mt-1">
+                              ⚠️ Nécessite une double confirmation
+                            </p>
+                          </div>
+                          <button
+                            onClick={clearAllKitsAndCollections}
+                            disabled={clearingData}
+                            className={`${
+                              clearingData 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-red-600 hover:bg-red-700 border-2 border-red-700'
+                            } text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors mt-3 md:mt-0 md:ml-4`}
+                          >
+                            {clearingData ? '⏳ Suppression...' : '💥 SUPPRIMER TOUT'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div className="flex items-center mb-3">
+                      <span className="text-2xl mr-3">ℹ️</span>
+                      <h3 className="text-lg font-bold text-blue-800">Instructions d'utilisation</h3>
+                    </div>
+                    <ul className="space-y-2 text-sm text-blue-700">
+                      <li>• <strong>Master Kits seulement:</strong> Utilisez pour réinitialiser les données de référence tout en gardant les collections utilisateurs</li>
+                      <li>• <strong>Collections seulement:</strong> Utilisez pour nettoyer les données personnelles tout en gardant les références</li>
+                      <li>• <strong>Suppression totale:</strong> Utilisez uniquement pour un reset complet de la plateforme</li>
+                      <li>• <strong>Toutes les suppressions sont définitives</strong> - Aucune récupération possible</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
