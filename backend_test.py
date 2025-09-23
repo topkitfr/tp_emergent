@@ -915,7 +915,7 @@ class TopKitMasterKitFormTesting:
         return any(test_results)
 
 def main():
-    """Main test execution - Master Kit Form Submission Bug Fix Testing"""
+    """Main test execution - Master Kit Pending_Review Status Testing"""
     tester = TopKitMasterKitFormTesting()
     success = tester.run_all_tests()
     
