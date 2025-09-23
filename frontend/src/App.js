@@ -2189,6 +2189,7 @@ const AppContent = () => {
     const [allUsers, setAllUsers] = useState([]);
     const [allJerseys, setAllJerseys] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [clearingData, setClearingData] = useState(false);
 
     // Load admin data
     useEffect(() => {
