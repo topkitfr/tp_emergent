@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - ADD PERSONAL DETAILS FORM FIX TESTING
+TopKit Backend Testing Suite - PATCHES FIELD VALIDATION FIX TESTING
 
-Testing the "Add Personal Details" form backend fix for adding Master Kits to collection:
-
-Key fixes being tested:
-1. Fixed patches field mapping: MyCollectionCreate string → MyCollection List[str] 
-2. Fixed signature field mapping: is_signed → signature, signed_by → signature_player_id
-3. Added proper field initialization for all MyCollection fields
-4. Maintained backward compatibility with legacy fields
+Testing the patches field validation fix for the Add Personal Details form.
+The user reported "Error: body.patches: Input should be a valid string" when submitting the form.
+Main agent has added debugging and additional sanitization to ensure patches arrays are properly converted to strings.
 
 Test Plan:
 1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
 2. **Master Kit Access** - Verify available Master Kits for collection addition
-3. **Minimal Collection Addition** - Test POST /api/my-collection with just master_kit_id and collection_type
-4. **Comprehensive Collection Addition** - Test with various fields (patches, condition, signature, etc.)
-5. **Field Mapping Verification** - Verify no more "[object Object]" errors in responses
-6. **Collection Type Testing** - Test both "owned" and "wanted" collection types
-7. **Error Handling** - Confirm proper field mapping and data conversion
+3. **Patches Field Scenarios Testing**:
+   - Test with patches as empty array []
+   - Test with patches as string array ["patch1", "patch2"] 
+   - Test with patches as null/undefined
+   - Test with patches as empty string ""
+4. **Verify patches field is always sent as a string or null to the backend**
+5. **Confirm no "Input should be a valid string" validation errors for patches field**
+6. **Test both minimal and comprehensive form data with various patches combinations**
 
-CRITICAL: Focus on verifying the model mapping fixes eliminated backend errors.
+CRITICAL: Focus on verifying that patches field validation no longer causes form submission failures.
 """
 
 import requests
