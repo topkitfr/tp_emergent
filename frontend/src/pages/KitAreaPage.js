@@ -359,6 +359,24 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
 
       console.log('Sending collection data:', collectionData);
 
+      // Final data sanitization - ensure no arrays are sent to backend
+      const sanitizedData = { ...collectionData };
+      
+      // Double-check patches field
+      if (sanitizedData.patches && Array.isArray(sanitizedData.patches)) {
+        console.warn('PATCHES STILL AN ARRAY - Converting again:', sanitizedData.patches);
+        sanitizedData.patches = sanitizedData.patches.join(', ');
+      }
+      
+      // Remove any undefined or null fields that might cause issues
+      Object.keys(sanitizedData).forEach(key => {
+        if (sanitizedData[key] === undefined) {
+          delete sanitizedData[key];
+        }
+      });
+      
+      console.log('Final sanitized data:', sanitizedData);
+
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/my-collection`, {
         method: 'POST',
         headers: {
