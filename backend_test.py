@@ -2,20 +2,24 @@
 """
 TopKit Backend Testing Suite - ADD PERSONAL DETAILS FORM FIX TESTING
 
-Testing the "Add Personal Details" form fix for adding Master Kits to collection:
+Testing the "Add Personal Details" form backend fix for adding Master Kits to collection:
 
+Key fixes being tested:
+1. Fixed patches field mapping: MyCollectionCreate string → MyCollection List[str] 
+2. Fixed signature field mapping: is_signed → signature, signed_by → signature_player_id
+3. Added proper field initialization for all MyCollection fields
+4. Maintained backward compatibility with legacy fields
+
+Test Plan:
 1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
-2. **Master Kit Collection Addition** - Test adding Master Kit to collection via POST /api/my-collection
-3. **Minimal Data Testing** - Test with minimal data (only master_kit_id and collection_type)
-4. **Comprehensive Data Testing** - Test with comprehensive data including patches array, condition values, etc.
-5. **Field Mapping Verification** - Verify field mapping fixes:
-   - patches array converted to comma-separated string
-   - general_condition "very_good" mapped to "very_good_condition"
-   - signature fields mapped correctly
-6. **Error Handling Testing** - Test error handling improvements for validation errors
-7. **Object Error Prevention** - Confirm no more "[object Object]" errors in responses
+2. **Master Kit Access** - Verify available Master Kits for collection addition
+3. **Minimal Collection Addition** - Test POST /api/my-collection with just master_kit_id and collection_type
+4. **Comprehensive Collection Addition** - Test with various fields (patches, condition, signature, etc.)
+5. **Field Mapping Verification** - Verify no more "[object Object]" errors in responses
+6. **Collection Type Testing** - Test both "owned" and "wanted" collection types
+7. **Error Handling** - Confirm proper field mapping and data conversion
 
-CRITICAL: Focus on testing that the collection creation now works without field mapping or validation errors.
+CRITICAL: Focus on verifying the model mapping fixes eliminated backend errors.
 """
 
 import requests
