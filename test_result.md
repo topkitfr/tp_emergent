@@ -194,6 +194,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Personal Details Persistence & Price Calculation Fix Testing - Add Personal Details Form"
+    implemented: true
+    working: true
+    file: "server.py, collaborative_models.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING REQUESTED - User requested comprehensive testing of personal details persistence and price calculation fix for Add Personal Details form. The user has fixed field mapping between EnhancedEditKitForm and the backend collection API to ensure all personal details are saved correctly and price calculations work. Key fixes tested: 1. Fixed field mapping: personal_notes from comments, condition from origin_type, physical_state from general_condition, 2. Improved enum value mapping for conditions and physical states, 3. Ensured all form fields are properly mapped to collection data. Test Plan: 1. Login with emergency.admin@topkit.test / EmergencyAdmin2025!, 2. Add comprehensive Master Kit to collection with detailed personal information (name printing, number printing, size, origin type, general condition, patches, signature details, user estimate price, comments), 3. Verify collection item created with all personal details saved correctly, 4. Test price estimation endpoint: GET /api/my-collection/{collection_id}/price-estimation, 5. Confirm price breakdown includes coefficients for flocking, patches, condition bonuses, physical state bonuses, signature bonuses, 6. Verify personal details appear correctly when retrieved."
+        - working: true
+        - agent: "testing"
+        - comment: "🎉 PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING COMPLETE - 100% SUCCESS RATE! Comprehensive testing confirms the personal details persistence and price calculation fix is working perfectly: ✅ AUTHENTICATION (100%): emergency.admin@topkit.test / EmergencyAdmin2025! authentication working perfectly ✅ MASTER KITS ACCESS (100%): 24 Master Kits available for collection testing ✅ COMPREHENSIVE COLLECTION CREATION (100%): Collection update with comprehensive personal details successful - all field mappings working correctly (size: L, name_printing: MESSI, number_printing: 10, condition: match_worn, physical_state: very_good_condition, patches: UEFA Champions League/Premier League/FA Cup, is_signed: True, signed_by: Lionel Messi, purchase_price: €250.0, purchase_date: 2024-01-15, personal_notes: comprehensive test verification) ✅ PRICE ESTIMATION ENDPOINT (100%): GET /api/my-collection/{collection_id}/price-estimation working with proper coefficient breakdown - Estimated Price: €360.0, 5 coefficients applied (Full flocking +0.2, Competition patches +0.15, Match Worn condition +1.5, Very good condition +0.15, Signed by Lionel Messi +1.0), coefficient types found: patches, condition, signature, flocking ✅ PERSONAL DETAILS RETRIEVAL (100%): Personal details persisted correctly - 11 fields with data verified, all personal information retrievable and correctly stored ✅ FIELD MAPPING VERIFICATION (100%): personal_notes from comments mapping working, condition from origin_type mapping working, physical_state from general_condition mapping working, all form fields properly mapped to collection data ✅ PRICE COEFFICIENT BREAKDOWN (100%): Price calculation includes proper coefficients for flocking (name+number printing), patches, condition bonuses (match_worn, training, etc.), physical state bonuses, signature bonuses CONCLUSION: The personal details persistence and price calculation fix is fully operational with 100% success rate. Field mapping between EnhancedEditKitForm and backend collection API working correctly, all personal details saved and retrievable, price calculations show proper coefficient breakdowns based on saved data."
+
   - task: "Add Personal Details Form Fix Testing - Collection Creation Field Mapping Issues"
     implemented: true
     working: true
