@@ -3363,29 +3363,44 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
     """
     Calculate estimated price for a Master Kit with optional personal details
     
-    TOPKIT Jersey Price Estimation Coefficients (Updated):
+    TOPKIT Jersey Price Estimation Coefficients (Updated with Enhanced Fields):
     Base Price: Authentic (€140), Replica (€90)
     
     Coefficients:
-    - Condition:
-      * Club Stock: +1.2
-      * Match Prepared: +0.8
-      * Match Worn: +1.5
-      * Training: +0.2
-    - Physical State:
+    - Origin & Authenticity:
+      * Standard: 0
+      * Match-issued: +0.8
+      * Match-worn: +1.5
+      * Authenticity proof (match photos): +0.3
+      * Authenticity proof (certificate): +0.2
+      * No proof: -0.5
+    - Competition:
+      * National League: +0.2
+      * National Cup: +0.1
+      * Continental Competition: +0.5
+      * International Competition: +1.0
+      * Continental Super Cup: +0.2
+    - Physical Condition:
       * New with tags: +0.3
       * Very good: +0.15
       * Used: 0
       * Damaged: -0.25
-      * Needs restoration: -0.4
-    - Flocking:
+      * Needs restoration: -0.5
+    - Technical Details:
+      * Patches: +0.1 to +1.0 (varies by competition)
+      * Signed: +2.0
+      * Signature certificate: +0.3
+    - Player & Printing:
+      * Associated player coefficient applied (varies by player type)
       * Official name flocking: +0.15
       * Official number flocking: +0.1
       * Full flocking (name + number): +0.2
-    - Additional Features:
-      * Competition patches: +0.15
-      * Signed by a famous player: +1.0
-      * Age: +0.03 per year (max +0.6)
+    - Legacy Conditions:
+      * Club Stock: +1.2
+      * Match Prepared: +0.8
+      * Match Worn: +1.5
+      * Training: +0.2
+    - Age: +0.03 per year (max +0.6)
     
     Formula: Estimated Price = Base Price × (1 + sum of coefficients)
     """
@@ -3398,7 +3413,12 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
         
         # Personal details from collection item (if provided)
         if collection_item:
-            # Flocking coefficients (more granular)
+            # A. Basic Information - Gender affects popularity (minor adjustment)
+            gender = collection_item.get('gender')
+            if gender == 'men':
+                coefficients += 0.05  # Men's kits are generally more popular
+            
+            # B. Player & Printing
             has_name = bool(collection_item.get('name_printing'))
             has_number = bool(collection_item.get('number_printing'))
             
@@ -3408,12 +3428,108 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
                 coefficients += 0.15  # Official name flocking only
             elif has_number:
                 coefficients += 0.1   # Official number flocking only
+
+            # Associated player coefficient (from player type)
+            # This would need to be looked up from player database
+            # For now, we'll use a placeholder logic
+            
+            # C. Origin & Authenticity
+            origin_type = collection_item.get('origin_type')
+            if origin_type == 'match_issued':
+                coefficients += 0.8
+            elif origin_type == 'match_worn':
+                coefficients += 1.5
+            # 'standard' adds 0
+            
+            # Authenticity proof
+            authenticity_proof = collection_item.get('authenticity_proof', [])
+            if isinstance(authenticity_proof, list):
+                if 'match_photos' in authenticity_proof:
+                    coefficients += 0.3
+                if 'certificate' in authenticity_proof:
+                    coefficients += 0.2
+                if 'no_proof' in authenticity_proof:
+                    coefficients -= 0.5
+            
+            # Competition coefficient
+            competition = collection_item.get('competition')
+            if competition == 'national_league':
+                coefficients += 0.2
+            elif competition == 'national_cup':
+                coefficients += 0.1
+            elif competition == 'continental_competition':
+                coefficients += 0.5
+            elif competition == 'international_competition':
+                coefficients += 1.0
+            elif competition == 'continental_super_cup':
+                coefficients += 0.2
                 
-            # Competition patches (reduced coefficient)
-            if collection_item.get('patches'):
+            # D. Physical Condition - Use new 'general_condition' field
+            general_condition = collection_item.get('general_condition')
+            if general_condition == 'new_with_tags':
+                coefficients += 0.3
+            elif general_condition == 'very_good':
                 coefficients += 0.15
+            elif general_condition == 'used':
+                coefficients += 0.0  # No change
+            elif general_condition == 'damaged':
+                coefficients -= 0.25  # Negative impact
+            elif general_condition == 'needs_restoration':
+                coefficients -= 0.5   # Significant negative impact
                 
-            # Condition multipliers (new values)
+            # Legacy physical_state (for backward compatibility)
+            if not general_condition:
+                physical_state = collection_item.get('physical_state')
+                if physical_state == 'new_with_tags':
+                    coefficients += 0.3
+                elif physical_state == 'very_good_condition':
+                    coefficients += 0.15
+                elif physical_state == 'used':
+                    coefficients += 0.0
+                elif physical_state == 'damaged':
+                    coefficients -= 0.25
+                elif physical_state == 'needs_restoration':
+                    coefficients -= 0.4
+                
+            # E. Technical Details - Enhanced patches system
+            # Handle both array and string formats
+            patches = collection_item.get('patches', [])
+            patches_list = collection_item.get('patches_list', [])
+            
+            # Convert string patches to array for processing
+            if isinstance(patches, str) and patches.strip():
+                patches = [p.strip() for p in patches.split(',') if p.strip()]
+            elif not isinstance(patches, list):
+                patches = []
+                
+            # Combine both patch sources
+            all_patches = list(set(patches + patches_list))
+            
+            # Apply patch coefficients
+            for patch in all_patches:
+                if patch == 'national_league':
+                    coefficients += 0.1
+                elif patch == 'national_cup':
+                    coefficients += 0.1
+                elif patch == 'continental_competition':
+                    coefficients += 0.5
+                elif patch == 'international_competition':
+                    coefficients += 1.0
+                elif patch == 'continental_super_cup':
+                    coefficients += 0.2
+                # 'other' patches don't add coefficient
+                
+            # Signature - Use new enhanced signature system
+            signature = collection_item.get('signature', False)
+            if signature or collection_item.get('is_signed'):  # Support both new and legacy
+                coefficients += 2.0  # Base signature coefficient
+                
+                # Signature certificate bonus
+                signature_certificate = collection_item.get('signature_certificate')
+                if signature_certificate == 'yes':
+                    coefficients += 0.3
+                    
+            # Legacy condition coefficients (for backward compatibility)
             condition = collection_item.get('condition')
             if condition == 'club_stock':
                 coefficients += 1.2
@@ -3423,25 +3539,8 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
                 coefficients += 1.5
             elif condition == 'training':
                 coefficients += 0.2
-                
-            # Physical State multipliers (new category)
-            physical_state = collection_item.get('physical_state')
-            if physical_state == 'new_with_tags':
-                coefficients += 0.3
-            elif physical_state == 'very_good_condition':
-                coefficients += 0.15
-            elif physical_state == 'used':
-                coefficients += 0.0  # No change
-            elif physical_state == 'damaged':
-                coefficients -= 0.25  # Negative impact
-            elif physical_state == 'needs_restoration':
-                coefficients -= 0.4   # Significant negative impact
-                
-            # Signed by a famous player (reduced coefficient)
-            if collection_item.get('is_signed') and collection_item.get('signed_by'):
-                coefficients += 1.0
         
-        # Age calculation from season (reduced coefficient and max)
+        # Age calculation from season
         season = master_kit.get('season', '')
         if season and '-' in season:
             try:
