@@ -272,6 +272,71 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
     fetchMasterKits();
   };
 
+  // Enhanced edit form handlers for adding to collection
+  const handleFormDataChange = (key, value) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSaveToCollection = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in to add to collection');
+        return;
+      }
+
+      // Prepare collection data similar to PersonalDetailsForm
+      const collectionData = {
+        master_kit_id: selectedMasterKit.id,
+        collection_type: selectedCollectionType,
+        name_printing: editFormData.name_printing || null,
+        number_printing: editFormData.number_printing || null,
+        patches: editFormData.patches || null,
+        is_signed: editFormData.signature || false,
+        signed_by: editFormData.signature ? editFormData.signature_player : null,
+        condition: editFormData.general_condition || null,
+        physical_state: editFormData.general_condition || null,
+        size: editFormData.size || null,
+        purchase_price: editFormData.user_estimate ? parseFloat(editFormData.user_estimate) : null,
+        purchase_date: editFormData.match_date || null,
+        personal_notes: editFormData.comments || null
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/my-collection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(collectionData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add to collection');
+      }
+
+      const successMessage = selectedCollectionType === 'owned' 
+        ? 'Master Kit added to your collection successfully!' 
+        : 'Master Kit added to your want list successfully!';
+      
+      alert(successMessage);
+      
+      // Reset form and close modal
+      setEditFormData({});
+      setShowPersonalDetailsForm(false);
+      setSelectedMasterKit(null);
+      handleAddedToCollection();
+
+    } catch (error) {
+      console.error('Error adding to collection:', error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
   const renderMasterKitCard = (kit) => {
     return (
       <div 
