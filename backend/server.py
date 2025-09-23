@@ -2455,7 +2455,7 @@ async def get_contributions(
         skip = (page - 1) * limit
         
         # Query database
-        cursor = db.contributions.find(filter_query).skip(skip).limit(limit).sort("created_at", -1)
+        cursor = db.contributions_v2.find(filter_query).skip(skip).limit(limit).sort("submitted_at", -1)
         contributions = await cursor.to_list(length=None)
         
         # Convert contributions to handle both old and new formats
