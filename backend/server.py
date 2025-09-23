@@ -2577,7 +2577,7 @@ async def vote_on_contribution(
             
             # Auto-reject if 2 downvotes
             if new_downvotes >= 2:
-                await db.contributions.update_one(
+                await db.contributions_v2.update_one(
                     {"id": contribution_id},
                     {"$set": {"status": "rejected"}}
                 )
