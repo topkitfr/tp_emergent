@@ -161,14 +161,14 @@ class TopKitMasterKitFormTesting:
             
             # Create Master Kit with required fields only
             master_kit_data = {
-                "kit_type": "home",
+                "kit_type": "authentic",  # KitModel: authentic or replica
                 "club_id": club['id'],
-                "kit_style": "short_sleeve",
+                "kit_style": "home",  # KitType: home, away, third, fourth, gk, special
                 "season": "2024/2025",
+                "competition_id": competition['id'],
                 "front_photo": "test_front_photo.jpg",
                 "back_photo": "test_back_photo.jpg",
-                "brand_id": brand['id'],
-                "competition_id": competition['id']
+                "brand_id": brand['id']
             }
             
             print(f"      Creating Master Kit with required fields:")
