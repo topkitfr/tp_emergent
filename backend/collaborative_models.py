@@ -338,17 +338,19 @@ class Team(BaseModel):
     external_ids: Dict[str, str] = {}
     topkit_reference: str
 
+class BrandType(str, Enum):
+    BRAND = "brand"
+    SPONSOR = "sponsor"
+
 class Brand(BaseModel):
-    """Brand/Manufacturer entity - keeping existing structure"""
+    """Brand/Manufacturer entity - updated structure"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    official_name: Optional[str] = None
-    common_names: List[str] = []
+    name: str  # Changed from brand_name to name
+    type: BrandType = BrandType.BRAND  # New field: Brand or Sponsor
     country: Optional[str] = None
     founded_year: Optional[int] = None
     website: Optional[str] = None
     logo_url: Optional[str] = None
-    brand_colors: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str
     verified_level: VerificationLevel = VerificationLevel.UNVERIFIED
