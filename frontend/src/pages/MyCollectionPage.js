@@ -661,21 +661,46 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                   key={item.id}
                   className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
                 >
-                  {/* Kit Image */}
+                  {/* Kit Image - Prioritize personal photos over master kit photos */}
                   <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                    {masterKit.front_photo_url ? (
-                      <img
-                        src={masterKit.front_photo_url.startsWith('http') 
-                          ? masterKit.front_photo_url 
-                          : masterKit.front_photo_url.startsWith('uploads/') ? 
-                            `${API}/api/${masterKit.front_photo_url}` :
-                            `${API}/api/uploads/master_kits/${masterKit.front_photo_url}.jpg`}
-                        alt={`${masterKit.club || 'Unknown'} ${masterKit.season || ''}`}
-                        className="w-full h-48 object-contain rounded-lg"
-                      />
-                    ) : (
-                      <span className="text-4xl">👕</span>
-                    )}
+                    {(() => {
+                      // Priority 1: Personal photos from Edit Kit Details form
+                      const personalPhotos = item.photo_urls || [];
+                      if (personalPhotos.length > 0) {
+                        const firstPhoto = personalPhotos[0];
+                        const photoUrl = firstPhoto.startsWith('http') 
+                          ? firstPhoto 
+                          : firstPhoto.startsWith('uploads/') ? 
+                            `${API}/api/${firstPhoto}` :
+                            `${API}/api/uploads/personal_photos/${firstPhoto}`;
+                        
+                        return (
+                          <img
+                            src={photoUrl}
+                            alt={`Personal ${masterKit.club || 'Unknown'} ${masterKit.season || ''}`}
+                            className="w-full h-48 object-contain rounded-lg"
+                          />
+                        );
+                      }
+                      
+                      // Priority 2: Master kit photos (fallback)
+                      if (masterKit.front_photo_url) {
+                        return (
+                          <img
+                            src={masterKit.front_photo_url.startsWith('http') 
+                              ? masterKit.front_photo_url 
+                              : masterKit.front_photo_url.startsWith('uploads/') ? 
+                                `${API}/api/${masterKit.front_photo_url}` :
+                                `${API}/api/uploads/master_kits/${masterKit.front_photo_url}.jpg`}
+                            alt={`${masterKit.club || 'Unknown'} ${masterKit.season || ''}`}
+                            className="w-full h-48 object-contain rounded-lg opacity-60"
+                          />
+                        );
+                      }
+                      
+                      // Priority 3: Default kit icon
+                      return <span className="text-4xl">👕</span>;
+                    })()}
                   </div>
 
                   {/* Kit Details */}
