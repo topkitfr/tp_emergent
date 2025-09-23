@@ -755,33 +755,6 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                           <span className="font-bold text-purple-600">€{priceEstimations[item.id].estimated_price}</span>
                         </div>
                       )}
-                      
-                      {/* Purchase Price */}
-                      {item.purchase_price && (
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-600">Purchase Price:</span>
-                          <span className="font-medium text-green-600">€{item.purchase_price}</span>
-                        </div>
-                      )}
-                      
-                      {/* Value Comparison - Compare TopKit Estimate vs Purchase Price */}
-                      {item.collection_type === 'owned' && item.purchase_price && priceEstimations[item.id] && (
-                        <div className="flex justify-between text-sm mt-1">
-                          <span className="text-gray-600">Value Change:</span>
-                          {(() => {
-                            const purchasePrice = item.purchase_price;
-                            const estimatedPrice = priceEstimations[item.id].estimated_price;
-                            const difference = estimatedPrice - purchasePrice;
-                            const percentage = ((difference / purchasePrice) * 100).toFixed(1);
-                            
-                            return (
-                              <span className={`font-medium ${difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {difference >= 0 ? '+' : ''}€{difference.toFixed(2)} ({percentage}%)
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      )}
 
                       {/* User vs TopKit Estimate Comparison */}
                       {item.collection_type === 'owned' && item.user_estimate && priceEstimations[item.id] && (
