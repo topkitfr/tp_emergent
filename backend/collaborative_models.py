@@ -254,13 +254,14 @@ class MasterKitResponse(BaseModel):
     club_name: Optional[str] = None  # Populated from club
     
     season: str
-    kit_type: Optional[KitType] = None  # Made optional for backward compatibility
+    kit_type: Optional[KitModel] = None  # This should be KitModel (authentic/replica), not KitType
+    kit_style: Optional[KitType] = None  # This should be KitType (home/away/third/etc)
     
     competition_id: Optional[str] = None  # New format
     competition: Optional[str] = None  # Old format - for backward compatibility
     competition_name: Optional[str] = None  # Populated from competition
     
-    model: KitModel
+    model: Optional[KitModel] = None  # Make optional for backward compatibility
     
     brand_id: Optional[str] = None  # New format
     brand: Optional[str] = None  # Old format - for backward compatibility
@@ -271,6 +272,8 @@ class MasterKitResponse(BaseModel):
     main_sponsor_id: Optional[str] = None
     main_sponsor: Optional[str] = None  # Old format - for backward compatibility
     main_sponsor_name: Optional[str] = None  # Populated from sponsor
+    
+    primary_sponsor_id: Optional[str] = None  # Add this field to match MasterKit model
     
     gender: Optional[Union[Gender, str]] = None  # Allow old enum values and made optional for backward compatibility
     primary_color: Optional[str] = None  # Made optional for backward compatibility
