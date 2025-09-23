@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Upload } from 'lucide-react';
 
-const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDataChange, onSave, API }) => {
+const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDataChange, onSave, API, title = "Edit Kit Details" }) => {
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(false);
