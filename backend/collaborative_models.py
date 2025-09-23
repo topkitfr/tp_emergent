@@ -244,15 +244,46 @@ class MyCollectionCreate(BaseModel):
 
 class MyCollectionUpdate(BaseModel):
     """Update model for personal details in My Collection"""
-    name_printing: Optional[str] = None
-    number_printing: Optional[str] = None
-    patches: Optional[str] = None
+    # A. Basic Information
+    gender: Optional[str] = None  # Men/Women/Children
+    size: Optional[str] = None  # XS/S/M/L/XL/XXL
+    
+    # B. Player & Printing
+    associated_player_id: Optional[str] = None  # Player with coefficient
+    name_printing: Optional[str] = None  # e.g., "Mbappé"
+    number_printing: Optional[str] = None  # e.g., "7"
+    
+    # C. Origin & Authenticity
+    origin_type: Optional[str] = None  # standard/match_issued/match_worn
+    competition: Optional[str] = None  # Required if match-issued/match-worn
+    authenticity_proof: Optional[List[str]] = None  # match_photos/certificate/no_proof
+    match_date: Optional[datetime] = None  # Required if match-issued/match-worn
+    opponent_id: Optional[str] = None  # Required if match-issued/match-worn
+    
+    # D. Physical Condition
+    general_condition: Optional[str] = None  # new_with_tags/very_good/used/damaged/needs_restoration
+    photo_urls: Optional[List[str]] = None  # Photos (front, back, details)
+    
+    # E. Technical Details
+    patches: Optional[str] = None  # For backward compatibility (comma-separated string)
+    patches_list: Optional[List[str]] = None  # Multiple selection (new format)
+    other_patches: Optional[str] = None  # If "other" selected
+    signature: Optional[bool] = None  # +2.0 coefficient
+    signature_player_id: Optional[str] = None  # Required if signed
+    signature_certificate: Optional[str] = None  # yes/no
+    
+    # F. User Estimate
+    user_estimate: Optional[float] = None  # User's price estimate
+    
+    # G. Comments
+    comments: Optional[str] = None  # Free text
+    
+    # Legacy fields (keep for backward compatibility)
     is_signed: Optional[bool] = None
     signed_by: Optional[str] = None
     condition: Optional[KitCondition] = None
     condition_other: Optional[str] = None
     physical_state: Optional[PhysicalState] = None
-    size: Optional[str] = None
     purchase_price: Optional[float] = None
     purchase_date: Optional[datetime] = None
     personal_notes: Optional[str] = None
