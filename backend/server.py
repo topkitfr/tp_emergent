@@ -918,10 +918,10 @@ async def create_master_kit(
             try:
                 contribution_data = {
                     "id": str(uuid.uuid4()),
-                    "title": f"New Master Kit: {master_kit.club} {master_kit.season} {master_kit.kit_type}",
+                    "title": f"New Master Kit: {club.get('name')} {master_kit.season} {master_kit.kit_type}",
                     "entity_type": "master_kit",
                     "entity_id": master_kit.id,
-                    "status": "approved",  # Auto-approve Master Kit creations
+                    "status": "pending",  # Set to pending for moderation
                     "created_at": datetime.utcnow(),
                     "created_by": current_user["id"],
                     "upvotes": 0,
@@ -929,11 +929,11 @@ async def create_master_kit(
                     "images_count": 1 if master_kit.front_photo_url else 0,
                     "topkit_reference": master_kit.topkit_reference,
                     "change_summary": {
-                        "club": master_kit.club,
+                        "club": club.get("name"),
                         "season": master_kit.season,
                         "kit_type": master_kit.kit_type,
-                        "brand": master_kit.brand,
-                        "competition": master_kit.competition
+                        "brand": brand.get("name"),
+                        "competition": competition.get("competition_name")
                     }
                 }
                 
