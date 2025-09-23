@@ -188,6 +188,7 @@ test_plan:
     - "Sponsor Filtering Functionality Testing - COMPLETED"
     - "Enhanced Edit Kit Form Testing - COMPLETED"
     - "Add Personal Details Form Fix Testing - COMPLETED"
+    - "Patches Field Validation Fix Testing - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
