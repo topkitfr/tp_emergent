@@ -2509,7 +2509,7 @@ async def get_contribution(
 ):
     """Get specific contribution by ID"""
     try:
-        contribution = await db.contributions.find_one({"id": contribution_id})
+        contribution = await db.contributions_v2.find_one({"id": contribution_id})
         if not contribution:
             raise HTTPException(status_code=404, detail="Contribution not found")
         
