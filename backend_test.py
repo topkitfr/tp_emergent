@@ -243,20 +243,20 @@ class TopKitMasterKitFormTesting:
             
             # Create Master Kit with sponsors if available
             master_kit_data = {
-                "kit_type": "away",
+                "kit_type": "replica",  # KitModel: authentic or replica
                 "club_id": club['id'],
-                "kit_style": "long_sleeve",
+                "kit_style": "away",  # KitType: home, away, third, fourth, gk, special
                 "season": "2024/2025",
+                "competition_id": competition['id'],
                 "front_photo": "test_front_photo_2.jpg",
                 "back_photo": "test_back_photo_2.jpg",
-                "brand_id": brand['id'],
-                "competition_id": competition['id']
+                "brand_id": brand['id']
             }
             
             # Add sponsors if available
             if self.form_data['sponsors']:
                 primary_sponsor = self.form_data['sponsors'][0]
-                master_kit_data["primary_sponsor_id"] = primary_sponsor['id']
+                master_kit_data["main_sponsor_id"] = primary_sponsor['id']  # Changed from primary_sponsor_id
                 print(f"         Primary Sponsor: {primary_sponsor['name']} ({primary_sponsor['id']})")
                 
                 if len(self.form_data['sponsors']) > 1:
