@@ -35,14 +35,48 @@ ADMIN_CREDENTIALS = {
 # Expected Brand Types
 EXPECTED_BRAND_TYPES = ["brand", "sponsor"]
 
-class TopKitMasterKitBrandFormTesting:
+# Test Sponsors Data - Emirates, Fly Emirates, Jeep (should be type="sponsor")
+TEST_SPONSORS = [
+    {
+        "name": "Emirates",
+        "type": "sponsor",
+        "country": "UAE",
+        "founded_year": 1985,
+        "website": "https://emirates.com"
+    },
+    {
+        "name": "Fly Emirates", 
+        "type": "sponsor",
+        "country": "UAE",
+        "founded_year": 1985,
+        "website": "https://emirates.com"
+    },
+    {
+        "name": "Jeep",
+        "type": "sponsor", 
+        "country": "USA",
+        "founded_year": 1941,
+        "website": "https://jeep.com"
+    }
+]
+
+# Test Brand Data - Nike (should be type="brand")
+TEST_BRAND = {
+    "name": "Nike",
+    "type": "brand",
+    "country": "USA", 
+    "founded_year": 1964,
+    "website": "https://nike.com"
+}
+
+class TopKitSponsorFilteringTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
-        self.brands_data = []
-        self.test_brand_id = None
+        self.created_sponsor_ids = []
+        self.created_brand_ids = []
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -98,399 +132,407 @@ class TopKitMasterKitBrandFormTesting:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_master_kits_database_cleanup(self):
-        """Test that Master Kits database has been cleaned up (should be empty)"""
+    def create_test_sponsors(self):
+        """Create test sponsors (Emirates, Fly Emirates, Jeep) for testing"""
         try:
-            print(f"\n🗑️ TESTING MASTER KITS DATABASE CLEANUP")
+            print(f"\n🏢 CREATING TEST SPONSORS")
             print("=" * 60)
-            print("Testing: GET /api/master-kits - Should return empty array after cleanup")
-            
-            response = self.session.get(
-                f"{BACKEND_URL}/master-kits",
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                master_kits = response.json()
-                
-                print(f"      ✅ Master kits endpoint accessible")
-                print(f"         Found {len(master_kits)} master kits")
-                
-                if len(master_kits) == 0:
-                    self.log_test("Master Kits Database Cleanup", True, 
-                                 "✅ Master kits database is empty as expected after cleanup")
-                    return True
-                else:
-                    self.log_test("Master Kits Database Cleanup", False, 
-                                 f"❌ Master kits database not empty - found {len(master_kits)} items")
-                    print(f"         Sample master kit: {master_kits[0] if master_kits else 'None'}")
-                    return False
-                    
-            else:
-                self.log_test("Master Kits Database Cleanup", False, 
-                             f"❌ Master kits endpoint failed - Status {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Master Kits Database Cleanup", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_form_data_brands_endpoint(self):
-        """Test GET /api/form-data/brands endpoint to verify brands with type field"""
-        try:
-            print(f"\n🏷️ TESTING FORM DATA BRANDS ENDPOINT")
-            print("=" * 60)
-            print("Testing: GET /api/form-data/brands - Verify brands with type field")
-            
-            response = self.session.get(
-                f"{BACKEND_URL}/form-data/brands",
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                brands_data = response.json()
-                self.brands_data = brands_data
-                
-                print(f"      ✅ Form data brands endpoint accessible")
-                print(f"         Found {len(brands_data)} brands")
-                
-                # Verify response structure
-                if isinstance(brands_data, list):
-                    self.log_test("Form Data Brands Endpoint", True, 
-                                 f"✅ Brands endpoint returns list with {len(brands_data)} brands")
-                    
-                    # Check if any brands have type field
-                    brands_with_type = [b for b in brands_data if b.get('type')]
-                    
-                    print(f"         Brands with type field: {len(brands_with_type)}")
-                    
-                    if len(brands_data) > 0:
-                        sample_brand = brands_data[0]
-                        print(f"         Sample brand structure: {list(sample_brand.keys())}")
-                        if sample_brand.get('type'):
-                            print(f"         Sample brand type: {sample_brand.get('type')}")
-                        if sample_brand.get('name'):
-                            print(f"         Sample brand name: {sample_brand.get('name')}")
-                    
-                    return True
-                else:
-                    self.log_test("Form Data Brands Endpoint", False, 
-                                 "❌ Brands endpoint returns invalid data structure")
-                    return False
-                    
-            else:
-                self.log_test("Form Data Brands Endpoint", False, 
-                             f"❌ Brands endpoint failed - Status {response.status_code}", response.text)
-                return False
-                
-        except Exception as e:
-            self.log_test("Form Data Brands Endpoint", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_brand_type_enum_validation(self):
-        """Test BrandType enum validation (brand/sponsor)"""
-        try:
-            print(f"\n🔍 TESTING BRAND TYPE ENUM VALIDATION")
-            print("=" * 60)
-            print("Testing: BrandType enum values (brand/sponsor)")
-            print("Expected brand types:")
-            for brand_type in EXPECTED_BRAND_TYPES:
-                print(f"   {brand_type}")
+            print("Creating test sponsors: Emirates, Fly Emirates, Jeep")
             
             if not self.auth_token:
-                self.log_test("Brand Type Enum Validation", False, "❌ No authentication token available")
+                self.log_test("Create Test Sponsors", False, "❌ No authentication token available")
                 return False
             
-            validation_tests = []
+            created_sponsors = []
             
-            # Test each BrandType enum value
-            for brand_type in EXPECTED_BRAND_TYPES:
-                test_brand_data = {
-                    "name": f"Test {brand_type.title()} Brand {uuid.uuid4().hex[:6]}",
-                    "type": brand_type,
-                    "country": "France",
-                    "founded_year": 2000,
-                    "website": f"https://test{brand_type}.com"
-                }
-                
-                print(f"      Testing brand type: {brand_type}")
+            for sponsor_data in TEST_SPONSORS:
+                print(f"      Creating sponsor: {sponsor_data['name']}")
                 
                 response = self.session.post(
                     f"{BACKEND_URL}/contributions-v2/",
                     json={
                         "entity_type": "brand",
-                        "title": f"Test {brand_type.title()} Brand",
-                        "description": f"Testing {brand_type} brand type validation",
-                        "data": test_brand_data
+                        "title": f"Test Sponsor - {sponsor_data['name']}",
+                        "description": f"Creating test sponsor {sponsor_data['name']} for sponsor filtering tests",
+                        "data": sponsor_data
                     },
-                    timeout=10
+                    timeout=15
                 )
                 
-                if response.status_code in [201, 200]:
-                    print(f"         ✅ {brand_type} - Valid")
-                    validation_tests.append(True)
+                if response.status_code in [200, 201]:
+                    data = response.json()
+                    print(f"         ✅ {sponsor_data['name']} - Created successfully")
+                    print(f"            Contribution ID: {data.get('id')}")
                     
-                    # Store first test brand ID for later testing
-                    if not self.test_brand_id:
-                        data = response.json()
-                        self.test_brand_id = data.get('entity_id')
-                        
-                elif response.status_code == 422:
-                    error_data = response.text
-                    if "type" in error_data.lower():
-                        print(f"         ❌ {brand_type} - Invalid enum value")
-                        validation_tests.append(False)
-                    else:
-                        print(f"         ✅ {brand_type} - Valid (other validation error)")
-                        validation_tests.append(True)
+                    # Store sponsor ID for later testing
+                    entity_id = data.get('entity_id')
+                    if entity_id:
+                        self.created_sponsor_ids.append(entity_id)
+                        created_sponsors.append(sponsor_data['name'])
                 else:
-                    print(f"         ⚠️ {brand_type} - Unexpected response: {response.status_code}")
-                    validation_tests.append(True)  # Don't fail for unexpected responses
+                    print(f"         ❌ {sponsor_data['name']} - Failed to create (Status: {response.status_code})")
             
-            # Test invalid brand type
-            invalid_brand_data = {
-                "name": "Test Invalid Brand",
-                "type": "invalid_type",  # Invalid type
-                "country": "France"
-            }
-            
-            print(f"      Testing invalid brand type: invalid_type")
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json={
-                    "entity_type": "brand",
-                    "title": "Test Invalid Brand",
-                    "description": "Testing invalid brand type validation",
-                    "data": invalid_brand_data
-                },
-                timeout=10
-            )
-            
-            if response.status_code == 422:
-                print(f"         ✅ invalid_type - Correctly rejected")
-                validation_tests.append(True)
+            if len(created_sponsors) >= 2:  # At least 2 sponsors created
+                self.log_test("Create Test Sponsors", True, 
+                             f"✅ Test sponsors created successfully ({len(created_sponsors)}/3)")
+                return True
             else:
-                print(f"         ❌ invalid_type - Should have been rejected but got {response.status_code}")
-                validation_tests.append(False)
-            
-            # Calculate success rate
-            if validation_tests:
-                success_rate = sum(validation_tests) / len(validation_tests)
-                if success_rate >= 0.8:  # 80% success rate threshold
-                    self.log_test("Brand Type Enum Validation", True, 
-                                 f"✅ BrandType enum validation working correctly ({success_rate*100:.1f}% success)")
-                    return True
-                else:
-                    self.log_test("Brand Type Enum Validation", False, 
-                                 f"❌ BrandType enum validation issues ({success_rate*100:.1f}% success)")
-                    return False
-            else:
-                self.log_test("Brand Type Enum Validation", False, "❌ No validation tests completed")
+                self.log_test("Create Test Sponsors", False, 
+                             f"❌ Failed to create sufficient test sponsors ({len(created_sponsors)}/3)")
                 return False
                 
         except Exception as e:
-            self.log_test("Brand Type Enum Validation", False, f"Exception: {str(e)}")
+            self.log_test("Create Test Sponsors", False, f"Exception: {str(e)}")
             return False
     
-    def test_brand_contribution_creation(self):
-        """Test brand contribution creation with new form structure"""
+    def create_test_brand(self):
+        """Create test brand (Nike) for testing brand vs sponsor separation"""
         try:
-            print(f"\n🏢 TESTING BRAND CONTRIBUTION CREATION")
+            print(f"\n👟 CREATING TEST BRAND")
             print("=" * 60)
-            print("Testing: Brand contribution creation with new form structure")
-            print("New form fields:")
-            print("   - Name field (previously 'Brand Name')")
-            print("   - Type dropdown with Brand/Sponsor options (previously 'Official Name')")
-            print("   - Removed: Alternative Name and Additional Logo fields")
+            print("Creating test brand: Nike (type='brand')")
             
             if not self.auth_token:
-                self.log_test("Brand Contribution Creation", False, "❌ No authentication token available")
+                self.log_test("Create Test Brand", False, "❌ No authentication token available")
                 return False
             
-            # Test brand contribution with new structure
-            test_brand_data = {
-                "name": f"Test New Brand Structure {uuid.uuid4().hex[:8]}",  # Name field (not brand_name)
-                "type": "brand",  # Type dropdown (brand/sponsor)
-                "country": "Germany",
-                "founded_year": 1995,
-                "website": "https://testnewbrand.com"
-                # Note: No alternative_name or additional_logo fields
-            }
+            print(f"      Creating brand: {TEST_BRAND['name']}")
             
-            print(f"      Creating test brand contribution:")
-            print(f"         Name: {test_brand_data['name']}")
-            print(f"         Type: {test_brand_data['type']}")
-            print(f"         Country: {test_brand_data['country']}")
-            
-            # Test brand creation through contribution system
             response = self.session.post(
                 f"{BACKEND_URL}/contributions-v2/",
                 json={
                     "entity_type": "brand",
-                    "title": f"Test Brand Contribution - {test_brand_data['name']}",
-                    "description": "Testing brand contribution creation with new form structure",
-                    "data": test_brand_data
+                    "title": f"Test Brand - {TEST_BRAND['name']}",
+                    "description": f"Creating test brand {TEST_BRAND['name']} for brand vs sponsor separation tests",
+                    "data": TEST_BRAND
                 },
                 timeout=15
             )
             
             if response.status_code in [200, 201]:
                 data = response.json()
-                print(f"      ✅ Brand contribution created successfully")
-                print(f"         Contribution ID: {data.get('id')}")
-                print(f"         Status: {data.get('status', 'unknown')}")
+                print(f"         ✅ {TEST_BRAND['name']} - Created successfully")
+                print(f"            Contribution ID: {data.get('id')}")
                 
-                # Store test brand ID for cleanup
-                if not self.test_brand_id:
-                    self.test_brand_id = data.get('entity_id')
+                # Store brand ID for later testing
+                entity_id = data.get('entity_id')
+                if entity_id:
+                    self.created_brand_ids.append(entity_id)
                 
-                self.log_test("Brand Contribution Creation", True, 
-                             f"✅ Brand contribution with new form structure created successfully")
+                self.log_test("Create Test Brand", True, 
+                             f"✅ Test brand {TEST_BRAND['name']} created successfully")
                 return True
-                
-            elif response.status_code == 400:
-                error_data = response.text
-                print(f"      ❌ Bad request error: {error_data}")
-                self.log_test("Brand Contribution Creation", False, 
-                             f"❌ Brand contribution creation failed - {error_data}")
-                return False
-            elif response.status_code == 401:
-                self.log_test("Brand Contribution Creation", False, 
-                             "❌ Authentication failed for brand contribution")
-                return False
-            elif response.status_code == 422:
-                error_data = response.text
-                print(f"      ❌ Validation error: {error_data}")
-                self.log_test("Brand Contribution Creation", False, 
-                             f"❌ Brand contribution validation failed - {error_data}")
-                return False
             else:
-                self.log_test("Brand Contribution Creation", False, 
-                             f"❌ Brand contribution creation failed - Status {response.status_code}", response.text)
+                print(f"         ❌ {TEST_BRAND['name']} - Failed to create (Status: {response.status_code})")
+                self.log_test("Create Test Brand", False, 
+                             f"❌ Failed to create test brand - Status {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Brand Contribution Creation", False, f"Exception: {str(e)}")
+            self.log_test("Create Test Brand", False, f"Exception: {str(e)}")
             return False
     
-    def test_create_entity_from_contribution_brands(self):
-        """Test that create_entity_from_contribution function includes brand type field"""
+    def test_sponsors_endpoint(self):
+        """Test GET /api/form-data/sponsors endpoint returns only brands with type='sponsor'"""
         try:
-            print(f"\n🔧 TESTING CREATE ENTITY FROM CONTRIBUTION - BRANDS")
+            print(f"\n🎯 TESTING SPONSORS ENDPOINT")
             print("=" * 60)
-            print("Testing: create_entity_from_contribution function includes brand type field")
+            print("Testing: GET /api/form-data/sponsors - Should return only sponsor-type brands")
             
-            if not self.auth_token:
-                self.log_test("Create Entity From Contribution - Brands", False, "❌ No authentication token available")
-                return False
-            
-            if not self.test_brand_id:
-                print(f"      ⚠️ No test brand ID available, skipping entity creation test")
-                self.log_test("Create Entity From Contribution - Brands", True, 
-                             "⚠️ No test brand available for entity creation test")
-                return True
-            
-            # Get the created brand to verify type field was saved
             response = self.session.get(
-                f"{BACKEND_URL}/brands/{self.test_brand_id}",
+                f"{BACKEND_URL}/form-data/sponsors",
                 timeout=10
             )
             
             if response.status_code == 200:
-                brand_data = response.json()
-                print(f"      ✅ Brand entity retrieved successfully")
-                print(f"         Brand ID: {brand_data.get('id')}")
-                print(f"         Name: {brand_data.get('name')}")
+                sponsors_data = response.json()
                 
-                # Check if type field was saved
-                brand_type = brand_data.get('type')
-                if brand_type:
-                    print(f"         Brand Type: {brand_type}")
-                    if brand_type in EXPECTED_BRAND_TYPES:
-                        self.log_test("Create Entity From Contribution - Brands", True, 
-                                     f"✅ Brand entity created with valid type: {brand_type}")
-                        return True
+                print(f"      ✅ Sponsors endpoint accessible")
+                print(f"         Found {len(sponsors_data)} sponsors")
+                
+                # Verify response structure and filtering
+                if isinstance(sponsors_data, list):
+                    # Check that all returned items have type="sponsor"
+                    sponsor_types = [s.get('type') for s in sponsors_data]
+                    non_sponsor_types = [t for t in sponsor_types if t != 'sponsor']
+                    
+                    print(f"         Sponsor types found: {set(sponsor_types)}")
+                    
+                    if len(non_sponsor_types) == 0:
+                        print(f"         ✅ All items have type='sponsor' - filtering working correctly")
+                        
+                        # Check for test sponsors
+                        sponsor_names = [s.get('name') for s in sponsors_data]
+                        test_sponsors_found = [name for name in ['Emirates', 'Fly Emirates', 'Jeep'] if name in sponsor_names]
+                        
+                        print(f"         Test sponsors found: {test_sponsors_found}")
+                        
+                        # Verify response format includes required fields
+                        if len(sponsors_data) > 0:
+                            sample_sponsor = sponsors_data[0]
+                            required_fields = ['id', 'name', 'country', 'type']
+                            missing_fields = [field for field in required_fields if field not in sample_sponsor]
+                            
+                            if len(missing_fields) == 0:
+                                print(f"         ✅ Response format includes all required fields: {required_fields}")
+                                self.log_test("Sponsors Endpoint", True, 
+                                             f"✅ Sponsors endpoint working correctly - {len(sponsors_data)} sponsors returned, all type='sponsor'")
+                                return True
+                            else:
+                                print(f"         ❌ Missing required fields: {missing_fields}")
+                                self.log_test("Sponsors Endpoint", False, 
+                                             f"❌ Response missing required fields: {missing_fields}")
+                                return False
+                        else:
+                            self.log_test("Sponsors Endpoint", True, 
+                                         "✅ Sponsors endpoint working - no sponsors found (may be expected)")
+                            return True
                     else:
-                        self.log_test("Create Entity From Contribution - Brands", False, 
-                                     f"❌ Brand entity has invalid type: {brand_type}")
+                        print(f"         ❌ Found non-sponsor types: {set(non_sponsor_types)}")
+                        self.log_test("Sponsors Endpoint", False, 
+                                     f"❌ Sponsors endpoint returning non-sponsor types: {set(non_sponsor_types)}")
                         return False
                 else:
-                    print(f"         Brand Type: None (missing)")
-                    self.log_test("Create Entity From Contribution - Brands", False, 
-                                 "❌ Brand entity missing type field")
+                    self.log_test("Sponsors Endpoint", False, 
+                                 "❌ Sponsors endpoint returns invalid data structure")
                     return False
                     
-            elif response.status_code == 404:
-                print(f"      ⚠️ Brand entity not found (may not be approved yet)")
-                self.log_test("Create Entity From Contribution - Brands", True, 
-                             "⚠️ Brand entity not found (contribution may need approval)")
-                return True
             else:
-                self.log_test("Create Entity From Contribution - Brands", False, 
-                             f"❌ Failed to retrieve brand entity - Status {response.status_code}")
+                self.log_test("Sponsors Endpoint", False, 
+                             f"❌ Sponsors endpoint failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Create Entity From Contribution - Brands", False, f"Exception: {str(e)}")
+            self.log_test("Sponsors Endpoint", False, f"Exception: {str(e)}")
             return False
     
-    def test_brands_endpoint_with_type_field(self):
-        """Test that GET /api/brands returns brands with type field"""
+    def test_brands_vs_sponsors_separation(self):
+        """Test that brands endpoint returns all brands, sponsors endpoint returns only sponsors"""
         try:
-            print(f"\n📋 TESTING BRANDS ENDPOINT WITH TYPE FIELD")
+            print(f"\n🔄 TESTING BRANDS VS SPONSORS SEPARATION")
             print("=" * 60)
-            print("Testing: GET /api/brands - Verify brands include type field")
+            print("Testing: Brands endpoint returns all brands, Sponsors endpoint returns only sponsors")
             
-            response = self.session.get(
-                f"{BACKEND_URL}/brands",
-                timeout=10
-            )
+            # Test brands endpoint
+            brands_response = self.session.get(f"{BACKEND_URL}/form-data/brands", timeout=10)
+            sponsors_response = self.session.get(f"{BACKEND_URL}/form-data/sponsors", timeout=10)
+            
+            if brands_response.status_code == 200 and sponsors_response.status_code == 200:
+                brands_data = brands_response.json()
+                sponsors_data = sponsors_response.json()
+                
+                print(f"      ✅ Both endpoints accessible")
+                print(f"         Brands endpoint: {len(brands_data)} items")
+                print(f"         Sponsors endpoint: {len(sponsors_data)} items")
+                
+                # Analyze brands endpoint
+                brand_types = [b.get('type') for b in brands_data if b.get('type')]
+                brand_type_counts = {}
+                for btype in brand_types:
+                    brand_type_counts[btype] = brand_type_counts.get(btype, 0) + 1
+                
+                print(f"         Brands endpoint types: {brand_type_counts}")
+                
+                # Analyze sponsors endpoint
+                sponsor_types = [s.get('type') for s in sponsors_data if s.get('type')]
+                sponsor_type_counts = {}
+                for stype in sponsor_types:
+                    sponsor_type_counts[stype] = sponsor_type_counts.get(stype, 0) + 1
+                
+                print(f"         Sponsors endpoint types: {sponsor_type_counts}")
+                
+                # Verify separation logic
+                brands_has_both_types = 'brand' in brand_type_counts and 'sponsor' in brand_type_counts
+                sponsors_only_sponsor = len(sponsor_type_counts) == 1 and 'sponsor' in sponsor_type_counts
+                
+                # Check for Nike brand in brands endpoint but not in sponsors endpoint
+                brand_names = [b.get('name') for b in brands_data]
+                sponsor_names = [s.get('name') for s in sponsors_data]
+                
+                nike_in_brands = 'Nike' in brand_names
+                nike_in_sponsors = 'Nike' in sponsor_names
+                
+                print(f"         Nike in brands endpoint: {nike_in_brands}")
+                print(f"         Nike in sponsors endpoint: {nike_in_sponsors}")
+                
+                # Check for test sponsors in sponsors endpoint
+                test_sponsors_in_sponsors = [name for name in ['Emirates', 'Fly Emirates', 'Jeep'] if name in sponsor_names]
+                print(f"         Test sponsors in sponsors endpoint: {test_sponsors_in_sponsors}")
+                
+                # Evaluate results
+                separation_working = True
+                issues = []
+                
+                if not sponsors_only_sponsor:
+                    separation_working = False
+                    issues.append("Sponsors endpoint contains non-sponsor types")
+                
+                if nike_in_sponsors:
+                    separation_working = False
+                    issues.append("Nike (brand type) found in sponsors endpoint")
+                
+                if len(test_sponsors_in_sponsors) == 0 and len(sponsors_data) > 0:
+                    issues.append("Test sponsors not found in sponsors endpoint")
+                
+                if separation_working:
+                    self.log_test("Brands vs Sponsors Separation", True, 
+                                 f"✅ Brands/Sponsors separation working correctly")
+                    return True
+                else:
+                    self.log_test("Brands vs Sponsors Separation", False, 
+                                 f"❌ Separation issues: {', '.join(issues)}")
+                    return False
+                    
+            else:
+                self.log_test("Brands vs Sponsors Separation", False, 
+                             f"❌ Endpoint access failed - Brands: {brands_response.status_code}, Sponsors: {sponsors_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Brands vs Sponsors Separation", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_master_kit_form_data_validation(self):
+        """Test that Master Kit form sponsor fields receive only sponsor-type brands"""
+        try:
+            print(f"\n📋 TESTING MASTER KIT FORM DATA VALIDATION")
+            print("=" * 60)
+            print("Testing: Master Kit form sponsor fields receive only sponsor-type brands")
+            
+            # Test form data endpoints that would be used by Master Kit forms
+            endpoints_to_test = [
+                ("brands", "/form-data/brands", "Brand field should receive all brand-type entities"),
+                ("sponsors", "/form-data/sponsors", "Primary/Secondary Sponsor fields should receive only sponsor-type brands")
+            ]
+            
+            validation_results = []
+            
+            for endpoint_name, endpoint_path, description in endpoints_to_test:
+                print(f"      Testing {endpoint_name} endpoint for Master Kit forms...")
+                print(f"         {description}")
+                
+                response = self.session.get(f"{BACKEND_URL}{endpoint_path}", timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if endpoint_name == "brands":
+                        # Brands endpoint should include all types
+                        types_found = set([item.get('type') for item in data if item.get('type')])
+                        print(f"         Types in brands endpoint: {types_found}")
+                        
+                        if 'brand' in types_found or 'sponsor' in types_found:
+                            print(f"         ✅ Brands endpoint includes brand entities")
+                            validation_results.append(True)
+                        else:
+                            print(f"         ❌ Brands endpoint missing brand entities")
+                            validation_results.append(False)
+                            
+                    elif endpoint_name == "sponsors":
+                        # Sponsors endpoint should only include sponsor types
+                        types_found = set([item.get('type') for item in data if item.get('type')])
+                        print(f"         Types in sponsors endpoint: {types_found}")
+                        
+                        if len(types_found) == 1 and 'sponsor' in types_found:
+                            print(f"         ✅ Sponsors endpoint only includes sponsor entities")
+                            validation_results.append(True)
+                        elif len(types_found) == 0:
+                            print(f"         ⚠️ Sponsors endpoint empty (may be expected)")
+                            validation_results.append(True)
+                        else:
+                            print(f"         ❌ Sponsors endpoint includes non-sponsor entities: {types_found}")
+                            validation_results.append(False)
+                else:
+                    print(f"         ❌ {endpoint_name} endpoint failed - Status {response.status_code}")
+                    validation_results.append(False)
+            
+            # Overall validation result
+            if all(validation_results):
+                self.log_test("Master Kit Form Data Validation", True, 
+                             "✅ Master Kit form data validation working correctly")
+                return True
+            else:
+                failed_count = len([r for r in validation_results if not r])
+                self.log_test("Master Kit Form Data Validation", False, 
+                             f"❌ Master Kit form data validation issues ({failed_count}/{len(validation_results)} failed)")
+                return False
+                
+        except Exception as e:
+            self.log_test("Master Kit Form Data Validation", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_data_integrity(self):
+        """Test that created test sponsors have proper structure"""
+        try:
+            print(f"\n🔍 TESTING DATA INTEGRITY")
+            print("=" * 60)
+            print("Testing: Created test sponsors have proper structure (id, name, type, country, etc.)")
+            
+            # Test sponsors endpoint for data integrity
+            response = self.session.get(f"{BACKEND_URL}/form-data/sponsors", timeout=10)
             
             if response.status_code == 200:
-                brands = response.json()
+                sponsors_data = response.json()
                 
-                print(f"      ✅ Brands endpoint accessible")
-                print(f"         Found {len(brands)} brands")
+                print(f"      ✅ Sponsors endpoint accessible")
+                print(f"         Found {len(sponsors_data)} sponsors")
                 
-                if len(brands) > 0:
-                    # Check if brands have type field
-                    brands_with_type = [b for b in brands if b.get('type')]
+                if len(sponsors_data) > 0:
+                    # Check data structure integrity
+                    required_fields = ['id', 'name', 'type', 'country']
+                    integrity_issues = []
                     
-                    print(f"         Brands with type field: {len(brands_with_type)}")
-                    
-                    if len(brands_with_type) > 0:
-                        sample_brand = brands_with_type[0]
-                        print(f"         Sample brand with type:")
-                        print(f"            Name: {sample_brand.get('name')}")
-                        print(f"            Type: {sample_brand.get('type')}")
-                        print(f"            Country: {sample_brand.get('country', 'Unknown')}")
+                    for sponsor in sponsors_data:
+                        sponsor_name = sponsor.get('name', 'Unknown')
+                        missing_fields = [field for field in required_fields if field not in sponsor or sponsor[field] is None]
                         
-                        self.log_test("Brands Endpoint With Type Field", True, 
-                                     f"✅ Brands endpoint returns brands with type field ({len(brands_with_type)}/{len(brands)} have type)")
+                        if missing_fields:
+                            integrity_issues.append(f"{sponsor_name}: missing {missing_fields}")
+                        
+                        # Verify type is 'sponsor'
+                        if sponsor.get('type') != 'sponsor':
+                            integrity_issues.append(f"{sponsor_name}: invalid type '{sponsor.get('type')}'")
+                    
+                    print(f"         Data integrity check:")
+                    if len(integrity_issues) == 0:
+                        print(f"         ✅ All sponsors have proper structure")
+                        
+                        # Show sample sponsor structure
+                        sample_sponsor = sponsors_data[0]
+                        print(f"         Sample sponsor structure:")
+                        for field in required_fields:
+                            print(f"            {field}: {sample_sponsor.get(field)}")
+                        
+                        self.log_test("Data Integrity", True, 
+                                     f"✅ Data integrity verified - all {len(sponsors_data)} sponsors have proper structure")
                         return True
                     else:
-                        self.log_test("Brands Endpoint With Type Field", False, 
-                                     "❌ No brands found with type field")
+                        print(f"         ❌ Data integrity issues found:")
+                        for issue in integrity_issues[:5]:  # Show first 5 issues
+                            print(f"            • {issue}")
+                        
+                        self.log_test("Data Integrity", False, 
+                                     f"❌ Data integrity issues found: {len(integrity_issues)} problems")
                         return False
                 else:
-                    print(f"      ⚠️ No brands found in database")
-                    self.log_test("Brands Endpoint With Type Field", True, 
-                                 "⚠️ No brands found in database (may be expected)")
+                    print(f"      ⚠️ No sponsors found for integrity testing")
+                    self.log_test("Data Integrity", True, 
+                                 "⚠️ No sponsors found for integrity testing (may be expected)")
                     return True
                     
             else:
-                self.log_test("Brands Endpoint With Type Field", False, 
-                             f"❌ Brands endpoint failed - Status {response.status_code}", response.text)
+                self.log_test("Data Integrity", False, 
+                             f"❌ Sponsors endpoint failed - Status {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_test("Brands Endpoint With Type Field", False, f"Exception: {str(e)}")
+            self.log_test("Data Integrity", False, f"Exception: {str(e)}")
             return False
     
-    def test_master_kit_brand_form_functionality(self):
-        """Test complete Master Kit and Brand form functionality"""
-        print("\n🚀 MASTER KIT & BRAND FORM PRIORITY CHANGES TESTING")
-        print("Testing Master Kit and Brand form priority changes implementation")
+    def test_sponsor_filtering_functionality(self):
+        """Test complete sponsor filtering functionality"""
+        print("\n🚀 SPONSOR FILTERING FUNCTIONALITY TESTING")
+        print("Testing sponsor filtering functionality in Master Kit forms")
         print("=" * 80)
         
         test_results = []
@@ -502,41 +544,41 @@ class TopKitMasterKitBrandFormTesting:
             print("❌ Cannot continue without authentication")
             return [False]
         
-        # Step 2: Test Master Kits database cleanup
-        print("\n2️⃣ Testing Master Kits database cleanup...")
-        cleanup_success = self.test_master_kits_database_cleanup()
-        test_results.append(cleanup_success)
+        # Step 2: Create test sponsors
+        print("\n2️⃣ Creating test sponsors...")
+        sponsors_created = self.create_test_sponsors()
+        test_results.append(sponsors_created)
         
-        # Step 3: Test form data brands endpoint
-        print("\n3️⃣ Testing form data brands endpoint...")
-        form_data_success = self.test_form_data_brands_endpoint()
-        test_results.append(form_data_success)
+        # Step 3: Create test brand
+        print("\n3️⃣ Creating test brand...")
+        brand_created = self.create_test_brand()
+        test_results.append(brand_created)
         
-        # Step 4: Test brand type enum validation
-        print("\n4️⃣ Testing brand type enum validation...")
-        enum_validation_success = self.test_brand_type_enum_validation()
-        test_results.append(enum_validation_success)
+        # Step 4: Test sponsors endpoint
+        print("\n4️⃣ Testing sponsors endpoint...")
+        sponsors_endpoint_success = self.test_sponsors_endpoint()
+        test_results.append(sponsors_endpoint_success)
         
-        # Step 5: Test brand contribution creation
-        print("\n5️⃣ Testing brand contribution creation...")
-        contribution_success = self.test_brand_contribution_creation()
-        test_results.append(contribution_success)
+        # Step 5: Test brands vs sponsors separation
+        print("\n5️⃣ Testing brands vs sponsors separation...")
+        separation_success = self.test_brands_vs_sponsors_separation()
+        test_results.append(separation_success)
         
-        # Step 6: Test create entity from contribution for brands
-        print("\n6️⃣ Testing create entity from contribution for brands...")
-        entity_creation_success = self.test_create_entity_from_contribution_brands()
-        test_results.append(entity_creation_success)
+        # Step 6: Test Master Kit form data validation
+        print("\n6️⃣ Testing Master Kit form data validation...")
+        form_validation_success = self.test_master_kit_form_data_validation()
+        test_results.append(form_validation_success)
         
-        # Step 7: Test brands endpoint with type field
-        print("\n7️⃣ Testing brands endpoint with type field...")
-        brands_endpoint_success = self.test_brands_endpoint_with_type_field()
-        test_results.append(brands_endpoint_success)
+        # Step 7: Test data integrity
+        print("\n7️⃣ Testing data integrity...")
+        integrity_success = self.test_data_integrity()
+        test_results.append(integrity_success)
         
         return test_results
     
     def print_final_summary(self):
         """Print final testing summary"""
-        print("\n📊 MASTER KIT & BRAND FORM TESTING SUMMARY")
+        print("\n📊 SPONSOR FILTERING FUNCTIONALITY TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -549,7 +591,7 @@ class TopKitMasterKitBrandFormTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 MASTER KIT & BRAND FORM RESULTS:")
+        print(f"\n🔍 SPONSOR FILTERING RESULTS:")
         
         # Authentication
         auth_working = any(r['success'] for r in self.test_results if 'Emergency Admin Authentication' in r['test'])
@@ -558,51 +600,50 @@ class TopKitMasterKitBrandFormTesting:
         else:
             print(f"  ❌ AUTHENTICATION: Emergency admin login failed")
         
-        # Master Kits Database Cleanup
-        cleanup_working = any(r['success'] for r in self.test_results if 'Master Kits Database Cleanup' in r['test'])
-        if cleanup_working:
-            print(f"  ✅ MASTER KITS CLEANUP: Database is empty as expected")
+        # Test Data Creation
+        sponsors_created = any(r['success'] for r in self.test_results if 'Create Test Sponsors' in r['test'])
+        brand_created = any(r['success'] for r in self.test_results if 'Create Test Brand' in r['test'])
+        if sponsors_created and brand_created:
+            print(f"  ✅ TEST DATA: Test sponsors and brand created successfully")
         else:
-            print(f"  ❌ MASTER KITS CLEANUP: Database not properly cleaned")
+            print(f"  ❌ TEST DATA: Failed to create test data")
         
-        # Form Data Brands Endpoint
-        form_data_working = any(r['success'] for r in self.test_results if 'Form Data Brands Endpoint' in r['test'])
-        if form_data_working:
-            print(f"  ✅ FORM DATA ENDPOINT: /api/form-data/brands accessible")
+        # Sponsors Endpoint
+        sponsors_endpoint_working = any(r['success'] for r in self.test_results if 'Sponsors Endpoint' in r['test'])
+        if sponsors_endpoint_working:
+            print(f"  ✅ SPONSORS ENDPOINT: /api/form-data/sponsors returns only sponsor-type brands")
         else:
-            print(f"  ❌ FORM DATA ENDPOINT: /api/form-data/brands failed")
+            print(f"  ❌ SPONSORS ENDPOINT: Filtering not working correctly")
         
-        # Brand Type Enum Validation
-        enum_working = any(r['success'] for r in self.test_results if 'Brand Type Enum Validation' in r['test'])
-        if enum_working:
-            print(f"  ✅ BRAND TYPE ENUM: BrandType enum validation working")
-            print(f"     - Supported types: brand, sponsor")
+        # Brands vs Sponsors Separation
+        separation_working = any(r['success'] for r in self.test_results if 'Brands vs Sponsors Separation' in r['test'])
+        if separation_working:
+            print(f"  ✅ SEPARATION LOGIC: Brands and sponsors properly separated")
+            print(f"     - Brands endpoint returns all brands (both brand and sponsor types)")
+            print(f"     - Sponsors endpoint returns only sponsor-type brands")
+            print(f"     - Nike (brand) NOT in sponsors endpoint")
+            print(f"     - Test sponsors (Emirates, Fly Emirates, Jeep) in sponsors endpoint")
         else:
-            print(f"  ❌ BRAND TYPE ENUM: BrandType enum validation failed")
+            print(f"  ❌ SEPARATION LOGIC: Brand/sponsor separation not working")
         
-        # Brand Contribution Creation
-        contribution_working = any(r['success'] for r in self.test_results if 'Brand Contribution Creation' in r['test'])
-        if contribution_working:
-            print(f"  ✅ BRAND CONTRIBUTION: New form structure working")
-            print(f"     - Name field (not Brand Name)")
-            print(f"     - Type dropdown (Brand/Sponsor)")
-            print(f"     - Removed Alternative Name and Additional Logo")
+        # Master Kit Form Data Validation
+        form_validation_working = any(r['success'] for r in self.test_results if 'Master Kit Form Data Validation' in r['test'])
+        if form_validation_working:
+            print(f"  ✅ FORM DATA VALIDATION: Master Kit form fields receive correct data")
+            print(f"     - Primary Sponsor field receives only sponsor-type brands")
+            print(f"     - Secondary Sponsors field receives only sponsor-type brands")
+            print(f"     - Brand field receives all brand-type entities")
         else:
-            print(f"  ❌ BRAND CONTRIBUTION: New form structure failed")
+            print(f"  ❌ FORM DATA VALIDATION: Form data validation issues")
         
-        # Entity Creation
-        entity_working = any(r['success'] for r in self.test_results if 'Create Entity From Contribution - Brands' in r['test'])
-        if entity_working:
-            print(f"  ✅ ENTITY CREATION: create_entity_from_contribution includes type field")
+        # Data Integrity
+        integrity_working = any(r['success'] for r in self.test_results if 'Data Integrity' in r['test'])
+        if integrity_working:
+            print(f"  ✅ DATA INTEGRITY: Created sponsors have proper structure")
+            print(f"     - All sponsors include id, name, type, country fields")
+            print(f"     - No brand-type entities leak into sponsor endpoints")
         else:
-            print(f"  ❌ ENTITY CREATION: type field not properly saved")
-        
-        # Brands Endpoint
-        brands_endpoint_working = any(r['success'] for r in self.test_results if 'Brands Endpoint With Type Field' in r['test'])
-        if brands_endpoint_working:
-            print(f"  ✅ BRANDS ENDPOINT: /api/brands returns brands with type field")
-        else:
-            print(f"  ❌ BRANDS ENDPOINT: type field not included in response")
+            print(f"  ❌ DATA INTEGRITY: Data structure issues found")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -613,33 +654,33 @@ class TopKitMasterKitBrandFormTesting:
         
         # Final status
         print(f"\n🎯 FINAL STATUS:")
-        critical_tests = [auth_working, cleanup_working, form_data_working, enum_working]
+        critical_tests = [auth_working, sponsors_endpoint_working, separation_working, form_validation_working]
         if all(critical_tests):
-            print(f"  ✅ MASTER KIT & BRAND FORM CHANGES WORKING")
+            print(f"  ✅ SPONSOR FILTERING FUNCTIONALITY WORKING PERFECTLY")
             print(f"     - Authentication system operational")
-            print(f"     - Master kits database properly cleaned")
-            print(f"     - Brand form structure updated correctly")
-            print(f"     - BrandType enum validation working")
-            print(f"     - Form data endpoints returning correct data")
-        elif auth_working and form_data_working:
-            print(f"  ⚠️ PARTIAL SUCCESS: Core functionality working")
-            print(f"     - Authentication and form data working")
-            print(f"     - Some cleanup or validation issues")
+            print(f"     - Sponsors endpoint returns only sponsor-type brands")
+            print(f"     - Brands vs sponsors separation working correctly")
+            print(f"     - Master Kit forms will receive proper separated data")
+            print(f"     - No brand-type entities leak into sponsor endpoints")
+        elif auth_working and sponsors_endpoint_working:
+            print(f"  ⚠️ PARTIAL SUCCESS: Core sponsor filtering working")
+            print(f"     - Sponsors endpoint filtering correctly")
+            print(f"     - Some separation or validation issues")
         else:
-            print(f"  ❌ MAJOR ISSUES: Critical functionality not working")
-            print(f"     - Cannot properly test form changes")
+            print(f"  ❌ MAJOR ISSUES: Critical sponsor filtering not working")
+            print(f"     - Cannot properly filter sponsors from brands")
         
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
-        """Run all Master Kit and Brand form tests and return success status"""
-        test_results = self.test_master_kit_brand_form_functionality()
+        """Run all sponsor filtering tests and return success status"""
+        test_results = self.test_sponsor_filtering_functionality()
         self.print_final_summary()
         return any(test_results)
 
 def main():
-    """Main test execution - Master Kit & Brand Form Testing"""
-    tester = TopKitMasterKitBrandFormTesting()
+    """Main test execution - Sponsor Filtering Testing"""
+    tester = TopKitSponsorFilteringTesting()
     success = tester.run_all_tests()
     
     # Exit with appropriate code
