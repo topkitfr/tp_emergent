@@ -213,6 +213,12 @@ export const fieldTypeConfig = {
   brand_select: {
     component: 'brand_select'
   },
+  sponsor_select: {
+    component: 'sponsor_select'
+  },
+  sponsor_select_multiple: {
+    component: 'sponsor_select_multiple'
+  },
   competition_select: {
     component: 'competition_select'
   },
