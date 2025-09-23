@@ -828,6 +828,17 @@ async def get_brands_for_form():
         logger.error(f"Error fetching brands: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/form-data/sponsors")
+async def get_sponsors_for_form():
+    """Get sponsors (brands with type='sponsor') for Master Kit form sponsor dropdowns"""
+    try:
+        cursor = db.brands.find({"type": "sponsor"}, {"id": 1, "name": 1, "country": 1, "type": 1})
+        sponsors = await cursor.to_list(length=None)
+        return [{"id": sponsor["id"], "name": sponsor["name"], "country": sponsor.get("country", "Unknown"), "type": sponsor.get("type", "sponsor")} for sponsor in sponsors]
+    except Exception as e:
+        logger.error(f"Error fetching sponsors: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/form-data/players")
 async def get_form_players():
     """Get all players for form dropdowns with influence coefficients and player types"""
