@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MASTER KIT FORM SUBMISSION BUG FIX TESTING
+TopKit Backend Testing Suite - MASTER KIT FORMDATA SUBMISSION BUG FIX TESTING
 
-Testing the Master Kit form submission bug fix comprehensively:
-1. **Master Kit Creation Testing** - Test POST /api/master-kits endpoint with complete form data
-2. **Contribution Creation for Moderation** - Verify contribution entry is created in contributions_v2 collection
-3. **Response Message Testing** - Verify success response includes detailed message with topkit_reference and status
-4. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
-5. **Moderation Dashboard Integration** - Test GET /api/contributions-v2 includes the new master kit contribution
-6. **Form Data Validation** - Test with required and optional fields
+Testing the Master Kit FormData submission bug fix comprehensively:
+1. **Master Kit FormData Creation Testing** - Test POST /api/master-kits endpoint with FormData and file uploads
+2. **UnicodeDecodeError Fix Verification** - Verify FormData endpoint works without UnicodeDecodeError
+3. **Contribution Creation for Moderation** - Verify contribution entry is created in contributions_v2 collection
+4. **Response Message Testing** - Verify success response includes detailed message with topkit_reference and status
+5. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
+6. **File Upload Testing** - Test front_photo and back_photo file uploads with FormData
 
 CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
-Focus on verifying that Master Kit submissions now properly create contributions that appear in the Moderation Dashboard and provide proper feedback to users.
+Focus on verifying that Master Kit FormData submissions now work without UnicodeDecodeError and properly create contributions.
 """
 
 import requests
@@ -21,6 +21,8 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 
 # Configuration
 BACKEND_URL = "https://jersey-collector-2.preview.emergentagent.com/api"
