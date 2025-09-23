@@ -782,7 +782,7 @@ class TopKitCollectionFormTesting:
     
     def print_final_summary(self):
         """Print final testing summary"""
-        print("\n📊 ADD PERSONAL DETAILS FORM FIX TESTING SUMMARY")
+        print("\n📊 PATCHES FIELD VALIDATION FIX TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -795,7 +795,7 @@ class TopKitCollectionFormTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 ADD PERSONAL DETAILS FORM FIX RESULTS:")
+        print(f"\n🔍 PATCHES FIELD VALIDATION FIX RESULTS:")
         
         # Authentication
         auth_working = any(r['success'] for r in self.test_results if 'Emergency Admin Authentication' in r['test'])
@@ -811,33 +811,44 @@ class TopKitCollectionFormTesting:
         else:
             print(f"  ❌ MASTER KITS ACCESS: Failed to get Master Kits")
         
+        # Patches Field Tests
+        empty_array_working = any(r['success'] for r in self.test_results if 'Patches Field Empty Array' in r['test'])
+        string_array_working = any(r['success'] for r in self.test_results if 'Patches Field String Array' in r['test'])
+        null_working = any(r['success'] for r in self.test_results if 'Patches Field Null' in r['test'])
+        empty_string_working = any(r['success'] for r in self.test_results if 'Patches Field Empty String' in r['test'])
+        comprehensive_working = any(r['success'] for r in self.test_results if 'Comprehensive Patches Combinations' in r['test'])
+        
+        if empty_array_working:
+            print(f"  ✅ PATCHES EMPTY ARRAY: No validation error with patches as []")
+        else:
+            print(f"  ❌ PATCHES EMPTY ARRAY: Still getting validation error with patches as []")
+        
+        if string_array_working:
+            print(f"  ✅ PATCHES STRING ARRAY: No validation error with patches as ['patch1', 'patch2']")
+        else:
+            print(f"  ❌ PATCHES STRING ARRAY: Still getting validation error with patches as string array")
+        
+        if null_working:
+            print(f"  ✅ PATCHES NULL: No validation error with patches as null")
+        else:
+            print(f"  ❌ PATCHES NULL: Still getting validation error with patches as null")
+        
+        if empty_string_working:
+            print(f"  ✅ PATCHES EMPTY STRING: No validation error with patches as ''")
+        else:
+            print(f"  ❌ PATCHES EMPTY STRING: Still getting validation error with patches as empty string")
+        
+        if comprehensive_working:
+            print(f"  ✅ COMPREHENSIVE PATCHES: All patches combinations working in comprehensive form")
+        else:
+            print(f"  ❌ COMPREHENSIVE PATCHES: Issues with patches combinations in comprehensive form")
+        
         # Minimal Collection Addition
         minimal_working = any(r['success'] for r in self.test_results if 'Minimal Collection Addition' in r['test'])
         if minimal_working:
-            print(f"  ✅ MINIMAL COLLECTION ADDITION: Working with no '[object Object]' errors")
+            print(f"  ✅ MINIMAL COLLECTION ADDITION: Basic form submission working")
         else:
-            print(f"  ❌ MINIMAL COLLECTION ADDITION: Field mapping errors still exist")
-        
-        # Comprehensive Collection Addition
-        comprehensive_working = any(r['success'] for r in self.test_results if 'Comprehensive Collection Addition' in r['test'])
-        if comprehensive_working:
-            print(f"  ✅ COMPREHENSIVE COLLECTION ADDITION: Field mapping fixes working")
-        else:
-            print(f"  ❌ COMPREHENSIVE COLLECTION ADDITION: Field mapping issues persist")
-        
-        # Collection Type Variations
-        variations_working = any(r['success'] for r in self.test_results if 'Collection Type Variations' in r['test'])
-        if variations_working:
-            print(f"  ✅ COLLECTION TYPE VARIATIONS: Both 'owned' and 'wanted' types working")
-        else:
-            print(f"  ❌ COLLECTION TYPE VARIATIONS: Issues with collection types")
-        
-        # Existing Collection Retrieval
-        retrieval_working = any(r['success'] for r in self.test_results if 'Existing Collection Retrieval' in r['test'])
-        if retrieval_working:
-            print(f"  ✅ EXISTING COLLECTION RETRIEVAL: No '[object Object]' errors in existing data")
-        else:
-            print(f"  ❌ EXISTING COLLECTION RETRIEVAL: '[object Object]' errors still present")
+            print(f"  ❌ MINIMAL COLLECTION ADDITION: Basic form submission failing")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -846,31 +857,46 @@ class TopKitCollectionFormTesting:
             for failure in failures:
                 print(f"  • {failure['test']}: {failure['message']}")
         
-        # Final status - Focus on the specific requirements
-        print(f"\n🎯 FINAL STATUS - ADD PERSONAL DETAILS FORM FIX:")
-        critical_tests = [auth_working, master_kits_working, minimal_working, comprehensive_working]
-        if all(critical_tests):
-            print(f"  ✅ ADD PERSONAL DETAILS FORM FIX WORKING PERFECTLY")
-            print(f"     - Emergency admin authentication operational")
-            print(f"     - Master Kits accessible for collection addition")
-            print(f"     - Minimal collection addition working without field mapping errors")
-            print(f"     - Comprehensive collection addition with proper field mapping")
-            print(f"     - No more '[object Object]' errors in responses")
-            print(f"     - Both 'owned' and 'wanted' collection types functional")
-        elif auth_working and master_kits_working and (minimal_working or comprehensive_working):
-            print(f"  ⚠️ PARTIAL SUCCESS: Some functionality working")
-            print(f"     - Basic collection addition may be functional")
-            print(f"     - Some field mapping issues may persist")
+        # Final status - Focus on patches field validation
+        print(f"\n🎯 FINAL STATUS - PATCHES FIELD VALIDATION FIX:")
+        patches_tests = [empty_array_working, string_array_working, null_working, empty_string_working]
+        critical_tests = [auth_working, master_kits_working] + patches_tests
+        
+        if all(patches_tests):
+            print(f"  ✅ PATCHES FIELD VALIDATION FIX WORKING PERFECTLY")
+            print(f"     - No 'Input should be a valid string' errors for patches field")
+            print(f"     - Empty array [] handled correctly")
+            print(f"     - String array ['patch1', 'patch2'] handled correctly")
+            print(f"     - Null/undefined values handled correctly")
+            print(f"     - Empty string '' handled correctly")
+            print(f"     - Patches field always sent as string or null to backend")
+        elif any(patches_tests):
+            print(f"  ⚠️ PARTIAL SUCCESS: Some patches scenarios working")
+            working_scenarios = []
+            if empty_array_working: working_scenarios.append("empty array")
+            if string_array_working: working_scenarios.append("string array")
+            if null_working: working_scenarios.append("null values")
+            if empty_string_working: working_scenarios.append("empty string")
+            print(f"     - Working scenarios: {', '.join(working_scenarios)}")
+            
+            failing_scenarios = []
+            if not empty_array_working: failing_scenarios.append("empty array")
+            if not string_array_working: failing_scenarios.append("string array")
+            if not null_working: failing_scenarios.append("null values")
+            if not empty_string_working: failing_scenarios.append("empty string")
+            if failing_scenarios:
+                print(f"     - Still failing: {', '.join(failing_scenarios)}")
         else:
-            print(f"  ❌ MAJOR ISSUES: Critical field mapping fixes not working")
-            print(f"     - Cannot properly add Master Kits to collection")
-            print(f"     - '[object Object]' errors likely still present")
+            print(f"  ❌ PATCHES FIELD VALIDATION FIX NOT WORKING")
+            print(f"     - Still getting 'Input should be a valid string' errors")
+            print(f"     - Form submission failures continue for patches field")
+            print(f"     - Backend validation not properly handling patches arrays")
         
         print("\n" + "=" * 80)
     
     def run_all_tests(self):
-        """Run all Add Personal Details form fix tests and return success status"""
-        test_results = self.test_add_personal_details_form_fix()
+        """Run all patches field validation fix tests and return success status"""
+        test_results = self.test_patches_field_validation_fix()
         self.print_final_summary()
         return any(test_results)
 
