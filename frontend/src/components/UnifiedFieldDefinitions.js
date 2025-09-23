@@ -100,17 +100,39 @@ export const getUnifiedFieldsForEntityType = (type) => {
     case 'master_kit':
     case 'master_jersey':
       return [
-        // Master Kit form fields for contribution improvements
-        { key: 'club_id', label: 'Team', type: 'team_select', required: false },
-        { key: 'season', label: 'Season', type: 'text', required: false, placeholder: '2024-2025' },
+        // Master Kit form fields matching MasterKitForm.js structure
+        { 
+          key: 'kit_type', 
+          label: 'Kit Type', 
+          type: 'select', 
+          required: true,
+          options: [
+            { value: 'replica', label: 'Replica (€90)' },
+            { value: 'authentic', label: 'Authentic (€140)' }
+          ]
+        },
+        { key: 'club_id', label: 'Team/Club', type: 'team_select', required: true },
+        { 
+          key: 'kit_style', 
+          label: 'Kit Style', 
+          type: 'select', 
+          required: true,
+          options: [
+            { value: 'home', label: 'Home' },
+            { value: 'away', label: 'Away' },
+            { value: 'third', label: 'Third' },
+            { value: 'fourth', label: 'Fourth' },
+            { value: 'gk', label: 'Goalkeeper' },
+            { value: 'special', label: 'Special' }
+          ]
+        },
         { key: 'brand_id', label: 'Brand', type: 'brand_select', required: false },
-        { key: 'kit_type', label: 'Kit Type', type: 'select', options: ['home', 'away', 'third', 'fourth', 'gk', 'special'], required: false },
-        { key: 'main_sponsor_id', label: 'Main Sponsor', type: 'brand_select', required: false },
-        { key: 'model', label: 'Model', type: 'select', options: ['replica', 'authentic', 'player_issue'], required: false },
-        { key: 'sku_code', label: 'SKU Code', type: 'text', required: false },
-        { key: 'primary_color', label: 'Primary Color', type: 'text', required: false },
-        { key: 'pattern_description', label: 'Pattern Description', type: 'textarea', required: false },
-        { key: 'front_photo_url', label: 'Front Photo', type: 'image', required: false }
+        { key: 'primary_sponsor_id', label: 'Primary Sponsor', type: 'brand_select', required: false },
+        { key: 'secondary_sponsor_ids', label: 'Secondary Sponsors', type: 'brand_select_multiple', required: false },
+        { key: 'season', label: 'Season (YYYY/YYYY)', type: 'text', required: true, placeholder: '2024/2025' },
+        { key: 'front_photo_url', label: 'Front Photo', type: 'image', required: true },
+        { key: 'back_photo_url', label: 'Back Photo', type: 'image', required: true },
+        { key: 'other_photo_urls', label: 'Other Photos (Max 3)', type: 'image_multiple', required: false }
       ];
 
     case 'reference_kit':
