@@ -330,31 +330,48 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
       
       console.log('Final patches value:', patchesString, 'Type:', typeof patchesString);
 
-      // Map EnhancedEditKitForm fields to MyCollectionCreate fields
+      // Map EnhancedEditKitForm fields to MyCollectionCreate fields correctly
       const collectionData = {
         master_kit_id: selectedMasterKit.id,
         collection_type: selectedCollectionType,
         
-        // Basic fields - direct mapping
+        // Basic fields - direct mapping with correct field names
         name_printing: editFormData.name_printing || null,
         number_printing: editFormData.number_printing || null,
         size: editFormData.size || null,
+        
+        // Personal notes mapping fix
         personal_notes: editFormData.comments || null,
         
-        // Patches - convert array to string
+        // Patches - convert array to string  
         patches: patchesString,
         
-        // Signature fields
+        // Signature fields with correct mapping
         is_signed: editFormData.signature || false,
         signed_by: editFormData.signature && editFormData.signature_player ? editFormData.signature_player : null,
         
-        // Condition mapping - fix the enum value mismatch
-        condition: mapConditionValue(editFormData.general_condition),
-        physical_state: mapPhysicalStateValue(editFormData.general_condition),
+        // Condition mapping with improved logic
+        condition: mapConditionValue(editFormData.origin_type), // Use origin_type for condition
+        physical_state: mapPhysicalStateValue(editFormData.general_condition), // Use general_condition for physical_state
         
-        // Price and date fields
+        // Price and date fields with correct mapping
         purchase_price: editFormData.user_estimate ? parseFloat(editFormData.user_estimate) : null,
         purchase_date: editFormData.match_date || null
+      };
+
+      // Helper functions to map enum values (update mapping)
+      const mapConditionValue = (value) => {
+        if (!value) return null;
+        
+        // Map origin_type to condition enum values
+        const mapping = {
+          'standard': null, // Standard doesn't need special condition
+          'match_issued': 'match_prepared',  
+          'match_worn': 'match_worn',
+          'training': 'training'
+        };
+        
+        return mapping[value] || null;
       };
 
       console.log('Sending collection data:', collectionData);
