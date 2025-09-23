@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MASTER KIT FORMDATA SUBMISSION BUG FIX TESTING
+TopKit Backend Testing Suite - MASTER KIT PENDING_REVIEW STATUS TESTING
 
-Testing the Master Kit FormData submission bug fix comprehensively:
-1. **Master Kit FormData Creation Testing** - Test POST /api/master-kits endpoint with FormData and file uploads
-2. **UnicodeDecodeError Fix Verification** - Verify FormData endpoint works without UnicodeDecodeError
-3. **Contribution Creation for Moderation** - Verify contribution entry is created in contributions_v2 collection
-4. **Response Message Testing** - Verify success response includes detailed message with topkit_reference and status
-5. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
-6. **File Upload Testing** - Test front_photo and back_photo file uploads with FormData
+Testing that Master Kit submission now creates contributions with correct status for Moderation Dashboard display:
 
-CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
-Focus on verifying that Master Kit FormData submissions now work without UnicodeDecodeError and properly create contributions.
+1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
+2. **Master Kit FormData Creation** - Create new Master Kit via POST /api/master-kits with FormData (use test images)
+3. **Contribution Status Verification** - Verify the created contribution has status="pending_review" (not "pending")
+4. **Status Filtering Testing** - Test GET /api/contributions-v2/?status=pending_review to confirm the new contribution appears
+5. **Moderation Dashboard Integration** - Verify the Moderation Dashboard API calls will now find the contributions
+
+CRITICAL: Focus on testing that Master Kit submissions now create contributions with the correct "pending_review" status 
+that the Moderation Dashboard expects to display.
 """
 
 import requests
