@@ -120,12 +120,12 @@ class MasterKitCreate(BaseModel):
     competition_id: str = Field(..., min_length=1, description="Competition ID is required")
     
     # Photo URLs (required)
-    front_photo: str = Field(..., min_length=1, description="Front photo is required")
-    back_photo: str = Field(..., min_length=1, description="Back photo is required")
+    front_photo_url: str = Field(..., min_length=1, description="Front photo URL is required")
+    back_photo_url: str = Field(..., min_length=1, description="Back photo URL is required")
     
     # Optional fields
     brand_id: Optional[str] = None
-    main_sponsor_id: Optional[str] = None  # Changed from primary_sponsor_id to match server expectation
+    primary_sponsor_id: Optional[str] = None  # Match MasterKit model
     secondary_sponsor_ids: List[str] = []
 
     @validator('season')
