@@ -166,8 +166,8 @@ class TopKitMasterKitFormTesting:
                 "kit_style": "home",  # KitType: home, away, third, fourth, gk, special
                 "season": "2024/2025",
                 "competition_id": competition['id'],
-                "front_photo": "test_front_photo.jpg",
-                "back_photo": "test_back_photo.jpg",
+                "front_photo_url": "test_front_photo.jpg",
+                "back_photo_url": "test_back_photo.jpg",
                 "brand_id": brand['id']
             }
             
