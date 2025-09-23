@@ -1124,11 +1124,55 @@ async def add_to_my_collection(
                 detail=f"Master Kit is already in your {opposite_type_name}. Please remove it first before adding to {current_type_name}."
             )
         
-        # Create collection entry
-        collection_item = MyCollection(
-            **collection_data.dict(),
-            user_id=current_user["id"]
-        )
+        # Create collection entry - properly map fields from MyCollectionCreate to MyCollection
+        collection_dict = collection_data.dict()
+        
+        # Handle field mapping and data conversion
+        collection_entry_data = {
+            "master_kit_id": collection_dict["master_kit_id"],
+            "user_id": current_user["id"],
+            "collection_type": collection_dict["collection_type"],
+            
+            # Legacy fields mapping for backward compatibility
+            "name_printing": collection_dict.get("name_printing"),
+            "number_printing": collection_dict.get("number_printing"), 
+            "size": collection_dict.get("size"),
+            "personal_notes": collection_dict.get("personal_notes"),
+            "purchase_price": collection_dict.get("purchase_price"),
+            "purchase_date": collection_dict.get("purchase_date"),
+            "condition": collection_dict.get("condition"),
+            "condition_other": collection_dict.get("condition_other"),
+            "physical_state": collection_dict.get("physical_state"),
+            
+            # Convert patches string to list for MyCollection model
+            "patches": [collection_dict["patches"]] if collection_dict.get("patches") else [],
+            "patches_legacy": collection_dict.get("patches"),  # Keep legacy field
+            
+            # Map signature fields correctly
+            "signature": collection_dict.get("is_signed", False),
+            "is_signed": collection_dict.get("is_signed", False),  # Legacy field
+            "signed_by": collection_dict.get("signed_by"),  # Legacy field
+            "signature_player_id": collection_dict.get("signed_by"),  # Map to new field
+            
+            # Initialize empty lists and default values for new fields
+            "authenticity_proof": [],
+            "photo_urls": [],
+            "other_patches": None,
+            "signature_certificate": None,
+            "user_estimate": None,
+            "comments": None,
+            "gender": None,
+            "associated_player_id": None,
+            "origin_type": None,
+            "competition": None,
+            "match_date": None,
+            "opponent_id": None,
+            "general_condition": None,
+            "certificate_url": None,
+            "proof_of_purchase_url": None
+        }
+        
+        collection_item = MyCollection(**collection_entry_data)
         
         # Insert into database
         result = await db.my_collection.insert_one(collection_item.dict())
