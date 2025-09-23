@@ -147,6 +147,52 @@ const UnifiedFieldRenderer = ({
           </select>
         );
 
+      case 'brand_select_multiple':
+        return (
+          <div>
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  const currentValues = Array.isArray(value) ? value : [];
+                  if (!currentValues.includes(e.target.value)) {
+                    onChange(field.key, [...currentValues, e.target.value]);
+                  }
+                  e.target.value = ""; // Reset select
+                }
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+            >
+              <option value="">Add Secondary Sponsor</option>
+              {brands.map(brand => (
+                <option key={brand.id} value={brand.id}>{brand.name}</option>
+              ))}
+            </select>
+            {Array.isArray(value) && value.length > 0 && (
+              <div className="space-y-1">
+                {value.map((brandId, index) => {
+                  const brand = brands.find(b => b.id === brandId);
+                  return (
+                    <div key={brandId} className="flex items-center justify-between bg-gray-100 px-3 py-1 rounded">
+                      <span>{brand?.name || 'Unknown Brand'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newValues = value.filter((_, i) => i !== index);
+                          onChange(field.key, newValues);
+                        }}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+
       case 'competition_select':
         return (
           <select
