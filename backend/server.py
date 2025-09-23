@@ -1229,6 +1229,10 @@ async def get_my_collection(
                 if "collection_type" not in item:
                     item["collection_type"] = "owned"
                     
+                # Convert patches list back to string for response model compatibility
+                if "patches" in item and isinstance(item["patches"], list):
+                    item["patches"] = ", ".join(item["patches"]) if item["patches"] else None
+                    
                 item["master_kit"] = MasterKitResponse(**master_kit)
                 response_items.append(MyCollectionResponse(**item))
         
