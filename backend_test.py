@@ -901,7 +901,7 @@ class TopKitCollectionFormTesting:
         return any(test_results)
 
 def main():
-    """Main test execution - Add Personal Details Form Fix Testing"""
+    """Main test execution - Patches Field Validation Fix Testing"""
     tester = TopKitCollectionFormTesting()
     success = tester.run_all_tests()
     
