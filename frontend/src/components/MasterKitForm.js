@@ -272,7 +272,11 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
 
       if (response.ok) {
         const result = await response.json();
-        alert('Master Kit created successfully!');
+        console.log('Master Kit creation result:', result);
+        
+        // Show detailed success message
+        alert(`Success! ${result.message}\n\nReference: ${result.topkit_reference}\nStatus: ${result.status || 'Submitted for moderation'}\n\nYou can view your contribution in the Moderation Dashboard.`);
+        
         resetForm();
         onSuccess && onSuccess(result);
         onClose();
