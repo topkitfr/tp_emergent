@@ -28,6 +28,9 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
   const [selectedMasterKit, setSelectedMasterKit] = useState(null);
   const [selectedCollectionType, setSelectedCollectionType] = useState('owned'); // 'owned' or 'wanted'
   
+  // Enhanced edit form data for adding to collection
+  const [editFormData, setEditFormData] = useState({});
+  
   // Filter options
   const [brands, setBrands] = useState([]);
   const [seasons, setSeasons] = useState([]);
