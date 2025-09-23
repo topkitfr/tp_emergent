@@ -756,9 +756,9 @@ class TopKitMasterKitFormTesting:
             return False
     
     def test_master_kit_form_submission_bug_fix(self):
-        """Test complete Master Kit form submission bug fix"""
-        print("\n🚀 MASTER KIT FORM SUBMISSION BUG FIX TESTING")
-        print("Testing Master Kit form submission bug fix comprehensively")
+        """Test complete Master Kit form submission bug fix with pending_review status"""
+        print("\n🚀 MASTER KIT FORM SUBMISSION BUG FIX TESTING - PENDING_REVIEW STATUS")
+        print("Testing Master Kit form submission creates contributions with pending_review status")
         print("=" * 80)
         
         test_results = []
@@ -776,20 +776,20 @@ class TopKitMasterKitFormTesting:
         form_data_success = self.get_form_data()
         test_results.append(form_data_success)
         
-        # Step 3: Test Master Kit creation with required fields
-        print("\n3️⃣ Testing Master Kit creation - required fields...")
-        required_fields_success = self.test_master_kit_creation_required_fields()
-        test_results.append(required_fields_success)
+        # Step 3: Test Master Kit creation via FormData (NEW REQUIREMENT)
+        print("\n3️⃣ Testing Master Kit creation via FormData with file uploads...")
+        formdata_success = self.test_master_kit_formdata_submission()
+        test_results.append(formdata_success)
         
-        # Step 4: Test Master Kit creation with sponsors
-        print("\n4️⃣ Testing Master Kit creation - with sponsors...")
-        sponsors_success = self.test_master_kit_creation_with_sponsors()
-        test_results.append(sponsors_success)
-        
-        # Step 5: Test contribution creation for moderation
-        print("\n5️⃣ Testing contribution creation for moderation...")
+        # Step 4: Test contribution creation with pending_review status (UPDATED REQUIREMENT)
+        print("\n4️⃣ Testing contribution creation with pending_review status...")
         contribution_success = self.test_contribution_creation_for_moderation()
         test_results.append(contribution_success)
+        
+        # Step 5: Test pending_review status filtering (NEW REQUIREMENT)
+        print("\n5️⃣ Testing GET /api/contributions-v2/?status=pending_review filtering...")
+        filtering_success = self.test_pending_review_status_filtering()
+        test_results.append(filtering_success)
         
         # Step 6: Test moderation dashboard integration
         print("\n6️⃣ Testing moderation dashboard integration...")
