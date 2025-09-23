@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MASTER KIT PENDING_REVIEW STATUS TESTING
+TopKit Backend Testing Suite - ADD PERSONAL DETAILS FORM FIX TESTING
 
-Testing that Master Kit submission now creates contributions with correct status for Moderation Dashboard display:
+Testing the "Add Personal Details" form fix for adding Master Kits to collection:
 
 1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
-2. **Master Kit FormData Creation** - Create new Master Kit via POST /api/master-kits with FormData (use test images)
-3. **Contribution Status Verification** - Verify the created contribution has status="pending_review" (not "pending")
-4. **Status Filtering Testing** - Test GET /api/contributions-v2/?status=pending_review to confirm the new contribution appears
-5. **Moderation Dashboard Integration** - Verify the Moderation Dashboard API calls will now find the contributions
+2. **Master Kit Collection Addition** - Test adding Master Kit to collection via POST /api/my-collection
+3. **Minimal Data Testing** - Test with minimal data (only master_kit_id and collection_type)
+4. **Comprehensive Data Testing** - Test with comprehensive data including patches array, condition values, etc.
+5. **Field Mapping Verification** - Verify field mapping fixes:
+   - patches array converted to comma-separated string
+   - general_condition "very_good" mapped to "very_good_condition"
+   - signature fields mapped correctly
+6. **Error Handling Testing** - Test error handling improvements for validation errors
+7. **Object Error Prevention** - Confirm no more "[object Object]" errors in responses
 
-CRITICAL: Focus on testing that Master Kit submissions now create contributions with the correct "pending_review" status 
-that the Moderation Dashboard expects to display.
+CRITICAL: Focus on testing that the collection creation now works without field mapping or validation errors.
 """
 
 import requests
