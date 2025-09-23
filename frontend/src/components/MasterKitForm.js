@@ -417,9 +417,9 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Primary Sponsor</option>
-              {formOptions.brands.map(brand => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name} {brand.country && `(${brand.country})`}
+              {formOptions.sponsors.map(sponsor => (
+                <option key={sponsor.id} value={sponsor.id}>
+                  {sponsor.name} {sponsor.country && `(${sponsor.country})`}
                 </option>
               ))}
             </select>
@@ -431,21 +431,21 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
               Secondary Sponsors (Multiple Selection)
             </label>
             <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto">
-              {formOptions.brands.map(brand => (
-                <label key={brand.id} className="flex items-center mb-2">
+              {formOptions.sponsors.map(sponsor => (
+                <label key={sponsor.id} className="flex items-center mb-2">
                   <input
                     type="checkbox"
-                    checked={formData.secondary_sponsor_ids.includes(brand.id)}
-                    onChange={() => handleMultiSelectChange('secondary_sponsor_ids', brand.id)}
+                    checked={formData.secondary_sponsor_ids.includes(sponsor.id)}
+                    onChange={() => handleMultiSelectChange('secondary_sponsor_ids', sponsor.id)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
                   />
                   <span className="text-sm text-gray-700">
-                    {brand.name} {brand.country && `(${brand.country})`}
+                    {sponsor.name} {sponsor.country && `(${sponsor.country})`}
                   </span>
                 </label>
               ))}
-              {formOptions.brands.length === 0 && (
-                <p className="text-gray-500 text-sm">No brands available</p>
+              {formOptions.sponsors.length === 0 && (
+                <p className="text-gray-500 text-sm">No sponsors available</p>
               )}
             </div>
             {formData.secondary_sponsor_ids.length > 0 && (
