@@ -2521,6 +2521,14 @@ const AppContent = () => {
             >
               Gestion des utilisateurs
             </button>
+            <button
+              onClick={() => setAdminActiveTab('data')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                adminActiveTab === 'data' ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-300'
+              }`}
+            >
+              🗑️ Gestion des données
+            </button>
           </div>
 
           {loading ? (
