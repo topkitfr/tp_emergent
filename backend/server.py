@@ -2461,15 +2461,40 @@ async def get_contributions(
         # Convert contributions to handle both old and new formats
         response_contributions = []
         for contrib in contributions:
-            # Handle backward compatibility
-            if "description" not in contrib:
-                contrib["description"] = ""
-            if "data" not in contrib:
-                contrib["data"] = contrib.get("change_summary", {})
-            if "source_urls" not in contrib:
-                contrib["source_urls"] = []
-                
-            response_contributions.append(ContributionResponse(**contrib))
+            # Handle contributions_v2 format
+            if "submitted_at" in contrib and "title" not in contrib:
+                # This is contributions_v2 format
+                entity_data = contrib.get("entity_data", {})
+                contrib_response = {
+                    "id": contrib.get("id"),
+                    "entity_type": contrib.get("entity_type"),
+                    "entity_id": contrib.get("master_kit_id", ""),
+                    "title": entity_data.get("name", f"{contrib.get('entity_type', 'Unknown').title()} Contribution"),
+                    "description": f"Submitted {contrib.get('entity_type', 'item')} for moderation",
+                    "data": entity_data,
+                    "status": contrib.get("status"),
+                    "created_at": contrib.get("submitted_at"),
+                    "created_by": contrib.get("submitted_by"),
+                    "upvotes": contrib.get("votes", {}).get("approve", 0),
+                    "downvotes": contrib.get("votes", {}).get("reject", 0),
+                    "images_count": 0,
+                    "source_urls": [],
+                    "topkit_reference": entity_data.get("topkit_reference", ""),
+                    "moderated_at": contrib.get("moderated_at"),
+                    "moderated_by": contrib.get("moderated_by"),
+                    "moderation_reason": ""
+                }
+                response_contributions.append(ContributionResponse(**contrib_response))
+            else:
+                # Handle backward compatibility for old contributions format
+                if "description" not in contrib:
+                    contrib["description"] = ""
+                if "data" not in contrib:
+                    contrib["data"] = contrib.get("change_summary", {})
+                if "source_urls" not in contrib:
+                    contrib["source_urls"] = []
+                    
+                response_contributions.append(ContributionResponse(**contrib))
         
         return response_contributions
         
