@@ -248,15 +248,15 @@ class TopKitMasterKitFormTesting:
                 "kit_style": "away",  # KitType: home, away, third, fourth, gk, special
                 "season": "2024/2025",
                 "competition_id": competition['id'],
-                "front_photo": "test_front_photo_2.jpg",
-                "back_photo": "test_back_photo_2.jpg",
+                "front_photo_url": "test_front_photo_2.jpg",
+                "back_photo_url": "test_back_photo_2.jpg",
                 "brand_id": brand['id']
             }
             
             # Add sponsors if available
             if self.form_data['sponsors']:
                 primary_sponsor = self.form_data['sponsors'][0]
-                master_kit_data["main_sponsor_id"] = primary_sponsor['id']  # Changed from primary_sponsor_id
+                master_kit_data["primary_sponsor_id"] = primary_sponsor['id']  # Use primary_sponsor_id
                 print(f"         Primary Sponsor: {primary_sponsor['name']} ({primary_sponsor['id']})")
                 
                 if len(self.form_data['sponsors']) > 1:
