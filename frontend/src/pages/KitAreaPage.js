@@ -666,17 +666,19 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         API={process.env.REACT_APP_BACKEND_URL}
       />
 
-      {/* Personal Details Form Modal */}
-      <PersonalDetailsForm
+      {/* Enhanced Personal Details Form Modal - Using same form as Edit Kit Details */}
+      <EnhancedEditKitForm
         isOpen={showPersonalDetailsForm}
         onClose={() => {
           setShowPersonalDetailsForm(false);
           setSelectedMasterKit(null);
           setSelectedCollectionType('owned');
+          setEditFormData({});
         }}
-        onSuccess={handleAddedToCollection}
-        masterKit={selectedMasterKit}
-        collectionType={selectedCollectionType}
+        editingItem={selectedMasterKit ? { master_kit: selectedMasterKit } : null}
+        formData={editFormData}
+        onFormDataChange={handleFormDataChange}
+        onSave={handleSaveToCollection}
         API={process.env.REACT_APP_BACKEND_URL}
       />
     </div>
