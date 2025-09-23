@@ -169,7 +169,7 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Master Kit & Brand Form Priority Changes Testing - COMPLETED"
+    - "Sponsor Filtering Functionality Testing - COMPLETED"
     - "Enhanced Edit Kit Form Testing - New Comprehensive Form Sections Verification"
   stuck_tasks: []
   test_all: false
