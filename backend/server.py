@@ -2549,7 +2549,7 @@ async def vote_on_contribution(
         # Update vote counts
         if vote_data.vote_type == "upvote":
             new_upvotes = contribution.get("upvotes", 0) + 1
-            await db.contributions.update_one(
+            await db.contributions_v2.update_one(
                 {"id": contribution_id},
                 {"$set": {"upvotes": new_upvotes}}
             )
