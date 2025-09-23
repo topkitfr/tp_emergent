@@ -24,18 +24,24 @@ export const getUnifiedFieldsForEntityType = (type) => {
     case 'brand':
       return [
         // Core required fields
-        { key: 'name', label: 'Brand Name', type: 'text', required: true },
-        { key: 'official_name', label: 'Official Name', type: 'text' },
+        { key: 'name', label: 'Name', type: 'text', required: true },  // Changed from 'Brand Name' to 'Name'
+        { 
+          key: 'type', 
+          label: 'Type', 
+          type: 'select', 
+          required: true,
+          options: [
+            { value: 'brand', label: 'Brand' },
+            { value: 'sponsor', label: 'Sponsor' }
+          ]
+        },  // Changed from 'Official Name' to 'Type: Dropdown > Brand - sponsor'
         { key: 'country', label: 'Country of Origin', type: 'text', required: true },
         { key: 'founded_year', label: 'Founded Year', type: 'number' },
         { key: 'website', label: 'Official Website', type: 'url' },
         
-        // Enhanced fields from existing brand creation
-        { key: 'common_names', label: 'Alternative Names', type: 'text_list', placeholder: 'Add alternative brand names' },
-        
-        // Image fields
-        { key: 'logo_url', label: 'Brand Logo', type: 'image', required: false },
-        { key: 'secondary_photos', label: 'Additional Photos', type: 'image_multiple' }
+        // Image field (removed secondary_photos/additional_photos)
+        { key: 'logo_url', label: 'Brand Logo', type: 'image', required: false }
+        // Removed: common_names (Alternative Names) and secondary_photos (Additional Photos)
       ];
 
     case 'player':
