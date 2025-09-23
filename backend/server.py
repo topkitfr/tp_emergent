@@ -1188,6 +1188,10 @@ async def add_to_my_collection(
             collection_item_dict = collection_item.dict()
             collection_item_dict["master_kit"] = MasterKitResponse(**master_kit)
             
+            # Convert patches list back to string for response model compatibility
+            if "patches" in collection_item_dict and isinstance(collection_item_dict["patches"], list):
+                collection_item_dict["patches"] = ", ".join(collection_item_dict["patches"]) if collection_item_dict["patches"] else None
+            
             return MyCollectionResponse(**collection_item_dict)
         else:
             raise HTTPException(status_code=500, detail="Error adding to collection")
