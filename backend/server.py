@@ -1272,6 +1272,10 @@ async def update_collection_item(
             updated_item = await db.my_collection.find_one({"id": collection_id})
             master_kit = await db.master_kits.find_one({"id": updated_item["master_kit_id"]})
             
+            # Convert patches list back to string for response model compatibility
+            if "patches" in updated_item and isinstance(updated_item["patches"], list):
+                updated_item["patches"] = ", ".join(updated_item["patches"]) if updated_item["patches"] else None
+            
             updated_item["master_kit"] = MasterKitResponse(**master_kit)
             return MyCollectionResponse(**updated_item)
         else:
