@@ -322,12 +322,12 @@ class TopKitCollectionFormTesting:
                 
                 # Verify field mapping worked correctly
                 patches_field = data.get('patches')
-                signature_field = data.get('signature')
-                signature_player_id = data.get('signature_player_id')
+                is_signed_field = data.get('is_signed')  # Legacy field
+                signed_by_field = data.get('signed_by')  # Legacy field
                 
                 print(f"            Patches field: {patches_field} (type: {type(patches_field)})")
-                print(f"            Signature field: {signature_field}")
-                print(f"            Signature Player ID: {signature_player_id}")
+                print(f"            Is Signed field: {is_signed_field}")
+                print(f"            Signed By field: {signed_by_field}")
                 
                 # Check if patches was converted correctly (should be string in response)
                 if isinstance(patches_field, str) or patches_field is None:
@@ -337,12 +337,12 @@ class TopKitCollectionFormTesting:
                     print(f"            ❌ Patches field not correctly handled in response")
                     field_mapping_success = False
                 
-                # Check if signature fields were mapped correctly
-                if signature_field == True and signature_player_id == "test-player-id":
-                    print(f"            ✅ Signature fields correctly mapped")
+                # Check if signature fields were mapped correctly (using legacy field names)
+                if is_signed_field == True and signed_by_field == "test-player-id":
+                    print(f"            ✅ Signature fields correctly mapped to legacy fields")
                     signature_mapping_success = True
                 else:
-                    print(f"            ❌ Signature fields not correctly mapped")
+                    print(f"            ❌ Signature fields not correctly mapped to legacy fields")
                     signature_mapping_success = False
                 
                 if field_mapping_success and signature_mapping_success:
