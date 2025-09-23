@@ -680,6 +680,7 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         onFormDataChange={handleFormDataChange}
         onSave={handleSaveToCollection}
         API={process.env.REACT_APP_BACKEND_URL}
+        title={selectedCollectionType === 'owned' ? 'Add Personal Details' : 'Add to Want List'}
       />
     </div>
   );
