@@ -292,9 +292,17 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
 
       // Helper functions to map enum values
       const mapConditionValue = (value) => {
-        // EnhancedEditKitForm doesn't separate condition vs physical_state
-        // For now, return null since it's optional
-        return null;
+        if (!value) return null;
+        
+        // Map origin_type to condition enum values
+        const mapping = {
+          'standard': null, // Standard doesn't need special condition
+          'match_issued': 'match_prepared',  
+          'match_worn': 'match_worn',
+          'training': 'training'
+        };
+        
+        return mapping[value] || null;
       };
 
       const mapPhysicalStateValue = (value) => {
