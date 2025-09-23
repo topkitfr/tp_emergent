@@ -172,17 +172,79 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         console.warn('Invalid purchase_date format:', item.purchase_date);
       }
     }
+
+    // Convert match_date from ISO string to YYYY-MM-DD format for date input
+    let formattedMatchDate = '';
+    if (item.match_date) {
+      try {
+        const date = new Date(item.match_date);
+        if (!isNaN(date.getTime())) {
+          // Format as YYYY-MM-DD for HTML date input
+          formattedMatchDate = date.toISOString().split('T')[0];
+        }
+      } catch (error) {
+        console.warn('Invalid match_date format:', item.match_date);
+      }
+    }
+
+    // Convert patches from string to array if needed
+    let patchesArray = [];
+    if (item.patches) {
+      if (typeof item.patches === 'string') {
+        patchesArray = item.patches.split(',').map(p => p.trim()).filter(p => p);
+      } else if (Array.isArray(item.patches)) {
+        patchesArray = item.patches;
+      }
+    } else if (item.patches_list) {
+      patchesArray = Array.isArray(item.patches_list) ? item.patches_list : [];
+    }
+
+    // Convert authenticity_proof to array if needed
+    let authenticityProofArray = [];
+    if (item.authenticity_proof) {
+      authenticityProofArray = Array.isArray(item.authenticity_proof) ? item.authenticity_proof : [];
+    }
     
     setEditFormData({
+      // A. Basic Information
+      gender: item.gender || '',
+      size: item.size || '',
+      
+      // B. Player & Printing
+      associated_player: item.associated_player_id || '',
       name_printing: item.name_printing || '',
       number_printing: item.number_printing || '',
-      patches: item.patches || '',
+      
+      // C. Origin & Authenticity
+      origin_type: item.origin_type || '',
+      competition: item.competition || '',
+      authenticity_proof: authenticityProofArray,
+      match_date: formattedMatchDate,
+      opponent: item.opponent_id || '',
+      
+      // D. Physical Condition
+      general_condition: item.general_condition || '',
+      photo_urls: item.photo_urls || [],
+      
+      // E. Technical Details
+      patches: patchesArray,
+      other_patches: item.other_patches || '',
+      signature: item.signature || false,
+      signature_player: item.signature_player_id || '',
+      signature_certificate: item.signature_certificate || '',
+      
+      // F. User Estimate
+      user_estimate: item.user_estimate || '',
+      
+      // G. Comments
+      comments: item.comments || '',
+      
+      // Legacy fields (for backward compatibility)
       is_signed: item.is_signed || false,
       signed_by: item.signed_by || '',
       condition: item.condition || '',
       condition_other: item.condition_other || '',
       physical_state: item.physical_state || '',
-      size: item.size || '',
       purchase_price: item.purchase_price || '',
       purchase_date: formattedPurchaseDate,
       personal_notes: item.personal_notes || ''
