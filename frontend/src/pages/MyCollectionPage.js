@@ -711,23 +711,31 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
                     {/* Pricing Information */}
                     <div className="border-t pt-3 mt-3">
-                      {/* Estimated Price (always shown for owned items) */}
+                      {/* User Estimate (from form field F) */}
+                      {item.collection_type === 'owned' && item.user_estimate && (
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">User Estimate:</span>
+                          <span className="font-bold text-blue-600">€{item.user_estimate}</span>
+                        </div>
+                      )}
+                      
+                      {/* TopKit Estimated Price (calculated with coefficients) */}
                       {item.collection_type === 'owned' && priceEstimations[item.id] && (
                         <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-600">Estimated Value:</span>
+                          <span className="text-gray-600">TopKit Estimate:</span>
                           <span className="font-bold text-purple-600">€{priceEstimations[item.id].estimated_price}</span>
                         </div>
                       )}
                       
                       {/* Purchase Price */}
                       {item.purchase_price && (
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-sm mb-2">
                           <span className="text-gray-600">Purchase Price:</span>
                           <span className="font-medium text-green-600">€{item.purchase_price}</span>
                         </div>
                       )}
                       
-                      {/* Value Comparison */}
+                      {/* Value Comparison - Compare TopKit Estimate vs Purchase Price */}
                       {item.collection_type === 'owned' && item.purchase_price && priceEstimations[item.id] && (
                         <div className="flex justify-between text-sm mt-1">
                           <span className="text-gray-600">Value Change:</span>
@@ -739,6 +747,25 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                             
                             return (
                               <span className={`font-medium ${difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {difference >= 0 ? '+' : ''}€{difference.toFixed(2)} ({percentage}%)
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* User vs TopKit Estimate Comparison */}
+                      {item.collection_type === 'owned' && item.user_estimate && priceEstimations[item.id] && (
+                        <div className="flex justify-between text-sm mt-1">
+                          <span className="text-gray-600">Estimate Difference:</span>
+                          {(() => {
+                            const userEstimate = parseFloat(item.user_estimate);
+                            const topkitEstimate = priceEstimations[item.id].estimated_price;
+                            const difference = userEstimate - topkitEstimate;
+                            const percentage = ((difference / topkitEstimate) * 100).toFixed(1);
+                            
+                            return (
+                              <span className={`font-medium text-xs ${difference >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                                 {difference >= 0 ? '+' : ''}€{difference.toFixed(2)} ({percentage}%)
                               </span>
                             );
