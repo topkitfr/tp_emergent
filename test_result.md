@@ -184,6 +184,7 @@ metadata:
 
 test_plan:
   current_focus: 
+    - "Enhanced Edit Kit Details Functionality Testing - COMPLETED"
     - "Master Kit Pending_Review Status Testing - COMPLETED"
     - "Sponsor Filtering Functionality Testing - COMPLETED"
     - "Enhanced Edit Kit Form Testing - COMPLETED"
