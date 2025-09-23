@@ -272,21 +272,76 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         }
       };
       
-      // Process text fields - only add if not empty
+      // A. Basic Information
+      addFieldIfNotEmpty('gender', editFormData.gender);
+      addFieldIfNotEmpty('size', editFormData.size);
+      
+      // B. Player & Printing
+      addFieldIfNotEmpty('associated_player_id', editFormData.associated_player);
       addFieldIfNotEmpty('name_printing', editFormData.name_printing);
       addFieldIfNotEmpty('number_printing', editFormData.number_printing);
-      addFieldIfNotEmpty('patches', editFormData.patches);
+      
+      // C. Origin & Authenticity
+      addFieldIfNotEmpty('origin_type', editFormData.origin_type);
+      addFieldIfNotEmpty('competition', editFormData.competition);
+      if (editFormData.authenticity_proof && Array.isArray(editFormData.authenticity_proof) && editFormData.authenticity_proof.length > 0) {
+        processedFormData.authenticity_proof = editFormData.authenticity_proof;
+      }
+      if (editFormData.match_date && editFormData.match_date !== '') {
+        try {
+          const dateObj = new Date(editFormData.match_date + 'T00:00:00.000Z');
+          processedFormData.match_date = dateObj.toISOString();
+        } catch (error) {
+          console.error('❌ Error converting match_date:', error);
+          alert('Error: Match date must be a valid date');
+          return;
+        }
+      }
+      addFieldIfNotEmpty('opponent_id', editFormData.opponent);
+      
+      // D. Physical Condition
+      addFieldIfNotEmpty('general_condition', editFormData.general_condition);
+      if (editFormData.photo_urls && Array.isArray(editFormData.photo_urls) && editFormData.photo_urls.length > 0) {
+        processedFormData.photo_urls = editFormData.photo_urls;
+      }
+      
+      // E. Technical Details
+      // Handle patches conversion from array to string for backend compatibility
+      if (editFormData.patches && Array.isArray(editFormData.patches) && editFormData.patches.length > 0) {
+        processedFormData.patches = editFormData.patches.join(', ');
+        processedFormData.patches_list = editFormData.patches; // Keep array version too
+      }
+      addFieldIfNotEmpty('other_patches', editFormData.other_patches);
+      
+      // Process signature fields
+      processedFormData.signature = editFormData.signature || false;
+      if (editFormData.signature) {
+        addFieldIfNotEmpty('signature_player_id', editFormData.signature_player);
+        addFieldIfNotEmpty('signature_certificate', editFormData.signature_certificate);
+      }
+      
+      // F. User Estimate
+      if (editFormData.user_estimate && editFormData.user_estimate !== '') {
+        const estimateValue = parseFloat(editFormData.user_estimate);
+        if (isNaN(estimateValue)) {
+          alert('Error: User estimate must be a valid number');
+          return;
+        }
+        processedFormData.user_estimate = estimateValue;
+      }
+      
+      // G. Comments
+      addFieldIfNotEmpty('comments', editFormData.comments);
+      
+      // Legacy fields (for backward compatibility) - only add if not already covered by new fields
+      if (!processedFormData.signature) {
+        processedFormData.is_signed = editFormData.is_signed || false;
+      }
       addFieldIfNotEmpty('signed_by', editFormData.signed_by);
-      addFieldIfNotEmpty('condition_other', editFormData.condition_other);
-      addFieldIfNotEmpty('size', editFormData.size);
-      addFieldIfNotEmpty('personal_notes', editFormData.personal_notes);
-      
-      // Process enum fields - only add if not empty (to avoid sending empty strings to backend)
       addFieldIfNotEmpty('condition', editFormData.condition);
+      addFieldIfNotEmpty('condition_other', editFormData.condition_other);
       addFieldIfNotEmpty('physical_state', editFormData.physical_state);
-      
-      // Process boolean field - always include (backend expects boolean)
-      processedFormData.is_signed = editFormData.is_signed || false;
+      addFieldIfNotEmpty('personal_notes', editFormData.personal_notes);
       
       // Convert purchase_price to float if provided
       if (editFormData.purchase_price && editFormData.purchase_price !== '') {
@@ -315,6 +370,8 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         console.log('📝 Purchase date is empty, will be omitted from request');
       }
 
+      console.log('📤 Sending update data:', processedFormData);
+
       const response = await fetch(`${API}/api/my-collection/${editingItem.id}`, {
         method: 'PUT',
         headers: {
@@ -336,30 +393,69 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
         // Update the editing item with new data to keep modal open
         setEditingItem(updatedItemData);
         
-        // Update form data to reflect the saved changes with proper date formatting
-        let formattedUpdatedPurchaseDate = '';
-        if (updatedItemData.purchase_date) {
-          try {
-            const date = new Date(updatedItemData.purchase_date);
-            if (!isNaN(date.getTime())) {
-              // Format as YYYY-MM-DD for HTML date input
-              formattedUpdatedPurchaseDate = date.toISOString().split('T')[0];
-            }
-          } catch (error) {
-            console.warn('Invalid updated purchase_date format:', updatedItemData.purchase_date);
+        // Update form data with the saved values for continued editing
+        const formattedUpdatedPurchaseDate = updatedItemData.purchase_date ? 
+          new Date(updatedItemData.purchase_date).toISOString().split('T')[0] : '';
+        const formattedUpdatedMatchDate = updatedItemData.match_date ? 
+          new Date(updatedItemData.match_date).toISOString().split('T')[0] : '';
+
+        // Convert patches back to array format for the form
+        let updatedPatchesArray = [];
+        if (updatedItemData.patches) {
+          if (typeof updatedItemData.patches === 'string') {
+            updatedPatchesArray = updatedItemData.patches.split(',').map(p => p.trim()).filter(p => p);
+          } else if (Array.isArray(updatedItemData.patches)) {
+            updatedPatchesArray = updatedItemData.patches;
           }
+        } else if (updatedItemData.patches_list) {
+          updatedPatchesArray = Array.isArray(updatedItemData.patches_list) ? updatedItemData.patches_list : [];
+        }
+
+        let updatedAuthenticityProofArray = [];
+        if (updatedItemData.authenticity_proof) {
+          updatedAuthenticityProofArray = Array.isArray(updatedItemData.authenticity_proof) ? updatedItemData.authenticity_proof : [];
         }
         
         setEditFormData({
+          // A. Basic Information
+          gender: updatedItemData.gender || '',
+          size: updatedItemData.size || '',
+          
+          // B. Player & Printing
+          associated_player: updatedItemData.associated_player_id || '',
           name_printing: updatedItemData.name_printing || '',
           number_printing: updatedItemData.number_printing || '',
-          patches: updatedItemData.patches || '',
+          
+          // C. Origin & Authenticity
+          origin_type: updatedItemData.origin_type || '',
+          competition: updatedItemData.competition || '',
+          authenticity_proof: updatedAuthenticityProofArray,
+          match_date: formattedUpdatedMatchDate,
+          opponent: updatedItemData.opponent_id || '',
+          
+          // D. Physical Condition
+          general_condition: updatedItemData.general_condition || '',
+          photo_urls: updatedItemData.photo_urls || [],
+          
+          // E. Technical Details
+          patches: updatedPatchesArray,
+          other_patches: updatedItemData.other_patches || '',
+          signature: updatedItemData.signature || false,
+          signature_player: updatedItemData.signature_player_id || '',
+          signature_certificate: updatedItemData.signature_certificate || '',
+          
+          // F. User Estimate
+          user_estimate: updatedItemData.user_estimate || '',
+          
+          // G. Comments
+          comments: updatedItemData.comments || '',
+          
+          // Legacy fields (for backward compatibility)
           is_signed: updatedItemData.is_signed || false,
           signed_by: updatedItemData.signed_by || '',
           condition: updatedItemData.condition || '',
           condition_other: updatedItemData.condition_other || '',
           physical_state: updatedItemData.physical_state || '',
-          size: updatedItemData.size || '',
           purchase_price: updatedItemData.purchase_price || '',
           purchase_date: formattedUpdatedPurchaseDate,
           personal_notes: updatedItemData.personal_notes || ''
