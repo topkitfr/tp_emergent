@@ -724,14 +724,18 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     </h3>
                     
                     <div className="text-sm text-gray-600 space-y-1">
-                      <div>Club: {masterKit.club || 'Unknown'}</div>
-                      <div>Season: {masterKit.season || 'Unknown'}</div>
-                      <div>Type: {masterKit.kit_type || 'Unknown'}</div>
-                      <div>Brand: {masterKit.brand || 'Unknown'}</div>
-                      {item.size && <div>Size: {item.size}</div>}
-                      {item.condition && <div>Condition: {item.condition}</div>}
-                      {item.is_signed && <div>✍️ Signed {item.signed_by ? `by ${item.signed_by}` : ''}</div>}
-                      {item.patches && <div>🏆 Patches: {item.patches}</div>}
+                      <div><strong>Club:</strong> {masterKit.club || 'Unknown'}</div>
+                      <div><strong>Season:</strong> {masterKit.season || 'Unknown'}</div>
+                      <div><strong>Type:</strong> {masterKit.kit_style || masterKit.kit_type || 'Unknown'}</div>
+                      <div><strong>Brand:</strong> {masterKit.brand || 'Unknown'}</div>
+                      <div><strong>Model:</strong> {masterKit.model || 'Unknown'}</div>
+                      {item.size && <div><strong>Size:</strong> {item.size}</div>}
+                      {item.condition && <div><strong>Condition:</strong> {item.condition}</div>}
+                      {item.general_condition && <div><strong>Physical Condition:</strong> {item.general_condition.replace('_', ' ')}</div>}
+                      {item.origin_type && <div><strong>Origin:</strong> {item.origin_type.replace('_', ' ')}</div>}
+                      {(item.signature || item.is_signed) && <div>✍️ <strong>Signed</strong> {item.signed_by ? `by ${item.signed_by}` : ''}</div>}
+                      {item.patches && <div>🏆 <strong>Patches:</strong> {item.patches}</div>}
+                      {item.comments && <div><strong>Comments:</strong> {item.comments}</div>}
                     </div>
 
                     {/* Pricing Information */}
