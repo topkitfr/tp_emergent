@@ -805,96 +805,318 @@ const ModerationModule = ({ API }) => (
 );
 
 // Data Management Module 
-const DataManagementModule = ({ API }) => (
-  <div>
-    <div className="mb-6">
-      <h2 className="text-2xl font-bold text-gray-900">💾 Data Management Enterprise</h2>
-      <p className="text-gray-600 mt-1">Import/Export, backup, migration, data cleaning</p>
-    </div>
+const DataManagementModule = ({ API }) => {
+  const [clearingData, setClearingData] = useState(false);
+  
+  // Data clearing functions
+  const clearAllMasterKits = async () => {
+    const confirm = window.confirm(
+      '🚨 ATTENTION: Cette action va supprimer TOUS les Master Kits de la base de données.\n\n' +
+      'Cela inclut:\n' +
+      '- Tous les Master Kits\n' +
+      '- Toutes les références de la base de données\n\n' +
+      'Cette action est IRRÉVERSIBLE.\n\n' +
+      'Êtes-vous absolument sûr de vouloir continuer ?'
+    );
+    if (!confirm) return;
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      
-      {/* Import/Export */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">📤 Import/Export</h3>
+    setClearingData(true);
+    try {
+      const response = await fetch(`${API}/api/admin/clear-master-kits`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Suppression réussie!\n\n` +
+              `Master Kits supprimés: ${result.deleted_count}\n` +
+              `Total avant suppression: ${result.count_before}`);
+      } else {
+        alert('❌ Erreur lors de la suppression des Master Kits');
+      }
+    } catch (error) {
+      console.error('Error clearing master kits:', error);
+      alert('❌ Erreur de connexion');
+    } finally {
+      setClearingData(false);
+    }
+  };
+
+  const clearAllPersonalCollections = async () => {
+    const confirm = window.confirm(
+      '🚨 ATTENTION: Cette action va supprimer TOUTES les collections personnelles de la base de données.\n\n' +
+      'Cela inclut:\n' +
+      '- Toutes les collections personnelles des utilisateurs\n' +
+      '- Tous les détails personnels ajoutés\n' +
+      '- Toutes les estimations de prix personnalisées\n\n' +
+      'Cette action est IRRÉVERSIBLE.\n\n' +
+      'Êtes-vous absolument sûr de vouloir continuer ?'
+    );
+    if (!confirm) return;
+
+    setClearingData(true);
+    try {
+      const response = await fetch(`${API}/api/admin/clear-personal-collections`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Suppression réussie!\n\n` +
+              `Collections personnelles supprimées: ${result.deleted_count}\n` +
+              `Total avant suppression: ${result.count_before}`);
+      } else {
+        alert('❌ Erreur lors de la suppression des collections personnelles');
+      }
+    } catch (error) {
+      console.error('Error clearing personal collections:', error);
+      alert('❌ Erreur de connexion');
+    } finally {
+      setClearingData(false);
+    }
+  };
+
+  const clearAllKitsAndCollections = async () => {
+    const confirm = window.confirm(
+      '🚨 DANGER EXTRÊME: Cette action va supprimer TOUS les kits ET TOUTES les collections de la base de données.\n\n' +
+      'Cela inclut:\n' +
+      '- TOUS les Master Kits\n' +
+      '- TOUTES les collections personnelles\n' +
+      '- TOUS les détails personnels\n' +
+      '- TOUTES les estimations\n\n' +
+      'Cette action est COMPLÈTEMENT IRRÉVERSIBLE et remettra la base de données à zéro.\n\n' +
+      'Tapez "SUPPRIMER TOUT" pour confirmer:'
+    );
+    if (!confirm) return;
+
+    const confirmText = prompt('Tapez exactement "SUPPRIMER TOUT" pour confirmer:');
+    if (confirmText !== 'SUPPRIMER TOUT') {
+      alert('❌ Confirmation annulée. Texte incorrect.');
+      return;
+    }
+
+    setClearingData(true);
+    try {
+      const response = await fetch(`${API}/api/admin/clear-all-kits`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Suppression totale réussie!\n\n` +
+              `Master Kits supprimés: ${result.master_kits_deleted}\n` +
+              `Collections supprimées: ${result.collections_deleted}\n` +
+              `Total supprimé: ${result.total_deleted}\n\n` +
+              `Compteurs avant suppression:\n` +
+              `- Master Kits: ${result.counts_before.master_kits}\n` +
+              `- Collections: ${result.counts_before.collections}`);
+      } else {
+        alert('❌ Erreur lors de la suppression complète');
+      }
+    } catch (error) {
+      console.error('Error clearing all kits and collections:', error);
+      alert('❌ Erreur de connexion');
+    } finally {
+      setClearingData(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">💾 Data Management Enterprise</h2>
+        <p className="text-gray-600 mt-1">Import/Export, backup, migration, data cleaning</p>
+      </div>
+
+      {/* WARNING SECTION FOR KIT CLEARING */}
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div className="flex items-center mb-3">
+          <span className="text-2xl mr-3">⚠️</span>
+          <h3 className="text-xl font-bold text-red-800">Zone Dangereuse - Suppression des Kits</h3>
+        </div>
+        <p className="text-red-700 mb-4">
+          <strong>ATTENTION:</strong> Les actions ci-dessous suppriment définitivement des données de la base. 
+          Ces actions sont <strong>IRRÉVERSIBLES</strong>. Utilisez avec précaution.
+        </p>
+
+        {/* Kit Clearing Actions */}
         <div className="space-y-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Export CSV Complet</h4>
-            <p className="text-sm text-gray-600 mb-3">Télécharger toutes les données en CSV avec mapping intelligent</p>
-            <div className="flex space-x-2">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
-                📥 Export Teams
-              </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
-                📥 Export All
+          {/* Clear Master Kits Only */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+              <div className="flex-1">
+                <h4 className="font-semibold text-orange-800 mb-2">🏷️ Supprimer tous les Master Kits</h4>
+                <p className="text-sm text-orange-700">
+                  Supprime tous les Master Kits de la base de données, mais conserve les collections personnelles des utilisateurs.
+                </p>
+              </div>
+              <button
+                onClick={clearAllMasterKits}
+                disabled={clearingData}
+                className={`${
+                  clearingData 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                } text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-3 md:mt-0 md:ml-4`}
+              >
+                {clearingData ? '⏳ Suppression...' : '🗑️ Supprimer Master Kits'}
               </button>
             </div>
           </div>
-          
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Import en Masse</h4>
-            <p className="text-sm text-gray-600 mb-3">Importer CSV/Excel avec validation automatique</p>
-            <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
-              <div className="text-gray-400 text-2xl mb-2">📁</div>
-              <p className="text-sm text-gray-500">Glisser-déposer vos fichiers ici</p>
+
+          {/* Clear Personal Collections Only */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+              <div className="flex-1">
+                <h4 className="font-semibold text-orange-800 mb-2">👤 Supprimer toutes les collections personnelles</h4>
+                <p className="text-sm text-orange-700">
+                  Supprime toutes les collections personnelles des utilisateurs, mais conserve les Master Kits de référence.
+                </p>
+              </div>
+              <button
+                onClick={clearAllPersonalCollections}
+                disabled={clearingData}
+                className={`${
+                  clearingData 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                } text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-3 md:mt-0 md:ml-4`}
+              >
+                {clearingData ? '⏳ Suppression...' : '🗑️ Supprimer Collections'}
+              </button>
+            </div>
+          </div>
+
+          {/* Clear Everything */}
+          <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+              <div className="flex-1">
+                <h4 className="font-semibold text-red-800 mb-2">💥 SUPPRIMER TOUT - Master Kits ET Collections</h4>
+                <p className="text-sm text-red-700">
+                  <strong>ACTION EXTRÊME:</strong> Supprime TOUS les Master Kits ET TOUTES les collections personnelles. 
+                  Remet complètement à zéro la base de données des kits.
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  ⚠️ Nécessite une double confirmation
+                </p>
+              </div>
+              <button
+                onClick={clearAllKitsAndCollections}
+                disabled={clearingData}
+                className={`${
+                  clearingData 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-red-600 hover:bg-red-700 border-2 border-red-700'
+                } text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors mt-3 md:mt-0 md:ml-4`}
+              >
+                {clearingData ? '⏳ Suppression...' : '💥 SUPPRIMER TOUT'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <span className="text-xl mr-2">ℹ️</span>
+            <h4 className="text-lg font-bold text-blue-800">Instructions d'utilisation</h4>
+          </div>
+          <ul className="space-y-2 text-sm text-blue-700">
+            <li>• <strong>Master Kits seulement:</strong> Utilisez pour réinitialiser les données de référence tout en gardant les collections utilisateurs</li>
+            <li>• <strong>Collections seulement:</strong> Utilisez pour nettoyer les données personnelles tout en gardant les références</li>
+            <li>• <strong>Suppression totale:</strong> Utilisez uniquement pour un reset complet de la plateforme</li>
+            <li>• <strong>Toutes les suppressions sont définitives</strong> - Aucune récupération possible</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        {/* Import/Export */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">📤 Import/Export</h3>
+          <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">Export CSV Complet</h4>
+              <p className="text-sm text-gray-600 mb-3">Télécharger toutes les données en CSV avec mapping intelligent</p>
+              <div className="flex space-x-2">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                  📥 Export Teams
+                </button>
+                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+                  📥 Export All
+                </button>
+              </div>
+            </div>
+            
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">Import en Masse</h4>
+              <p className="text-sm text-gray-600 mb-3">Importer CSV/Excel avec validation automatique</p>
+              <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
+                <div className="text-gray-400 text-2xl mb-2">📁</div>
+                <p className="text-sm text-gray-500">Glisser-déposer vos fichiers ici</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Backup System */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🛡️ Système de Backup</h3>
+          <div className="space-y-4">
+            <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+              <h4 className="font-medium text-green-900 mb-2">Backup Automatique</h4>
+              <p className="text-sm text-green-700 mb-2">Dernière sauvegarde: Aujourd'hui 03:00</p>
+              <div className="text-xs text-green-600">✅ Backup quotidien actif</div>
+            </div>
+            
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">Backup Manuel</h4>
+              <p className="text-sm text-gray-600 mb-3">Créer une sauvegarde complète maintenant</p>
+              <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm w-full">
+                🔄 Créer Backup Maintenant
+              </button>
+            </div>
+            
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">Restauration Point-in-Time</h4>
+              <p className="text-sm text-gray-600 mb-3">Restaurer à une date spécifique</p>
+              <input type="date" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Backup System */}
+      {/* Data Quality Tools */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">🛡️ Système de Backup</h3>
-        <div className="space-y-4">
-          <div className="border border-green-200 bg-green-50 rounded-lg p-4">
-            <h4 className="font-medium text-green-900 mb-2">Backup Automatique</h4>
-            <p className="text-sm text-green-700 mb-2">Dernière sauvegarde: Aujourd'hui 03:00</p>
-            <div className="text-xs text-green-600">✅ Backup quotidien actif</div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🔧 Outils Qualité des Données</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-gray-200 rounded-lg p-4 text-center">
+            <div className="text-2xl mb-2">🔍</div>
+            <h4 className="font-medium text-gray-900 mb-1">Détection Doublons</h4>
+            <p className="text-xs text-gray-600 mb-3">Identifier et fusionner les entrées en double</p>
+            <button className="bg-yellow-600 text-white px-3 py-1 rounded text-sm">Scanner</button>
           </div>
-          
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Backup Manuel</h4>
-            <p className="text-sm text-gray-600 mb-3">Créer une sauvegarde complète maintenant</p>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm w-full">
-              🔄 Créer Backup Maintenant
-            </button>
+          <div className="border border-gray-200 rounded-lg p-4 text-center">
+            <div className="text-2xl mb-2">✨</div>
+            <h4 className="font-medium text-gray-900 mb-1">Normalisation</h4>
+            <p className="text-xs text-gray-600 mb-3">Standardiser formats et conventions</p>
+            <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Normaliser</button>
           </div>
-          
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Restauration Point-in-Time</h4>
-            <p className="text-sm text-gray-600 mb-3">Restaurer à une date spécifique</p>
-            <input type="date" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <div className="border border-gray-200 rounded-lg p-4 text-center">
+            <div className="text-2xl mb-2">✅</div>
+            <h4 className="font-medium text-gray-900 mb-1">Validation</h4>
+            <p className="text-xs text-gray-600 mb-3">Vérifier intégrité et cohérence</p>
+            <button className="bg-green-600 text-white px-3 py-1 rounded text-sm">Valider</button>
           </div>
         </div>
       </div>
     </div>
-
-    {/* Data Quality Tools */}
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">🔧 Outils Qualité des Données</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border border-gray-200 rounded-lg p-4 text-center">
-          <div className="text-2xl mb-2">🔍</div>
-          <h4 className="font-medium text-gray-900 mb-1">Détection Doublons</h4>
-          <p className="text-xs text-gray-600 mb-3">Identifier et fusionner les entrées en double</p>
-          <button className="bg-yellow-600 text-white px-3 py-1 rounded text-sm">Scanner</button>
-        </div>
-        <div className="border border-gray-200 rounded-lg p-4 text-center">
-          <div className="text-2xl mb-2">✨</div>
-          <h4 className="font-medium text-gray-900 mb-1">Normalisation</h4>
-          <p className="text-xs text-gray-600 mb-3">Standardiser formats et conventions</p>
-          <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Normaliser</button>
-        </div>
-        <div className="border border-gray-200 rounded-lg p-4 text-center">
-          <div className="text-2xl mb-2">✅</div>
-          <h4 className="font-medium text-gray-900 mb-1">Validation</h4>
-          <p className="text-xs text-gray-600 mb-3">Vérifier intégrité et cohérence</p>
-          <button className="bg-green-600 text-white px-3 py-1 rounded text-sm">Valider</button>
-        </div>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 // Analytics Module
 const AnalyticsModule = ({ dashboardData }) => (
