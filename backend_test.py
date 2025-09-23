@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MASTER KIT & BRAND FORM PRIORITY CHANGES TESTING
+TopKit Backend Testing Suite - SPONSOR FILTERING FUNCTIONALITY TESTING
 
-Testing the priority changes implemented for Master Kit and Brand forms:
-1. **Master Kit Form Updates** - Verify "Improve Master Kit Profile" form fields match "Create New Master Kit" form structure
-2. **Master Kit Database Cleanup** - Verify Master Kits database cleanup (should be empty now)
-3. **Brand Form Updates** - Test "New Contribution - Brand" form with updated fields:
-   - "Name" field (previously "Brand Name")
-   - "Type" dropdown with Brand/Sponsor options (previously "Official Name")
-   - Verify removal of "Alternative Name" and "Additional Logo" fields
-4. **Backend Model Validation** - Test BrandType enum (brand/sponsor)
-5. **Brand Entity Creation** - Verify brand creation through contribution system includes type field
-6. **Form Data Endpoints** - Test GET /api/form-data/brands returns brands with type field
+Testing the sponsor filtering functionality in Master Kit forms:
+1. **Sponsors Endpoint Testing** - Test GET /api/form-data/sponsors endpoint returns only brands with type="sponsor"
+2. **Brands vs Sponsors Separation** - Test GET /api/form-data/brands returns all brands (both brand and sponsor types)
+3. **Master Kit Form Data Validation** - Test that Primary Sponsor field will receive only sponsor-type brands
+4. **Authentication Testing** - Test with emergency.admin@topkit.test / EmergencyAdmin2025! credentials
+5. **Data Integrity Testing** - Verify created test sponsors have proper structure (id, name, type, country, etc.)
+6. **Sponsor Filtering Logic** - Verify that no brand-type entities leak into sponsor endpoints
 
 CRITICAL: Testing with emergency.admin@topkit.test / EmergencyAdmin2025! account.
-Focus on verifying the form structure changes and brand type functionality work correctly.
+Focus on verifying the sponsor filtering logic works correctly and that Master Kit forms will receive proper separated data for brands vs sponsors.
 """
 
 import requests
