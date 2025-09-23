@@ -3721,7 +3721,7 @@ async def create_master_kit(
                     },
                     "submitted_by": current_user["id"],
                     "submitted_at": datetime.now(),
-                    "status": "pending",
+                    "status": "pending_review",
                     "votes": {"approve": 0, "reject": 0, "voters": []},
                     "comments": [],
                     "moderated_by": None,
