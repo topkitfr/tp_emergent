@@ -727,10 +727,10 @@ class TopKitCollectionFormTesting:
             self.log_test("Existing Collection Retrieval", False, f"Exception: {str(e)}")
             return False
     
-    def test_add_personal_details_form_fix(self):
-        """Test complete Add Personal Details form fix"""
-        print("\n🚀 ADD PERSONAL DETAILS FORM FIX TESTING")
-        print("Testing the fixed 'Add Personal Details' form backend fix")
+    def test_patches_field_validation_fix(self):
+        """Test complete patches field validation fix"""
+        print("\n🚀 PATCHES FIELD VALIDATION FIX TESTING")
+        print("Testing the patches field validation fix for Add Personal Details form")
         print("=" * 80)
         
         test_results = []
@@ -748,25 +748,35 @@ class TopKitCollectionFormTesting:
         master_kits_success = self.get_available_master_kits()
         test_results.append(master_kits_success)
         
-        # Step 3: Test minimal collection addition
-        print("\n3️⃣ Testing minimal collection addition...")
-        minimal_success = self.test_minimal_collection_addition()
-        test_results.append(minimal_success)
+        # Step 3: Test patches field with empty array
+        print("\n3️⃣ Testing patches field with empty array []...")
+        empty_array_success = self.test_patches_field_empty_array()
+        test_results.append(empty_array_success)
         
-        # Step 4: Test comprehensive collection addition
-        print("\n4️⃣ Testing comprehensive collection addition...")
-        comprehensive_success = self.test_comprehensive_collection_addition()
+        # Step 4: Test patches field with string array
+        print("\n4️⃣ Testing patches field with string array...")
+        string_array_success = self.test_patches_field_string_array()
+        test_results.append(string_array_success)
+        
+        # Step 5: Test patches field with null/undefined
+        print("\n5️⃣ Testing patches field with null/undefined...")
+        null_success = self.test_patches_field_null_undefined()
+        test_results.append(null_success)
+        
+        # Step 6: Test patches field with empty string
+        print("\n6️⃣ Testing patches field with empty string...")
+        empty_string_success = self.test_patches_field_empty_string()
+        test_results.append(empty_string_success)
+        
+        # Step 7: Test comprehensive patches combinations
+        print("\n7️⃣ Testing comprehensive patches combinations...")
+        comprehensive_success = self.test_comprehensive_patches_combinations()
         test_results.append(comprehensive_success)
         
-        # Step 5: Test collection type variations
-        print("\n5️⃣ Testing collection type variations...")
-        variations_success = self.test_collection_type_variations()
-        test_results.append(variations_success)
-        
-        # Step 6: Test existing collection retrieval
-        print("\n6️⃣ Testing existing collection retrieval...")
-        retrieval_success = self.test_existing_collection_retrieval()
-        test_results.append(retrieval_success)
+        # Step 8: Test minimal collection addition (for baseline)
+        print("\n8️⃣ Testing minimal collection addition...")
+        minimal_success = self.test_minimal_collection_addition()
+        test_results.append(minimal_success)
         
         return test_results
     
