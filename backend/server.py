@@ -3773,10 +3773,44 @@ async def create_master_kit(
         # Insert into database
         result = await db.master_kits.insert_one(master_kit_data)
         
+        if result.inserted_id:
+            # Create a contribution entry for moderation dashboard
+            try:
+                contribution_data = {
+                    "id": str(uuid.uuid4()),
+                    "entity_type": "master_kit",
+                    "entity_data": {
+                        "name": f"{kit_type.title()} Kit",
+                        "club_id": club_id,
+                        "kit_style": kit_style,
+                        "season": season,
+                        "brand_id": brand_id,
+                        "primary_sponsor_id": primary_sponsor_id,
+                        "secondary_sponsor_ids": secondary_sponsors,
+                        "front_photo_url": f"master_kits/{front_filename}",
+                        "back_photo_url": f"master_kits/{back_filename}",
+                        "topkit_reference": topkit_reference
+                    },
+                    "submitted_by": current_user["id"],
+                    "submitted_at": datetime.now(),
+                    "status": "pending",
+                    "votes": {"approve": 0, "reject": 0, "voters": []},
+                    "comments": [],
+                    "moderated_by": None,
+                    "moderated_at": None,
+                    "master_kit_id": master_kit_id  # Link to the created master kit
+                }
+                
+                await db.contributions_v2.insert_one(contribution_data)
+                logger.info(f"Created contribution entry for Master Kit: {master_kit_id}")
+            except Exception as contrib_error:
+                logger.error(f"Failed to create contribution entry: {str(contrib_error)}")
+        
         return {
-            "message": "Master Kit created successfully",
+            "message": "Master Kit created successfully and submitted for moderation",
             "id": master_kit_id,
-            "topkit_reference": topkit_reference
+            "topkit_reference": topkit_reference,
+            "status": "pending_moderation"
         }
         
     except HTTPException:
