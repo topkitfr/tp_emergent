@@ -1,36 +1,30 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING
+TopKit Backend Testing Suite - ADMIN DATA DELETION ENDPOINTS TESTING
 
-Testing the personal details persistence and price calculation fix for Add Personal Details form.
-The user has fixed field mapping between EnhancedEditKitForm and the backend collection API to ensure 
-all personal details are saved correctly and price calculations work.
+Testing the newly created admin data deletion endpoints for clearing master kits and personal collections.
 
-Key fixes tested:
-1. Fixed field mapping: personal_notes from comments, condition from origin_type, physical_state from general_condition
-2. Improved enum value mapping for conditions and physical states 
-3. Ensured all form fields are properly mapped to collection data
+**Testing Requirements:**
+1. Login with emergency admin account (emergency.admin@topkit.test / EmergencyAdmin2025!)
+2. Test the three new admin endpoints:
+   - `DELETE /api/admin/clear-master-kits` - Should clear all master kits
+   - `DELETE /api/admin/clear-personal-collections` - Should clear all personal collections
+   - `DELETE /api/admin/clear-all-kits` - Should clear both master kits and personal collections
+3. Verify the endpoints return proper counts before and after deletion
+4. Test admin authorization (endpoints should require admin role)
+5. Verify the data is actually cleared from the database by checking counts afterward
 
-Test Plan:
-1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
-2. **Master Kit Access** - Verify available Master Kits for collection addition
-3. **Comprehensive Collection Creation** - Add Master Kit with detailed personal information:
-   - Name printing, number printing, size
-   - Origin type (standard/match_issued/match_worn/training)
-   - General condition (new_with_tags/very_good/used/damaged)  
-   - Patches, signature details
-   - User estimate price, comments
-4. **Personal Details Persistence** - Verify collection item created with all personal details saved correctly
-5. **Price Estimation Testing** - Test GET /api/my-collection/{collection_id}/price-estimation
-6. **Price Coefficient Verification** - Confirm price breakdown includes coefficients for:
-   - Flocking (name+number printing)
-   - Patches  
-   - Condition bonuses (match_worn, training, etc.)
-   - Physical state bonuses
-   - Signature bonuses
-7. **Data Retrieval Verification** - Verify personal details appear correctly when retrieved
+**Expected Results:**
+- All endpoints should return success messages with deletion counts
+- After running the clear endpoints, the respective collections should be empty
+- Only admin users should be able to access these endpoints
+- Error handling should work for non-admin users
 
-CRITICAL: Focus on ensuring personal details are persisted and price calculations show proper coefficient breakdowns.
+**Authentication:**
+- Use emergency.admin@topkit.test / EmergencyAdmin2025! (admin role)
+- Test should confirm admin authorization is working correctly
+
+CRITICAL: Focus on testing admin data deletion endpoints with proper authorization and data verification.
 """
 
 import requests
