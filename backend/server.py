@@ -2625,7 +2625,7 @@ async def upload_contribution_image(
         
         # Update contribution with image info and file path
         # First ensure uploaded_images array exists
-        await db.contributions.update_one(
+        await db.contributions_v2.update_one(
             {"id": contribution_id, "uploaded_images": {"$exists": False}},
             {"$set": {"uploaded_images": []}}
         )
