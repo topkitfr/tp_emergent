@@ -116,34 +116,34 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
     // Only calculate value for owned items
     const ownedItems = collections.filter(c => c.collection_type === 'owned');
     
-    let totalPurchaseValue = 0;
-    let totalEstimatedValue = 0;
-    let itemsWithPurchasePrice = 0;
-    let itemsWithEstimatedPrice = 0;
+    let totalUserEstimate = 0;
+    let totalTopKitEstimate = 0;
+    let itemsWithUserEstimate = 0;
+    let itemsWithTopKitEstimate = 0;
     
     ownedItems.forEach(item => {
-      // Purchase price calculation
-      if (item.purchase_price) {
-        totalPurchaseValue += item.purchase_price;
-        itemsWithPurchasePrice++;
+      // User estimate calculation (from field F. User Estimate)
+      if (item.user_estimate) {
+        totalUserEstimate += parseFloat(item.user_estimate);
+        itemsWithUserEstimate++;
       }
       
-      // Estimated price calculation
+      // TopKit estimated price calculation
       const estimation = priceEstimations[item.id];
       if (estimation?.estimated_price) {
-        totalEstimatedValue += estimation.estimated_price;
-        itemsWithEstimatedPrice++;
+        totalTopKitEstimate += estimation.estimated_price;
+        itemsWithTopKitEstimate++;
       }
     });
     
     return {
-      totalPurchase: Math.round(totalPurchaseValue),
-      totalEstimated: Math.round(totalEstimatedValue),
-      averagePurchase: itemsWithPurchasePrice > 0 ? Math.round(totalPurchaseValue / itemsWithPurchasePrice) : 0,
-      averageEstimated: itemsWithEstimatedPrice > 0 ? Math.round(totalEstimatedValue / itemsWithEstimatedPrice) : 0,
+      totalUserEstimate: Math.round(totalUserEstimate),
+      totalTopKitEstimate: Math.round(totalTopKitEstimate),
+      averageUserEstimate: itemsWithUserEstimate > 0 ? Math.round(totalUserEstimate / itemsWithUserEstimate) : 0,
+      averageTopKitEstimate: itemsWithTopKitEstimate > 0 ? Math.round(totalTopKitEstimate / itemsWithTopKitEstimate) : 0,
       count: ownedItems.length,
-      itemsWithPurchasePrice,
-      itemsWithEstimatedPrice
+      itemsWithUserEstimate,
+      itemsWithTopKitEstimate
     };
   }, [collections, priceEstimations]);
 
