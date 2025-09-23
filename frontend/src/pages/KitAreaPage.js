@@ -290,6 +290,28 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
 
       console.log('Form data being processed:', editFormData);
 
+      // Helper functions to map enum values
+      const mapConditionValue = (value) => {
+        // EnhancedEditKitForm doesn't separate condition vs physical_state
+        // For now, return null since it's optional
+        return null;
+      };
+
+      const mapPhysicalStateValue = (value) => {
+        if (!value) return null;
+        
+        // Map EnhancedEditKitForm values to backend enum values
+        const mapping = {
+          'new_with_tags': 'new_with_tags',
+          'very_good': 'very_good_condition',  // Fix the mismatch
+          'used': 'used',
+          'damaged': 'damaged',
+          'needs_restoration': 'needs_restoration'
+        };
+        
+        return mapping[value] || null;
+      };
+
       // Convert patches array to string if it exists
       let patchesString = null;
       if (editFormData.patches && Array.isArray(editFormData.patches)) {
@@ -324,28 +346,6 @@ const KitAreaPage = ({ user, setShowAuthModal }) => {
         purchase_price: editFormData.user_estimate ? parseFloat(editFormData.user_estimate) : null,
         purchase_date: editFormData.match_date || null
       };
-
-      // Helper functions to map enum values
-      function mapConditionValue(value) {
-        // EnhancedEditKitForm doesn't separate condition vs physical_state
-        // For now, return null since it's optional
-        return null;
-      }
-
-      function mapPhysicalStateValue(value) {
-        if (!value) return null;
-        
-        // Map EnhancedEditKitForm values to backend enum values
-        const mapping = {
-          'new_with_tags': 'new_with_tags',
-          'very_good': 'very_good_condition',  // Fix the mismatch
-          'used': 'used',
-          'damaged': 'damaged',
-          'needs_restoration': 'needs_restoration'
-        };
-        
-        return mapping[value] || null;
-      }
 
       console.log('Sending collection data:', collectionData);
 
