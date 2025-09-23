@@ -17,7 +17,8 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
   
   const [formOptions, setFormOptions] = useState({
     clubs: [],
-    brands: []
+    brands: [],
+    sponsors: []  // Add sponsors array
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
