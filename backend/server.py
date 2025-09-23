@@ -2641,7 +2641,7 @@ async def upload_contribution_image(
             }}
         }
         
-        result = await db.contributions.update_one(
+        result = await db.contributions_v2.update_one(
             {"id": contribution_id},
             update_data
         )
