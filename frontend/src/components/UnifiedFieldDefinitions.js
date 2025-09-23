@@ -127,8 +127,8 @@ export const getUnifiedFieldsForEntityType = (type) => {
           ]
         },
         { key: 'brand_id', label: 'Brand', type: 'brand_select', required: false },
-        { key: 'primary_sponsor_id', label: 'Primary Sponsor', type: 'brand_select', required: false },
-        { key: 'secondary_sponsor_ids', label: 'Secondary Sponsors', type: 'brand_select_multiple', required: false },
+        { key: 'primary_sponsor_id', label: 'Primary Sponsor', type: 'sponsor_select', required: false },
+        { key: 'secondary_sponsor_ids', label: 'Secondary Sponsors (Multiple Selection)', type: 'sponsor_select_multiple', required: false },
         { key: 'season', label: 'Season (YYYY/YYYY)', type: 'text', required: true, placeholder: '2024/2025' },
         { key: 'front_photo_url', label: 'Front Photo', type: 'image', required: true },
         { key: 'back_photo_url', label: 'Back Photo', type: 'image', required: true },
