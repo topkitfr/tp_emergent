@@ -192,6 +192,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Add Personal Details Form Fix Testing - Collection Creation Field Mapping Issues"
+    implemented: true
+    working: false
+    file: "server.py, collaborative_models.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 ADD PERSONAL DETAILS FORM FIX TESTING REQUESTED - User reported '[object Object]' errors and validation issues in the 'Add Personal Details' form for adding Master Kits to collection. Main agent has fixed form data mapping, enum value mismatches, and error handling. Testing: 1. Login with emergency.admin@topkit.test / EmergencyAdmin2025!, 2. Test adding Master Kit to collection via POST /api/my-collection, 3. Test with minimal data (only master_kit_id and collection_type), 4. Test with comprehensive data including patches array, condition values, etc., 5. Verify field mapping fixes (patches array to comma-separated string, general_condition 'very_good' to 'very_good_condition', signature fields), 6. Test error handling improvements, 7. Confirm no more '[object Object]' errors in responses."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL ADD PERSONAL DETAILS FORM BUG IDENTIFIED - 66.7% SUCCESS RATE! Comprehensive testing reveals critical backend model mismatch issues preventing collection creation: ✅ AUTHENTICATION (100%): emergency.admin@topkit.test / EmergencyAdmin2025! authentication working perfectly ✅ MASTER KITS ACCESS (100%): Available Master Kits retrieved successfully (5 Master Kits found) ✅ VALIDATION ERROR HANDLING (100%): No '[object Object]' errors in validation responses, proper 422 status codes returned ✅ EXISTING COLLECTION ITEMS (100%): No '[object Object]' errors in existing data retrieval ❌ CRITICAL BUG - MINIMAL COLLECTION ADDITION (0%): POST /api/my-collection endpoint completely broken due to backend model mismatch - Status 500 error: 'patches field expects List[str] but MyCollectionCreate provides Optional[str]', MyCollection base model and MyCollectionCreate model have incompatible field types ❌ CRITICAL BUG - COMPREHENSIVE COLLECTION ADDITION (0%): Status 422 error: 'patches field Input should be a valid string but received array', Field mapping between models is broken causing validation failures 🎯 ROOT CAUSE IDENTIFIED: Backend model mismatch in collaborative_models.py - MyCollection base model expects patches: List[str] but MyCollectionCreate expects patches: Optional[str], signature field mismatch (signature vs is_signed), signed_by vs signature_player_id field name conflicts. The '[object Object]' errors are caused by these model incompatibilities when trying to create MyCollection from MyCollectionCreate data. CONCLUSION: Add Personal Details form is completely broken due to backend model mismatches. The main agent needs to fix field mapping between MyCollectionCreate and MyCollection models to resolve validation errors and '[object Object]' issues."
+
   - task: "Master Kit Moderation Approval Fix Testing - Collection Mismatch Bug Resolution"
     implemented: true
     working: true
