@@ -2871,10 +2871,12 @@ async def create_entity_from_contribution(contribution: dict) -> str:
             
             entity.update({
                 "name": entity_data.get("name", ""),
+                "type": entity_data.get("type", BrandType.BRAND),  # New type field
                 "country": entity_data.get("country", ""),
                 "founded_year": entity_data.get("founded_year", 0),
+                "website": entity_data.get("website", ""),  # Add website field
                 "logo_url": logo_url,
-                "description": entity_data.get("description", "")
+                "created_by": entity_data.get("created_by", "system")  # Add created_by field
             })
             await db.brands.insert_one(entity)
             
