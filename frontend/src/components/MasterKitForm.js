@@ -75,18 +75,20 @@ const MasterKitForm = ({ isOpen, onClose, onSuccess, API }) => {
 
   const loadFormData = async () => {
     try {
-      const [clubsRes, brandsRes] = await Promise.all([
+      const [clubsRes, brandsRes, sponsorsRes] = await Promise.all([
         fetch(`${API}/api/form-data/clubs`),
-        fetch(`${API}/api/form-data/brands`)
+        fetch(`${API}/api/form-data/brands`),
+        fetch(`${API}/api/form-data/sponsors`)
       ]);
 
-      if (clubsRes.ok && brandsRes.ok) {
-        const [clubs, brands] = await Promise.all([
+      if (clubsRes.ok && brandsRes.ok && sponsorsRes.ok) {
+        const [clubs, brands, sponsors] = await Promise.all([
           clubsRes.json(),
-          brandsRes.json()
+          brandsRes.json(),
+          sponsorsRes.json()
         ]);
 
-        setFormOptions({ clubs, brands });
+        setFormOptions({ clubs, brands, sponsors });
       }
     } catch (error) {
       console.error('Error loading form data:', error);
