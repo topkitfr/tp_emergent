@@ -2556,7 +2556,7 @@ async def vote_on_contribution(
             
             # Auto-approve if 3 upvotes
             if new_upvotes >= 3:
-                await db.contributions.update_one(
+                await db.contributions_v2.update_one(
                     {"id": contribution_id},
                     {"$set": {"status": "approved"}}
                 )
