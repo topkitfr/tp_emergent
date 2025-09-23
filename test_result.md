@@ -184,12 +184,11 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Add Personal Details Form Fix Testing - Collection Creation Field Mapping Issues"
     - "Master Kit Pending_Review Status Testing - COMPLETED"
     - "Sponsor Filtering Functionality Testing - COMPLETED"
     - "Enhanced Edit Kit Form Testing - COMPLETED"
-  stuck_tasks: 
-    - "Add Personal Details Form Fix Testing - Collection Creation Field Mapping Issues"
+    - "Add Personal Details Form Fix Testing - COMPLETED"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
