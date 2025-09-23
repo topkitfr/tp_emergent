@@ -821,9 +821,9 @@ async def get_competitions_for_form():
 async def get_brands_for_form():
     """Get brands for Master Kit form dropdown"""
     try:
-        cursor = db.brands.find({}, {"id": 1, "name": 1, "country": 1})
+        cursor = db.brands.find({}, {"id": 1, "name": 1, "country": 1, "type": 1})
         brands = await cursor.to_list(length=None)
-        return [{"id": brand["id"], "name": brand["name"], "country": brand.get("country", "Unknown")} for brand in brands]
+        return [{"id": brand["id"], "name": brand["name"], "country": brand.get("country", "Unknown"), "type": brand.get("type", "brand")} for brand in brands]
     except Exception as e:
         logger.error(f"Error fetching brands: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
