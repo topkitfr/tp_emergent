@@ -1,24 +1,36 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - PATCHES FIELD VALIDATION FIX TESTING
+TopKit Backend Testing Suite - PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING
 
-Testing the patches field validation fix for the Add Personal Details form.
-The user reported "Error: body.patches: Input should be a valid string" when submitting the form.
-Main agent has added debugging and additional sanitization to ensure patches arrays are properly converted to strings.
+Testing the personal details persistence and price calculation fix for Add Personal Details form.
+The user has fixed field mapping between EnhancedEditKitForm and the backend collection API to ensure 
+all personal details are saved correctly and price calculations work.
+
+Key fixes tested:
+1. Fixed field mapping: personal_notes from comments, condition from origin_type, physical_state from general_condition
+2. Improved enum value mapping for conditions and physical states 
+3. Ensured all form fields are properly mapped to collection data
 
 Test Plan:
 1. **Authentication Testing** - Login with emergency.admin@topkit.test / EmergencyAdmin2025!
 2. **Master Kit Access** - Verify available Master Kits for collection addition
-3. **Patches Field Scenarios Testing**:
-   - Test with patches as empty array []
-   - Test with patches as string array ["patch1", "patch2"] 
-   - Test with patches as null/undefined
-   - Test with patches as empty string ""
-4. **Verify patches field is always sent as a string or null to the backend**
-5. **Confirm no "Input should be a valid string" validation errors for patches field**
-6. **Test both minimal and comprehensive form data with various patches combinations**
+3. **Comprehensive Collection Creation** - Add Master Kit with detailed personal information:
+   - Name printing, number printing, size
+   - Origin type (standard/match_issued/match_worn/training)
+   - General condition (new_with_tags/very_good/used/damaged)  
+   - Patches, signature details
+   - User estimate price, comments
+4. **Personal Details Persistence** - Verify collection item created with all personal details saved correctly
+5. **Price Estimation Testing** - Test GET /api/my-collection/{collection_id}/price-estimation
+6. **Price Coefficient Verification** - Confirm price breakdown includes coefficients for:
+   - Flocking (name+number printing)
+   - Patches  
+   - Condition bonuses (match_worn, training, etc.)
+   - Physical state bonuses
+   - Signature bonuses
+7. **Data Retrieval Verification** - Verify personal details appear correctly when retrieved
 
-CRITICAL: Focus on verifying that patches field validation no longer causes form submission failures.
+CRITICAL: Focus on ensuring personal details are persisted and price calculations show proper coefficient breakdowns.
 """
 
 import requests
