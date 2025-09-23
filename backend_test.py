@@ -862,9 +862,9 @@ class TopKitPersonalDetailsFormTesting:
         
         return test_results
     
-    def print_final_summary(self):
-        """Print final testing summary"""
-        print("\n📊 PERSONAL DETAILS PERSISTENCE & PRICE CALCULATION FIX TESTING SUMMARY")
+    def print_admin_deletion_summary(self):
+        """Print final admin data deletion testing summary"""
+        print("\n📊 ADMIN DATA DELETION ENDPOINTS TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -877,42 +877,49 @@ class TopKitPersonalDetailsFormTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 PERSONAL DETAILS FORM FIX RESULTS:")
+        print(f"\n🔍 ADMIN DATA DELETION ENDPOINTS RESULTS:")
         
         # Authentication
         auth_working = any(r['success'] for r in self.test_results if 'Emergency Admin Authentication' in r['test'])
         if auth_working:
-            print(f"  ✅ AUTHENTICATION: Emergency admin login working")
+            print(f"  ✅ AUTHENTICATION: Emergency admin login working with admin role")
         else:
             print(f"  ❌ AUTHENTICATION: Emergency admin login failed")
         
-        # Master Kits Access
-        master_kits_working = any(r['success'] for r in self.test_results if 'Get Available Master Kits' in r['test'])
-        if master_kits_working:
-            print(f"  ✅ MASTER KITS ACCESS: Available Master Kits retrieved successfully")
+        # Initial Data Counts
+        counts_working = any(r['success'] for r in self.test_results if 'Get Initial Data Counts' in r['test'])
+        if counts_working:
+            print(f"  ✅ INITIAL DATA COUNTS: Successfully retrieved counts before deletion")
         else:
-            print(f"  ❌ MASTER KITS ACCESS: Failed to get Master Kits")
+            print(f"  ❌ INITIAL DATA COUNTS: Failed to get initial counts")
         
-        # Comprehensive Collection Creation
-        comprehensive_working = any(r['success'] for r in self.test_results if 'Comprehensive Collection Creation' in r['test'])
-        if comprehensive_working:
-            print(f"  ✅ COMPREHENSIVE COLLECTION CREATION: All personal details saved correctly")
+        # Non-Admin Authorization
+        auth_test_working = any(r['success'] for r in self.test_results if 'Non-Admin Authorization' in r['test'])
+        if auth_test_working:
+            print(f"  ✅ AUTHORIZATION SECURITY: Admin endpoints properly protected")
         else:
-            print(f"  ❌ COMPREHENSIVE COLLECTION CREATION: Field mapping issues detected")
+            print(f"  ❌ AUTHORIZATION SECURITY: Admin endpoints not properly protected")
         
-        # Price Estimation
-        price_estimation_working = any(r['success'] for r in self.test_results if 'Price Estimation Endpoint' in r['test'])
-        if price_estimation_working:
-            print(f"  ✅ PRICE ESTIMATION: Endpoint working with proper coefficient breakdown")
+        # Clear Master Kits
+        clear_master_kits_working = any(r['success'] for r in self.test_results if 'Clear Master Kits Endpoint' in r['test'])
+        if clear_master_kits_working:
+            print(f"  ✅ CLEAR MASTER KITS: DELETE /api/admin/clear-master-kits working correctly")
         else:
-            print(f"  ❌ PRICE ESTIMATION: Endpoint not working or missing coefficients")
+            print(f"  ❌ CLEAR MASTER KITS: DELETE /api/admin/clear-master-kits failed")
         
-        # Personal Details Retrieval
-        retrieval_working = any(r['success'] for r in self.test_results if 'Personal Details Retrieval' in r['test'])
-        if retrieval_working:
-            print(f"  ✅ PERSONAL DETAILS RETRIEVAL: Personal details persisted and retrievable")
+        # Clear Personal Collections
+        clear_collections_working = any(r['success'] for r in self.test_results if 'Clear Personal Collections Endpoint' in r['test'])
+        if clear_collections_working:
+            print(f"  ✅ CLEAR PERSONAL COLLECTIONS: DELETE /api/admin/clear-personal-collections working correctly")
         else:
-            print(f"  ❌ PERSONAL DETAILS RETRIEVAL: Personal details not properly persisted")
+            print(f"  ❌ CLEAR PERSONAL COLLECTIONS: DELETE /api/admin/clear-personal-collections failed")
+        
+        # Clear All Kits
+        clear_all_working = any(r['success'] for r in self.test_results if 'Clear All Kits Endpoint' in r['test'])
+        if clear_all_working:
+            print(f"  ✅ CLEAR ALL KITS: DELETE /api/admin/clear-all-kits working correctly")
+        else:
+            print(f"  ❌ CLEAR ALL KITS: DELETE /api/admin/clear-all-kits failed")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -922,45 +929,46 @@ class TopKitPersonalDetailsFormTesting:
                 print(f"  • {failure['test']}: {failure['message']}")
         
         # Final status
-        print(f"\n🎯 FINAL STATUS - PERSONAL DETAILS FORM FIX:")
-        critical_tests = [auth_working, master_kits_working, comprehensive_working, retrieval_working]
+        print(f"\n🎯 FINAL STATUS - ADMIN DATA DELETION ENDPOINTS:")
+        critical_tests = [auth_working, clear_master_kits_working, clear_collections_working, clear_all_working]
         
         if all(critical_tests):
-            print(f"  ✅ PERSONAL DETAILS FORM FIX WORKING PERFECTLY")
-            print(f"     - Field mapping between EnhancedEditKitForm and backend working correctly")
-            print(f"     - personal_notes from comments mapping working")
-            print(f"     - condition from origin_type mapping working")
-            print(f"     - physical_state from general_condition mapping working")
-            print(f"     - All personal details persisted correctly")
-            print(f"     - Price calculation coefficients available")
+            print(f"  ✅ ADMIN DATA DELETION ENDPOINTS WORKING PERFECTLY")
+            print(f"     - All three admin deletion endpoints functional")
+            print(f"     - DELETE /api/admin/clear-master-kits clears all master kits")
+            print(f"     - DELETE /api/admin/clear-personal-collections clears all personal collections")
+            print(f"     - DELETE /api/admin/clear-all-kits clears both master kits and personal collections")
+            print(f"     - Admin authorization working correctly")
+            print(f"     - Proper counts returned before and after deletion")
+            print(f"     - Data actually cleared from database")
         elif any(critical_tests):
-            print(f"  ⚠️ PARTIAL SUCCESS: Some functionality working")
+            print(f"  ⚠️ PARTIAL SUCCESS: Some endpoints working")
             working_areas = []
             if auth_working: working_areas.append("authentication")
-            if master_kits_working: working_areas.append("master kits access")
-            if comprehensive_working: working_areas.append("collection creation")
-            if retrieval_working: working_areas.append("personal details retrieval")
-            print(f"     - Working areas: {', '.join(working_areas)}")
+            if clear_master_kits_working: working_areas.append("clear master kits")
+            if clear_collections_working: working_areas.append("clear personal collections")
+            if clear_all_working: working_areas.append("clear all kits")
+            print(f"     - Working endpoints: {', '.join(working_areas)}")
             
             failing_areas = []
             if not auth_working: failing_areas.append("authentication")
-            if not master_kits_working: failing_areas.append("master kits access")
-            if not comprehensive_working: failing_areas.append("collection creation")
-            if not retrieval_working: failing_areas.append("personal details retrieval")
+            if not clear_master_kits_working: failing_areas.append("clear master kits")
+            if not clear_collections_working: failing_areas.append("clear personal collections")
+            if not clear_all_working: failing_areas.append("clear all kits")
             if failing_areas:
                 print(f"     - Still failing: {', '.join(failing_areas)}")
         else:
-            print(f"  ❌ PERSONAL DETAILS FORM FIX NOT WORKING")
-            print(f"     - Field mapping issues persist")
-            print(f"     - Personal details not being saved correctly")
-            print(f"     - Price calculation may not be working properly")
+            print(f"  ❌ ADMIN DATA DELETION ENDPOINTS NOT WORKING")
+            print(f"     - Admin deletion endpoints not functional")
+            print(f"     - Data clearing not working properly")
+            print(f"     - Authorization may not be working correctly")
         
         print("\n" + "=" * 80)
     
-    def run_all_tests(self):
-        """Run all personal details form fix tests and return success status"""
-        test_results = self.test_personal_details_form_fix()
-        self.print_final_summary()
+    def run_admin_deletion_tests(self):
+        """Run all admin data deletion tests and return success status"""
+        test_results = self.test_admin_data_deletion_endpoints()
+        self.print_admin_deletion_summary()
         return any(test_results)
 
 def main():
