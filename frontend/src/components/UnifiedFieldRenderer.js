@@ -193,6 +193,113 @@ const UnifiedFieldRenderer = ({
           </div>
         );
 
+      case 'sponsor_select': {
+        // State for sponsors data
+        const [sponsors, setSponsors] = useState([]);
+        
+        // Load sponsors when component mounts
+        useEffect(() => {
+          const loadSponsors = async () => {
+            try {
+              const response = await fetch(`${API}/api/form-data/sponsors`);
+              if (response.ok) {
+                const sponsorsData = await response.json();
+                setSponsors(sponsorsData);
+              }
+            } catch (error) {
+              console.error('Error loading sponsors:', error);
+            }
+          };
+          
+          if (API) {
+            loadSponsors();
+          }
+        }, [API]);
+
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={field.required}
+          >
+            <option value="">Select Sponsor</option>
+            {sponsors.map(sponsor => (
+              <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>
+            ))}
+          </select>
+        );
+      }
+
+      case 'sponsor_select_multiple': {
+        // State for sponsors data
+        const [sponsors, setSponsors] = useState([]);
+        
+        // Load sponsors when component mounts
+        useEffect(() => {
+          const loadSponsors = async () => {
+            try {
+              const response = await fetch(`${API}/api/form-data/sponsors`);
+              if (response.ok) {
+                const sponsorsData = await response.json();
+                setSponsors(sponsorsData);
+              }
+            } catch (error) {
+              console.error('Error loading sponsors:', error);
+            }
+          };
+          
+          if (API) {
+            loadSponsors();
+          }
+        }, [API]);
+
+        return (
+          <div>
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  const currentValues = Array.isArray(value) ? value : [];
+                  if (!currentValues.includes(e.target.value)) {
+                    onChange(field.key, [...currentValues, e.target.value]);
+                  }
+                  e.target.value = ""; // Reset select
+                }
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+            >
+              <option value="">Add Secondary Sponsor</option>
+              {sponsors.map(sponsor => (
+                <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>
+              ))}
+            </select>
+            {Array.isArray(value) && value.length > 0 && (
+              <div className="space-y-1">
+                {value.map((sponsorId, index) => {
+                  const sponsor = sponsors.find(s => s.id === sponsorId);
+                  return (
+                    <div key={sponsorId} className="flex items-center justify-between bg-gray-100 px-3 py-1 rounded">
+                      <span>{sponsor?.name || 'Unknown Sponsor'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newValues = value.filter((_, i) => i !== index);
+                          onChange(field.key, newValues);
+                        }}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case 'competition_select':
         return (
           <select
