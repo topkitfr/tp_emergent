@@ -93,7 +93,7 @@ const AppContent = () => {
           const parsedUser = JSON.parse(userData);
           
           // Validate token by making a test API call
-          const response = await fetch(`${API}/api/profile`, {
+          const response = await fetch(`${API}/api/auth/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           
