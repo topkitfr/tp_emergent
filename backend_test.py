@@ -1,30 +1,45 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - ADMIN DATA DELETION ENDPOINTS TESTING
+TopKit Backend Testing Suite - COMPREHENSIVE AUTHENTICATION & SYSTEM TESTING
 
-Testing the newly created admin data deletion endpoints for clearing master kits and personal collections.
+Comprehensive backend testing to verify the authentication fix and overall system functionality:
 
 **Testing Requirements:**
-1. Login with emergency admin account (emergency.admin@topkit.test / EmergencyAdmin2025!)
-2. Test the three new admin endpoints:
-   - `DELETE /api/admin/clear-master-kits` - Should clear all master kits
-   - `DELETE /api/admin/clear-personal-collections` - Should clear all personal collections
-   - `DELETE /api/admin/clear-all-kits` - Should clear both master kits and personal collections
-3. Verify the endpoints return proper counts before and after deletion
-4. Test admin authorization (endpoints should require admin role)
-5. Verify the data is actually cleared from the database by checking counts afterward
+1. **Authentication System Testing:**
+   - Test `/api/auth/me` endpoint with valid JWT token
+   - Test authentication for emergency.admin@topkit.test user
+   - Test token validation and user data retrieval
+   - Test admin endpoints with admin user
+
+2. **Core API Functionality:**
+   - Test main API endpoints are responding correctly
+   - Test database connectivity and basic CRUD operations
+   - Test protected routes require proper authentication
+
+3. **Admin Functionality:**
+   - Test admin dashboard statistics endpoints
+   - Test admin data management endpoints (clear operations)
+   - Test admin role verification
+
+4. **System Health Check:**
+   - Verify all backend services are running properly
+   - Test environment variable configuration
+   - Test MongoDB connectivity
+
+**Authentication Credentials:**
+- Email: emergency.admin@topkit.test
+- Password: EmergencyAdmin2025!
 
 **Expected Results:**
-- All endpoints should return success messages with deletion counts
-- After running the clear endpoints, the respective collections should be empty
-- Only admin users should be able to access these endpoints
-- Error handling should work for non-admin users
+- All authentication endpoints should work correctly
+- Admin user should have proper access to admin functions
+- Core system functionality should be stable
+- Recent authentication fixes should be confirmed working
 
-**Authentication:**
-- Use emergency.admin@topkit.test / EmergencyAdmin2025! (admin role)
-- Test should confirm admin authorization is working correctly
-
-CRITICAL: Focus on testing admin data deletion endpoints with proper authorization and data verification.
+**Priority Focus:**
+- Verify the authentication fix (API endpoint change from /api/profile to /api/auth/me)
+- Confirm admin dashboard access works
+- Validate system stability after authentication fixes
 """
 
 import requests
