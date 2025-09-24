@@ -167,8 +167,8 @@ const AdminDashboard = ({ user, API }) => {
     }
   };
 
-  // Check if user is admin (topkitfr@gmail.com)
-  if (!user || user.email !== 'topkitfr@gmail.com') {
+  // Check if user is admin (topkitfr@gmail.com or emergency.admin@topkit.test or has admin role)
+  if (!user || (user.email !== 'topkitfr@gmail.com' && user.email !== 'emergency.admin@topkit.test' && user.role !== 'admin')) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
