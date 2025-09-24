@@ -194,7 +194,7 @@ const AppContent = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`${API}/api/profile`, {
+      const response = await fetch(`${API}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
