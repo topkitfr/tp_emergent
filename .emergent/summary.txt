@@ -1,35 +1,24 @@
 <analysis>
-The provided trajectory details the iterative bug-fixing and feature enhancement work performed by the AI engineer. Initially, a Master Kit submission error () was debugged, revealing duplicate API endpoints in ; the JSON-expecting endpoint was removed. Subsequently, Master Kit contributions failed to appear in the Moderation Dashboard due to a status mismatch ( vs. ), which was corrected in . A Contribution not found error during moderation approval was resolved by updating  to use the correct  collection. Form inconsistency between Add Personal Details and Edit Kit Details was fixed by unifying them under  in . Lastly, errors with empty form submission,  error messages, and missing data persistence/price calculation for personal details were meticulously addressed through extensive field mapping corrections in  and , including Pydantic validators in  for the  field. All major fixes were validated with backend and/or frontend testing.
+The trajectory details the iterative development and bug-fixing of the TopKit application. Initially, the AI engineer resolved several critical bugs related to Master Kit submission (, incorrect status in Moderation Dashboard) and moderation approval (). Form consistency and data persistence for personal details were major focuses, leading to the unification of Add Personal Details and Edit Kit Details under  and extensive backend model () and API endpoint () adjustments to ensure comprehensive field mapping and price calculation. Subsequently, new admin endpoints for clearing database collections were implemented and the Admin Dashboard UI was updated. The most recent work involved refining the Edit Kit Details display on the frontend based on user feedback, addressing issues like showing both user and TopKit estimates, restoring master kit information, and implementing a photo priority system. Persistent frontend login/authentication issues were noted as blocking comprehensive automated testing.
 </analysis>
 
 <product_requirements>
-The TopKit application serves as a collaborative platform for football jersey collectors, featuring gamification (XP, levels, leaderboard, badges), detailed user profiles with privacy controls, and dynamic content. Key functionalities include showcasing collections, user interaction, and recognition. The homepage displays rare kits, recent master kits, and approved contributions, with all usernames linking to public profiles. Mobile responsiveness and performance, particularly for image handling, are critical non-functional requirements.
+The TopKit application is a collaborative platform for football jersey collectors with gamification (XP, leaderboard, badges), detailed user profiles, and dynamic content. Key features include displaying rare and recent master kits, approved contributions, and clickable usernames. The application must be mobile-responsive and optimized for image handling.
 
-**Implementation Done So Far (incorporating trajectory fixes):**
-*   Gamification, admin account, merged Database and Contributions pages, dynamic homepage sections, privacy setting (), clickable usernames, and authentication protection () are in place.
-*   Profile picture upload/display and deletion functionality is fixed.
-*   Database/Contributions page's grid/list view black screen bug is resolved.
-*   Frontend authentication state persistence issue has been fixed, allowing access to protected pages like .
-*   Master Kit Form is updated with fields: Kit Type, Team/Club, Kit Style, Brand, Sponsors, Season/Year (YYYY/YYYY), and Photos (Front, Back, Other). Master Kit submission now works, creates contributions with status , and appears in the Moderation Dashboard.
-*   Edit Kit Form () is enhanced with sections (Basic Info, Player & Printing, Origin & Authenticity, Physical Condition, Technical Details, User Estimate, Comments). This comprehensive form is now also used for Add Personal Details for new collection items, ensuring consistency. All personal details, including patches, signatures, conditions, and custom estimates, are saved, persisted, and accurately reflected in the Price Breakdown with applied coefficients.
-*   A player type field with coefficients (Showdown Legend 3.00x, Superstar 2.00x, Star 1.00x, Good Player 0.5x, None 0.00x) is added to the player contribution form, influencing price calculation in the 'edit kit' form.
-*   Improve Master Kit Profile form matches Create New Master Kit form structure, and all Master Kits have been deleted from the database.
-*   New Contribution - Brand form fields modified: Official Name to Type: Dropdown - sponsor, Brand Name to Name, removed Alternative Name and Additional Logo. Improve Brand Profile is updated.
-*   Create New Master Kit form's Primary and Secondary Sponsor fields now exclusively display brands of type sponsor from the database, with secondary sponsors supporting multiple selections.
-*   The Master Kit form submission bug (no confirmation, no appearance in Moderation Dashboard) has been fixed, ensuring contribution entries are created upon Master Kit submission, and are visible in the Moderation Dashboard.
-*   The moderation approval process in the Moderation Dashboard for  is now functioning correctly, resolving Contribution not found errors.
+**Implementation Done So Far:**
+Gamification, admin account, merged Database and Contributions pages, dynamic homepage sections, user profile privacy (), clickable usernames, and authentication protection () are operational. Profile picture upload/deletion is fixed, as is the Database/Contributions page's grid/list view black screen bug. Frontend authentication state persistence is resolved, allowing access to protected pages.
+
+Master Kit Form has been updated with detailed fields (Kit Type, Team/Club, Style, Brand, Sponsors, Season/Year, Photos). Master Kit submissions now create  contributions visible in the Moderation Dashboard. The  is now used for both Edit Kit Details and Add Personal Details, ensuring consistency. All personal details, including , , , and , are saved, persisted, and accurately reflected in the Price Breakdown using specific coefficients (e.g., ). Admin functionality to erase all of the master kit and personal kit in collection was added, allowing clearing of  and  via new backend DELETE endpoints and an updated  UI. Latest refinements include displaying User estimate and Topkit estimate, removing Value Change, restoring master jersey team/brand/type, and prioritizing personal photos over master kit photos on collection item sheets.
 </product_requirements>
 
 <key_technical_concepts>
 -   **React/FastAPI/MongoDB Stack**: Core application architecture for frontend, backend, and database.
--   **Pydantic Models**: Backend data validation, serialization, and deserialization, including custom validators for data transformation.
+-   **Pydantic Models**: Data validation and serialization, including custom validators for data transformation.
 -   **Frontend State Management**: React hooks (, , ) for UI and routing.
 -   **Authentication/Authorization**: Token-based authentication,  for secured routes.
 -   **RESTful APIs**: Backend endpoints for CRUD operations and specialized functionalities.
--   **Responsive Design**: CSS for mobile optimization.
--   **Dynamic Forms**:  and  for configurable forms, now  is a central component.
+-   **Dynamic Forms**:  as a central, configurable component for various kit-related data.
 -   **Enum & Coefficient Logic**: Used for player types, sponsor types, and kit conditions for price estimation.
--   **FormData Handling**: For file uploads in API submissions.
 </key_technical_concepts>
 
 <code_architecture>
@@ -39,102 +28,48 @@ The application uses a React frontend, FastAPI backend, and MongoDB database. Al
 
 -   ****:
     -   Importance: Main FastAPI server, API routes, and business logic.
-    -   Summary of changes:
-        *   Removed a duplicate  (lines 868-965) to resolve  when submitting FormData.
-        *   Modified the remaining  endpoint to create contributions with  (previously pending) to match the Moderation Dashboard's filtering.
-        *   Updated the moderation endpoint () to query and update  instead of .
-        *   Fixed field mapping in  to correctly convert  data to  model fields (e.g.,  to ,  to , handling  conversion).
-        *   Added , ,  (fixed to create contributions), , and .
-        *   Fixed analytics data structure ().
-        *   Updated  to handle  and new brand fields (e.g., ).
-        *   Added  helper.
+    -   Summary of changes: Fixed Master Kit submission (, ), updated moderation to , fixed  field mapping (, , ). Added , , , . Added admin endpoints: , , . Updated  to support all fields from . Enhanced  and detailed price breakdown to use new coefficient logic and enhanced fields.
 -   ****:
     -   Importance: Defines Pydantic models for data validation and database interaction.
-    -   Summary of changes:
-        *   Added a  to  to convert array  to a comma-separated string or  for backend validation.
-        *   Updated  and  models with new fields for Master Kit and Edit Kit forms (e.g., , , , , , , , , , , , , , , , , , , , , , ).
-        *   Added  enum and  field to  model.
-        *   Added  enum (/) and  field to  model.
-        *   Fixed  to  in Master Kit models.
--   ****:
-    -   Importance: Unified page for database browsing and contributions.
-    -   Summary of changes: Fixed the infinite recursion bug that caused a black screen in 'list' view.
--   ****:
-    -   Importance: Displays the user's own profile and settings.
-    -   Summary of changes: Corrected profile picture URL paths.
+    -   Summary of changes: Added  to . Updated  and  with new fields (kit_type, team, kit_style, brand, sponsors, season_year, gender, size, associated_player, origin_type, competition, authenticity_proof, match_date, opponent, general_condition, patches, signature, signature_certificate, user_estimate, comments, player_influence_level). Added  enum and  field to  model,  enum and  field to  model. Fixed . Crucially,  was updated to include all fields from  for comprehensive collection item editing.
 -   ****:
     -   Importance: Displays the user's collection and allows editing. Also displays price breakdown.
-    -   Summary of changes: Replaced existing edit modal with .
+    -   Summary of changes: Replaced existing edit modal with . Updated  and  to correctly map and send all  fields. Modified the display section to show User Estimate and TopKit Estimate and removed Value Change. Restored master jersey details (team name/brand/type) and implemented a photo priority system (personal photos take precedence). Updated collection statistics to use .
 -   ****:
     -   Importance: Page for adding Master Kits to personal collection, previously used .
-    -   Summary of changes:
-        *   Replaced  with  to ensure form consistency.
-        *   Added state for form data and handlers (, ) to manage 's comprehensive fields.
-        *   Updated  to correctly map  fields to  API expectations, including enum value conversions (e.g., very_good to very_good_condition), patches array to string conversion, and proper error handling.
-        *   Passed a dynamic  prop to .
+    -   Summary of changes: Replaced  with . Updated  for comprehensive field mapping, enum conversions, patches array to string conversion, and error handling.
 -   ****:
-    -   Importance: Displays contributions awaiting moderation.
-    -   Summary of changes: Modified the fetch logic to filter contributions by  (previously implicitly or incorrectly filtering).
--   ****:
-    -   Importance: Component for creating new Master Kits.
-    -   Summary of changes:
-        *   Updated to reflect new form specifications including new fields, photo uploads (Front, Back, Other).
-        *   Modified to load sponsors separately and use the sponsors array for primary/secondary sponsor dropdowns.
-        *   Added success message feedback on submission.
+    -   Importance: The actual admin dashboard component.
+    -   Summary of changes: Modified to include a Data Management module with buttons for , , and . Implemented warning sections, multiple confirmation dialogs, and loading states for these destructive operations. Added  import.
 -   ****:
     -   Importance: Comprehensive component for editing kit details, now also used for adding new items to collection.
-    -   Summary of changes:
-        *   Created with detailed sections and validation logic, including making photos in D. Physical Condition optional, and displaying player type coefficient.
-        *   Modified to accept a  prop to dynamically set the form header.
--   ****: (DEPRECATED/REPLACED)
-    -   Importance: Previously used for adding personal details to a collected Master Kit.
-    -   Summary of changes: No longer used, replaced by  in .
--   ****:
-    -   Importance: Handles user authentication (login/signup).
-    -   Summary of changes: Fixed frontend authentication state persistence issue, added debugging for state updates and form submission.
--   ****:
-    -   Importance: Defines the structure and properties of various form fields.
-    -   Summary of changes:
-        *   Added  field definition with specific options and coefficients.
-        *   Updated Master Kit fields to match  structure.
-        *   Modified Brand fields to include  dropdown (/).
-        *   Added  and  field types for filtering.
--   ****:
-    -   Importance: Dynamically renders form fields based on .
-    -   Summary of changes:
-        *   Updated to handle  select field with complex options (objects).
-        *   Added cases for  and  to correctly render filtered sponsor dropdowns.
--   ****:
-    -   Importance: Handles profile picture upload functionality.
-    -   Summary of changes: Adjusted profile picture URL display logic.
+    -   Summary of changes: Created with detailed sections and validation logic, including making photos in D. Physical Condition optional, and displaying player type coefficient. Accepts a  prop. Ensures  is used correctly.
 </code_architecture>
 
 <pending_tasks>
-- Full manual and automated frontend testing of the integrated  (though authentication is fixed, a comprehensive test was only partially confirmed).
-- User review and feedback on pricing coefficients and overall price estimation system.
+- Address the persistent frontend login/authentication issue that prevents access to the admin panel and comprehensive frontend automated testing.
+- Full manual and automated frontend testing of the integrated  and all its functionalities, once the authentication issue is resolved.
+- User review and feedback on pricing coefficients and the overall price estimation system.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing a critical bug reported by the user: after submitting personal details for a Master Kit added to their collection, the information was not persisting or displaying on the jersey's detail sheet, and the Price Breakdown section remained empty without applying coefficients.
+Immediately before this summary request, the AI engineer was addressing user feedback regarding the Edit Kit Details functionality displayed on the jersey's detail sheet after it has been added to a user's collection. The user reported:
 
-The investigation revealed that:
-1.  **Data Persistence Issue**: While some basic fields were saving, many of the detailed personal fields from the  were not being stored in the MongoDB  database, appearing as .
-2.  **Field Mapping Mismatch**: The  function in  had incorrect field mappings and data conversions when sending data to the backend's  endpoint. This included mismatches for fields like , , , and .
-3.  **Backend Model Inconsistencies**: There were underlying Pydantic model field mismatches between  and  in , which caused data loss during conversion in the backend ().
-4.  **Price Calculation/Display**: The frontend's price estimation logic in  relied on properly saved and accessible personal details, which were missing due to the persistence issues.
+1.  Purchase Price should be replaced by User estimate from the form.
+2.  The Value Change section should be removed.
+3.  Information from the master jersey (team name, brand, type) was missing on the personal kit sheet.
+4.  The photo displayed for a personal kit was still the master jersey photo, not the personal photo uploaded via the Edit Kit Details form.
 
-The AI engineer implemented the following fixes:
-*   **Frontend ():**
-    *   The  function was extensively refactored to ensure correct mapping of *all* fields from  to the backend's  model, including proper conversion of enum values (e.g., very_good to very_good_condition) and converting the  array to a comma-separated string.
-    *   Minor issues like duplicate function declarations were resolved.
-*   **Backend ():**
-    *   The  endpoint was modified to accurately map and convert incoming  data to the  model, specifically addressing  (string to list conversion),  to , and  to .
-*   **Backend ():**
-    *   A custom Pydantic  was added to  to robustly handle the conversion of  from various input types (list, empty string, ) to a consistent string format or  before further validation, resolving the body.patches: Input should be a valid string error.
+The AI engineer implemented fixes primarily within  and confirmed consistency with :
 
-These changes were thoroughly tested using backend testing agents, showing a 100% success rate, confirming that personal details are now correctly saved, persisted, and the price breakdown with coefficients is accurately calculated and displayed.
+*   **Pricing Display**: Purchase Price was replaced with User Estimate, and the Value Change section was removed. Collection statistics were updated to reflect User Estimates and TopKit Estimates for the total collection value.
+*   **Master Kit Information Restoration**: The display was enhanced to show critical master kit details such as Club (team name), Season, Type (kit style), Brand, Model, Size, Condition, Origin, Signature, Patches, and Comments alongside personal details for the collected item.
+*   **Photo Priority System**: A new logic was implemented to prioritize displaying photos from the personal Edit Kit Details form () over master kit photos. If no personal photos exist, it falls back to master kit photos, and then to a default kit icon.
+*   **Field Consistency**: Ensured that the  correctly uses  and that all fields from sections A-G are properly mapped and saved via the updated  model and backend API.
+
+Backend testing confirmed a 95% success rate for these changes, indicating the data is correctly processed and stored. However, frontend validation via automated testing was blocked due to an ongoing login/authentication issue, preventing full end-to-end verification of the UI changes.
 </current_work>
 
 <optional_next_step>
-Await user confirmation that the personal details persistence and price calculation are working as expected on the frontend.
+Investigate and resolve the frontend login/authentication issue that is preventing access to the admin panel and comprehensive frontend testing.
 </optional_next_step>
