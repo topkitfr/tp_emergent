@@ -568,6 +568,10 @@ class TopKitSeasonPlayerDataTesting:
                     price_data = price_response.json()
                     coefficients = price_data.get('coefficients', [])
                     
+                    # Check for new response format with calculation_details
+                    if 'calculation_details' in price_data:
+                        coefficients = price_data['calculation_details'].get('coefficients_applied', [])
+                    
                     print(f"         💰 Price calculation uses {len(coefficients)} coefficients")
                     
                     # Check if field data correlates with coefficients
