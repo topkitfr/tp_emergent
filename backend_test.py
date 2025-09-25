@@ -406,6 +406,11 @@ class TopKitSeasonPlayerDataTesting:
                     coefficients = price_data.get('coefficients', [])
                     base_price = price_data.get('base_price', 0)
                     
+                    # Check for new response format with calculation_details
+                    if 'calculation_details' in price_data:
+                        coefficients = price_data['calculation_details'].get('coefficients_applied', [])
+                        base_price = price_data['calculation_details'].get('base_price', base_price)
+                    
                     print(f"         ✅ Price estimation successful:")
                     print(f"            Base Price: €{base_price}")
                     print(f"            Estimated Price: €{estimated_price}")
