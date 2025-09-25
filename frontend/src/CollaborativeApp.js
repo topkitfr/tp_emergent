@@ -334,6 +334,11 @@ const AppContent = () => {
               <MyCollectionPage {...commonProps} />
             </ProtectedRoute>
           } />
+          <Route path="/my-collection/:itemId" element={
+            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+              <CollectionItemDetailPage {...commonProps} />
+            </ProtectedRoute>
+          } />
           <Route path="/contributions-v2" element={
             <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
               <ContributionsV2Page {...commonProps} />
