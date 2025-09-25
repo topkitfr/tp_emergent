@@ -2122,4 +2122,22 @@ def main():
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
-    main()
+    tester = TopKitComprehensiveBackendTesting()
+    
+    print("🎯 TOPKIT MODERATION AND DISPLAY ISSUES FIX VERIFICATION")
+    print("Testing the fixes for master kit approval filtering and image serving endpoint")
+    print("=" * 80)
+    
+    # Run the moderation and display issues fix verification
+    test_results = tester.run_moderation_display_issues_fix_verification()
+    
+    # Print comprehensive summary
+    tester.print_moderation_display_issues_summary()
+    
+    # Exit with appropriate code
+    if all(test_results):
+        print("\n🎉 ALL TESTS PASSED - MODERATION AND DISPLAY ISSUES FIXES VERIFIED")
+        sys.exit(0)
+    else:
+        print("\n❌ SOME TESTS FAILED - MODERATION AND DISPLAY ISSUES NEED ATTENTION")
+        sys.exit(1)
