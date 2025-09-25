@@ -957,10 +957,21 @@ async def get_master_kits(
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0)
 ):
-    """Get Master Kits with optional filtering - backward compatible"""
+    """Get Master Kits with optional filtering - only approved kits"""
     try:
+        # First get approved contribution IDs for master kits
+        approved_contributions = await db.contributions_v2.find({
+            "entity_type": "master_kit",
+            "status": "approved"
+        }).to_list(length=None)
+        
+        approved_master_kit_ids = [contrib["entity_id"] for contrib in approved_contributions if "entity_id" in contrib]
+        
         # Build filter query
-        filter_query = {}
+        filter_query = {
+            "id": {"$in": approved_master_kit_ids}  # Only show approved master kits
+        }
+        
         if club:
             filter_query["club"] = {"$regex": club, "$options": "i"}
         if season:
