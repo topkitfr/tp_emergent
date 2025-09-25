@@ -1334,6 +1334,43 @@ async def get_my_collection(
         logger.error(f"Error fetching collection: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/my-collection/{collection_id}", response_model=MyCollectionResponse)
+async def get_collection_item(
+    collection_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get individual collection item details"""
+    try:
+        # Find collection item
+        collection_item = await db.my_collection.find_one({
+            "id": collection_id,
+            "user_id": current_user["id"]
+        })
+        if not collection_item:
+            raise HTTPException(status_code=404, detail="Collection item not found")
+        
+        # Get Master Kit info
+        master_kit = await db.master_kits.find_one({"id": collection_item["master_kit_id"]})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master Kit not found")
+        
+        # Add default collection_type for backward compatibility
+        if "collection_type" not in collection_item:
+            collection_item["collection_type"] = "owned"
+            
+        # Convert patches list back to string for response model compatibility
+        if "patches" in collection_item and isinstance(collection_item["patches"], list):
+            collection_item["patches"] = ", ".join(collection_item["patches"]) if collection_item["patches"] else None
+            
+        collection_item["master_kit"] = MasterKitResponse(**master_kit)
+        return MyCollectionResponse(**collection_item)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching collection item: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.put("/api/my-collection/{collection_id}", response_model=MyCollectionResponse)
 async def update_collection_item(
     collection_id: str,
