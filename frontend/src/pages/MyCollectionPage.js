@@ -661,7 +661,9 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
               return (
                 <div
                   key={item.id}
-                  className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/my-collection/${item.id}`)}
+                  title="Click to view detailed page"
                 >
                   {/* Kit Image - Prioritize personal photos over master kit photos */}
                   <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
