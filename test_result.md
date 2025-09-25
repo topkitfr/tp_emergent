@@ -65,6 +65,21 @@ frontend:
         - comment: "🎉 FRONTEND NULL REFERENCE FIXES COMPLETE - 100% SUCCESS RATE! Fixed CollaborativeHomepage.js null reference errors for team.name property, added proper null checks and fallback to 'Unknown Team', eliminates JavaScript crashes when team.name is null, all instances of team.name access now safely handled with proper error handling and graceful degradation."
 
 backend:
+  - task: "Season and Player Data in Price Calculations Investigation"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 SEASON AND PLAYER DATA IN PRICE CALCULATIONS INVESTIGATION REQUESTED - User requested investigation of missing season and player data affecting price calculations: 1. Season Information Investigation (check if season data from master kits is being used in price calculations), 2. Player Information Investigation (check how player information from 'B. Player & Printing' field is being processed), 3. Price Calculation Logic Review (test calculate_estimated_price function logic), 4. Field Mapping Verification (check if associated_player_id from EnhancedEditKitForm is properly mapped). Authentication: emergency.admin@topkit.test / EmergencyAdmin2025!. Expected Results: Season information should affect price calculations with age coefficients, Player information should apply proper player type coefficients, Price breakdown should show all applicable coefficients including season and player."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL SEASON COEFFICIENT BUG IDENTIFIED - 80% SUCCESS RATE! Comprehensive testing reveals season coefficient logic issue preventing age-based pricing: ✅ AUTHENTICATION (100%): emergency.admin@topkit.test / EmergencyAdmin2025! authentication working perfectly with admin role ✅ PLAYER INFORMATION (100%): Player data is being used in price calculations - Flocking coefficients working correctly (name/number printing → +0.2 coefficient), Player type coefficients available (none: 0.0x, good_player: 0.5x, star: 1.0x, superstar: 2.0x, showdown_legend: 3.0x) ✅ COMPREHENSIVE LOGIC (100%): Price calculation logic working with multiple coefficient types - 4 coefficients applied successfully (Full flocking +0.2, Very good condition +0.15, Signed by Lionel Messi +2.0, Match Worn condition +1.5), Base price €90.0 → Estimated price €436.5 ✅ FIELD MAPPING (100%): Field mapping between frontend and backend working correctly - 3 field-coefficient correlations found (Name/Number printing → Flocking coefficient, Signature → Signature coefficient, Condition → Condition coefficient) ❌ CRITICAL BUG - SEASON INFORMATION (0%): Season data NOT being used in price calculations - Root cause identified: Season coefficient logic in server.py lines 3532-3541 and 3735-3743 expects season format with '-' (e.g., '2015-2016') but database contains seasons with '/' format (e.g., '2025/2026'), Age coefficient calculation completely bypassed due to format mismatch, No age coefficients applied despite valid season data available 🎯 ROOT CAUSE IDENTIFIED: Season format mismatch in calculate_estimated_price function - Code checks 'if season and '-' in season:' but database has '2025/2026' format, Simple fix needed: update season parsing to handle both '-' and '/' formats. CONCLUSION: Player information and most price calculation logic working perfectly. Season coefficient bug prevents age-based pricing - requires format parsing fix in server.py to handle '/' season format."
+
   - task: "Moderation Dashboard Pending Contributions Investigation"
     implemented: true
     working: true
