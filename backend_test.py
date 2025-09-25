@@ -1,35 +1,39 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MODERATION AND DISPLAY ISSUES FIX VERIFICATION
+TopKit Backend Testing Suite - SEASON AND PLAYER DATA IN PRICE CALCULATIONS
 
-Test the fixes for the three moderation and display issues:
+**ISSUE 4: Missing Season and Player Data in Price Calculations**
 
-**ISSUE 2 FIX VERIFICATION - Master Kit Approval Filtering:**
-- Test GET /api/master-kits endpoint - should now only return approved master kits
-- Verify that TK-MASTER-658543 (pending_review status) no longer appears in Kit Area
-- Test that only approved master kits show in the public master-kits list
-- Confirm the filtering logic works correctly
+1. **Season Information Investigation:**
+   - Check if season data from master kits is being used in price calculations
+   - Test GET /api/my-collection/{collection_id}/price-estimation with season information
+   - Verify if season coefficient is being applied to pricing
 
-**ISSUE 3 FIX VERIFICATION - Image Serving Endpoint:**
-- Test /api/uploads/ endpoint with master kit image paths
-- Try accessing specific master kit images (front_photo, back_photo)
-- Verify that Status 500 errors are resolved
-- Test image serving for TK-MASTER-658543 images
+2. **Player Information Investigation:**
+   - Check how player information from "B. Player & Printing" field is being processed
+   - Test if associated_player_id is being used in price calculations 
+   - Verify player type coefficients (Showdown Legend: 3.00x, Superstar: 2.00x, Star: 1.00x, etc.)
+
+3. **Price Calculation Logic Review:**
+   - Test a collection item with both season and player information
+   - Check calculate_estimated_price function logic for season and player coefficients
+   - Verify all coefficient types are being applied correctly
+
+4. **Field Mapping Verification:**
+   - Check if associated_player_id from EnhancedEditKitForm is properly mapped
+   - Verify season information flows from master kit to price calculation
+   - Test with emergency admin collection items
 
 **Authentication Credentials:**
 - Email: emergency.admin@topkit.test
 - Password: EmergencyAdmin2025!
 
 **Expected Results:**
-- Master kits endpoint should filter out unapproved kits
-- Image serving should work without 500 errors  
-- Only approved master kits should be accessible via public API
-- Uploaded master kit images should be viewable
+- Season information should affect price calculations with age coefficients
+- Player information should apply proper player type coefficients 
+- Price breakdown should show all applicable coefficients including season and player
 
-**Priority Focus:**
-- Confirm master kit approval workflow now working
-- Verify image serving infrastructure repaired
-- Test that unapproved content no longer appears in public areas
+This will identify what's preventing season and player data from being used in pricing calculations.
 """
 
 import requests
