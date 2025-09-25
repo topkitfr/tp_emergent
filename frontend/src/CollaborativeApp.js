@@ -8,6 +8,7 @@ import CollaborativeExplorePage from './pages/CollaborativeExplorePage';
 import CataloguePage from './pages/CataloguePage';
 import DatabaseContributionsPage from './pages/DatabaseContributionsPage';
 import MyCollectionPage from './pages/MyCollectionPage';
+import CollectionItemDetailPage from './pages/CollectionItemDetailPage';
 import CollaborativeTeamsPage from './pages/CollaborativeTeamsPage';
 import CollaborativeBrandsPage from './pages/CollaborativeBrandsPage';
 import CollaborativePlayersPage from './pages/CollaborativePlayersPage';
