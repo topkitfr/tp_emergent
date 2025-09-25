@@ -1134,10 +1134,10 @@ class TopKitComprehensiveBackendTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main test execution - Comprehensive Backend Testing"""
+    """Main test execution - Moderation Dashboard Testing"""
     tester = TopKitComprehensiveBackendTesting()
-    test_results = tester.run_comprehensive_backend_tests()
-    tester.print_comprehensive_summary()
+    test_results = tester.run_moderation_dashboard_tests()
+    tester.print_moderation_dashboard_summary()
     
     # Determine overall success
     success = any(test_results)
