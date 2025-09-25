@@ -806,10 +806,26 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
 
                   {/* Action Buttons */}
                   <div className="flex space-x-2">
+                    {/* View Details button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/my-collection/${item.id}`);
+                      }}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+                      title="View detailed page"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View</span>
+                    </button>
+                    
                     {/* Edit button ONLY for owned items */}
                     {item.collection_type === 'owned' && (
                       <button
-                        onClick={() => handleEditItem(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditItem(item);
+                        }}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
                         title="Edit personal details"
                       >
@@ -819,12 +835,15 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                     )}
                     
                     <button
-                      onClick={() => handleDeleteItem(item)}
-                      className={`${item.collection_type === 'owned' ? 'flex-1' : 'w-full'} bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteItem(item);
+                      }}
+                      className={`${item.collection_type === 'owned' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1`}
                       title={`Remove from ${item.collection_type === 'owned' ? 'collection' : 'want list'}`}
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>{item.collection_type === 'owned' ? 'Remove' : 'Remove'}</span>
+                      <span>Remove</span>
                     </button>
                   </div>
                 </div>
