@@ -209,12 +209,9 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Enhanced Edit Kit Details Functionality Testing - COMPLETED"
-    - "Master Kit Pending_Review Status Testing - COMPLETED"
-    - "Sponsor Filtering Functionality Testing - COMPLETED"
-    - "Enhanced Edit Kit Form Testing - COMPLETED"
-    - "Add Personal Details Form Fix Testing - COMPLETED"
-    - "Patches Field Validation Fix Testing - COMPLETED"
+    - "Three Moderation and Display Issues Investigation - COMPLETED"
+    - "Master Kit Approval Workflow Fix - CRITICAL"
+    - "Image Serving Endpoint Fix - CRITICAL"
   stuck_tasks: 
     - "Master Kit Approval Workflow Issue - Unapproved kits showing in Kit Area"
     - "Image Serving Issue - Master kit images not accessible via /api/uploads/"
