@@ -965,7 +965,7 @@ async def get_master_kits(
             "status": "approved"
         }).to_list(length=None)
         
-        approved_master_kit_ids = [contrib["entity_id"] for contrib in approved_contributions if "entity_id" in contrib]
+        approved_master_kit_ids = [contrib.get("master_kit_id") or contrib.get("entity_id") for contrib in approved_contributions if contrib.get("master_kit_id") or contrib.get("entity_id")]
         
         # Build filter query
         filter_query = {
