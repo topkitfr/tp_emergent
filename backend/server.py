@@ -3734,9 +3734,11 @@ async def get_collection_item_price_estimation(
         
         # Age coefficient
         season = master_kit.get('season', '')
-        if season and '-' in season:
+        if season and ('-' in season or '/' in season):
             try:
-                start_year = int(season.split('-')[0])
+                # Extract start year from season (e.g., "2015-2016" or "2015/2016" -> 2015)
+                separator = '-' if '-' in season else '/'
+                start_year = int(season.split(separator)[0])
                 age_years = 2025 - start_year
                 age_coefficient = min(age_years * 0.03, 0.6)
                 coefficients.append({"factor": f"Age ({age_years} years)", "value": f"+{age_coefficient:.2f}"})
