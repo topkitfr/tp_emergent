@@ -1719,32 +1719,8 @@ async def ensure_database_indexes():
 asyncio.create_task(ensure_database_indexes())
 
 # ================================
-# ORIGINAL FILE SERVING (keeping for backward compatibility)
+# ORIGINAL FILE SERVING REMOVED - Using optimized version above
 # ================================
-
-@app.get("/api/uploads/{file_path:path}")
-async def serve_file(file_path: str):
-    """Serve uploaded files"""
-    try:
-        full_path = UPLOAD_DIR / file_path
-        if not full_path.exists():
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        # Determine content type
-        content_type, _ = mimetypes.guess_type(str(full_path))
-        if not content_type:
-            content_type = "application/octet-stream"
-        
-        return FileResponse(
-            path=str(full_path),
-            media_type=content_type
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error serving file {file_path}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/legacy-image/{image_id}")
 async def serve_legacy_image(image_id: str):
