@@ -3529,10 +3529,11 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
         
         # Age calculation from season
         season = master_kit.get('season', '')
-        if season and '-' in season:
+        if season and ('-' in season or '/' in season):
             try:
-                # Extract start year from season (e.g., "2015-2016" -> 2015)
-                start_year = int(season.split('-')[0])
+                # Extract start year from season (e.g., "2015-2016" or "2015/2016" -> 2015)
+                separator = '-' if '-' in season else '/'
+                start_year = int(season.split(separator)[0])
                 current_year = 2025  # Current year
                 age_years = current_year - start_year
                 age_coefficient = min(age_years * 0.03, 0.6)  # Max +0.6
