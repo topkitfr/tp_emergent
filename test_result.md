@@ -215,7 +215,9 @@ test_plan:
     - "Enhanced Edit Kit Form Testing - COMPLETED"
     - "Add Personal Details Form Fix Testing - COMPLETED"
     - "Patches Field Validation Fix Testing - COMPLETED"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Master Kit Approval Workflow Issue - Unapproved kits showing in Kit Area"
+    - "Image Serving Issue - Master kit images not accessible via /api/uploads/"
   test_all: false
   test_priority: "high_first"
 
