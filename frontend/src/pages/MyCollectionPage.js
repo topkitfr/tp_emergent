@@ -11,6 +11,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [priceEstimations, setPriceEstimations] = useState({}); // Store price estimations
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
