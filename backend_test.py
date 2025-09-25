@@ -1,39 +1,41 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - SEASON AND PLAYER DATA IN PRICE CALCULATIONS
+TopKit Backend Testing Suite - COMPREHENSIVE FOUR FIXES VERIFICATION
 
-**ISSUE 4: Missing Season and Player Data in Price Calculations**
+**ISSUE 1: Season Format Bug Fixed - VERIFICATION**
+- Test price calculation endpoints with season format "2025/2026" (slash format)
+- Verify age coefficients are now being applied to price calculations
+- Test both calculate_estimated_price functions for season coefficient inclusion
+- Check price breakdown shows age coefficient details
 
-1. **Season Information Investigation:**
-   - Check if season data from master kits is being used in price calculations
-   - Test GET /api/my-collection/{collection_id}/price-estimation with season information
-   - Verify if season coefficient is being applied to pricing
+**ISSUE 2: Form Naming Consistency - VERIFICATION** 
+- Verify KitAreaPage.js EnhancedEditKitForm now shows "Edit Kit Details" instead of "Add Personal Details"
+- Confirm both add-to-collection and edit-collection forms have consistent naming
 
-2. **Player Information Investigation:**
-   - Check how player information from "B. Player & Printing" field is being processed
-   - Test if associated_player_id is being used in price calculations 
-   - Verify player type coefficients (Showdown Legend: 3.00x, Superstar: 2.00x, Star: 1.00x, etc.)
+**ISSUE 3: API Endpoints for New Collection Item Detail Page**
+- Test GET /api/my-collection/{item_id} endpoint for individual collection item details
+- Verify all collection item fields are returned for the detail page
+- Test collection item personal photos accessibility
+- Ensure proper authentication for collection item access
 
-3. **Price Calculation Logic Review:**
-   - Test a collection item with both season and player information
-   - Check calculate_estimated_price function logic for season and player coefficients
-   - Verify all coefficient types are being applied correctly
-
-4. **Field Mapping Verification:**
-   - Check if associated_player_id from EnhancedEditKitForm is properly mapped
-   - Verify season information flows from master kit to price calculation
-   - Test with emergency admin collection items
+**ISSUE 4: Backend Endpoints Functioning After All Changes**
+- Test master kit approval filtering still working after season format changes
+- Verify image serving endpoints still functional
+- Test moderation dashboard APIs still operational
+- Confirm all backend changes haven't broken existing functionality
 
 **Authentication Credentials:**
 - Email: emergency.admin@topkit.test
 - Password: EmergencyAdmin2025!
 
 **Expected Results:**
-- Season information should affect price calculations with age coefficients
-- Player information should apply proper player type coefficients 
-- Price breakdown should show all applicable coefficients including season and player
+- Season coefficients should now appear in price calculations with "2025/2026" format
+- All API endpoints should remain functional after the fixes
+- Collection item detail endpoint should return comprehensive data
+- System should be ready for frontend testing of the new collection detail page
 
-This will identify what's preventing season and player data from being used in pricing calculations.
+**Priority Focus:**
+Test that all four major fixes work correctly and haven't broken existing functionality.
 """
 
 import requests
