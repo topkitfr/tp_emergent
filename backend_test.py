@@ -1,41 +1,35 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MODERATION DASHBOARD PENDING CONTRIBUTIONS TESTING
+TopKit Backend Testing Suite - MODERATION AND DISPLAY ISSUES FIX VERIFICATION
 
-Investigate and test the Moderation Dashboard pending contributions issue:
+Test the fixes for the three moderation and display issues:
 
-**Testing Requirements:**
-1. **Check Current Contributions Status:**
-   - Query the contributions_v2 collection to see what contributions exist
-   - Check the status of existing contributions (pending_review, approved, rejected)
-   - Verify if there are any contributions that should be showing in pending review
+**ISSUE 2 FIX VERIFICATION - Master Kit Approval Filtering:**
+- Test GET /api/master-kits endpoint - should now only return approved master kits
+- Verify that TK-MASTER-658543 (pending_review status) no longer appears in Kit Area
+- Test that only approved master kits show in the public master-kits list
+- Confirm the filtering logic works correctly
 
-2. **Test Moderation API Endpoints:**
-   - Test GET /api/contributions-v2/ endpoint to get all contributions
-   - Test GET /api/contributions-v2/?status=pending_review to get pending contributions  
-   - Test the moderation dashboard's API calls
-
-3. **Create Test Contributions if Needed:**
-   - Create a test master kit contribution that should appear in pending review
-   - Verify the contribution has the correct status (pending_review)
-   - Test that it shows up in the moderation dashboard API calls
-
-4. **Verify Moderation Workflow:**
-   - Test that new master kit submissions create contributions with pending_review status
-   - Test moderation approve/reject functionality
-   - Ensure contributions move through the proper states
+**ISSUE 3 FIX VERIFICATION - Image Serving Endpoint:**
+- Test /api/uploads/ endpoint with master kit image paths
+- Try accessing specific master kit images (front_photo, back_photo)
+- Verify that Status 500 errors are resolved
+- Test image serving for TK-MASTER-658543 images
 
 **Authentication Credentials:**
 - Email: emergency.admin@topkit.test
 - Password: EmergencyAdmin2025!
 
 **Expected Results:**
-- Should find contributions in the database or create test ones
-- Moderation API endpoints should return pending contributions for the dashboard
-- New contributions should appear with pending_review status for admin review
+- Master kits endpoint should filter out unapproved kits
+- Image serving should work without 500 errors  
+- Only approved master kits should be accessible via public API
+- Uploaded master kit images should be viewable
 
-**Focus:**
-The user reports they don't see pending contributions in the Moderation Dashboard. Need to verify if this is because there are no pending contributions, or if there's an API/display issue.
+**Priority Focus:**
+- Confirm master kit approval workflow now working
+- Verify image serving infrastructure repaired
+- Test that unapproved content no longer appears in public areas
 """
 
 import requests
