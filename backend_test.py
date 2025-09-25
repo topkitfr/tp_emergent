@@ -1,45 +1,41 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - COMPREHENSIVE AUTHENTICATION & SYSTEM TESTING
+TopKit Backend Testing Suite - MODERATION DASHBOARD PENDING CONTRIBUTIONS TESTING
 
-Comprehensive backend testing to verify the authentication fix and overall system functionality:
+Investigate and test the Moderation Dashboard pending contributions issue:
 
 **Testing Requirements:**
-1. **Authentication System Testing:**
-   - Test `/api/auth/me` endpoint with valid JWT token
-   - Test authentication for emergency.admin@topkit.test user
-   - Test token validation and user data retrieval
-   - Test admin endpoints with admin user
+1. **Check Current Contributions Status:**
+   - Query the contributions_v2 collection to see what contributions exist
+   - Check the status of existing contributions (pending_review, approved, rejected)
+   - Verify if there are any contributions that should be showing in pending review
 
-2. **Core API Functionality:**
-   - Test main API endpoints are responding correctly
-   - Test database connectivity and basic CRUD operations
-   - Test protected routes require proper authentication
+2. **Test Moderation API Endpoints:**
+   - Test GET /api/contributions-v2/ endpoint to get all contributions
+   - Test GET /api/contributions-v2/?status=pending_review to get pending contributions  
+   - Test the moderation dashboard's API calls
 
-3. **Admin Functionality:**
-   - Test admin dashboard statistics endpoints
-   - Test admin data management endpoints (clear operations)
-   - Test admin role verification
+3. **Create Test Contributions if Needed:**
+   - Create a test master kit contribution that should appear in pending review
+   - Verify the contribution has the correct status (pending_review)
+   - Test that it shows up in the moderation dashboard API calls
 
-4. **System Health Check:**
-   - Verify all backend services are running properly
-   - Test environment variable configuration
-   - Test MongoDB connectivity
+4. **Verify Moderation Workflow:**
+   - Test that new master kit submissions create contributions with pending_review status
+   - Test moderation approve/reject functionality
+   - Ensure contributions move through the proper states
 
 **Authentication Credentials:**
 - Email: emergency.admin@topkit.test
 - Password: EmergencyAdmin2025!
 
 **Expected Results:**
-- All authentication endpoints should work correctly
-- Admin user should have proper access to admin functions
-- Core system functionality should be stable
-- Recent authentication fixes should be confirmed working
+- Should find contributions in the database or create test ones
+- Moderation API endpoints should return pending contributions for the dashboard
+- New contributions should appear with pending_review status for admin review
 
-**Priority Focus:**
-- Verify the authentication fix (API endpoint change from /api/profile to /api/auth/me)
-- Confirm admin dashboard access works
-- Validate system stability after authentication fixes
+**Focus:**
+The user reports they don't see pending contributions in the Moderation Dashboard. Need to verify if this is because there are no pending contributions, or if there's an API/display issue.
 """
 
 import requests
