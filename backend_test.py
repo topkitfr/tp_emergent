@@ -413,7 +413,7 @@ class TopKitAuthenticationSystemTesting:
             self.log_test("User Login", False, f"Exception: {str(e)}")
             return False
     
-    def test_issue_4_backend_endpoints_functioning(self):
+    def test_authentication_verification(self):
         """ISSUE 4: Test backend endpoints still functioning after all changes"""
         try:
             print(f"\n🔧 ISSUE 4: TESTING BACKEND ENDPOINTS FUNCTIONING")
