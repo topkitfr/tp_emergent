@@ -290,7 +290,7 @@ const ModerationDashboard = ({ user, API }) => {
   const ContributionCard = ({ contribution, showActions = true, actionType = 'pending' }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow relative">
       {/* Pending Approval Sticker */}
-      {contribution.status === 'pending_review' && (
+      {(contribution.status === 'pending_review' || contribution.status === 'pending') && (
         <div className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md z-10">
           PENDING APPROVAL
         </div>
