@@ -1353,7 +1353,11 @@ async def add_to_my_collection(
             
             # Return response with embedded Master Kit info
             collection_item_dict = collection_item.dict()
-            collection_item_dict["master_kit"] = MasterKitResponse(**master_kit)
+            
+            # CRITICAL FIX: Enrich master kit data with related entity names
+            enriched_master_kit = await enrich_master_kit_data(master_kit)
+            
+            collection_item_dict["master_kit"] = MasterKitResponse(**enriched_master_kit)
             
             # Convert patches list back to string for response model compatibility
             if "patches" in collection_item_dict and isinstance(collection_item_dict["patches"], list):
