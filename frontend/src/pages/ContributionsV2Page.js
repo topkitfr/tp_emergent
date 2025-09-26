@@ -347,7 +347,13 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
               // Grid View (Default)
               if (displayOptions.viewMode === 'grid') {
                 return (
-                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow relative">
+                    {/* Pending Approval Sticker */}
+                    {contribution.status === 'pending_review' && (
+                      <div className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md z-10">
+                        PENDING APPROVAL
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
