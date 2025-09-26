@@ -2565,7 +2565,7 @@ async def create_contribution(
 ):
     """Create a new contribution"""
     try:
-        # Generate contribution
+        # Generate contribution with proper status
         contribution = {
             "id": str(uuid.uuid4()),
             "entity_type": contribution_data.entity_type,
@@ -2573,7 +2573,9 @@ async def create_contribution(
             "title": contribution_data.title,
             "description": contribution_data.description,
             "data": contribution_data.data,
-            "status": "pending_review",
+            "status": "pending",  # Use "pending" status to match existing system
+            "submitted_at": datetime.utcnow(),  # Use consistent field name
+            "submitted_by": current_user["id"],  # Use consistent field name
             "created_at": datetime.utcnow(),
             "created_by": current_user["id"],
             "upvotes": 0,
@@ -2583,8 +2585,8 @@ async def create_contribution(
             "topkit_reference": f"TK-CONTRIB-{uuid.uuid4().hex[:6].upper()}"
         }
         
-        # Insert into database
-        result = await db.contributions.insert_one(contribution)
+        # Insert into CORRECT database collection
+        result = await db.contributions_v2.insert_one(contribution)
         
         if result.inserted_id:
             return ContributionResponse(**contribution)
