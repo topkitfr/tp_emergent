@@ -1,50 +1,44 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - CRITICAL CONTRIBUTION SYSTEM INVESTIGATION
+TopKit Backend Testing Suite - CONTRIBUTION CREATION FIX VERIFICATION
 
-**CRITICAL CONTRIBUTION SYSTEM ISSUE:**
-The user reports a major issue with the contribution system:
+**CONTRIBUTION CREATION FIX TESTING:**
+Testing the critical bug fix where all brand/team/player/competition contributions 
+were being saved to the wrong database collection (db.contributions instead of db.contributions_v2).
 
-1. **Only seeing master kit contributions** in moderation dashboard and community contributions  
-2. **Missing brand/team/player/competition contributions** completely
-3. **User created a brand contribution but can't see it anywhere**
-4. **Should see ALL contribution types** with pending approval status
+**TEST FOCUS:**
 
-**INVESTIGATION FOCUS:**
+1. **Authentication**: Login with emergency.admin@topkit.test / EmergencyAdmin2025!
 
-1. **Contribution Creation Endpoints**:
-   - Check if there are separate endpoints for brand/team/player/competition vs master kit submissions
-   - Verify which collections these contributions are saved to
-   - Test if brand/team/player/competition submissions are working at all
+2. **Create Test Brand Contribution**:
+   - Test POST /api/contributions-v2/ with brand entity data
+   - Use proper JSON payload with entity_type: "brand", title, description, data fields
+   - Verify contribution is saved to contributions_v2 collection (not the old contributions collection)
 
-2. **Contributions V2 Collection Analysis**:
-   - List all contributions in contributions_v2 collection by entity_type
-   - Check if any non-master_kit contributions exist
-   - Verify if contributions are being saved with correct entity_type values
+3. **Verify Contribution Appears**:
+   - Test GET /api/contributions-v2/ to see all contributions 
+   - Check if the new brand contribution appears with other contributions
+   - Verify it has entity_type="brand" and proper status
 
-3. **Contribution Form Submission Logic**:
-   - Check DynamicContributionForm endpoint usage
-   - Verify POST endpoints for different contribution types
-   - Test brand/team/player/competition contribution creation
+4. **Test Moderation Dashboard Data**:
+   - Test GET /api/contributions-v2/admin/moderation-stats
+   - Verify the pending count increases after creating the brand contribution
+   - Check consistency between stats and actual contributions
 
-4. **API Endpoint Investigation**:
-   - Test GET /api/contributions-v2/ with no filters to see all contributions
-   - Test filtering by entity_type (brand, team, player, competition)
-   - Compare results to identify missing contribution types
+5. **Create Additional Entity Types**:
+   - Test team contribution creation
+   - Test player contribution creation  
+   - Test competition contribution creation
+   - Verify all entity types now appear in contributions_v2
 
-5. **Database Collection Check**:
-   - Check if contributions are being saved to wrong collection (contributions vs contributions_v2)
-   - Verify if different entity types use different database collections
+**Expected Results**:
+- Brand/team/player/competition contributions now save correctly to contributions_v2
+- All contributions appear in moderation dashboard 
+- Consistent counts between stats and actual data
+- User will now see ALL contribution types with pending approval stickers
+- Fixed the core issue preventing 80% of contributions from being visible
 
-**Authentication**: emergency.admin@topkit.test / EmergencyAdmin2025!
-
-**Expected to Find**:
-- Root cause why only master_kit contributions are visible
-- Missing contribution creation logic for other entity types  
-- Database collection inconsistencies
-- Path to restore full contribution system functionality
-
-**PRIORITY: CRITICAL** - This is blocking the entire contribution moderation workflow.
+**PRIORITY: CRITICAL** - This fix should restore the entire contribution moderation workflow.
 """
 
 import requests
