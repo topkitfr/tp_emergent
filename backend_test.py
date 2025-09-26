@@ -66,13 +66,14 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitContributionCreationFixTesting:
+class TopKitMasterKitDisplayIssuesInvestigation:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
-        self.created_contributions = []
+        self.master_kits_data = []
+        self.image_test_results = []
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -128,463 +129,390 @@ class TopKitContributionCreationFixTesting:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def get_initial_contribution_counts(self):
-        """Get initial contribution counts before testing"""
+    def test_master_kits_endpoint(self):
+        """Test GET /api/master-kits endpoint for data retrieval"""
         try:
-            print(f"\n📊 GETTING INITIAL CONTRIBUTION COUNTS")
+            print(f"\n🎽 TESTING MASTER KITS ENDPOINT")
             print("=" * 60)
             
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, {}
+            response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
             
-            # Get all contributions
-            all_response = self.session.get(f"{BACKEND_URL}/contributions-v2/", timeout=10)
+            print(f"      Response Status: {response.status_code}")
             
-            if all_response.status_code == 200:
-                all_contributions = all_response.json()
+            if response.status_code == 200:
+                master_kits = response.json()
+                self.master_kits_data = master_kits
                 
-                # Count by entity type
-                entity_counts = {}
-                status_counts = {}
+                print(f"      ✅ Master kits endpoint accessible")
+                print(f"      Total master kits returned: {len(master_kits)}")
                 
-                for contrib in all_contributions:
-                    entity_type = contrib.get('entity_type', 'unknown')
-                    status = contrib.get('status', 'unknown')
+                if len(master_kits) > 0:
+                    # Analyze first master kit for data completeness
+                    first_kit = master_kits[0]
+                    print(f"\n      📋 FIRST MASTER KIT DATA ANALYSIS:")
+                    print(f"         ID: {first_kit.get('id', 'MISSING')}")
+                    print(f"         Club: {first_kit.get('club', 'MISSING')}")
+                    print(f"         Season: {first_kit.get('season', 'MISSING')}")
+                    print(f"         Brand: {first_kit.get('brand', 'MISSING')}")
+                    print(f"         Kit Type: {first_kit.get('kit_type', 'MISSING')}")
+                    print(f"         Front Photo URL: {first_kit.get('front_photo_url', 'MISSING')}")
+                    print(f"         Back Photo URL: {first_kit.get('back_photo_url', 'MISSING')}")
+                    print(f"         TopKit Reference: {first_kit.get('topkit_reference', 'MISSING')}")
                     
-                    entity_counts[entity_type] = entity_counts.get(entity_type, 0) + 1
-                    status_counts[status] = status_counts.get(status, 0) + 1
-                
-                print(f"      Initial contribution counts:")
-                print(f"         Total contributions: {len(all_contributions)}")
-                print(f"         By entity type:")
-                for entity_type, count in entity_counts.items():
-                    print(f"            {entity_type}: {count}")
-                print(f"         By status:")
-                for status, count in status_counts.items():
-                    print(f"            {status}: {count}")
-                
-                # Get moderation stats
-                stats_response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats", timeout=10)
-                
-                if stats_response.status_code == 200:
-                    stats_data = stats_response.json()
-                    print(f"         Moderation stats:")
-                    print(f"            Pending: {stats_data.get('pending', 0)}")
-                    print(f"            Approved: {stats_data.get('approved', 0)}")
-                    print(f"            Rejected: {stats_data.get('rejected', 0)}")
-                    print(f"            Total: {stats_data.get('total', 0)}")
-                
-                self.log_test("Initial Contribution Counts", True, 
-                             f"✅ Retrieved initial counts - {len(all_contributions)} total contributions")
-                return True, {
-                    "all_contributions": all_contributions,
-                    "entity_counts": entity_counts,
-                    "status_counts": status_counts,
-                    "stats": stats_data if stats_response.status_code == 200 else {}
-                }
-            else:
-                self.log_test("Initial Contribution Counts", False, 
-                             f"❌ Failed to get contributions - Status {all_response.status_code}")
-                return False, {}
-                
-        except Exception as e:
-            self.log_test("Initial Contribution Counts", False, f"Exception: {str(e)}")
-            return False, {}
-    
-    def create_brand_contribution(self):
-        """Create a test brand contribution"""
-        try:
-            print(f"\n🏷️ CREATING TEST BRAND CONTRIBUTION")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, None
-            
-            # Create brand contribution data
-            brand_contribution_data = {
-                "entity_type": "brand",
-                "title": f"Test Brand Contribution - {datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "description": "Testing brand contribution creation fix - should save to contributions_v2 collection",
-                "data": {
-                    "name": f"Test Brand {uuid.uuid4().hex[:8]}",
-                    "country": "France",
-                    "type": "brand",
-                    "founded_year": 2024,
-                    "website": "https://testbrand.example.com"
-                },
-                "status": "pending"
-            }
-            
-            print(f"      Creating brand contribution:")
-            print(f"         Title: {brand_contribution_data['title']}")
-            print(f"         Entity Type: {brand_contribution_data['entity_type']}")
-            print(f"         Status: {brand_contribution_data['status']}")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=brand_contribution_data,
-                timeout=10
-            )
-            
-            print(f"         Response Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                created_contribution = response.json()
-                contribution_id = created_contribution.get('id')
-                
-                print(f"         ✅ Brand contribution created successfully!")
-                print(f"         Contribution ID: {contribution_id}")
-                print(f"         Entity Type: {created_contribution.get('entity_type')}")
-                print(f"         Status: {created_contribution.get('status')}")
-                
-                self.created_contributions.append(created_contribution)
-                
-                self.log_test("Brand Contribution Creation", True, 
-                             f"✅ Brand contribution created - ID: {contribution_id}")
-                return True, created_contribution
-            else:
-                print(f"         ❌ Failed to create brand contribution")
-                print(f"         Response: {response.text}")
-                
-                self.log_test("Brand Contribution Creation", False, 
-                             f"❌ Failed - Status {response.status_code}", response.text)
-                return False, None
-                
-        except Exception as e:
-            self.log_test("Brand Contribution Creation", False, f"Exception: {str(e)}")
-            return False, None
-    
-    def create_team_contribution(self):
-        """Create a test team contribution"""
-        try:
-            print(f"\n⚽ CREATING TEST TEAM CONTRIBUTION")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, None
-            
-            # Create team contribution data
-            team_contribution_data = {
-                "entity_type": "team",
-                "title": f"Test Team Contribution - {datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "description": "Testing team contribution creation fix - should save to contributions_v2 collection",
-                "data": {
-                    "name": f"Test FC {uuid.uuid4().hex[:8]}",
-                    "country": "Spain",
-                    "city": "Madrid",
-                    "founded_year": 1995,
-                    "stadium": "Test Stadium"
-                },
-                "status": "pending"
-            }
-            
-            print(f"      Creating team contribution:")
-            print(f"         Title: {team_contribution_data['title']}")
-            print(f"         Entity Type: {team_contribution_data['entity_type']}")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=team_contribution_data,
-                timeout=10
-            )
-            
-            print(f"         Response Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                created_contribution = response.json()
-                contribution_id = created_contribution.get('id')
-                
-                print(f"         ✅ Team contribution created successfully!")
-                print(f"         Contribution ID: {contribution_id}")
-                
-                self.created_contributions.append(created_contribution)
-                
-                self.log_test("Team Contribution Creation", True, 
-                             f"✅ Team contribution created - ID: {contribution_id}")
-                return True, created_contribution
-            else:
-                print(f"         ❌ Failed to create team contribution")
-                print(f"         Response: {response.text}")
-                
-                self.log_test("Team Contribution Creation", False, 
-                             f"❌ Failed - Status {response.status_code}", response.text)
-                return False, None
-                
-        except Exception as e:
-            self.log_test("Team Contribution Creation", False, f"Exception: {str(e)}")
-            return False, None
-    
-    def create_player_contribution(self):
-        """Create a test player contribution"""
-        try:
-            print(f"\n👤 CREATING TEST PLAYER CONTRIBUTION")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, None
-            
-            # Create player contribution data
-            player_contribution_data = {
-                "entity_type": "player",
-                "title": f"Test Player Contribution - {datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "description": "Testing player contribution creation fix - should save to contributions_v2 collection",
-                "data": {
-                    "name": f"Test Player {uuid.uuid4().hex[:8]}",
-                    "nationality": "Brazil",
-                    "position": "Forward",
-                    "birth_year": 1995,
-                    "player_type": "star"
-                },
-                "status": "pending"
-            }
-            
-            print(f"      Creating player contribution:")
-            print(f"         Title: {player_contribution_data['title']}")
-            print(f"         Entity Type: {player_contribution_data['entity_type']}")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=player_contribution_data,
-                timeout=10
-            )
-            
-            print(f"         Response Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                created_contribution = response.json()
-                contribution_id = created_contribution.get('id')
-                
-                print(f"         ✅ Player contribution created successfully!")
-                print(f"         Contribution ID: {contribution_id}")
-                
-                self.created_contributions.append(created_contribution)
-                
-                self.log_test("Player Contribution Creation", True, 
-                             f"✅ Player contribution created - ID: {contribution_id}")
-                return True, created_contribution
-            else:
-                print(f"         ❌ Failed to create player contribution")
-                print(f"         Response: {response.text}")
-                
-                self.log_test("Player Contribution Creation", False, 
-                             f"❌ Failed - Status {response.status_code}", response.text)
-                return False, None
-                
-        except Exception as e:
-            self.log_test("Player Contribution Creation", False, f"Exception: {str(e)}")
-            return False, None
-    
-    def create_competition_contribution(self):
-        """Create a test competition contribution"""
-        try:
-            print(f"\n🏆 CREATING TEST COMPETITION CONTRIBUTION")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, None
-            
-            # Create competition contribution data
-            competition_contribution_data = {
-                "entity_type": "competition",
-                "title": f"Test Competition Contribution - {datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "description": "Testing competition contribution creation fix - should save to contributions_v2 collection",
-                "data": {
-                    "competition_name": f"Test Cup {uuid.uuid4().hex[:8]}",
-                    "country": "Italy",
-                    "type": "domestic_cup",
-                    "founded_year": 2000,
-                    "format": "knockout"
-                },
-                "status": "pending"
-            }
-            
-            print(f"      Creating competition contribution:")
-            print(f"         Title: {competition_contribution_data['title']}")
-            print(f"         Entity Type: {competition_contribution_data['entity_type']}")
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/contributions-v2/",
-                json=competition_contribution_data,
-                timeout=10
-            )
-            
-            print(f"         Response Status: {response.status_code}")
-            
-            if response.status_code in [200, 201]:
-                created_contribution = response.json()
-                contribution_id = created_contribution.get('id')
-                
-                print(f"         ✅ Competition contribution created successfully!")
-                print(f"         Contribution ID: {contribution_id}")
-                
-                self.created_contributions.append(created_contribution)
-                
-                self.log_test("Competition Contribution Creation", True, 
-                             f"✅ Competition contribution created - ID: {contribution_id}")
-                return True, created_contribution
-            else:
-                print(f"         ❌ Failed to create competition contribution")
-                print(f"         Response: {response.text}")
-                
-                self.log_test("Competition Contribution Creation", False, 
-                             f"❌ Failed - Status {response.status_code}", response.text)
-                return False, None
-                
-        except Exception as e:
-            self.log_test("Competition Contribution Creation", False, f"Exception: {str(e)}")
-            return False, None
-    
-    def verify_contributions_appear(self):
-        """Verify that created contributions appear in the contributions_v2 collection"""
-        try:
-            print(f"\n🔍 VERIFYING CONTRIBUTIONS APPEAR IN CONTRIBUTIONS_V2")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, {}
-            
-            # Get all contributions
-            all_response = self.session.get(f"{BACKEND_URL}/contributions-v2/", timeout=10)
-            
-            if all_response.status_code == 200:
-                all_contributions = all_response.json()
-                
-                print(f"      Total contributions in contributions_v2: {len(all_contributions)}")
-                
-                # Check if our created contributions appear
-                found_contributions = []
-                
-                for created_contrib in self.created_contributions:
-                    created_id = created_contrib.get('id')
+                    # Check for "Unknown" values
+                    unknown_fields = []
+                    for field, value in first_kit.items():
+                        if value == "Unknown" or value == "unknown":
+                            unknown_fields.append(field)
                     
-                    # Find in all contributions
-                    found = None
-                    for contrib in all_contributions:
-                        if contrib.get('id') == created_id:
-                            found = contrib
-                            break
-                    
-                    if found:
-                        print(f"         ✅ Found contribution: {created_id}")
-                        print(f"            Entity Type: {found.get('entity_type')}")
-                        print(f"            Status: {found.get('status')}")
-                        print(f"            Title: {found.get('title', 'N/A')}")
-                        found_contributions.append(found)
+                    if unknown_fields:
+                        print(f"         ⚠️ Fields with 'Unknown' values: {unknown_fields}")
                     else:
-                        print(f"         ❌ Missing contribution: {created_id}")
+                        print(f"         ✅ No 'Unknown' values detected in first master kit")
+                    
+                    # Check image URLs format
+                    front_photo = first_kit.get('front_photo_url')
+                    back_photo = first_kit.get('back_photo_url')
+                    
+                    if front_photo:
+                        print(f"         Front photo path: {front_photo}")
+                        if front_photo.startswith('uploads/') or front_photo.startswith('master_kits/'):
+                            print(f"         ✅ Front photo URL format looks correct")
+                        else:
+                            print(f"         ⚠️ Front photo URL format may be incorrect")
+                    
+                    if back_photo:
+                        print(f"         Back photo path: {back_photo}")
+                        if back_photo.startswith('uploads/') or back_photo.startswith('master_kits/'):
+                            print(f"         ✅ Back photo URL format looks correct")
+                        else:
+                            print(f"         ⚠️ Back photo URL format may be incorrect")
                 
-                # Count by entity type
-                entity_counts = {}
-                for contrib in all_contributions:
-                    entity_type = contrib.get('entity_type', 'unknown')
-                    entity_counts[entity_type] = entity_counts.get(entity_type, 0) + 1
-                
-                print(f"      Current entity type breakdown:")
-                for entity_type, count in entity_counts.items():
-                    print(f"         {entity_type}: {count} contributions")
-                
-                success = len(found_contributions) == len(self.created_contributions)
-                
-                self.log_test("Verify Contributions Appear", success, 
-                             f"{'✅' if success else '❌'} Found {len(found_contributions)}/{len(self.created_contributions)} created contributions")
-                return success, {
-                    "all_contributions": all_contributions,
-                    "found_contributions": found_contributions,
-                    "entity_counts": entity_counts
-                }
+                self.log_test("Master Kits Endpoint", True, 
+                             f"✅ Retrieved {len(master_kits)} master kits successfully")
+                return True, master_kits
             else:
-                print(f"         ❌ Failed to get contributions - Status {all_response.status_code}")
-                self.log_test("Verify Contributions Appear", False, 
-                             f"❌ Failed to get contributions - Status {all_response.status_code}")
-                return False, {}
+                print(f"      ❌ Failed to get master kits - Status {response.status_code}")
+                print(f"      Response: {response.text}")
+                
+                self.log_test("Master Kits Endpoint", False, 
+                             f"❌ Failed - Status {response.status_code}", response.text)
+                return False, []
                 
         except Exception as e:
-            self.log_test("Verify Contributions Appear", False, f"Exception: {str(e)}")
-            return False, {}
+            self.log_test("Master Kits Endpoint", False, f"Exception: {str(e)}")
+            return False, []
     
-    def test_moderation_dashboard_consistency(self):
-        """Test moderation dashboard data consistency"""
+    def test_image_serving_endpoints(self):
+        """Test image serving endpoints for master kit images"""
         try:
-            print(f"\n📊 TESTING MODERATION DASHBOARD CONSISTENCY")
+            print(f"\n🖼️ TESTING IMAGE SERVING ENDPOINTS")
+            print("=" * 60)
+            
+            if not self.master_kits_data:
+                print("      ⚠️ No master kits data available for image testing")
+                return False, []
+            
+            image_test_results = []
+            
+            # Test uploads endpoint accessibility
+            print(f"      Testing /api/uploads/ endpoint accessibility...")
+            uploads_response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
+            print(f"      /api/uploads/ response status: {uploads_response.status_code}")
+            
+            if uploads_response.status_code == 500:
+                print(f"      ❌ /api/uploads/ endpoint returning 500 Internal Server Error")
+                print(f"      Response: {uploads_response.text}")
+                self.log_test("Uploads Endpoint", False, 
+                             f"❌ /api/uploads/ endpoint broken - Status 500", uploads_response.text)
+            
+            # Test specific master kit images
+            tested_images = 0
+            accessible_images = 0
+            
+            for kit in self.master_kits_data[:5]:  # Test first 5 kits
+                kit_id = kit.get('id', 'unknown')
+                front_photo = kit.get('front_photo_url')
+                back_photo = kit.get('back_photo_url')
+                
+                print(f"\n      🎽 Testing images for Master Kit: {kit_id}")
+                print(f"         Club: {kit.get('club', 'Unknown')}")
+                print(f"         Season: {kit.get('season', 'Unknown')}")
+                
+                # Test front photo
+                if front_photo:
+                    tested_images += 1
+                    print(f"         Testing front photo: {front_photo}")
+                    
+                    # Try different URL formats
+                    image_urls_to_test = [
+                        f"{BACKEND_URL}/uploads/{front_photo}",
+                        f"{BACKEND_URL}/{front_photo}",
+                        f"https://collector-hub-4.preview.emergentagent.com/{front_photo}",
+                        f"https://collector-hub-4.preview.emergentagent.com/api/{front_photo}"
+                    ]
+                    
+                    image_accessible = False
+                    for url in image_urls_to_test:
+                        try:
+                            img_response = self.session.get(url, timeout=5)
+                            if img_response.status_code == 200:
+                                print(f"         ✅ Front photo accessible at: {url}")
+                                accessible_images += 1
+                                image_accessible = True
+                                break
+                            else:
+                                print(f"         ❌ Front photo not accessible at: {url} (Status: {img_response.status_code})")
+                        except Exception as e:
+                            print(f"         ❌ Error accessing {url}: {str(e)}")
+                    
+                    if not image_accessible:
+                        print(f"         ❌ Front photo not accessible via any tested URL")
+                        image_test_results.append({
+                            "kit_id": kit_id,
+                            "image_type": "front",
+                            "image_path": front_photo,
+                            "accessible": False,
+                            "issue": "Image not accessible via any URL format"
+                        })
+                    else:
+                        image_test_results.append({
+                            "kit_id": kit_id,
+                            "image_type": "front", 
+                            "image_path": front_photo,
+                            "accessible": True
+                        })
+                
+                # Test back photo
+                if back_photo:
+                    tested_images += 1
+                    print(f"         Testing back photo: {back_photo}")
+                    
+                    # Try different URL formats
+                    image_urls_to_test = [
+                        f"{BACKEND_URL}/uploads/{back_photo}",
+                        f"{BACKEND_URL}/{back_photo}",
+                        f"https://collector-hub-4.preview.emergentagent.com/{back_photo}",
+                        f"https://collector-hub-4.preview.emergentagent.com/api/{back_photo}"
+                    ]
+                    
+                    image_accessible = False
+                    for url in image_urls_to_test:
+                        try:
+                            img_response = self.session.get(url, timeout=5)
+                            if img_response.status_code == 200:
+                                print(f"         ✅ Back photo accessible at: {url}")
+                                accessible_images += 1
+                                image_accessible = True
+                                break
+                            else:
+                                print(f"         ❌ Back photo not accessible at: {url} (Status: {img_response.status_code})")
+                        except Exception as e:
+                            print(f"         ❌ Error accessing {url}: {str(e)}")
+                    
+                    if not image_accessible:
+                        print(f"         ❌ Back photo not accessible via any tested URL")
+                        image_test_results.append({
+                            "kit_id": kit_id,
+                            "image_type": "back",
+                            "image_path": back_photo,
+                            "accessible": False,
+                            "issue": "Image not accessible via any URL format"
+                        })
+                    else:
+                        image_test_results.append({
+                            "kit_id": kit_id,
+                            "image_type": "back",
+                            "image_path": back_photo,
+                            "accessible": True
+                        })
+            
+            self.image_test_results = image_test_results
+            
+            print(f"\n      📊 IMAGE ACCESSIBILITY SUMMARY:")
+            print(f"         Total images tested: {tested_images}")
+            print(f"         Accessible images: {accessible_images}")
+            print(f"         Failed images: {tested_images - accessible_images}")
+            print(f"         Success rate: {(accessible_images/tested_images)*100:.1f}%" if tested_images > 0 else "N/A")
+            
+            success = accessible_images > 0 if tested_images > 0 else False
+            
+            self.log_test("Image Serving Endpoints", success, 
+                         f"{'✅' if success else '❌'} Image accessibility: {accessible_images}/{tested_images} images accessible")
+            return success, image_test_results
+                
+        except Exception as e:
+            self.log_test("Image Serving Endpoints", False, f"Exception: {str(e)}")
+            return False, []
+    
+    def test_collection_item_data_retrieval(self):
+        """Test collection item data retrieval with master kit information"""
+        try:
+            print(f"\n📦 TESTING COLLECTION ITEM DATA RETRIEVAL")
             print("=" * 60)
             
             if not self.auth_token:
                 if not self.authenticate_admin():
                     return False, {}
             
-            # Get moderation stats
-            stats_response = self.session.get(f"{BACKEND_URL}/contributions-v2/admin/moderation-stats", timeout=10)
+            # Get user's collection
+            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
             
-            if stats_response.status_code == 200:
-                stats_data = stats_response.json()
+            print(f"      Response Status: {collection_response.status_code}")
+            
+            if collection_response.status_code == 200:
+                collection_items = collection_response.json()
                 
-                print(f"      Moderation stats:")
-                print(f"         Pending: {stats_data.get('pending', 0)}")
-                print(f"         Approved: {stats_data.get('approved', 0)}")
-                print(f"         Rejected: {stats_data.get('rejected', 0)}")
-                print(f"         Total: {stats_data.get('total', 0)}")
+                print(f"      ✅ Collection endpoint accessible")
+                print(f"      Total collection items: {len(collection_items)}")
                 
-                # Get actual contributions by status
-                pending_response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=pending", timeout=10)
-                approved_response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=approved", timeout=10)
-                rejected_response = self.session.get(f"{BACKEND_URL}/contributions-v2/?status=rejected", timeout=10)
-                
-                actual_counts = {}
-                
-                if pending_response.status_code == 200:
-                    pending_contribs = pending_response.json()
-                    actual_counts['pending'] = len(pending_contribs)
-                    print(f"         Actual pending contributions: {len(pending_contribs)}")
-                
-                if approved_response.status_code == 200:
-                    approved_contribs = approved_response.json()
-                    actual_counts['approved'] = len(approved_contribs)
-                    print(f"         Actual approved contributions: {len(approved_contribs)}")
-                
-                if rejected_response.status_code == 200:
-                    rejected_contribs = rejected_response.json()
-                    actual_counts['rejected'] = len(rejected_contribs)
-                    print(f"         Actual rejected contributions: {len(rejected_contribs)}")
-                
-                # Check consistency
-                consistent = True
-                for status in ['pending', 'approved', 'rejected']:
-                    stats_count = stats_data.get(status, 0)
-                    actual_count = actual_counts.get(status, 0)
+                if len(collection_items) > 0:
+                    # Analyze first collection item
+                    first_item = collection_items[0]
+                    print(f"\n      📋 FIRST COLLECTION ITEM ANALYSIS:")
+                    print(f"         Item ID: {first_item.get('id', 'MISSING')}")
+                    print(f"         Master Kit ID: {first_item.get('master_kit_id', 'MISSING')}")
+                    print(f"         Collection Type: {first_item.get('collection_type', 'MISSING')}")
                     
-                    if stats_count != actual_count:
-                        print(f"         ❌ Inconsistency in {status}: stats={stats_count}, actual={actual_count}")
-                        consistent = False
+                    # Check embedded master kit data
+                    master_kit_data = first_item.get('master_kit')
+                    if master_kit_data:
+                        print(f"         ✅ Master kit data embedded in collection item")
+                        print(f"         Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
+                        print(f"         Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
+                        print(f"         Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
+                        
+                        # Check for "Unknown" values in master kit data
+                        unknown_fields = []
+                        for field, value in master_kit_data.items():
+                            if value == "Unknown" or value == "unknown":
+                                unknown_fields.append(field)
+                        
+                        if unknown_fields:
+                            print(f"         ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
+                        else:
+                            print(f"         ✅ No 'Unknown' values in embedded master kit data")
                     else:
-                        print(f"         ✅ {status} count consistent: {stats_count}")
+                        print(f"         ❌ No master kit data embedded in collection item")
                 
-                self.log_test("Moderation Dashboard Consistency", consistent, 
-                             f"{'✅' if consistent else '❌'} Moderation stats {'consistent' if consistent else 'inconsistent'} with actual data")
-                return consistent, {
-                    "stats_data": stats_data,
-                    "actual_counts": actual_counts,
-                    "consistent": consistent
-                }
+                self.log_test("Collection Item Data Retrieval", True, 
+                             f"✅ Retrieved {len(collection_items)} collection items successfully")
+                return True, collection_items
             else:
-                print(f"         ❌ Failed to get moderation stats - Status {stats_response.status_code}")
-                self.log_test("Moderation Dashboard Consistency", False, 
-                             f"❌ Failed to get moderation stats - Status {stats_response.status_code}")
-                return False, {}
+                print(f"      ❌ Failed to get collection items - Status {collection_response.status_code}")
+                print(f"      Response: {collection_response.text}")
+                
+                self.log_test("Collection Item Data Retrieval", False, 
+                             f"❌ Failed - Status {collection_response.status_code}", collection_response.text)
+                return False, []
                 
         except Exception as e:
-            self.log_test("Moderation Dashboard Consistency", False, f"Exception: {str(e)}")
-            return False, {}
+            self.log_test("Collection Item Data Retrieval", False, f"Exception: {str(e)}")
+            return False, []
     
-    def run_contribution_creation_fix_testing(self):
-        """Run comprehensive contribution creation fix testing"""
-        print("\n🚀 CONTRIBUTION CREATION FIX TESTING")
-        print("Testing the critical bug fix for contribution collection saving")
+    def test_homepage_master_kit_endpoints(self):
+        """Test homepage endpoints that should display master kit data"""
+        try:
+            print(f"\n🏠 TESTING HOMEPAGE MASTER KIT ENDPOINTS")
+            print("=" * 60)
+            
+            homepage_endpoints = [
+                "/homepage/expensive-kits",
+                "/homepage/recent-master-kits", 
+                "/homepage/recent-contributions"
+            ]
+            
+            homepage_results = []
+            
+            for endpoint in homepage_endpoints:
+                print(f"\n      Testing {endpoint}...")
+                
+                try:
+                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
+                    print(f"         Response Status: {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        print(f"         ✅ Endpoint accessible")
+                        print(f"         Items returned: {len(data) if isinstance(data, list) else 'N/A'}")
+                        
+                        # Check for master kit data quality
+                        if isinstance(data, list) and len(data) > 0:
+                            first_item = data[0]
+                            
+                            # Check for image URLs
+                            front_photo = first_item.get('front_photo_url')
+                            if front_photo:
+                                print(f"         Front photo URL present: {front_photo}")
+                            else:
+                                print(f"         ⚠️ No front photo URL in first item")
+                            
+                            # Check for basic master kit fields
+                            club = first_item.get('club')
+                            season = first_item.get('season')
+                            brand = first_item.get('brand')
+                            
+                            if club and club != "Unknown":
+                                print(f"         ✅ Club data present: {club}")
+                            else:
+                                print(f"         ⚠️ Club data missing or 'Unknown': {club}")
+                            
+                            if season and season != "Unknown":
+                                print(f"         ✅ Season data present: {season}")
+                            else:
+                                print(f"         ⚠️ Season data missing or 'Unknown': {season}")
+                            
+                            if brand and brand != "Unknown":
+                                print(f"         ✅ Brand data present: {brand}")
+                            else:
+                                print(f"         ⚠️ Brand data missing or 'Unknown': {brand}")
+                        
+                        homepage_results.append({
+                            "endpoint": endpoint,
+                            "status": response.status_code,
+                            "success": True,
+                            "data_count": len(data) if isinstance(data, list) else 0
+                        })
+                    else:
+                        print(f"         ❌ Endpoint failed - Status {response.status_code}")
+                        print(f"         Response: {response.text}")
+                        
+                        homepage_results.append({
+                            "endpoint": endpoint,
+                            "status": response.status_code,
+                            "success": False,
+                            "error": response.text
+                        })
+                        
+                except Exception as e:
+                    print(f"         ❌ Exception testing {endpoint}: {str(e)}")
+                    homepage_results.append({
+                        "endpoint": endpoint,
+                        "success": False,
+                        "error": str(e)
+                    })
+            
+            successful_endpoints = len([r for r in homepage_results if r.get('success')])
+            total_endpoints = len(homepage_endpoints)
+            
+            print(f"\n      📊 HOMEPAGE ENDPOINTS SUMMARY:")
+            print(f"         Successful endpoints: {successful_endpoints}/{total_endpoints}")
+            print(f"         Success rate: {(successful_endpoints/total_endpoints)*100:.1f}%")
+            
+            success = successful_endpoints > 0
+            
+            self.log_test("Homepage Master Kit Endpoints", success, 
+                         f"{'✅' if success else '❌'} Homepage endpoints: {successful_endpoints}/{total_endpoints} working")
+            return success, homepage_results
+                
+        except Exception as e:
+            self.log_test("Homepage Master Kit Endpoints", False, f"Exception: {str(e)}")
+            return False, []
+    
+    def run_master_kit_display_investigation(self):
+        """Run comprehensive master kit display issues investigation"""
+        print("\n🚀 MASTER KIT DISPLAY ISSUES INVESTIGATION")
+        print("Investigating critical master kit image and data display problems")
         print("=" * 80)
         
         test_results = []
@@ -598,51 +526,36 @@ class TopKitContributionCreationFixTesting:
             print("❌ Cannot proceed without authentication")
             return test_results, {}
         
-        # Step 2: Get initial counts
-        print("\n2️⃣ Getting Initial Contribution Counts...")
-        initial_success, initial_data = self.get_initial_contribution_counts()
-        test_results.append(initial_success)
+        # Step 2: Test master kits endpoint
+        print("\n2️⃣ Testing Master Kits Endpoint...")
+        master_kits_success, master_kits_data = self.test_master_kits_endpoint()
+        test_results.append(master_kits_success)
         
-        # Step 3: Create brand contribution
-        print("\n3️⃣ Creating Brand Contribution...")
-        brand_success, brand_contribution = self.create_brand_contribution()
-        test_results.append(brand_success)
+        # Step 3: Test image serving
+        print("\n3️⃣ Testing Image Serving Endpoints...")
+        image_success, image_results = self.test_image_serving_endpoints()
+        test_results.append(image_success)
         
-        # Step 4: Create team contribution
-        print("\n4️⃣ Creating Team Contribution...")
-        team_success, team_contribution = self.create_team_contribution()
-        test_results.append(team_success)
+        # Step 4: Test collection item data
+        print("\n4️⃣ Testing Collection Item Data Retrieval...")
+        collection_success, collection_data = self.test_collection_item_data_retrieval()
+        test_results.append(collection_success)
         
-        # Step 5: Create player contribution
-        print("\n5️⃣ Creating Player Contribution...")
-        player_success, player_contribution = self.create_player_contribution()
-        test_results.append(player_success)
-        
-        # Step 6: Create competition contribution
-        print("\n6️⃣ Creating Competition Contribution...")
-        competition_success, competition_contribution = self.create_competition_contribution()
-        test_results.append(competition_success)
-        
-        # Step 7: Verify contributions appear
-        print("\n7️⃣ Verifying Contributions Appear...")
-        verify_success, verify_data = self.verify_contributions_appear()
-        test_results.append(verify_success)
-        
-        # Step 8: Test moderation dashboard consistency
-        print("\n8️⃣ Testing Moderation Dashboard Consistency...")
-        consistency_success, consistency_data = self.test_moderation_dashboard_consistency()
-        test_results.append(consistency_success)
+        # Step 5: Test homepage endpoints
+        print("\n5️⃣ Testing Homepage Master Kit Endpoints...")
+        homepage_success, homepage_results = self.test_homepage_master_kit_endpoints()
+        test_results.append(homepage_success)
         
         return test_results, {
-            "initial_data": initial_data if initial_success else {},
-            "created_contributions": self.created_contributions,
-            "verify_data": verify_data if verify_success else {},
-            "consistency_data": consistency_data if consistency_success else {}
+            "master_kits_data": master_kits_data if master_kits_success else [],
+            "image_results": image_results if image_success else [],
+            "collection_data": collection_data if collection_success else [],
+            "homepage_results": homepage_results if homepage_success else []
         }
     
-    def print_comprehensive_testing_summary(self, test_data):
-        """Print final comprehensive testing summary"""
-        print("\n📊 CONTRIBUTION CREATION FIX TESTING SUMMARY")
+    def print_comprehensive_investigation_summary(self, test_data):
+        """Print final comprehensive investigation summary"""
+        print("\n📊 MASTER KIT DISPLAY ISSUES INVESTIGATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -655,60 +568,122 @@ class TopKitContributionCreationFixTesting:
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 CONTRIBUTION CREATION FIX RESULTS:")
+        print(f"\n🔍 CRITICAL ISSUES INVESTIGATION RESULTS:")
         
-        created_contributions = test_data.get("created_contributions", [])
-        print(f"\n📝 CREATED CONTRIBUTIONS ({len(created_contributions)}):")
-        
-        entity_type_created = {}
-        for contrib in created_contributions:
-            entity_type = contrib.get('entity_type', 'unknown')
-            entity_type_created[entity_type] = entity_type_created.get(entity_type, 0) + 1
-        
-        for entity_type, count in entity_type_created.items():
-            print(f"  {entity_type}: {count} contribution(s) created")
-        
-        # Verification results
-        verify_data = test_data.get("verify_data", {})
-        if verify_data:
-            found_contributions = verify_data.get("found_contributions", [])
-            entity_counts = verify_data.get("entity_counts", {})
+        # Master kits data analysis
+        master_kits_data = test_data.get("master_kits_data", [])
+        if master_kits_data:
+            print(f"\n🎽 MASTER KITS DATA ANALYSIS:")
+            print(f"  Total master kits available: {len(master_kits_data)}")
             
-            print(f"\n🔍 VERIFICATION RESULTS:")
-            print(f"  Created contributions found in contributions_v2: {len(found_contributions)}/{len(created_contributions)}")
-            print(f"  Current entity type distribution:")
-            for entity_type, count in entity_counts.items():
-                print(f"    {entity_type}: {count} contributions")
+            if len(master_kits_data) > 0:
+                first_kit = master_kits_data[0]
+                unknown_fields = []
+                for field, value in first_kit.items():
+                    if value == "Unknown" or value == "unknown":
+                        unknown_fields.append(field)
+                
+                if unknown_fields:
+                    print(f"  ❌ ISSUE CONFIRMED: Fields showing 'Unknown' values: {unknown_fields}")
+                else:
+                    print(f"  ✅ No 'Unknown' values detected in master kit data")
         
-        # Consistency results
-        consistency_data = test_data.get("consistency_data", {})
-        if consistency_data:
-            consistent = consistency_data.get("consistent", False)
-            stats_data = consistency_data.get("stats_data", {})
+        # Image serving analysis
+        image_results = test_data.get("image_results", [])
+        if image_results:
+            accessible_images = len([r for r in image_results if r.get('accessible')])
+            total_images = len(image_results)
             
-            print(f"\n📊 MODERATION DASHBOARD CONSISTENCY:")
-            print(f"  Stats consistency: {'✅ CONSISTENT' if consistent else '❌ INCONSISTENT'}")
-            if stats_data:
-                print(f"  Current moderation stats:")
-                print(f"    Pending: {stats_data.get('pending', 0)}")
-                print(f"    Approved: {stats_data.get('approved', 0)}")
-                print(f"    Rejected: {stats_data.get('rejected', 0)}")
-                print(f"    Total: {stats_data.get('total', 0)}")
+            print(f"\n🖼️ IMAGE SERVING ANALYSIS:")
+            print(f"  Images tested: {total_images}")
+            print(f"  Accessible images: {accessible_images}")
+            print(f"  Failed images: {total_images - accessible_images}")
+            
+            if accessible_images == 0 and total_images > 0:
+                print(f"  ❌ CRITICAL ISSUE CONFIRMED: NO MASTER KIT IMAGES ARE ACCESSIBLE")
+                print(f"  Root cause: Image serving infrastructure is broken")
+            elif accessible_images < total_images:
+                print(f"  ⚠️ PARTIAL ISSUE: Some master kit images not accessible")
+            else:
+                print(f"  ✅ All tested images are accessible")
+        
+        # Collection data analysis
+        collection_data = test_data.get("collection_data", [])
+        if collection_data:
+            print(f"\n📦 COLLECTION DATA ANALYSIS:")
+            print(f"  Collection items found: {len(collection_data)}")
+            
+            if len(collection_data) > 0:
+                first_item = collection_data[0]
+                master_kit_data = first_item.get('master_kit')
+                
+                if master_kit_data:
+                    unknown_fields = []
+                    for field, value in master_kit_data.items():
+                        if value == "Unknown" or value == "unknown":
+                            unknown_fields.append(field)
+                    
+                    if unknown_fields:
+                        print(f"  ❌ ISSUE CONFIRMED: Collection items showing 'Unknown' master kit data: {unknown_fields}")
+                    else:
+                        print(f"  ✅ Collection items have proper master kit data")
+                else:
+                    print(f"  ❌ CRITICAL ISSUE: No master kit data embedded in collection items")
+        
+        # Homepage endpoints analysis
+        homepage_results = test_data.get("homepage_results", [])
+        if homepage_results:
+            successful_endpoints = len([r for r in homepage_results if r.get('success')])
+            total_endpoints = len(homepage_results)
+            
+            print(f"\n🏠 HOMEPAGE ENDPOINTS ANALYSIS:")
+            print(f"  Working endpoints: {successful_endpoints}/{total_endpoints}")
+            
+            if successful_endpoints == 0:
+                print(f"  ❌ CRITICAL ISSUE: All homepage master kit endpoints are broken")
+            elif successful_endpoints < total_endpoints:
+                print(f"  ⚠️ PARTIAL ISSUE: Some homepage endpoints not working")
+            else:
+                print(f"  ✅ All homepage endpoints working")
         
         # Final diagnosis
-        print(f"\n🎯 CONTRIBUTION CREATION FIX DIAGNOSIS:")
+        print(f"\n🎯 CRITICAL ISSUES DIAGNOSIS:")
         
-        if passed_tests >= 6:  # Most tests passed
-            print(f"  ✅ CONTRIBUTION CREATION FIX WORKING:")
-            print(f"     • Brand/team/player/competition contributions now save correctly to contributions_v2")
-            print(f"     • All contribution types appear in moderation dashboard")
-            print(f"     • Fixed the core issue preventing 80% of contributions from being visible")
-            print(f"     • User will now see ALL contribution types with pending approval stickers")
+        critical_issues = []
+        
+        # Check for image serving issues
+        if image_results:
+            accessible_images = len([r for r in image_results if r.get('accessible')])
+            if accessible_images == 0:
+                critical_issues.append("Master kit images not displaying - image serving infrastructure broken")
+        
+        # Check for unknown data issues
+        if master_kits_data and len(master_kits_data) > 0:
+            first_kit = master_kits_data[0]
+            unknown_fields = [field for field, value in first_kit.items() if value == "Unknown" or value == "unknown"]
+            if unknown_fields:
+                critical_issues.append(f"Master kit data showing 'Unknown' instead of actual values in fields: {unknown_fields}")
+        
+        # Check for collection data issues
+        if collection_data and len(collection_data) > 0:
+            first_item = collection_data[0]
+            master_kit_data = first_item.get('master_kit')
+            if not master_kit_data:
+                critical_issues.append("Collection items missing embedded master kit data")
+            elif master_kit_data:
+                unknown_fields = [field for field, value in master_kit_data.items() if value == "Unknown" or value == "unknown"]
+                if unknown_fields:
+                    critical_issues.append(f"Collection items showing 'Unknown' master kit data in fields: {unknown_fields}")
+        
+        if critical_issues:
+            print(f"  ❌ CRITICAL ISSUES CONFIRMED:")
+            for i, issue in enumerate(critical_issues, 1):
+                print(f"     {i}. {issue}")
         else:
-            print(f"  ❌ CONTRIBUTION CREATION FIX ISSUES DETECTED:")
-            print(f"     • Some contribution types may still not be saving correctly")
-            print(f"     • Moderation dashboard may still have inconsistencies")
-            print(f"     • Further investigation needed")
+            print(f"  ✅ NO CRITICAL ISSUES DETECTED:")
+            print(f"     • Master kit images appear to be accessible")
+            print(f"     • Master kit data appears to be properly populated")
+            print(f"     • Collection items have proper master kit information")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
@@ -720,14 +695,14 @@ class TopKitContributionCreationFixTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the contribution creation fix testing"""
-    tester = TopKitContributionCreationFixTesting()
+    """Main function to run the master kit display issues investigation"""
+    tester = TopKitMasterKitDisplayIssuesInvestigation()
     
-    # Run the comprehensive contribution creation fix testing
-    test_results, test_data = tester.run_contribution_creation_fix_testing()
+    # Run the comprehensive master kit display investigation
+    test_results, test_data = tester.run_master_kit_display_investigation()
     
     # Print comprehensive summary
-    tester.print_comprehensive_testing_summary(test_data)
+    tester.print_comprehensive_investigation_summary(test_data)
     
     # Return overall success
     return all(test_results)
