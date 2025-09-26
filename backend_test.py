@@ -65,6 +65,13 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
+# Test User Credentials for registration/login testing
+TEST_USER_CREDENTIALS = {
+    "name": "Test User",
+    "email": "testuser@example.com",
+    "password": "TestUser2024!"
+}
+
 class TopKitAuthenticationSystemTesting:
     def __init__(self):
         self.session = requests.Session()
