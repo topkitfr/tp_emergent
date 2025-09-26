@@ -736,35 +736,32 @@ class TopKitAuthenticationSystemTesting:
             return False
     
     def run_comprehensive_authentication_tests(self):
-        """Run comprehensive four fixes testing suite"""
-        print("\n🚀 COMPREHENSIVE FOUR FIXES TESTING SUITE")
-        print("Testing all four major fixes implemented for the user's issues")
+        """Run comprehensive authentication system testing suite"""
+        print("\n🚀 COMPREHENSIVE AUTHENTICATION SYSTEM TESTING SUITE")
+        print("Testing all critical authentication endpoints and functionality")
         print("=" * 80)
         
         test_results = []
         
-        # Step 1: Authenticate with admin account
-        print("\n1️⃣ Authentication...")
-        auth_success = self.authenticate_admin()
-        if not auth_success:
-            print("❌ Cannot continue without authentication")
-            return [False]
-        test_results.append(auth_success)
+        # Step 1: Test User Registration
+        print("\n1️⃣ Testing User Registration...")
+        registration_success, user_data = self.test_user_registration()
+        test_results.append(registration_success)
         
-        # Step 2: Test Issue 1 - Season Format Bug Fix
-        print("\n2️⃣ Testing Issue 1 - Season Format Bug Fix...")
-        issue1_success = self.test_issue_1_season_format_bug_fix()
-        test_results.append(issue1_success)
+        # Step 2: Test User Login
+        print("\n2️⃣ Testing User Login...")
+        login_success = self.test_user_login()
+        test_results.append(login_success)
         
-        # Step 3: Test Issue 3 - Collection Item Detail Endpoint
-        print("\n3️⃣ Testing Issue 3 - Collection Item Detail Endpoint...")
-        issue3_success = self.test_issue_3_collection_item_detail_endpoint()
-        test_results.append(issue3_success)
+        # Step 3: Test Authentication Verification
+        print("\n3️⃣ Testing Authentication Verification...")
+        auth_verification_success = self.test_authentication_verification()
+        test_results.append(auth_verification_success)
         
-        # Step 4: Test Issue 4 - Backend Endpoints Functioning
-        print("\n4️⃣ Testing Issue 4 - Backend Endpoints Functioning...")
-        issue4_success = self.test_issue_4_backend_endpoints_functioning()
-        test_results.append(issue4_success)
+        # Step 4: Test Session Management
+        print("\n4️⃣ Testing Session Management...")
+        session_management_success = self.test_session_management()
+        test_results.append(session_management_success)
         
         return test_results
     
