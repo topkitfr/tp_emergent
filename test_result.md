@@ -255,7 +255,6 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Critical Contribution System Investigation - Missing Entity Types - CRITICAL"
     - "Authentication Error Message Handling Fix - CRITICAL"
     - "Signup Success Feedback Improvement - HIGH"
   stuck_tasks: []
