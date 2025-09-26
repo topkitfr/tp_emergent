@@ -437,7 +437,7 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
                             ? masterKit.front_photo_url 
                             : masterKit.front_photo_url.startsWith('uploads/') ? 
                               `${API}/api/${masterKit.front_photo_url}` :
-                              `${API}/api/uploads/master_kits/${masterKit.front_photo_url}.jpg`}
+                              `${API}/api/uploads/${masterKit.front_photo_url}`}
                           alt="Front view"
                           className="w-full h-64 object-contain bg-gray-50 rounded-lg border opacity-75"
                         />
