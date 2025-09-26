@@ -187,7 +187,6 @@ const ModerationDashboard = ({ user, API }) => {
             console.log(`Found ${contribData.length} contributions with 'pending' status`);
           }
         }
-      }
         
         // Update contributions and cache
         setContributions(contribData);
@@ -198,6 +197,27 @@ const ModerationDashboard = ({ user, API }) => {
 
         // For non-overview tabs, we need to get total count for pagination
         if (tab !== 'overview') {
+          // Get total count by making another request with a high limit to count all
+          const countResponse = await fetch(
+            `${API}/api/contributions-v2/?status=${status}&page=1&limit=1000`, 
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          
+          if (countResponse.ok) {
+            const countData = await countResponse.json();
+            setTotalContributions(countData.length);
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
+    }
+  };
           // Get total count by making another request with a high limit to count all
           const countResponse = await fetch(
             `${API}/api/contributions-v2/?status=${status}&page=1&limit=1000`, 
