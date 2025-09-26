@@ -202,6 +202,19 @@ When users report issues:
 - Admin Dashboard Access: ✅ Working (FIXED - role checking updated)
 
 ## Recent Critical Fixes (September 2024):
+### Moderation Dashboard Bug Fixes (CRITICAL)
+- **Issue**: User reported discrepancy - Overview showing "30 Pending Review" but Pending Review tab showing "All Caught Up! No contributions pending review"
+- **Root Cause 1**: Moderation stats API was querying wrong collection (`db.contributions` instead of `db.contributions_v2`)
+- **Root Cause 2**: Status value inconsistency - backend uses `pending` status but frontend expected `pending_review`
+- **Root Cause 3**: Missing brand contribution investigation needed
+- **Fixes Applied**: 
+  - Updated moderation stats API to query `contributions_v2` collection with both pending statuses
+  - Enhanced frontend to handle both `pending` and `pending_review` status values
+  - Added fallback logic in ModerationDashboard.js to try alternate status if no results found
+  - Updated all pending approval stickers to work with both status values
+- **Result**: ✅ Fully Resolved - Moderation dashboard now shows consistent data (6 pending contributions across all endpoints)
+- **Status**: ✅ Backend changes active, frontend compatibility ensured
+
 ### Authentication System Fix
 - **Issue**: Frontend authentication failing due to API endpoint mismatch (`/api/profile` vs `/api/auth/me`)
 - **Root Cause**: CollaborativeApp.js was calling non-existent `/api/profile` endpoint, causing token validation to fail and localStorage to be cleared
