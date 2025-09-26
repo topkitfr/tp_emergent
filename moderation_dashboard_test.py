@@ -140,7 +140,7 @@ class ModerationDashboardTesting:
                 print(f"            Response data: {json.dumps(stats_data, indent=2)}")
                 
                 # Extract key metrics
-                pending_count = stats_data.get('pending_review', 0)
+                pending_count = stats_data.get('pending', 0)
                 total_contributions = stats_data.get('total', 0)
                 approved_count = stats_data.get('approved', 0)
                 rejected_count = stats_data.get('rejected', 0)
