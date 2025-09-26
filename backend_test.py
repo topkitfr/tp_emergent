@@ -65,7 +65,7 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitComprehensiveFourFixesTesting:
+class TopKitAuthenticationSystemTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
