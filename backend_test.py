@@ -864,14 +864,14 @@ class TopKitAuthenticationSystemTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the comprehensive four fixes testing suite"""
-    tester = TopKitComprehensiveFourFixesTesting()
+    """Main function to run the comprehensive authentication system testing suite"""
+    tester = TopKitAuthenticationSystemTesting()
     
-    # Run the comprehensive four fixes tests
-    test_results = tester.run_comprehensive_four_fixes_tests()
+    # Run the comprehensive authentication tests
+    test_results = tester.run_comprehensive_authentication_tests()
     
     # Print comprehensive summary
-    tester.print_comprehensive_four_fixes_summary()
+    tester.print_comprehensive_authentication_summary()
     
     # Return overall success
     return all(test_results)
