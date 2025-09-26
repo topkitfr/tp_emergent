@@ -416,7 +416,13 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
               // Thumbnail View (Images Only)
               else if (displayOptions.viewMode === 'thumbnail') {
                 return (
-                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                  <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative">
+                    {/* Pending Approval Sticker */}
+                    {contribution.status === 'pending_review' && (
+                      <div className="absolute top-1 right-1 bg-orange-500 text-white text-xs font-bold px-1 py-0.5 rounded shadow-md z-10">
+                        PENDING
+                      </div>
+                    )}
                     <div className="aspect-square bg-gray-100 flex items-center justify-center text-2xl">
                       {contribution.entity_type === 'team' && '⚽'}
                       {contribution.entity_type === 'brand' && '👕'}
