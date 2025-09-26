@@ -695,7 +695,7 @@ const MyCollectionPage = ({ user, API, onDataUpdate }) => {
                               ? masterKit.front_photo_url 
                               : masterKit.front_photo_url.startsWith('uploads/') ? 
                                 `${API}/api/${masterKit.front_photo_url}` :
-                                `${API}/api/uploads/master_kits/${masterKit.front_photo_url}.jpg`}
+                                `${API}/api/uploads/${masterKit.front_photo_url}`}
                             alt={`${masterKit.club || 'Unknown'} ${masterKit.season || ''}`}
                             className="w-full h-48 object-contain rounded-lg opacity-60"
                           />
