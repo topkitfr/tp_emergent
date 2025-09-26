@@ -1399,8 +1399,11 @@ async def get_my_collection(
                 # Convert patches list back to string for response model compatibility
                 if "patches" in item and isinstance(item["patches"], list):
                     item["patches"] = ", ".join(item["patches"]) if item["patches"] else None
-                    
-                item["master_kit"] = MasterKitResponse(**master_kit)
+                
+                # CRITICAL FIX: Enrich master kit data with related entity names
+                enriched_master_kit = await enrich_master_kit_data(master_kit)
+                
+                item["master_kit"] = MasterKitResponse(**enriched_master_kit)
                 response_items.append(MyCollectionResponse(**item))
         
         return response_items
