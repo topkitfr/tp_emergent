@@ -239,14 +239,11 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Three Moderation and Display Issues Investigation - COMPLETED"
-    - "Master Kit Approval Workflow Fix - CRITICAL"
-    - "Image Serving Endpoint Fix - CRITICAL"
-  stuck_tasks: 
-    - "Master Kit Approval Workflow Issue - Unapproved kits showing in Kit Area"
-    - "Image Serving Issue - Master kit images not accessible via /api/uploads/"
+    - "Comprehensive Authentication System Testing - COMPLETED"
+    - "Critical User Authentication Issues Investigation - COMPLETED"
+  stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
 backend:
   - task: "Comprehensive Authentication System Testing - Critical User Report Investigation"
