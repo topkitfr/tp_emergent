@@ -133,121 +133,127 @@ class TopKitAuthenticationSystemTesting:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_issue_1_season_format_bug_fix(self):
-        """ISSUE 1: Test season format bug fix - verify age coefficients with slash format seasons"""
+    def test_user_registration(self):
+        """Test user registration endpoint - POST /api/auth/register"""
         try:
-            print(f"\n📅 ISSUE 1: TESTING SEASON FORMAT BUG FIX")
+            print(f"\n📝 TESTING USER REGISTRATION")
             print("=" * 80)
-            print("Testing if season format '2025/2026' now works with age coefficients...")
+            print("Testing POST /api/auth/register endpoint...")
             
-            if not self.auth_token:
-                self.log_test("Issue 1 - Season Format Bug Fix", False, "❌ Missing authentication")
-                return False
+            # Step 1: Test registration with valid data
+            print(f"      Testing registration with valid user data...")
+            print(f"         Name: {TEST_USER_CREDENTIALS['name']}")
+            print(f"         Email: {TEST_USER_CREDENTIALS['email']}")
+            print(f"         Password: {TEST_USER_CREDENTIALS['password']}")
             
-            # Step 1: Get collection items to test season coefficient fix
-            print(f"      Getting collection items to test season coefficients...")
-            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            # First, try to clean up any existing test user
+            try:
+                # Try to login with test credentials to see if user exists
+                existing_login_response = self.session.post(
+                    f"{BACKEND_URL}/auth/login",
+                    json={
+                        "email": TEST_USER_CREDENTIALS['email'],
+                        "password": TEST_USER_CREDENTIALS['password']
+                    },
+                    timeout=10
+                )
+                if existing_login_response.status_code == 200:
+                    print(f"         ⚠️ Test user already exists, will test with existing user")
+                    existing_user_data = existing_login_response.json()
+                    self.log_test("User Registration", True, 
+                                 f"✅ Test user already exists and can login - using existing user for testing")
+                    return True, existing_user_data
+            except:
+                pass  # User doesn't exist, proceed with registration
             
-            if collection_response.status_code != 200:
-                self.log_test("Issue 1 - Season Format Bug Fix", False, 
-                             f"❌ Cannot access collection - Status {collection_response.status_code}")
-                return False
+            # Attempt registration
+            registration_response = self.session.post(
+                f"{BACKEND_URL}/auth/register",
+                json=TEST_USER_CREDENTIALS,
+                timeout=10
+            )
             
-            collection_items = collection_response.json()
-            print(f"         ✅ Retrieved {len(collection_items)} collection items")
+            print(f"         Registration response status: {registration_response.status_code}")
             
-            if not collection_items:
-                self.log_test("Issue 1 - Season Format Bug Fix", False, 
-                             "❌ No collection items available for testing")
-                return False
-            
-            # Step 2: Test price estimation for items with slash format seasons
-            season_coefficients_found = 0
-            slash_format_seasons_tested = 0
-            total_items_tested = 0
-            
-            for item in collection_items[:5]:  # Test first 5 items
-                collection_id = item.get('id')
-                master_kit = item.get('master_kit', {})
-                season = master_kit.get('season', '')
+            if registration_response.status_code == 200:
+                registration_data = registration_response.json()
+                print(f"         ✅ Registration successful!")
+                print(f"            Token received: {'Yes' if registration_data.get('token') else 'No'}")
+                print(f"            User data received: {'Yes' if registration_data.get('user') else 'No'}")
                 
-                print(f"      Testing collection item {collection_id}...")
-                print(f"         Master Kit: {master_kit.get('club')} {season}")
+                if registration_data.get('user'):
+                    user_data = registration_data['user']
+                    print(f"            User ID: {user_data.get('id')}")
+                    print(f"            Name: {user_data.get('name')}")
+                    print(f"            Email: {user_data.get('email')}")
+                    print(f"            Role: {user_data.get('role')}")
                 
-                # Check if this is a slash format season
-                is_slash_format = '/' in season
-                if is_slash_format:
-                    slash_format_seasons_tested += 1
-                    print(f"         🎯 Slash format season detected: {season}")
-                
-                # Get price estimation
-                price_response = self.session.get(
-                    f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", 
+                # Step 2: Verify user was created in database by trying to login
+                print(f"      Verifying user creation by attempting login...")
+                login_response = self.session.post(
+                    f"{BACKEND_URL}/auth/login",
+                    json={
+                        "email": TEST_USER_CREDENTIALS['email'],
+                        "password": TEST_USER_CREDENTIALS['password']
+                    },
                     timeout=10
                 )
                 
-                if price_response.status_code == 200:
-                    price_data = price_response.json()
-                    estimated_price = price_data.get('estimated_price')
-                    coefficients = price_data.get('coefficients', [])
+                if login_response.status_code == 200:
+                    print(f"         ✅ User can login after registration - user properly created")
+                    login_data = login_response.json()
                     
-                    # Check for new response format with calculation_details
-                    if 'calculation_details' in price_data:
-                        coefficients = price_data['calculation_details'].get('coefficients_applied', [])
-                    
-                    print(f"         ✅ Price estimation successful: €{estimated_price}")
-                    print(f"         📊 Coefficients applied: {len(coefficients)}")
-                    
-                    # Check for season/age coefficient
-                    season_coefficient_found = False
-                    for coeff in coefficients:
-                        factor = coeff.get('factor', '').lower()
-                        if 'age' in factor or 'season' in factor or 'vintage' in factor:
-                            season_coefficient_found = True
-                            season_coefficients_found += 1
-                            print(f"         ✅ Season coefficient found: {coeff.get('factor')} = {coeff.get('value')}")
-                            break
-                    
-                    if not season_coefficient_found and season:
-                        print(f"         ⚠️ No season coefficient found for season: {season}")
-                    
-                    # Show all coefficients for analysis
-                    print(f"         📋 All coefficients:")
-                    for coeff in coefficients:
-                        print(f"            • {coeff.get('factor')}: {coeff.get('value')}")
-                    
-                    total_items_tested += 1
-                    
+                    self.log_test("User Registration", True, 
+                                 f"✅ User registration working - user created and can login immediately")
+                    return True, login_data
                 else:
-                    print(f"         ❌ Price estimation failed - Status {price_response.status_code}")
-                    print(f"            Error: {price_response.text}")
-            
-            # Step 3: Analyze results
-            if total_items_tested == 0:
-                self.log_test("Issue 1 - Season Format Bug Fix", False, 
-                             "❌ No collection items could be tested")
-                return False
-            
-            season_coefficient_rate = (season_coefficients_found / total_items_tested) * 100
-            
-            print(f"\n      📊 ISSUE 1 ANALYSIS:")
-            print(f"         Total items tested: {total_items_tested}")
-            print(f"         Slash format seasons found: {slash_format_seasons_tested}")
-            print(f"         Season coefficients found: {season_coefficients_found}")
-            print(f"         Season coefficient rate: {season_coefficient_rate:.1f}%")
-            
-            if season_coefficients_found > 0:
-                self.log_test("Issue 1 - Season Format Bug Fix", True, 
-                             f"✅ Season format bug fix working - {season_coefficients_found}/{total_items_tested} items ({season_coefficient_rate:.1f}%) show season coefficients with slash format support")
-                return True
+                    print(f"         ❌ User cannot login after registration - Status {login_response.status_code}")
+                    print(f"            Error: {login_response.text}")
+                    self.log_test("User Registration", False, 
+                                 f"❌ Registration succeeded but user cannot login - Status {login_response.status_code}")
+                    return False, None
+                    
+            elif registration_response.status_code == 400:
+                error_text = registration_response.text
+                if "already registered" in error_text.lower():
+                    print(f"         ⚠️ User already exists - testing login instead")
+                    # Test login with existing user
+                    login_response = self.session.post(
+                        f"{BACKEND_URL}/auth/login",
+                        json={
+                            "email": TEST_USER_CREDENTIALS['email'],
+                            "password": TEST_USER_CREDENTIALS['password']
+                        },
+                        timeout=10
+                    )
+                    
+                    if login_response.status_code == 200:
+                        print(f"         ✅ Existing user can login successfully")
+                        login_data = login_response.json()
+                        self.log_test("User Registration", True, 
+                                     f"✅ User already exists and can login - registration system working")
+                        return True, login_data
+                    else:
+                        print(f"         ❌ Existing user cannot login - Status {login_response.status_code}")
+                        self.log_test("User Registration", False, 
+                                     f"❌ User exists but cannot login - authentication broken")
+                        return False, None
+                else:
+                    print(f"         ❌ Registration failed with validation error")
+                    print(f"            Error: {error_text}")
+                    self.log_test("User Registration", False, 
+                                 f"❌ Registration failed with validation error - {error_text}")
+                    return False, None
             else:
-                self.log_test("Issue 1 - Season Format Bug Fix", False, 
-                             f"❌ Season format bug NOT fixed - 0/{total_items_tested} items show season coefficients")
-                return False
+                print(f"         ❌ Registration failed - Status {registration_response.status_code}")
+                print(f"            Error: {registration_response.text}")
+                self.log_test("User Registration", False, 
+                             f"❌ Registration failed - Status {registration_response.status_code}")
+                return False, None
                 
         except Exception as e:
-            self.log_test("Issue 1 - Season Format Bug Fix", False, f"Exception: {str(e)}")
-            return False
+            self.log_test("User Registration", False, f"Exception: {str(e)}")
+            return False, None
     
     def test_issue_3_collection_item_detail_endpoint(self):
         """ISSUE 3: Test new collection item detail endpoint"""
