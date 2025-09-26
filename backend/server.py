@@ -2295,13 +2295,15 @@ async def login(login_data: LoginRequest):
         token_data = {"sub": user["id"]}
         token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
         
-        # Return response
+        # Return response with gamification data
         user_response = UserResponse(
             id=user["id"],
             name=user["name"],
             email=user["email"],
             role=user.get("role", "user"),
-            created_at=user.get("created_at", datetime.utcnow())
+            created_at=user.get("created_at", datetime.utcnow()),
+            xp=user.get("xp", 0),
+            level=UserLevel(user.get("level", UserLevel.REMPLACANT))
         )
         
         return LoginResponse(token=token, user=user_response)
