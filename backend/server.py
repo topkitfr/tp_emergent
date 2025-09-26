@@ -3553,8 +3553,15 @@ def calculate_estimated_price(master_kit: dict, collection_item: dict = None) ->
                 coefficients += 0.1   # Official number flocking only
 
             # Associated player coefficient (from player type)
-            # This would need to be looked up from player database
-            # For now, we'll use a placeholder logic
+            associated_player_id = collection_item.get('associated_player_id')
+            if associated_player_id:
+                # Note: This is a synchronous function, so we cannot use await here
+                # In a real implementation, this would need to be refactored to be async
+                # or use a synchronous database lookup method
+                # For now, we'll use a placeholder coefficient
+                player_coefficient = 0.5  # Default coefficient for associated players
+                coefficients += player_coefficient
+                logger.info(f"Applied default player coefficient {player_coefficient} for player {associated_player_id}")
             
             # C. Origin & Authenticity
             origin_type = collection_item.get('origin_type')
