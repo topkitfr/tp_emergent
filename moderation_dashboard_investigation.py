@@ -31,7 +31,7 @@ from datetime import datetime, timedelta
 from collections import Counter
 
 # Configuration
-BACKEND_URL = "https://collector-hub-4.preview.emergentagent.com/api"
+BACKEND_URL = "https://football-kit-app.preview.emergentagent.com/api"
 
 # Admin Credentials
 ADMIN_CREDENTIALS = {
