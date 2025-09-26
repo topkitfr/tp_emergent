@@ -1531,8 +1531,12 @@ async def serve_optimized_file(
 ):
     """Serve uploaded files with optional optimization"""
     try:
+        # Handle empty file_path (when accessing /api/uploads/)
+        if not file_path or file_path == "/":
+            raise HTTPException(status_code=404, detail="File path required")
+        
         full_path = UPLOAD_DIR / file_path
-        if not full_path.exists():
+        if not full_path.exists() or not full_path.is_file():
             raise HTTPException(status_code=404, detail="File not found")
         
         # Determine content type
