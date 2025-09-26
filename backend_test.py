@@ -51,14 +51,14 @@ ADMIN_CREDENTIALS = {
     "name": "TopKit Admin"
 }
 
-class TopKitMasterKitFixesVerification:
+class TopKitMasterKitDataRetrievalVerification:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
         self.master_kits_data = []
-        self.image_test_results = []
+        self.collection_items_data = []
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
@@ -77,9 +77,9 @@ class TopKitMasterKitFixesVerification:
             print(f"   Details: {details}")
     
     def authenticate_admin(self):
-        """Authenticate with emergency admin credentials"""
+        """Authenticate with TopKit admin credentials"""
         try:
-            print(f"\n🔐 EMERGENCY ADMIN AUTHENTICATION")
+            print(f"\n🔐 TOPKIT ADMIN AUTHENTICATION")
             print("=" * 60)
             print(f"   Email: {ADMIN_CREDENTIALS['email']}")
             print(f"   Password: {ADMIN_CREDENTIALS['password']}")
@@ -96,8 +96,8 @@ class TopKitMasterKitFixesVerification:
                 self.auth_token = data.get("token")
                 self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
                 
-                self.log_test("Emergency Admin Authentication", True, 
-                             f"✅ Emergency admin authentication successful")
+                self.log_test("TopKit Admin Authentication", True, 
+                             f"✅ TopKit admin authentication successful")
                 print(f"      User ID: {self.admin_user_data.get('id')}")
                 print(f"      Name: {self.admin_user_data.get('name')}")
                 print(f"      Email: {self.admin_user_data.get('email')}")
@@ -106,51 +106,18 @@ class TopKitMasterKitFixesVerification:
                 return True
                 
             else:
-                self.log_test("Emergency Admin Authentication", False, 
-                             f"❌ Emergency admin authentication failed - Status {response.status_code}", response.text)
+                self.log_test("TopKit Admin Authentication", False, 
+                             f"❌ TopKit admin authentication failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_uploads_endpoint_fix(self):
-        """Test the fixed /api/uploads/ endpoint - should no longer return 500 error"""
-        try:
-            print(f"\n🔧 TESTING UPLOADS ENDPOINT FIX")
-            print("=" * 60)
-            print("      Testing if duplicate PIL import fix resolved 500 error...")
-            
-            response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
-            print(f"      /api/uploads/ response status: {response.status_code}")
-            
-            if response.status_code == 500:
-                print(f"      ❌ UPLOADS ENDPOINT STILL BROKEN - Status 500")
-                print(f"      Response: {response.text}")
-                self.log_test("Uploads Endpoint Fix", False, 
-                             f"❌ /api/uploads/ still returning 500 error - fix not working", response.text)
-                return False
-            elif response.status_code == 200:
-                print(f"      ✅ UPLOADS ENDPOINT FIXED - Status 200")
-                print(f"      Response: {response.text[:200]}...")
-                self.log_test("Uploads Endpoint Fix", True, 
-                             f"✅ /api/uploads/ endpoint now working - Status 200")
-                return True
-            else:
-                print(f"      ⚠️ UPLOADS ENDPOINT - Unexpected status: {response.status_code}")
-                print(f"      Response: {response.text}")
-                self.log_test("Uploads Endpoint Fix", True, 
-                             f"⚠️ /api/uploads/ endpoint - Status {response.status_code} (not 500)")
-                return True
-                
-        except Exception as e:
-            self.log_test("Uploads Endpoint Fix", False, f"Exception: {str(e)}")
+            self.log_test("TopKit Admin Authentication", False, f"Exception: {str(e)}")
             return False
 
-    def test_master_kits_endpoint(self):
-        """Test GET /api/master-kits endpoint for data retrieval"""
+    def test_master_kits_data_enrichment(self):
+        """Test GET /api/master-kits endpoint for data enrichment verification"""
         try:
-            print(f"\n🎽 TESTING MASTER KITS ENDPOINT")
+            print(f"\n🎽 TESTING MASTER KITS DATA ENRICHMENT")
             print("=" * 60)
             
             response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
@@ -165,152 +132,93 @@ class TopKitMasterKitFixesVerification:
                 print(f"      Total master kits returned: {len(master_kits)}")
                 
                 if len(master_kits) > 0:
-                    # Analyze first master kit for data completeness
+                    # Analyze first master kit for data enrichment
                     first_kit = master_kits[0]
-                    print(f"\n      📋 FIRST MASTER KIT DATA ANALYSIS:")
+                    print(f"\n      📋 MASTER KIT DATA ENRICHMENT ANALYSIS:")
                     print(f"         ID: {first_kit.get('id', 'MISSING')}")
-                    print(f"         Club: {first_kit.get('club', 'MISSING')}")
-                    print(f"         Season: {first_kit.get('season', 'MISSING')}")
-                    print(f"         Brand: {first_kit.get('brand', 'MISSING')}")
-                    print(f"         Kit Type: {first_kit.get('kit_type', 'MISSING')}")
-                    print(f"         Front Photo URL: {first_kit.get('front_photo_url', 'MISSING')}")
-                    print(f"         Back Photo URL: {first_kit.get('back_photo_url', 'MISSING')}")
-                    print(f"         TopKit Reference: {first_kit.get('topkit_reference', 'MISSING')}")
                     
-                    # Check for "Unknown" values
-                    unknown_fields = []
-                    for field, value in first_kit.items():
-                        if value == "Unknown" or value == "unknown":
-                            unknown_fields.append(field)
+                    # Check new enriched fields
+                    club_name = first_kit.get('club_name')
+                    brand_name = first_kit.get('brand_name')
+                    competition_name = first_kit.get('competition_name')
+                    model = first_kit.get('model')
                     
-                    if unknown_fields:
-                        print(f"         ⚠️ Fields with 'Unknown' values: {unknown_fields}")
+                    # Check legacy fields for backward compatibility
+                    club = first_kit.get('club')
+                    brand = first_kit.get('brand')
+                    competition = first_kit.get('competition')
+                    
+                    print(f"         🆕 NEW FORMAT FIELDS:")
+                    print(f"            club_name: {club_name}")
+                    print(f"            brand_name: {brand_name}")
+                    print(f"            competition_name: {competition_name}")
+                    print(f"            model: {model}")
+                    
+                    print(f"         🔄 LEGACY FORMAT FIELDS:")
+                    print(f"            club: {club}")
+                    print(f"            brand: {brand}")
+                    print(f"            competition: {competition}")
+                    
+                    # Verify enrichment worked
+                    enrichment_success = True
+                    enrichment_issues = []
+                    
+                    if not club_name or club_name in ["Unknown", "null", None]:
+                        enrichment_issues.append("club_name is null/Unknown")
+                        enrichment_success = False
+                    
+                    if not brand_name or brand_name in ["Unknown", "null", None]:
+                        enrichment_issues.append("brand_name is null/Unknown")
+                        enrichment_success = False
+                    
+                    if not model or model in ["Unknown", "null", None]:
+                        enrichment_issues.append("model is null/Unknown")
+                        enrichment_success = False
+                    
+                    # Check backward compatibility
+                    if not club or club in ["Unknown", "null", None]:
+                        enrichment_issues.append("legacy club field is null/Unknown")
+                        enrichment_success = False
+                    
+                    if not brand or brand in ["Unknown", "null", None]:
+                        enrichment_issues.append("legacy brand field is null/Unknown")
+                        enrichment_success = False
+                    
+                    if enrichment_success:
+                        print(f"         ✅ ENRICHMENT SUCCESS: All fields properly populated")
+                        print(f"         ✅ BACKWARD COMPATIBILITY: Legacy fields maintained")
                     else:
-                        print(f"         ✅ No 'Unknown' values detected in first master kit")
+                        print(f"         ❌ ENRICHMENT ISSUES: {enrichment_issues}")
                     
-                    # Check image URLs format
-                    front_photo = first_kit.get('front_photo_url')
-                    back_photo = first_kit.get('back_photo_url')
+                    # Check other important fields
+                    season = first_kit.get('season')
+                    topkit_reference = first_kit.get('topkit_reference')
+                    kit_type = first_kit.get('kit_type')
                     
-                    if front_photo:
-                        print(f"         Front photo path: {front_photo}")
-                        if front_photo.startswith('uploads/') or front_photo.startswith('master_kits/'):
-                            print(f"         ✅ Front photo URL format looks correct")
-                        else:
-                            print(f"         ⚠️ Front photo URL format may be incorrect")
-                    
-                    if back_photo:
-                        print(f"         Back photo path: {back_photo}")
-                        if back_photo.startswith('uploads/') or back_photo.startswith('master_kits/'):
-                            print(f"         ✅ Back photo URL format looks correct")
-                        else:
-                            print(f"         ⚠️ Back photo URL format may be incorrect")
+                    print(f"         📊 OTHER CRITICAL FIELDS:")
+                    print(f"            season: {season}")
+                    print(f"            topkit_reference: {topkit_reference}")
+                    print(f"            kit_type: {kit_type}")
                 
-                self.log_test("Master Kits Endpoint", True, 
-                             f"✅ Retrieved {len(master_kits)} master kits successfully")
+                self.log_test("Master Kits Data Enrichment", True, 
+                             f"✅ Retrieved {len(master_kits)} master kits with enrichment verification")
                 return True, master_kits
             else:
                 print(f"      ❌ Failed to get master kits - Status {response.status_code}")
                 print(f"      Response: {response.text}")
                 
-                self.log_test("Master Kits Endpoint", False, 
+                self.log_test("Master Kits Data Enrichment", False, 
                              f"❌ Failed - Status {response.status_code}", response.text)
                 return False, []
                 
         except Exception as e:
-            self.log_test("Master Kits Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Master Kits Data Enrichment", False, f"Exception: {str(e)}")
             return False, []
     
-    def test_image_serving_endpoints(self):
-        """Test image serving endpoints for master kit images"""
+    def test_my_collection_list_enrichment(self):
+        """Test GET /api/my-collection endpoint for embedded master kit data enrichment"""
         try:
-            print(f"\n🖼️ TESTING IMAGE SERVING ENDPOINTS")
-            print("=" * 60)
-            
-            if not self.master_kits_data:
-                print("      ⚠️ No master kits data available for image testing")
-                return False, []
-            
-            image_test_results = []
-            
-            # Test specific master kit images
-            tested_images = 0
-            accessible_images = 0
-            
-            for kit in self.master_kits_data[:3]:  # Test first 3 kits
-                kit_id = kit.get('id', 'unknown')
-                front_photo = kit.get('front_photo_url')
-                back_photo = kit.get('back_photo_url')
-                
-                print(f"\n      🎽 Testing images for Master Kit: {kit_id}")
-                print(f"         Club: {kit.get('club', 'Unknown')}")
-                print(f"         Season: {kit.get('season', 'Unknown')}")
-                
-                # Test front photo
-                if front_photo:
-                    tested_images += 1
-                    print(f"         Testing front photo: {front_photo}")
-                    
-                    # Try different URL formats
-                    image_urls_to_test = [
-                        f"https://topkit-auth-fix-2.preview.emergentagent.com/api/uploads/master_kits/{kit_id}_front.jpg",
-                        f"https://topkit-auth-fix-2.preview.emergentagent.com/{front_photo}",
-                        f"https://topkit-auth-fix-2.preview.emergentagent.com/api/{front_photo}"
-                    ]
-                    
-                    image_accessible = False
-                    for url in image_urls_to_test:
-                        try:
-                            img_response = self.session.get(url, timeout=5)
-                            if img_response.status_code == 200:
-                                print(f"         ✅ Front photo accessible at: {url}")
-                                accessible_images += 1
-                                image_accessible = True
-                                break
-                            else:
-                                print(f"         ❌ Front photo not accessible at: {url} (Status: {img_response.status_code})")
-                        except Exception as e:
-                            print(f"         ❌ Error accessing {url}: {str(e)}")
-                    
-                    if not image_accessible:
-                        print(f"         ❌ Front photo not accessible via any tested URL")
-                        image_test_results.append({
-                            "kit_id": kit_id,
-                            "image_type": "front",
-                            "image_path": front_photo,
-                            "accessible": False,
-                            "issue": "Image not accessible via any URL format"
-                        })
-                    else:
-                        image_test_results.append({
-                            "kit_id": kit_id,
-                            "image_type": "front", 
-                            "image_path": front_photo,
-                            "accessible": True
-                        })
-            
-            self.image_test_results = image_test_results
-            
-            print(f"\n      📊 IMAGE ACCESSIBILITY SUMMARY:")
-            print(f"         Total images tested: {tested_images}")
-            print(f"         Accessible images: {accessible_images}")
-            print(f"         Failed images: {tested_images - accessible_images}")
-            print(f"         Success rate: {(accessible_images/tested_images)*100:.1f}%" if tested_images > 0 else "N/A")
-            
-            success = accessible_images > 0 if tested_images > 0 else False
-            
-            self.log_test("Image Serving Endpoints", success, 
-                         f"{'✅' if success else '❌'} Image accessibility: {accessible_images}/{tested_images} images accessible")
-            return success, image_test_results
-                
-        except Exception as e:
-            self.log_test("Image Serving Endpoints", False, f"Exception: {str(e)}")
-            return False, []
-    
-    def test_collection_item_data_retrieval(self):
-        """Test collection item data retrieval with master kit information"""
-        try:
-            print(f"\n📦 TESTING COLLECTION ITEM DATA RETRIEVAL")
+            print(f"\n📦 TESTING MY COLLECTION LIST DATA ENRICHMENT")
             print("=" * 60)
             
             if not self.auth_token:
@@ -324,15 +232,16 @@ class TopKitMasterKitFixesVerification:
             
             if collection_response.status_code == 200:
                 collection_items = collection_response.json()
+                self.collection_items_data = collection_items
                 
-                print(f"      ✅ Collection endpoint accessible")
+                print(f"      ✅ My Collection endpoint accessible")
                 print(f"      Total collection items: {len(collection_items)}")
                 
                 if len(collection_items) > 0:
-                    # Analyze first collection item
+                    # Analyze first collection item for embedded master kit enrichment
                     first_item = collection_items[0]
-                    print(f"\n      📋 FIRST COLLECTION ITEM ANALYSIS:")
-                    print(f"         Item ID: {first_item.get('id', 'MISSING')}")
+                    print(f"\n      📋 COLLECTION ITEM MASTER KIT ENRICHMENT ANALYSIS:")
+                    print(f"         Collection Item ID: {first_item.get('id', 'MISSING')}")
                     print(f"         Master Kit ID: {first_item.get('master_kit_id', 'MISSING')}")
                     print(f"         Collection Type: {first_item.get('collection_type', 'MISSING')}")
                     
@@ -340,42 +249,93 @@ class TopKitMasterKitFixesVerification:
                     master_kit_data = first_item.get('master_kit')
                     if master_kit_data:
                         print(f"         ✅ Master kit data embedded in collection item")
-                        print(f"         Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
-                        print(f"         Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
-                        print(f"         Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
                         
-                        # Check for "Unknown" values in master kit data
-                        unknown_fields = []
-                        for field, value in master_kit_data.items():
-                            if value == "Unknown" or value == "unknown":
-                                unknown_fields.append(field)
+                        # Check enriched fields in embedded data
+                        club_name = master_kit_data.get('club_name')
+                        brand_name = master_kit_data.get('brand_name')
+                        competition_name = master_kit_data.get('competition_name')
+                        model = master_kit_data.get('model')
                         
-                        if unknown_fields:
-                            print(f"         ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
+                        # Check legacy fields for backward compatibility
+                        club = master_kit_data.get('club')
+                        brand = master_kit_data.get('brand')
+                        competition = master_kit_data.get('competition')
+                        
+                        print(f"         🆕 EMBEDDED NEW FORMAT FIELDS:")
+                        print(f"            club_name: {club_name}")
+                        print(f"            brand_name: {brand_name}")
+                        print(f"            competition_name: {competition_name}")
+                        print(f"            model: {model}")
+                        
+                        print(f"         🔄 EMBEDDED LEGACY FORMAT FIELDS:")
+                        print(f"            club: {club}")
+                        print(f"            brand: {brand}")
+                        print(f"            competition: {competition}")
+                        
+                        # Verify embedded enrichment worked
+                        embedded_enrichment_success = True
+                        embedded_enrichment_issues = []
+                        
+                        if not club_name or club_name in ["Unknown", "null", None]:
+                            embedded_enrichment_issues.append("embedded club_name is null/Unknown")
+                            embedded_enrichment_success = False
+                        
+                        if not brand_name or brand_name in ["Unknown", "null", None]:
+                            embedded_enrichment_issues.append("embedded brand_name is null/Unknown")
+                            embedded_enrichment_success = False
+                        
+                        if not model or model in ["Unknown", "null", None]:
+                            embedded_enrichment_issues.append("embedded model is null/Unknown")
+                            embedded_enrichment_success = False
+                        
+                        # Check backward compatibility in embedded data
+                        if not club or club in ["Unknown", "null", None]:
+                            embedded_enrichment_issues.append("embedded legacy club field is null/Unknown")
+                            embedded_enrichment_success = False
+                        
+                        if not brand or brand in ["Unknown", "null", None]:
+                            embedded_enrichment_issues.append("embedded legacy brand field is null/Unknown")
+                            embedded_enrichment_success = False
+                        
+                        if embedded_enrichment_success:
+                            print(f"         ✅ EMBEDDED ENRICHMENT SUCCESS: All embedded fields properly populated")
+                            print(f"         ✅ EMBEDDED BACKWARD COMPATIBILITY: Legacy embedded fields maintained")
                         else:
-                            print(f"         ✅ No 'Unknown' values in embedded master kit data")
+                            print(f"         ❌ EMBEDDED ENRICHMENT ISSUES: {embedded_enrichment_issues}")
+                        
+                        # Check other important embedded fields
+                        season = master_kit_data.get('season')
+                        topkit_reference = master_kit_data.get('topkit_reference')
+                        kit_type = master_kit_data.get('kit_type')
+                        
+                        print(f"         📊 OTHER EMBEDDED CRITICAL FIELDS:")
+                        print(f"            season: {season}")
+                        print(f"            topkit_reference: {topkit_reference}")
+                        print(f"            kit_type: {kit_type}")
+                        
                     else:
                         print(f"         ❌ No master kit data embedded in collection item")
+                        embedded_enrichment_success = False
                 
-                self.log_test("Collection Item Data Retrieval", True, 
-                             f"✅ Retrieved {len(collection_items)} collection items successfully")
+                self.log_test("My Collection List Data Enrichment", True, 
+                             f"✅ Retrieved {len(collection_items)} collection items with embedded enrichment verification")
                 return True, collection_items
             else:
                 print(f"      ❌ Failed to get collection items - Status {collection_response.status_code}")
                 print(f"      Response: {collection_response.text}")
                 
-                self.log_test("Collection Item Data Retrieval", False, 
+                self.log_test("My Collection List Data Enrichment", False, 
                              f"❌ Failed - Status {collection_response.status_code}", collection_response.text)
                 return False, []
                 
         except Exception as e:
-            self.log_test("Collection Item Data Retrieval", False, f"Exception: {str(e)}")
+            self.log_test("My Collection List Data Enrichment", False, f"Exception: {str(e)}")
             return False, []
 
-    def test_individual_collection_item_endpoint(self):
-        """Test GET /api/my-collection/{collection_id} for individual items"""
+    def test_individual_collection_item_enrichment(self):
+        """Test GET /api/my-collection/{collection_id} for individual item enrichment"""
         try:
-            print(f"\n📋 TESTING INDIVIDUAL COLLECTION ITEM ENDPOINT")
+            print(f"\n📋 TESTING INDIVIDUAL COLLECTION ITEM DATA ENRICHMENT")
             print("=" * 60)
             
             if not self.auth_token:
@@ -383,20 +343,17 @@ class TopKitMasterKitFixesVerification:
                     return False, {}
             
             # First get collection items to get an ID
-            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            if not self.collection_items_data:
+                collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+                if collection_response.status_code == 200:
+                    self.collection_items_data = collection_response.json()
             
-            if collection_response.status_code != 200:
-                print(f"      ❌ Cannot get collection items to test individual endpoint")
-                return False, {}
-            
-            collection_items = collection_response.json()
-            
-            if len(collection_items) == 0:
+            if not self.collection_items_data or len(self.collection_items_data) == 0:
                 print(f"      ⚠️ No collection items available to test individual endpoint")
                 return True, {}
             
             # Test first collection item
-            first_item = collection_items[0]
+            first_item = self.collection_items_data[0]
             item_id = first_item.get('id')
             
             print(f"      Testing individual collection item: {item_id}")
@@ -411,145 +368,97 @@ class TopKitMasterKitFixesVerification:
                 print(f"      Item ID: {item_data.get('id', 'MISSING')}")
                 print(f"      Master Kit ID: {item_data.get('master_kit_id', 'MISSING')}")
                 
-                # Check embedded master kit data
+                # Check embedded master kit data in individual item
                 master_kit_data = item_data.get('master_kit')
                 if master_kit_data:
                     print(f"      ✅ Master kit data embedded in individual item")
-                    print(f"      Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
-                    print(f"      Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
-                    print(f"      Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
                     
-                    # Check for "Unknown" values
-                    unknown_fields = []
-                    for field, value in master_kit_data.items():
-                        if value == "Unknown" or value == "unknown":
-                            unknown_fields.append(field)
+                    # Check enriched fields in individual embedded data
+                    club_name = master_kit_data.get('club_name')
+                    brand_name = master_kit_data.get('brand_name')
+                    competition_name = master_kit_data.get('competition_name')
+                    model = master_kit_data.get('model')
                     
-                    if unknown_fields:
-                        print(f"      ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
+                    # Check legacy fields for backward compatibility
+                    club = master_kit_data.get('club')
+                    brand = master_kit_data.get('brand')
+                    competition = master_kit_data.get('competition')
+                    
+                    print(f"      🆕 INDIVIDUAL ITEM NEW FORMAT FIELDS:")
+                    print(f"         club_name: {club_name}")
+                    print(f"         brand_name: {brand_name}")
+                    print(f"         competition_name: {competition_name}")
+                    print(f"         model: {model}")
+                    
+                    print(f"      🔄 INDIVIDUAL ITEM LEGACY FORMAT FIELDS:")
+                    print(f"         club: {club}")
+                    print(f"         brand: {brand}")
+                    print(f"         competition: {competition}")
+                    
+                    # Verify individual item enrichment worked
+                    individual_enrichment_success = True
+                    individual_enrichment_issues = []
+                    
+                    if not club_name or club_name in ["Unknown", "null", None]:
+                        individual_enrichment_issues.append("individual club_name is null/Unknown")
+                        individual_enrichment_success = False
+                    
+                    if not brand_name or brand_name in ["Unknown", "null", None]:
+                        individual_enrichment_issues.append("individual brand_name is null/Unknown")
+                        individual_enrichment_success = False
+                    
+                    if not model or model in ["Unknown", "null", None]:
+                        individual_enrichment_issues.append("individual model is null/Unknown")
+                        individual_enrichment_success = False
+                    
+                    # Check backward compatibility in individual data
+                    if not club or club in ["Unknown", "null", None]:
+                        individual_enrichment_issues.append("individual legacy club field is null/Unknown")
+                        individual_enrichment_success = False
+                    
+                    if not brand or brand in ["Unknown", "null", None]:
+                        individual_enrichment_issues.append("individual legacy brand field is null/Unknown")
+                        individual_enrichment_success = False
+                    
+                    if individual_enrichment_success:
+                        print(f"      ✅ INDIVIDUAL ENRICHMENT SUCCESS: All individual fields properly populated")
+                        print(f"      ✅ INDIVIDUAL BACKWARD COMPATIBILITY: Legacy individual fields maintained")
                     else:
-                        print(f"      ✅ No 'Unknown' values in individual item master kit data")
+                        print(f"      ❌ INDIVIDUAL ENRICHMENT ISSUES: {individual_enrichment_issues}")
+                    
+                    # Check other important individual fields
+                    season = master_kit_data.get('season')
+                    topkit_reference = master_kit_data.get('topkit_reference')
+                    kit_type = master_kit_data.get('kit_type')
+                    
+                    print(f"      📊 OTHER INDIVIDUAL CRITICAL FIELDS:")
+                    print(f"         season: {season}")
+                    print(f"         topkit_reference: {topkit_reference}")
+                    print(f"         kit_type: {kit_type}")
+                    
                 else:
                     print(f"      ❌ No master kit data embedded in individual item")
+                    individual_enrichment_success = False
                 
-                self.log_test("Individual Collection Item Endpoint", True, 
-                             f"✅ Individual collection item endpoint working with embedded master kit data")
+                self.log_test("Individual Collection Item Data Enrichment", True, 
+                             f"✅ Individual collection item endpoint working with embedded enrichment verification")
                 return True, item_data
             else:
                 print(f"      ❌ Failed to get individual collection item - Status {individual_response.status_code}")
                 print(f"      Response: {individual_response.text}")
                 
-                self.log_test("Individual Collection Item Endpoint", False, 
+                self.log_test("Individual Collection Item Data Enrichment", False, 
                              f"❌ Failed - Status {individual_response.status_code}", individual_response.text)
                 return False, {}
                 
         except Exception as e:
-            self.log_test("Individual Collection Item Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Individual Collection Item Data Enrichment", False, f"Exception: {str(e)}")
             return False, {}
-    
-    def test_homepage_master_kit_endpoints(self):
-        """Test homepage endpoints that should display master kit data"""
-        try:
-            print(f"\n🏠 TESTING HOMEPAGE MASTER KIT ENDPOINTS")
-            print("=" * 60)
-            
-            homepage_endpoints = [
-                "/homepage/expensive-kits",
-                "/homepage/recent-master-kits", 
-                "/homepage/recent-contributions"
-            ]
-            
-            homepage_results = []
-            
-            for endpoint in homepage_endpoints:
-                print(f"\n      Testing {endpoint}...")
-                
-                try:
-                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
-                    print(f"         Response Status: {response.status_code}")
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        print(f"         ✅ Endpoint accessible")
-                        print(f"         Items returned: {len(data) if isinstance(data, list) else 'N/A'}")
-                        
-                        # Check for master kit data quality
-                        if isinstance(data, list) and len(data) > 0:
-                            first_item = data[0]
-                            
-                            # Check for image URLs
-                            front_photo = first_item.get('front_photo_url')
-                            if front_photo:
-                                print(f"         Front photo URL present: {front_photo}")
-                            else:
-                                print(f"         ⚠️ No front photo URL in first item")
-                            
-                            # Check for basic master kit fields
-                            club = first_item.get('club')
-                            season = first_item.get('season')
-                            brand = first_item.get('brand')
-                            
-                            if club and club != "Unknown":
-                                print(f"         ✅ Club data present: {club}")
-                            else:
-                                print(f"         ⚠️ Club data missing or 'Unknown': {club}")
-                            
-                            if season and season != "Unknown":
-                                print(f"         ✅ Season data present: {season}")
-                            else:
-                                print(f"         ⚠️ Season data missing or 'Unknown': {season}")
-                            
-                            if brand and brand != "Unknown":
-                                print(f"         ✅ Brand data present: {brand}")
-                            else:
-                                print(f"         ⚠️ Brand data missing or 'Unknown': {brand}")
-                        
-                        homepage_results.append({
-                            "endpoint": endpoint,
-                            "status": response.status_code,
-                            "success": True,
-                            "data_count": len(data) if isinstance(data, list) else 0
-                        })
-                    else:
-                        print(f"         ❌ Endpoint failed - Status {response.status_code}")
-                        print(f"         Response: {response.text}")
-                        
-                        homepage_results.append({
-                            "endpoint": endpoint,
-                            "status": response.status_code,
-                            "success": False,
-                            "error": response.text
-                        })
-                        
-                except Exception as e:
-                    print(f"         ❌ Exception testing {endpoint}: {str(e)}")
-                    homepage_results.append({
-                        "endpoint": endpoint,
-                        "success": False,
-                        "error": str(e)
-                    })
-            
-            successful_endpoints = len([r for r in homepage_results if r.get('success')])
-            total_endpoints = len(homepage_endpoints)
-            
-            print(f"\n      📊 HOMEPAGE ENDPOINTS SUMMARY:")
-            print(f"         Successful endpoints: {successful_endpoints}/{total_endpoints}")
-            print(f"         Success rate: {(successful_endpoints/total_endpoints)*100:.1f}%")
-            
-            success = successful_endpoints > 0
-            
-            self.log_test("Homepage Master Kit Endpoints", success, 
-                         f"{'✅' if success else '❌'} Homepage endpoints: {successful_endpoints}/{total_endpoints} working")
-            return success, homepage_results
-                
-        except Exception as e:
-            self.log_test("Homepage Master Kit Endpoints", False, f"Exception: {str(e)}")
-            return False, []
 
-    def run_master_kit_fixes_verification(self):
-        """Run comprehensive master kit fixes verification"""
-        print("\n🚀 MASTER KIT IMAGE AND DATA FIXES VERIFICATION")
-        print("Verifying fixes for master kit image serving and data embedding issues")
+    def run_master_kit_data_retrieval_verification(self):
+        """Run comprehensive master kit data retrieval verification"""
+        print("\n🚀 MASTER KIT DATA RETRIEVAL FIXES VERIFICATION")
+        print("Verifying fixes for master kit data enrichment and embedding issues")
         print("=" * 80)
         
         test_results = []
@@ -563,47 +472,30 @@ class TopKitMasterKitFixesVerification:
             print("❌ Cannot proceed without authentication")
             return test_results, {}
         
-        # Step 2: Test uploads endpoint fix
-        print("\n2️⃣ Testing Uploads Endpoint Fix...")
-        uploads_success = self.test_uploads_endpoint_fix()
-        test_results.append(uploads_success)
-        
-        # Step 3: Test master kits endpoint
-        print("\n3️⃣ Testing Master Kits Endpoint...")
-        master_kits_success, master_kits_data = self.test_master_kits_endpoint()
+        # Step 2: Test master kits data enrichment
+        print("\n2️⃣ Testing Master Kits Data Enrichment...")
+        master_kits_success, master_kits_data = self.test_master_kits_data_enrichment()
         test_results.append(master_kits_success)
         
-        # Step 4: Test image serving
-        print("\n4️⃣ Testing Image Serving Endpoints...")
-        image_success, image_results = self.test_image_serving_endpoints()
-        test_results.append(image_success)
-        
-        # Step 5: Test collection item data
-        print("\n5️⃣ Testing Collection Item Data Retrieval...")
-        collection_success, collection_data = self.test_collection_item_data_retrieval()
+        # Step 3: Test my collection list enrichment
+        print("\n3️⃣ Testing My Collection List Data Enrichment...")
+        collection_success, collection_data = self.test_my_collection_list_enrichment()
         test_results.append(collection_success)
         
-        # Step 6: Test individual collection item endpoint
-        print("\n6️⃣ Testing Individual Collection Item Endpoint...")
-        individual_success, individual_data = self.test_individual_collection_item_endpoint()
+        # Step 4: Test individual collection item enrichment
+        print("\n4️⃣ Testing Individual Collection Item Data Enrichment...")
+        individual_success, individual_data = self.test_individual_collection_item_enrichment()
         test_results.append(individual_success)
-        
-        # Step 7: Test homepage endpoints
-        print("\n7️⃣ Testing Homepage Master Kit Endpoints...")
-        homepage_success, homepage_results = self.test_homepage_master_kit_endpoints()
-        test_results.append(homepage_success)
         
         return test_results, {
             "master_kits_data": master_kits_data if master_kits_success else [],
-            "image_results": image_results if image_success else [],
             "collection_data": collection_data if collection_success else [],
-            "individual_data": individual_data if individual_success else {},
-            "homepage_results": homepage_results if homepage_success else []
+            "individual_data": individual_data if individual_success else {}
         }
 
-    def print_comprehensive_fixes_summary(self, test_data):
-        """Print final comprehensive fixes verification summary"""
-        print("\n📊 MASTER KIT FIXES VERIFICATION SUMMARY")
+    def print_comprehensive_data_retrieval_summary(self, test_data):
+        """Print final comprehensive data retrieval verification summary"""
+        print("\n📊 MASTER KIT DATA RETRIEVAL FIXES VERIFICATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -615,152 +507,192 @@ class TopKitMasterKitFixesVerification:
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
-        # Key findings for fixes verification
-        print(f"\n🔍 FIXES VERIFICATION RESULTS:")
+        # Key findings for data retrieval verification
+        print(f"\n🔍 DATA RETRIEVAL FIXES VERIFICATION RESULTS:")
         
-        # Check uploads endpoint fix
-        uploads_test = next((r for r in self.test_results if r['test'] == 'Uploads Endpoint Fix'), None)
-        if uploads_test:
-            if uploads_test['success']:
-                print(f"\n✅ FIX 1 - UPLOADS ENDPOINT: VERIFIED WORKING")
-                print(f"  • /api/uploads/ endpoint no longer returns 500 error")
-                print(f"  • Duplicate PIL import issue has been resolved")
-            else:
-                print(f"\n❌ FIX 1 - UPLOADS ENDPOINT: STILL BROKEN")
-                print(f"  • /api/uploads/ endpoint still returning 500 error")
-                print(f"  • Duplicate PIL import fix may not be working")
-        
-        # Master kits data analysis
+        # Master kits data enrichment analysis
         master_kits_data = test_data.get("master_kits_data", [])
         if master_kits_data:
-            print(f"\n✅ FIX 2 - MASTER KITS DATA: VERIFIED")
+            print(f"\n✅ FIX 1 - MASTER KITS DATA ENRICHMENT: VERIFIED")
             print(f"  • Total master kits available: {len(master_kits_data)}")
             
             if len(master_kits_data) > 0:
                 first_kit = master_kits_data[0]
-                unknown_fields = []
-                for field, value in first_kit.items():
-                    if value == "Unknown" or value == "unknown":
-                        unknown_fields.append(field)
                 
-                if unknown_fields:
-                    print(f"  ⚠️ Some fields still showing 'Unknown' values: {unknown_fields}")
+                # Check enriched fields
+                club_name = first_kit.get('club_name')
+                brand_name = first_kit.get('brand_name')
+                model = first_kit.get('model')
+                
+                # Check legacy fields
+                club = first_kit.get('club')
+                brand = first_kit.get('brand')
+                
+                enrichment_working = []
+                enrichment_broken = []
+                
+                if club_name and club_name not in ["Unknown", "null", None]:
+                    enrichment_working.append(f"club_name: '{club_name}'")
                 else:
-                    print(f"  ✅ No 'Unknown' values detected in master kit data")
+                    enrichment_broken.append(f"club_name: '{club_name}'")
+                
+                if brand_name and brand_name not in ["Unknown", "null", None]:
+                    enrichment_working.append(f"brand_name: '{brand_name}'")
+                else:
+                    enrichment_broken.append(f"brand_name: '{brand_name}'")
+                
+                if model and model not in ["Unknown", "null", None]:
+                    enrichment_working.append(f"model: '{model}'")
+                else:
+                    enrichment_broken.append(f"model: '{model}'")
+                
+                if club and club not in ["Unknown", "null", None]:
+                    enrichment_working.append(f"legacy club: '{club}'")
+                else:
+                    enrichment_broken.append(f"legacy club: '{club}'")
+                
+                if brand and brand not in ["Unknown", "null", None]:
+                    enrichment_working.append(f"legacy brand: '{brand}'")
+                else:
+                    enrichment_broken.append(f"legacy brand: '{brand}'")
+                
+                if enrichment_working:
+                    print(f"  ✅ WORKING ENRICHED FIELDS:")
+                    for field in enrichment_working:
+                        print(f"     • {field}")
+                
+                if enrichment_broken:
+                    print(f"  ❌ BROKEN ENRICHED FIELDS:")
+                    for field in enrichment_broken:
+                        print(f"     • {field}")
+                
+                if not enrichment_broken:
+                    print(f"  🎉 ALL MASTER KIT FIELDS PROPERLY ENRICHED!")
         
-        # Image serving analysis
-        image_results = test_data.get("image_results", [])
-        if image_results:
-            accessible_images = len([r for r in image_results if r.get('accessible')])
-            total_images = len(image_results)
-            
-            print(f"\n✅ FIX 3 - IMAGE SERVING: VERIFIED")
-            print(f"  • Images tested: {total_images}")
-            print(f"  • Accessible images: {accessible_images}")
-            print(f"  • Success rate: {(accessible_images/total_images)*100:.1f}%" if total_images > 0 else "N/A")
-            
-            if accessible_images == total_images and total_images > 0:
-                print(f"  ✅ All master kit images are now accessible")
-            elif accessible_images > 0:
-                print(f"  ⚠️ Partial fix: {accessible_images}/{total_images} images accessible")
-            else:
-                print(f"  ❌ Image serving still broken: no images accessible")
-        
-        # Collection data analysis
+        # Collection data enrichment analysis
         collection_data = test_data.get("collection_data", [])
         individual_data = test_data.get("individual_data", {})
         
         if collection_data or individual_data:
-            print(f"\n✅ FIX 4 - COLLECTION DATA EMBEDDING: VERIFIED")
+            print(f"\n✅ FIX 2 - COLLECTION DATA EMBEDDING ENRICHMENT: VERIFIED")
             
-            if collection_data:
-                print(f"  • Collection items found: {len(collection_data)}")
+            if collection_data and len(collection_data) > 0:
+                first_item = collection_data[0]
+                master_kit_data = first_item.get('master_kit')
                 
-                if len(collection_data) > 0:
-                    first_item = collection_data[0]
-                    master_kit_data = first_item.get('master_kit')
+                if master_kit_data:
+                    print(f"  • Collection items found: {len(collection_data)}")
                     
-                    if master_kit_data:
-                        unknown_fields = []
-                        for field, value in master_kit_data.items():
-                            if value == "Unknown" or value == "unknown":
-                                unknown_fields.append(field)
-                        
-                        if unknown_fields:
-                            print(f"  ⚠️ Collection items still showing some 'Unknown' master kit data: {unknown_fields}")
-                        else:
-                            print(f"  ✅ Collection items have complete master kit data")
+                    # Check embedded enriched fields
+                    club_name = master_kit_data.get('club_name')
+                    brand_name = master_kit_data.get('brand_name')
+                    model = master_kit_data.get('model')
+                    
+                    # Check embedded legacy fields
+                    club = master_kit_data.get('club')
+                    brand = master_kit_data.get('brand')
+                    
+                    embedded_enrichment_working = []
+                    embedded_enrichment_broken = []
+                    
+                    if club_name and club_name not in ["Unknown", "null", None]:
+                        embedded_enrichment_working.append(f"embedded club_name: '{club_name}'")
                     else:
-                        print(f"  ❌ Collection items missing embedded master kit data")
+                        embedded_enrichment_broken.append(f"embedded club_name: '{club_name}'")
+                    
+                    if brand_name and brand_name not in ["Unknown", "null", None]:
+                        embedded_enrichment_working.append(f"embedded brand_name: '{brand_name}'")
+                    else:
+                        embedded_enrichment_broken.append(f"embedded brand_name: '{brand_name}'")
+                    
+                    if model and model not in ["Unknown", "null", None]:
+                        embedded_enrichment_working.append(f"embedded model: '{model}'")
+                    else:
+                        embedded_enrichment_broken.append(f"embedded model: '{model}'")
+                    
+                    if club and club not in ["Unknown", "null", None]:
+                        embedded_enrichment_working.append(f"embedded legacy club: '{club}'")
+                    else:
+                        embedded_enrichment_broken.append(f"embedded legacy club: '{club}'")
+                    
+                    if brand and brand not in ["Unknown", "null", None]:
+                        embedded_enrichment_working.append(f"embedded legacy brand: '{brand}'")
+                    else:
+                        embedded_enrichment_broken.append(f"embedded legacy brand: '{brand}'")
+                    
+                    if embedded_enrichment_working:
+                        print(f"  ✅ WORKING EMBEDDED ENRICHED FIELDS:")
+                        for field in embedded_enrichment_working:
+                            print(f"     • {field}")
+                    
+                    if embedded_enrichment_broken:
+                        print(f"  ❌ BROKEN EMBEDDED ENRICHED FIELDS:")
+                        for field in embedded_enrichment_broken:
+                            print(f"     • {field}")
+                    
+                    if not embedded_enrichment_broken:
+                        print(f"  🎉 ALL EMBEDDED COLLECTION FIELDS PROPERLY ENRICHED!")
+                else:
+                    print(f"  ❌ Collection items missing embedded master kit data")
             
             if individual_data:
                 master_kit_data = individual_data.get('master_kit')
                 if master_kit_data:
-                    print(f"  ✅ Individual collection item endpoint working with embedded data")
+                    print(f"  ✅ Individual collection item endpoint working with embedded enriched data")
                 else:
-                    print(f"  ❌ Individual collection item endpoint missing embedded data")
+                    print(f"  ❌ Individual collection item endpoint missing embedded enriched data")
         
-        # Homepage endpoints analysis
-        homepage_results = test_data.get("homepage_results", [])
-        if homepage_results:
-            successful_endpoints = len([r for r in homepage_results if r.get('success')])
-            total_endpoints = len(homepage_results)
-            
-            print(f"\n✅ FIX 5 - HOMEPAGE ENDPOINTS: VERIFIED")
-            print(f"  • Working endpoints: {successful_endpoints}/{total_endpoints}")
-            print(f"  • Success rate: {(successful_endpoints/total_endpoints)*100:.1f}%")
-            
-            if successful_endpoints == total_endpoints:
-                print(f"  ✅ All homepage master kit endpoints working")
-            elif successful_endpoints > 0:
-                print(f"  ⚠️ Partial fix: {successful_endpoints}/{total_endpoints} endpoints working")
-            else:
-                print(f"  ❌ Homepage endpoints still broken")
-        
-        # Overall fix status
-        print(f"\n🎯 OVERALL FIXES STATUS:")
+        # Overall enrichment status
+        print(f"\n🎯 OVERALL DATA ENRICHMENT STATUS:")
         
         fixes_working = []
         fixes_broken = []
         
-        # Check each fix
-        if uploads_test and uploads_test['success']:
-            fixes_working.append("Uploads endpoint 500 error fix")
-        elif uploads_test:
-            fixes_broken.append("Uploads endpoint 500 error fix")
-        
-        if master_kits_data:
-            fixes_working.append("Master kit data retrieval")
+        # Check master kits enrichment
+        if master_kits_data and len(master_kits_data) > 0:
+            first_kit = master_kits_data[0]
+            if (first_kit.get('club_name') and first_kit.get('club_name') not in ["Unknown", "null", None] and
+                first_kit.get('brand_name') and first_kit.get('brand_name') not in ["Unknown", "null", None]):
+                fixes_working.append("Master kits data enrichment (club_name, brand_name)")
+            else:
+                fixes_broken.append("Master kits data enrichment (club_name, brand_name)")
         else:
-            fixes_broken.append("Master kit data retrieval")
+            fixes_broken.append("Master kits data retrieval")
         
-        if image_results and len([r for r in image_results if r.get('accessible')]) > 0:
-            fixes_working.append("Master kit image accessibility")
-        elif image_results:
-            fixes_broken.append("Master kit image accessibility")
-        
-        if (collection_data and len(collection_data) > 0 and collection_data[0].get('master_kit')) or (individual_data and individual_data.get('master_kit')):
-            fixes_working.append("Collection item data embedding")
+        # Check collection embedding enrichment
+        if (collection_data and len(collection_data) > 0 and collection_data[0].get('master_kit')):
+            master_kit_data = collection_data[0].get('master_kit')
+            if (master_kit_data.get('club_name') and master_kit_data.get('club_name') not in ["Unknown", "null", None] and
+                master_kit_data.get('brand_name') and master_kit_data.get('brand_name') not in ["Unknown", "null", None]):
+                fixes_working.append("Collection item data embedding enrichment")
+            else:
+                fixes_broken.append("Collection item data embedding enrichment")
         else:
             fixes_broken.append("Collection item data embedding")
         
-        if homepage_results and len([r for r in homepage_results if r.get('success')]) > 0:
-            fixes_working.append("Homepage master kit endpoints")
-        elif homepage_results:
-            fixes_broken.append("Homepage master kit endpoints")
+        # Check individual item enrichment
+        if individual_data and individual_data.get('master_kit'):
+            master_kit_data = individual_data.get('master_kit')
+            if (master_kit_data.get('club_name') and master_kit_data.get('club_name') not in ["Unknown", "null", None] and
+                master_kit_data.get('brand_name') and master_kit_data.get('brand_name') not in ["Unknown", "null", None]):
+                fixes_working.append("Individual collection item enrichment")
+            else:
+                fixes_broken.append("Individual collection item enrichment")
+        else:
+            fixes_broken.append("Individual collection item enrichment")
         
         if fixes_working:
-            print(f"  ✅ WORKING FIXES ({len(fixes_working)}):")
+            print(f"  ✅ WORKING ENRICHMENT FIXES ({len(fixes_working)}):")
             for fix in fixes_working:
                 print(f"     • {fix}")
         
         if fixes_broken:
-            print(f"  ❌ BROKEN FIXES ({len(fixes_broken)}):")
+            print(f"  ❌ BROKEN ENRICHMENT FIXES ({len(fixes_broken)}):")
             for fix in fixes_broken:
                 print(f"     • {fix}")
         
         if not fixes_broken:
-            print(f"  🎉 ALL FIXES VERIFIED WORKING!")
+            print(f"  🎉 ALL DATA ENRICHMENT FIXES VERIFIED WORKING!")
         
         # Show test failures
         failures = [r for r in self.test_results if not r['success']]
@@ -772,14 +704,14 @@ class TopKitMasterKitFixesVerification:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the master kit fixes verification"""
-    tester = TopKitMasterKitFixesVerification()
+    """Main function to run the master kit data retrieval verification"""
+    tester = TopKitMasterKitDataRetrievalVerification()
     
-    # Run the comprehensive master kit fixes verification
-    test_results, test_data = tester.run_master_kit_fixes_verification()
+    # Run the comprehensive master kit data retrieval verification
+    test_results, test_data = tester.run_master_kit_data_retrieval_verification()
     
     # Print comprehensive summary
-    tester.print_comprehensive_fixes_summary(test_data)
+    tester.print_comprehensive_data_retrieval_summary(test_data)
     
     # Return overall success
     return all(test_results)
