@@ -1743,8 +1743,11 @@ async def get_master_kits_paginated(
                 # Remove MongoDB ObjectId
                 if "_id" in kit:
                     del kit["_id"]
+                
+                # CRITICAL FIX: Enrich master kit data with related entity names
+                enriched_kit = await enrich_master_kit_data(kit)
                     
-                response_kits.append(MasterKitResponse(**kit))
+                response_kits.append(MasterKitResponse(**enriched_kit))
             except Exception as kit_error:
                 logger.warning(f"Error processing kit {kit.get('id', 'unknown')}: {str(kit_error)}")
                 continue
