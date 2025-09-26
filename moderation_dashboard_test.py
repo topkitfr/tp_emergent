@@ -344,7 +344,7 @@ class ModerationDashboardTesting:
                 return False
             
             # Extract data from stats API
-            stats_pending = stats_data.get('pending_review', 0)
+            stats_pending = stats_data.get('pending', 0)  # Fixed: use 'pending' instead of 'pending_review'
             stats_total = stats_data.get('total', 0)
             stats_approved = stats_data.get('approved', 0)
             stats_rejected = stats_data.get('rejected', 0)
