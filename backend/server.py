@@ -3770,8 +3770,33 @@ async def get_collection_item_price_estimation(
         if not master_kit:
             raise HTTPException(status_code=404, detail="Master Kit not found")
         
+        # PLAYER COEFFICIENT FIX: Look up player coefficient before price calculation
+        player_coefficient = 0.0
+        associated_player_id = collection_item.get('associated_player_id')
+        if associated_player_id:
+            player = await db.players.find_one({"id": associated_player_id})
+            if player:
+                # Priority 1: Use influence_coefficient if available
+                if player.get("influence_coefficient"):
+                    player_coefficient = player["influence_coefficient"]
+                
+                # Priority 2: Use player_type coefficient
+                elif player.get("player_type"):
+                    try:
+                        player_type = PlayerType(player["player_type"])
+                        player_coefficient = get_player_type_coefficient(player_type)
+                    except ValueError:
+                        # Handle invalid player_type values gracefully
+                        player_coefficient = 0.0
+                
+                logger.info(f"Applied player coefficient {player_coefficient} for player {player.get('name', 'Unknown')}")
+        
+        # Add player coefficient to collection item temporarily for calculation
+        calculation_item = collection_item.copy()
+        calculation_item['_player_coefficient'] = player_coefficient
+        
         # Calculate detailed price with personal details
-        estimated_price = calculate_estimated_price(master_kit, collection_item)
+        estimated_price = calculate_estimated_price(master_kit, calculation_item)
         
         # Build detailed breakdown with enhanced coefficients
         base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
