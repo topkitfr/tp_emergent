@@ -3824,6 +3824,20 @@ async def get_collection_item_price_estimation(
         elif has_number:
             coefficients.append({"factor": "Official number flocking", "value": "+0.1"})
         
+        # Player Coefficient (NEW FIX)
+        if player_coefficient > 0:
+            # Get player name for display
+            player_name = "Unknown Player"
+            if associated_player_id:
+                player = await db.players.find_one({"id": associated_player_id})
+                if player:
+                    player_name = player.get('name', 'Unknown Player')
+            
+            coefficients.append({
+                "factor": f"Player influence ({player_name})", 
+                "value": f"+{player_coefficient:.2f}"
+            })
+        
         # C. Origin & Authenticity
         origin_type = collection_item.get('origin_type')
         if origin_type == 'match_issued':
