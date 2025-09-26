@@ -1486,7 +1486,10 @@ async def update_collection_item(
             if "patches" in updated_item and isinstance(updated_item["patches"], list):
                 updated_item["patches"] = ", ".join(updated_item["patches"]) if updated_item["patches"] else None
             
-            updated_item["master_kit"] = MasterKitResponse(**master_kit)
+            # CRITICAL FIX: Enrich master kit data with related entity names
+            enriched_master_kit = await enrich_master_kit_data(master_kit)
+            
+            updated_item["master_kit"] = MasterKitResponse(**enriched_master_kit)
             return MyCollectionResponse(**updated_item)
         else:
             raise HTTPException(status_code=500, detail="Error updating collection item")
