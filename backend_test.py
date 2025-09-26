@@ -1,44 +1,51 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - CONTRIBUTION CREATION FIX VERIFICATION
+TopKit Backend Testing Suite - CRITICAL MASTER KIT DISPLAY ISSUES INVESTIGATION
 
-**CONTRIBUTION CREATION FIX TESTING:**
-Testing the critical bug fix where all brand/team/player/competition contributions 
-were being saved to the wrong database collection (db.contributions instead of db.contributions_v2).
+**CRITICAL MASTER KIT DISPLAY ISSUES INVESTIGATION:**
+User reports multiple critical issues:
 
-**TEST FOCUS:**
+1. **Master kit images not displaying** on:
+   - Homepage
+   - Kit Area pages
+   - My Collection
+   - Collection item detail pages
+
+2. **Master kit data not being retrieved** when adding to collection:
+   - Only showing "Unknown" instead of actual master kit information
+   - Should copy all master kit data + user personal details
+
+**INVESTIGATION FOCUS:**
 
 1. **Authentication**: Login with emergency.admin@topkit.test / EmergencyAdmin2025!
 
-2. **Create Test Brand Contribution**:
-   - Test POST /api/contributions-v2/ with brand entity data
-   - Use proper JSON payload with entity_type: "brand", title, description, data fields
-   - Verify contribution is saved to contributions_v2 collection (not the old contributions collection)
+2. **Image Serving Issues**:
+   - Test GET /api/uploads/ endpoints for master kit images
+   - Check if master kit front_photo_url and back_photo_url are accessible
+   - Verify image URLs are correctly formatted and served
 
-3. **Verify Contribution Appears**:
-   - Test GET /api/contributions-v2/ to see all contributions 
-   - Check if the new brand contribution appears with other contributions
-   - Verify it has entity_type="brand" and proper status
+3. **Master Kit Data Retrieval**:
+   - Test GET /api/master-kits/ to see what data is returned
+   - Check if master kit fields like name, club, season, brand are populated
+   - Verify master kit to collection copying logic
 
-4. **Test Moderation Dashboard Data**:
-   - Test GET /api/contributions-v2/admin/moderation-stats
-   - Verify the pending count increases after creating the brand contribution
-   - Check consistency between stats and actual contributions
+4. **API Endpoints Health**:
+   - Test homepage master kit endpoints
+   - Test kit area master kit listing
+   - Test individual master kit detail retrieval
+   - Test collection item data with master kit information
 
-5. **Create Additional Entity Types**:
-   - Test team contribution creation
-   - Test player contribution creation  
-   - Test competition contribution creation
-   - Verify all entity types now appear in contributions_v2
+5. **Database Master Kit Records**:
+   - Check master kit database records for complete information
+   - Verify image paths and metadata are stored correctly
 
-**Expected Results**:
-- Brand/team/player/competition contributions now save correctly to contributions_v2
-- All contributions appear in moderation dashboard 
-- Consistent counts between stats and actual data
-- User will now see ALL contribution types with pending approval stickers
-- Fixed the core issue preventing 80% of contributions from being visible
+**Expected to Find**:
+- Root cause of image serving failures
+- Missing master kit data population issues  
+- Database or API problems preventing proper data display
+- Path to restore full master kit functionality
 
-**PRIORITY: CRITICAL** - This fix should restore the entire contribution moderation workflow.
+**PRIORITY: CRITICAL** - These issues affect core user experience and functionality.
 """
 
 import requests
