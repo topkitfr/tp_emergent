@@ -294,7 +294,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       src={item.master_kit.front_photo_url.startsWith('data:') || item.master_kit.front_photo_url.startsWith('http') ? item.master_kit.front_photo_url : 
                          item.master_kit.front_photo_url.startsWith('uploads/') ? 
                          `${API}/api/${item.master_kit.front_photo_url}` :
-                         `${API}/api/uploads/master_kits/${item.master_kit.front_photo_url}.jpg`}
+                         `${API}/api/uploads/${item.master_kit.front_photo_url}`}
                       alt={`${item.master_kit.club_name || item.master_kit.club || 'Team'} ${item.master_kit.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
