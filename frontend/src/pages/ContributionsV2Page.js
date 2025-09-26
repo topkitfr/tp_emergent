@@ -450,7 +450,7 @@ const ContributionsV2Page = ({ user, teams = [], brands = [], competitions = [],
                 return (
                   <div key={contribution.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
                     {/* Pending Approval Sticker */}
-                    {contribution.status === 'pending_review' && (
+                    {(contribution.status === 'pending_review' || contribution.status === 'pending') && (
                       <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md z-10">
                         PENDING APPROVAL
                       </div>
