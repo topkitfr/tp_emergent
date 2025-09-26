@@ -22,7 +22,7 @@ MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'topkit')
 
 # Target user email
-TARGET_USER_EMAIL = "Topkitfr@gmail.com"
+TARGET_USER_EMAIL = "topkitfr@gmail.com"
 
 async def assign_data_to_user():
     """Main function to assign all data to target user"""
