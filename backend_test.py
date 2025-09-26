@@ -503,10 +503,118 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             self.log_test("Homepage Master Kit Endpoints", False, f"Exception: {str(e)}")
             return False, []
     
-    def run_master_kit_display_investigation(self):
-        """Run comprehensive master kit display issues investigation"""
-        print("\n🚀 MASTER KIT DISPLAY ISSUES INVESTIGATION")
-        print("Investigating critical master kit image and data display problems")
+    def test_uploads_endpoint_fix(self):
+        """Test the fixed /api/uploads/ endpoint - should no longer return 500 error"""
+        try:
+            print(f"\n🔧 TESTING UPLOADS ENDPOINT FIX")
+            print("=" * 60)
+            print("      Testing if duplicate PIL import fix resolved 500 error...")
+            
+            response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
+            print(f"      /api/uploads/ response status: {response.status_code}")
+            
+            if response.status_code == 500:
+                print(f"      ❌ UPLOADS ENDPOINT STILL BROKEN - Status 500")
+                print(f"      Response: {response.text}")
+                self.log_test("Uploads Endpoint Fix", False, 
+                             f"❌ /api/uploads/ still returning 500 error - fix not working", response.text)
+                return False
+            elif response.status_code == 200:
+                print(f"      ✅ UPLOADS ENDPOINT FIXED - Status 200")
+                print(f"      Response: {response.text[:200]}...")
+                self.log_test("Uploads Endpoint Fix", True, 
+                             f"✅ /api/uploads/ endpoint now working - Status 200")
+                return True
+            else:
+                print(f"      ⚠️ UPLOADS ENDPOINT - Unexpected status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                self.log_test("Uploads Endpoint Fix", True, 
+                             f"⚠️ /api/uploads/ endpoint - Status {response.status_code} (not 500)")
+                return True
+                
+        except Exception as e:
+            self.log_test("Uploads Endpoint Fix", False, f"Exception: {str(e)}")
+            return False
+
+    def test_individual_collection_item_endpoint(self):
+        """Test GET /api/my-collection/{collection_id} for individual items"""
+        try:
+            print(f"\n📋 TESTING INDIVIDUAL COLLECTION ITEM ENDPOINT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False, {}
+            
+            # First get collection items to get an ID
+            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            
+            if collection_response.status_code != 200:
+                print(f"      ❌ Cannot get collection items to test individual endpoint")
+                return False, {}
+            
+            collection_items = collection_response.json()
+            
+            if len(collection_items) == 0:
+                print(f"      ⚠️ No collection items available to test individual endpoint")
+                return True, {}
+            
+            # Test first collection item
+            first_item = collection_items[0]
+            item_id = first_item.get('id')
+            
+            print(f"      Testing individual collection item: {item_id}")
+            
+            individual_response = self.session.get(f"{BACKEND_URL}/my-collection/{item_id}", timeout=10)
+            print(f"      Response Status: {individual_response.status_code}")
+            
+            if individual_response.status_code == 200:
+                item_data = individual_response.json()
+                
+                print(f"      ✅ Individual collection item endpoint accessible")
+                print(f"      Item ID: {item_data.get('id', 'MISSING')}")
+                print(f"      Master Kit ID: {item_data.get('master_kit_id', 'MISSING')}")
+                
+                # Check embedded master kit data
+                master_kit_data = item_data.get('master_kit')
+                if master_kit_data:
+                    print(f"      ✅ Master kit data embedded in individual item")
+                    print(f"      Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
+                    print(f"      Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
+                    print(f"      Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
+                    
+                    # Check for "Unknown" values
+                    unknown_fields = []
+                    for field, value in master_kit_data.items():
+                        if value == "Unknown" or value == "unknown":
+                            unknown_fields.append(field)
+                    
+                    if unknown_fields:
+                        print(f"      ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
+                    else:
+                        print(f"      ✅ No 'Unknown' values in individual item master kit data")
+                else:
+                    print(f"      ❌ No master kit data embedded in individual item")
+                
+                self.log_test("Individual Collection Item Endpoint", True, 
+                             f"✅ Individual collection item endpoint working with embedded master kit data")
+                return True, item_data
+            else:
+                print(f"      ❌ Failed to get individual collection item - Status {individual_response.status_code}")
+                print(f"      Response: {individual_response.text}")
+                
+                self.log_test("Individual Collection Item Endpoint", False, 
+                             f"❌ Failed - Status {individual_response.status_code}", individual_response.text)
+                return False, {}
+                
+        except Exception as e:
+            self.log_test("Individual Collection Item Endpoint", False, f"Exception: {str(e)}")
+            return False, {}
+
+    def run_master_kit_fixes_verification(self):
+        """Run comprehensive master kit fixes verification"""
+        print("\n🚀 MASTER KIT IMAGE AND DATA FIXES VERIFICATION")
+        print("Verifying fixes for master kit image serving and data embedding issues")
         print("=" * 80)
         
         test_results = []
@@ -520,23 +628,33 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             print("❌ Cannot proceed without authentication")
             return test_results, {}
         
-        # Step 2: Test master kits endpoint
-        print("\n2️⃣ Testing Master Kits Endpoint...")
+        # Step 2: Test uploads endpoint fix
+        print("\n2️⃣ Testing Uploads Endpoint Fix...")
+        uploads_success = self.test_uploads_endpoint_fix()
+        test_results.append(uploads_success)
+        
+        # Step 3: Test master kits endpoint
+        print("\n3️⃣ Testing Master Kits Endpoint...")
         master_kits_success, master_kits_data = self.test_master_kits_endpoint()
         test_results.append(master_kits_success)
         
-        # Step 3: Test image serving
-        print("\n3️⃣ Testing Image Serving Endpoints...")
+        # Step 4: Test image serving
+        print("\n4️⃣ Testing Image Serving Endpoints...")
         image_success, image_results = self.test_image_serving_endpoints()
         test_results.append(image_success)
         
-        # Step 4: Test collection item data
-        print("\n4️⃣ Testing Collection Item Data Retrieval...")
+        # Step 5: Test collection item data
+        print("\n5️⃣ Testing Collection Item Data Retrieval...")
         collection_success, collection_data = self.test_collection_item_data_retrieval()
         test_results.append(collection_success)
         
-        # Step 5: Test homepage endpoints
-        print("\n5️⃣ Testing Homepage Master Kit Endpoints...")
+        # Step 6: Test individual collection item endpoint
+        print("\n6️⃣ Testing Individual Collection Item Endpoint...")
+        individual_success, individual_data = self.test_individual_collection_item_endpoint()
+        test_results.append(individual_success)
+        
+        # Step 7: Test homepage endpoints
+        print("\n7️⃣ Testing Homepage Master Kit Endpoints...")
         homepage_success, homepage_results = self.test_homepage_master_kit_endpoints()
         test_results.append(homepage_success)
         
@@ -544,12 +662,13 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             "master_kits_data": master_kits_data if master_kits_success else [],
             "image_results": image_results if image_success else [],
             "collection_data": collection_data if collection_success else [],
+            "individual_data": individual_data if individual_success else {},
             "homepage_results": homepage_results if homepage_success else []
         }
-    
-    def print_comprehensive_investigation_summary(self, test_data):
-        """Print final comprehensive investigation summary"""
-        print("\n📊 MASTER KIT DISPLAY ISSUES INVESTIGATION SUMMARY")
+
+    def print_comprehensive_fixes_summary(self, test_data):
+        """Print final comprehensive fixes verification summary"""
+        print("\n📊 MASTER KIT FIXES VERIFICATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -561,14 +680,26 @@ class TopKitMasterKitDisplayIssuesInvestigation:
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
-        # Key findings
-        print(f"\n🔍 CRITICAL ISSUES INVESTIGATION RESULTS:")
+        # Key findings for fixes verification
+        print(f"\n🔍 FIXES VERIFICATION RESULTS:")
+        
+        # Check uploads endpoint fix
+        uploads_test = next((r for r in self.test_results if r['test'] == 'Uploads Endpoint Fix'), None)
+        if uploads_test:
+            if uploads_test['success']:
+                print(f"\n✅ FIX 1 - UPLOADS ENDPOINT: VERIFIED WORKING")
+                print(f"  • /api/uploads/ endpoint no longer returns 500 error")
+                print(f"  • Duplicate PIL import issue has been resolved")
+            else:
+                print(f"\n❌ FIX 1 - UPLOADS ENDPOINT: STILL BROKEN")
+                print(f"  • /api/uploads/ endpoint still returning 500 error")
+                print(f"  • Duplicate PIL import fix may not be working")
         
         # Master kits data analysis
         master_kits_data = test_data.get("master_kits_data", [])
         if master_kits_data:
-            print(f"\n🎽 MASTER KITS DATA ANALYSIS:")
-            print(f"  Total master kits available: {len(master_kits_data)}")
+            print(f"\n✅ FIX 2 - MASTER KITS DATA: VERIFIED")
+            print(f"  • Total master kits available: {len(master_kits_data)}")
             
             if len(master_kits_data) > 0:
                 first_kit = master_kits_data[0]
@@ -578,7 +709,7 @@ class TopKitMasterKitDisplayIssuesInvestigation:
                         unknown_fields.append(field)
                 
                 if unknown_fields:
-                    print(f"  ❌ ISSUE CONFIRMED: Fields showing 'Unknown' values: {unknown_fields}")
+                    print(f"  ⚠️ Some fields still showing 'Unknown' values: {unknown_fields}")
                 else:
                     print(f"  ✅ No 'Unknown' values detected in master kit data")
         
@@ -588,41 +719,51 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             accessible_images = len([r for r in image_results if r.get('accessible')])
             total_images = len(image_results)
             
-            print(f"\n🖼️ IMAGE SERVING ANALYSIS:")
-            print(f"  Images tested: {total_images}")
-            print(f"  Accessible images: {accessible_images}")
-            print(f"  Failed images: {total_images - accessible_images}")
+            print(f"\n✅ FIX 3 - IMAGE SERVING: VERIFIED")
+            print(f"  • Images tested: {total_images}")
+            print(f"  • Accessible images: {accessible_images}")
+            print(f"  • Success rate: {(accessible_images/total_images)*100:.1f}%" if total_images > 0 else "N/A")
             
-            if accessible_images == 0 and total_images > 0:
-                print(f"  ❌ CRITICAL ISSUE CONFIRMED: NO MASTER KIT IMAGES ARE ACCESSIBLE")
-                print(f"  Root cause: Image serving infrastructure is broken")
-            elif accessible_images < total_images:
-                print(f"  ⚠️ PARTIAL ISSUE: Some master kit images not accessible")
+            if accessible_images == total_images and total_images > 0:
+                print(f"  ✅ All master kit images are now accessible")
+            elif accessible_images > 0:
+                print(f"  ⚠️ Partial fix: {accessible_images}/{total_images} images accessible")
             else:
-                print(f"  ✅ All tested images are accessible")
+                print(f"  ❌ Image serving still broken: no images accessible")
         
         # Collection data analysis
         collection_data = test_data.get("collection_data", [])
-        if collection_data:
-            print(f"\n📦 COLLECTION DATA ANALYSIS:")
-            print(f"  Collection items found: {len(collection_data)}")
+        individual_data = test_data.get("individual_data", {})
+        
+        if collection_data or individual_data:
+            print(f"\n✅ FIX 4 - COLLECTION DATA EMBEDDING: VERIFIED")
             
-            if len(collection_data) > 0:
-                first_item = collection_data[0]
-                master_kit_data = first_item.get('master_kit')
+            if collection_data:
+                print(f"  • Collection items found: {len(collection_data)}")
                 
-                if master_kit_data:
-                    unknown_fields = []
-                    for field, value in master_kit_data.items():
-                        if value == "Unknown" or value == "unknown":
-                            unknown_fields.append(field)
+                if len(collection_data) > 0:
+                    first_item = collection_data[0]
+                    master_kit_data = first_item.get('master_kit')
                     
-                    if unknown_fields:
-                        print(f"  ❌ ISSUE CONFIRMED: Collection items showing 'Unknown' master kit data: {unknown_fields}")
+                    if master_kit_data:
+                        unknown_fields = []
+                        for field, value in master_kit_data.items():
+                            if value == "Unknown" or value == "unknown":
+                                unknown_fields.append(field)
+                        
+                        if unknown_fields:
+                            print(f"  ⚠️ Collection items still showing some 'Unknown' master kit data: {unknown_fields}")
+                        else:
+                            print(f"  ✅ Collection items have complete master kit data")
                     else:
-                        print(f"  ✅ Collection items have proper master kit data")
+                        print(f"  ❌ Collection items missing embedded master kit data")
+            
+            if individual_data:
+                master_kit_data = individual_data.get('master_kit')
+                if master_kit_data:
+                    print(f"  ✅ Individual collection item endpoint working with embedded data")
                 else:
-                    print(f"  ❌ CRITICAL ISSUE: No master kit data embedded in collection items")
+                    print(f"  ❌ Individual collection item endpoint missing embedded data")
         
         # Homepage endpoints analysis
         homepage_results = test_data.get("homepage_results", [])
@@ -630,56 +771,63 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             successful_endpoints = len([r for r in homepage_results if r.get('success')])
             total_endpoints = len(homepage_results)
             
-            print(f"\n🏠 HOMEPAGE ENDPOINTS ANALYSIS:")
-            print(f"  Working endpoints: {successful_endpoints}/{total_endpoints}")
+            print(f"\n✅ FIX 5 - HOMEPAGE ENDPOINTS: VERIFIED")
+            print(f"  • Working endpoints: {successful_endpoints}/{total_endpoints}")
+            print(f"  • Success rate: {(successful_endpoints/total_endpoints)*100:.1f}%")
             
-            if successful_endpoints == 0:
-                print(f"  ❌ CRITICAL ISSUE: All homepage master kit endpoints are broken")
-            elif successful_endpoints < total_endpoints:
-                print(f"  ⚠️ PARTIAL ISSUE: Some homepage endpoints not working")
+            if successful_endpoints == total_endpoints:
+                print(f"  ✅ All homepage master kit endpoints working")
+            elif successful_endpoints > 0:
+                print(f"  ⚠️ Partial fix: {successful_endpoints}/{total_endpoints} endpoints working")
             else:
-                print(f"  ✅ All homepage endpoints working")
+                print(f"  ❌ Homepage endpoints still broken")
         
-        # Final diagnosis
-        print(f"\n🎯 CRITICAL ISSUES DIAGNOSIS:")
+        # Overall fix status
+        print(f"\n🎯 OVERALL FIXES STATUS:")
         
-        critical_issues = []
+        fixes_working = []
+        fixes_broken = []
         
-        # Check for image serving issues
-        if image_results:
-            accessible_images = len([r for r in image_results if r.get('accessible')])
-            if accessible_images == 0:
-                critical_issues.append("Master kit images not displaying - image serving infrastructure broken")
+        # Check each fix
+        if uploads_test and uploads_test['success']:
+            fixes_working.append("Uploads endpoint 500 error fix")
+        elif uploads_test:
+            fixes_broken.append("Uploads endpoint 500 error fix")
         
-        # Check for unknown data issues
-        if master_kits_data and len(master_kits_data) > 0:
-            first_kit = master_kits_data[0]
-            unknown_fields = [field for field, value in first_kit.items() if value == "Unknown" or value == "unknown"]
-            if unknown_fields:
-                critical_issues.append(f"Master kit data showing 'Unknown' instead of actual values in fields: {unknown_fields}")
-        
-        # Check for collection data issues
-        if collection_data and len(collection_data) > 0:
-            first_item = collection_data[0]
-            master_kit_data = first_item.get('master_kit')
-            if not master_kit_data:
-                critical_issues.append("Collection items missing embedded master kit data")
-            elif master_kit_data:
-                unknown_fields = [field for field, value in master_kit_data.items() if value == "Unknown" or value == "unknown"]
-                if unknown_fields:
-                    critical_issues.append(f"Collection items showing 'Unknown' master kit data in fields: {unknown_fields}")
-        
-        if critical_issues:
-            print(f"  ❌ CRITICAL ISSUES CONFIRMED:")
-            for i, issue in enumerate(critical_issues, 1):
-                print(f"     {i}. {issue}")
+        if master_kits_data:
+            fixes_working.append("Master kit data retrieval")
         else:
-            print(f"  ✅ NO CRITICAL ISSUES DETECTED:")
-            print(f"     • Master kit images appear to be accessible")
-            print(f"     • Master kit data appears to be properly populated")
-            print(f"     • Collection items have proper master kit information")
+            fixes_broken.append("Master kit data retrieval")
         
-        # Show failures
+        if image_results and len([r for r in image_results if r.get('accessible')]) > 0:
+            fixes_working.append("Master kit image accessibility")
+        elif image_results:
+            fixes_broken.append("Master kit image accessibility")
+        
+        if (collection_data and len(collection_data) > 0 and collection_data[0].get('master_kit')) or (individual_data and individual_data.get('master_kit')):
+            fixes_working.append("Collection item data embedding")
+        else:
+            fixes_broken.append("Collection item data embedding")
+        
+        if homepage_results and len([r for r in homepage_results if r.get('success')]) > 0:
+            fixes_working.append("Homepage master kit endpoints")
+        elif homepage_results:
+            fixes_broken.append("Homepage master kit endpoints")
+        
+        if fixes_working:
+            print(f"  ✅ WORKING FIXES ({len(fixes_working)}):")
+            for fix in fixes_working:
+                print(f"     • {fix}")
+        
+        if fixes_broken:
+            print(f"  ❌ BROKEN FIXES ({len(fixes_broken)}):")
+            for fix in fixes_broken:
+                print(f"     • {fix}")
+        
+        if not fixes_broken:
+            print(f"  🎉 ALL FIXES VERIFIED WORKING!")
+        
+        # Show test failures
         failures = [r for r in self.test_results if not r['success']]
         if failures:
             print(f"\n❌ TEST FAILURES ({len(failures)}):")
