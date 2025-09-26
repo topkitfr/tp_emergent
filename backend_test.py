@@ -1,41 +1,50 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - COMPREHENSIVE FOUR FIXES VERIFICATION
+TopKit Backend Testing Suite - COMPREHENSIVE AUTHENTICATION SYSTEM TESTING
 
-**ISSUE 1: Season Format Bug Fixed - VERIFICATION**
-- Test price calculation endpoints with season format "2025/2026" (slash format)
-- Verify age coefficients are now being applied to price calculations
-- Test both calculate_estimated_price functions for season coefficient inclusion
-- Check price breakdown shows age coefficient details
+**CRITICAL USER REPORT - AUTHENTICATION ISSUES:**
+User is experiencing multiple authentication issues despite previous testing showing 100% success rate:
 
-**ISSUE 2: Form Naming Consistency - VERIFICATION** 
-- Verify KitAreaPage.js EnhancedEditKitForm now shows "Edit Kit Details" instead of "Add Personal Details"
-- Confirm both add-to-collection and edit-collection forms have consistent naming
+1. **"Invalid email or password" error appearing on Sign Up form** - This is illogical as it's a registration form, not login
+2. **Cannot create new accounts** - Sign up process is failing
+3. **Cannot log in and browse without being disconnected** - Session persistence issues  
+4. **Session timeout management not working correctly** - Users are being disconnected unexpectedly
+5. **No confirmation emails being sent** - Email notification system not working
 
-**ISSUE 3: API Endpoints for New Collection Item Detail Page**
-- Test GET /api/my-collection/{item_id} endpoint for individual collection item details
-- Verify all collection item fields are returned for the detail page
-- Test collection item personal photos accessibility
-- Ensure proper authentication for collection item access
+**CRITICAL AUTHENTICATION ENDPOINTS TO TEST:**
+1. **User Registration** - POST /api/auth/register
+   - Test with valid user data (name, email, password)
+   - Verify user creation in database
+   - Check if registration creates proper user record
+   - Test password hashing is working
 
-**ISSUE 4: Backend Endpoints Functioning After All Changes**
-- Test master kit approval filtering still working after season format changes
-- Verify image serving endpoints still functional
-- Test moderation dashboard APIs still operational
-- Confirm all backend changes haven't broken existing functionality
+2. **User Login** - POST /api/auth/login  
+   - Test with existing valid credentials
+   - Verify JWT token generation
+   - Check token expiration settings
+   - Test if login returns proper user data
 
-**Authentication Credentials:**
-- Email: emergency.admin@topkit.test
-- Password: EmergencyAdmin2025!
+3. **Authentication Verification** - GET /api/auth/me
+   - Test with valid JWT token
+   - Test with invalid/expired token  
+   - Verify user data retrieval
 
-**Expected Results:**
-- Season coefficients should now appear in price calculations with "2025/2026" format
-- All API endpoints should remain functional after the fixes
-- Collection item detail endpoint should return comprehensive data
-- System should be ready for frontend testing of the new collection detail page
+4. **Session Management**
+   - Test JWT token expiration behavior
+   - Verify refresh token logic (if implemented)
+   - Test logout functionality
 
-**Priority Focus:**
-Test that all four major fixes work correctly and haven't broken existing functionality.
+**TEST CREDENTIALS:**
+- Admin: emergency.admin@topkit.test / EmergencyAdmin2025!
+- Create new test user: testuser@example.com / TestUser2024!
+
+**EXPECTED RESULTS:**
+- Registration should work without login validation errors
+- JWT tokens should have proper expiration
+- Session management should be stable
+- Email system should be functional (or identify if it's missing)
+
+**PRIORITY: CRITICAL** - This is blocking core user functionality.
 """
 
 import requests
