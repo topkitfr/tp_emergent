@@ -1,50 +1,50 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - COMPREHENSIVE AUTHENTICATION SYSTEM TESTING
+TopKit Backend Testing Suite - CRITICAL CONTRIBUTION SYSTEM INVESTIGATION
 
-**CRITICAL USER REPORT - AUTHENTICATION ISSUES:**
-User is experiencing multiple authentication issues despite previous testing showing 100% success rate:
+**CRITICAL CONTRIBUTION SYSTEM ISSUE:**
+The user reports a major issue with the contribution system:
 
-1. **"Invalid email or password" error appearing on Sign Up form** - This is illogical as it's a registration form, not login
-2. **Cannot create new accounts** - Sign up process is failing
-3. **Cannot log in and browse without being disconnected** - Session persistence issues  
-4. **Session timeout management not working correctly** - Users are being disconnected unexpectedly
-5. **No confirmation emails being sent** - Email notification system not working
+1. **Only seeing master kit contributions** in moderation dashboard and community contributions  
+2. **Missing brand/team/player/competition contributions** completely
+3. **User created a brand contribution but can't see it anywhere**
+4. **Should see ALL contribution types** with pending approval status
 
-**CRITICAL AUTHENTICATION ENDPOINTS TO TEST:**
-1. **User Registration** - POST /api/auth/register
-   - Test with valid user data (name, email, password)
-   - Verify user creation in database
-   - Check if registration creates proper user record
-   - Test password hashing is working
+**INVESTIGATION FOCUS:**
 
-2. **User Login** - POST /api/auth/login  
-   - Test with existing valid credentials
-   - Verify JWT token generation
-   - Check token expiration settings
-   - Test if login returns proper user data
+1. **Contribution Creation Endpoints**:
+   - Check if there are separate endpoints for brand/team/player/competition vs master kit submissions
+   - Verify which collections these contributions are saved to
+   - Test if brand/team/player/competition submissions are working at all
 
-3. **Authentication Verification** - GET /api/auth/me
-   - Test with valid JWT token
-   - Test with invalid/expired token  
-   - Verify user data retrieval
+2. **Contributions V2 Collection Analysis**:
+   - List all contributions in contributions_v2 collection by entity_type
+   - Check if any non-master_kit contributions exist
+   - Verify if contributions are being saved with correct entity_type values
 
-4. **Session Management**
-   - Test JWT token expiration behavior
-   - Verify refresh token logic (if implemented)
-   - Test logout functionality
+3. **Contribution Form Submission Logic**:
+   - Check DynamicContributionForm endpoint usage
+   - Verify POST endpoints for different contribution types
+   - Test brand/team/player/competition contribution creation
 
-**TEST CREDENTIALS:**
-- Admin: emergency.admin@topkit.test / EmergencyAdmin2025!
-- Create new test user: testuser@example.com / TestUser2024!
+4. **API Endpoint Investigation**:
+   - Test GET /api/contributions-v2/ with no filters to see all contributions
+   - Test filtering by entity_type (brand, team, player, competition)
+   - Compare results to identify missing contribution types
 
-**EXPECTED RESULTS:**
-- Registration should work without login validation errors
-- JWT tokens should have proper expiration
-- Session management should be stable
-- Email system should be functional (or identify if it's missing)
+5. **Database Collection Check**:
+   - Check if contributions are being saved to wrong collection (contributions vs contributions_v2)
+   - Verify if different entity types use different database collections
 
-**PRIORITY: CRITICAL** - This is blocking core user functionality.
+**Authentication**: emergency.admin@topkit.test / EmergencyAdmin2025!
+
+**Expected to Find**:
+- Root cause why only master_kit contributions are visible
+- Missing contribution creation logic for other entity types  
+- Database collection inconsistencies
+- Path to restore full contribution system functionality
+
+**PRIORITY: CRITICAL** - This is blocking the entire contribution moderation workflow.
 """
 
 import requests
