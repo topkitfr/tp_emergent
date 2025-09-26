@@ -184,7 +184,7 @@ const CollaborativeHomepage = ({ user, teams, brands, players, masterJerseys, on
                       src={jersey.front_photo_url.startsWith('data:') || jersey.front_photo_url.startsWith('http') ? jersey.front_photo_url : 
                            jersey.front_photo_url.startsWith('uploads/') ? 
                            `${API}/api/${jersey.front_photo_url}` :
-                           `${API}/api/uploads/master_kits/${jersey.front_photo_url}.jpg`}
+                           `${API}/api/uploads/${jersey.front_photo_url}`}
                       alt={`${jersey.club_name || jersey.club || 'Team'} ${jersey.season}`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
