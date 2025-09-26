@@ -255,7 +255,7 @@ class TopKitAuthenticationSystemTesting:
             self.log_test("User Registration", False, f"Exception: {str(e)}")
             return False, None
     
-    def test_issue_3_collection_item_detail_endpoint(self):
+    def test_user_login(self):
         """ISSUE 3: Test new collection item detail endpoint"""
         try:
             print(f"\n🔍 ISSUE 3: TESTING COLLECTION ITEM DETAIL ENDPOINT")
