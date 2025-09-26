@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://jersey-vault-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://collector-hub-4.preview.emergentagent.com/api"
 
 class GoogleOAuthTester:
     def __init__(self):
