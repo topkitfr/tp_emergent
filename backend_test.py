@@ -65,14 +65,7 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-# Test User Credentials for registration/login testing
-TEST_USER_CREDENTIALS = {
-    "name": "Test User",
-    "email": "testuser@example.com",
-    "password": "TestUser2024!"
-}
-
-class TopKitAuthenticationSystemTesting:
+class TopKitContributionSystemInvestigation:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
@@ -133,748 +126,615 @@ class TopKitAuthenticationSystemTesting:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
-    def test_user_registration(self):
-        """Test user registration endpoint - POST /api/auth/register"""
+    def investigate_contributions_v2_collection(self):
+        """Investigate contributions_v2 collection to analyze entity types"""
         try:
-            print(f"\n📝 TESTING USER REGISTRATION")
+            print(f"\n📊 INVESTIGATING CONTRIBUTIONS V2 COLLECTION")
             print("=" * 80)
-            print("Testing POST /api/auth/register endpoint...")
+            print("Analyzing contributions_v2 collection by entity_type...")
             
-            # Step 1: Test registration with valid data
-            print(f"      Testing registration with valid user data...")
-            print(f"         Name: {TEST_USER_CREDENTIALS['name']}")
-            print(f"         Email: {TEST_USER_CREDENTIALS['email']}")
-            print(f"         Password: {TEST_USER_CREDENTIALS['password']}")
+            if not self.auth_token:
+                print(f"         ⚠️ No auth token available, attempting authentication...")
+                if not self.authenticate_admin():
+                    self.log_test("Contributions V2 Collection Analysis", False, 
+                                 "❌ Cannot authenticate for collection analysis")
+                    return False, [], {}
             
-            # First, try to clean up any existing test user
-            try:
-                # Try to login with test credentials to see if user exists
-                existing_login_response = self.session.post(
-                    f"{BACKEND_URL}/auth/login",
-                    json={
-                        "email": TEST_USER_CREDENTIALS['email'],
-                        "password": TEST_USER_CREDENTIALS['password']
-                    },
-                    timeout=10
-                )
-                if existing_login_response.status_code == 200:
-                    print(f"         ⚠️ Test user already exists, will test with existing user")
-                    existing_user_data = existing_login_response.json()
-                    self.log_test("User Registration", True, 
-                                 f"✅ Test user already exists and can login - using existing user for testing")
-                    return True, existing_user_data
-            except:
-                pass  # User doesn't exist, proceed with registration
+            # Step 1: Get all contributions without filters
+            print(f"      Step 1: Getting ALL contributions from contributions_v2...")
             
-            # Attempt registration
-            registration_response = self.session.post(
-                f"{BACKEND_URL}/auth/register",
-                json=TEST_USER_CREDENTIALS,
+            all_contributions_response = self.session.get(
+                f"{BACKEND_URL}/contributions-v2/",
                 timeout=10
             )
             
-            print(f"         Registration response status: {registration_response.status_code}")
-            
-            if registration_response.status_code == 200:
-                registration_data = registration_response.json()
-                print(f"         ✅ Registration successful!")
-                print(f"            Token received: {'Yes' if registration_data.get('token') else 'No'}")
-                print(f"            User data received: {'Yes' if registration_data.get('user') else 'No'}")
+            if all_contributions_response.status_code == 200:
+                all_contributions = all_contributions_response.json()
+                print(f"         ✅ Retrieved {len(all_contributions)} total contributions")
                 
-                if registration_data.get('user'):
-                    user_data = registration_data['user']
-                    print(f"            User ID: {user_data.get('id')}")
-                    print(f"            Name: {user_data.get('name')}")
-                    print(f"            Email: {user_data.get('email')}")
-                    print(f"            Role: {user_data.get('role')}")
+                # Analyze by entity_type
+                entity_type_counts = {}
+                status_counts = {}
                 
-                # Step 2: Verify user was created in database by trying to login
-                print(f"      Verifying user creation by attempting login...")
-                login_response = self.session.post(
-                    f"{BACKEND_URL}/auth/login",
-                    json={
-                        "email": TEST_USER_CREDENTIALS['email'],
-                        "password": TEST_USER_CREDENTIALS['password']
-                    },
-                    timeout=10
-                )
-                
-                if login_response.status_code == 200:
-                    print(f"         ✅ User can login after registration - user properly created")
-                    login_data = login_response.json()
+                for contrib in all_contributions:
+                    entity_type = contrib.get('entity_type', 'unknown')
+                    status = contrib.get('status', 'unknown')
                     
-                    self.log_test("User Registration", True, 
-                                 f"✅ User registration working - user created and can login immediately")
-                    return True, login_data
+                    entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
+                    status_counts[status] = status_counts.get(status, 0) + 1
+                
+                print(f"         📊 ENTITY TYPE BREAKDOWN:")
+                for entity_type, count in entity_type_counts.items():
+                    print(f"            {entity_type}: {count} contributions")
+                
+                print(f"         📊 STATUS BREAKDOWN:")
+                for status, count in status_counts.items():
+                    print(f"            {status}: {count} contributions")
+                
+                # Check for non-master_kit contributions
+                non_master_kit_contributions = [c for c in all_contributions if c.get('entity_type') != 'master_kit']
+                
+                if non_master_kit_contributions:
+                    print(f"         ✅ Found {len(non_master_kit_contributions)} non-master_kit contributions:")
+                    for contrib in non_master_kit_contributions[:5]:  # Show first 5
+                        print(f"            - {contrib.get('entity_type')} (ID: {contrib.get('id')}, Status: {contrib.get('status')})")
                 else:
-                    print(f"         ❌ User cannot login after registration - Status {login_response.status_code}")
-                    print(f"            Error: {login_response.text}")
-                    self.log_test("User Registration", False, 
-                                 f"❌ Registration succeeded but user cannot login - Status {login_response.status_code}")
-                    return False, None
+                    print(f"         ❌ NO NON-MASTER_KIT CONTRIBUTIONS FOUND!")
+                    print(f"            This explains why user only sees master_kit contributions")
+                
+                self.log_test("Contributions V2 Collection Analysis", True, 
+                             f"✅ Collection analysis complete - {len(all_contributions)} total, {len(non_master_kit_contributions)} non-master_kit")
+                return True, all_contributions, entity_type_counts
+                
+            else:
+                print(f"         ❌ Failed to retrieve contributions - Status {all_contributions_response.status_code}")
+                print(f"            Error: {all_contributions_response.text}")
+                self.log_test("Contributions V2 Collection Analysis", False, 
+                             f"❌ Failed to retrieve contributions - Status {all_contributions_response.status_code}")
+                return False, [], {}
+                
+        except Exception as e:
+            self.log_test("Contributions V2 Collection Analysis", False, f"Exception: {str(e)}")
+            return False, [], {}
+    
+    def test_contribution_creation_endpoints(self):
+        """Test contribution creation endpoints for different entity types"""
+        try:
+            print(f"\n🔧 TESTING CONTRIBUTION CREATION ENDPOINTS")
+            print("=" * 80)
+            print("Testing contribution creation for different entity types...")
+            
+            if not self.auth_token:
+                print(f"         ⚠️ No auth token available, attempting authentication...")
+                if not self.authenticate_admin():
+                    self.log_test("Contribution Creation Endpoints", False, 
+                                 "❌ Cannot authenticate for endpoint testing")
+                    return False, [], {}
+            
+            # Step 1: Check available form data endpoints
+            print(f"      Step 1: Checking available form data endpoints...")
+            
+            form_data_endpoints = [
+                ("clubs", "/form-data/clubs"),
+                ("brands", "/form-data/brands"),
+                ("competitions", "/form-data/competitions"),
+                ("players", "/form-data/players")
+            ]
+            
+            available_entities = {}
+            
+            for entity_name, endpoint in form_data_endpoints:
+                try:
+                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        available_entities[entity_name] = data
+                        print(f"         ✅ {entity_name}: {len(data)} items available")
+                        if data:  # Show first item as example
+                            print(f"            Example: {data[0].get('name', 'N/A')} (ID: {data[0].get('id', 'N/A')})")
+                    else:
+                        print(f"         ❌ {entity_name}: Failed - Status {response.status_code}")
+                        available_entities[entity_name] = []
+                except Exception as e:
+                    print(f"         ❌ {entity_name}: Exception - {str(e)}")
+                    available_entities[entity_name] = []
+            
+            # Step 2: Look for contribution creation endpoints
+            print(f"      Step 2: Testing contribution creation endpoints...")
+            
+            # Test different possible endpoints for contribution creation
+            contribution_endpoints_to_test = [
+                ("POST /api/contributions-v2/", "contributions-v2/"),
+                ("POST /api/contributions/", "contributions/"),
+                ("POST /api/brands/", "brands/"),
+                ("POST /api/teams/", "teams/"),
+                ("POST /api/players/", "players/"),
+                ("POST /api/competitions/", "competitions/")
+            ]
+            
+            working_endpoints = []
+            
+            for endpoint_name, endpoint_path in contribution_endpoints_to_test:
+                try:
+                    # Test with minimal data to see if endpoint exists
+                    test_data = {
+                        "name": "Test Contribution",
+                        "entity_type": "brand"
+                    }
                     
-            elif registration_response.status_code == 400:
-                error_text = registration_response.text
-                if "already registered" in error_text.lower():
-                    print(f"         ⚠️ User already exists - testing login instead")
-                    # Test login with existing user
-                    login_response = self.session.post(
-                        f"{BACKEND_URL}/auth/login",
-                        json={
-                            "email": TEST_USER_CREDENTIALS['email'],
-                            "password": TEST_USER_CREDENTIALS['password']
-                        },
+                    response = self.session.post(
+                        f"{BACKEND_URL}/{endpoint_path}",
+                        json=test_data,
                         timeout=10
                     )
                     
-                    if login_response.status_code == 200:
-                        print(f"         ✅ Existing user can login successfully")
-                        login_data = login_response.json()
-                        self.log_test("User Registration", True, 
-                                     f"✅ User already exists and can login - registration system working")
-                        return True, login_data
-                    else:
-                        print(f"         ❌ Existing user cannot login - Status {login_response.status_code}")
-                        self.log_test("User Registration", False, 
-                                     f"❌ User exists but cannot login - authentication broken")
-                        return False, None
-                else:
-                    print(f"         ❌ Registration failed with validation error")
-                    print(f"            Error: {error_text}")
-                    self.log_test("User Registration", False, 
-                                 f"❌ Registration failed with validation error - {error_text}")
-                    return False, None
-            else:
-                print(f"         ❌ Registration failed - Status {registration_response.status_code}")
-                print(f"            Error: {registration_response.text}")
-                self.log_test("User Registration", False, 
-                             f"❌ Registration failed - Status {registration_response.status_code}")
-                return False, None
-                
-        except Exception as e:
-            self.log_test("User Registration", False, f"Exception: {str(e)}")
-            return False, None
-    
-    def test_user_login(self):
-        """Test user login endpoint - POST /api/auth/login"""
-        try:
-            print(f"\n🔐 TESTING USER LOGIN")
-            print("=" * 80)
-            print("Testing POST /api/auth/login endpoint...")
-            
-            # Step 1: Test login with admin credentials
-            print(f"      Testing login with admin credentials...")
-            print(f"         Email: {ADMIN_CREDENTIALS['email']}")
-            print(f"         Password: {ADMIN_CREDENTIALS['password']}")
-            
-            admin_login_response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json={
-                    "email": ADMIN_CREDENTIALS['email'],
-                    "password": ADMIN_CREDENTIALS['password']
-                },
-                timeout=10
-            )
-            
-            admin_login_success = False
-            admin_token = None
-            
-            if admin_login_response.status_code == 200:
-                admin_data = admin_login_response.json()
-                admin_token = admin_data.get('token')
-                user_data = admin_data.get('user', {})
-                
-                print(f"         ✅ Admin login successful!")
-                print(f"            Token received: {'Yes' if admin_token else 'No'}")
-                print(f"            User ID: {user_data.get('id')}")
-                print(f"            Name: {user_data.get('name')}")
-                print(f"            Email: {user_data.get('email')}")
-                print(f"            Role: {user_data.get('role')}")
-                
-                admin_login_success = True
-                
-                # Set auth token for further tests
-                self.auth_token = admin_token
-                self.admin_user_data = user_data
-                self.session.headers.update({"Authorization": f"Bearer {admin_token}"})
-                
-            else:
-                print(f"         ❌ Admin login failed - Status {admin_login_response.status_code}")
-                print(f"            Error: {admin_login_response.text}")
-            
-            # Step 2: Test login with test user credentials
-            print(f"      Testing login with test user credentials...")
-            print(f"         Email: {TEST_USER_CREDENTIALS['email']}")
-            print(f"         Password: {TEST_USER_CREDENTIALS['password']}")
-            
-            test_user_login_response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json={
-                    "email": TEST_USER_CREDENTIALS['email'],
-                    "password": TEST_USER_CREDENTIALS['password']
-                },
-                timeout=10
-            )
-            
-            test_user_login_success = False
-            
-            if test_user_login_response.status_code == 200:
-                test_user_data = test_user_login_response.json()
-                test_token = test_user_data.get('token')
-                user_data = test_user_data.get('user', {})
-                
-                print(f"         ✅ Test user login successful!")
-                print(f"            Token received: {'Yes' if test_token else 'No'}")
-                print(f"            User ID: {user_data.get('id')}")
-                print(f"            Name: {user_data.get('name')}")
-                print(f"            Email: {user_data.get('email')}")
-                print(f"            Role: {user_data.get('role')}")
-                
-                test_user_login_success = True
-                
-            else:
-                print(f"         ❌ Test user login failed - Status {test_user_login_response.status_code}")
-                print(f"            Error: {test_user_login_response.text}")
-            
-            # Step 3: Test login with invalid credentials
-            print(f"      Testing login with invalid credentials...")
-            
-            invalid_login_response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json={
-                    "email": "nonexistent@example.com",
-                    "password": "wrongpassword"
-                },
-                timeout=10
-            )
-            
-            invalid_login_properly_rejected = False
-            
-            if invalid_login_response.status_code == 401:
-                print(f"         ✅ Invalid credentials properly rejected - Status 401")
-                print(f"            Error message: {invalid_login_response.text}")
-                invalid_login_properly_rejected = True
-            else:
-                print(f"         ❌ Invalid credentials not properly rejected - Status {invalid_login_response.status_code}")
-                print(f"            Response: {invalid_login_response.text}")
-            
-            # Step 4: Test JWT token structure
-            print(f"      Testing JWT token structure...")
-            
-            jwt_token_valid = False
-            if admin_token:
-                try:
-                    # Decode JWT token (without verification for testing)
-                    import jwt as jwt_lib
-                    decoded_token = jwt_lib.decode(admin_token, options={"verify_signature": False})
-                    print(f"         ✅ JWT token structure valid")
-                    print(f"            Subject (user ID): {decoded_token.get('sub')}")
-                    print(f"            Token payload: {decoded_token}")
-                    jwt_token_valid = True
-                except Exception as jwt_error:
-                    print(f"         ❌ JWT token structure invalid: {str(jwt_error)}")
-            else:
-                print(f"         ❌ No JWT token to test")
-            
-            # Step 5: Analyze results
-            login_tests_passed = 0
-            total_login_tests = 4
-            
-            if admin_login_success:
-                login_tests_passed += 1
-            if test_user_login_success:
-                login_tests_passed += 1
-            if invalid_login_properly_rejected:
-                login_tests_passed += 1
-            if jwt_token_valid:
-                login_tests_passed += 1
-            
-            login_success_rate = (login_tests_passed / total_login_tests) * 100
-            
-            print(f"\n      📊 LOGIN TESTING ANALYSIS:")
-            print(f"         Total login tests: {total_login_tests}")
-            print(f"         Login tests passed: {login_tests_passed}")
-            print(f"         Login success rate: {login_success_rate:.1f}%")
-            print(f"         Admin login: {'✅' if admin_login_success else '❌'}")
-            print(f"         Test user login: {'✅' if test_user_login_success else '❌'}")
-            print(f"         Invalid credentials rejected: {'✅' if invalid_login_properly_rejected else '❌'}")
-            print(f"         JWT token valid: {'✅' if jwt_token_valid else '❌'}")
-            
-            if login_success_rate >= 75:  # At least 3 out of 4 tests pass
-                self.log_test("User Login", True, 
-                             f"✅ User login working - {login_tests_passed}/{total_login_tests} tests passed ({login_success_rate:.1f}%)")
-                return True
-            else:
-                self.log_test("User Login", False, 
-                             f"❌ User login issues - {login_tests_passed}/{total_login_tests} tests passed ({login_success_rate:.1f}%)")
-                return False
-                
-        except Exception as e:
-            self.log_test("User Login", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_authentication_verification(self):
-        """Test authentication verification endpoint - GET /api/auth/me"""
-        try:
-            print(f"\n🔍 TESTING AUTHENTICATION VERIFICATION")
-            print("=" * 80)
-            print("Testing GET /api/auth/me endpoint...")
-            
-            # Step 1: Test with valid JWT token
-            print(f"      Testing /api/auth/me with valid JWT token...")
-            
-            if not self.auth_token:
-                print(f"         ⚠️ No auth token available, attempting to get one...")
-                # Try to login first
-                login_response = self.session.post(
-                    f"{BACKEND_URL}/auth/login",
-                    json=ADMIN_CREDENTIALS,
-                    timeout=10
-                )
-                
-                if login_response.status_code == 200:
-                    login_data = login_response.json()
-                    self.auth_token = login_data.get('token')
-                    self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
-                    print(f"         ✅ Obtained auth token via login")
-                else:
-                    self.log_test("Authentication Verification", False, 
-                                 "❌ Cannot obtain auth token for testing")
-                    return False
-            
-            # Test with valid token
-            auth_me_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
-            
-            valid_token_success = False
-            user_data_complete = False
-            
-            if auth_me_response.status_code == 200:
-                auth_data = auth_me_response.json()
-                print(f"         ✅ Auth/me successful with valid token")
-                print(f"            User ID: {auth_data.get('id')}")
-                print(f"            Name: {auth_data.get('name')}")
-                print(f"            Email: {auth_data.get('email')}")
-                print(f"            Role: {auth_data.get('role')}")
-                
-                valid_token_success = True
-                
-                # Check if user data is complete
-                required_fields = ['id', 'name', 'email', 'role']
-                fields_present = all(auth_data.get(field) for field in required_fields)
-                
-                if fields_present:
-                    print(f"         ✅ User data complete - all required fields present")
-                    user_data_complete = True
-                else:
-                    print(f"         ⚠️ User data incomplete - missing some required fields")
-                    for field in required_fields:
-                        if not auth_data.get(field):
-                            print(f"            Missing: {field}")
-                
-            else:
-                print(f"         ❌ Auth/me failed with valid token - Status {auth_me_response.status_code}")
-                print(f"            Error: {auth_me_response.text}")
-            
-            # Step 2: Test with invalid JWT token
-            print(f"      Testing /api/auth/me with invalid JWT token...")
-            
-            # Save original auth header
-            original_auth = self.session.headers.get('Authorization')
-            
-            # Set invalid token
-            self.session.headers.update({"Authorization": "Bearer invalid_token_12345"})
-            
-            invalid_token_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
-            
-            invalid_token_properly_rejected = False
-            
-            if invalid_token_response.status_code == 401:
-                print(f"         ✅ Invalid token properly rejected - Status 401")
-                print(f"            Error message: {invalid_token_response.text}")
-                invalid_token_properly_rejected = True
-            else:
-                print(f"         ❌ Invalid token not properly rejected - Status {invalid_token_response.status_code}")
-                print(f"            Response: {invalid_token_response.text}")
-            
-            # Restore original auth header
-            if original_auth:
-                self.session.headers.update({"Authorization": original_auth})
-            
-            # Step 3: Test without authentication header
-            print(f"      Testing /api/auth/me without authentication header...")
-            
-            # Remove auth header
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            no_auth_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
-            
-            no_auth_properly_rejected = False
-            
-            if no_auth_response.status_code == 401:
-                print(f"         ✅ No auth header properly rejected - Status 401")
-                print(f"            Error message: {no_auth_response.text}")
-                no_auth_properly_rejected = True
-            else:
-                print(f"         ❌ No auth header not properly rejected - Status {no_auth_response.status_code}")
-                print(f"            Response: {no_auth_response.text}")
-            
-            # Restore auth header for future tests
-            if original_auth:
-                self.session.headers.update({"Authorization": original_auth})
-            
-            # Step 4: Test token expiration (if possible)
-            print(f"      Testing JWT token expiration behavior...")
-            
-            token_expiration_handled = True  # Assume it's handled unless we can test otherwise
-            
-            try:
-                # Try to decode the token to check expiration
-                import jwt as jwt_lib
-                if self.auth_token:
-                    decoded_token = jwt_lib.decode(self.auth_token, options={"verify_signature": False})
-                    exp_timestamp = decoded_token.get('exp')
+                    print(f"         Testing {endpoint_name}...")
+                    print(f"            Status: {response.status_code}")
                     
-                    if exp_timestamp:
-                        from datetime import datetime
-                        exp_datetime = datetime.fromtimestamp(exp_timestamp)
-                        current_datetime = datetime.now()
+                    if response.status_code in [200, 201, 400, 422]:  # 400/422 means endpoint exists but validation failed
+                        working_endpoints.append((endpoint_name, endpoint_path, response.status_code))
+                        print(f"            ✅ Endpoint exists (Status {response.status_code})")
+                        if response.status_code in [400, 422]:
+                            print(f"            Response: {response.text[:200]}...")
+                    elif response.status_code == 404:
+                        print(f"            ❌ Endpoint not found")
+                    elif response.status_code == 405:
+                        print(f"            ⚠️ Method not allowed (endpoint exists but POST not supported)")
+                    else:
+                        print(f"            ⚠️ Unexpected status: {response.status_code}")
                         
-                        print(f"         ✅ Token has expiration timestamp")
-                        print(f"            Expires at: {exp_datetime}")
-                        print(f"            Current time: {current_datetime}")
-                        print(f"            Time until expiration: {exp_datetime - current_datetime}")
-                    else:
-                        print(f"         ⚠️ Token does not have expiration timestamp")
-                        token_expiration_handled = False
-                else:
-                    print(f"         ⚠️ No token to check expiration")
-                    
-            except Exception as token_error:
-                print(f"         ⚠️ Could not check token expiration: {str(token_error)}")
+                except Exception as e:
+                    print(f"            ❌ Exception: {str(e)}")
             
-            # Step 5: Analyze results
-            auth_tests_passed = 0
-            total_auth_tests = 4
+            print(f"      📊 ENDPOINT ANALYSIS:")
+            print(f"         Working endpoints found: {len(working_endpoints)}")
+            for endpoint_name, endpoint_path, status in working_endpoints:
+                print(f"            - {endpoint_name} (Status {status})")
             
-            if valid_token_success and user_data_complete:
-                auth_tests_passed += 1
-            if invalid_token_properly_rejected:
-                auth_tests_passed += 1
-            if no_auth_properly_rejected:
-                auth_tests_passed += 1
-            if token_expiration_handled:
-                auth_tests_passed += 1
+            # Step 3: Try to create a test brand contribution
+            print(f"      Step 3: Attempting to create test brand contribution...")
             
-            auth_success_rate = (auth_tests_passed / total_auth_tests) * 100
-            
-            print(f"\n      📊 AUTHENTICATION VERIFICATION ANALYSIS:")
-            print(f"         Total auth tests: {total_auth_tests}")
-            print(f"         Auth tests passed: {auth_tests_passed}")
-            print(f"         Auth success rate: {auth_success_rate:.1f}%")
-            print(f"         Valid token works: {'✅' if valid_token_success and user_data_complete else '❌'}")
-            print(f"         Invalid token rejected: {'✅' if invalid_token_properly_rejected else '❌'}")
-            print(f"         No auth rejected: {'✅' if no_auth_properly_rejected else '❌'}")
-            print(f"         Token expiration handled: {'✅' if token_expiration_handled else '❌'}")
-            
-            if auth_success_rate >= 75:  # At least 3 out of 4 tests pass
-                self.log_test("Authentication Verification", True, 
-                             f"✅ Authentication verification working - {auth_tests_passed}/{total_auth_tests} tests passed ({auth_success_rate:.1f}%)")
-                return True
-            else:
-                self.log_test("Authentication Verification", False, 
-                             f"❌ Authentication verification issues - {auth_tests_passed}/{total_auth_tests} tests passed ({auth_success_rate:.1f}%)")
-                return False
+            if available_entities.get('brands'):
+                brand_data = available_entities['brands'][0]
                 
-        except Exception as e:
-            self.log_test("Authentication Verification", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_session_management(self):
-        """Test session management and logout functionality"""
-        try:
-            print(f"\n🔄 TESTING SESSION MANAGEMENT")
-            print("=" * 80)
-            print("Testing session management and logout functionality...")
+                # Try different possible contribution creation methods
+                contribution_attempts = [
+                    {
+                        "method": "Direct brand contribution",
+                        "endpoint": "contributions-v2/",
+                        "data": {
+                            "entity_type": "brand",
+                            "entity_id": brand_data.get('id'),
+                            "name": f"Test Brand Contribution - {brand_data.get('name')}",
+                            "description": "Test brand contribution for investigation",
+                            "status": "pending_review"
+                        }
+                    },
+                    {
+                        "method": "Brand entity creation",
+                        "endpoint": "brands/",
+                        "data": {
+                            "name": f"Test Brand {uuid.uuid4().hex[:8]}",
+                            "country": "Test Country",
+                            "type": "brand"
+                        }
+                    }
+                ]
+                
+                for attempt in contribution_attempts:
+                    try:
+                        print(f"         Trying {attempt['method']}...")
+                        
+                        response = self.session.post(
+                            f"{BACKEND_URL}/{attempt['endpoint']}",
+                            json=attempt['data'],
+                            timeout=10
+                        )
+                        
+                        print(f"            Status: {response.status_code}")
+                        print(f"            Response: {response.text[:300]}...")
+                        
+                        if response.status_code in [200, 201]:
+                            print(f"            ✅ Success! Brand contribution created")
+                            created_data = response.json()
+                            print(f"            Created ID: {created_data.get('id', 'N/A')}")
+                            break
+                        else:
+                            print(f"            ❌ Failed with status {response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"            ❌ Exception: {str(e)}")
+            else:
+                print(f"         ⚠️ No brands available for testing contribution creation")
             
-            # Step 1: Test logout endpoint
-            print(f"      Testing logout endpoint...")
+            self.log_test("Contribution Creation Endpoints", True, 
+                         f"✅ Endpoint investigation complete - {len(working_endpoints)} working endpoints found")
+            return True, working_endpoints, available_entities
+            
+        except Exception as e:
+            self.log_test("Contribution Creation Endpoints", False, f"Exception: {str(e)}")
+            return False, [], {}
+    
+    def test_contribution_filtering_endpoints(self):
+        """Test contribution filtering by entity_type"""
+        try:
+            print(f"\n🔍 TESTING CONTRIBUTION FILTERING ENDPOINTS")
+            print("=" * 80)
+            print("Testing filtering by entity_type to identify missing contributions...")
             
             if not self.auth_token:
-                print(f"         ⚠️ No auth token available for logout testing")
-                self.log_test("Session Management", False, "❌ No auth token for logout testing")
-                return False
+                print(f"         ⚠️ No auth token available, attempting authentication...")
+                if not self.authenticate_admin():
+                    self.log_test("Contribution Filtering", False, 
+                                 "❌ Cannot authenticate for filtering tests")
+                    return False, {}, {}, []
             
-            # Test logout
-            logout_response = self.session.post(f"{BACKEND_URL}/auth/logout", timeout=10)
+            # Test filtering by different entity types
+            entity_types_to_test = ['master_kit', 'brand', 'team', 'player', 'competition']
             
-            logout_success = False
+            filtering_results = {}
             
-            if logout_response.status_code == 200:
-                logout_data = logout_response.json()
-                print(f"         ✅ Logout successful")
-                print(f"            Message: {logout_data.get('message', 'No message')}")
-                logout_success = True
-            else:
-                print(f"         ❌ Logout failed - Status {logout_response.status_code}")
-                print(f"            Error: {logout_response.text}")
-            
-            # Step 2: Test that token is invalidated after logout (if session-based)
-            print(f"      Testing token validity after logout...")
-            
-            # Try to access protected endpoint after logout
-            post_logout_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
-            
-            token_invalidated = False
-            
-            if post_logout_response.status_code == 401:
-                print(f"         ✅ Token properly invalidated after logout - Status 401")
-                token_invalidated = True
-            elif post_logout_response.status_code == 200:
-                print(f"         ⚠️ Token still valid after logout (JWT tokens don't invalidate server-side)")
-                # This is expected behavior for JWT tokens without server-side blacklisting
-                token_invalidated = True  # Consider this acceptable for JWT
-            else:
-                print(f"         ❌ Unexpected response after logout - Status {post_logout_response.status_code}")
-                print(f"            Response: {post_logout_response.text}")
-            
-            # Step 3: Test re-authentication after logout
-            print(f"      Testing re-authentication after logout...")
-            
-            # Clear any existing auth headers
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            # Try to login again
-            reauth_response = self.session.post(
-                f"{BACKEND_URL}/auth/login",
-                json=ADMIN_CREDENTIALS,
-                timeout=10
-            )
-            
-            reauth_success = False
-            
-            if reauth_response.status_code == 200:
-                reauth_data = reauth_response.json()
-                new_token = reauth_data.get('token')
+            for entity_type in entity_types_to_test:
+                print(f"      Testing filter for entity_type='{entity_type}'...")
                 
-                print(f"         ✅ Re-authentication successful after logout")
-                print(f"            New token received: {'Yes' if new_token else 'No'}")
-                
-                # Restore auth token for any remaining tests
-                self.auth_token = new_token
-                self.session.headers.update({"Authorization": f"Bearer {new_token}"})
-                
-                reauth_success = True
-            else:
-                print(f"         ❌ Re-authentication failed - Status {reauth_response.status_code}")
-                print(f"            Error: {reauth_response.text}")
-            
-            # Step 4: Test session persistence (check if user stays logged in across requests)
-            print(f"      Testing session persistence...")
-            
-            session_persistence = False
-            
-            if self.auth_token:
-                # Make multiple requests to see if session persists
-                persistence_tests = 0
-                persistence_successes = 0
-                
-                for i in range(3):
-                    test_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
-                    persistence_tests += 1
+                try:
+                    # Test with entity_type filter
+                    response = self.session.get(
+                        f"{BACKEND_URL}/contributions-v2/?entity_type={entity_type}",
+                        timeout=10
+                    )
                     
-                    if test_response.status_code == 200:
-                        persistence_successes += 1
-                        print(f"         ✅ Session persistent - Request {i+1}/3 successful")
+                    if response.status_code == 200:
+                        contributions = response.json()
+                        filtering_results[entity_type] = contributions
+                        print(f"         ✅ {entity_type}: {len(contributions)} contributions found")
+                        
+                        if contributions:
+                            # Show details of first contribution
+                            first_contrib = contributions[0]
+                            print(f"            Example: ID {first_contrib.get('id')}, Status: {first_contrib.get('status')}")
+                        else:
+                            print(f"            ⚠️ No contributions found for {entity_type}")
                     else:
-                        print(f"         ❌ Session not persistent - Request {i+1}/3 failed with Status {test_response.status_code}")
-                
-                if persistence_successes == persistence_tests:
-                    print(f"         ✅ Session persistence working - {persistence_successes}/{persistence_tests} requests successful")
-                    session_persistence = True
-                else:
-                    print(f"         ❌ Session persistence issues - {persistence_successes}/{persistence_tests} requests successful")
+                        print(f"         ❌ {entity_type}: Failed - Status {response.status_code}")
+                        print(f"            Error: {response.text}")
+                        filtering_results[entity_type] = []
+                        
+                except Exception as e:
+                    print(f"         ❌ {entity_type}: Exception - {str(e)}")
+                    filtering_results[entity_type] = []
+            
+            # Test status filtering
+            print(f"      Testing status filtering...")
+            
+            status_types_to_test = ['pending', 'pending_review', 'approved', 'rejected']
+            status_results = {}
+            
+            for status in status_types_to_test:
+                try:
+                    response = self.session.get(
+                        f"{BACKEND_URL}/contributions-v2/?status={status}",
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        contributions = response.json()
+                        status_results[status] = contributions
+                        print(f"         ✅ status={status}: {len(contributions)} contributions")
+                    else:
+                        print(f"         ❌ status={status}: Failed - Status {response.status_code}")
+                        status_results[status] = []
+                        
+                except Exception as e:
+                    print(f"         ❌ status={status}: Exception - {str(e)}")
+                    status_results[status] = []
+            
+            # Analysis
+            print(f"      📊 FILTERING ANALYSIS:")
+            
+            total_by_entity = sum(len(contribs) for contribs in filtering_results.values())
+            total_by_status = sum(len(contribs) for contribs in status_results.values())
+            
+            print(f"         Total contributions by entity_type: {total_by_entity}")
+            print(f"         Total contributions by status: {total_by_status}")
+            
+            # Check for missing entity types
+            missing_entity_types = [et for et, contribs in filtering_results.items() if len(contribs) == 0 and et != 'master_kit']
+            
+            if missing_entity_types:
+                print(f"         ❌ MISSING ENTITY TYPES: {missing_entity_types}")
+                print(f"            This explains why user only sees master_kit contributions!")
             else:
-                print(f"         ⚠️ No auth token to test session persistence")
+                print(f"         ✅ All entity types have contributions")
             
-            # Step 5: Analyze results
-            session_tests_passed = 0
-            total_session_tests = 4
+            # Check pending contributions
+            pending_contributions = status_results.get('pending', []) + status_results.get('pending_review', [])
             
-            if logout_success:
-                session_tests_passed += 1
-            if token_invalidated:
-                session_tests_passed += 1
-            if reauth_success:
-                session_tests_passed += 1
-            if session_persistence:
-                session_tests_passed += 1
+            print(f"         Pending contributions for moderation: {len(pending_contributions)}")
             
-            session_success_rate = (session_tests_passed / total_session_tests) * 100
-            
-            print(f"\n      📊 SESSION MANAGEMENT ANALYSIS:")
-            print(f"         Total session tests: {total_session_tests}")
-            print(f"         Session tests passed: {session_tests_passed}")
-            print(f"         Session success rate: {session_success_rate:.1f}%")
-            print(f"         Logout works: {'✅' if logout_success else '❌'}")
-            print(f"         Token invalidation: {'✅' if token_invalidated else '❌'}")
-            print(f"         Re-authentication works: {'✅' if reauth_success else '❌'}")
-            print(f"         Session persistence: {'✅' if session_persistence else '❌'}")
-            
-            if session_success_rate >= 75:  # At least 3 out of 4 tests pass
-                self.log_test("Session Management", True, 
-                             f"✅ Session management working - {session_tests_passed}/{total_session_tests} tests passed ({session_success_rate:.1f}%)")
-                return True
-            else:
-                self.log_test("Session Management", False, 
-                             f"❌ Session management issues - {session_tests_passed}/{total_session_tests} tests passed ({session_success_rate:.1f}%)")
-                return False
+            if pending_contributions:
+                pending_entity_types = {}
+                for contrib in pending_contributions:
+                    et = contrib.get('entity_type', 'unknown')
+                    pending_entity_types[et] = pending_entity_types.get(et, 0) + 1
                 
+                print(f"         Pending by entity type:")
+                for et, count in pending_entity_types.items():
+                    print(f"            {et}: {count}")
+            
+            self.log_test("Contribution Filtering", True, 
+                         f"✅ Filtering analysis complete - {len(missing_entity_types)} missing entity types identified")
+            return True, filtering_results, status_results, missing_entity_types
+            
         except Exception as e:
-            self.log_test("Session Management", False, f"Exception: {str(e)}")
-            return False
+            self.log_test("Contribution Filtering", False, f"Exception: {str(e)}")
+            return False, {}, {}, []
     
-    def run_comprehensive_authentication_tests(self):
-        """Run comprehensive authentication system testing suite"""
-        print("\n🚀 COMPREHENSIVE AUTHENTICATION SYSTEM TESTING SUITE")
-        print("Testing all critical authentication endpoints and functionality")
+    def investigate_database_collections(self):
+        """Investigate if contributions are being saved to wrong collections"""
+        try:
+            print(f"\n🗄️ INVESTIGATING DATABASE COLLECTIONS")
+            print("=" * 80)
+            print("Checking if contributions are saved to different collections...")
+            
+            if not self.auth_token:
+                print(f"         ⚠️ No auth token available, attempting authentication...")
+                if not self.authenticate_admin():
+                    self.log_test("Database Collections Investigation", False, 
+                                 "❌ Cannot authenticate for database investigation")
+                    return False, {}
+            
+            # Test different possible collection endpoints
+            collection_endpoints = [
+                ("contributions_v2", "/contributions-v2/"),
+                ("contributions", "/contributions/"),
+                ("moderation", "/contributions-v2/admin/moderation-stats")
+            ]
+            
+            collection_results = {}
+            
+            for collection_name, endpoint in collection_endpoints:
+                print(f"      Testing {collection_name} collection via {endpoint}...")
+                
+                try:
+                    response = self.session.get(f"{BACKEND_URL}{endpoint}", timeout=10)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        
+                        if isinstance(data, list):
+                            collection_results[collection_name] = {
+                                "count": len(data),
+                                "data": data,
+                                "type": "list"
+                            }
+                            print(f"         ✅ {collection_name}: {len(data)} items found")
+                            
+                            # Analyze entity types if available
+                            if data and isinstance(data[0], dict) and 'entity_type' in data[0]:
+                                entity_types = {}
+                                for item in data:
+                                    et = item.get('entity_type', 'unknown')
+                                    entity_types[et] = entity_types.get(et, 0) + 1
+                                
+                                print(f"            Entity types: {entity_types}")
+                                
+                        elif isinstance(data, dict):
+                            collection_results[collection_name] = {
+                                "count": 1,
+                                "data": data,
+                                "type": "dict"
+                            }
+                            print(f"         ✅ {collection_name}: Stats object returned")
+                            print(f"            Data: {data}")
+                        else:
+                            collection_results[collection_name] = {
+                                "count": 0,
+                                "data": data,
+                                "type": "other"
+                            }
+                            print(f"         ⚠️ {collection_name}: Unexpected data type")
+                            
+                    elif response.status_code == 404:
+                        print(f"         ❌ {collection_name}: Collection not found")
+                        collection_results[collection_name] = {"count": 0, "data": None, "type": "not_found"}
+                    else:
+                        print(f"         ❌ {collection_name}: Failed - Status {response.status_code}")
+                        print(f"            Error: {response.text}")
+                        collection_results[collection_name] = {"count": 0, "data": None, "type": "error"}
+                        
+                except Exception as e:
+                    print(f"         ❌ {collection_name}: Exception - {str(e)}")
+                    collection_results[collection_name] = {"count": 0, "data": None, "type": "exception"}
+            
+            # Analysis
+            print(f"      📊 DATABASE COLLECTIONS ANALYSIS:")
+            
+            total_contributions = 0
+            for collection_name, result in collection_results.items():
+                count = result.get("count", 0)
+                total_contributions += count if result.get("type") == "list" else 0
+                print(f"         {collection_name}: {count} items ({result.get('type', 'unknown')})")
+            
+            print(f"         Total contributions across collections: {total_contributions}")
+            
+            # Check for collection inconsistencies
+            contributions_v2_count = collection_results.get("contributions_v2", {}).get("count", 0)
+            contributions_count = collection_results.get("contributions", {}).get("count", 0)
+            
+            if contributions_count > 0 and contributions_v2_count == 0:
+                print(f"         ❌ COLLECTION MISMATCH: Contributions in 'contributions' but not 'contributions_v2'")
+                print(f"            This could explain missing contributions in moderation dashboard")
+            elif contributions_v2_count > 0 and contributions_count == 0:
+                print(f"         ✅ Contributions properly in 'contributions_v2' collection")
+            elif contributions_v2_count > 0 and contributions_count > 0:
+                print(f"         ⚠️ Contributions in BOTH collections - potential duplication")
+            else:
+                print(f"         ❌ NO CONTRIBUTIONS found in either collection")
+            
+            self.log_test("Database Collections Investigation", True, 
+                         f"✅ Database investigation complete - {total_contributions} total contributions found")
+            return True, collection_results
+            
+        except Exception as e:
+            self.log_test("Database Collections Investigation", False, f"Exception: {str(e)}")
+            return False, {}
+    
+    def run_comprehensive_contribution_investigation(self):
+        """Run comprehensive contribution system investigation"""
+        print("\n🚀 COMPREHENSIVE CONTRIBUTION SYSTEM INVESTIGATION")
+        print("Investigating critical contribution system issues")
         print("=" * 80)
         
-        test_results = []
+        investigation_results = []
         
-        # Step 1: Test User Registration
-        print("\n1️⃣ Testing User Registration...")
-        registration_success, user_data = self.test_user_registration()
-        test_results.append(registration_success)
+        # Step 1: Authenticate
+        print("\n1️⃣ Authenticating...")
+        auth_success = self.authenticate_admin()
+        investigation_results.append(auth_success)
         
-        # Step 2: Test User Login
-        print("\n2️⃣ Testing User Login...")
-        login_success = self.test_user_login()
-        test_results.append(login_success)
+        if not auth_success:
+            print("❌ Cannot proceed without authentication")
+            return investigation_results, {}
         
-        # Step 3: Test Authentication Verification
-        print("\n3️⃣ Testing Authentication Verification...")
-        auth_verification_success = self.test_authentication_verification()
-        test_results.append(auth_verification_success)
+        # Step 2: Investigate contributions_v2 collection
+        print("\n2️⃣ Investigating Contributions V2 Collection...")
+        collection_success, all_contributions, entity_type_counts = self.investigate_contributions_v2_collection()
+        investigation_results.append(collection_success)
         
-        # Step 4: Test Session Management
-        print("\n4️⃣ Testing Session Management...")
-        session_management_success = self.test_session_management()
-        test_results.append(session_management_success)
+        # Step 3: Test contribution creation endpoints
+        print("\n3️⃣ Testing Contribution Creation Endpoints...")
+        creation_success, working_endpoints, available_entities = self.test_contribution_creation_endpoints()
+        investigation_results.append(creation_success)
         
-        return test_results
+        # Step 4: Test contribution filtering
+        print("\n4️⃣ Testing Contribution Filtering...")
+        filtering_success, filtering_results, status_results, missing_entity_types = self.test_contribution_filtering_endpoints()
+        investigation_results.append(filtering_success)
+        
+        # Step 5: Investigate database collections
+        print("\n5️⃣ Investigating Database Collections...")
+        db_success, collection_results = self.investigate_database_collections()
+        investigation_results.append(db_success)
+        
+        return investigation_results, {
+            "all_contributions": all_contributions if collection_success else [],
+            "entity_type_counts": entity_type_counts if collection_success else {},
+            "working_endpoints": working_endpoints if creation_success else [],
+            "available_entities": available_entities if creation_success else {},
+            "filtering_results": filtering_results if filtering_success else {},
+            "status_results": status_results if filtering_success else {},
+            "missing_entity_types": missing_entity_types if filtering_success else [],
+            "collection_results": collection_results if db_success else {}
+        }
     
-    def print_comprehensive_authentication_summary(self):
-        """Print final comprehensive authentication testing summary"""
-        print("\n📊 COMPREHENSIVE AUTHENTICATION SYSTEM TESTING SUMMARY")
+    def print_comprehensive_investigation_summary(self, investigation_data):
+        """Print final comprehensive investigation summary"""
+        print("\n📊 COMPREHENSIVE CONTRIBUTION SYSTEM INVESTIGATION SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
         passed_tests = len([r for r in self.test_results if r['success']])
         failed_tests = total_tests - passed_tests
         
-        print(f"Total tests: {total_tests}")
-        print(f"Passed: {passed_tests} ✅")
+        print(f"Total investigation steps: {total_tests}")
+        print(f"Completed: {passed_tests} ✅")
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Key findings
-        print(f"\n🔍 AUTHENTICATION SYSTEM TESTING RESULTS:")
+        print(f"\n🔍 CRITICAL CONTRIBUTION SYSTEM FINDINGS:")
         
-        # User Registration
-        registration_working = any(r['success'] for r in self.test_results if 'User Registration' in r['test'])
-        if registration_working:
-            print(f"  ✅ USER REGISTRATION: Registration endpoint working - users can create accounts")
-        else:
-            print(f"  ❌ USER REGISTRATION: Registration endpoint failing - users cannot create accounts")
+        # Entity type analysis
+        entity_type_counts = investigation_data.get("entity_type_counts", {})
+        missing_entity_types = investigation_data.get("missing_entity_types", [])
         
-        # User Login
-        login_working = any(r['success'] for r in self.test_results if 'User Login' in r['test'])
-        if login_working:
-            print(f"  ✅ USER LOGIN: Login endpoint working - users can authenticate successfully")
+        print(f"\n📊 ENTITY TYPE ANALYSIS:")
+        if entity_type_counts:
+            for entity_type, count in entity_type_counts.items():
+                print(f"  {entity_type}: {count} contributions")
         else:
-            print(f"  ❌ USER LOGIN: Login endpoint failing - users cannot authenticate")
+            print(f"  ❌ No entity type data available")
         
-        # Authentication Verification
-        auth_verification_working = any(r['success'] for r in self.test_results if 'Authentication Verification' in r['test'])
-        if auth_verification_working:
-            print(f"  ✅ AUTH VERIFICATION: /api/auth/me endpoint working - token validation functional")
+        if missing_entity_types:
+            print(f"\n❌ MISSING ENTITY TYPES ({len(missing_entity_types)}):")
+            for entity_type in missing_entity_types:
+                print(f"  • {entity_type}: NO contributions found")
+            print(f"  🎯 ROOT CAUSE: This explains why user only sees master_kit contributions!")
         else:
-            print(f"  ❌ AUTH VERIFICATION: /api/auth/me endpoint failing - token validation broken")
+            print(f"\n✅ All entity types have contributions")
         
-        # Session Management
-        session_management_working = any(r['success'] for r in self.test_results if 'Session Management' in r['test'])
-        if session_management_working:
-            print(f"  ✅ SESSION MANAGEMENT: Logout and session persistence working correctly")
+        # Endpoint analysis
+        working_endpoints = investigation_data.get("working_endpoints", [])
+        print(f"\n🔧 CONTRIBUTION CREATION ENDPOINTS:")
+        if working_endpoints:
+            print(f"  Found {len(working_endpoints)} working endpoints:")
+            for endpoint_name, endpoint_path, status in working_endpoints:
+                print(f"    • {endpoint_name} (Status {status})")
         else:
-            print(f"  ❌ SESSION MANAGEMENT: Logout or session persistence issues detected")
+            print(f"  ❌ No working contribution creation endpoints found")
+        
+        # Database collection analysis
+        collection_results = investigation_data.get("collection_results", {})
+        print(f"\n🗄️ DATABASE COLLECTION ANALYSIS:")
+        if collection_results:
+            for collection_name, result in collection_results.items():
+                count = result.get("count", 0)
+                result_type = result.get("type", "unknown")
+                print(f"  {collection_name}: {count} items ({result_type})")
+        else:
+            print(f"  ❌ No database collection data available")
+        
+        # Status analysis
+        status_results = investigation_data.get("status_results", {})
+        print(f"\n📋 CONTRIBUTION STATUS ANALYSIS:")
+        if status_results:
+            for status, contributions in status_results.items():
+                print(f"  {status}: {len(contributions)} contributions")
+        else:
+            print(f"  ❌ No status data available")
+        
+        # Final diagnosis
+        print(f"\n🎯 CONTRIBUTION SYSTEM DIAGNOSIS:")
+        
+        if missing_entity_types:
+            print(f"  ❌ CRITICAL ISSUE IDENTIFIED:")
+            print(f"     • Only master_kit contributions exist in system")
+            print(f"     • Missing entity types: {', '.join(missing_entity_types)}")
+            print(f"     • User's brand contribution likely failed to save or was saved incorrectly")
+            print(f"     • Contribution creation endpoints for non-master_kit entities may be broken")
+            
+            print(f"\n  🔧 RECOMMENDED FIXES:")
+            print(f"     1. Investigate why brand/team/player/competition contributions aren't being created")
+            print(f"     2. Check if contribution creation endpoints exist for all entity types")
+            print(f"     3. Verify contribution form submission logic for different entity types")
+            print(f"     4. Test actual contribution creation for each missing entity type")
+            print(f"     5. Check if contributions are being saved to wrong collection or with wrong entity_type")
+            
+        else:
+            print(f"  ✅ All entity types have contributions - issue may be elsewhere")
         
         # Show failures
         failures = [r for r in self.test_results if not r['success']]
         if failures:
-            print(f"\n❌ CRITICAL AUTHENTICATION ISSUES IDENTIFIED ({len(failures)}):")
+            print(f"\n❌ INVESTIGATION FAILURES ({len(failures)}):")
             for failure in failures:
                 print(f"  • {failure['test']}: {failure['message']}")
-        
-        # Final diagnosis
-        print(f"\n🎯 AUTHENTICATION SYSTEM DIAGNOSIS:")
-        
-        working_components = sum([registration_working, login_working, auth_verification_working, session_management_working])
-        total_components = 4
-        
-        if working_components == total_components:
-            print(f"  ✅ ALL AUTHENTICATION COMPONENTS WORKING ({working_components}/{total_components})")
-            print(f"     - User registration working without 'Invalid email or password' errors")
-            print(f"     - User login working with proper JWT token generation")
-            print(f"     - Authentication verification working with token validation")
-            print(f"     - Session management working with proper logout functionality")
-            print(f"     - Users should be able to create accounts and stay logged in")
-        elif working_components >= 3:
-            print(f"  ⚠️ MOST AUTHENTICATION COMPONENTS WORKING ({working_components}/{total_components})")
-            if registration_working:
-                print(f"     ✅ User registration working")
-            else:
-                print(f"     ❌ User registration failing - 'Invalid email or password' on signup form")
-            if login_working:
-                print(f"     ✅ User login working")
-            else:
-                print(f"     ❌ User login failing - authentication broken")
-            if auth_verification_working:
-                print(f"     ✅ Authentication verification working")
-            else:
-                print(f"     ❌ Authentication verification failing - token validation broken")
-            if session_management_working:
-                print(f"     ✅ Session management working")
-            else:
-                print(f"     ❌ Session management failing - users being disconnected")
-        else:
-            print(f"  ❌ MULTIPLE AUTHENTICATION COMPONENTS BROKEN ({working_components}/{total_components})")
-            print(f"     - User registration may be showing login validation errors")
-            print(f"     - User login may be failing completely")
-            print(f"     - Session persistence may be broken")
-            print(f"     - Users cannot create accounts or stay logged in")
-        
-        # Email system note
-        print(f"\n📧 EMAIL SYSTEM STATUS:")
-        print(f"  ⚠️ Email confirmation system not tested (requires SMTP configuration)")
-        print(f"     - Check SENDGRID_API_KEY or GMAIL_APP_PASSWORD in backend/.env")
-        print(f"     - Verify email sending functionality separately")
         
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the comprehensive authentication system testing suite"""
-    tester = TopKitAuthenticationSystemTesting()
+    """Main function to run the comprehensive contribution system investigation"""
+    investigator = TopKitContributionSystemInvestigation()
     
-    # Run the comprehensive authentication tests
-    test_results = tester.run_comprehensive_authentication_tests()
+    # Run the comprehensive contribution investigation
+    investigation_results, investigation_data = investigator.run_comprehensive_contribution_investigation()
     
     # Print comprehensive summary
-    tester.print_comprehensive_authentication_summary()
+    investigator.print_comprehensive_investigation_summary(investigation_data)
     
     # Return overall success
-    return all(test_results)
+    return all(investigation_results)
 
 if __name__ == "__main__":
     success = main()
