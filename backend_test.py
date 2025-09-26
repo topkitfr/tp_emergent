@@ -256,155 +256,161 @@ class TopKitAuthenticationSystemTesting:
             return False, None
     
     def test_user_login(self):
-        """ISSUE 3: Test new collection item detail endpoint"""
+        """Test user login endpoint - POST /api/auth/login"""
         try:
-            print(f"\n🔍 ISSUE 3: TESTING COLLECTION ITEM DETAIL ENDPOINT")
+            print(f"\n🔐 TESTING USER LOGIN")
             print("=" * 80)
-            print("Testing GET /api/my-collection/{item_id} endpoint for individual collection item details...")
+            print("Testing POST /api/auth/login endpoint...")
             
-            if not self.auth_token:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", False, "❌ Missing authentication")
-                return False
+            # Step 1: Test login with admin credentials
+            print(f"      Testing login with admin credentials...")
+            print(f"         Email: {ADMIN_CREDENTIALS['email']}")
+            print(f"         Password: {ADMIN_CREDENTIALS['password']}")
             
-            # Step 1: Get collection items to test detail endpoint
-            print(f"      Getting collection items to test detail endpoint...")
-            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-            
-            if collection_response.status_code != 200:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", False, 
-                             f"❌ Cannot access collection - Status {collection_response.status_code}")
-                return False
-            
-            collection_items = collection_response.json()
-            print(f"         ✅ Retrieved {len(collection_items)} collection items")
-            
-            if not collection_items:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", False, 
-                             "❌ No collection items available for testing")
-                return False
-            
-            # Step 2: Test individual collection item detail endpoint
-            detail_endpoints_working = 0
-            total_items_tested = 0
-            
-            for item in collection_items[:3]:  # Test first 3 items
-                collection_id = item.get('id')
-                master_kit = item.get('master_kit', {})
-                
-                print(f"      Testing detail endpoint for collection item {collection_id}...")
-                print(f"         Master Kit: {master_kit.get('club')} {master_kit.get('season')}")
-                
-                # Test individual collection item detail endpoint
-                detail_response = self.session.get(
-                    f"{BACKEND_URL}/my-collection/{collection_id}", 
-                    timeout=10
-                )
-                
-                if detail_response.status_code == 200:
-                    detail_data = detail_response.json()
-                    
-                    print(f"         ✅ Detail endpoint successful")
-                    
-                    # Verify comprehensive data is returned
-                    expected_fields = [
-                        'id', 'master_kit_id', 'user_id', 'collection_type',
-                        'name_printing', 'number_printing', 'size', 'condition',
-                        'physical_state', 'patches', 'is_signed', 'signed_by',
-                        'purchase_price', 'purchase_date', 'personal_notes',
-                        'master_kit'
-                    ]
-                    
-                    fields_present = 0
-                    fields_with_data = 0
-                    
-                    for field in expected_fields:
-                        if field in detail_data:
-                            fields_present += 1
-                            if detail_data[field] is not None and detail_data[field] != '':
-                                fields_with_data += 1
-                                print(f"         ✅ {field}: {detail_data[field]}")
-                            else:
-                                print(f"         ⚪ {field}: (empty)")
-                        else:
-                            print(f"         ❌ {field}: (missing)")
-                    
-                    field_presence_rate = (fields_present / len(expected_fields)) * 100
-                    field_data_rate = (fields_with_data / len(expected_fields)) * 100
-                    
-                    print(f"         📊 Detail endpoint analysis:")
-                    print(f"            Fields present: {fields_present}/{len(expected_fields)} ({field_presence_rate:.1f}%)")
-                    print(f"            Fields with data: {fields_with_data}/{len(expected_fields)} ({field_data_rate:.1f}%)")
-                    
-                    # Check if master_kit is embedded
-                    if 'master_kit' in detail_data and detail_data['master_kit']:
-                        print(f"         ✅ Master kit data embedded in response")
-                        master_kit_data = detail_data['master_kit']
-                        print(f"            Club: {master_kit_data.get('club')}")
-                        print(f"            Season: {master_kit_data.get('season')}")
-                        print(f"            Brand: {master_kit_data.get('brand')}")
-                    else:
-                        print(f"         ⚠️ Master kit data not embedded")
-                    
-                    if field_presence_rate >= 80:  # At least 80% of expected fields present
-                        detail_endpoints_working += 1
-                    
-                    total_items_tested += 1
-                    
-                else:
-                    print(f"         ❌ Detail endpoint failed - Status {detail_response.status_code}")
-                    print(f"            Error: {detail_response.text}")
-                    total_items_tested += 1
-            
-            # Step 3: Test authentication requirement
-            print(f"      Testing authentication requirement for detail endpoint...")
-            
-            # Remove auth header temporarily
-            original_auth = self.session.headers.get('Authorization')
-            if original_auth:
-                del self.session.headers['Authorization']
-            
-            # Test without authentication
-            unauth_response = self.session.get(
-                f"{BACKEND_URL}/my-collection/{collection_items[0]['id']}", 
+            admin_login_response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json={
+                    "email": ADMIN_CREDENTIALS['email'],
+                    "password": ADMIN_CREDENTIALS['password']
+                },
                 timeout=10
             )
             
-            # Restore auth header
-            if original_auth:
-                self.session.headers['Authorization'] = original_auth
+            admin_login_success = False
+            admin_token = None
             
-            if unauth_response.status_code == 401:
-                print(f"         ✅ Authentication properly required - Status 401")
-                auth_protection_working = True
+            if admin_login_response.status_code == 200:
+                admin_data = admin_login_response.json()
+                admin_token = admin_data.get('token')
+                user_data = admin_data.get('user', {})
+                
+                print(f"         ✅ Admin login successful!")
+                print(f"            Token received: {'Yes' if admin_token else 'No'}")
+                print(f"            User ID: {user_data.get('id')}")
+                print(f"            Name: {user_data.get('name')}")
+                print(f"            Email: {user_data.get('email')}")
+                print(f"            Role: {user_data.get('role')}")
+                
+                admin_login_success = True
+                
+                # Set auth token for further tests
+                self.auth_token = admin_token
+                self.admin_user_data = user_data
+                self.session.headers.update({"Authorization": f"Bearer {admin_token}"})
+                
             else:
-                print(f"         ⚠️ Authentication not required - Status {unauth_response.status_code}")
-                auth_protection_working = False
+                print(f"         ❌ Admin login failed - Status {admin_login_response.status_code}")
+                print(f"            Error: {admin_login_response.text}")
             
-            # Step 4: Analyze results
-            if total_items_tested == 0:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", False, 
-                             "❌ No collection items could be tested")
-                return False
+            # Step 2: Test login with test user credentials
+            print(f"      Testing login with test user credentials...")
+            print(f"         Email: {TEST_USER_CREDENTIALS['email']}")
+            print(f"         Password: {TEST_USER_CREDENTIALS['password']}")
             
-            detail_success_rate = (detail_endpoints_working / total_items_tested) * 100
+            test_user_login_response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json={
+                    "email": TEST_USER_CREDENTIALS['email'],
+                    "password": TEST_USER_CREDENTIALS['password']
+                },
+                timeout=10
+            )
             
-            print(f"\n      📊 ISSUE 3 ANALYSIS:")
-            print(f"         Total items tested: {total_items_tested}")
-            print(f"         Detail endpoints working: {detail_endpoints_working}")
-            print(f"         Detail success rate: {detail_success_rate:.1f}%")
-            print(f"         Authentication protection: {'✅' if auth_protection_working else '❌'}")
+            test_user_login_success = False
             
-            if detail_success_rate >= 80 and auth_protection_working:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", True, 
-                             f"✅ Collection item detail endpoint working - {detail_endpoints_working}/{total_items_tested} items ({detail_success_rate:.1f}%) return comprehensive data with proper authentication")
+            if test_user_login_response.status_code == 200:
+                test_user_data = test_user_login_response.json()
+                test_token = test_user_data.get('token')
+                user_data = test_user_data.get('user', {})
+                
+                print(f"         ✅ Test user login successful!")
+                print(f"            Token received: {'Yes' if test_token else 'No'}")
+                print(f"            User ID: {user_data.get('id')}")
+                print(f"            Name: {user_data.get('name')}")
+                print(f"            Email: {user_data.get('email')}")
+                print(f"            Role: {user_data.get('role')}")
+                
+                test_user_login_success = True
+                
+            else:
+                print(f"         ❌ Test user login failed - Status {test_user_login_response.status_code}")
+                print(f"            Error: {test_user_login_response.text}")
+            
+            # Step 3: Test login with invalid credentials
+            print(f"      Testing login with invalid credentials...")
+            
+            invalid_login_response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json={
+                    "email": "nonexistent@example.com",
+                    "password": "wrongpassword"
+                },
+                timeout=10
+            )
+            
+            invalid_login_properly_rejected = False
+            
+            if invalid_login_response.status_code == 401:
+                print(f"         ✅ Invalid credentials properly rejected - Status 401")
+                print(f"            Error message: {invalid_login_response.text}")
+                invalid_login_properly_rejected = True
+            else:
+                print(f"         ❌ Invalid credentials not properly rejected - Status {invalid_login_response.status_code}")
+                print(f"            Response: {invalid_login_response.text}")
+            
+            # Step 4: Test JWT token structure
+            print(f"      Testing JWT token structure...")
+            
+            jwt_token_valid = False
+            if admin_token:
+                try:
+                    # Decode JWT token (without verification for testing)
+                    import jwt as jwt_lib
+                    decoded_token = jwt_lib.decode(admin_token, options={"verify_signature": False})
+                    print(f"         ✅ JWT token structure valid")
+                    print(f"            Subject (user ID): {decoded_token.get('sub')}")
+                    print(f"            Token payload: {decoded_token}")
+                    jwt_token_valid = True
+                except Exception as jwt_error:
+                    print(f"         ❌ JWT token structure invalid: {str(jwt_error)}")
+            else:
+                print(f"         ❌ No JWT token to test")
+            
+            # Step 5: Analyze results
+            login_tests_passed = 0
+            total_login_tests = 4
+            
+            if admin_login_success:
+                login_tests_passed += 1
+            if test_user_login_success:
+                login_tests_passed += 1
+            if invalid_login_properly_rejected:
+                login_tests_passed += 1
+            if jwt_token_valid:
+                login_tests_passed += 1
+            
+            login_success_rate = (login_tests_passed / total_login_tests) * 100
+            
+            print(f"\n      📊 LOGIN TESTING ANALYSIS:")
+            print(f"         Total login tests: {total_login_tests}")
+            print(f"         Login tests passed: {login_tests_passed}")
+            print(f"         Login success rate: {login_success_rate:.1f}%")
+            print(f"         Admin login: {'✅' if admin_login_success else '❌'}")
+            print(f"         Test user login: {'✅' if test_user_login_success else '❌'}")
+            print(f"         Invalid credentials rejected: {'✅' if invalid_login_properly_rejected else '❌'}")
+            print(f"         JWT token valid: {'✅' if jwt_token_valid else '❌'}")
+            
+            if login_success_rate >= 75:  # At least 3 out of 4 tests pass
+                self.log_test("User Login", True, 
+                             f"✅ User login working - {login_tests_passed}/{total_login_tests} tests passed ({login_success_rate:.1f}%)")
                 return True
             else:
-                self.log_test("Issue 3 - Collection Item Detail Endpoint", False, 
-                             f"❌ Collection item detail endpoint issues - {detail_endpoints_working}/{total_items_tested} items ({detail_success_rate:.1f}%) working, auth protection: {auth_protection_working}")
+                self.log_test("User Login", False, 
+                             f"❌ User login issues - {login_tests_passed}/{total_login_tests} tests passed ({login_success_rate:.1f}%)")
                 return False
                 
         except Exception as e:
-            self.log_test("Issue 3 - Collection Item Detail Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("User Login", False, f"Exception: {str(e)}")
             return False
     
     def test_issue_4_backend_endpoints_functioning(self):
