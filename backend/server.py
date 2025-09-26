@@ -2821,9 +2821,10 @@ async def upload_contribution_image(
 async def get_moderation_stats(admin_user: dict = Depends(get_admin_user)):
     """Get moderation statistics for admin"""
     try:
-        total_pending = await db.contributions.count_documents({"status": "pending_review"})
-        total_approved = await db.contributions.count_documents({"status": "approved"})
-        total_rejected = await db.contributions.count_documents({"status": "rejected"})
+        # Fix: Use contributions_v2 collection and check for both pending and pending_review status
+        total_pending = await db.contributions_v2.count_documents({"status": {"$in": ["pending", "pending_review"]}})
+        total_approved = await db.contributions_v2.count_documents({"status": "approved"})
+        total_rejected = await db.contributions_v2.count_documents({"status": "rejected"})
         
         return {
             "pending": total_pending,
