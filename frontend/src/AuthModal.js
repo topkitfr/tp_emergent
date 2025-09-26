@@ -176,8 +176,20 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         onClose();
       } else {
         console.log('📝 Registration successful');
-        alert('Registration successful! You can now sign in.');
-        setIsLogin(true); // Switch to login mode
+        setSuccessMessage('Registration successful! You are now signed in.');
+        
+        // Auto-login the user after successful registration
+        if (data.token && data.user) {
+          console.log('🎉 Auto-login after registration successful');
+          onLoginSuccess(data.token, data.user);
+          onClose();
+        } else {
+          // Fallback: show success message and switch to login mode
+          setTimeout(() => {
+            setSuccessMessage('');
+            setIsLogin(true); // Switch to login mode
+          }, 2000);
+        }
       }
       
     } catch (error) {
