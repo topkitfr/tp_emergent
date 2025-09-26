@@ -475,7 +475,7 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
                                 ? img 
                                 : img.startsWith('uploads/') ? 
                                   `${API}/api/${img}` :
-                                  `${API}/api/uploads/master_kits/${img}.jpg`}
+                                  `${API}/api/uploads/${img}`}
                               alt={`Detail ${index + 1}`}
                               className="w-full h-32 object-contain bg-gray-50 rounded-lg border opacity-75"
                             />
