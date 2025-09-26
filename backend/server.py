@@ -2603,9 +2603,9 @@ async def get_contributions(
     limit: int = Query(20, le=100),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get contributions with filtering"""
+    """Get contributions with filtering - show all contributions (pending and approved) with status indicators"""
     try:
-        # Build filter query
+        # Build filter query - Do NOT filter by status to show all contributions
         filter_query = {}
         if status:
             filter_query["status"] = status
@@ -2615,7 +2615,7 @@ async def get_contributions(
         # Calculate skip
         skip = (page - 1) * limit
         
-        # Query database
+        # Query database - include all contributions regardless of approval status
         cursor = db.contributions_v2.find(filter_query).skip(skip).limit(limit).sort("submitted_at", -1)
         contributions = await cursor.to_list(length=None)
         
