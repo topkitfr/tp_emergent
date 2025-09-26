@@ -1520,7 +1520,6 @@ async def upload_proof_of_purchase(
 # PERFORMANCE OPTIMIZATIONS
 # ================================
 
-from PIL import Image as PILImage
 import io
 
 @app.get("/api/uploads/{file_path:path}")
