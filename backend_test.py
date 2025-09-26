@@ -51,7 +51,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://football-kit-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-auth-fix-2.preview.emergentagent.com/api"
 
 # Test Admin Credentials for authentication
 ADMIN_CREDENTIALS = {
@@ -262,9 +262,9 @@ class TopKitMasterKitFixesVerification:
                     
                     # Try different URL formats
                     image_urls_to_test = [
-                        f"https://football-kit-app.preview.emergentagent.com/api/uploads/master_kits/{kit_id}_front.jpg",
-                        f"https://football-kit-app.preview.emergentagent.com/{front_photo}",
-                        f"https://football-kit-app.preview.emergentagent.com/api/{front_photo}"
+                        f"https://topkit-auth-fix-2.preview.emergentagent.com/api/uploads/master_kits/{kit_id}_front.jpg",
+                        f"https://topkit-auth-fix-2.preview.emergentagent.com/{front_photo}",
+                        f"https://topkit-auth-fix-2.preview.emergentagent.com/api/{front_photo}"
                     ]
                     
                     image_accessible = False

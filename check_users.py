@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import json
 
-BACKEND_URL = "https://football-kit-app.preview.emergentagent.com/api"
+BACKEND_URL = "https://topkit-auth-fix-2.preview.emergentagent.com/api"
 
 async def check_users():
     async with aiohttp.ClientSession() as session:
