@@ -53,11 +53,11 @@ from pathlib import Path
 # Configuration
 BACKEND_URL = "https://topkit-auth-fix-2.preview.emergentagent.com/api"
 
-# Test Admin Credentials for authentication
+# Test Admin Credentials for authentication - Updated for Master Kit Data Retrieval Testing
 ADMIN_CREDENTIALS = {
-    "email": "emergency.admin@topkit.test",
-    "password": "EmergencyAdmin2025!",
-    "name": "Emergency Admin"
+    "email": "topkitfr@gmail.com",
+    "password": "TopKitAdmin2024!",
+    "name": "TopKit Admin"
 }
 
 class TopKitMasterKitFixesVerification:
