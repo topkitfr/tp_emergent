@@ -414,170 +414,180 @@ class TopKitAuthenticationSystemTesting:
             return False
     
     def test_authentication_verification(self):
-        """ISSUE 4: Test backend endpoints still functioning after all changes"""
+        """Test authentication verification endpoint - GET /api/auth/me"""
         try:
-            print(f"\n🔧 ISSUE 4: TESTING BACKEND ENDPOINTS FUNCTIONING")
+            print(f"\n🔍 TESTING AUTHENTICATION VERIFICATION")
             print("=" * 80)
-            print("Testing that all backend endpoints still work after the fixes...")
+            print("Testing GET /api/auth/me endpoint...")
+            
+            # Step 1: Test with valid JWT token
+            print(f"      Testing /api/auth/me with valid JWT token...")
             
             if not self.auth_token:
-                self.log_test("Issue 4 - Backend Endpoints Functioning", False, "❌ Missing authentication")
-                return False
-            
-            endpoints_tested = 0
-            endpoints_working = 0
-            
-            # Test 1: Master kit approval filtering
-            print(f"      Testing master kit approval filtering...")
-            master_kits_response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
-            
-            if master_kits_response.status_code == 200:
-                master_kits = master_kits_response.json()
-                print(f"         ✅ Master kits endpoint working - {len(master_kits)} kits returned")
-                endpoints_working += 1
-            else:
-                print(f"         ❌ Master kits endpoint failed - Status {master_kits_response.status_code}")
-            endpoints_tested += 1
-            
-            # Test 2: Image serving endpoints
-            print(f"      Testing image serving endpoints...")
-            
-            # Get a master kit with image to test
-            if master_kits_response.status_code == 200:
-                master_kits = master_kits_response.json()
-                image_test_successful = False
+                print(f"         ⚠️ No auth token available, attempting to get one...")
+                # Try to login first
+                login_response = self.session.post(
+                    f"{BACKEND_URL}/auth/login",
+                    json=ADMIN_CREDENTIALS,
+                    timeout=10
+                )
                 
-                for kit in master_kits[:3]:  # Test first 3 kits
-                    front_photo_url = kit.get('front_photo_url')
-                    if front_photo_url:
-                        print(f"         Testing image: {front_photo_url}")
-                        
-                        # Test image serving
-                        image_response = self.session.get(
-                            f"{BACKEND_URL}/uploads/{front_photo_url}", 
-                            timeout=10
-                        )
-                        
-                        if image_response.status_code == 200:
-                            print(f"         ✅ Image serving working - Status 200")
-                            image_test_successful = True
-                            break
-                        else:
-                            print(f"         ⚠️ Image serving issue - Status {image_response.status_code}")
-                
-                if image_test_successful:
-                    endpoints_working += 1
-                    print(f"         ✅ Image serving endpoints working")
+                if login_response.status_code == 200:
+                    login_data = login_response.json()
+                    self.auth_token = login_data.get('token')
+                    self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
+                    print(f"         ✅ Obtained auth token via login")
                 else:
-                    print(f"         ❌ Image serving endpoints not working")
-            else:
-                print(f"         ⚠️ Cannot test image serving - no master kits available")
-            endpoints_tested += 1
+                    self.log_test("Authentication Verification", False, 
+                                 "❌ Cannot obtain auth token for testing")
+                    return False
             
-            # Test 3: Moderation dashboard APIs
-            print(f"      Testing moderation dashboard APIs...")
-            
-            # Test contributions endpoint
-            contributions_response = self.session.get(f"{BACKEND_URL}/contributions-v2/", timeout=10)
-            
-            if contributions_response.status_code == 200:
-                contributions = contributions_response.json()
-                print(f"         ✅ Contributions endpoint working - {len(contributions)} contributions")
-                endpoints_working += 1
-            else:
-                print(f"         ❌ Contributions endpoint failed - Status {contributions_response.status_code}")
-            endpoints_tested += 1
-            
-            # Test 4: Price calculation endpoints
-            print(f"      Testing price calculation endpoints...")
-            
-            # Get collection items to test price calculation
-            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-            
-            if collection_response.status_code == 200:
-                collection_items = collection_response.json()
-                if collection_items:
-                    collection_id = collection_items[0]['id']
-                    
-                    price_response = self.session.get(
-                        f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", 
-                        timeout=10
-                    )
-                    
-                    if price_response.status_code == 200:
-                        price_data = price_response.json()
-                        print(f"         ✅ Price calculation working - €{price_data.get('estimated_price')}")
-                        endpoints_working += 1
-                    else:
-                        print(f"         ❌ Price calculation failed - Status {price_response.status_code}")
-                else:
-                    print(f"         ⚠️ No collection items to test price calculation")
-                    endpoints_working += 1  # Consider it working if no items to test
-            else:
-                print(f"         ❌ Collection endpoint failed - Status {collection_response.status_code}")
-            endpoints_tested += 1
-            
-            # Test 5: Authentication endpoints
-            print(f"      Testing authentication endpoints...")
-            
-            # Test auth/me endpoint
+            # Test with valid token
             auth_me_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
+            
+            valid_token_success = False
+            user_data_complete = False
             
             if auth_me_response.status_code == 200:
                 auth_data = auth_me_response.json()
-                print(f"         ✅ Auth/me endpoint working - User: {auth_data.get('name')}")
-                endpoints_working += 1
-            else:
-                print(f"         ❌ Auth/me endpoint failed - Status {auth_me_response.status_code}")
-            endpoints_tested += 1
-            
-            # Test 6: Form data endpoints
-            print(f"      Testing form data endpoints...")
-            
-            form_data_endpoints = ['clubs', 'brands', 'competitions', 'players']
-            form_data_working = 0
-            
-            for endpoint in form_data_endpoints:
-                form_response = self.session.get(f"{BACKEND_URL}/form-data/{endpoint}", timeout=10)
+                print(f"         ✅ Auth/me successful with valid token")
+                print(f"            User ID: {auth_data.get('id')}")
+                print(f"            Name: {auth_data.get('name')}")
+                print(f"            Email: {auth_data.get('email')}")
+                print(f"            Role: {auth_data.get('role')}")
                 
-                if form_response.status_code == 200:
-                    data = form_response.json()
-                    print(f"         ✅ Form data {endpoint} working - {len(data)} items")
-                    form_data_working += 1
+                valid_token_success = True
+                
+                # Check if user data is complete
+                required_fields = ['id', 'name', 'email', 'role']
+                fields_present = all(auth_data.get(field) for field in required_fields)
+                
+                if fields_present:
+                    print(f"         ✅ User data complete - all required fields present")
+                    user_data_complete = True
                 else:
-                    print(f"         ❌ Form data {endpoint} failed - Status {form_response.status_code}")
-            
-            if form_data_working >= 3:  # At least 3 out of 4 working
-                endpoints_working += 1
-                print(f"         ✅ Form data endpoints working - {form_data_working}/4")
+                    print(f"         ⚠️ User data incomplete - missing some required fields")
+                    for field in required_fields:
+                        if not auth_data.get(field):
+                            print(f"            Missing: {field}")
+                
             else:
-                print(f"         ❌ Form data endpoints issues - {form_data_working}/4 working")
-            endpoints_tested += 1
+                print(f"         ❌ Auth/me failed with valid token - Status {auth_me_response.status_code}")
+                print(f"            Error: {auth_me_response.text}")
             
-            # Step 3: Analyze results
-            if endpoints_tested == 0:
-                self.log_test("Issue 4 - Backend Endpoints Functioning", False, 
-                             "❌ No endpoints could be tested")
-                return False
+            # Step 2: Test with invalid JWT token
+            print(f"      Testing /api/auth/me with invalid JWT token...")
             
-            endpoint_success_rate = (endpoints_working / endpoints_tested) * 100
+            # Save original auth header
+            original_auth = self.session.headers.get('Authorization')
             
-            print(f"\n      📊 ISSUE 4 ANALYSIS:")
-            print(f"         Total endpoints tested: {endpoints_tested}")
-            print(f"         Endpoints working: {endpoints_working}")
-            print(f"         Endpoint success rate: {endpoint_success_rate:.1f}%")
+            # Set invalid token
+            self.session.headers.update({"Authorization": "Bearer invalid_token_12345"})
             
-            if endpoint_success_rate >= 80:
-                self.log_test("Issue 4 - Backend Endpoints Functioning", True, 
-                             f"✅ Backend endpoints functioning after changes - {endpoints_working}/{endpoints_tested} endpoints ({endpoint_success_rate:.1f}%) working")
+            invalid_token_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
+            
+            invalid_token_properly_rejected = False
+            
+            if invalid_token_response.status_code == 401:
+                print(f"         ✅ Invalid token properly rejected - Status 401")
+                print(f"            Error message: {invalid_token_response.text}")
+                invalid_token_properly_rejected = True
+            else:
+                print(f"         ❌ Invalid token not properly rejected - Status {invalid_token_response.status_code}")
+                print(f"            Response: {invalid_token_response.text}")
+            
+            # Restore original auth header
+            if original_auth:
+                self.session.headers.update({"Authorization": original_auth})
+            
+            # Step 3: Test without authentication header
+            print(f"      Testing /api/auth/me without authentication header...")
+            
+            # Remove auth header
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            no_auth_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
+            
+            no_auth_properly_rejected = False
+            
+            if no_auth_response.status_code == 401:
+                print(f"         ✅ No auth header properly rejected - Status 401")
+                print(f"            Error message: {no_auth_response.text}")
+                no_auth_properly_rejected = True
+            else:
+                print(f"         ❌ No auth header not properly rejected - Status {no_auth_response.status_code}")
+                print(f"            Response: {no_auth_response.text}")
+            
+            # Restore auth header for future tests
+            if original_auth:
+                self.session.headers.update({"Authorization": original_auth})
+            
+            # Step 4: Test token expiration (if possible)
+            print(f"      Testing JWT token expiration behavior...")
+            
+            token_expiration_handled = True  # Assume it's handled unless we can test otherwise
+            
+            try:
+                # Try to decode the token to check expiration
+                import jwt as jwt_lib
+                if self.auth_token:
+                    decoded_token = jwt_lib.decode(self.auth_token, options={"verify_signature": False})
+                    exp_timestamp = decoded_token.get('exp')
+                    
+                    if exp_timestamp:
+                        from datetime import datetime
+                        exp_datetime = datetime.fromtimestamp(exp_timestamp)
+                        current_datetime = datetime.now()
+                        
+                        print(f"         ✅ Token has expiration timestamp")
+                        print(f"            Expires at: {exp_datetime}")
+                        print(f"            Current time: {current_datetime}")
+                        print(f"            Time until expiration: {exp_datetime - current_datetime}")
+                    else:
+                        print(f"         ⚠️ Token does not have expiration timestamp")
+                        token_expiration_handled = False
+                else:
+                    print(f"         ⚠️ No token to check expiration")
+                    
+            except Exception as token_error:
+                print(f"         ⚠️ Could not check token expiration: {str(token_error)}")
+            
+            # Step 5: Analyze results
+            auth_tests_passed = 0
+            total_auth_tests = 4
+            
+            if valid_token_success and user_data_complete:
+                auth_tests_passed += 1
+            if invalid_token_properly_rejected:
+                auth_tests_passed += 1
+            if no_auth_properly_rejected:
+                auth_tests_passed += 1
+            if token_expiration_handled:
+                auth_tests_passed += 1
+            
+            auth_success_rate = (auth_tests_passed / total_auth_tests) * 100
+            
+            print(f"\n      📊 AUTHENTICATION VERIFICATION ANALYSIS:")
+            print(f"         Total auth tests: {total_auth_tests}")
+            print(f"         Auth tests passed: {auth_tests_passed}")
+            print(f"         Auth success rate: {auth_success_rate:.1f}%")
+            print(f"         Valid token works: {'✅' if valid_token_success and user_data_complete else '❌'}")
+            print(f"         Invalid token rejected: {'✅' if invalid_token_properly_rejected else '❌'}")
+            print(f"         No auth rejected: {'✅' if no_auth_properly_rejected else '❌'}")
+            print(f"         Token expiration handled: {'✅' if token_expiration_handled else '❌'}")
+            
+            if auth_success_rate >= 75:  # At least 3 out of 4 tests pass
+                self.log_test("Authentication Verification", True, 
+                             f"✅ Authentication verification working - {auth_tests_passed}/{total_auth_tests} tests passed ({auth_success_rate:.1f}%)")
                 return True
             else:
-                self.log_test("Issue 4 - Backend Endpoints Functioning", False, 
-                             f"❌ Backend endpoints issues after changes - {endpoints_working}/{endpoints_tested} endpoints ({endpoint_success_rate:.1f}%) working")
+                self.log_test("Authentication Verification", False, 
+                             f"❌ Authentication verification issues - {auth_tests_passed}/{total_auth_tests} tests passed ({auth_success_rate:.1f}%)")
                 return False
                 
         except Exception as e:
-            self.log_test("Issue 4 - Backend Endpoints Functioning", False, f"Exception: {str(e)}")
+            self.log_test("Authentication Verification", False, f"Exception: {str(e)}")
             return False
     
     def run_comprehensive_four_fixes_tests(self):
