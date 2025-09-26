@@ -285,7 +285,6 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Critical Master Kit Display Issues Investigation - CRITICAL"
     - "Authentication Error Message Handling Fix - CRITICAL"
     - "Signup Success Feedback Improvement - HIGH"
   stuck_tasks: []
