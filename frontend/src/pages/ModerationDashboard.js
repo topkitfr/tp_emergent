@@ -138,11 +138,12 @@ const ModerationDashboard = ({ user, API }) => {
       // Determine status based on tab
       switch (tab) {
         case 'overview':
-          // For overview, get recent pending contributions
+          // For overview, get recent pending contributions - check for both pending and pending_review
           status = 'pending_review';
           limit = 6; // Just show 6 recent ones in overview
           break;
         case 'pending':
+          // Check for both pending and pending_review status values
           status = 'pending_review';
           break;
         case 'approved':
@@ -164,8 +165,29 @@ const ModerationDashboard = ({ user, API }) => {
         }
       );
       
+      // If no pending_review results, try pending status for backward compatibility
+      let contribData = [];
       if (contribResponse.ok) {
-        const contribData = await contribResponse.json();
+        contribData = await contribResponse.json();
+        
+        // If we're looking for pending items and got no results, try the alternate status
+        if ((status === 'pending_review') && contribData.length === 0) {
+          console.log('No pending_review found, trying pending status...');
+          const alternateResponse = await fetch(
+            `${API}/api/contributions-v2/?status=pending&page=${tab === 'overview' ? 1 : currentPage}&limit=${limit}`, 
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
+          );
+          
+          if (alternateResponse.ok) {
+            contribData = await alternateResponse.json();
+            console.log(`Found ${contribData.length} contributions with 'pending' status`);
+          }
+        }
+      }
         
         // Update contributions and cache
         setContributions(contribData);
