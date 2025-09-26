@@ -267,7 +267,13 @@ const ModerationDashboard = ({ user, API }) => {
   );
 
   const ContributionCard = ({ contribution, showActions = true, actionType = 'pending' }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow relative">
+      {/* Pending Approval Sticker */}
+      {contribution.status === 'pending_review' && (
+        <div className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md z-10">
+          PENDING APPROVAL
+        </div>
+      )}
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900">{contribution.title}</h3>
