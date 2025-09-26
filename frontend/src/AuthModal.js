@@ -191,9 +191,14 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
         if (statusMatch) {
           const status = parseInt(statusMatch[1]);
           if (status === 400 || status === 401) {
-            errorMessage = 'Invalid email or password';
+            // Different error messages based on login vs signup context
+            if (isLogin) {
+              errorMessage = 'Invalid email or password';
+            } else {
+              errorMessage = 'Email already exists or invalid data. Please try a different email or sign in instead.';
+            }
           } else if (status === 422) {
-            errorMessage = 'Invalid data format';
+            errorMessage = isLogin ? 'Invalid login data' : 'Please check your registration details';
           } else {
             errorMessage = `Server error (${status})`;
           }
