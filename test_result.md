@@ -262,6 +262,21 @@ test_plan:
   test_priority: "critical_first"
 
 backend:
+  - task: "Critical Contribution System Investigation - Missing Entity Types"
+    implemented: true
+    working: false
+    file: "server.py, collaborative_models.py, backend_test.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "🔍 CRITICAL CONTRIBUTION SYSTEM INVESTIGATION REQUESTED - User reports major issue: 1. Only seeing master kit contributions in moderation dashboard and community contributions, 2. Missing brand/team/player/competition contributions completely, 3. User created a brand contribution but can't see it anywhere, 4. Should see ALL contribution types with pending approval status. Investigation focus: Contribution Creation Endpoints, Contributions V2 Collection Analysis, Contribution Form Submission Logic, API Endpoint Investigation, Database Collection Check. Authentication: emergency.admin@topkit.test / EmergencyAdmin2025!. Expected to find: Root cause why only master_kit contributions are visible, Missing contribution creation logic for other entity types, Database collection inconsistencies, Path to restore full contribution system functionality."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL CONTRIBUTION SYSTEM ISSUE CONFIRMED - ROOT CAUSE IDENTIFIED! Comprehensive investigation reveals the exact cause of missing contribution types: ✅ AUTHENTICATION (100%): emergency.admin@topkit.test / EmergencyAdmin2025! authentication working perfectly with admin role - User ID: 71bcab20-aa81-42ca-8d0a-e6854898c7cc ✅ CONTRIBUTIONS V2 COLLECTION ANALYSIS (100%): Retrieved 13 total contributions from contributions_v2 collection - Entity type breakdown: master_kit (13 contributions), Status breakdown: approved (11), rejected (2), NO NON-MASTER_KIT CONTRIBUTIONS FOUND - explains why user only sees master_kit contributions ✅ CONTRIBUTION CREATION ENDPOINTS (100%): Found 5 working endpoints - POST /api/contributions-v2/ (Status 422 - validation errors), POST /api/brands/ (Status 200), POST /api/teams/ (Status 200), POST /api/players/ (Status 200), POST /api/competitions/ (Status 200), Brand entity creation successful but doesn't create contributions ✅ CONTRIBUTION FILTERING (100%): Entity type filtering reveals missing types - master_kit: 13 contributions found, brand: 0 contributions, team: 0 contributions, player: 0 contributions, competition: 0 contributions, Status filtering: pending (0), pending_review (0), approved (11), rejected (2) ✅ DATABASE COLLECTIONS (100%): Contributions properly in contributions_v2 collection (13 items), No contributions in legacy 'contributions' collection, Moderation stats consistent (pending: 0, approved: 11, rejected: 2, total: 13) ❌ CRITICAL ROOT CAUSE IDENTIFIED: Only master_kit contributions exist in system, Missing entity types: brand, team, player, competition, User's brand contribution likely failed to save or was saved incorrectly, Contribution creation endpoints for non-master_kit entities may be broken 🎯 RECOMMENDED FIXES: 1. Investigate why brand/team/player/competition contributions aren't being created, 2. Check if contribution creation endpoints exist for all entity types, 3. Verify contribution form submission logic for different entity types, 4. Test actual contribution creation for each missing entity type, 5. Check if contributions are being saved to wrong collection or with wrong entity_type. CONCLUSION: The contribution system is fundamentally broken for all entity types except master_kit. This explains why the user only sees master_kit contributions in the moderation dashboard and cannot find their brand contribution anywhere."
+
   - task: "Moderation Dashboard Fixes Testing - Collection Consistency and Status Values"
     implemented: true
     working: true
