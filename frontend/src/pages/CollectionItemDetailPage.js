@@ -454,7 +454,7 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
                             ? masterKit.back_photo_url 
                             : masterKit.back_photo_url.startsWith('uploads/') ? 
                               `${API}/api/${masterKit.back_photo_url}` :
-                              `${API}/api/uploads/master_kits/${masterKit.back_photo_url}.jpg`}
+                              `${API}/api/uploads/${masterKit.back_photo_url}`}
                           alt="Back view"
                           className="w-full h-64 object-contain bg-gray-50 rounded-lg border opacity-75"
                         />
