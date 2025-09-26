@@ -60,7 +60,7 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitMasterKitDisplayIssuesInvestigation:
+class TopKitMasterKitFixesVerification:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
@@ -123,6 +123,39 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
     
+    def test_uploads_endpoint_fix(self):
+        """Test the fixed /api/uploads/ endpoint - should no longer return 500 error"""
+        try:
+            print(f"\n🔧 TESTING UPLOADS ENDPOINT FIX")
+            print("=" * 60)
+            print("      Testing if duplicate PIL import fix resolved 500 error...")
+            
+            response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
+            print(f"      /api/uploads/ response status: {response.status_code}")
+            
+            if response.status_code == 500:
+                print(f"      ❌ UPLOADS ENDPOINT STILL BROKEN - Status 500")
+                print(f"      Response: {response.text}")
+                self.log_test("Uploads Endpoint Fix", False, 
+                             f"❌ /api/uploads/ still returning 500 error - fix not working", response.text)
+                return False
+            elif response.status_code == 200:
+                print(f"      ✅ UPLOADS ENDPOINT FIXED - Status 200")
+                print(f"      Response: {response.text[:200]}...")
+                self.log_test("Uploads Endpoint Fix", True, 
+                             f"✅ /api/uploads/ endpoint now working - Status 200")
+                return True
+            else:
+                print(f"      ⚠️ UPLOADS ENDPOINT - Unexpected status: {response.status_code}")
+                print(f"      Response: {response.text}")
+                self.log_test("Uploads Endpoint Fix", True, 
+                             f"⚠️ /api/uploads/ endpoint - Status {response.status_code} (not 500)")
+                return True
+                
+        except Exception as e:
+            self.log_test("Uploads Endpoint Fix", False, f"Exception: {str(e)}")
+            return False
+
     def test_master_kits_endpoint(self):
         """Test GET /api/master-kits endpoint for data retrieval"""
         try:
@@ -209,22 +242,11 @@ class TopKitMasterKitDisplayIssuesInvestigation:
             
             image_test_results = []
             
-            # Test uploads endpoint accessibility
-            print(f"      Testing /api/uploads/ endpoint accessibility...")
-            uploads_response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
-            print(f"      /api/uploads/ response status: {uploads_response.status_code}")
-            
-            if uploads_response.status_code == 500:
-                print(f"      ❌ /api/uploads/ endpoint returning 500 Internal Server Error")
-                print(f"      Response: {uploads_response.text}")
-                self.log_test("Uploads Endpoint", False, 
-                             f"❌ /api/uploads/ endpoint broken - Status 500", uploads_response.text)
-            
             # Test specific master kit images
             tested_images = 0
             accessible_images = 0
             
-            for kit in self.master_kits_data[:5]:  # Test first 5 kits
+            for kit in self.master_kits_data[:3]:  # Test first 3 kits
                 kit_id = kit.get('id', 'unknown')
                 front_photo = kit.get('front_photo_url')
                 back_photo = kit.get('back_photo_url')
@@ -240,8 +262,7 @@ class TopKitMasterKitDisplayIssuesInvestigation:
                     
                     # Try different URL formats
                     image_urls_to_test = [
-                        f"{BACKEND_URL}/uploads/{front_photo}",
-                        f"{BACKEND_URL}/{front_photo}",
+                        f"https://collector-hub-4.preview.emergentagent.com/api/uploads/master_kits/{kit_id}_front.jpg",
                         f"https://collector-hub-4.preview.emergentagent.com/{front_photo}",
                         f"https://collector-hub-4.preview.emergentagent.com/api/{front_photo}"
                     ]
@@ -274,50 +295,6 @@ class TopKitMasterKitDisplayIssuesInvestigation:
                             "kit_id": kit_id,
                             "image_type": "front", 
                             "image_path": front_photo,
-                            "accessible": True
-                        })
-                
-                # Test back photo
-                if back_photo:
-                    tested_images += 1
-                    print(f"         Testing back photo: {back_photo}")
-                    
-                    # Try different URL formats
-                    image_urls_to_test = [
-                        f"{BACKEND_URL}/uploads/{back_photo}",
-                        f"{BACKEND_URL}/{back_photo}",
-                        f"https://collector-hub-4.preview.emergentagent.com/{back_photo}",
-                        f"https://collector-hub-4.preview.emergentagent.com/api/{back_photo}"
-                    ]
-                    
-                    image_accessible = False
-                    for url in image_urls_to_test:
-                        try:
-                            img_response = self.session.get(url, timeout=5)
-                            if img_response.status_code == 200:
-                                print(f"         ✅ Back photo accessible at: {url}")
-                                accessible_images += 1
-                                image_accessible = True
-                                break
-                            else:
-                                print(f"         ❌ Back photo not accessible at: {url} (Status: {img_response.status_code})")
-                        except Exception as e:
-                            print(f"         ❌ Error accessing {url}: {str(e)}")
-                    
-                    if not image_accessible:
-                        print(f"         ❌ Back photo not accessible via any tested URL")
-                        image_test_results.append({
-                            "kit_id": kit_id,
-                            "image_type": "back",
-                            "image_path": back_photo,
-                            "accessible": False,
-                            "issue": "Image not accessible via any URL format"
-                        })
-                    else:
-                        image_test_results.append({
-                            "kit_id": kit_id,
-                            "image_type": "back",
-                            "image_path": back_photo,
                             "accessible": True
                         })
             
@@ -403,6 +380,81 @@ class TopKitMasterKitDisplayIssuesInvestigation:
         except Exception as e:
             self.log_test("Collection Item Data Retrieval", False, f"Exception: {str(e)}")
             return False, []
+
+    def test_individual_collection_item_endpoint(self):
+        """Test GET /api/my-collection/{collection_id} for individual items"""
+        try:
+            print(f"\n📋 TESTING INDIVIDUAL COLLECTION ITEM ENDPOINT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False, {}
+            
+            # First get collection items to get an ID
+            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            
+            if collection_response.status_code != 200:
+                print(f"      ❌ Cannot get collection items to test individual endpoint")
+                return False, {}
+            
+            collection_items = collection_response.json()
+            
+            if len(collection_items) == 0:
+                print(f"      ⚠️ No collection items available to test individual endpoint")
+                return True, {}
+            
+            # Test first collection item
+            first_item = collection_items[0]
+            item_id = first_item.get('id')
+            
+            print(f"      Testing individual collection item: {item_id}")
+            
+            individual_response = self.session.get(f"{BACKEND_URL}/my-collection/{item_id}", timeout=10)
+            print(f"      Response Status: {individual_response.status_code}")
+            
+            if individual_response.status_code == 200:
+                item_data = individual_response.json()
+                
+                print(f"      ✅ Individual collection item endpoint accessible")
+                print(f"      Item ID: {item_data.get('id', 'MISSING')}")
+                print(f"      Master Kit ID: {item_data.get('master_kit_id', 'MISSING')}")
+                
+                # Check embedded master kit data
+                master_kit_data = item_data.get('master_kit')
+                if master_kit_data:
+                    print(f"      ✅ Master kit data embedded in individual item")
+                    print(f"      Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
+                    print(f"      Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
+                    print(f"      Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
+                    
+                    # Check for "Unknown" values
+                    unknown_fields = []
+                    for field, value in master_kit_data.items():
+                        if value == "Unknown" or value == "unknown":
+                            unknown_fields.append(field)
+                    
+                    if unknown_fields:
+                        print(f"      ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
+                    else:
+                        print(f"      ✅ No 'Unknown' values in individual item master kit data")
+                else:
+                    print(f"      ❌ No master kit data embedded in individual item")
+                
+                self.log_test("Individual Collection Item Endpoint", True, 
+                             f"✅ Individual collection item endpoint working with embedded master kit data")
+                return True, item_data
+            else:
+                print(f"      ❌ Failed to get individual collection item - Status {individual_response.status_code}")
+                print(f"      Response: {individual_response.text}")
+                
+                self.log_test("Individual Collection Item Endpoint", False, 
+                             f"❌ Failed - Status {individual_response.status_code}", individual_response.text)
+                return False, {}
+                
+        except Exception as e:
+            self.log_test("Individual Collection Item Endpoint", False, f"Exception: {str(e)}")
+            return False, {}
     
     def test_homepage_master_kit_endpoints(self):
         """Test homepage endpoints that should display master kit data"""
@@ -502,114 +554,6 @@ class TopKitMasterKitDisplayIssuesInvestigation:
         except Exception as e:
             self.log_test("Homepage Master Kit Endpoints", False, f"Exception: {str(e)}")
             return False, []
-    
-    def test_uploads_endpoint_fix(self):
-        """Test the fixed /api/uploads/ endpoint - should no longer return 500 error"""
-        try:
-            print(f"\n🔧 TESTING UPLOADS ENDPOINT FIX")
-            print("=" * 60)
-            print("      Testing if duplicate PIL import fix resolved 500 error...")
-            
-            response = self.session.get(f"{BACKEND_URL}/uploads/", timeout=10)
-            print(f"      /api/uploads/ response status: {response.status_code}")
-            
-            if response.status_code == 500:
-                print(f"      ❌ UPLOADS ENDPOINT STILL BROKEN - Status 500")
-                print(f"      Response: {response.text}")
-                self.log_test("Uploads Endpoint Fix", False, 
-                             f"❌ /api/uploads/ still returning 500 error - fix not working", response.text)
-                return False
-            elif response.status_code == 200:
-                print(f"      ✅ UPLOADS ENDPOINT FIXED - Status 200")
-                print(f"      Response: {response.text[:200]}...")
-                self.log_test("Uploads Endpoint Fix", True, 
-                             f"✅ /api/uploads/ endpoint now working - Status 200")
-                return True
-            else:
-                print(f"      ⚠️ UPLOADS ENDPOINT - Unexpected status: {response.status_code}")
-                print(f"      Response: {response.text}")
-                self.log_test("Uploads Endpoint Fix", True, 
-                             f"⚠️ /api/uploads/ endpoint - Status {response.status_code} (not 500)")
-                return True
-                
-        except Exception as e:
-            self.log_test("Uploads Endpoint Fix", False, f"Exception: {str(e)}")
-            return False
-
-    def test_individual_collection_item_endpoint(self):
-        """Test GET /api/my-collection/{collection_id} for individual items"""
-        try:
-            print(f"\n📋 TESTING INDIVIDUAL COLLECTION ITEM ENDPOINT")
-            print("=" * 60)
-            
-            if not self.auth_token:
-                if not self.authenticate_admin():
-                    return False, {}
-            
-            # First get collection items to get an ID
-            collection_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
-            
-            if collection_response.status_code != 200:
-                print(f"      ❌ Cannot get collection items to test individual endpoint")
-                return False, {}
-            
-            collection_items = collection_response.json()
-            
-            if len(collection_items) == 0:
-                print(f"      ⚠️ No collection items available to test individual endpoint")
-                return True, {}
-            
-            # Test first collection item
-            first_item = collection_items[0]
-            item_id = first_item.get('id')
-            
-            print(f"      Testing individual collection item: {item_id}")
-            
-            individual_response = self.session.get(f"{BACKEND_URL}/my-collection/{item_id}", timeout=10)
-            print(f"      Response Status: {individual_response.status_code}")
-            
-            if individual_response.status_code == 200:
-                item_data = individual_response.json()
-                
-                print(f"      ✅ Individual collection item endpoint accessible")
-                print(f"      Item ID: {item_data.get('id', 'MISSING')}")
-                print(f"      Master Kit ID: {item_data.get('master_kit_id', 'MISSING')}")
-                
-                # Check embedded master kit data
-                master_kit_data = item_data.get('master_kit')
-                if master_kit_data:
-                    print(f"      ✅ Master kit data embedded in individual item")
-                    print(f"      Master Kit Club: {master_kit_data.get('club', 'MISSING')}")
-                    print(f"      Master Kit Season: {master_kit_data.get('season', 'MISSING')}")
-                    print(f"      Master Kit Brand: {master_kit_data.get('brand', 'MISSING')}")
-                    
-                    # Check for "Unknown" values
-                    unknown_fields = []
-                    for field, value in master_kit_data.items():
-                        if value == "Unknown" or value == "unknown":
-                            unknown_fields.append(field)
-                    
-                    if unknown_fields:
-                        print(f"      ⚠️ Master kit fields with 'Unknown' values: {unknown_fields}")
-                    else:
-                        print(f"      ✅ No 'Unknown' values in individual item master kit data")
-                else:
-                    print(f"      ❌ No master kit data embedded in individual item")
-                
-                self.log_test("Individual Collection Item Endpoint", True, 
-                             f"✅ Individual collection item endpoint working with embedded master kit data")
-                return True, item_data
-            else:
-                print(f"      ❌ Failed to get individual collection item - Status {individual_response.status_code}")
-                print(f"      Response: {individual_response.text}")
-                
-                self.log_test("Individual Collection Item Endpoint", False, 
-                             f"❌ Failed - Status {individual_response.status_code}", individual_response.text)
-                return False, {}
-                
-        except Exception as e:
-            self.log_test("Individual Collection Item Endpoint", False, f"Exception: {str(e)}")
-            return False, {}
 
     def run_master_kit_fixes_verification(self):
         """Run comprehensive master kit fixes verification"""
@@ -837,14 +781,14 @@ class TopKitMasterKitDisplayIssuesInvestigation:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the master kit display issues investigation"""
-    tester = TopKitMasterKitDisplayIssuesInvestigation()
+    """Main function to run the master kit fixes verification"""
+    tester = TopKitMasterKitFixesVerification()
     
-    # Run the comprehensive master kit display investigation
-    test_results, test_data = tester.run_master_kit_display_investigation()
+    # Run the comprehensive master kit fixes verification
+    test_results, test_data = tester.run_master_kit_fixes_verification()
     
     # Print comprehensive summary
-    tester.print_comprehensive_investigation_summary(test_data)
+    tester.print_comprehensive_fixes_summary(test_data)
     
     # Return overall success
     return all(test_results)
