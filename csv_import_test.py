@@ -41,14 +41,14 @@ ADMIN_CREDENTIALS = {
 }
 
 # Expected CSV data constants
-EXPECTED_TEAMS = ["Real Madrid", "FC Barcelona", "Bayern Munich", "Liverpool"]
+EXPECTED_TEAMS = ["Real Madrid", "FC Barcelone", "Bayern Munich", "Liverpool"]  # Note: FC Barcelone (French spelling)
 EXPECTED_BRANDS = ["Adidas", "Nike"]
 EXPECTED_SEASONS = ["2024/2025", "2025/2026"]
 EXPECTED_TOTAL_KITS = 20
 EXPECTED_TEAM_BRAND_MAPPING = {
     "Real Madrid": "Adidas",
     "Bayern Munich": "Adidas", 
-    "FC Barcelona": "Nike",
+    "FC Barcelone": "Nike",  # Note: FC Barcelone (French spelling)
     "Liverpool": "Nike"
 }
 
