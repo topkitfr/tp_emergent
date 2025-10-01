@@ -31,7 +31,7 @@ from datetime import datetime, timedelta
 from collections import Counter
 
 # Configuration
-BACKEND_URL = "https://topkit-auth-fix-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-pricing.preview.emergentagent.com/api"
 
 # Admin Credentials
 ADMIN_CREDENTIALS = {
