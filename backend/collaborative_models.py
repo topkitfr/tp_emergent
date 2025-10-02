@@ -585,3 +585,107 @@ class XPTransaction(BaseModel):
     item_id: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: str  # Admin/system who awarded XP
+
+# ================================
+# ENHANCED EDIT KIT FORM MODELS
+# ================================
+
+class KitConditionType(str, Enum):
+    """Updated condition types with coefficients"""
+    NWT = "nwt"  # New with tags (+0.3)
+    VERY_GOOD = "very_good"  # (+0.15)
+    USED = "used"  # (0)
+    DAMAGED = "damaged"  # (-0.25)
+    NEEDS_RESTORE = "needs_restore"  # (-0.5)
+
+class OriginType(str, Enum):
+    """Origin type with coefficients"""
+    STANDARD = "standard"  # (0)
+    MATCH_ISSUED = "match_issued"  # (+0.8)
+    MATCH_WORN = "match_worn"  # (+1.5)
+
+class SpecialMatchType(str, Enum):
+    """Special match types"""
+    CLASSICO = "classico"  # (+0.7)
+    DERBY = "derby"  # (+0.7)
+    FINAL = "final"  # (+1.0)
+    TITLE_DECIDER = "title_decider"  # (+0.8)
+    HISTORICAL = "historical"  # (+0.8)
+
+class MatchResult(str, Enum):
+    """Match results"""
+    WIN = "win"  # (+0.3)
+    DRAW = "draw"  # (0)
+    LOSS = "loss"  # (-0.2)
+
+class Performance(str, Enum):
+    """Performance types"""
+    SCORED_GOAL = "scored_goal"  # (+0.5)
+    DECISIVE_ASSIST = "decisive_assist"  # (+0.3)
+    MAN_OF_THE_MATCH = "man_of_the_match"  # (+0.4)
+    TITLE_WINNING_GOAL = "title_winning_goal"  # (+1.0)
+    CLEAN_SHEET = "clean_sheet"  # (+0.5)
+
+class ProofType(str, Enum):
+    """Proof types"""
+    PHOTO = "photo"  # (+0.5)
+    CERTIFICATE = "certificate"  # (+0.4)
+    NONE = "none"  # (-0.5)
+
+class PrintingStyle(str, Enum):
+    """Printing styles"""
+    LEAGUE = "league"
+    CUP = "cup"
+    SPECIAL = "special"
+
+class KitEditDetails(BaseModel):
+    """Enhanced kit details for the edit form"""
+    # 1. BASE INFO
+    type: Optional[KitModel] = None  # replica (90€) / authentic (140€)
+    gender: Optional[str] = None  # men/women/kid
+    size: Optional[str] = None  # xs/s/m/l/xl/xxl
+    condition: Optional[KitConditionType] = None
+    
+    # 2. PLAYER & PRINTING
+    player_id: Optional[str] = None  # Player with aura rating
+    player_aura: Optional[float] = None  # Computed from player_id
+    number: Optional[int] = None  # 0-99
+    style: Optional[PrintingStyle] = None  # league/cup/special
+    competition_patch_id: Optional[str] = None
+    
+    # 3. ORIGIN & AUTHENTICITY
+    origin_type: Optional[OriginType] = None
+    competition_id: Optional[str] = None  # Required if match_issued/match_worn
+    match_date: Optional[datetime] = None
+    opponent_team_id: Optional[str] = None
+    special_match_type: Optional[SpecialMatchType] = None
+    match_result: Optional[MatchResult] = None
+    performance: List[Performance] = []  # Multiple selections
+    match_proof: Optional[ProofType] = None
+    
+    # 4. SIGNATURE
+    signed: bool = False  # (+2.5)
+    signature_proof: Optional[ProofType] = None
+    
+    # 5. PHOTOS
+    front_photo: Optional[str] = None
+    back_photo: Optional[str] = None
+    other_photos: List[str] = []  # max 3
+    
+    # 6. USER ESTIMATION
+    user_estimate: Optional[float] = None  # min: 0
+    
+    # 7. NOTES
+    notes: Optional[str] = None
+
+class EditKitRequest(BaseModel):
+    """Request model for editing kit details"""
+    kit_details: KitEditDetails
+    
+class EditKitResponse(BaseModel):
+    """Response model for edit kit operation"""
+    success: bool
+    message: str
+    updated_kit_id: str
+    estimated_price: Optional[float] = None
+    coefficients_applied: Dict[str, float] = {}
