@@ -35,7 +35,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://jersey-pricing.preview.emergentagent.com/api"
+BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
 
 # Emergency Admin Credentials (KNOWN WORKING)
 EMERGENCY_ADMIN_CREDENTIALS = {
