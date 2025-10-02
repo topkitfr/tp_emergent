@@ -97,9 +97,9 @@ class TopKitEditKitFormBackendTesting:
             print(f"   Details: {details}")
     
     def authenticate_admin(self):
-        """Authenticate with TopKit admin credentials"""
+        """Authenticate with Emergency Admin credentials"""
         try:
-            print(f"\n🔐 TOPKIT ADMIN AUTHENTICATION")
+            print(f"\n🔐 EMERGENCY ADMIN AUTHENTICATION")
             print("=" * 60)
             print(f"   Email: {ADMIN_CREDENTIALS['email']}")
             print(f"   Password: {ADMIN_CREDENTIALS['password']}")
@@ -116,8 +116,8 @@ class TopKitEditKitFormBackendTesting:
                 self.auth_token = data.get("token")
                 self.session.headers.update({"Authorization": f"Bearer {self.auth_token}"})
                 
-                self.log_test("TopKit Admin Authentication", True, 
-                             f"✅ TopKit admin authentication successful")
+                self.log_test("Emergency Admin Authentication", True, 
+                             f"✅ Emergency admin authentication successful")
                 print(f"      User ID: {self.admin_user_data.get('id')}")
                 print(f"      Name: {self.admin_user_data.get('name')}")
                 print(f"      Email: {self.admin_user_data.get('email')}")
@@ -126,12 +126,12 @@ class TopKitEditKitFormBackendTesting:
                 return True
                 
             else:
-                self.log_test("TopKit Admin Authentication", False, 
-                             f"❌ TopKit admin authentication failed - Status {response.status_code}", response.text)
+                self.log_test("Emergency Admin Authentication", False, 
+                             f"❌ Emergency admin authentication failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("TopKit Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_test("Emergency Admin Authentication", False, f"Exception: {str(e)}")
             return False
 
     def test_master_kits_data_enrichment(self):
