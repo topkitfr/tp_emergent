@@ -395,6 +395,88 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                       </p>
                     )}
                   </div>
+
+                  {/* Special fields for match-worn kits */}
+                  {formData.origin_type === 'match_worn' && (
+                    <>
+                      {/* Special Match Type */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Special Match Type</label>
+                        <select
+                          value={formData.special_match_type || ''}
+                          onChange={(e) => handleInputChange('special_match_type', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Regular match</option>
+                          <option value="classico">Clásico (+0.7)</option>
+                          <option value="derby">Derby (+0.7)</option>
+                          <option value="final">Final (+1.0)</option>
+                          <option value="title_decider">Title Decider (+0.8)</option>
+                          <option value="historical">Historical Match (+0.8)</option>
+                        </select>
+                      </div>
+
+                      {/* Match Result */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Match Result</label>
+                        <select
+                          value={formData.match_result || ''}
+                          onChange={(e) => handleInputChange('match_result', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Not specified</option>
+                          <option value="win">Win (+0.3)</option>
+                          <option value="draw">Draw (0)</option>
+                          <option value="loss">Loss (-0.2)</option>
+                        </select>
+                      </div>
+
+                      {/* Performance */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Performance (multiple selections allowed)</label>
+                        <div className="space-y-2">
+                          {[
+                            { value: 'scored_goal', label: 'Scored Goal (+0.5)' },
+                            { value: 'decisive_assist', label: 'Decisive Assist (+0.3)' },
+                            { value: 'man_of_the_match', label: 'Man of the Match (+0.4)' },
+                            { value: 'title_winning_goal', label: 'Title Winning Goal (+1.0)' },
+                            { value: 'clean_sheet', label: 'Clean Sheet (+0.5)' }
+                          ].map(perf => (
+                            <label key={perf.value} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.performance?.includes(perf.value) || false}
+                                onChange={(e) => {
+                                  const currentPerf = formData.performance || [];
+                                  if (e.target.checked) {
+                                    handleInputChange('performance', [...currentPerf, perf.value]);
+                                  } else {
+                                    handleInputChange('performance', currentPerf.filter(p => p !== perf.value));
+                                  }
+                                }}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-2 text-sm text-gray-700">{perf.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Match Proof (for both match-issued and match-worn) */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Match Proof</label>
+                    <select
+                      value={formData.match_proof || ''}
+                      onChange={(e) => handleInputChange('match_proof', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="none">No proof (-0.5)</option>
+                      <option value="photo">Photo (+0.5)</option>
+                      <option value="certificate">Certificate (+0.4)</option>
+                    </select>
+                  </div>
                 </>
               )}
             </section>
