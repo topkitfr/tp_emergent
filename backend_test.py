@@ -70,14 +70,15 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitMasterKitDataRetrievalVerification:
+class TopKitEditKitFormBackendTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
         self.test_results = []
         self.admin_user_data = None
+        self.form_data = {}
         self.master_kits_data = []
-        self.collection_items_data = []
+        self.sample_player_id = None
         
     def log_test(self, test_name, success, message, details=None):
         """Log test result"""
