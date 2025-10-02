@@ -323,7 +323,7 @@ class TopKitEditKitFormBackendTesting:
             print(f"      📷 Testing photo upload with sample JPEG image (100x100)")
             
             files = {
-                'file': ('test_kit_photo.jpg', img_buffer, 'image/jpeg')
+                'photo': ('test_kit_photo.jpg', img_buffer, 'image/jpeg')
             }
             
             response = self.session.post(
