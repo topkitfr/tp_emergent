@@ -623,9 +623,69 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
               </div>
             </section>
 
-            {/* F. User Estimate */}
+            {/* F. Photos */}
             <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">F. User Estimate</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">F. Photos</h3>
+              
+              {/* Front Photo */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Front Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files[0]) {
+                      handleInputChange('front_photo', e.target.files[0]);
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+                {formData.front_photo && (
+                  <p className="text-xs text-green-600 mt-1">✓ Photo selected</p>
+                )}
+              </div>
+
+              {/* Back Photo */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Back Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files[0]) {
+                      handleInputChange('back_photo', e.target.files[0]);
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+                {formData.back_photo && (
+                  <p className="text-xs text-green-600 mt-1">✓ Photo selected</p>
+                )}
+              </div>
+
+              {/* Other Photos */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Other Photos (max 3)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files.length > 0) {
+                      handleInputChange('other_photos', Array.from(e.target.files));
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+                {formData.other_photos && formData.other_photos.length > 0 && (
+                  <p className="text-xs text-green-600 mt-1">✓ {formData.other_photos.length} photo(s) selected</p>
+                )}
+              </div>
+            </section>
+
+            {/* G. User Estimate */}
+            <section>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">G. User Estimate</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Your Estimate (€)</label>
