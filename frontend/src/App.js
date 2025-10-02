@@ -3043,6 +3043,17 @@ const AppContent = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Kit Modal */}
+      {showEditKitModal && selectedKitForEdit && (
+        <EditKitModal
+          isOpen={showEditKitModal}
+          onClose={closeEditKitModal}
+          masterKit={selectedKitForEdit}
+          user={user}
+          API={API}
+        />
+      )}
     </div>
   );
 };
