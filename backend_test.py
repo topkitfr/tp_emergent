@@ -63,11 +63,11 @@ from pathlib import Path
 # Configuration
 BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
 
-# Test Admin Credentials for authentication - Updated for Master Kit Data Retrieval Testing
+# Test Admin Credentials for authentication - Updated for Edit Kit Form Testing
 ADMIN_CREDENTIALS = {
-    "email": "topkitfr@gmail.com",
-    "password": "TopKitAdmin2024!",
-    "name": "TopKit Admin"
+    "email": "emergency.admin@topkit.test",
+    "password": "EmergencyAdmin2025!",
+    "name": "Emergency Admin"
 }
 
 class TopKitMasterKitDataRetrievalVerification:
