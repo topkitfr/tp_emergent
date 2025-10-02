@@ -355,6 +355,19 @@ const AppContent = () => {
     loadUserSubmissions();
   };
 
+  // Edit Kit Modal Functions
+  const openEditKitModal = (jersey) => {
+    setSelectedKitForEdit(jersey);
+    setShowEditKitModal(true);
+  };
+
+  const closeEditKitModal = () => {
+    setShowEditKitModal(false);
+    setSelectedKitForEdit(null);
+    // Reload jerseys to get updated data
+    loadJerseys();
+  };
+
   // Check if jersey is in user collection
   const isInCollection = (jerseyId, type) => {
     return userCollections[type]?.some(item => item.jersey_id === jerseyId);
