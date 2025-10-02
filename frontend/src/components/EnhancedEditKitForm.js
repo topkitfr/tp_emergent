@@ -481,72 +481,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
               )}
             </section>
 
-            {/* D. Physical Condition */}
-            <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">D. Physical Condition</h3>
-              
-              {/* General Condition */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">General Condition</label>
-                <select
-                  value={formData.general_condition || ''}
-                  onChange={(e) => handleInputChange('general_condition', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select condition</option>
-                  <option value="new_with_tags">New with Condition tags (+0.3)</option>
-                  <option value="very_good">Very Good (+0.15)</option>
-                  <option value="used">Used (0)</option>
-                  <option value="damaged">Damaged (-0.25)</option>
-                  <option value="needs_restoration">Needs restoration (-0.5)</option>
-                </select>
-              </div>
-
-              {/* Photos */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Photos (Optional - Recommended: front, back, details)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleFileUpload(e.target.files)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                />
-                {fileUploads.photos.length > 0 && (
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {fileUploads.photos.map((file, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(index)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  {fileUploads.photos.length} photos uploaded (photos are optional but recommended for better documentation)
-                </p>
-                {errors.photos && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    {errors.photos}
-                  </p>
-                )}
-              </div>
-            </section>
-
-            {/* E. Technical Details */}
+            {/* D. Technical Details */}
             <section>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">E. Technical Details</h3>
               
