@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import EditKitModal from './EditKitModal';
 
 // Football data for suggestions - Kept for future use
 // const LEAGUES_DATA = { ... }
