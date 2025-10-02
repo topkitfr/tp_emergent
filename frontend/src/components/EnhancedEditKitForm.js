@@ -140,11 +140,34 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
             <section>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">A. Basic Information</h3>
               
+              {/* Type */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kit Type</label>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { value: 'replica', label: 'Replica (€90)' },
+                    { value: 'authentic', label: 'Authentic (€140)' }
+                  ].map(type => (
+                    <label key={type.value} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="kit_type"
+                        value={type.value}
+                        checked={formData.kit_type === type.value}
+                        onChange={(e) => handleInputChange('kit_type', e.target.value)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">{type.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
               {/* Gender */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-                <div className="flex space-x-4">
-                  {['Men', 'Women', 'Children'].map(gender => (
+                <div className="flex flex-wrap gap-4">
+                  {['Men', 'Women', 'Kid'].map(gender => (
                     <label key={gender} className="flex items-center">
                       <input
                         type="radio"
@@ -172,6 +195,23 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
                     <option key={size} value={size}>{size}</option>
                   ))}
+                </select>
+              </div>
+
+              {/* Condition */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                <select
+                  value={formData.condition || ''}
+                  onChange={(e) => handleInputChange('condition', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select condition</option>
+                  <option value="nwt">New with tags (+0.3)</option>
+                  <option value="very_good">Very good (+0.15)</option>
+                  <option value="used">Used (0)</option>
+                  <option value="damaged">Damaged (-0.25)</option>
+                  <option value="needs_restore">Needs restore (-0.5)</option>
                 </select>
               </div>
             </section>
