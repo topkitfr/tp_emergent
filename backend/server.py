@@ -4574,6 +4574,202 @@ async def get_stats():
     }
 
 # ================================
+# ENHANCED EDIT KIT FORM ENDPOINTS
+# ================================
+
+@app.get("/api/form-data/players")
+async def get_players_for_form():
+    """Get players with aura ratings for edit form dropdown"""
+    try:
+        cursor = db.players.find(
+            {"influence_coefficient": {"$exists": True}}, 
+            {"_id": 0, "id": 1, "name": 1, "full_name": 1, "influence_coefficient": 1, "player_type": 1}
+        ).sort("influence_coefficient", -1).limit(50)
+        
+        players = await cursor.to_list(length=None)
+        
+        # Format for dropdown with aura display
+        formatted_players = []
+        for player in players:
+            aura = player.get("influence_coefficient", 1.0)
+            formatted_players.append({
+                "id": player["id"],
+                "name": player["name"],
+                "display_name": f"{player['name']} ({aura:.1f})",
+                "aura": aura,
+                "player_type": player.get("player_type", "none")
+            })
+        
+        return formatted_players
+        
+    except Exception as e:
+        logger.error(f"Error fetching players for form: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/form-data/competitions")
+async def get_competitions_for_form():
+    """Get competitions for edit form dropdown"""
+    try:
+        cursor = db.competitions.find(
+            {}, 
+            {"_id": 0, "id": 1, "competition_name": 1, "short_name": 1, "type": 1, "country": 1}
+        ).sort("competition_name", 1)
+        
+        competitions = await cursor.to_list(length=None)
+        return competitions
+        
+    except Exception as e:
+        logger.error(f"Error fetching competitions for form: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/form-data/teams")
+async def get_teams_for_form():
+    """Get teams for opponent dropdown"""
+    try:
+        cursor = db.teams.find(
+            {}, 
+            {"_id": 0, "id": 1, "name": 1, "short_name": 1, "country": 1}
+        ).sort("name", 1)
+        
+        teams = await cursor.to_list(length=None)
+        return teams
+        
+    except Exception as e:
+        logger.error(f"Error fetching teams for form: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/upload/kit-photo")
+async def upload_kit_photo(
+    photo: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload photo for kit edit form"""
+    try:
+        # Validate file type
+        if not photo.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Check file size (max 10MB)
+        content = await photo.read()
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Max 10MB allowed.")
+        
+        # Create kit photos directory
+        kit_photos_dir = UPLOAD_DIR / "kit_photos"
+        kit_photos_dir.mkdir(exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = photo.filename.split('.')[-1] if '.' in photo.filename else 'jpg'
+        filename = f"kit_{uuid.uuid4().hex[:8]}_{int(datetime.now().timestamp())}.{file_extension}"
+        file_path = kit_photos_dir / filename
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+        
+        # Return relative path for database storage
+        relative_path = f"kit_photos/{filename}"
+        
+        return {
+            "message": "Photo uploaded successfully",
+            "photo_url": relative_path,
+            "filename": filename
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading kit photo: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/master-kits/{master_kit_id}/edit")
+async def edit_master_kit_details(
+    master_kit_id: str,
+    kit_details: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Edit master kit with enhanced details and pricing calculation"""
+    try:
+        # Find the master kit
+        master_kit = await db.master_kits.find_one({"id": master_kit_id})
+        if not master_kit:
+            raise HTTPException(status_code=404, detail="Master kit not found")
+        
+        # Get player aura if player selected
+        if kit_details.get('player_id'):
+            player = await db.players.find_one({"id": kit_details['player_id']})
+            if player and player.get('influence_coefficient'):
+                kit_details['player_aura'] = player['influence_coefficient']
+        
+        # Calculate estimated price with new details
+        estimated_price, coefficients = await calculate_estimated_price_enhanced(kit_details)
+        
+        # Prepare update data
+        update_data = {
+            "kit_details": kit_details,
+            "estimated_price": estimated_price,
+            "price_coefficients": coefficients,
+            "last_modified_at": datetime.now(timezone.utc),
+            "last_modified_by": current_user["id"],
+            "modification_count": master_kit.get("modification_count", 0) + 1
+        }
+        
+        # Update master kit in database
+        result = await db.master_kits.update_one(
+            {"id": master_kit_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Master kit not found for update")
+        
+        # Update any collection items that reference this master kit
+        await db.my_collection.update_many(
+            {"master_kit_id": master_kit_id},
+            {"$set": {
+                "master_kit_estimated_price": estimated_price,
+                "updated_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {
+            "success": True,
+            "message": "Master kit updated successfully",
+            "updated_kit_id": master_kit_id,
+            "estimated_price": estimated_price,
+            "coefficients_applied": coefficients
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error editing master kit: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/calculate-price")
+async def calculate_kit_price(kit_details: dict):
+    """Calculate estimated price for kit details without saving"""
+    try:
+        # Get player aura if player selected
+        if kit_details.get('player_id'):
+            player = await db.players.find_one({"id": kit_details['player_id']})
+            if player and player.get('influence_coefficient'):
+                kit_details['player_aura'] = player['influence_coefficient']
+        
+        # Calculate estimated price
+        estimated_price, coefficients = await calculate_estimated_price_enhanced(kit_details)
+        
+        return {
+            "estimated_price": estimated_price,
+            "coefficients": coefficients,
+            "calculation_breakdown": coefficients
+        }
+        
+    except Exception as e:
+        logger.error(f"Error calculating kit price: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ================================
 # HEALTH CHECK
 # ================================
 
