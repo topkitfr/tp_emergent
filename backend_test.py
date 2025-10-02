@@ -616,14 +616,14 @@ class TopKitEditKitFormBackendTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the master kit data retrieval verification"""
-    tester = TopKitMasterKitDataRetrievalVerification()
+    """Main function to run the Edit Kit Form backend testing"""
+    tester = TopKitEditKitFormBackendTesting()
     
-    # Run the comprehensive master kit data retrieval verification
-    test_results, test_data = tester.run_master_kit_data_retrieval_verification()
+    # Run the comprehensive Edit Kit Form backend testing
+    test_results = tester.run_edit_kit_form_backend_testing()
     
     # Print comprehensive summary
-    tester.print_comprehensive_data_retrieval_summary(test_data)
+    tester.print_comprehensive_edit_kit_form_summary()
     
     # Return overall success
     return all(test_results)
