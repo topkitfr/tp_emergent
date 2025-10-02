@@ -1508,8 +1508,7 @@ const AppContent = () => {
                 return (
                 <div
                   key={jersey.id}
-                  onClick={() => openJerseyModal(jersey)}
-                  className={`cursor-pointer transition-shadow hover:shadow-md ${
+                  className={`transition-shadow hover:shadow-md relative group ${
                     viewMode === 'grid'
                       ? "bg-white rounded-lg overflow-hidden border border-gray-200"
                       : viewMode === 'thumbnail' 
