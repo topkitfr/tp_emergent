@@ -1,36 +1,55 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - MASTER KIT DATA RETRIEVAL FIXES VERIFICATION
+TopKit Backend Testing Suite - EDIT KIT FORM BACKEND FUNCTIONALITY TESTING
 
-**CRITICAL MASTER KIT DATA RETRIEVAL FIXES VERIFICATION:**
+**EDIT KIT FORM BACKEND FUNCTIONALITY TESTING:**
 
-The main agent has implemented critical fixes for master kit data retrieval issues where club, brand, model, and reference fields were showing "Unknown" instead of actual data.
+Testing the Edit Kit Form backend functionality that was just implemented. This includes comprehensive testing of:
 
-**Key fixes implemented:**
-1. Created enrich_master_kit_data() helper function in server.py
-2. Applied fixes to all collection endpoints (/api/my-collection, /api/my-collection/{id})
-3. Fixed collection item creation and update responses  
-4. Fixed paginated master kits endpoint
+**Test Requirements:**
+1. **Form Data API Endpoints**: Test the new form data endpoints:
+   - GET /api/form-data/players (should return players with aura ratings)
+   - GET /api/form-data/competitions (should return competition data)
+   - GET /api/form-data/teams (should return team data for opponents)
 
-**Testing Requirements:**
-1. **Authentication Testing**: Login with topkitfr@gmail.com / TopKitAdmin2024!
-2. **My Collection List API**: Test GET /api/my-collection - verify master_kit data has populated club_name, brand_name, competition_name fields
-3. **Collection Item Detail API**: Test GET /api/my-collection/{collection_id} - verify enriched master kit data
-4. **Data Verification**: Confirm specific fields show actual names:
-   - club_name should be "Real Madrid", "Paris Saint-Germain" etc. (not null)  
-   - brand_name should be "Nike", "Adidas" etc. (not null)
-   - model should be "authentic", "replica" etc. (not null)
-   - season, topkit_reference should be properly populated
-5. **Master Kits API**: Test GET /api/master-kits to verify enrichment working there too
-6. **Backward Compatibility**: Verify both old format (club, brand) and new format (club_name, brand_name) fields are populated
+2. **Price Calculation Endpoint**: Test the pricing calculation:
+   - POST /api/calculate-price with sample kit details data
+   - Verify it returns proper estimated price and coefficients breakdown
+   - Test different combinations (signed vs unsigned, match-worn vs standard, etc.)
+
+3. **Edit Master Kit Endpoint**: Test the edit functionality:
+   - PUT /api/master-kits/{master_kit_id}/edit with sample kit details
+   - Verify it updates the master kit and returns proper response
+
+4. **Photo Upload Endpoint**: Test the photo upload:
+   - POST /api/upload/kit-photo with a sample image
+   - Verify it returns proper photo URL
+
+**Authentication:** Use emergency.admin@topkit.test / EmergencyAdmin2025!
+
+**Sample Test Data for Price Calculation:**
+```json
+{
+  "type": "authentic",
+  "condition": "nwt", 
+  "origin_type": "match_worn",
+  "special_match_type": "classico",
+  "match_result": "win",
+  "performance": ["scored_goal", "man_of_the_match"],
+  "match_proof": "photo",
+  "signed": true,
+  "signature_proof": "certificate",
+  "player_id": "[use any player ID from form-data/players]"
+}
+```
 
 **Expected Results:**
-- All master kit data should show actual entity names instead of "Unknown" or null values
-- Collection items should have comprehensive master kit information embedded
-- No "Unknown" values for Club, Brand, Model, Reference fields
-- API responses should include both legacy fields (club, brand) and new fields (club_name, brand_name) for compatibility
+- All form data endpoints should return populated data (players with aura ratings, competitions, teams)
+- Price calculation should return detailed coefficients and estimated price
+- Edit functionality should successfully update master kits
+- Photo upload should work properly
 
-**PRIORITY: CRITICAL** - Verifying fixes for master kit data enrichment functionality.
+**PRIORITY: HIGH** - Testing Edit Kit Form backend functionality implementation.
 """
 
 import requests
