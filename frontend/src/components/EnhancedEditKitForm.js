@@ -333,11 +333,18 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                       }`}
                     >
                       <option value="">Select competition</option>
-                      <option value="national_league">National League (+0.2)</option>
-                      <option value="national_cup">National Cup (+0.1)</option>
-                      <option value="continental_competition">Continental Competition (+0.5)</option>
-                      <option value="international_competition">International Competition (+1.0)</option>
-                      <option value="continental_super_cup">Continental Super Cup (+0.2)</option>
+                      <option value="ucl">UEFA Champions League</option>
+                      <option value="uel">UEFA Europa League</option>
+                      <option value="uecl">UEFA Europa Conference League</option>
+                      <option value="laliga">La Liga</option>
+                      <option value="premier_league">Premier League</option>
+                      <option value="bundesliga">Bundesliga</option>
+                      <option value="serie_a">Serie A</option>
+                      <option value="ligue_1">Ligue 1</option>
+                      <option value="world_cup">FIFA World Cup</option>
+                      <option value="euro">UEFA Euro</option>
+                      <option value="copa_america">Copa América</option>
+                      <option value="national_cup">National Cup</option>
                     </select>
                     {errors.competition && (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
@@ -345,35 +352,6 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                         {errors.competition}
                       </p>
                     )}
-                  </div>
-
-                  {/* Authenticity Proof */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Authenticity Proof</label>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'match_photos', label: 'Match photos/videos (+0.3)', coefficient: 0.3 },
-                        { value: 'certificate', label: 'Certificate of authenticity (+0.2)', coefficient: 0.2 },
-                        { value: 'no_proof', label: 'No proof (-0.5)', coefficient: -0.5 }
-                      ].map(option => (
-                        <label key={option.value} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.authenticity_proof?.includes(option.value) || false}
-                            onChange={(e) => {
-                              const currentProofs = formData.authenticity_proof || [];
-                              if (e.target.checked) {
-                                handleInputChange('authenticity_proof', [...currentProofs, option.value]);
-                              } else {
-                                handleInputChange('authenticity_proof', currentProofs.filter(p => p !== option.value));
-                              }
-                            }}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Match Date */}
