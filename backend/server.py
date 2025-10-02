@@ -739,81 +739,151 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "general") -> st
     # Return relative path for storage in database
     return f"uploads/{subfolder}/{unique_filename}"
 
-async def calculate_estimated_price_internal(collection_item: dict, master_kit: dict) -> float:
-    """Calculate estimated price for a collection item based on various factors"""
+async def calculate_estimated_price_enhanced(kit_details: dict) -> tuple[float, dict]:
+    """
+    Enhanced price calculation based on user specification with detailed coefficients
+    Returns (final_price, coefficients_breakdown)
+    """
     try:
-        # Base price calculation logic
-        base_price = 50.0  # Default base price
+        coefficients = {}
         
-        # Factor in kit age (vintage kits are more valuable)
-        current_year = datetime.now().year
-        season = master_kit.get("season", "")
-        try:
-            season_year = int(season.split("-")[0])
-            age_factor = max(1.0, (current_year - season_year) * 0.1)
-            base_price *= age_factor
-        except:
-            pass
+        # Base Price based on type
+        kit_type = kit_details.get('type') or kit_details.get('kit_type', 'replica')
+        base_price = 140.0 if kit_type == 'authentic' else 90.0
+        coefficients['base_price'] = f"€{base_price} ({kit_type})"
         
-        # Factor in rarity (fewer collectors = higher price)
-        total_collectors = master_kit.get("total_collectors", 1)
-        rarity_factor = max(1.0, 100 / max(total_collectors, 1))
-        base_price *= min(rarity_factor, 5.0)  # Cap at 5x multiplier
+        # Initialize total coefficient
+        total_coeff = 0.0
         
-        # Factor in condition
-        condition = collection_item.get("condition")
-        condition_multipliers = {
-            "mint": 1.5,
-            "excellent": 1.3,
-            "very_good": 1.1,
-            "good": 1.0,
-            "fair": 0.8,
-            "poor": 0.6
+        # Condition coefficients
+        condition = kit_details.get('condition')
+        condition_coeffs = {
+            'nwt': 0.3,
+            'very_good': 0.15, 
+            'used': 0.0,
+            'damaged': -0.25,
+            'needs_restore': -0.5
         }
-        base_price *= condition_multipliers.get(condition, 1.0)
+        if condition and condition in condition_coeffs:
+            coeff_val = condition_coeffs[condition]
+            total_coeff += coeff_val
+            coefficients['condition'] = f"{condition.replace('_', ' ').title()} = {coeff_val:+.2f}"
         
-        # Factor in if it's signed
-        if collection_item.get("is_signed"):
-            base_price *= 2.0
+        # Origin Type coefficients
+        origin_type = kit_details.get('origin_type')
+        origin_coeffs = {
+            'standard': 0.0,
+            'match_issued': 0.8,
+            'match_worn': 1.5
+        }
+        if origin_type and origin_type in origin_coeffs:
+            coeff_val = origin_coeffs[origin_type]
+            total_coeff += coeff_val
+            coefficients['origin'] = f"{origin_type.replace('_', ' ').title()} = {coeff_val:+.2f}"
         
-        # Factor in size (popular sizes are more valuable)
-        size = collection_item.get("size", "")
-        popular_sizes = ["M", "L", "XL"]
-        if size in popular_sizes:
-            base_price *= 1.2
+        # Special Match Type coefficients (if origin is match-issued or match-worn)
+        if origin_type in ['match_issued', 'match_worn']:
+            special_match = kit_details.get('special_match_type')
+            special_coeffs = {
+                'classico': 0.7,
+                'derby': 0.7,
+                'final': 1.0,
+                'title_decider': 0.8,
+                'historical': 0.8
+            }
+            if special_match and special_match in special_coeffs:
+                coeff_val = special_coeffs[special_match]
+                total_coeff += coeff_val
+                coefficients['special_match'] = f"{special_match.replace('_', ' ').title()} = {coeff_val:+.2f}"
+            
+            # Match Result coefficient
+            match_result = kit_details.get('match_result')
+            result_coeffs = {
+                'win': 0.3,
+                'draw': 0.0,
+                'loss': -0.2
+            }
+            if match_result and match_result in result_coeffs:
+                coeff_val = result_coeffs[match_result]
+                total_coeff += coeff_val
+                coefficients['result'] = f"Match {match_result.title()} = {coeff_val:+.2f}"
+            
+            # Performance coefficients (can be multiple)
+            performances = kit_details.get('performance', [])
+            if isinstance(performances, list):
+                performance_coeffs = {
+                    'scored_goal': 0.5,
+                    'decisive_assist': 0.3,
+                    'man_of_the_match': 0.4,
+                    'title_winning_goal': 1.0,
+                    'clean_sheet': 0.5
+                }
+                for perf in performances:
+                    if perf in performance_coeffs:
+                        coeff_val = performance_coeffs[perf]
+                        total_coeff += coeff_val
+                        coefficients[f'performance_{perf}'] = f"{perf.replace('_', ' ').title()} = {coeff_val:+.2f}"
+            
+            # Match Proof coefficient
+            match_proof = kit_details.get('match_proof')
+            proof_coeffs = {
+                'photo': 0.5,
+                'certificate': 0.4,
+                'none': -0.5
+            }
+            if match_proof and match_proof in proof_coeffs:
+                coeff_val = proof_coeffs[match_proof]
+                total_coeff += coeff_val
+                coefficients['match_proof'] = f"Match Proof ({match_proof.title()}) = {coeff_val:+.2f}"
         
-        # Factor in associated player coefficient
-        associated_player_id = collection_item.get('associated_player_id')
-        if associated_player_id:
-            # Look up player from database
-            player = await db.players.find_one({"id": associated_player_id})
-            if player:
-                # Get player coefficient from player_type or influence_coefficient
-                player_coefficient = 1.0  # Default multiplier
-                
-                # Priority 1: Use influence_coefficient if available
-                if player.get("influence_coefficient"):
-                    player_coefficient = 1.0 + player["influence_coefficient"]
-                
-                # Priority 2: Use player_type coefficient
-                elif player.get("player_type"):
-                    try:
-                        player_type = PlayerType(player["player_type"])
-                        type_coefficient = get_player_type_coefficient(player_type)
-                        player_coefficient = 1.0 + type_coefficient
-                    except ValueError:
-                        # Handle invalid player_type values gracefully
-                        player_coefficient = 1.0
-                
-                # Apply the player coefficient as a multiplier
-                base_price *= player_coefficient
-                logger.info(f"Applied player coefficient {player_coefficient} for player {player.get('name', 'Unknown')}")
+        # Signature coefficients
+        if kit_details.get('signed', False):
+            total_coeff += 2.5
+            coefficients['signature'] = "Signed = +2.50"
+            
+            # Signature proof coefficient
+            sig_proof = kit_details.get('signature_proof')
+            proof_coeffs = {
+                'photo': 0.5,
+                'certificate': 0.4, 
+                'none': -0.5
+            }
+            if sig_proof and sig_proof in proof_coeffs:
+                coeff_val = proof_coeffs[sig_proof]
+                total_coeff += coeff_val
+                coefficients['signature_proof'] = f"Signature Proof ({sig_proof.title()}) = {coeff_val:+.2f}"
         
-        return round(base_price, 2)
+        # Player Aura coefficient
+        player_aura = kit_details.get('player_aura', 1.0)
+        if player_aura and player_aura != 1.0:
+            coefficients['player_aura'] = f"Player Aura = {player_aura:.1f}x"
+        
+        # Calculate final price: base_price * (1 + total_coeff) * player_aura
+        final_price = base_price * (1 + total_coeff) * player_aura
+        
+        # Apply minimum price protection (50% of base price)
+        min_price = base_price * 0.5
+        final_price = max(final_price, min_price)
+        
+        coefficients['total_coefficient'] = f"Total Coefficient = {total_coeff:+.2f}"
+        coefficients['final_calculation'] = f"€{base_price} × (1 + {total_coeff:.2f}) × {player_aura:.1f} = €{final_price:.2f}"
+        
+        return round(final_price, 2), coefficients
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced price calculation: {str(e)}")
+        return 90.0, {"error": "Calculation failed, using base price"}
+
+async def calculate_estimated_price_internal(collection_item: dict, master_kit: dict) -> float:
+    """Legacy price calculation function - maintained for backward compatibility"""
+    try:
+        # Use enhanced calculation for new items
+        enhanced_price, _ = await calculate_estimated_price_enhanced(collection_item)
+        return enhanced_price
         
     except Exception as e:
         logger.error(f"Error calculating estimated price: {str(e)}")
-        return 50.0  # Return default price on error
+        return 90.0  # Return base replica price on error
 
 async def trigger_cascading_updates(entity_type: str, entity_id: str, update_fields: dict):
     """Trigger cascading updates for related entities when an entity is updated"""
