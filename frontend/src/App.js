@@ -108,6 +108,8 @@ const AppContent = () => {
   const [showJerseyDetailView, setShowJerseyDetailView] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [editingJersey, setEditingJersey] = useState(null);
+  const [showEditKitModal, setShowEditKitModal] = useState(false);
+  const [selectedKitForEdit, setSelectedKitForEdit] = useState(null);
   const [userCollections, setUserCollections] = useState({
     owned: [],
     wanted: []
