@@ -596,49 +596,26 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.signature || false}
-                    onChange={(e) => handleInputChange('signature', e.target.checked)}
+                    checked={formData.signed || false}
+                    onChange={(e) => handleInputChange('signed', e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Signed (+2.0)</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">Signed (+2.5)</span>
                 </label>
                 
-                {formData.signature && (
+                {formData.signed && (
                   <div className="mt-3 space-y-3">
-                    {/* Player dropdown */}
+                    {/* Signature Proof */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Player</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Signature Proof</label>
                       <select
-                        value={formData.signature_player || ''}
-                        onChange={(e) => handleInputChange('signature_player', e.target.value)}
-                        className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
-                          errors.signature_player ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <option value="">Select player</option>
-                        {players.map(player => (
-                          <option key={player.id} value={player.id}>{player.name}</option>
-                        ))}
-                      </select>
-                      {errors.signature_player && (
-                        <p className="text-red-500 text-sm mt-1 flex items-center">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {errors.signature_player}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Signature Certificate */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Signature Certificate</label>
-                      <select
-                        value={formData.signature_certificate || ''}
-                        onChange={(e) => handleInputChange('signature_certificate', e.target.value)}
+                        value={formData.signature_proof || ''}
+                        onChange={(e) => handleInputChange('signature_proof', e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select certificate status</option>
-                        <option value="yes">Yes (+0.3)</option>
-                        <option value="no">No (0)</option>
+                        <option value="none">No proof (-0.5)</option>
+                        <option value="photo">Photo (+0.5)</option>
+                        <option value="certificate">Certificate (+0.4)</option>
                       </select>
                     </div>
                   </div>
