@@ -483,7 +483,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
 
             {/* D. Technical Details */}
             <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">E. Technical Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">D. Technical Details</h3>
               
               {/* Patches */}
               <div className="mb-4">
