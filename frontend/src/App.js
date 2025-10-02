@@ -1552,10 +1552,27 @@ const AppContent = () => {
                         <div className="text-4xl w-full h-full flex items-center justify-center" style={{display: 'none'}}>👕</div>
                       </div>
                       <div className="p-4">
-                        <h3 className="font-semibold text-black mb-2">{jersey.team}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{jersey.league}</p>
-                        <p className="text-sm text-gray-500">{jersey.season}</p>
-                        {jersey.player && <p className="text-sm text-blue-600 mt-1">{jersey.player}</p>}
+                        <div onClick={() => openJerseyModal(jersey)} className="cursor-pointer">
+                          <h3 className="font-semibold text-black mb-2">{jersey.team}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{jersey.league}</p>
+                          <p className="text-sm text-gray-500">{jersey.season}</p>
+                          {jersey.player && <p className="text-sm text-blue-600 mt-1">{jersey.player}</p>}
+                        </div>
+                        
+                        {/* Edit Button - Only show for logged in users */}
+                        {user && (
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditKitModal(jersey);
+                              }}
+                              className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                              ✏️ Edit Kit Details
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : viewMode === 'thumbnail' ? (
