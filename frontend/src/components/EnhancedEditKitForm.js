@@ -231,11 +231,63 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   <option value="">Select player</option>
                   {players.map(player => (
                     <option key={player.id} value={player.id}>
-                      {player.name} {(player.coefficient || player.influence_coefficient) && `(×${player.coefficient || player.influence_coefficient})`}
+                      {player.name} {(player.coefficient || player.influence_coefficient) && `(${player.coefficient || player.influence_coefficient})`}
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Player coefficient automatically applied to price estimation</p>
+                <p className="text-xs text-gray-500 mt-1">Player aura coefficient automatically applied to price estimation</p>
+              </div>
+
+              {/* Number */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Number</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={formData.number || ''}
+                  onChange={(e) => handleInputChange('number', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="0-99"
+                />
+              </div>
+
+              {/* Style */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Printing Style</label>
+                <select
+                  value={formData.printing_style || ''}
+                  onChange={(e) => handleInputChange('printing_style', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select style</option>
+                  <option value="league">League</option>
+                  <option value="cup">Cup</option>
+                  <option value="special">Special</option>
+                </select>
+              </div>
+
+              {/* Competition Patch */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Competition Patch</label>
+                <select
+                  value={formData.competition_patch || ''}
+                  onChange={(e) => handleInputChange('competition_patch', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">No patch</option>
+                  <option value="ucl">UEFA Champions League</option>
+                  <option value="uel">UEFA Europa League</option>
+                  <option value="uecl">UEFA Europa Conference League</option>
+                  <option value="laliga">La Liga</option>
+                  <option value="premier_league">Premier League</option>
+                  <option value="bundesliga">Bundesliga</option>
+                  <option value="serie_a">Serie A</option>
+                  <option value="ligue_1">Ligue 1</option>
+                  <option value="world_cup">FIFA World Cup</option>
+                  <option value="euro">UEFA Euro</option>
+                  <option value="copa_america">Copa América</option>
+                </select>
               </div>
             </section>
 
