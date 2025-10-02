@@ -455,10 +455,10 @@ class TopKitEditKitFormBackendTesting:
             self.log_test("Edit Master Kit Endpoint", False, f"Exception: {str(e)}")
             return False
 
-    def run_master_kit_data_retrieval_verification(self):
-        """Run comprehensive master kit data retrieval verification"""
-        print("\n🚀 MASTER KIT DATA RETRIEVAL FIXES VERIFICATION")
-        print("Verifying fixes for master kit data enrichment and embedding issues")
+    def run_edit_kit_form_backend_testing(self):
+        """Run comprehensive Edit Kit Form backend functionality testing"""
+        print("\n🚀 EDIT KIT FORM BACKEND FUNCTIONALITY TESTING")
+        print("Testing Edit Kit Form backend endpoints and functionality")
         print("=" * 80)
         
         test_results = []
@@ -470,32 +470,33 @@ class TopKitEditKitFormBackendTesting:
         
         if not auth_success:
             print("❌ Cannot proceed without authentication")
-            return test_results, {}
+            return test_results
         
-        # Step 2: Test master kits data enrichment
-        print("\n2️⃣ Testing Master Kits Data Enrichment...")
-        master_kits_success, master_kits_data = self.test_master_kits_data_enrichment()
-        test_results.append(master_kits_success)
+        # Step 2: Test form data endpoints
+        print("\n2️⃣ Testing Form Data Endpoints...")
+        form_data_success = self.test_form_data_endpoints()
+        test_results.append(form_data_success)
         
-        # Step 3: Test my collection list enrichment
-        print("\n3️⃣ Testing My Collection List Data Enrichment...")
-        collection_success, collection_data = self.test_my_collection_list_enrichment()
-        test_results.append(collection_success)
+        # Step 3: Test price calculation endpoint
+        print("\n3️⃣ Testing Price Calculation Endpoint...")
+        price_calc_success = self.test_price_calculation_endpoint()
+        test_results.append(price_calc_success)
         
-        # Step 4: Test individual collection item enrichment
-        print("\n4️⃣ Testing Individual Collection Item Data Enrichment...")
-        individual_success, individual_data = self.test_individual_collection_item_enrichment()
-        test_results.append(individual_success)
+        # Step 4: Test photo upload endpoint
+        print("\n4️⃣ Testing Photo Upload Endpoint...")
+        photo_upload_success = self.test_photo_upload_endpoint()
+        test_results.append(photo_upload_success)
         
-        return test_results, {
-            "master_kits_data": master_kits_data if master_kits_success else [],
-            "collection_data": collection_data if collection_success else [],
-            "individual_data": individual_data if individual_success else {}
-        }
+        # Step 5: Test edit master kit endpoint
+        print("\n5️⃣ Testing Edit Master Kit Endpoint...")
+        edit_kit_success = self.test_edit_master_kit_endpoint()
+        test_results.append(edit_kit_success)
+        
+        return test_results
 
-    def print_comprehensive_data_retrieval_summary(self, test_data):
-        """Print final comprehensive data retrieval verification summary"""
-        print("\n📊 MASTER KIT DATA RETRIEVAL FIXES VERIFICATION SUMMARY")
+    def print_comprehensive_edit_kit_form_summary(self):
+        """Print final comprehensive Edit Kit Form testing summary"""
+        print("\n📊 EDIT KIT FORM BACKEND FUNCTIONALITY TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -507,192 +508,103 @@ class TopKitEditKitFormBackendTesting:
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
-        # Key findings for data retrieval verification
-        print(f"\n🔍 DATA RETRIEVAL FIXES VERIFICATION RESULTS:")
+        # Key findings for Edit Kit Form testing
+        print(f"\n🔍 EDIT KIT FORM BACKEND TESTING RESULTS:")
         
-        # Master kits data enrichment analysis
-        master_kits_data = test_data.get("master_kits_data", [])
-        if master_kits_data:
-            print(f"\n✅ FIX 1 - MASTER KITS DATA ENRICHMENT: VERIFIED")
-            print(f"  • Total master kits available: {len(master_kits_data)}")
+        # Form Data Endpoints Analysis
+        form_data_tests = [r for r in self.test_results if 'Form Data' in r['test']]
+        if form_data_tests:
+            form_data_passed = len([r for r in form_data_tests if r['success']])
+            print(f"\n✅ FORM DATA ENDPOINTS: {form_data_passed}/{len(form_data_tests)} PASSED")
             
-            if len(master_kits_data) > 0:
-                first_kit = master_kits_data[0]
+            if self.form_data:
+                if 'players' in self.form_data:
+                    players_count = len(self.form_data['players'])
+                    print(f"  • Players endpoint: {players_count} players returned")
+                    if players_count > 0 and self.sample_player_id:
+                        print(f"    - Sample player ID available: {self.sample_player_id}")
                 
-                # Check enriched fields
-                club_name = first_kit.get('club_name')
-                brand_name = first_kit.get('brand_name')
-                model = first_kit.get('model')
+                if 'competitions' in self.form_data:
+                    competitions_count = len(self.form_data['competitions'])
+                    print(f"  • Competitions endpoint: {competitions_count} competitions returned")
                 
-                # Check legacy fields
-                club = first_kit.get('club')
-                brand = first_kit.get('brand')
-                
-                enrichment_working = []
-                enrichment_broken = []
-                
-                if club_name and club_name not in ["Unknown", "null", None]:
-                    enrichment_working.append(f"club_name: '{club_name}'")
-                else:
-                    enrichment_broken.append(f"club_name: '{club_name}'")
-                
-                if brand_name and brand_name not in ["Unknown", "null", None]:
-                    enrichment_working.append(f"brand_name: '{brand_name}'")
-                else:
-                    enrichment_broken.append(f"brand_name: '{brand_name}'")
-                
-                if model and model not in ["Unknown", "null", None]:
-                    enrichment_working.append(f"model: '{model}'")
-                else:
-                    enrichment_broken.append(f"model: '{model}'")
-                
-                if club and club not in ["Unknown", "null", None]:
-                    enrichment_working.append(f"legacy club: '{club}'")
-                else:
-                    enrichment_broken.append(f"legacy club: '{club}'")
-                
-                if brand and brand not in ["Unknown", "null", None]:
-                    enrichment_working.append(f"legacy brand: '{brand}'")
-                else:
-                    enrichment_broken.append(f"legacy brand: '{brand}'")
-                
-                if enrichment_working:
-                    print(f"  ✅ WORKING ENRICHED FIELDS:")
-                    for field in enrichment_working:
-                        print(f"     • {field}")
-                
-                if enrichment_broken:
-                    print(f"  ❌ BROKEN ENRICHED FIELDS:")
-                    for field in enrichment_broken:
-                        print(f"     • {field}")
-                
-                if not enrichment_broken:
-                    print(f"  🎉 ALL MASTER KIT FIELDS PROPERLY ENRICHED!")
+                if 'teams' in self.form_data:
+                    teams_count = len(self.form_data['teams'])
+                    print(f"  • Teams endpoint: {teams_count} teams returned")
         
-        # Collection data enrichment analysis
-        collection_data = test_data.get("collection_data", [])
-        individual_data = test_data.get("individual_data", {})
-        
-        if collection_data or individual_data:
-            print(f"\n✅ FIX 2 - COLLECTION DATA EMBEDDING ENRICHMENT: VERIFIED")
+        # Price Calculation Analysis
+        price_calc_tests = [r for r in self.test_results if 'Price Calculation' in r['test']]
+        if price_calc_tests:
+            price_calc_passed = len([r for r in price_calc_tests if r['success']])
+            print(f"\n✅ PRICE CALCULATION ENDPOINT: {price_calc_passed}/{len(price_calc_tests)} PASSED")
             
-            if collection_data and len(collection_data) > 0:
-                first_item = collection_data[0]
-                master_kit_data = first_item.get('master_kit')
-                
-                if master_kit_data:
-                    print(f"  • Collection items found: {len(collection_data)}")
-                    
-                    # Check embedded enriched fields
-                    club_name = master_kit_data.get('club_name')
-                    brand_name = master_kit_data.get('brand_name')
-                    model = master_kit_data.get('model')
-                    
-                    # Check embedded legacy fields
-                    club = master_kit_data.get('club')
-                    brand = master_kit_data.get('brand')
-                    
-                    embedded_enrichment_working = []
-                    embedded_enrichment_broken = []
-                    
-                    if club_name and club_name not in ["Unknown", "null", None]:
-                        embedded_enrichment_working.append(f"embedded club_name: '{club_name}'")
-                    else:
-                        embedded_enrichment_broken.append(f"embedded club_name: '{club_name}'")
-                    
-                    if brand_name and brand_name not in ["Unknown", "null", None]:
-                        embedded_enrichment_working.append(f"embedded brand_name: '{brand_name}'")
-                    else:
-                        embedded_enrichment_broken.append(f"embedded brand_name: '{brand_name}'")
-                    
-                    if model and model not in ["Unknown", "null", None]:
-                        embedded_enrichment_working.append(f"embedded model: '{model}'")
-                    else:
-                        embedded_enrichment_broken.append(f"embedded model: '{model}'")
-                    
-                    if club and club not in ["Unknown", "null", None]:
-                        embedded_enrichment_working.append(f"embedded legacy club: '{club}'")
-                    else:
-                        embedded_enrichment_broken.append(f"embedded legacy club: '{club}'")
-                    
-                    if brand and brand not in ["Unknown", "null", None]:
-                        embedded_enrichment_working.append(f"embedded legacy brand: '{brand}'")
-                    else:
-                        embedded_enrichment_broken.append(f"embedded legacy brand: '{brand}'")
-                    
-                    if embedded_enrichment_working:
-                        print(f"  ✅ WORKING EMBEDDED ENRICHED FIELDS:")
-                        for field in embedded_enrichment_working:
-                            print(f"     • {field}")
-                    
-                    if embedded_enrichment_broken:
-                        print(f"  ❌ BROKEN EMBEDDED ENRICHED FIELDS:")
-                        for field in embedded_enrichment_broken:
-                            print(f"     • {field}")
-                    
-                    if not embedded_enrichment_broken:
-                        print(f"  🎉 ALL EMBEDDED COLLECTION FIELDS PROPERLY ENRICHED!")
-                else:
-                    print(f"  ❌ Collection items missing embedded master kit data")
+            if price_calc_passed > 0:
+                print(f"  • Price calculation working with coefficient breakdown")
+                print(f"  • Sample data processed successfully")
+            else:
+                print(f"  • Price calculation endpoint issues detected")
+        
+        # Photo Upload Analysis
+        photo_upload_tests = [r for r in self.test_results if 'Photo Upload' in r['test']]
+        if photo_upload_tests:
+            photo_upload_passed = len([r for r in photo_upload_tests if r['success']])
+            print(f"\n✅ PHOTO UPLOAD ENDPOINT: {photo_upload_passed}/{len(photo_upload_tests)} PASSED")
             
-            if individual_data:
-                master_kit_data = individual_data.get('master_kit')
-                if master_kit_data:
-                    print(f"  ✅ Individual collection item endpoint working with embedded enriched data")
-                else:
-                    print(f"  ❌ Individual collection item endpoint missing embedded enriched data")
-        
-        # Overall enrichment status
-        print(f"\n🎯 OVERALL DATA ENRICHMENT STATUS:")
-        
-        fixes_working = []
-        fixes_broken = []
-        
-        # Check master kits enrichment
-        if master_kits_data and len(master_kits_data) > 0:
-            first_kit = master_kits_data[0]
-            if (first_kit.get('club_name') and first_kit.get('club_name') not in ["Unknown", "null", None] and
-                first_kit.get('brand_name') and first_kit.get('brand_name') not in ["Unknown", "null", None]):
-                fixes_working.append("Master kits data enrichment (club_name, brand_name)")
+            if photo_upload_passed > 0:
+                print(f"  • Photo upload working with proper URL generation")
             else:
-                fixes_broken.append("Master kits data enrichment (club_name, brand_name)")
-        else:
-            fixes_broken.append("Master kits data retrieval")
+                print(f"  • Photo upload endpoint issues detected")
         
-        # Check collection embedding enrichment
-        if (collection_data and len(collection_data) > 0 and collection_data[0].get('master_kit')):
-            master_kit_data = collection_data[0].get('master_kit')
-            if (master_kit_data.get('club_name') and master_kit_data.get('club_name') not in ["Unknown", "null", None] and
-                master_kit_data.get('brand_name') and master_kit_data.get('brand_name') not in ["Unknown", "null", None]):
-                fixes_working.append("Collection item data embedding enrichment")
+        # Edit Master Kit Analysis
+        edit_kit_tests = [r for r in self.test_results if 'Edit Master Kit' in r['test']]
+        if edit_kit_tests:
+            edit_kit_passed = len([r for r in edit_kit_tests if r['success']])
+            print(f"\n✅ EDIT MASTER KIT ENDPOINT: {edit_kit_passed}/{len(edit_kit_tests)} PASSED")
+            
+            if edit_kit_passed > 0:
+                print(f"  • Master kit editing functionality working")
             else:
-                fixes_broken.append("Collection item data embedding enrichment")
+                print(f"  • Master kit editing endpoint issues detected")
+        
+        # Overall functionality status
+        print(f"\n🎯 OVERALL EDIT KIT FORM FUNCTIONALITY STATUS:")
+        
+        functionality_working = []
+        functionality_broken = []
+        
+        # Check each major functionality
+        if any(r['success'] for r in self.test_results if 'Form Data' in r['test']):
+            functionality_working.append("Form Data Endpoints (players, competitions, teams)")
         else:
-            fixes_broken.append("Collection item data embedding")
+            functionality_broken.append("Form Data Endpoints")
         
-        # Check individual item enrichment
-        if individual_data and individual_data.get('master_kit'):
-            master_kit_data = individual_data.get('master_kit')
-            if (master_kit_data.get('club_name') and master_kit_data.get('club_name') not in ["Unknown", "null", None] and
-                master_kit_data.get('brand_name') and master_kit_data.get('brand_name') not in ["Unknown", "null", None]):
-                fixes_working.append("Individual collection item enrichment")
-            else:
-                fixes_broken.append("Individual collection item enrichment")
+        if any(r['success'] for r in self.test_results if 'Price Calculation' in r['test']):
+            functionality_working.append("Price Calculation with Coefficients")
         else:
-            fixes_broken.append("Individual collection item enrichment")
+            functionality_broken.append("Price Calculation")
         
-        if fixes_working:
-            print(f"  ✅ WORKING ENRICHMENT FIXES ({len(fixes_working)}):")
-            for fix in fixes_working:
-                print(f"     • {fix}")
+        if any(r['success'] for r in self.test_results if 'Photo Upload' in r['test']):
+            functionality_working.append("Photo Upload")
+        else:
+            functionality_broken.append("Photo Upload")
         
-        if fixes_broken:
-            print(f"  ❌ BROKEN ENRICHMENT FIXES ({len(fixes_broken)}):")
-            for fix in fixes_broken:
-                print(f"     • {fix}")
+        if any(r['success'] for r in self.test_results if 'Edit Master Kit' in r['test']):
+            functionality_working.append("Master Kit Editing")
+        else:
+            functionality_broken.append("Master Kit Editing")
         
-        if not fixes_broken:
-            print(f"  🎉 ALL DATA ENRICHMENT FIXES VERIFIED WORKING!")
+        if functionality_working:
+            print(f"  ✅ WORKING FUNCTIONALITY ({len(functionality_working)}):")
+            for func in functionality_working:
+                print(f"     • {func}")
+        
+        if functionality_broken:
+            print(f"  ❌ BROKEN FUNCTIONALITY ({len(functionality_broken)}):")
+            for func in functionality_broken:
+                print(f"     • {func}")
+        
+        if not functionality_broken:
+            print(f"  🎉 ALL EDIT KIT FORM FUNCTIONALITY WORKING!")
         
         # Show test failures
         failures = [r for r in self.test_results if not r['success']]
