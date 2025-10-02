@@ -618,9 +618,9 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
               </div>
             </section>
 
-            {/* G. User Estimate */}
+            {/* F. User Estimate */}
             <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">G. User Estimate</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">F. User Estimate</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Your Estimate (€)</label>
