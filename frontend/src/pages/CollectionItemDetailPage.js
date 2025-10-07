@@ -269,8 +269,8 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
         await loadCollectionItem();
         alert('✅ Kit details updated successfully!');
         // Reload collection item data to show updated values
-        fetchCollectionItem();
-        setShowEditForm(false);
+        loadCollectionItem();
+        setIsEditing(false);
       } else {
         const errorData = await response.json();
         console.error('❌ Update failed:', errorData);
