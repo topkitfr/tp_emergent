@@ -200,47 +200,78 @@ class TopKitNewCoefficientsBackendTesting:
             self.log_test("Form Data Endpoints", False, f"Exception: {str(e)}")
             return False
 
-    def test_price_calculation_endpoint(self):
-        """Test POST /api/calculate-price endpoint with user-specified data"""
+    def test_age_coefficient_with_old_season(self):
+        """Test age coefficient calculation with an existing master kit with old season"""
         try:
-            print(f"\n💰 TESTING PRICE CALCULATION ENDPOINT")
+            print(f"\n⏰ TESTING AGE COEFFICIENT WITH OLD SEASON")
             print("=" * 60)
             
             if not self.auth_token:
                 if not self.authenticate_admin():
                     return False
             
-            # User-specified test data for price calculation
-            user_specified_kit_details = {
+            # First, get master kits to find one with an old season
+            print(f"      🔍 Looking for master kits with old seasons...")
+            master_kits_response = self.session.get(f"{BACKEND_URL}/master-kits", timeout=10)
+            
+            if master_kits_response.status_code != 200:
+                print(f"      ❌ Cannot get master kits - Status {master_kits_response.status_code}")
+                self.log_test("Age Coefficient Test", False, "❌ Cannot get master kits")
+                return False
+            
+            master_kits = master_kits_response.json()
+            
+            # Look for a master kit with an old season (before 2020)
+            old_season_kit = None
+            for kit in master_kits:
+                season = kit.get('season', '')
+                if season and ('2015' in season or '2016' in season or '2017' in season or '2018' in season or '2019' in season):
+                    old_season_kit = kit
+                    break
+            
+            if not old_season_kit:
+                # Use the user-specified master kit ID
+                user_specified_kit_id = "049229a5-c6c0-405a-b055-88759d775f25"
+                print(f"      🎯 Using user-specified master kit ID: {user_specified_kit_id}")
+                
+                # Get specific master kit
+                kit_response = self.session.get(f"{BACKEND_URL}/master-kits/{user_specified_kit_id}", timeout=10)
+                if kit_response.status_code == 200:
+                    old_season_kit = kit_response.json()
+                else:
+                    print(f"      ❌ Cannot find user-specified master kit")
+                    self.log_test("Age Coefficient Test", False, "❌ Cannot find master kit for age testing")
+                    return False
+            
+            master_kit_id = old_season_kit.get('id')
+            season = old_season_kit.get('season', 'Unknown')
+            club = old_season_kit.get('club', 'Unknown')
+            
+            print(f"      🎽 Testing with master kit:")
+            print(f"         ID: {master_kit_id}")
+            print(f"         Club: {club}")
+            print(f"         Season: {season}")
+            
+            # Test data with master kit ID for age coefficient calculation
+            test_data = {
+                "master_kit_id": master_kit_id,
                 "condition": "match_worn",
-                "number": "10", 
                 "signed": True,
                 "signature_proof": "photo",
                 "origin_type": "match_worn",
                 "special_match_type": "classico",
                 "match_result": "win",
-                "performance": ["scored_goal", "man_of_the_match"],
-                "match_proof": "photo",
-                "printing_style": "league",
-                "competition_patch": "ucl"
+                "performance": ["scored_goal"],
+                "match_proof": "photo"
             }
             
-            print(f"      📊 Testing price calculation with USER-SPECIFIED data:")
-            print(f"         Condition: {user_specified_kit_details['condition']}")
-            print(f"         Number: {user_specified_kit_details['number']}")
-            print(f"         Signed: {user_specified_kit_details['signed']}")
-            print(f"         Signature Proof: {user_specified_kit_details['signature_proof']}")
-            print(f"         Origin Type: {user_specified_kit_details['origin_type']}")
-            print(f"         Special Match: {user_specified_kit_details['special_match_type']}")
-            print(f"         Match Result: {user_specified_kit_details['match_result']}")
-            print(f"         Performance: {user_specified_kit_details['performance']}")
-            print(f"         Match Proof: {user_specified_kit_details['match_proof']}")
-            print(f"         Printing Style: {user_specified_kit_details['printing_style']}")
-            print(f"         Competition Patch: {user_specified_kit_details['competition_patch']}")
+            print(f"      📊 Testing price calculation with age coefficient data:")
+            for key, value in test_data.items():
+                print(f"         {key}: {value}")
             
             response = self.session.post(
                 f"{BACKEND_URL}/calculate-price",
-                json=user_specified_kit_details,
+                json=test_data,
                 timeout=10
             )
             
@@ -248,55 +279,243 @@ class TopKitNewCoefficientsBackendTesting:
             
             if response.status_code == 200:
                 price_data = response.json()
-                print(f"      ✅ Price calculation endpoint accessible")
+                print(f"      ✅ Price calculation with age coefficient successful")
                 
                 estimated_price = price_data.get('estimated_price')
                 coefficients = price_data.get('coefficients', {})
                 base_price = price_data.get('base_price', 90.0)
                 
-                print(f"\n      💰 PRICE CALCULATION RESULTS:")
+                print(f"\n      💰 AGE COEFFICIENT RESULTS:")
                 print(f"         Base Price: €{base_price}")
                 print(f"         Final Estimated Price: €{estimated_price}")
-                print(f"         Price Increase: €{estimated_price - base_price:.2f}")
                 
-                if coefficients:
-                    print(f"\n         📈 DETAILED COEFFICIENTS BREAKDOWN:")
-                    for coeff_name, coeff_value in coefficients.items():
-                        print(f"            • {coeff_name}: {coeff_value}")
+                # Look for age coefficient specifically
+                age_coefficient_found = False
+                age_coefficient_value = None
                 
-                # Check if price is higher than base price
-                if estimated_price > base_price:
-                    print(f"      ✅ Final price (€{estimated_price}) is higher than base price (€{base_price})")
+                for coeff_name, coeff_value in coefficients.items():
+                    if 'age' in coeff_name.lower() or 'ancienneté' in coeff_name.lower():
+                        age_coefficient_found = True
+                        age_coefficient_value = coeff_value
+                        print(f"         🎯 AGE COEFFICIENT FOUND: {coeff_name} = {coeff_value}")
+                        break
+                
+                if age_coefficient_found:
+                    print(f"      ✅ Age coefficient is calculated and displayed!")
+                    self.log_test("Age Coefficient Test", True, f"✅ Age coefficient found: {age_coefficient_value}")
                 else:
-                    print(f"      ⚠️ Final price (€{estimated_price}) is not higher than base price (€{base_price})")
+                    print(f"      ❌ Age coefficient NOT found in response")
+                    print(f"      Available coefficients: {list(coefficients.keys())}")
+                    self.log_test("Age Coefficient Test", False, "❌ Age coefficient not found in response")
                 
-                # Verify expected components are present for this specific test
-                expected_components = ['base_price', 'origin', 'signature', 'competition_patch']
-                present_components = []
-                missing_components = []
-                
-                for component in expected_components:
-                    if component in coefficients:
-                        present_components.append(component)
-                    else:
-                        missing_components.append(component)
-                
-                if present_components:
-                    print(f"      ✅ Present coefficient components: {present_components}")
-                if missing_components:
-                    print(f"      ⚠️ Missing expected coefficient components: {missing_components}")
-                
-                self.log_test("Price Calculation Endpoint", True, f"✅ Price calculation successful - €{estimated_price} (Base: €{base_price})")
-                return True
+                return age_coefficient_found
                 
             else:
                 print(f"      ❌ Price calculation failed - Status {response.status_code}")
                 print(f"      Response: {response.text}")
-                self.log_test("Price Calculation Endpoint", False, f"❌ Failed - Status {response.status_code}", response.text)
+                self.log_test("Age Coefficient Test", False, f"❌ Failed - Status {response.status_code}", response.text)
                 return False
                 
         except Exception as e:
-            self.log_test("Price Calculation Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Age Coefficient Test", False, f"Exception: {str(e)}")
+            return False
+
+    def test_player_type_coefficient(self):
+        """Test player type coefficient with a player that has player_type defined"""
+        try:
+            print(f"\n👤 TESTING PLAYER TYPE COEFFICIENT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False
+            
+            # Get players to find one with player_type defined
+            print(f"      🔍 Looking for players with player_type defined...")
+            players_response = self.session.get(f"{BACKEND_URL}/form-data/players", timeout=10)
+            
+            if players_response.status_code != 200:
+                print(f"      ❌ Cannot get players - Status {players_response.status_code}")
+                self.log_test("Player Type Coefficient Test", False, "❌ Cannot get players")
+                return False
+            
+            players = players_response.json()
+            
+            # Look for a player with player_type defined
+            player_with_type = None
+            for player in players:
+                if player.get('player_type') and player.get('player_type') != 'none':
+                    player_with_type = player
+                    break
+            
+            if not player_with_type:
+                print(f"      ⚠️ No players with player_type found, using first available player")
+                if players:
+                    player_with_type = players[0]
+                else:
+                    print(f"      ❌ No players available for testing")
+                    self.log_test("Player Type Coefficient Test", False, "❌ No players available")
+                    return False
+            
+            player_id = player_with_type.get('id') or player_with_type.get('name')
+            player_name = player_with_type.get('name', 'Unknown')
+            player_type = player_with_type.get('player_type', 'none')
+            
+            print(f"      👤 Testing with player:")
+            print(f"         ID: {player_id}")
+            print(f"         Name: {player_name}")
+            print(f"         Player Type: {player_type}")
+            
+            # Test data with player ID for player type coefficient calculation
+            test_data = {
+                "associated_player_id": player_id,
+                "condition": "match_worn",
+                "signed": True,
+                "signature_proof": "photo",
+                "origin_type": "match_worn",
+                "special_match_type": "classico",
+                "match_result": "win",
+                "performance": ["scored_goal"],
+                "match_proof": "photo"
+            }
+            
+            print(f"      📊 Testing price calculation with player type coefficient data:")
+            for key, value in test_data.items():
+                print(f"         {key}: {value}")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/calculate-price",
+                json=test_data,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                print(f"      ✅ Price calculation with player type coefficient successful")
+                
+                estimated_price = price_data.get('estimated_price')
+                coefficients = price_data.get('coefficients', {})
+                base_price = price_data.get('base_price', 90.0)
+                
+                print(f"\n      💰 PLAYER TYPE COEFFICIENT RESULTS:")
+                print(f"         Base Price: €{base_price}")
+                print(f"         Final Estimated Price: €{estimated_price}")
+                
+                # Look for player type coefficient specifically
+                player_type_coefficient_found = False
+                player_type_coefficient_value = None
+                
+                for coeff_name, coeff_value in coefficients.items():
+                    if 'player_type' in coeff_name.lower() or 'player type' in coeff_name.lower():
+                        player_type_coefficient_found = True
+                        player_type_coefficient_value = coeff_value
+                        print(f"         🎯 PLAYER TYPE COEFFICIENT FOUND: {coeff_name} = {coeff_value}")
+                        break
+                
+                if player_type_coefficient_found:
+                    print(f"      ✅ Player Type coefficient is calculated and displayed!")
+                    self.log_test("Player Type Coefficient Test", True, f"✅ Player Type coefficient found: {player_type_coefficient_value}")
+                else:
+                    print(f"      ❌ Player Type coefficient NOT found in response")
+                    print(f"      Available coefficients: {list(coefficients.keys())}")
+                    self.log_test("Player Type Coefficient Test", False, "❌ Player Type coefficient not found in response")
+                
+                return player_type_coefficient_found
+                
+            else:
+                print(f"      ❌ Price calculation failed - Status {response.status_code}")
+                print(f"      Response: {response.text}")
+                self.log_test("Player Type Coefficient Test", False, f"❌ Failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("Player Type Coefficient Test", False, f"Exception: {str(e)}")
+            return False
+
+    def test_user_specified_data_comprehensive(self):
+        """Test with the exact user-specified data to verify all coefficients"""
+        try:
+            print(f"\n🎯 TESTING USER-SPECIFIED DATA COMPREHENSIVE")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False
+            
+            # User-specified test data exactly as provided
+            user_data = {
+                "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
+                "associated_player_id": "test-player-id",  
+                "condition": "match_worn",
+                "signed": True,
+                "signature_proof": "photo",
+                "origin_type": "match_worn",
+                "special_match_type": "classico",
+                "match_result": "win",
+                "performance": ["scored_goal"],
+                "match_proof": "photo"
+            }
+            
+            print(f"      📊 Testing with EXACT user-specified data:")
+            for key, value in user_data.items():
+                print(f"         {key}: {value}")
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/calculate-price",
+                json=user_data,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                print(f"      ✅ Price calculation with user-specified data successful")
+                
+                estimated_price = price_data.get('estimated_price')
+                coefficients = price_data.get('coefficients', {})
+                base_price = price_data.get('base_price', 90.0)
+                
+                print(f"\n      💰 USER-SPECIFIED DATA RESULTS:")
+                print(f"         Base Price: €{base_price}")
+                print(f"         Final Estimated Price: €{estimated_price}")
+                print(f"         Price Increase: €{estimated_price - base_price:.2f}")
+                
+                print(f"\n         📈 ALL COEFFICIENTS BREAKDOWN:")
+                for coeff_name, coeff_value in coefficients.items():
+                    print(f"            • {coeff_name}: {coeff_value}")
+                
+                # Check for specific coefficients the user asked about
+                age_found = any('age' in coeff.lower() or 'ancienneté' in coeff.lower() for coeff in coefficients.keys())
+                player_type_found = any('player_type' in coeff.lower() or 'player type' in coeff.lower() for coeff in coefficients.keys())
+                
+                print(f"\n      🔍 SPECIFIC COEFFICIENT VERIFICATION:")
+                print(f"         Age coefficient found: {'✅ YES' if age_found else '❌ NO'}")
+                print(f"         Player Type coefficient found: {'✅ YES' if player_type_found else '❌ NO'}")
+                print(f"         Total coefficients returned: {len(coefficients)}")
+                
+                # Return the price and coefficient details for user
+                result_summary = {
+                    "estimated_price": estimated_price,
+                    "base_price": base_price,
+                    "coefficients": coefficients,
+                    "age_coefficient_found": age_found,
+                    "player_type_coefficient_found": player_type_found
+                }
+                
+                self.log_test("User-Specified Data Test", True, f"✅ Price: €{estimated_price}, Age coeff: {age_found}, Player type coeff: {player_type_found}")
+                return result_summary
+                
+            else:
+                print(f"      ❌ Price calculation failed - Status {response.status_code}")
+                print(f"      Response: {response.text}")
+                self.log_test("User-Specified Data Test", False, f"❌ Failed - Status {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_test("User-Specified Data Test", False, f"Exception: {str(e)}")
             return False
 
     def test_photo_upload_endpoint(self):
