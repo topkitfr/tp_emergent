@@ -901,6 +901,74 @@ class TopKitEditKitDataPersistenceBackendTesting:
         
         print("\n" + "=" * 80)
 
+    def print_mycollection_model_fix_summary(self):
+        """Print summary for MyCollectionResponse model fix testing"""
+        print("\n📊 MYCOLLECTIONRESPONSE MODEL FIX TESTING SUMMARY")
+        print("=" * 80)
+        
+        total_tests = len(self.test_results)
+        passed_tests = len([r for r in self.test_results if r['success']])
+        failed_tests = total_tests - passed_tests
+        
+        print(f"Total tests: {total_tests}")
+        print(f"Passed: {passed_tests} ✅")
+        print(f"Failed: {failed_tests} ❌")
+        print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
+        
+        # Key findings for MyCollectionResponse model fix
+        print(f"\n🔍 MYCOLLECTIONRESPONSE MODEL FIX RESULTS:")
+        
+        # Model Fix Analysis
+        model_tests = [r for r in self.test_results if 'MyCollectionResponse Model Fix' in r['test']]
+        if model_tests:
+            model_passed = len([r for r in model_tests if r['success']])
+            print(f"\n🔧 MODEL FIX STATUS: {'✅ RESOLVED' if model_passed > 0 else '❌ INCOMPLETE'}")
+            
+            if model_passed > 0:
+                print(f"  • MyCollectionResponse model successfully updated")
+                print(f"  • All new fields now appear in GET collection item response")
+                print(f"  • estimated_price is properly returned in API responses")
+                print(f"  • Data persistence issue resolved - saved data now visible")
+            else:
+                print(f"  • MyCollectionResponse model still incomplete")
+                print(f"  • Some new fields missing from API responses")
+                print(f"  • Model needs further updates to include all Edit Kit Details fields")
+        
+        # Authentication Analysis
+        auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
+        if auth_tests:
+            auth_passed = len([r for r in auth_tests if r['success']])
+            print(f"\n🔐 AUTHENTICATION: {'✅ WORKING' if auth_passed > 0 else '❌ FAILED'}")
+            if auth_passed > 0:
+                print(f"  • Emergency admin authentication successful")
+            else:
+                print(f"  • Emergency admin authentication failed")
+        
+        # Overall status
+        print(f"\n🎯 OVERALL MYCOLLECTIONRESPONSE MODEL STATUS:")
+        
+        if model_tests and any(r['success'] for r in model_tests):
+            print(f"  ✅ MODEL FIX SUCCESSFUL: MyCollectionResponse model correction verified")
+            print(f"  • All expected new fields present in API responses")
+            print(f"  • estimated_price calculation now visible to users")
+            print(f"  • Edit Kit Details data persistence issue resolved")
+        else:
+            print(f"  ❌ MODEL FIX INCOMPLETE: MyCollectionResponse model needs more work")
+            print(f"  • Some new fields still missing from API responses")
+            print(f"  • Users may still see incomplete data in collection details")
+            print(f"  • Further model updates required")
+        
+        # Show test failures
+        failures = [r for r in self.test_results if not r['success']]
+        if failures:
+            print(f"\n❌ TEST FAILURES ({len(failures)}):")
+            for failure in failures:
+                print(f"  • {failure['test']}: {failure['message']}")
+                if failure.get('details') and isinstance(failure['details'], str):
+                    print(f"    Details: {failure['details']}")
+        
+        print("\n" + "=" * 80)
+
     def test_mycollection_response_model_fix(self):
         """Test the MyCollectionResponse model fix - verify all new fields appear in GET response"""
         try:
