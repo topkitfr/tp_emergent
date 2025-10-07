@@ -755,19 +755,64 @@ async def calculate_estimated_price_enhanced(kit_details: dict) -> tuple[float, 
         # Initialize total coefficient
         total_coeff = 0.0
         
-        # Condition coefficients
+        # Condition coefficients (kit type)
         condition = kit_details.get('condition')
         condition_coeffs = {
-            'nwt': 0.3,
-            'very_good': 0.15, 
-            'used': 0.0,
-            'damaged': -0.25,
-            'needs_restore': -0.5
+            'club_stock': 0.0,      # Home
+            'match_prepared': 0.0,  # Away  
+            'match_worn': 0.1,      # Third
+            'training': 0.2,        # Fourth
+            'other': 0.1            # GK/Special
         }
         if condition and condition in condition_coeffs:
             coeff_val = condition_coeffs[condition]
             total_coeff += coeff_val
-            coefficients['condition'] = f"{condition.replace('_', ' ').title()} = {coeff_val:+.2f}"
+            condition_names = {
+                'club_stock': 'Home',
+                'match_prepared': 'Away',
+                'match_worn': 'Third', 
+                'training': 'Fourth',
+                'other': 'GK/Special'
+            }
+            coefficients['condition'] = f"{condition_names.get(condition, condition)} = {coeff_val:+.2f}"
+        
+        # Number coefficient
+        if kit_details.get('number'):
+            total_coeff += 0.1
+            coefficients['number'] = "Number = +0.10"
+            
+        # Printing Style coefficient  
+        printing_style = kit_details.get('printing_style')
+        style_coeffs = {
+            'league': 0.05,
+            'cup': 0.05,
+            'special': 0.1
+        }
+        if printing_style and printing_style in style_coeffs:
+            coeff_val = style_coeffs[printing_style]
+            total_coeff += coeff_val
+            coefficients['printing_style'] = f"Printing {printing_style.title()} = +{coeff_val:.2f}"
+            
+        # Competition Patch coefficient
+        competition_patch = kit_details.get('competition_patch')
+        patch_coeffs = {
+            'ucl': 1.0,
+            'uel': 0.5,
+            'uecl': 0.2,
+            'laliga': 0.1,
+            'premier_league': 0.1,
+            'bundesliga': 0.1,
+            'serie_a': 0.1,
+            'ligue_1': 0.1,
+            'world_cup': 1.0,
+            'euro': 1.0,
+            'copa_america': 1.0,
+            'other': 0.1
+        }
+        if competition_patch and competition_patch in patch_coeffs:
+            coeff_val = patch_coeffs[competition_patch]
+            total_coeff += coeff_val
+            coefficients['competition_patch'] = f"Competition Patch = +{coeff_val:.2f}"
         
         # Origin Type coefficients
         origin_type = kit_details.get('origin_type')
