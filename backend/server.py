@@ -911,13 +911,21 @@ async def calculate_estimated_price_enhanced(kit_details: dict) -> tuple[float, 
                 try:
                     current_year = datetime.now().year
                     season = master_kit['season']
-                    season_year = int(season.split("-")[0])
+                    # Handle both "/" and "-" season formats
+                    if "/" in season:
+                        season_year = int(season.split("/")[0])
+                    elif "-" in season:
+                        season_year = int(season.split("-")[0])
+                    else:
+                        season_year = int(season[:4])  # Fallback for YYYY format
+                    
                     age_years = current_year - season_year
                     if age_years > 0:
                         age_coefficient = min(age_years * 0.03, 0.6)  # Max +0.6
                         total_coeff += age_coefficient
                         coefficients['age'] = f"Age ({age_years} years) = +{age_coefficient:.2f}"
-                except:
+                except Exception as e:
+                    logger.warning(f"Error calculating age coefficient: {str(e)}")
                     pass
                     
         # Player Type coefficient
