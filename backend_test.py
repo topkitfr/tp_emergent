@@ -901,15 +901,154 @@ class TopKitEditKitDataPersistenceBackendTesting:
         
         print("\n" + "=" * 80)
 
+    def test_mycollection_response_model_fix(self):
+        """Test the MyCollectionResponse model fix - verify all new fields appear in GET response"""
+        try:
+            print(f"\n🔧 TESTING MYCOLLECTIONRESPONSE MODEL FIX")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False
+            
+            # User-specified collection ID from the review request
+            collection_id = "0b602c78-4a36-474c-b7bb-95f92c687909"
+            
+            print(f"      🎯 Testing collection item: {collection_id}")
+            
+            # GET collection item to verify all new fields appear in response
+            print(f"\n      📋 Getting collection item to verify MyCollectionResponse model...")
+            get_response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}", timeout=10)
+            
+            print(f"      Response Status: {get_response.status_code}")
+            
+            if get_response.status_code != 200:
+                print(f"      ❌ Cannot get collection item - Status {get_response.status_code}")
+                print(f"      Response: {get_response.text}")
+                self.log_test("MyCollectionResponse Model Fix", False, f"❌ Cannot get collection item - Status {get_response.status_code}")
+                return False
+            
+            collection_data = get_response.json()
+            print(f"      ✅ Collection item retrieved successfully")
+            
+            # List of new fields that should appear in the response according to the review request
+            expected_new_fields = [
+                'estimated_price',
+                'price_coefficients',
+                'signature_proof',
+                'origin_type', 
+                'special_match_type',
+                'match_result',
+                'performance',
+                'match_proof',
+                'printing_style',
+                'competition_patch',
+                'number',
+                'kit_type'
+            ]
+            
+            print(f"\n      🔍 VERIFYING NEW FIELDS IN RESPONSE:")
+            print(f"         Expected new fields: {len(expected_new_fields)}")
+            
+            # Check each expected field
+            found_fields = []
+            missing_fields = []
+            
+            for field in expected_new_fields:
+                if field in collection_data:
+                    found_fields.append(field)
+                    field_value = collection_data[field]
+                    print(f"         ✅ {field}: {field_value}")
+                else:
+                    missing_fields.append(field)
+                    print(f"         ❌ {field}: MISSING")
+            
+            # Special focus on estimated_price as mentioned in the review request
+            estimated_price = collection_data.get('estimated_price')
+            if estimated_price is not None:
+                print(f"\n      💰 ESTIMATED PRICE VERIFICATION:")
+                print(f"         ✅ estimated_price found: €{estimated_price}")
+                print(f"         ✅ Calculated estimated_price is now returned in API response")
+            else:
+                print(f"\n      💰 ESTIMATED PRICE VERIFICATION:")
+                print(f"         ❌ estimated_price is MISSING from response")
+            
+            # Check price_coefficients specifically
+            price_coefficients = collection_data.get('price_coefficients')
+            if price_coefficients is not None:
+                print(f"\n      📊 PRICE COEFFICIENTS VERIFICATION:")
+                print(f"         ✅ price_coefficients found: {type(price_coefficients)}")
+                if isinstance(price_coefficients, dict):
+                    print(f"         Coefficients count: {len(price_coefficients)}")
+                    for coeff_name, coeff_value in list(price_coefficients.items())[:3]:  # Show first 3
+                        print(f"         - {coeff_name}: {coeff_value}")
+                    if len(price_coefficients) > 3:
+                        print(f"         ... and {len(price_coefficients) - 3} more coefficients")
+            else:
+                print(f"\n      📊 PRICE COEFFICIENTS VERIFICATION:")
+                print(f"         ❌ price_coefficients is MISSING from response")
+            
+            # Summary of findings
+            print(f"\n      📋 FIELD VERIFICATION SUMMARY:")
+            print(f"         Total expected fields: {len(expected_new_fields)}")
+            print(f"         Found fields: {len(found_fields)} ✅")
+            print(f"         Missing fields: {len(missing_fields)} ❌")
+            
+            if missing_fields:
+                print(f"         Missing fields list: {missing_fields}")
+            
+            # Determine success
+            success = len(missing_fields) == 0
+            
+            if success:
+                print(f"\n      🎉 MYCOLLECTIONRESPONSE MODEL FIX VERIFIED!")
+                print(f"         ✅ All expected new fields are present in API response")
+                print(f"         ✅ estimated_price is properly returned: €{estimated_price}")
+                print(f"         ✅ MyCollectionResponse model fix is working correctly")
+                
+                self.log_test("MyCollectionResponse Model Fix", True, 
+                             f"✅ All {len(expected_new_fields)} new fields found in response, estimated_price: €{estimated_price}")
+            else:
+                print(f"\n      ❌ MYCOLLECTIONRESPONSE MODEL STILL INCOMPLETE")
+                print(f"         ❌ {len(missing_fields)} fields still missing from API response")
+                print(f"         ❌ MyCollectionResponse model needs further updates")
+                
+                self.log_test("MyCollectionResponse Model Fix", False, 
+                             f"❌ {len(missing_fields)} fields missing: {missing_fields}")
+            
+            return success
+                
+        except Exception as e:
+            self.log_test("MyCollectionResponse Model Fix", False, f"Exception: {str(e)}")
+            return False
+
 def main():
-    """Main function to run the Edit Kit Details data persistence testing"""
+    """Main function to run the MyCollectionResponse model fix testing"""
     tester = TopKitEditKitDataPersistenceBackendTesting()
     
-    # Run the comprehensive Edit Kit Details data persistence testing
-    test_results = tester.run_edit_kit_data_persistence_testing()
+    # Run the specific MyCollectionResponse model fix test
+    print("\n🚀 MYCOLLECTIONRESPONSE MODEL FIX TESTING")
+    print("Testing the correction of MyCollectionResponse model to include all new fields")
+    print("=" * 80)
     
-    # Print comprehensive summary
-    tester.print_comprehensive_edit_kit_data_persistence_summary()
+    test_results = []
+    
+    # Step 1: Authenticate
+    print("\n1️⃣ Authenticating...")
+    auth_success = tester.authenticate_admin()
+    test_results.append(auth_success)
+    
+    if not auth_success:
+        print("❌ Cannot proceed without authentication")
+        return test_results
+    
+    # Step 2: Test MyCollectionResponse model fix
+    print("\n2️⃣ Testing MyCollectionResponse Model Fix...")
+    model_fix_success = tester.test_mycollection_response_model_fix()
+    test_results.append(model_fix_success)
+    
+    # Print summary
+    tester.print_mycollection_model_fix_summary()
     
     # Return overall success
     return all(test_results)
