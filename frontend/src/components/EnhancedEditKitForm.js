@@ -639,7 +639,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   accept="image/*"
                   onChange={(e) => {
                     if (e.target.files[0]) {
-                      handleInputChange('front_photo', e.target.files[0]);
+                      handleFileUpload([e.target.files[0]], 'front');
                     }
                   }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
