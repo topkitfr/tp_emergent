@@ -812,14 +812,14 @@ class TopKitNewCoefficientsBackendTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the Edit Kit Form backend testing"""
-    tester = TopKitEditKitFormBackendTesting()
+    """Main function to run the new coefficients testing"""
+    tester = TopKitNewCoefficientsBackendTesting()
     
-    # Run the comprehensive Edit Kit Form backend testing
-    test_results = tester.run_edit_kit_form_backend_testing()
+    # Run the comprehensive new coefficients testing
+    test_results = tester.run_new_coefficients_testing()
     
     # Print comprehensive summary
-    tester.print_comprehensive_edit_kit_form_summary()
+    tester.print_comprehensive_new_coefficients_summary()
     
     # Return overall success
     return all(test_results)
