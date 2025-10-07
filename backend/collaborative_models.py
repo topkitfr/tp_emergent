@@ -277,9 +277,11 @@ class MyCollectionUpdate(BaseModel):
     patches: Optional[str] = None  # For backward compatibility (comma-separated string)
     patches_list: Optional[List[str]] = None  # Multiple selection (new format)
     other_patches: Optional[str] = None  # If "other" selected
-    signature: Optional[bool] = None  # +2.0 coefficient
+    signature: Optional[bool] = None  # +2.0 coefficient (legacy)
+    signed: Optional[bool] = None  # +2.5 coefficient (new)
     signature_player_id: Optional[str] = None  # Required if signed
-    signature_certificate: Optional[str] = None  # yes/no
+    signature_certificate: Optional[str] = None  # yes/no (legacy)
+    signature_proof: Optional[str] = None  # photo/certificate/none (new)
     
     # F. User Estimate
     user_estimate: Optional[float] = None  # User's price estimate
