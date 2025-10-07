@@ -1707,7 +1707,9 @@ async def update_collection_item(
         logger.info(f"   Filtered update_dict: {update_dict}")
         
         # Recalculate estimated price with enhanced function
+        logger.info(f"🔍 DEBUG - About to calculate price with data: {update_dict}")
         enhanced_price, coefficients = await calculate_estimated_price_enhanced(update_dict)
+        logger.info(f"🔍 DEBUG - Price calculation result: price={enhanced_price}, coefficients_count={len(coefficients)}")
         update_dict["estimated_price"] = enhanced_price
         update_dict["price_coefficients"] = coefficients
         
