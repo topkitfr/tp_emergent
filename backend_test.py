@@ -673,10 +673,10 @@ class TopKitNewCoefficientsBackendTesting:
             self.log_test("Edit Master Kit Endpoint", False, f"Exception: {str(e)}")
             return False
 
-    def run_edit_kit_form_backend_testing(self):
-        """Run comprehensive Edit Kit Form backend functionality testing"""
-        print("\n🚀 EDIT KIT FORM BACKEND FUNCTIONALITY TESTING")
-        print("Testing Edit Kit Form backend endpoints and functionality")
+    def run_new_coefficients_testing(self):
+        """Run comprehensive testing of the 3 new coefficients"""
+        print("\n🚀 NEW COEFFICIENTS TESTING")
+        print("Testing the 3 new coefficients: Age, Player Type, and Data Saving")
         print("=" * 80)
         
         test_results = []
@@ -690,25 +690,23 @@ class TopKitNewCoefficientsBackendTesting:
             print("❌ Cannot proceed without authentication")
             return test_results
         
-        # Step 2: Test form data endpoints
-        print("\n2️⃣ Testing Form Data Endpoints...")
-        form_data_success = self.test_form_data_endpoints()
-        test_results.append(form_data_success)
+        # Step 2: Test age coefficient with old season
+        print("\n2️⃣ Testing Age Coefficient with Old Season...")
+        age_coeff_success = self.test_age_coefficient_with_old_season()
+        test_results.append(age_coeff_success)
         
-        # Step 3: Test price calculation endpoint
-        print("\n3️⃣ Testing Price Calculation Endpoint...")
-        price_calc_success = self.test_price_calculation_endpoint()
-        test_results.append(price_calc_success)
+        # Step 3: Test player type coefficient
+        print("\n3️⃣ Testing Player Type Coefficient...")
+        player_type_success = self.test_player_type_coefficient()
+        test_results.append(player_type_success)
         
-        # Step 4: Test photo upload endpoint
-        print("\n4️⃣ Testing Photo Upload Endpoint...")
-        photo_upload_success = self.test_photo_upload_endpoint()
-        test_results.append(photo_upload_success)
+        # Step 4: Test with user-specified data comprehensively
+        print("\n4️⃣ Testing User-Specified Data Comprehensively...")
+        user_data_result = self.test_user_specified_data_comprehensive()
+        test_results.append(user_data_result is not False)
         
-        # Step 5: Test edit master kit endpoint
-        print("\n5️⃣ Testing Edit Master Kit Endpoint...")
-        edit_kit_success = self.test_edit_master_kit_endpoint()
-        test_results.append(edit_kit_success)
+        # Store the comprehensive result for summary
+        self.comprehensive_result = user_data_result
         
         return test_results
 
