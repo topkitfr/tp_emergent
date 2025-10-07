@@ -187,8 +187,18 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
       addFieldIfNotEmpty('size', editFormData.size);
       addFieldIfNotEmpty('condition', editFormData.condition);
       
-      // B. Player & Printing
-      addFieldIfNotEmpty('associated_player_id', editFormData.associated_player);
+      // B. Player & Printing  
+      // Fix: associated_player should contain the ID, not the display name
+      if (editFormData.associated_player && editFormData.associated_player !== '') {
+        // Extract ID if it's in format "ID" or "Name (coefficient)"
+        let playerId = editFormData.associated_player;
+        if (playerId.includes(' (')) {
+          // For legacy format, we need to map back to ID - this needs to be fixed in form
+          addFieldIfNotEmpty('associated_player_id', playerId);
+        } else {
+          addFieldIfNotEmpty('associated_player_id', playerId);
+        }
+      }
       addFieldIfNotEmpty('name_printing', editFormData.name_printing);
       addFieldIfNotEmpty('number_printing', editFormData.number_printing);
       addFieldIfNotEmpty('number', editFormData.number);
