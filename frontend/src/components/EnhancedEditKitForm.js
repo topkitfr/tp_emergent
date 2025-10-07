@@ -481,6 +481,37 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   </div>
                 </>
               )}
+
+              {/* Signature */}
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.signed || false}
+                    onChange={(e) => handleInputChange('signed', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm font-medium text-gray-700">Signed (+2.5)</span>
+                </label>
+                
+                {formData.signed && (
+                  <div className="mt-3 space-y-3">
+                    {/* Signature Proof */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Signature Proof</label>
+                      <select
+                        value={formData.signature_proof || ''}
+                        onChange={(e) => handleInputChange('signature_proof', e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="none">No proof (-0.5)</option>
+                        <option value="photo">Photo (+0.5)</option>
+                        <option value="certificate">Certificate (+0.4)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
 
             {/* D. Technical Details */}
