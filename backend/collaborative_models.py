@@ -264,6 +264,10 @@ class MyCollectionUpdate(BaseModel):
     authenticity_proof: Optional[List[str]] = None  # match_photos/certificate/no_proof
     match_date: Optional[datetime] = None  # Required if match-issued/match-worn
     opponent_id: Optional[str] = None  # Required if match-issued/match-worn
+    special_match_type: Optional[str] = None  # classico/derby/final/title_decider/historical
+    match_result: Optional[str] = None  # win/draw/loss
+    performance: Optional[List[str]] = None  # scored_goal/decisive_assist/etc
+    match_proof: Optional[str] = None  # photo/certificate/none
     
     # D. Physical Condition
     general_condition: Optional[str] = None  # new_with_tags/very_good/used/damaged/needs_restoration
