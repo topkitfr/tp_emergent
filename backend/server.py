@@ -1713,10 +1713,12 @@ async def update_collection_item(
         update_dict["estimated_price"] = enhanced_price
         update_dict["price_coefficients"] = coefficients
         
+        logger.info(f"🔍 DEBUG - About to update database with: {update_dict}")
         result = await db.my_collection.update_one(
             {"id": collection_id, "user_id": current_user["id"]},
             {"$set": update_dict}
         )
+        logger.info(f"🔍 DEBUG - Database update result: modified_count={result.modified_count}")
         
         if result.modified_count > 0:
             # Get updated item with Master Kit info
