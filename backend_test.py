@@ -902,14 +902,14 @@ class TopKitEditKitDataPersistenceBackendTesting:
         print("\n" + "=" * 80)
 
 def main():
-    """Main function to run the new coefficients testing"""
-    tester = TopKitNewCoefficientsBackendTesting()
+    """Main function to run the Edit Kit Details data persistence testing"""
+    tester = TopKitEditKitDataPersistenceBackendTesting()
     
-    # Run the comprehensive new coefficients testing
-    test_results = tester.run_new_coefficients_testing()
+    # Run the comprehensive Edit Kit Details data persistence testing
+    test_results = tester.run_edit_kit_data_persistence_testing()
     
     # Print comprehensive summary
-    tester.print_comprehensive_new_coefficients_summary()
+    tester.print_comprehensive_edit_kit_data_persistence_summary()
     
     # Return overall success
     return all(test_results)
