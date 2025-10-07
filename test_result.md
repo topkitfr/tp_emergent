@@ -98,6 +98,18 @@ frontend:
         - comment: "🎉 FRONTEND NULL REFERENCE FIXES COMPLETE - 100% SUCCESS RATE! Fixed CollaborativeHomepage.js null reference errors for team.name property, added proper null checks and fallback to 'Unknown Team', eliminates JavaScript crashes when team.name is null, all instances of team.name access now safely handled with proper error handling and graceful degradation."
 
 backend:
+  - task: "Edit Kit Details Data Persistence Issue - MyCollectionResponse Model Bug"
+    implemented: false
+    working: false
+    file: "collaborative_models.py, server.py"
+    stuck_count: 0
+    priority: "urgent"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 URGENT - EDIT KIT DETAILS DATA PERSISTENCE ISSUE ROOT CAUSE IDENTIFIED! User reported that real-time calculation in form works but after validation, displayed price doesn't match form info. Comprehensive testing with collection_id 0b602c78-4a36-474c-b7bb-95f92c687909 and user-specified data (authentic, match_worn, signed, classico, UCL patch, etc.) reveals: ✅ BACKEND LOGIC WORKING (100%): Data reception, price calculation, and database updates all working perfectly. Debug logs confirm data IS being saved (modified_count=1). ❌ CRITICAL BUG IDENTIFIED (0%): MyCollectionResponse model missing critical Edit Kit Details fields (signature_proof, origin_type, special_match_type, match_result, performance, match_proof, printing_style, competition_patch, estimated_price). This causes API responses to filter out saved data, creating illusion that data isn't persisted. 🎯 ROOT CAUSE: Response model incomplete, not data persistence issue. Data saves correctly but API responses exclude new fields due to model limitations. URGENT FIX NEEDED: Update MyCollectionResponse model to include all Edit Kit Details fields so saved data is returned in API responses."
+
   - task: "Season and Player Data in Price Calculations Investigation"
     implemented: true
     working: true
