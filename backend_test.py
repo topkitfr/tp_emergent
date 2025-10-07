@@ -436,88 +436,204 @@ class TopKitEditKitDataPersistenceBackendTesting:
             self.log_test("Player Type Coefficient Test", False, f"Exception: {str(e)}")
             return False
 
-    def test_user_specified_data_comprehensive(self):
-        """Test with the exact user-specified data to verify all coefficients"""
+    def test_edit_kit_data_persistence_issue(self):
+        """Test the specific Edit Kit Details data persistence issue"""
         try:
-            print(f"\n🎯 TESTING USER-SPECIFIED DATA COMPREHENSIVE")
+            print(f"\n🚨 TESTING EDIT KIT DATA PERSISTENCE ISSUE")
             print("=" * 60)
             
             if not self.auth_token:
                 if not self.authenticate_admin():
                     return False
             
+            # User-specified collection ID from logs
+            collection_id = "0b602c78-4a36-474c-b7bb-95f92c687909"
+            
+            print(f"      🎯 Testing with collection ID: {collection_id}")
+            
+            # Step 1: Get current collection item data
+            print(f"\n      1️⃣ Getting current collection item data...")
+            get_response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}", timeout=10)
+            
+            if get_response.status_code != 200:
+                print(f"      ❌ Cannot get collection item - Status {get_response.status_code}")
+                print(f"      Response: {get_response.text}")
+                self.log_test("Edit Kit Data Persistence - GET Before", False, f"❌ Cannot get collection item - Status {get_response.status_code}")
+                return False
+            
+            original_data = get_response.json()
+            original_price = original_data.get('estimated_price')
+            print(f"      ✅ Original collection item retrieved")
+            print(f"         Original estimated price: €{original_price}")
+            print(f"         Master kit ID: {original_data.get('master_kit_id')}")
+            
+            # Step 2: Test price calculation with user-specified data
+            print(f"\n      2️⃣ Testing price calculation with user-specified data...")
+            
             # User-specified test data exactly as provided
-            user_data = {
-                "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
-                "associated_player_id": "test-player-id",  
-                "condition": "match_worn",
+            calculation_data = {
+                "kit_type": "authentic",
+                "condition": "match_worn", 
+                "number": "10",
                 "signed": True,
                 "signature_proof": "photo",
                 "origin_type": "match_worn",
                 "special_match_type": "classico",
                 "match_result": "win",
-                "performance": ["scored_goal"],
-                "match_proof": "photo"
+                "performance": ["scored_goal", "man_of_the_match"],
+                "match_proof": "photo",
+                "printing_style": "league",
+                "competition_patch": "ucl",
+                "master_kit_id": original_data.get('master_kit_id')  # Use the master kit ID from collection
             }
             
-            print(f"      📊 Testing with EXACT user-specified data:")
-            for key, value in user_data.items():
+            print(f"      📊 Calculating price with user-specified data:")
+            for key, value in calculation_data.items():
                 print(f"         {key}: {value}")
             
-            response = self.session.post(
+            calc_response = self.session.post(
                 f"{BACKEND_URL}/calculate-price",
-                json=user_data,
+                json=calculation_data,
                 timeout=10
             )
             
-            print(f"      Response Status: {response.status_code}")
+            if calc_response.status_code != 200:
+                print(f"      ❌ Price calculation failed - Status {calc_response.status_code}")
+                print(f"      Response: {calc_response.text}")
+                self.log_test("Edit Kit Data Persistence - Price Calculation", False, f"❌ Price calculation failed - Status {calc_response.status_code}")
+                return False
             
-            if response.status_code == 200:
-                price_data = response.json()
-                print(f"      ✅ Price calculation with user-specified data successful")
+            calc_data = calc_response.json()
+            calculated_price = calc_data.get('estimated_price')
+            coefficients = calc_data.get('coefficients', {})
+            
+            print(f"      ✅ Price calculation successful")
+            print(f"         Calculated price: €{calculated_price}")
+            print(f"         Number of coefficients: {len(coefficients)}")
+            
+            # Step 3: Update collection item with user-specified data
+            print(f"\n      3️⃣ Updating collection item with user-specified data...")
+            
+            # Prepare update data (map to collection item fields)
+            update_data = {
+                "condition": calculation_data["condition"],
+                "number_printing": calculation_data["number"],
+                "is_signed": calculation_data["signed"],
+                "signature_proof": calculation_data["signature_proof"],
+                "origin_type": calculation_data["origin_type"],
+                "special_match_type": calculation_data["special_match_type"],
+                "match_result": calculation_data["match_result"],
+                "performance": calculation_data["performance"],
+                "match_proof": calculation_data["match_proof"],
+                "printing_style": calculation_data["printing_style"],
+                "competition_patch": calculation_data["competition_patch"]
+            }
+            
+            print(f"      📝 Updating collection item with data:")
+            for key, value in update_data.items():
+                print(f"         {key}: {value}")
+            
+            put_response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{collection_id}",
+                json=update_data,
+                timeout=10
+            )
+            
+            print(f"      PUT Response Status: {put_response.status_code}")
+            
+            if put_response.status_code != 200:
+                print(f"      ❌ Collection item update failed - Status {put_response.status_code}")
+                print(f"      Response: {put_response.text}")
+                self.log_test("Edit Kit Data Persistence - PUT Update", False, f"❌ Update failed - Status {put_response.status_code}")
+                return False
+            
+            put_data = put_response.json()
+            put_returned_price = put_data.get('estimated_price')
+            
+            print(f"      ✅ Collection item update successful")
+            print(f"         PUT returned price: €{put_returned_price}")
+            
+            # Step 4: Get updated collection item to verify persistence
+            print(f"\n      4️⃣ Getting updated collection item to verify persistence...")
+            
+            get_after_response = self.session.get(f"{BACKEND_URL}/my-collection/{collection_id}", timeout=10)
+            
+            if get_after_response.status_code != 200:
+                print(f"      ❌ Cannot get updated collection item - Status {get_after_response.status_code}")
+                self.log_test("Edit Kit Data Persistence - GET After", False, f"❌ Cannot get updated item - Status {get_after_response.status_code}")
+                return False
+            
+            updated_data = get_after_response.json()
+            final_price = updated_data.get('estimated_price')
+            
+            print(f"      ✅ Updated collection item retrieved")
+            print(f"         Final stored price: €{final_price}")
+            
+            # Step 5: Compare prices and identify discrepancies
+            print(f"\n      5️⃣ Analyzing price discrepancies...")
+            
+            print(f"\n      💰 PRICE COMPARISON ANALYSIS:")
+            print(f"         Original price: €{original_price}")
+            print(f"         Calculated price (real-time): €{calculated_price}")
+            print(f"         PUT returned price: €{put_returned_price}")
+            print(f"         Final stored price (GET after): €{final_price}")
+            
+            # Check for discrepancies
+            discrepancies = []
+            
+            if calculated_price != put_returned_price:
+                discrepancy = f"Calculated price (€{calculated_price}) ≠ PUT returned price (€{put_returned_price})"
+                discrepancies.append(discrepancy)
+                print(f"      🚨 DISCREPANCY 1: {discrepancy}")
+            
+            if put_returned_price != final_price:
+                discrepancy = f"PUT returned price (€{put_returned_price}) ≠ Final stored price (€{final_price})"
+                discrepancies.append(discrepancy)
+                print(f"      🚨 DISCREPANCY 2: {discrepancy}")
+            
+            if calculated_price != final_price:
+                discrepancy = f"Calculated price (€{calculated_price}) ≠ Final stored price (€{final_price})"
+                discrepancies.append(discrepancy)
+                print(f"      🚨 DISCREPANCY 3: {discrepancy}")
+            
+            # Step 6: Verify data persistence
+            print(f"\n      6️⃣ Verifying data persistence...")
+            
+            data_persistence_issues = []
+            
+            # Check if the updated data matches what we sent
+            for key, expected_value in update_data.items():
+                actual_value = updated_data.get(key)
+                if actual_value != expected_value:
+                    issue = f"{key}: expected {expected_value}, got {actual_value}"
+                    data_persistence_issues.append(issue)
+                    print(f"      🚨 DATA PERSISTENCE ISSUE: {issue}")
+            
+            # Final assessment
+            print(f"\n      📊 FINAL ASSESSMENT:")
+            
+            if not discrepancies and not data_persistence_issues:
+                print(f"      ✅ NO ISSUES FOUND - Edit Kit Details data persistence working correctly")
+                self.log_test("Edit Kit Data Persistence Issue", True, "✅ No price discrepancies or data persistence issues found")
+                return True
+            else:
+                print(f"      ❌ ISSUES IDENTIFIED:")
+                print(f"         Price discrepancies: {len(discrepancies)}")
+                print(f"         Data persistence issues: {len(data_persistence_issues)}")
                 
-                estimated_price = price_data.get('estimated_price')
-                coefficients = price_data.get('coefficients', {})
-                base_price = price_data.get('base_price', 90.0)
-                
-                print(f"\n      💰 USER-SPECIFIED DATA RESULTS:")
-                print(f"         Base Price: €{base_price}")
-                print(f"         Final Estimated Price: €{estimated_price}")
-                print(f"         Price Increase: €{estimated_price - base_price:.2f}")
-                
-                print(f"\n         📈 ALL COEFFICIENTS BREAKDOWN:")
-                for coeff_name, coeff_value in coefficients.items():
-                    print(f"            • {coeff_name}: {coeff_value}")
-                
-                # Check for specific coefficients the user asked about
-                age_found = any('age' in coeff.lower() or 'ancienneté' in coeff.lower() for coeff in coefficients.keys())
-                player_type_found = any('player_type' in coeff.lower() or 'player type' in coeff.lower() for coeff in coefficients.keys())
-                
-                print(f"\n      🔍 SPECIFIC COEFFICIENT VERIFICATION:")
-                print(f"         Age coefficient found: {'✅ YES' if age_found else '❌ NO'}")
-                print(f"         Player Type coefficient found: {'✅ YES' if player_type_found else '❌ NO'}")
-                print(f"         Total coefficients returned: {len(coefficients)}")
-                
-                # Return the price and coefficient details for user
-                result_summary = {
-                    "estimated_price": estimated_price,
-                    "base_price": base_price,
-                    "coefficients": coefficients,
-                    "age_coefficient_found": age_found,
-                    "player_type_coefficient_found": player_type_found
+                issue_summary = {
+                    "price_discrepancies": discrepancies,
+                    "data_persistence_issues": data_persistence_issues,
+                    "calculated_price": calculated_price,
+                    "put_returned_price": put_returned_price,
+                    "final_stored_price": final_price
                 }
                 
-                self.log_test("User-Specified Data Test", True, f"✅ Price: €{estimated_price}, Age coeff: {age_found}, Player type coeff: {player_type_found}")
-                return result_summary
-                
-            else:
-                print(f"      ❌ Price calculation failed - Status {response.status_code}")
-                print(f"      Response: {response.text}")
-                self.log_test("User-Specified Data Test", False, f"❌ Failed - Status {response.status_code}", response.text)
+                self.log_test("Edit Kit Data Persistence Issue", False, f"❌ Found {len(discrepancies)} price discrepancies and {len(data_persistence_issues)} data issues", issue_summary)
                 return False
                 
         except Exception as e:
-            self.log_test("User-Specified Data Test", False, f"Exception: {str(e)}")
+            self.log_test("Edit Kit Data Persistence Issue", False, f"Exception: {str(e)}")
             return False
 
     def test_photo_upload_endpoint(self):
