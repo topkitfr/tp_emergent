@@ -1372,6 +1372,36 @@ def main():
     # Return overall success
     return all(test_results)
 
+def main_coefficient_investigation():
+    """Main function for coefficient investigation testing"""
+    tester = TopKitEditKitDataPersistenceBackendTesting()
+    
+    print("\n🔍 COEFFICIENT INVESTIGATION TESTING")
+    print("Testing why Player Type and Signature Proof coefficients don't appear")
+    print("=" * 80)
+    
+    test_results = []
+    
+    # Step 1: Authenticate
+    print("\n1️⃣ Authenticating...")
+    auth_success = tester.authenticate_admin()
+    test_results.append(auth_success)
+    
+    if not auth_success:
+        print("❌ Cannot proceed without authentication")
+        return test_results
+    
+    # Step 2: Test user-specified data with new coefficients
+    print("\n2️⃣ Testing User-Specified Data with New Coefficients...")
+    coefficients_success = tester.test_user_specified_data_with_new_coefficients()
+    test_results.append(coefficients_success)
+    
+    # Print summary
+    tester.print_coefficient_investigation_summary()
+    
+    # Return overall success
+    return all(test_results)
+
 if __name__ == "__main__":
-    success = main()
+    success = main_coefficient_investigation()
     sys.exit(0 if success else 1)
