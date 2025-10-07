@@ -1351,10 +1351,27 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 if not self.authenticate_admin():
                     return False
             
+            # First, let's check if we can find a real player with player_type
+            print(f"      🔍 Looking for players with player_type defined...")
+            players_response = self.session.get(f"{BACKEND_URL}/form-data/players", timeout=10)
+            
+            real_player_id = None
+            if players_response.status_code == 200:
+                players = players_response.json()
+                for player in players:
+                    if player.get('player_type') and player.get('player_type') != 'none':
+                        real_player_id = player.get('id') or player.get('name')
+                        print(f"         Found player with type: {player.get('name')} (type: {player.get('player_type')})")
+                        break
+            
+            if not real_player_id:
+                print(f"         No players with player_type found, using test ID")
+                real_player_id = "test-player-id-with-influence"
+            
             # User-specified test data from the review request
             user_test_data = {
                 "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
-                "associated_player_id": "test-player-id-with-influence",
+                "associated_player_id": real_player_id,
                 "kit_type": "authentic", 
                 "condition": "training",
                 "number": "10",
