@@ -276,18 +276,19 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   onChange={(e) => handleInputChange('competition_patch', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">No patch</option>
-                  <option value="ucl">UEFA Champions League</option>
-                  <option value="uel">UEFA Europa League</option>
-                  <option value="uecl">UEFA Europa Conference League</option>
-                  <option value="laliga">La Liga</option>
-                  <option value="premier_league">Premier League</option>
-                  <option value="bundesliga">Bundesliga</option>
-                  <option value="serie_a">Serie A</option>
-                  <option value="ligue_1">Ligue 1</option>
-                  <option value="world_cup">FIFA World Cup</option>
-                  <option value="euro">UEFA Euro</option>
-                  <option value="copa_america">Copa América</option>
+                  <option value="">No patch (0)</option>
+                  <option value="ucl">UEFA Champions League (+1.0)</option>
+                  <option value="uel">UEFA Europa League (+0.5)</option>
+                  <option value="uecl">UEFA Europa Conference League (+0.2)</option>
+                  <option value="laliga">La Liga (+0.1)</option>
+                  <option value="premier_league">Premier League (+0.1)</option>
+                  <option value="bundesliga">Bundesliga (+0.1)</option>
+                  <option value="serie_a">Serie A (+0.1)</option>
+                  <option value="ligue_1">Ligue 1 (+0.1)</option>
+                  <option value="world_cup">FIFA World Cup (+1.0)</option>
+                  <option value="euro">UEFA Euro (+1.0)</option>
+                  <option value="copa_america">Copa América (+1.0)</option>
+                  <option value="other">Other (+0.1)</option>
                 </select>
               </div>
             </section>
