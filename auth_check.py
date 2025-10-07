@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import json
 
-BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-catalog-app-1.preview.emergentagent.com/api"
 
 async def test_credentials():
     async with aiohttp.ClientSession() as session:

@@ -27,7 +27,7 @@ from pathlib import Path
 import uuid
 
 # Configuration
-BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-catalog-app-1.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "gamification.admin@topkit.fr",
     "password": "GamificationAdmin123!"

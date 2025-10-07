@@ -48,7 +48,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-catalog-app-1.preview.emergentagent.com/api"
 
 # Test Admin Credentials for authentication - Updated for Edit Kit Form Testing
 ADMIN_CREDENTIALS = {

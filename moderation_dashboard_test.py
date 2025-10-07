@@ -43,7 +43,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://soccer-kit-catalog-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://jersey-catalog-app-1.preview.emergentagent.com/api"
 
 # Admin Credentials for authentication
 ADMIN_CREDENTIALS = {
