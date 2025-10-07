@@ -66,12 +66,18 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
 
   const calculatePrice = async () => {
     try {
+      // Include master_kit_id in the calculation data
+      const calculationData = {
+        ...formData,
+        master_kit_id: editingItem?.master_kit_id || editingItem?.master_kit?.id
+      };
+      
       const response = await fetch(`${API}/api/calculate-price`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(calculationData)
       });
       
       if (response.ok) {
