@@ -4013,8 +4013,8 @@ async def get_collection_item_price_estimation(
         calculation_item = collection_item.copy()
         calculation_item['_player_coefficient'] = player_coefficient
         
-        # Calculate detailed price with personal details
-        estimated_price = calculate_estimated_price(master_kit, calculation_item)
+        # Calculate detailed price with enhanced function
+        enhanced_price, coefficients = await calculate_estimated_price_enhanced(collection_item)
         
         # Build detailed breakdown with enhanced coefficients
         base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
