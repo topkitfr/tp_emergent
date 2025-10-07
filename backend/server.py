@@ -931,7 +931,11 @@ async def calculate_estimated_price_enhanced(kit_details: dict) -> tuple[float, 
         # Player Type coefficient
         associated_player_id = kit_details.get('associated_player_id') or kit_details.get('associated_player')
         if associated_player_id:
+            # Try to find player by ID first, then by name
             player = await db.players.find_one({"id": associated_player_id})
+            if not player:
+                player = await db.players.find_one({"name": associated_player_id})
+            
             if player and player.get('player_type'):
                 player_type_coeffs = {
                     'showdown_legend': 0.8,
