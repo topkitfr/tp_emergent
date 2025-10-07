@@ -16,9 +16,42 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
   useEffect(() => {
     if (isOpen) {
       loadFormData();
+      // Initialize form with existing item data
+      if (editingItem) {
+        // Map existing data to form fields
+        const initialFormData = {
+          kit_type: editingItem.kit_type || 'replica',
+          condition: editingItem.condition || '',
+          gender: editingItem.gender || '',
+          size: editingItem.size || '',
+          number: editingItem.number || '',
+          printing_style: editingItem.printing_style || '',
+          competition_patch: editingItem.competition_patch || '',
+          associated_player: editingItem.associated_player_id || '',
+          origin_type: editingItem.origin_type || '',
+          competition: editingItem.competition || '',
+          match_date: editingItem.match_date || '',
+          opponent: editingItem.opponent_id || '',
+          special_match_type: editingItem.special_match_type || '',
+          match_result: editingItem.match_result || '',
+          performance: editingItem.performance || [],
+          match_proof: editingItem.match_proof || '',
+          signed: editingItem.signed || false,
+          signature_proof: editingItem.signature_proof || '',
+          user_estimate: editingItem.user_estimate || '',
+          notes: editingItem.personal_notes || ''
+        };
+        
+        // Update form data with existing values
+        Object.keys(initialFormData).forEach(key => {
+          if (initialFormData[key] !== '' && initialFormData[key] !== null && initialFormData[key] !== undefined) {
+            onFormDataChange(key, initialFormData[key]);
+          }
+        });
+      }
       calculatePrice();
     }
-  }, [isOpen]);
+  }, [isOpen, editingItem]);
 
   // Calculate price when form data changes
   useEffect(() => {
