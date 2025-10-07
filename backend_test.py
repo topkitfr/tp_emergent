@@ -1240,6 +1240,9 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 main_collection_data = main_collection_response.json()
                 main_estimated_price = main_collection_data.get('estimated_price')
                 main_coefficients = main_collection_data.get('price_coefficients', {})
+                if not main_coefficients:
+                    # Try alternative field name
+                    main_coefficients = main_collection_data.get('coefficients', {})
                 
                 print(f"      ✅ Main collection endpoint accessible")
                 print(f"         Main endpoint estimated price: €{main_estimated_price}")
