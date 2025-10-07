@@ -9,6 +9,8 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
   const [fileUploads, setFileUploads] = useState({
     photos: []
   });
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
+  const [coefficients, setCoefficients] = useState({});
 
   // Load form data when modal opens
   useEffect(() => {
