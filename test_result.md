@@ -345,10 +345,10 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Calculate Price Endpoint Testing - HIGH"
+    - "Edit Kit Details Data Persistence Issue - URGENT"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "urgent_first"
 
 agent_communication:
     - agent: "testing"
