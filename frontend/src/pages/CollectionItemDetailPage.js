@@ -198,6 +198,12 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
       // C. Origin & Authenticity
       addFieldIfNotEmpty('origin_type', editFormData.origin_type);
       addFieldIfNotEmpty('competition', editFormData.competition);
+      addFieldIfNotEmpty('special_match_type', editFormData.special_match_type);
+      addFieldIfNotEmpty('match_result', editFormData.match_result);
+      if (editFormData.performance && Array.isArray(editFormData.performance) && editFormData.performance.length > 0) {
+        processedFormData.performance = editFormData.performance;
+      }
+      addFieldIfNotEmpty('match_proof', editFormData.match_proof);
       if (editFormData.authenticity_proof && Array.isArray(editFormData.authenticity_proof) && editFormData.authenticity_proof.length > 0) {
         processedFormData.authenticity_proof = editFormData.authenticity_proof;
       }
