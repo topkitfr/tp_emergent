@@ -815,9 +815,9 @@ class TopKitEditKitDataPersistenceBackendTesting:
         
         return test_results
 
-    def print_comprehensive_new_coefficients_summary(self):
-        """Print final comprehensive new coefficients testing summary"""
-        print("\n📊 NEW COEFFICIENTS TESTING SUMMARY")
+    def print_comprehensive_edit_kit_data_persistence_summary(self):
+        """Print final comprehensive Edit Kit Details data persistence testing summary"""
+        print("\n📊 EDIT KIT DETAILS DATA PERSISTENCE TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -829,83 +829,66 @@ class TopKitEditKitDataPersistenceBackendTesting:
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
-        # Key findings for new coefficients testing
-        print(f"\n🔍 NEW COEFFICIENTS TESTING RESULTS:")
+        # Key findings for Edit Kit Details data persistence testing
+        print(f"\n🔍 EDIT KIT DETAILS DATA PERSISTENCE RESULTS:")
         
-        # Age Coefficient Analysis
-        age_tests = [r for r in self.test_results if 'Age Coefficient' in r['test']]
-        if age_tests:
-            age_passed = len([r for r in age_tests if r['success']])
-            print(f"\n⏰ AGE COEFFICIENT: {'✅ WORKING' if age_passed > 0 else '❌ NOT WORKING'}")
-            if age_passed > 0:
-                print(f"  • Age coefficient is calculated and displayed correctly")
-            else:
-                print(f"  • Age coefficient not found in price calculation response")
-        
-        # Player Type Coefficient Analysis
-        player_type_tests = [r for r in self.test_results if 'Player Type' in r['test']]
-        if player_type_tests:
-            player_type_passed = len([r for r in player_type_tests if r['success']])
-            print(f"\n👤 PLAYER TYPE COEFFICIENT: {'✅ WORKING' if player_type_passed > 0 else '❌ NOT WORKING'}")
-            if player_type_passed > 0:
-                print(f"  • Player Type coefficient is calculated and displayed correctly")
-            else:
-                print(f"  • Player Type coefficient not found in price calculation response")
-        
-        # User-Specified Data Analysis
-        user_data_tests = [r for r in self.test_results if 'User-Specified' in r['test']]
-        if user_data_tests:
-            user_data_passed = len([r for r in user_data_tests if r['success']])
-            print(f"\n🎯 USER-SPECIFIED DATA TEST: {'✅ WORKING' if user_data_passed > 0 else '❌ NOT WORKING'}")
+        # Data Persistence Analysis
+        persistence_tests = [r for r in self.test_results if 'Edit Kit Data Persistence' in r['test']]
+        if persistence_tests:
+            persistence_passed = len([r for r in persistence_tests if r['success']])
+            print(f"\n🚨 DATA PERSISTENCE ISSUE: {'✅ RESOLVED' if persistence_passed > 0 else '❌ CONFIRMED'}")
             
-            if hasattr(self, 'comprehensive_result') and self.comprehensive_result:
-                result = self.comprehensive_result
-                print(f"  • Final Price Returned: €{result.get('estimated_price', 'N/A')}")
-                print(f"  • Base Price: €{result.get('base_price', 'N/A')}")
-                print(f"  • Age Coefficient Found: {'✅ YES' if result.get('age_coefficient_found') else '❌ NO'}")
-                print(f"  • Player Type Coefficient Found: {'✅ YES' if result.get('player_type_coefficient_found') else '❌ NO'}")
-                print(f"  • Total Coefficients Returned: {len(result.get('coefficients', {}))}")
+            if persistence_passed > 0:
+                print(f"  • Edit Kit Details form data persistence is working correctly")
+                print(f"  • No discrepancies found between calculated and saved prices")
+                print(f"  • Form data is properly saved and retrieved")
+            else:
+                print(f"  • Edit Kit Details form data persistence issue CONFIRMED")
+                print(f"  • Price discrepancies found between calculation and storage")
                 
-                if result.get('coefficients'):
-                    print(f"  • Specific Coefficients Found:")
-                    for coeff_name, coeff_value in result['coefficients'].items():
-                        if 'age' in coeff_name.lower() or 'player_type' in coeff_name.lower():
-                            print(f"    - {coeff_name}: {coeff_value}")
+                # Show specific issues if available
+                failed_test = [r for r in persistence_tests if not r['success']][0]
+                if failed_test.get('details'):
+                    details = failed_test['details']
+                    if isinstance(details, dict):
+                        if details.get('price_discrepancies'):
+                            print(f"  • Price Discrepancies Found:")
+                            for discrepancy in details['price_discrepancies']:
+                                print(f"    - {discrepancy}")
+                        
+                        if details.get('data_persistence_issues'):
+                            print(f"  • Data Persistence Issues Found:")
+                            for issue in details['data_persistence_issues']:
+                                print(f"    - {issue}")
+                        
+                        print(f"  • Price Analysis:")
+                        print(f"    - Calculated price (real-time): €{details.get('calculated_price', 'N/A')}")
+                        print(f"    - PUT returned price: €{details.get('put_returned_price', 'N/A')}")
+                        print(f"    - Final stored price: €{details.get('final_stored_price', 'N/A')}")
+        
+        # Authentication Analysis
+        auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
+        if auth_tests:
+            auth_passed = len([r for r in auth_tests if r['success']])
+            print(f"\n🔐 AUTHENTICATION: {'✅ WORKING' if auth_passed > 0 else '❌ FAILED'}")
+            if auth_passed > 0:
+                print(f"  • Emergency admin authentication successful")
+            else:
+                print(f"  • Emergency admin authentication failed")
         
         # Overall status
-        print(f"\n🎯 OVERALL NEW COEFFICIENTS STATUS:")
+        print(f"\n🎯 OVERALL EDIT KIT DETAILS STATUS:")
         
-        coefficients_working = []
-        coefficients_broken = []
-        
-        # Check each coefficient
-        if any(r['success'] for r in self.test_results if 'Age Coefficient' in r['test']):
-            coefficients_working.append("Age Coefficient (Coefficient d'ancienneté)")
+        if persistence_tests and any(r['success'] for r in persistence_tests):
+            print(f"  ✅ ISSUE RESOLVED: Edit Kit Details data persistence working correctly")
+            print(f"  • Real-time price calculation matches saved price")
+            print(f"  • Form data is properly persisted in database")
+            print(f"  • No discrepancies between form display and stored data")
         else:
-            coefficients_broken.append("Age Coefficient")
-        
-        if any(r['success'] for r in self.test_results if 'Player Type' in r['test']):
-            coefficients_working.append("Player Type Coefficient")
-        else:
-            coefficients_broken.append("Player Type Coefficient")
-        
-        if any(r['success'] for r in self.test_results if 'User-Specified' in r['test']):
-            coefficients_working.append("Data Saving and Response")
-        else:
-            coefficients_broken.append("Data Saving and Response")
-        
-        if coefficients_working:
-            print(f"  ✅ WORKING COEFFICIENTS ({len(coefficients_working)}):")
-            for coeff in coefficients_working:
-                print(f"     • {coeff}")
-        
-        if coefficients_broken:
-            print(f"  ❌ BROKEN COEFFICIENTS ({len(coefficients_broken)}):")
-            for coeff in coefficients_broken:
-                print(f"     • {coeff}")
-        
-        if not coefficients_broken:
-            print(f"  🎉 ALL NEW COEFFICIENTS WORKING!")
+            print(f"  ❌ ISSUE CONFIRMED: Edit Kit Details data persistence problem exists")
+            print(f"  • Price discrepancy between real-time calculation and saved data")
+            print(f"  • Form data may not be properly persisted")
+            print(f"  • Investigation needed to identify root cause")
         
         # Show test failures
         failures = [r for r in self.test_results if not r['success']]
@@ -913,6 +896,8 @@ class TopKitEditKitDataPersistenceBackendTesting:
             print(f"\n❌ TEST FAILURES ({len(failures)}):")
             for failure in failures:
                 print(f"  • {failure['test']}: {failure['message']}")
+                if failure.get('details') and isinstance(failure['details'], str):
+                    print(f"    Details: {failure['details']}")
         
         print("\n" + "=" * 80)
 
