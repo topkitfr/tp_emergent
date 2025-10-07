@@ -216,7 +216,7 @@ class TopKitEditKitFormBackendTesting:
             return False
 
     def test_price_calculation_endpoint(self):
-        """Test POST /api/calculate-price endpoint with sample kit details"""
+        """Test POST /api/calculate-price endpoint with user-specified data"""
         try:
             print(f"\n💰 TESTING PRICE CALCULATION ENDPOINT")
             print("=" * 60)
@@ -225,35 +225,37 @@ class TopKitEditKitFormBackendTesting:
                 if not self.authenticate_admin():
                     return False
             
-            # Sample test data for price calculation
-            sample_kit_details = {
-                "type": "authentic",
-                "condition": "nwt", 
+            # User-specified test data for price calculation
+            user_specified_kit_details = {
+                "condition": "match_worn",
+                "number": "10", 
+                "signed": True,
+                "signature_proof": "photo",
                 "origin_type": "match_worn",
                 "special_match_type": "classico",
                 "match_result": "win",
                 "performance": ["scored_goal", "man_of_the_match"],
                 "match_proof": "photo",
-                "signed": True,
-                "signature_proof": "certificate",
-                "player_aura": 2.0
+                "printing_style": "league",
+                "competition_patch": "ucl"
             }
             
-            # Add player_id if we have one from form data
-            if self.sample_player_id:
-                sample_kit_details["player_id"] = self.sample_player_id
-            
-            print(f"      📊 Testing price calculation with sample data:")
-            print(f"         Type: {sample_kit_details['type']}")
-            print(f"         Condition: {sample_kit_details['condition']}")
-            print(f"         Origin: {sample_kit_details['origin_type']}")
-            print(f"         Special Match: {sample_kit_details['special_match_type']}")
-            print(f"         Signed: {sample_kit_details['signed']}")
-            print(f"         Player Aura: {sample_kit_details['player_aura']}")
+            print(f"      📊 Testing price calculation with USER-SPECIFIED data:")
+            print(f"         Condition: {user_specified_kit_details['condition']}")
+            print(f"         Number: {user_specified_kit_details['number']}")
+            print(f"         Signed: {user_specified_kit_details['signed']}")
+            print(f"         Signature Proof: {user_specified_kit_details['signature_proof']}")
+            print(f"         Origin Type: {user_specified_kit_details['origin_type']}")
+            print(f"         Special Match: {user_specified_kit_details['special_match_type']}")
+            print(f"         Match Result: {user_specified_kit_details['match_result']}")
+            print(f"         Performance: {user_specified_kit_details['performance']}")
+            print(f"         Match Proof: {user_specified_kit_details['match_proof']}")
+            print(f"         Printing Style: {user_specified_kit_details['printing_style']}")
+            print(f"         Competition Patch: {user_specified_kit_details['competition_patch']}")
             
             response = self.session.post(
                 f"{BACKEND_URL}/calculate-price",
-                json=sample_kit_details,
+                json=user_specified_kit_details,
                 timeout=10
             )
             
@@ -265,29 +267,41 @@ class TopKitEditKitFormBackendTesting:
                 
                 estimated_price = price_data.get('estimated_price')
                 coefficients = price_data.get('coefficients', {})
+                base_price = price_data.get('base_price', 90.0)
                 
-                print(f"      💰 PRICE CALCULATION RESULTS:")
-                print(f"         Estimated Price: €{estimated_price}")
+                print(f"\n      💰 PRICE CALCULATION RESULTS:")
+                print(f"         Base Price: €{base_price}")
+                print(f"         Final Estimated Price: €{estimated_price}")
+                print(f"         Price Increase: €{estimated_price - base_price:.2f}")
                 
                 if coefficients:
-                    print(f"         📈 COEFFICIENTS BREAKDOWN:")
+                    print(f"\n         📈 DETAILED COEFFICIENTS BREAKDOWN:")
                     for coeff_name, coeff_value in coefficients.items():
-                        print(f"            {coeff_name}: {coeff_value}")
+                        print(f"            • {coeff_name}: {coeff_value}")
                 
-                # Verify expected components are present
-                expected_components = ['base_price', 'condition', 'origin', 'signature']
+                # Check if price is higher than base price
+                if estimated_price > base_price:
+                    print(f"      ✅ Final price (€{estimated_price}) is higher than base price (€{base_price})")
+                else:
+                    print(f"      ⚠️ Final price (€{estimated_price}) is not higher than base price (€{base_price})")
+                
+                # Verify expected components are present for this specific test
+                expected_components = ['base_price', 'origin', 'signature', 'competition_patch']
+                present_components = []
                 missing_components = []
                 
                 for component in expected_components:
-                    if component not in coefficients:
+                    if component in coefficients:
+                        present_components.append(component)
+                    else:
                         missing_components.append(component)
                 
+                if present_components:
+                    print(f"      ✅ Present coefficient components: {present_components}")
                 if missing_components:
                     print(f"      ⚠️ Missing expected coefficient components: {missing_components}")
-                else:
-                    print(f"      ✅ All expected coefficient components present")
                 
-                self.log_test("Price Calculation Endpoint", True, f"✅ Price calculation successful - €{estimated_price}")
+                self.log_test("Price Calculation Endpoint", True, f"✅ Price calculation successful - €{estimated_price} (Base: €{base_price})")
                 return True
                 
             else:
