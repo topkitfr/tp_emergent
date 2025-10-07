@@ -1,55 +1,40 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - EDIT KIT FORM BACKEND FUNCTIONALITY TESTING
+TopKit Backend Testing Suite - NEW COEFFICIENTS TESTING
 
-**EDIT KIT FORM BACKEND FUNCTIONALITY TESTING:**
+**NEW COEFFICIENTS TESTING:**
 
-Testing the Edit Kit Form backend functionality that was just implemented. This includes comprehensive testing of:
+Testing the 3 new coefficients that were added:
 
 **Test Requirements:**
-1. **Form Data API Endpoints**: Test the new form data endpoints:
-   - GET /api/form-data/players (should return players with aura ratings)
-   - GET /api/form-data/competitions (should return competition data)
-   - GET /api/form-data/teams (should return team data for opponents)
+1. **Coefficient d'ancienneté (Age coefficient)**: Use an existing master_kit with an old season
+2. **Player Type coefficient**: Test with a player that has a player_type defined  
+3. **Data saving**: Verify that new data is properly saved
 
-2. **Price Calculation Endpoint**: Test the pricing calculation:
-   - POST /api/calculate-price with sample kit details data
-   - Verify it returns proper estimated price and coefficients breakdown
-   - Test different combinations (signed vs unsigned, match-worn vs standard, etc.)
-
-3. **Edit Master Kit Endpoint**: Test the edit functionality:
-   - PUT /api/master-kits/{master_kit_id}/edit with sample kit details
-   - Verify it updates the master kit and returns proper response
-
-4. **Photo Upload Endpoint**: Test the photo upload:
-   - POST /api/upload/kit-photo with a sample image
-   - Verify it returns proper photo URL
-
-**Authentication:** Use emergency.admin@topkit.test / EmergencyAdmin2025!
-
-**Sample Test Data for Price Calculation:**
+**User-Specified Test Data:**
 ```json
 {
-  "type": "authentic",
-  "condition": "nwt", 
+  "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
+  "associated_player_id": "test-player-id",  
+  "condition": "match_worn",
+  "signed": true,
+  "signature_proof": "photo",
   "origin_type": "match_worn",
   "special_match_type": "classico",
   "match_result": "win",
-  "performance": ["scored_goal", "man_of_the_match"],
-  "match_proof": "photo",
-  "signed": true,
-  "signature_proof": "certificate",
-  "player_id": "[use any player ID from form-data/players]"
+  "performance": ["scored_goal"],
+  "match_proof": "photo"
 }
 ```
 
-**Expected Results:**
-- All form data endpoints should return populated data (players with aura ratings, competitions, teams)
-- Price calculation should return detailed coefficients and estimated price
-- Edit functionality should successfully update master kits
-- Photo upload should work properly
+**Verification Points:**
+- Is the age coefficient calculated and displayed?
+- Is the Player Type coefficient taken into account?
+- Does the response contain all coefficients?
 
-**PRIORITY: HIGH** - Testing Edit Kit Form backend functionality implementation.
+**Authentication:** emergency.admin@topkit.test / EmergencyAdmin2025!
+
+**PRIORITY: HIGH** - Testing new coefficients implementation.
 """
 
 import requests
