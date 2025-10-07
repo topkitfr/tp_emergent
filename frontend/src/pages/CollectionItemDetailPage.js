@@ -502,9 +502,67 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
                         ))}
                       </div>
                     )}
+
+                    {/* Personal Photos from Edit Kit Form */}
+                    {(collectionItem.front_photo || collectionItem.back_photo || 
+                      (collectionItem.other_photos && collectionItem.other_photos.length > 0)) && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Personal Photos</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Front Photo */}
+                          {collectionItem.front_photo && (
+                            <div className="relative">
+                              <img
+                                src={collectionItem.front_photo.startsWith('http') 
+                                  ? collectionItem.front_photo 
+                                  : `${API}/api/uploads/${collectionItem.front_photo}`}
+                                alt="Front view"
+                                className="w-full h-32 object-contain bg-gray-50 rounded-lg border"
+                              />
+                              <div className="absolute top-1 right-1 bg-blue-600 text-white px-1 py-0.5 rounded text-xs">
+                                Front
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Back Photo */}
+                          {collectionItem.back_photo && (
+                            <div className="relative">
+                              <img
+                                src={collectionItem.back_photo.startsWith('http') 
+                                  ? collectionItem.back_photo 
+                                  : `${API}/api/uploads/${collectionItem.back_photo}`}
+                                alt="Back view"
+                                className="w-full h-32 object-contain bg-gray-50 rounded-lg border"
+                              />
+                              <div className="absolute top-1 right-1 bg-blue-600 text-white px-1 py-0.5 rounded text-xs">
+                                Back
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Other Photos */}
+                          {collectionItem.other_photos && Array.isArray(collectionItem.other_photos) && 
+                           collectionItem.other_photos.slice(0, 4).map((photo, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={photo.startsWith('http') 
+                                  ? photo 
+                                  : `${API}/api/uploads/${photo}`}
+                                alt={`Detail ${index + 1}`}
+                                className="w-full h-32 object-contain bg-gray-50 rounded-lg border"
+                              />
+                              <div className="absolute top-1 right-1 bg-green-600 text-white px-1 py-0.5 rounded text-xs">
+                                Detail {index + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  {!masterKit.front_photo_url && (
+                  {!masterKit.front_photo_url && !
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
                       <span className="text-4xl">👕</span>
                       <p className="text-gray-500 mt-2">No photos available</p>
