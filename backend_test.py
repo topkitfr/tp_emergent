@@ -1248,6 +1248,14 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 print(f"         Main endpoint estimated price: €{main_estimated_price}")
                 print(f"         Main endpoint coefficients count: {len(main_coefficients)}")
                 
+                # Show some main coefficients for comparison
+                if main_coefficients:
+                    print(f"         Main endpoint coefficients (first 3):")
+                    for i, (coeff_name, coeff_value) in enumerate(list(main_coefficients.items())[:3]):
+                        print(f"           - {coeff_name}: {coeff_value}")
+                    if len(main_coefficients) > 3:
+                        print(f"           ... and {len(main_coefficients) - 3} more")
+                
                 # Check consistency between endpoints
                 print(f"\n      🔄 CONSISTENCY CHECK:")
                 
