@@ -1341,6 +1341,192 @@ class TopKitEditKitDataPersistenceBackendTesting:
             self.log_test("Price-Estimation Endpoint", False, f"Exception: {str(e)}")
             return False
 
+    def test_user_specified_data_with_new_coefficients(self):
+        """Test user-specified data to verify Player Type and Signature Proof coefficients appear"""
+        try:
+            print(f"\n🎯 TESTING USER-SPECIFIED DATA WITH NEW COEFFICIENTS")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False
+            
+            # User-specified test data from the review request
+            user_test_data = {
+                "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
+                "associated_player_id": "test-player-id-with-influence",
+                "kit_type": "authentic", 
+                "condition": "training",
+                "number": "10",
+                "printing_style": "league",
+                "competition_patch": "ucl",
+                "origin_type": "match_worn",
+                "special_match_type": "historical",
+                "match_result": "win", 
+                "performance": ["scored_goal", "decisive_assist", "man_of_the_match", "title_winning_goal", "clean_sheet"],
+                "match_proof": "certificate",
+                "signed": True,
+                "signature_proof": "certificate"
+            }
+            
+            print(f"      📊 Testing with user-specified data:")
+            for key, value in user_test_data.items():
+                print(f"         {key}: {value}")
+            
+            # Test price calculation
+            print(f"\n      💰 Calculating price with user-specified data...")
+            response = self.session.post(
+                f"{BACKEND_URL}/calculate-price",
+                json=user_test_data,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"      ❌ Price calculation failed - Status {response.status_code}")
+                print(f"      Response: {response.text}")
+                self.log_test("User-Specified Data New Coefficients", False, f"❌ Failed - Status {response.status_code}")
+                return False
+            
+            price_data = response.json()
+            estimated_price = price_data.get('estimated_price')
+            coefficients = price_data.get('coefficients', {})
+            
+            print(f"      ✅ Price calculation successful")
+            print(f"         Estimated Price: €{estimated_price}")
+            print(f"         Total coefficients: {len(coefficients)}")
+            
+            # Check specifically for Signature Proof coefficient
+            signature_proof_found = False
+            signature_proof_value = None
+            
+            print(f"\n      🔍 CHECKING FOR SIGNATURE PROOF COEFFICIENT:")
+            for coeff_name, coeff_value in coefficients.items():
+                if 'signature_proof' in coeff_name.lower() or 'signature proof' in coeff_name.lower():
+                    signature_proof_found = True
+                    signature_proof_value = coeff_value
+                    print(f"         ✅ SIGNATURE PROOF FOUND: {coeff_name} = {coeff_value}")
+                    break
+            
+            if not signature_proof_found:
+                print(f"         ❌ SIGNATURE PROOF coefficient NOT found")
+            
+            # Check specifically for Player Type coefficient
+            player_type_found = False
+            player_type_value = None
+            
+            print(f"\n      🔍 CHECKING FOR PLAYER TYPE COEFFICIENT:")
+            for coeff_name, coeff_value in coefficients.items():
+                if 'player_type' in coeff_name.lower() or 'player type' in coeff_name.lower() or 'player_aura' in coeff_name.lower():
+                    player_type_found = True
+                    player_type_value = coeff_value
+                    print(f"         ✅ PLAYER TYPE FOUND: {coeff_name} = {coeff_value}")
+                    break
+            
+            if not player_type_found:
+                print(f"         ❌ PLAYER TYPE coefficient NOT found")
+            
+            # Show all coefficients returned
+            print(f"\n      📋 ALL COEFFICIENTS RETURNED:")
+            for coeff_name, coeff_value in coefficients.items():
+                print(f"         - {coeff_name}: {coeff_value}")
+            
+            # Final assessment
+            print(f"\n      📊 USER-SPECIFIED DATA COEFFICIENT ANALYSIS:")
+            print(f"         Signature Proof coefficient: {'✅ FOUND' if signature_proof_found else '❌ MISSING'}")
+            print(f"         Player Type coefficient: {'✅ FOUND' if player_type_found else '❌ MISSING'}")
+            print(f"         Total coefficients returned: {len(coefficients)}")
+            
+            # Determine success - both coefficients should be found
+            success = signature_proof_found and player_type_found
+            
+            if success:
+                self.log_test("User-Specified Data New Coefficients", True, 
+                             f"✅ Both Signature Proof and Player Type coefficients found")
+            else:
+                missing_coeffs = []
+                if not signature_proof_found:
+                    missing_coeffs.append("Signature Proof")
+                if not player_type_found:
+                    missing_coeffs.append("Player Type")
+                
+                self.log_test("User-Specified Data New Coefficients", False, 
+                             f"❌ Missing coefficients: {', '.join(missing_coeffs)}")
+            
+            return success
+                
+        except Exception as e:
+            self.log_test("User-Specified Data New Coefficients", False, f"Exception: {str(e)}")
+            return False
+
+    def print_coefficient_investigation_summary(self):
+        """Print summary for coefficient investigation testing"""
+        print("\n📊 COEFFICIENT INVESTIGATION TESTING SUMMARY")
+        print("=" * 80)
+        
+        total_tests = len(self.test_results)
+        passed_tests = len([r for r in self.test_results if r['success']])
+        failed_tests = total_tests - passed_tests
+        
+        print(f"Total tests: {total_tests}")
+        print(f"Passed: {passed_tests} ✅")
+        print(f"Failed: {failed_tests} ❌")
+        print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
+        
+        # Key findings for coefficient investigation
+        print(f"\n🔍 COEFFICIENT INVESTIGATION RESULTS:")
+        
+        # Coefficient Analysis
+        coeff_tests = [r for r in self.test_results if 'New Coefficients' in r['test']]
+        if coeff_tests:
+            coeff_passed = len([r for r in coeff_tests if r['success']])
+            print(f"\n🎯 COEFFICIENT INVESTIGATION: {'✅ RESOLVED' if coeff_passed > 0 else '❌ ISSUE CONFIRMED'}")
+            
+            if coeff_passed > 0:
+                print(f"  • Player Type and Signature Proof coefficients are working correctly")
+                print(f"  • Both coefficients appear in price calculation results")
+                print(f"  • User-specified data processed successfully")
+            else:
+                print(f"  • Player Type and/or Signature Proof coefficients are missing")
+                print(f"  • Issue confirmed with coefficient calculation or display")
+                print(f"  • Investigation needed to identify root cause")
+        
+        # Authentication Analysis
+        auth_tests = [r for r in self.test_results if 'Authentication' in r['test']]
+        if auth_tests:
+            auth_passed = len([r for r in auth_tests if r['success']])
+            print(f"\n🔐 AUTHENTICATION: {'✅ WORKING' if auth_passed > 0 else '❌ FAILED'}")
+            if auth_passed > 0:
+                print(f"  • Emergency admin authentication successful")
+            else:
+                print(f"  • Emergency admin authentication failed")
+        
+        # Overall status
+        print(f"\n🎯 OVERALL COEFFICIENT INVESTIGATION STATUS:")
+        
+        if coeff_tests and any(r['success'] for r in coeff_tests):
+            print(f"  ✅ COEFFICIENTS WORKING: Player Type and Signature Proof coefficients found")
+            print(f"  • Both coefficients properly calculated and returned")
+            print(f"  • User-specified test data processed correctly")
+            print(f"  • No issues with coefficient calculation system")
+        else:
+            print(f"  ❌ COEFFICIENTS MISSING: Player Type and/or Signature Proof coefficients not found")
+            print(f"  • One or both coefficients missing from calculation results")
+            print(f"  • Backend coefficient calculation may have issues")
+            print(f"  • Further investigation needed to identify root cause")
+        
+        # Show test failures
+        failures = [r for r in self.test_results if not r['success']]
+        if failures:
+            print(f"\n❌ TEST FAILURES ({len(failures)}):")
+            for failure in failures:
+                print(f"  • {failure['test']}: {failure['message']}")
+                if failure.get('details') and isinstance(failure['details'], str):
+                    print(f"    Details: {failure['details']}")
+        
+        print("\n" + "=" * 80)
+
 def main():
     """Main function to run the price-estimation endpoint testing"""
     tester = TopKitEditKitDataPersistenceBackendTesting()
