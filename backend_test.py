@@ -1194,7 +1194,18 @@ class TopKitEditKitDataPersistenceBackendTesting:
             
             # Extract key data from price-estimation response
             estimated_price = price_estimation_data.get('estimated_price')
+            # Check both possible locations for coefficients
             coefficients = price_estimation_data.get('coefficients', {})
+            if not coefficients:
+                # Try calculation_details format
+                calc_details = price_estimation_data.get('calculation_details', {})
+                coefficients_applied = calc_details.get('coefficients_applied', [])
+                # Convert list format to dict format for consistency
+                coefficients = {}
+                for coeff in coefficients_applied:
+                    factor = coeff.get('factor', 'Unknown')
+                    value = coeff.get('value', 'Unknown')
+                    coefficients[factor] = value
             
             print(f"\n      💰 PRICE-ESTIMATION RESULTS:")
             print(f"         Estimated Price: €{estimated_price}")
