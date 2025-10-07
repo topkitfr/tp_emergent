@@ -1618,6 +1618,11 @@ async def update_collection_item(
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
         update_dict["updated_at"] = datetime.utcnow()
         
+        # Recalculate estimated price with enhanced function
+        enhanced_price, coefficients = await calculate_estimated_price_enhanced(update_dict)
+        update_dict["estimated_price"] = enhanced_price
+        update_dict["price_coefficients"] = coefficients
+        
         result = await db.my_collection.update_one(
             {"id": collection_id, "user_id": current_user["id"]},
             {"$set": update_dict}
