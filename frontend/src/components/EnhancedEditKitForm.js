@@ -210,7 +210,8 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   <option value="club_stock">Home (0)</option>
                   <option value="match_prepared">Away (0)</option>
                   <option value="match_worn">Third (+0.1)</option>
-                  <option value="training">GK (+0.1)</option>
+                  <option value="training">Fourth (+0.2)</option>
+                  <option value="other">GK (+0.1)</option>
                   <option value="other">Special (+0.3)</option>
                 </select>
               </div>
