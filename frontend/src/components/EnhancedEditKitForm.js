@@ -592,9 +592,9 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
               </div>
             </section>
 
-            {/* G. Comments */}
+            {/* F. Comments */}
             <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">G. Comments</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">F. Comments</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
