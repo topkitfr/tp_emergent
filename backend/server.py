@@ -4014,11 +4014,22 @@ async def get_collection_item_price_estimation(
         calculation_item['_player_coefficient'] = player_coefficient
         
         # Calculate detailed price with enhanced function
-        enhanced_price, coefficients = await calculate_estimated_price_enhanced(collection_item)
+        enhanced_price, coefficients_dict = await calculate_estimated_price_enhanced(collection_item)
         
-        # Build detailed breakdown with enhanced coefficients
-        base_price = 140.0 if master_kit.get('model') == 'authentic' else 90.0
+        # Convert coefficients dict to list format for frontend compatibility
         coefficients = []
+        base_price = 90.0  # Default
+        
+        for key, value in coefficients_dict.items():
+            if key == 'base_price':
+                base_price = float(value.split('€')[1].split(' ')[0]) if '€' in value else 90.0
+            else:
+                coefficients.append({
+                    "factor": key.replace('_', ' ').title(),
+                    "value": value
+                })
+        
+        estimated_price = enhanced_price
         
         # A. Basic Information
         gender = collection_item.get('gender')
