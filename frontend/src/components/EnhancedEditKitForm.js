@@ -516,7 +516,7 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
 
             {/* D. Photos */}
             <section>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">E. Photos</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">D. Photos</h3>
               
               {/* Front Photo */}
               <div className="mb-4">
