@@ -390,6 +390,31 @@ class MyCollectionResponse(BaseModel):
     purchase_date: Optional[datetime] = None
     proof_of_purchase_url: Optional[str] = None
     personal_notes: Optional[str] = None
+    
+    # Enhanced Edit Kit Form fields (NEW)
+    kit_type: Optional[str] = None  # replica/authentic
+    gender: Optional[str] = None  # men/women/kid
+    associated_player_id: Optional[str] = None  # Player with coefficient
+    number: Optional[str] = None  # Jersey number (0-99)
+    printing_style: Optional[str] = None  # league/cup/special
+    competition_patch: Optional[str] = None  # ucl/uel/etc
+    origin_type: Optional[str] = None  # standard/match_issued/match_worn
+    competition: Optional[str] = None  # Competition for match context
+    match_date: Optional[datetime] = None
+    opponent_id: Optional[str] = None
+    special_match_type: Optional[str] = None  # classico/derby/final/etc
+    match_result: Optional[str] = None  # win/draw/loss
+    performance: Optional[List[str]] = None  # scored_goal/assist/etc
+    match_proof: Optional[str] = None  # photo/certificate/none
+    signature: Optional[bool] = None  # Legacy field
+    signed: Optional[bool] = None  # New signature field (+2.5)
+    signature_proof: Optional[str] = None  # photo/certificate/none
+    user_estimate: Optional[float] = None  # User's price estimate
+    
+    # Price calculation results
+    estimated_price: Optional[float] = None  # Calculated estimated price
+    price_coefficients: Optional[Dict[str, Any]] = None  # Detailed coefficient breakdown
+    
     created_at: datetime
     updated_at: Optional[datetime] = None
 
