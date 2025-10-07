@@ -1,40 +1,42 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - NEW COEFFICIENTS TESTING
+TopKit Backend Testing Suite - EDIT KIT DETAILS DATA PERSISTENCE TESTING
 
-**NEW COEFFICIENTS TESTING:**
+**URGENT - EDIT KIT DETAILS DATA PERSISTENCE ISSUE:**
 
-Testing the 3 new coefficients that were added:
+Testing the Edit Kit Details form data persistence issue where:
+1. Real-time calculation in form works (shows correct price)
+2. After validation, displayed price "doesn't match the form info"
 
 **Test Requirements:**
-1. **Coefficient d'ancienneté (Age coefficient)**: Use an existing master_kit with an old season
-2. **Player Type coefficient**: Test with a player that has a player_type defined  
-3. **Data saving**: Verify that new data is properly saved
+1. **PUT collection item** with specific data to test data persistence
+2. **Use existing collection_id**: 0b602c78-4a36-474c-b7bb-95f92c687909 (from logs)
+3. **Verify PUT returns correct calculated price**
+4. **Verify new data is properly saved**
+5. **Verify GET collection item after save returns same price**
+6. **Check for discrepancy between calculated and saved price**
 
 **User-Specified Test Data:**
 ```json
 {
-  "master_kit_id": "049229a5-c6c0-405a-b055-88759d775f25",
-  "associated_player_id": "test-player-id",  
-  "condition": "match_worn",
+  "kit_type": "authentic",
+  "condition": "match_worn", 
+  "number": "10",
   "signed": true,
   "signature_proof": "photo",
   "origin_type": "match_worn",
   "special_match_type": "classico",
   "match_result": "win",
-  "performance": ["scored_goal"],
-  "match_proof": "photo"
+  "performance": ["scored_goal", "man_of_the_match"],
+  "match_proof": "photo",
+  "printing_style": "league",
+  "competition_patch": "ucl"
 }
 ```
 
-**Verification Points:**
-- Is the age coefficient calculated and displayed?
-- Is the Player Type coefficient taken into account?
-- Does the response contain all coefficients?
-
 **Authentication:** emergency.admin@topkit.test / EmergencyAdmin2025!
 
-**PRIORITY: HIGH** - Testing new coefficients implementation.
+**PRIORITY: URGENT** - Testing Edit Kit Details data persistence issue.
 """
 
 import requests
