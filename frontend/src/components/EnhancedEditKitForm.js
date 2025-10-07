@@ -16,8 +16,16 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
   useEffect(() => {
     if (isOpen) {
       loadFormData();
+      calculatePrice();
     }
   }, [isOpen]);
+
+  // Calculate price when form data changes
+  useEffect(() => {
+    if (isOpen && Object.keys(formData).length > 0) {
+      calculatePrice();
+    }
+  }, [formData, isOpen]);
 
   const loadFormData = async () => {
     try {
