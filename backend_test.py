@@ -1288,7 +1288,9 @@ class TopKitEditKitDataPersistenceBackendTesting:
             print(f"         ✅ Estimated price present: {'YES' if has_estimated_price else 'NO'}")
             print(f"         ✅ Coefficients present: {'YES' if has_coefficients else 'NO'}")
             print(f"         ✅ New coefficients found: {'YES' if has_new_coefficients else 'NO'}")
-            print(f"         ✅ Endpoint consistency: {'YES' if consistency_success else 'NO'}")
+            print(f"         ✅ Endpoint consistency: {'YES' if consistency_success_updated else 'NO'}")
+            if price_difference > 0:
+                print(f"         💰 Price difference: €{price_difference:.2f} ({'ACCEPTABLE' if price_tolerance_ok else 'TOO HIGH'})")
             
             if has_new_coefficients:
                 print(f"         🎯 New coefficients found: {len(new_coefficients_found)}")
