@@ -562,7 +562,10 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
                     )}
                   </div>
                   
-                  {!masterKit.front_photo_url && !
+                  {!masterKit.front_photo_url && 
+                   !collectionItem.front_photo && 
+                   !collectionItem.back_photo && 
+                   (!collectionItem.other_photos || collectionItem.other_photos.length === 0) && (
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
                       <span className="text-4xl">👕</span>
                       <p className="text-gray-500 mt-2">No photos available</p>
