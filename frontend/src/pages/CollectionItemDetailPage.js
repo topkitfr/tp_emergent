@@ -182,13 +182,18 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
       };
       
       // A. Basic Information
+      addFieldIfNotEmpty('kit_type', editFormData.kit_type);
       addFieldIfNotEmpty('gender', editFormData.gender);
       addFieldIfNotEmpty('size', editFormData.size);
+      addFieldIfNotEmpty('condition', editFormData.condition);
       
       // B. Player & Printing
       addFieldIfNotEmpty('associated_player_id', editFormData.associated_player);
       addFieldIfNotEmpty('name_printing', editFormData.name_printing);
       addFieldIfNotEmpty('number_printing', editFormData.number_printing);
+      addFieldIfNotEmpty('number', editFormData.number);
+      addFieldIfNotEmpty('printing_style', editFormData.printing_style);
+      addFieldIfNotEmpty('competition_patch', editFormData.competition_patch);
       
       // C. Origin & Authenticity
       addFieldIfNotEmpty('origin_type', editFormData.origin_type);
