@@ -1701,6 +1701,11 @@ async def update_collection_item(
         update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
         update_dict["updated_at"] = datetime.utcnow()
         
+        # DEBUG: Log what we're actually updating
+        logger.info(f"🔍 DEBUG - Collection item update for {collection_id}:")
+        logger.info(f"   Original update_data.dict(): {update_data.dict()}")
+        logger.info(f"   Filtered update_dict: {update_dict}")
+        
         # Recalculate estimated price with enhanced function
         enhanced_price, coefficients = await calculate_estimated_price_enhanced(update_dict)
         update_dict["estimated_price"] = enhanced_price
