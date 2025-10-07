@@ -52,6 +52,28 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
         [key]: null
       }));
     }
+    // Trigger price calculation after data change
+    setTimeout(() => calculatePrice(), 100);
+  };
+
+  const calculatePrice = async () => {
+    try {
+      const response = await fetch(`${API}/api/calculate-price`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setEstimatedPrice(result.estimated_price || 0);
+        setCoefficients(result.coefficients || {});
+      }
+    } catch (error) {
+      console.error('Error calculating price:', error);
+    }
   };
 
   const handleFileUpload = (files) => {
