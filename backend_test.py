@@ -710,9 +710,9 @@ class TopKitNewCoefficientsBackendTesting:
         
         return test_results
 
-    def print_comprehensive_edit_kit_form_summary(self):
-        """Print final comprehensive Edit Kit Form testing summary"""
-        print("\n📊 EDIT KIT FORM BACKEND FUNCTIONALITY TESTING SUMMARY")
+    def print_comprehensive_new_coefficients_summary(self):
+        """Print final comprehensive new coefficients testing summary"""
+        print("\n📊 NEW COEFFICIENTS TESTING SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -724,103 +724,83 @@ class TopKitNewCoefficientsBackendTesting:
         print(f"Failed: {failed_tests} ❌")
         print(f"Success rate: {(passed_tests/total_tests)*100:.1f}%")
         
-        # Key findings for Edit Kit Form testing
-        print(f"\n🔍 EDIT KIT FORM BACKEND TESTING RESULTS:")
+        # Key findings for new coefficients testing
+        print(f"\n🔍 NEW COEFFICIENTS TESTING RESULTS:")
         
-        # Form Data Endpoints Analysis
-        form_data_tests = [r for r in self.test_results if 'Form Data' in r['test']]
-        if form_data_tests:
-            form_data_passed = len([r for r in form_data_tests if r['success']])
-            print(f"\n✅ FORM DATA ENDPOINTS: {form_data_passed}/{len(form_data_tests)} PASSED")
+        # Age Coefficient Analysis
+        age_tests = [r for r in self.test_results if 'Age Coefficient' in r['test']]
+        if age_tests:
+            age_passed = len([r for r in age_tests if r['success']])
+            print(f"\n⏰ AGE COEFFICIENT: {'✅ WORKING' if age_passed > 0 else '❌ NOT WORKING'}")
+            if age_passed > 0:
+                print(f"  • Age coefficient is calculated and displayed correctly")
+            else:
+                print(f"  • Age coefficient not found in price calculation response")
+        
+        # Player Type Coefficient Analysis
+        player_type_tests = [r for r in self.test_results if 'Player Type' in r['test']]
+        if player_type_tests:
+            player_type_passed = len([r for r in player_type_tests if r['success']])
+            print(f"\n👤 PLAYER TYPE COEFFICIENT: {'✅ WORKING' if player_type_passed > 0 else '❌ NOT WORKING'}")
+            if player_type_passed > 0:
+                print(f"  • Player Type coefficient is calculated and displayed correctly")
+            else:
+                print(f"  • Player Type coefficient not found in price calculation response")
+        
+        # User-Specified Data Analysis
+        user_data_tests = [r for r in self.test_results if 'User-Specified' in r['test']]
+        if user_data_tests:
+            user_data_passed = len([r for r in user_data_tests if r['success']])
+            print(f"\n🎯 USER-SPECIFIED DATA TEST: {'✅ WORKING' if user_data_passed > 0 else '❌ NOT WORKING'}")
             
-            if self.form_data:
-                if 'players' in self.form_data:
-                    players_count = len(self.form_data['players'])
-                    print(f"  • Players endpoint: {players_count} players returned")
-                    if players_count > 0 and self.sample_player_id:
-                        print(f"    - Sample player ID available: {self.sample_player_id}")
+            if hasattr(self, 'comprehensive_result') and self.comprehensive_result:
+                result = self.comprehensive_result
+                print(f"  • Final Price Returned: €{result.get('estimated_price', 'N/A')}")
+                print(f"  • Base Price: €{result.get('base_price', 'N/A')}")
+                print(f"  • Age Coefficient Found: {'✅ YES' if result.get('age_coefficient_found') else '❌ NO'}")
+                print(f"  • Player Type Coefficient Found: {'✅ YES' if result.get('player_type_coefficient_found') else '❌ NO'}")
+                print(f"  • Total Coefficients Returned: {len(result.get('coefficients', {}))}")
                 
-                if 'competitions' in self.form_data:
-                    competitions_count = len(self.form_data['competitions'])
-                    print(f"  • Competitions endpoint: {competitions_count} competitions returned")
-                
-                if 'teams' in self.form_data:
-                    teams_count = len(self.form_data['teams'])
-                    print(f"  • Teams endpoint: {teams_count} teams returned")
+                if result.get('coefficients'):
+                    print(f"  • Specific Coefficients Found:")
+                    for coeff_name, coeff_value in result['coefficients'].items():
+                        if 'age' in coeff_name.lower() or 'player_type' in coeff_name.lower():
+                            print(f"    - {coeff_name}: {coeff_value}")
         
-        # Price Calculation Analysis
-        price_calc_tests = [r for r in self.test_results if 'Price Calculation' in r['test']]
-        if price_calc_tests:
-            price_calc_passed = len([r for r in price_calc_tests if r['success']])
-            print(f"\n✅ PRICE CALCULATION ENDPOINT: {price_calc_passed}/{len(price_calc_tests)} PASSED")
-            
-            if price_calc_passed > 0:
-                print(f"  • Price calculation working with coefficient breakdown")
-                print(f"  • Sample data processed successfully")
-            else:
-                print(f"  • Price calculation endpoint issues detected")
+        # Overall status
+        print(f"\n🎯 OVERALL NEW COEFFICIENTS STATUS:")
         
-        # Photo Upload Analysis
-        photo_upload_tests = [r for r in self.test_results if 'Photo Upload' in r['test']]
-        if photo_upload_tests:
-            photo_upload_passed = len([r for r in photo_upload_tests if r['success']])
-            print(f"\n✅ PHOTO UPLOAD ENDPOINT: {photo_upload_passed}/{len(photo_upload_tests)} PASSED")
-            
-            if photo_upload_passed > 0:
-                print(f"  • Photo upload working with proper URL generation")
-            else:
-                print(f"  • Photo upload endpoint issues detected")
+        coefficients_working = []
+        coefficients_broken = []
         
-        # Edit Master Kit Analysis
-        edit_kit_tests = [r for r in self.test_results if 'Edit Master Kit' in r['test']]
-        if edit_kit_tests:
-            edit_kit_passed = len([r for r in edit_kit_tests if r['success']])
-            print(f"\n✅ EDIT MASTER KIT ENDPOINT: {edit_kit_passed}/{len(edit_kit_tests)} PASSED")
-            
-            if edit_kit_passed > 0:
-                print(f"  • Master kit editing functionality working")
-            else:
-                print(f"  • Master kit editing endpoint issues detected")
-        
-        # Overall functionality status
-        print(f"\n🎯 OVERALL EDIT KIT FORM FUNCTIONALITY STATUS:")
-        
-        functionality_working = []
-        functionality_broken = []
-        
-        # Check each major functionality
-        if any(r['success'] for r in self.test_results if 'Form Data' in r['test']):
-            functionality_working.append("Form Data Endpoints (players, competitions, teams)")
+        # Check each coefficient
+        if any(r['success'] for r in self.test_results if 'Age Coefficient' in r['test']):
+            coefficients_working.append("Age Coefficient (Coefficient d'ancienneté)")
         else:
-            functionality_broken.append("Form Data Endpoints")
+            coefficients_broken.append("Age Coefficient")
         
-        if any(r['success'] for r in self.test_results if 'Price Calculation' in r['test']):
-            functionality_working.append("Price Calculation with Coefficients")
+        if any(r['success'] for r in self.test_results if 'Player Type' in r['test']):
+            coefficients_working.append("Player Type Coefficient")
         else:
-            functionality_broken.append("Price Calculation")
+            coefficients_broken.append("Player Type Coefficient")
         
-        if any(r['success'] for r in self.test_results if 'Photo Upload' in r['test']):
-            functionality_working.append("Photo Upload")
+        if any(r['success'] for r in self.test_results if 'User-Specified' in r['test']):
+            coefficients_working.append("Data Saving and Response")
         else:
-            functionality_broken.append("Photo Upload")
+            coefficients_broken.append("Data Saving and Response")
         
-        if any(r['success'] for r in self.test_results if 'Edit Master Kit' in r['test']):
-            functionality_working.append("Master Kit Editing")
-        else:
-            functionality_broken.append("Master Kit Editing")
+        if coefficients_working:
+            print(f"  ✅ WORKING COEFFICIENTS ({len(coefficients_working)}):")
+            for coeff in coefficients_working:
+                print(f"     • {coeff}")
         
-        if functionality_working:
-            print(f"  ✅ WORKING FUNCTIONALITY ({len(functionality_working)}):")
-            for func in functionality_working:
-                print(f"     • {func}")
+        if coefficients_broken:
+            print(f"  ❌ BROKEN COEFFICIENTS ({len(coefficients_broken)}):")
+            for coeff in coefficients_broken:
+                print(f"     • {coeff}")
         
-        if functionality_broken:
-            print(f"  ❌ BROKEN FUNCTIONALITY ({len(functionality_broken)}):")
-            for func in functionality_broken:
-                print(f"     • {func}")
-        
-        if not functionality_broken:
-            print(f"  🎉 ALL EDIT KIT FORM FUNCTIONALITY WORKING!")
+        if not coefficients_broken:
+            print(f"  🎉 ALL NEW COEFFICIENTS WORKING!")
         
         # Show test failures
         failures = [r for r in self.test_results if not r['success']]
