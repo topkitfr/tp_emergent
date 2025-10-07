@@ -1325,7 +1325,7 @@ class TopKitEditKitDataPersistenceBackendTesting:
                     issues.append("No estimated price returned")
                 if not has_coefficients:
                     issues.append("No coefficients returned")
-                if not consistency_success:
+                if not consistency_success_updated:
                     issues.append("Inconsistency with main collection endpoint")
                 
                 print(f"         Issues: {', '.join(issues)}")
