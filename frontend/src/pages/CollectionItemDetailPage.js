@@ -233,9 +233,11 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
       addFieldIfNotEmpty('other_patches', editFormData.other_patches);
       
       processedFormData.signature = editFormData.signature || false;
-      if (editFormData.signature) {
+      processedFormData.signed = editFormData.signed || false;
+      if (editFormData.signature || editFormData.signed) {
         addFieldIfNotEmpty('signature_player_id', editFormData.signature_player);
         addFieldIfNotEmpty('signature_certificate', editFormData.signature_certificate);
+        addFieldIfNotEmpty('signature_proof', editFormData.signature_proof);
       }
       
       // F. User Estimate
