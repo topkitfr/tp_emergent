@@ -245,13 +245,18 @@ class MyCollectionCreate(BaseModel):
 class MyCollectionUpdate(BaseModel):
     """Update model for personal details in My Collection"""
     # A. Basic Information
+    kit_type: Optional[str] = None  # replica/authentic
     gender: Optional[str] = None  # Men/Women/Children
     size: Optional[str] = None  # XS/S/M/L/XL/XXL
+    condition: Optional[str] = None  # club_stock/match_prepared/match_worn/training/other
     
     # B. Player & Printing
     associated_player_id: Optional[str] = None  # Player with coefficient
     name_printing: Optional[str] = None  # e.g., "Mbappé"
     number_printing: Optional[str] = None  # e.g., "7"
+    number: Optional[str] = None  # Jersey number (0-99)
+    printing_style: Optional[str] = None  # league/cup/special
+    competition_patch: Optional[str] = None  # ucl/uel/etc
     
     # C. Origin & Authenticity
     origin_type: Optional[str] = None  # standard/match_issued/match_worn
