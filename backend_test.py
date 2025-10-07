@@ -1297,12 +1297,6 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 for new_coeff in new_coefficients_found:
                     print(f"           - {new_coeff}")
             
-                # Determine overall success - allow small price differences (within €5)
-                price_difference = abs(estimated_price - main_estimated_price) if (estimated_price and main_estimated_price) else 0
-                price_tolerance_ok = price_difference <= 5.0  # Allow €5 difference
-                
-                # Update consistency success to be more tolerant
-                consistency_success_updated = price_tolerance_ok and coefficients_similar
             else:
                 consistency_success_updated = False
                 price_difference = 0
