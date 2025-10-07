@@ -1278,6 +1278,11 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 print(f"      ❌ Main collection endpoint failed - Status {main_collection_response.status_code}")
                 consistency_success = False
             
+            else:
+                consistency_success_updated = False
+                price_difference = 0
+                price_tolerance_ok = False
+            
             # Final assessment
             print(f"\n      📊 PRICE-ESTIMATION ENDPOINT ASSESSMENT:")
             
@@ -1296,11 +1301,6 @@ class TopKitEditKitDataPersistenceBackendTesting:
                 print(f"         🎯 New coefficients found: {len(new_coefficients_found)}")
                 for new_coeff in new_coefficients_found:
                     print(f"           - {new_coeff}")
-            
-            else:
-                consistency_success_updated = False
-                price_difference = 0
-                price_tolerance_ok = False
             
             # Determine overall success
             overall_success = has_estimated_price and has_coefficients and consistency_success_updated
