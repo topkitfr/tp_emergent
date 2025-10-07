@@ -123,13 +123,55 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
     }
   };
 
-  const handleFileUpload = (files) => {
-    const fileArray = Array.from(files);
-    
-    setFileUploads(prev => ({
-      ...prev,
-      photos: [...prev.photos, ...fileArray]
-    }));
+  const handleFileUpload = async (files, photoType = 'other') => {
+    try {
+      setLoading(true);
+      const uploadedUrls = [];
+      
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('photo', file);
+        
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API}/api/upload/kit-photo`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          uploadedUrls.push(result.photo_url);
+        } else {
+          console.error('Failed to upload photo');
+        }
+      }
+      
+      // Update form data with uploaded photo URLs
+      if (photoType === 'front' && uploadedUrls.length > 0) {
+        onFormDataChange('front_photo', uploadedUrls[0]);
+      } else if (photoType === 'back' && uploadedUrls.length > 0) {
+        onFormDataChange('back_photo', uploadedUrls[0]);
+      } else {
+        // Add to other photos array
+        const currentOtherPhotos = formData.other_photos || [];
+        onFormDataChange('other_photos', [...currentOtherPhotos, ...uploadedUrls]);
+      }
+      
+      // Also update visual state for preview
+      setFileUploads(prev => ({
+        ...prev,
+        photos: [...prev.photos, ...Array.from(files)]
+      }));
+      
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      alert('Error uploading photos');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const removePhoto = (index) => {
