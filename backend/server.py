@@ -902,6 +902,41 @@ async def calculate_estimated_price_enhanced(kit_details: dict) -> tuple[float, 
         player_aura = kit_details.get('player_aura', 1.0)
         if player_aura and player_aura != 1.0:
             coefficients['player_aura'] = f"Player Aura = {player_aura:.1f}x"
+            
+        # Age coefficient (from master kit season)
+        master_kit_id = kit_details.get('master_kit_id')
+        if master_kit_id:
+            master_kit = await db.master_kits.find_one({"id": master_kit_id})
+            if master_kit and master_kit.get('season'):
+                try:
+                    current_year = datetime.now().year
+                    season = master_kit['season']
+                    season_year = int(season.split("-")[0])
+                    age_years = current_year - season_year
+                    if age_years > 0:
+                        age_coefficient = min(age_years * 0.03, 0.6)  # Max +0.6
+                        total_coeff += age_coefficient
+                        coefficients['age'] = f"Age ({age_years} years) = +{age_coefficient:.2f}"
+                except:
+                    pass
+                    
+        # Player Type coefficient
+        associated_player_id = kit_details.get('associated_player_id') or kit_details.get('associated_player')
+        if associated_player_id:
+            player = await db.players.find_one({"id": associated_player_id})
+            if player and player.get('player_type'):
+                player_type_coeffs = {
+                    'showdown_legend': 0.8,
+                    'superstar': 0.6, 
+                    'star': 0.4,
+                    'good_player': 0.2,
+                    'none': 0.0
+                }
+                player_type = player['player_type'].lower()
+                if player_type in player_type_coeffs:
+                    type_coeff = player_type_coeffs[player_type]
+                    total_coeff += type_coeff
+                    coefficients['player_type'] = f"Player Type ({player_type.replace('_', ' ').title()}) = +{type_coeff:.2f}"
         
         # Calculate final price: base_price * (1 + total_coeff) * player_aura
         final_price = base_price * (1 + total_coeff) * player_aura
