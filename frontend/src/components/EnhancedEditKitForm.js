@@ -207,12 +207,11 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select condition</option>
-                  <option value="home">Home (0)</option>
-                  <option value="away">Away (0)</option>
-                  <option value="third">Third (+0.1)</option>
-                  <option value="fourth">Fourth (+0.2)</option>
-                  <option value="gk">GK (+0.1)</option>
-                  <option value="special">Special (+0.3)</option>
+                  <option value="club_stock">Home (+1.2)</option>
+                  <option value="match_prepared">Away (+0.8)</option>
+                  <option value="match_worn">Third (+1.5)</option>
+                  <option value="training">GK (+0.2)</option>
+                  <option value="other">Special (0)</option>
                 </select>
               </div>
             </section>
