@@ -633,6 +633,25 @@ const EnhancedEditKitForm = ({ isOpen, onClose, editingItem, formData, onFormDat
             </section>
           </div>
 
+          {/* Price Calculation Display */}
+          {estimatedPrice > 0 && (
+            <section className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mt-6">
+              <h3 className="text-lg font-semibold mb-4 text-blue-800">TopKit Estimated Price</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-4">€{estimatedPrice.toFixed(2)}</div>
+              
+              {Object.keys(coefficients).length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-blue-700">Calculation Breakdown:</h4>
+                  {Object.entries(coefficients).map(([key, value]) => (
+                    <div key={key} className="text-sm text-blue-600">
+                      <span className="capitalize">{key.replace('_', ' ')}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
           <div className="flex justify-between items-center space-x-3 pt-6 border-t border-gray-200 mt-8">
             <div className="text-xs text-gray-500">
               💡 All coefficients are automatically applied to price estimation
