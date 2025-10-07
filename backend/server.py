@@ -1605,6 +1605,42 @@ async def get_my_collection(
         logger.error(f"Error fetching collection: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/users/{user_id}/collections", response_model=List[MyCollectionResponse])
+async def get_user_collections(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get specific user's collection items (admin or own collections only)"""
+    try:
+        # Security: Users can only access their own collections unless they're admin
+        if current_user["id"] != user_id and current_user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        cursor = db.my_collection.find({"user_id": user_id})
+        collection_items = await cursor.to_list(length=None)
+        
+        # Process each collection item  
+        enriched_items = []
+        for item in collection_items:
+            master_kit = await db.master_kits.find_one({"id": item["master_kit_id"]})
+            if master_kit:
+                # Add default collection_type for backward compatibility
+                if "collection_type" not in item:
+                    item["collection_type"] = "owned"
+                    
+                # Convert patches list back to string for response model compatibility
+                if "patches" in item and isinstance(item["patches"], list):
+                    item["patches"] = ", ".join(item["patches"]) if item["patches"] else None
+                
+                # CRITICAL FIX: Enrich master kit data with related entity names
+                enriched_master_kit = await enrich_master_kit_data(master_kit)
+                
+                item["master_kit"] = MasterKitResponse(**enriched_master_kit)
+                enriched_items.append(MyCollectionResponse(**item))
+        
+        return enriched_items
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting user collections: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/my-collection/{collection_id}", response_model=MyCollectionResponse)
 async def get_collection_item(
     collection_id: str,
