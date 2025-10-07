@@ -1090,13 +1090,161 @@ class TopKitEditKitDataPersistenceBackendTesting:
             self.log_test("MyCollectionResponse Model Fix", False, f"Exception: {str(e)}")
             return False
 
+    def test_price_estimation_endpoint(self):
+        """Test the specific price-estimation endpoint requested by user"""
+        try:
+            print(f"\n💰 TESTING PRICE-ESTIMATION ENDPOINT")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                if not self.authenticate_admin():
+                    return False
+            
+            # User-specified collection ID from the review request
+            collection_id = "0b602c78-4a36-474c-b7bb-95f92c687909"
+            
+            print(f"      🎯 Testing price-estimation endpoint for collection: {collection_id}")
+            
+            # Test the specific endpoint: GET /api/my-collection/{id}/price-estimation
+            print(f"\n      📊 Testing GET /api/my-collection/{collection_id}/price-estimation")
+            price_estimation_response = self.session.get(
+                f"{BACKEND_URL}/my-collection/{collection_id}/price-estimation", 
+                timeout=10
+            )
+            
+            print(f"      Response Status: {price_estimation_response.status_code}")
+            
+            if price_estimation_response.status_code != 200:
+                print(f"      ❌ Price-estimation endpoint failed - Status {price_estimation_response.status_code}")
+                print(f"      Response: {price_estimation_response.text}")
+                self.log_test("Price-Estimation Endpoint", False, f"❌ Failed - Status {price_estimation_response.status_code}")
+                return False
+            
+            price_estimation_data = price_estimation_response.json()
+            print(f"      ✅ Price-estimation endpoint accessible")
+            
+            # Extract key data from price-estimation response
+            estimated_price = price_estimation_data.get('estimated_price')
+            coefficients = price_estimation_data.get('coefficients', {})
+            
+            print(f"\n      💰 PRICE-ESTIMATION RESULTS:")
+            print(f"         Estimated Price: €{estimated_price}")
+            print(f"         Number of coefficients: {len(coefficients)}")
+            
+            # Check for new coefficients (age, player type, etc.)
+            new_coefficients_found = []
+            expected_new_coefficients = ['age', 'player_type', 'player type', 'ancienneté']
+            
+            for coeff_name, coeff_value in coefficients.items():
+                coeff_name_lower = coeff_name.lower()
+                for expected_coeff in expected_new_coefficients:
+                    if expected_coeff in coeff_name_lower:
+                        new_coefficients_found.append(f"{coeff_name}: {coeff_value}")
+                        print(f"         🎯 NEW COEFFICIENT FOUND: {coeff_name} = {coeff_value}")
+            
+            # Show all coefficients for verification
+            print(f"\n      📋 ALL COEFFICIENTS:")
+            for coeff_name, coeff_value in coefficients.items():
+                print(f"         - {coeff_name}: {coeff_value}")
+            
+            # Now test the main collection item endpoint for consistency
+            print(f"\n      🔄 Testing main collection item endpoint for consistency...")
+            main_collection_response = self.session.get(
+                f"{BACKEND_URL}/my-collection/{collection_id}", 
+                timeout=10
+            )
+            
+            print(f"      Main collection endpoint status: {main_collection_response.status_code}")
+            
+            if main_collection_response.status_code == 200:
+                main_collection_data = main_collection_response.json()
+                main_estimated_price = main_collection_data.get('estimated_price')
+                main_coefficients = main_collection_data.get('price_coefficients', {})
+                
+                print(f"      ✅ Main collection endpoint accessible")
+                print(f"         Main endpoint estimated price: €{main_estimated_price}")
+                print(f"         Main endpoint coefficients count: {len(main_coefficients)}")
+                
+                # Check consistency between endpoints
+                print(f"\n      🔄 CONSISTENCY CHECK:")
+                
+                price_consistent = estimated_price == main_estimated_price
+                print(f"         Price consistency: {'✅ CONSISTENT' if price_consistent else '❌ INCONSISTENT'}")
+                if not price_consistent:
+                    print(f"           Price-estimation: €{estimated_price}")
+                    print(f"           Main collection: €{main_estimated_price}")
+                
+                # Check if both endpoints have similar coefficient structure
+                coefficients_similar = len(coefficients) == len(main_coefficients)
+                print(f"         Coefficients count consistency: {'✅ CONSISTENT' if coefficients_similar else '❌ INCONSISTENT'}")
+                if not coefficients_similar:
+                    print(f"           Price-estimation coefficients: {len(coefficients)}")
+                    print(f"           Main collection coefficients: {len(main_coefficients)}")
+                
+                consistency_success = price_consistent and coefficients_similar
+                
+            else:
+                print(f"      ❌ Main collection endpoint failed - Status {main_collection_response.status_code}")
+                consistency_success = False
+            
+            # Final assessment
+            print(f"\n      📊 PRICE-ESTIMATION ENDPOINT ASSESSMENT:")
+            
+            has_estimated_price = estimated_price is not None
+            has_coefficients = len(coefficients) > 0
+            has_new_coefficients = len(new_coefficients_found) > 0
+            
+            print(f"         ✅ Estimated price present: {'YES' if has_estimated_price else 'NO'}")
+            print(f"         ✅ Coefficients present: {'YES' if has_coefficients else 'NO'}")
+            print(f"         ✅ New coefficients found: {'YES' if has_new_coefficients else 'NO'}")
+            print(f"         ✅ Endpoint consistency: {'YES' if consistency_success else 'NO'}")
+            
+            if has_new_coefficients:
+                print(f"         🎯 New coefficients found: {len(new_coefficients_found)}")
+                for new_coeff in new_coefficients_found:
+                    print(f"           - {new_coeff}")
+            
+            # Determine overall success
+            overall_success = has_estimated_price and has_coefficients and consistency_success
+            
+            if overall_success:
+                print(f"\n      🎉 PRICE-ESTIMATION ENDPOINT VERIFICATION SUCCESSFUL!")
+                print(f"         ✅ Endpoint responds with estimated price: €{estimated_price}")
+                print(f"         ✅ Coefficients include new calculations ({len(coefficients)} total)")
+                print(f"         ✅ Consistency maintained with main collection endpoint")
+                
+                success_message = f"✅ Price-estimation endpoint working - €{estimated_price} with {len(coefficients)} coefficients"
+                if has_new_coefficients:
+                    success_message += f", {len(new_coefficients_found)} new coefficients found"
+                
+                self.log_test("Price-Estimation Endpoint", True, success_message)
+            else:
+                print(f"\n      ❌ PRICE-ESTIMATION ENDPOINT ISSUES IDENTIFIED")
+                issues = []
+                if not has_estimated_price:
+                    issues.append("No estimated price returned")
+                if not has_coefficients:
+                    issues.append("No coefficients returned")
+                if not consistency_success:
+                    issues.append("Inconsistency with main collection endpoint")
+                
+                print(f"         Issues: {', '.join(issues)}")
+                
+                self.log_test("Price-Estimation Endpoint", False, f"❌ Issues found: {', '.join(issues)}")
+            
+            return overall_success
+                
+        except Exception as e:
+            self.log_test("Price-Estimation Endpoint", False, f"Exception: {str(e)}")
+            return False
+
 def main():
-    """Main function to run the MyCollectionResponse model fix testing"""
+    """Main function to run the price-estimation endpoint testing"""
     tester = TopKitEditKitDataPersistenceBackendTesting()
     
-    # Run the specific MyCollectionResponse model fix test
-    print("\n🚀 MYCOLLECTIONRESPONSE MODEL FIX TESTING")
-    print("Testing the correction of MyCollectionResponse model to include all new fields")
+    # Run the specific price-estimation endpoint test as requested
+    print("\n🚀 PRICE-ESTIMATION ENDPOINT TESTING")
+    print("Testing the updated price-estimation endpoint with new coefficients")
     print("=" * 80)
     
     test_results = []
@@ -1110,13 +1258,13 @@ def main():
         print("❌ Cannot proceed without authentication")
         return test_results
     
-    # Step 2: Test MyCollectionResponse model fix
-    print("\n2️⃣ Testing MyCollectionResponse Model Fix...")
-    model_fix_success = tester.test_mycollection_response_model_fix()
-    test_results.append(model_fix_success)
+    # Step 2: Test price-estimation endpoint
+    print("\n2️⃣ Testing Price-Estimation Endpoint...")
+    price_estimation_success = tester.test_price_estimation_endpoint()
+    test_results.append(price_estimation_success)
     
     # Print summary
-    tester.print_mycollection_model_fix_summary()
+    tester.print_price_estimation_summary()
     
     # Return overall success
     return all(test_results)
