@@ -40,7 +40,7 @@ ADMIN_CREDENTIALS = {
     "name": "Emergency Admin"
 }
 
-class TopKitEditKitDataPersistenceBackendTesting:
+class TopKitAuthenticationAndEditKitBackendTesting:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
