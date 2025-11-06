@@ -331,109 +331,109 @@ const AppContent = () => {
           
           {/* Protected Routes - Authentication Required */}
           <Route path="/explore" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeExplorePage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/catalogue" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CataloguePage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/my-collection" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <MyCollectionPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/my-collection/:itemId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollectionItemDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/contributions-v2" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <ContributionsV2Page {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/moderation" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <ModerationDashboard {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/teams" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeTeamsPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/brands" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeBrandsPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/players" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativePlayersPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/competitions" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeCompetitionsPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/master-kits" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeMasterJerseyPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CollaborativeProfilePage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/profile/:userId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <PublicProfilePage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <AdminDashboard user={user} API={API} />
             </ProtectedRoute>
           } />
           <Route path="/leaderboard" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <LeaderboardPage {...commonProps} />
             </ProtectedRoute>
           } />
           
           {/* Protected Routes pour les pages détaillées */}
           <Route path="/teams/:teamId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <TeamDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/brands/:brandId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <BrandDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/competitions/:competitionId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <CompetitionDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/players/:playerId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <PlayerDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/master-kits/:jerseyId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <MasterJerseyDetailPage {...commonProps} />
             </ProtectedRoute>
           } />
           <Route path="/contributions-v2/:contributionId" element={
-            <ProtectedRoute user={user} setShowAuthModal={setShowAuthModal}>
+            <ProtectedRoute user={user} authLoading={authLoading} setShowAuthModal={setShowAuthModal}>
               <ContributionDetailPage 
                 {...commonProps} 
                 contributionId={window.location.pathname.split('/contributions-v2/')[1]}
