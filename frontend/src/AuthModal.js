@@ -548,12 +548,20 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 type="password"
                 name="password"
                 placeholder="Password"
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
+                value={formData.password || ''}
+                onChange={(e) => {
+                  console.log('🔍 Password onChange triggered:', e.target.value);
+                  handleInputChange('password', e.target.value);
+                }}
+                onInput={(e) => {
+                  console.log('🔍 Password onInput triggered:', e.target.value);
+                  handleInputChange('password', e.target.value);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
                 autoComplete={isLogin ? "current-password" : "new-password"}
+                data-testid="auth-password"
               />
 
               {/* Password strength indicator (registration only) */}
