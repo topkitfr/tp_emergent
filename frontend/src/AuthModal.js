@@ -507,8 +507,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   placeholder="Full name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  onInput={(e) => handleInputChange('name', e.target.value)}
-                  onBlur={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
