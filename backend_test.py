@@ -2101,5 +2101,15 @@ def main_coefficient_investigation():
     return all(test_results)
 
 if __name__ == "__main__":
-    success = main_coefficient_investigation()
+    # Initialize testing suite
+    tester = TopKitAuthenticationAndEditKitBackendTesting()
+    
+    # Run comprehensive authentication system and Edit Kit form backend testing
+    test_results = tester.run_comprehensive_authentication_and_edit_kit_testing()
+    
+    # Print comprehensive summary
+    tester.print_comprehensive_authentication_and_edit_kit_summary()
+    
+    # Exit with appropriate code
+    success = all(test_results)
     sys.exit(0 if success else 1)
