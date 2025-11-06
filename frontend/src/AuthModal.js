@@ -526,12 +526,20 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 type="email"
                 name="email"
                 placeholder="Email address"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                value={formData.email || ''}
+                onChange={(e) => {
+                  console.log('🔍 Email onChange triggered:', e.target.value);
+                  handleInputChange('email', e.target.value);
+                }}
+                onInput={(e) => {
+                  console.log('🔍 Email onInput triggered:', e.target.value);
+                  handleInputChange('email', e.target.value);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
                 autoComplete="email"
+                data-testid="auth-email"
               />
               
               {/* Password field */}
