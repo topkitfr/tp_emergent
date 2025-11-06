@@ -145,13 +145,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
       const payload = isLogin 
         ? { 
-            email: formData.email.trim(), 
-            password: formData.password 
+            email: email, 
+            password: password 
           }
         : { 
-            email: formData.email.trim(), 
-            password: formData.password, 
-            name: formData.name.trim() 
+            email: email, 
+            password: password, 
+            name: (formData.name || '').trim() 
           };
 
       console.log('📤 API URL:', `${API}/api${endpoint}`);
