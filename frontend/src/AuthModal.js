@@ -385,7 +385,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     >
       <div 
         className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200"
-        style={{ position: 'relative', zIndex: 10000 }}
+        style={{ 
+          position: 'relative', 
+          zIndex: 10000,
+          pointerEvents: 'auto'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
