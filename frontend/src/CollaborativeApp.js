@@ -44,6 +44,7 @@ const AppContent = () => {
   
   // State management
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // Add loading state for authentication
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
