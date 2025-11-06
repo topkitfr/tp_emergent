@@ -1,42 +1,25 @@
 #!/usr/bin/env python3
 """
-TopKit Backend Testing Suite - EDIT KIT DETAILS DATA PERSISTENCE TESTING
+TopKit Backend Testing Suite - AUTHENTICATION SYSTEM & EDIT KIT FORM BACKEND TESTING
 
-**URGENT - EDIT KIT DETAILS DATA PERSISTENCE ISSUE:**
+**COMPREHENSIVE BACKEND TESTING REQUEST:**
 
-Testing the Edit Kit Details form data persistence issue where:
-1. Real-time calculation in form works (shows correct price)
-2. After validation, displayed price "doesn't match the form info"
+Testing authentication system and Edit Kit form functionality as reported by users:
+1. Authentication problems accessing "My Collection"
+2. Edit Kit Details form not working properly
+3. Backend API testing via curl shows endpoints work correctly
+4. Need comprehensive backend verification
 
-**Test Requirements:**
-1. **PUT collection item** with specific data to test data persistence
-2. **Use existing collection_id**: 0b602c78-4a36-474c-b7bb-95f92c687909 (from logs)
-3. **Verify PUT returns correct calculated price**
-4. **Verify new data is properly saved**
-5. **Verify GET collection item after save returns same price**
-6. **Check for discrepancy between calculated and saved price**
+**Test Phases:**
+1. **Authentication Testing** - login, token validation, user data response
+2. **My Collection Access Testing** - collection endpoints with authentication
+3. **Edit Kit Form Backend Testing** - form data endpoints, price calculation, updates
+4. **Data Persistence Testing** - verify data saves and retrieves correctly
 
-**User-Specified Test Data:**
-```json
-{
-  "kit_type": "authentic",
-  "condition": "match_worn", 
-  "number": "10",
-  "signed": true,
-  "signature_proof": "photo",
-  "origin_type": "match_worn",
-  "special_match_type": "classico",
-  "match_result": "win",
-  "performance": ["scored_goal", "man_of_the_match"],
-  "match_proof": "photo",
-  "printing_style": "league",
-  "competition_patch": "ucl"
-}
-```
-
+**Test Collection Item ID:** 0b602c78-4a36-474c-b7bb-95f92c687909 (Real Madrid kit)
 **Authentication:** emergency.admin@topkit.test / EmergencyAdmin2025!
 
-**PRIORITY: URGENT** - Testing Edit Kit Details data persistence issue.
+**PRIORITY: CRITICAL** - Comprehensive backend testing for authentication and Edit Kit form.
 """
 
 import requests
