@@ -133,9 +133,16 @@ const AppContent = () => {
 
   // Authentication handlers
   const handleLoginSuccess = (token, userData) => {
+    console.log('🎉 CollaborativeApp - Login success handler called');
+    console.log('📝 Token received:', !!token);
+    console.log('👤 User data received:', userData);
+    
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    setUser({ ...userData, token });
+    const authenticatedUser = { ...userData, token };
+    setUser(authenticatedUser);
+    
+    console.log('✅ User state updated:', authenticatedUser);
     setShowAuthModal(false);
     
     // Handle pending actions after login
