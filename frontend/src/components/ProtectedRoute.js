@@ -6,7 +6,7 @@ const ProtectedRoute = ({ user, setShowAuthModal, children }) => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Add a small delay to allow for authentication check to complete
+    // Check authentication immediately, but allow a brief moment for state to settle
     const timer = setTimeout(() => {
       setIsChecking(false);
       
@@ -20,7 +20,7 @@ const ProtectedRoute = ({ user, setShowAuthModal, children }) => {
       } else {
         console.log('✅ ProtectedRoute: User authenticated:', user.email);
       }
-    }, 500); // Small delay to allow authentication state to settle
+    }, 100); // Reduced delay to minimize timing issues
 
     return () => clearTimeout(timer);
   }, [user, navigate, setShowAuthModal]);
