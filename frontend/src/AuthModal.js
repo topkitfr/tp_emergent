@@ -503,7 +503,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
           /* Login/Register Form */
           ) : (
-            <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4">
+            <form onSubmit={handleAuthFormSubmit} noValidate className="space-y-4" style={{ pointerEvents: 'auto' }}>
               
               {/* Name field (registration only) */}
               {!isLogin && (
