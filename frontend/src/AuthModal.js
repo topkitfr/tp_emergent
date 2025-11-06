@@ -120,7 +120,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       console.log('🔑 Password from DOM:', passwordField.value || 'EMPTY');
     }
 
-    if (!formData.email || !formData.password) {
+    // Trim whitespace for validation
+    const email = (formData.email || '').trim();
+    const password = (formData.password || '').trim();
+    
+    if (!email || !password) {
       console.error('❌ Missing required fields in formData state');
       console.error('❌ formData.email:', formData.email);
       console.error('❌ formData.password:', formData.password);
