@@ -774,26 +774,505 @@ class TopKitAuthenticationAndEditKitBackendTesting:
             self.log_test("Edit Master Kit Endpoint", False, f"Exception: {str(e)}")
             return False
 
-    def run_edit_kit_data_persistence_testing(self):
-        """Run comprehensive testing of Edit Kit Details data persistence issue"""
-        print("\n🚀 EDIT KIT DETAILS DATA PERSISTENCE TESTING")
-        print("Testing the Edit Kit Details form data persistence issue")
-        print("=" * 80)
+    def test_authentication_system(self):
+        """Phase 1: Comprehensive Authentication System Testing"""
+        try:
+            print(f"\n🔐 PHASE 1: AUTHENTICATION SYSTEM TESTING")
+            print("=" * 60)
+            
+            # Test 1: Login endpoint with credentials
+            print(f"\n      1️⃣ Testing POST /api/auth/login")
+            print(f"         Credentials: {ADMIN_CREDENTIALS['email']} / {ADMIN_CREDENTIALS['password']}")
+            
+            login_response = self.session.post(
+                f"{BACKEND_URL}/auth/login",
+                json=ADMIN_CREDENTIALS,
+                timeout=10
+            )
+            
+            print(f"         Response Status: {login_response.status_code}")
+            
+            if login_response.status_code != 200:
+                print(f"      ❌ Login failed - Status {login_response.status_code}")
+                print(f"      Response: {login_response.text}")
+                self.log_test("Authentication Login", False, f"❌ Login failed - Status {login_response.status_code}")
+                return False
+            
+            login_data = login_response.json()
+            token = login_data.get("token")
+            user_data = login_data.get("user", {})
+            
+            if not token:
+                print(f"      ❌ No token in login response")
+                self.log_test("Authentication Login", False, "❌ No token in login response")
+                return False
+            
+            print(f"      ✅ Login successful")
+            print(f"         Token generated: {token[:20]}...")
+            print(f"         User ID: {user_data.get('id')}")
+            print(f"         User Name: {user_data.get('name')}")
+            print(f"         User Email: {user_data.get('email')}")
+            print(f"         User Role: {user_data.get('role')}")
+            
+            self.auth_token = token
+            self.admin_user_data = user_data
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
+            
+            self.log_test("Authentication Login", True, f"✅ Login successful, token generated, user: {user_data.get('name')}")
+            
+            # Test 2: Token validation with GET /api/auth/me
+            print(f"\n      2️⃣ Testing GET /api/auth/me (token validation)")
+            
+            me_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
+            print(f"         Response Status: {me_response.status_code}")
+            
+            if me_response.status_code != 200:
+                print(f"      ❌ Token validation failed - Status {me_response.status_code}")
+                print(f"      Response: {me_response.text}")
+                self.log_test("Authentication Token Validation", False, f"❌ Token validation failed - Status {me_response.status_code}")
+                return False
+            
+            me_data = me_response.json()
+            print(f"      ✅ Token validation successful")
+            print(f"         Validated User ID: {me_data.get('id')}")
+            print(f"         Validated User Name: {me_data.get('name')}")
+            print(f"         Validated User Role: {me_data.get('role')}")
+            
+            # Verify user data consistency
+            if me_data.get('id') == user_data.get('id'):
+                print(f"      ✅ User data consistency verified")
+                self.log_test("Authentication Token Validation", True, f"✅ Token validation successful, user data consistent")
+            else:
+                print(f"      ❌ User data inconsistency detected")
+                self.log_test("Authentication Token Validation", False, "❌ User data inconsistency between login and validation")
+                return False
+            
+            # Test 3: Authentication persistence
+            print(f"\n      3️⃣ Testing authentication persistence")
+            print(f"         Verifying token persists across requests...")
+            
+            # Make another authenticated request to verify persistence
+            test_response = self.session.get(f"{BACKEND_URL}/auth/me", timeout=10)
+            if test_response.status_code == 200:
+                print(f"      ✅ Authentication persists properly across requests")
+                self.log_test("Authentication Persistence", True, "✅ Authentication persists across requests")
+            else:
+                print(f"      ❌ Authentication persistence failed")
+                self.log_test("Authentication Persistence", False, "❌ Authentication does not persist")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Authentication System Testing", False, f"Exception: {str(e)}")
+            return False
+
+    def test_my_collection_access(self):
+        """Phase 2: My Collection Access Testing"""
+        try:
+            print(f"\n📚 PHASE 2: MY COLLECTION ACCESS TESTING")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                print(f"      ❌ No authentication token available")
+                return False
+            
+            # Test 1: GET /api/my-collection (list endpoint)
+            print(f"\n      1️⃣ Testing GET /api/my-collection (collection list)")
+            
+            collection_list_response = self.session.get(f"{BACKEND_URL}/my-collection", timeout=10)
+            print(f"         Response Status: {collection_list_response.status_code}")
+            
+            if collection_list_response.status_code != 200:
+                print(f"      ❌ Collection list access failed - Status {collection_list_response.status_code}")
+                print(f"      Response: {collection_list_response.text}")
+                self.log_test("My Collection List Access", False, f"❌ Failed - Status {collection_list_response.status_code}")
+                return False
+            
+            collection_list = collection_list_response.json()
+            print(f"      ✅ Collection list accessible")
+            print(f"         Total collection items: {len(collection_list)}")
+            
+            # Look for the specific Real Madrid kit
+            target_item_id = "0b602c78-4a36-474c-b7bb-95f92c687909"
+            target_item = None
+            
+            for item in collection_list:
+                if item.get('id') == target_item_id:
+                    target_item = item
+                    break
+            
+            if target_item:
+                print(f"         ✅ Target Real Madrid kit found in collection")
+                print(f"         Kit ID: {target_item.get('id')}")
+                print(f"         Master Kit ID: {target_item.get('master_kit_id')}")
+                print(f"         Estimated Price: €{target_item.get('estimated_price', 'N/A')}")
+            else:
+                print(f"         ⚠️ Target Real Madrid kit not found in collection list")
+            
+            self.log_test("My Collection List Access", True, f"✅ Collection list accessible, {len(collection_list)} items found")
+            
+            # Test 2: GET /api/my-collection/{item_id} (individual item)
+            print(f"\n      2️⃣ Testing GET /api/my-collection/{target_item_id} (individual item)")
+            
+            item_response = self.session.get(f"{BACKEND_URL}/my-collection/{target_item_id}", timeout=10)
+            print(f"         Response Status: {item_response.status_code}")
+            
+            if item_response.status_code != 200:
+                print(f"      ❌ Individual collection item access failed - Status {item_response.status_code}")
+                print(f"      Response: {item_response.text}")
+                self.log_test("My Collection Item Access", False, f"❌ Failed - Status {item_response.status_code}")
+                return False
+            
+            item_data = item_response.json()
+            print(f"      ✅ Individual collection item accessible")
+            print(f"         Item ID: {item_data.get('id')}")
+            print(f"         Master Kit ID: {item_data.get('master_kit_id')}")
+            print(f"         Collection Type: {item_data.get('collection_type')}")
+            print(f"         Estimated Price: €{item_data.get('estimated_price', 'N/A')}")
+            
+            # Verify data completeness
+            essential_fields = ['id', 'master_kit_id', 'user_id', 'collection_type']
+            missing_fields = [field for field in essential_fields if not item_data.get(field)]
+            
+            if missing_fields:
+                print(f"      ⚠️ Missing essential fields: {missing_fields}")
+            else:
+                print(f"      ✅ All essential fields present")
+            
+            self.log_test("My Collection Item Access", True, f"✅ Individual item accessible, essential data present")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("My Collection Access Testing", False, f"Exception: {str(e)}")
+            return False
+
+    def test_edit_kit_form_backend(self):
+        """Phase 3: Edit Kit Form Backend Testing"""
+        try:
+            print(f"\n🛠️ PHASE 3: EDIT KIT FORM BACKEND TESTING")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                print(f"      ❌ No authentication token available")
+                return False
+            
+            # Test 1: Form data endpoints
+            print(f"\n      1️⃣ Testing form data endpoints")
+            
+            # Test players endpoint
+            print(f"\n         🏃 GET /api/form-data/players")
+            players_response = self.session.get(f"{BACKEND_URL}/form-data/players", timeout=10)
+            print(f"            Status: {players_response.status_code}")
+            
+            if players_response.status_code == 200:
+                players_data = players_response.json()
+                print(f"            ✅ Players: {len(players_data)} returned with aura ratings")
+                if players_data:
+                    sample_player = players_data[0]
+                    print(f"            Sample: {sample_player.get('name')} (aura: {sample_player.get('coefficient', 'N/A')})")
+            else:
+                print(f"            ❌ Players endpoint failed")
+                self.log_test("Form Data Players", False, f"❌ Failed - Status {players_response.status_code}")
+                return False
+            
+            # Test clubs endpoint
+            print(f"\n         ⚽ GET /api/form-data/clubs")
+            clubs_response = self.session.get(f"{BACKEND_URL}/form-data/clubs", timeout=10)
+            print(f"            Status: {clubs_response.status_code}")
+            
+            if clubs_response.status_code == 200:
+                clubs_data = clubs_response.json()
+                print(f"            ✅ Clubs: {len(clubs_data)} returned for opponent selection")
+                if clubs_data:
+                    sample_club = clubs_data[0]
+                    print(f"            Sample: {sample_club.get('name')} ({sample_club.get('country', 'Unknown')})")
+            else:
+                print(f"            ❌ Clubs endpoint failed")
+                self.log_test("Form Data Clubs", False, f"❌ Failed - Status {clubs_response.status_code}")
+                return False
+            
+            # Test competitions endpoint
+            print(f"\n         🏆 GET /api/form-data/competitions")
+            competitions_response = self.session.get(f"{BACKEND_URL}/form-data/competitions", timeout=10)
+            print(f"            Status: {competitions_response.status_code}")
+            
+            if competitions_response.status_code == 200:
+                competitions_data = competitions_response.json()
+                print(f"            ✅ Competitions: {len(competitions_data)} returned")
+                if competitions_data:
+                    sample_comp = competitions_data[0]
+                    print(f"            Sample: {sample_comp.get('name')} ({sample_comp.get('country', 'Unknown')})")
+            else:
+                print(f"            ❌ Competitions endpoint failed")
+                self.log_test("Form Data Competitions", False, f"❌ Failed - Status {competitions_response.status_code}")
+                return False
+            
+            self.log_test("Form Data Endpoints", True, f"✅ All form data endpoints accessible")
+            
+            # Test 2: Price calculation endpoint
+            print(f"\n      2️⃣ Testing POST /api/calculate-price")
+            
+            # Sample kit details for price calculation
+            sample_kit_details = {
+                "kit_type": "authentic",
+                "condition": "match_worn",
+                "number": "10",
+                "signed": True,
+                "signature_proof": "photo",
+                "origin_type": "match_worn",
+                "special_match_type": "classico",
+                "match_result": "win",
+                "performance": ["scored_goal", "man_of_the_match"],
+                "match_proof": "photo",
+                "printing_style": "league",
+                "competition_patch": "ucl"
+            }
+            
+            print(f"         Testing with sample kit details:")
+            for key, value in sample_kit_details.items():
+                print(f"            {key}: {value}")
+            
+            price_calc_response = self.session.post(
+                f"{BACKEND_URL}/calculate-price",
+                json=sample_kit_details,
+                timeout=10
+            )
+            
+            print(f"         Response Status: {price_calc_response.status_code}")
+            
+            if price_calc_response.status_code == 200:
+                price_data = price_calc_response.json()
+                estimated_price = price_data.get('estimated_price')
+                coefficients = price_data.get('coefficients', {})
+                
+                print(f"         ✅ Price calculation successful")
+                print(f"            Estimated Price: €{estimated_price}")
+                print(f"            Coefficients Count: {len(coefficients)}")
+                
+                # Show key coefficients
+                key_coefficients = ['condition', 'signature', 'origin', 'special_match', 'competition_patch']
+                for key_coeff in key_coefficients:
+                    for coeff_name, coeff_value in coefficients.items():
+                        if key_coeff in coeff_name.lower():
+                            print(f"            {coeff_name}: {coeff_value}")
+                            break
+                
+                self.log_test("Price Calculation", True, f"✅ Price calculation successful: €{estimated_price}")
+            else:
+                print(f"         ❌ Price calculation failed - Status {price_calc_response.status_code}")
+                print(f"         Response: {price_calc_response.text}")
+                self.log_test("Price Calculation", False, f"❌ Failed - Status {price_calc_response.status_code}")
+                return False
+            
+            # Test 3: Photo upload endpoint
+            print(f"\n      3️⃣ Testing POST /api/upload/kit-photo")
+            
+            # Create a simple test image
+            try:
+                import io
+                from PIL import Image
+                
+                test_image = Image.new('RGB', (100, 100), color='blue')
+                img_buffer = io.BytesIO()
+                test_image.save(img_buffer, format='JPEG')
+                img_buffer.seek(0)
+                
+                files = {'photo': ('test_kit_photo.jpg', img_buffer, 'image/jpeg')}
+                
+                upload_response = self.session.post(
+                    f"{BACKEND_URL}/upload/kit-photo",
+                    files=files,
+                    timeout=15
+                )
+                
+                print(f"         Response Status: {upload_response.status_code}")
+                
+                if upload_response.status_code == 200:
+                    upload_data = upload_response.json()
+                    photo_url = upload_data.get('photo_url') or upload_data.get('file_url')
+                    print(f"         ✅ Photo upload successful")
+                    print(f"            Photo URL: {photo_url}")
+                    self.log_test("Photo Upload", True, f"✅ Photo upload successful")
+                else:
+                    print(f"         ❌ Photo upload failed - Status {upload_response.status_code}")
+                    self.log_test("Photo Upload", False, f"❌ Failed - Status {upload_response.status_code}")
+                    
+            except ImportError:
+                print(f"         ⚠️ PIL not available, skipping photo upload test")
+                self.log_test("Photo Upload", True, f"⚠️ Skipped - PIL not available")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Edit Kit Form Backend Testing", False, f"Exception: {str(e)}")
+            return False
+
+    def test_data_persistence(self):
+        """Phase 4: Data Persistence Testing"""
+        try:
+            print(f"\n💾 PHASE 4: DATA PERSISTENCE TESTING")
+            print("=" * 60)
+            
+            if not self.auth_token:
+                print(f"      ❌ No authentication token available")
+                return False
+            
+            target_item_id = "0b602c78-4a36-474c-b7bb-95f92c687909"
+            
+            # Test 1: Collection update with PUT /api/my-collection/{item_id}
+            print(f"\n      1️⃣ Testing PUT /api/my-collection/{target_item_id}")
+            
+            # Get current data first
+            get_response = self.session.get(f"{BACKEND_URL}/my-collection/{target_item_id}", timeout=10)
+            if get_response.status_code != 200:
+                print(f"      ❌ Cannot get current collection item for update test")
+                return False
+            
+            current_data = get_response.json()
+            original_price = current_data.get('estimated_price')
+            
+            print(f"         Current estimated price: €{original_price}")
+            
+            # Update with new form data
+            update_data = {
+                "condition": "match_worn",
+                "number_printing": "10",
+                "is_signed": True,
+                "signature_proof": "photo",
+                "origin_type": "match_worn",
+                "special_match_type": "classico",
+                "match_result": "win",
+                "performance": ["scored_goal", "man_of_the_match"],
+                "match_proof": "photo",
+                "printing_style": "league",
+                "competition_patch": "ucl"
+            }
+            
+            print(f"         Updating with new form data:")
+            for key, value in update_data.items():
+                print(f"            {key}: {value}")
+            
+            update_response = self.session.put(
+                f"{BACKEND_URL}/my-collection/{target_item_id}",
+                json=update_data,
+                timeout=10
+            )
+            
+            print(f"         Response Status: {update_response.status_code}")
+            
+            if update_response.status_code != 200:
+                print(f"      ❌ Collection update failed - Status {update_response.status_code}")
+                print(f"      Response: {update_response.text}")
+                self.log_test("Collection Update", False, f"❌ Failed - Status {update_response.status_code}")
+                return False
+            
+            update_result = update_response.json()
+            updated_price = update_result.get('estimated_price')
+            
+            print(f"         ✅ Collection update successful")
+            print(f"            Updated estimated price: €{updated_price}")
+            
+            self.log_test("Collection Update", True, f"✅ Collection update successful, new price: €{updated_price}")
+            
+            # Test 2: Verify data persistence by re-fetching
+            print(f"\n      2️⃣ Testing data persistence verification")
+            
+            verify_response = self.session.get(f"{BACKEND_URL}/my-collection/{target_item_id}", timeout=10)
+            
+            if verify_response.status_code != 200:
+                print(f"      ❌ Cannot verify data persistence")
+                self.log_test("Data Persistence Verification", False, "❌ Cannot re-fetch updated data")
+                return False
+            
+            verified_data = verify_response.json()
+            verified_price = verified_data.get('estimated_price')
+            
+            print(f"         ✅ Data persistence verification successful")
+            print(f"            Verified estimated price: €{verified_price}")
+            
+            # Check if updated data persisted correctly
+            persistence_issues = []
+            for key, expected_value in update_data.items():
+                actual_value = verified_data.get(key)
+                if actual_value != expected_value:
+                    persistence_issues.append(f"{key}: expected {expected_value}, got {actual_value}")
+            
+            if persistence_issues:
+                print(f"      ⚠️ Data persistence issues found:")
+                for issue in persistence_issues:
+                    print(f"            {issue}")
+                self.log_test("Data Persistence Verification", False, f"⚠️ {len(persistence_issues)} persistence issues found")
+            else:
+                print(f"      ✅ All form fields saved and retrieved correctly")
+                self.log_test("Data Persistence Verification", True, "✅ All form data persisted correctly")
+            
+            # Test 3: Price estimation endpoint
+            print(f"\n      3️⃣ Testing GET /api/my-collection/{target_item_id}/price-estimation")
+            
+            price_est_response = self.session.get(
+                f"{BACKEND_URL}/my-collection/{target_item_id}/price-estimation",
+                timeout=10
+            )
+            
+            print(f"         Response Status: {price_est_response.status_code}")
+            
+            if price_est_response.status_code == 200:
+                price_est_data = price_est_response.json()
+                price_est_value = price_est_data.get('estimated_price')
+                
+                print(f"         ✅ Price estimation endpoint accessible")
+                print(f"            Price estimation value: €{price_est_value}")
+                
+                # Check consistency with main collection endpoint
+                price_difference = abs(verified_price - price_est_value) if (verified_price and price_est_value) else 0
+                if price_difference <= 1.0:  # Allow €1 difference
+                    print(f"         ✅ Price consistency maintained across endpoints")
+                    self.log_test("Price Estimation Endpoint", True, f"✅ Price estimation working, consistent with main endpoint")
+                else:
+                    print(f"         ⚠️ Price inconsistency: main €{verified_price} vs estimation €{price_est_value}")
+                    self.log_test("Price Estimation Endpoint", False, f"⚠️ Price inconsistency detected")
+            else:
+                print(f"         ❌ Price estimation endpoint failed - Status {price_est_response.status_code}")
+                self.log_test("Price Estimation Endpoint", False, f"❌ Failed - Status {price_est_response.status_code}")
+            
+            return len(persistence_issues) == 0
+            
+        except Exception as e:
+            self.log_test("Data Persistence Testing", False, f"Exception: {str(e)}")
+            return False
+
+    def run_comprehensive_authentication_and_edit_kit_testing(self):
+        """Run comprehensive authentication system and Edit Kit form backend testing"""
+        print("\n🚀 COMPREHENSIVE AUTHENTICATION SYSTEM & EDIT KIT FORM BACKEND TESTING")
+        print("Testing authentication problems and Edit Kit form functionality as reported by users")
+        print("=" * 90)
         
         test_results = []
         
-        # Step 1: Authenticate
-        print("\n1️⃣ Authenticating...")
-        auth_success = self.authenticate_admin()
+        # Phase 1: Authentication System Testing
+        print("\n🔐 PHASE 1: AUTHENTICATION SYSTEM TESTING")
+        auth_success = self.test_authentication_system()
         test_results.append(auth_success)
         
         if not auth_success:
-            print("❌ Cannot proceed without authentication")
+            print("❌ Cannot proceed without authentication - stopping tests")
             return test_results
         
-        # Step 2: Test Edit Kit Details data persistence issue
-        print("\n2️⃣ Testing Edit Kit Details Data Persistence Issue...")
-        persistence_success = self.test_edit_kit_data_persistence_issue()
+        # Phase 2: My Collection Access Testing
+        print("\n📚 PHASE 2: MY COLLECTION ACCESS TESTING")
+        collection_success = self.test_my_collection_access()
+        test_results.append(collection_success)
+        
+        # Phase 3: Edit Kit Form Backend Testing
+        print("\n🛠️ PHASE 3: EDIT KIT FORM BACKEND TESTING")
+        form_success = self.test_edit_kit_form_backend()
+        test_results.append(form_success)
+        
+        # Phase 4: Data Persistence Testing
+        print("\n💾 PHASE 4: DATA PERSISTENCE TESTING")
+        persistence_success = self.test_data_persistence()
         test_results.append(persistence_success)
         
         return test_results
