@@ -13,7 +13,7 @@ import json
 import os
 
 # Configuration
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://jersey-catalog-app-1.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://kitauth-fix.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 # Test credentials

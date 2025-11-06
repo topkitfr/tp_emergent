@@ -28,7 +28,7 @@ from io import BytesIO
 from PIL import Image
 
 # Configuration
-BACKEND_URL = "https://jersey-catalog-app-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://kitauth-fix.preview.emergentagent.com/api"
 
 # Test Admin Credentials for authentication
 ADMIN_CREDENTIALS = {
