@@ -129,6 +129,9 @@ const AppContent = () => {
     } catch (error) {
       console.error('❌ Error checking auth status:', error);
       setUser(null);
+    } finally {
+      // Always set auth loading to false when check is complete
+      setAuthLoading(false);
     }
   };
 
