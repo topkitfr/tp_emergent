@@ -18,14 +18,11 @@ const ProtectedRoute = ({ user, authLoading, setShowAuthModal, children }) => {
     }
   }, [user, authLoading, navigate, setShowAuthModal]);
 
-  // Show loading state while checking authentication
-  if (isChecking) {
+  // Show loading spinner while checking authentication
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Checking authentication...</div>
       </div>
     );
   }
