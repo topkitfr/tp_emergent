@@ -441,6 +441,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 value={formData.resetEmail}
                 onChange={(e) => handleInputChange('resetEmail', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
               />
               
@@ -476,6 +477,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 value={formData.newPassword}
                 onChange={(e) => handleInputChange('newPassword', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
               />
               
@@ -486,6 +488,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
               />
               
@@ -512,6 +515,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                   required
                 />
               )}
@@ -525,6 +529,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
                 autoComplete="email"
               />
@@ -538,6 +543,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ pointerEvents: 'auto', zIndex: 1 }}
                 required
                 autoComplete={isLogin ? "current-password" : "new-password"}
               />
