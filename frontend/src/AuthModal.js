@@ -358,6 +358,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
     
     console.log('📊 New formData:', newFormData);
     setFormData(newFormData);
+    
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
   };
 
   const handleModalClick = (e) => {
