@@ -14,8 +14,14 @@ const CollectionItemDetailPage = ({ user, API, onDataUpdate }) => {
   const [editFormData, setEditFormData] = useState({});
 
   useEffect(() => {
+    console.log('📍 CollectionItemDetailPage: User state', user?.id ? `User ID: ${user.id}` : 'No user');
+    console.log('📍 CollectionItemDetailPage: Item ID', itemId);
+    
     if (user && itemId) {
+      console.log('✅ CollectionItemDetailPage: Loading collection item...');
       loadCollectionItem();
+    } else {
+      console.log('⏳ CollectionItemDetailPage: Waiting for user or itemId...', { user: !!user, itemId });
     }
   }, [user, itemId]);
 
