@@ -157,7 +157,7 @@ class GmailSMTPService:
         subject = f"Confirmez votre compte - {self.app_name}"
         
         # Create confirmation URL using environment variable
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://kitauth-fix.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
         confirmation_url = f"{frontend_url}/verify-email?token={confirmation_token}"
         
         # Plain text version
@@ -344,7 +344,7 @@ Connectez-vous à l'admin panel pour gérer cette demande.
         
         subject = f"🎉 Accès accordé à {self.app_name} !"
         
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://kitauth-fix.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
         login_url = frontend_url
         
         # Plain text version
@@ -867,7 +867,7 @@ L'équipe {self.app_name}
         
         subject = f"🔑 Réinitialisation de votre mot de passe - {self.app_name}"
         
-        frontend_url = os.environ.get('FRONTEND_URL', 'https://kitauth-fix.preview.emergentagent.com')
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
         reset_url = f"{frontend_url}/reset-password?token={reset_token}"
         
         text_body = f"""
