@@ -11,6 +11,7 @@ import VersionDetail from "@/pages/VersionDetail";
 import MyCollection from "@/pages/MyCollection";
 import AddJersey from "@/pages/AddJersey";
 import Profile from "@/pages/Profile";
+import Contributions from "@/pages/Contributions";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -31,6 +32,7 @@ function AppRouter() {
         <Route path="/version/:versionId" element={<VersionDetail />} />
         <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
         <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
+        <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
