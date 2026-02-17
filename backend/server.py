@@ -835,78 +835,74 @@ async def upload_multiple_images(files: List[UploadFile] = File(...)):
     return results
 
 
-# ─── Seed Data ───
+# ─── Seed / Import Data ───
 
 @api_router.post("/seed")
 async def seed_data():
-    existing = await db.master_kits.count_documents({})
-    if existing > 0:
-        return {"message": "Data already seeded", "count": existing}
+    """Legacy seed endpoint - redirects to import"""
+    return {"message": "Use POST /api/import-excel to import data from the Excel file"}
 
-    JERSEY_PHOTOS = [
-        "https://images.unsplash.com/photo-1763656812756-3539efd3e301?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1693683224122-0a8e206f248d?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1764116679127-dc9d2c1138a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1768146106244-e1ac5490504f?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1671810458671-759db56dc405?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1616479719489-a68220dc9d6e?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-    ]
+@api_router.post("/import-excel")
+async def import_excel():
+    """Clear DB and import master kits from the Excel file"""
+    import openpyxl
 
-    seed_kits = [
-        {"club": "FC Barcelona", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "FC Barcelona", "season": "2024/2025", "kit_type": "Away", "brand": "Nike", "year": 2024},
-        {"club": "Real Madrid", "season": "2024/2025", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "Real Madrid", "season": "2023/2024", "kit_type": "Away", "brand": "Adidas", "year": 2023},
-        {"club": "Manchester United", "season": "2024/2025", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "Manchester United", "season": "2024/2025", "kit_type": "Third", "brand": "Adidas", "year": 2024},
-        {"club": "Liverpool FC", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Liverpool FC", "season": "2023/2024", "kit_type": "Away", "brand": "Nike", "year": 2023},
-        {"club": "AC Milan", "season": "2024/2025", "kit_type": "Home", "brand": "Puma", "year": 2024},
-        {"club": "Inter Milan", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Juventus", "season": "2024/2025", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "Bayern Munich", "season": "2024/2025", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "Paris Saint-Germain", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Paris Saint-Germain", "season": "2024/2025", "kit_type": "Away", "brand": "Nike", "year": 2024},
-        {"club": "Borussia Dortmund", "season": "2024/2025", "kit_type": "Home", "brand": "Puma", "year": 2024},
-        {"club": "Chelsea FC", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Arsenal", "season": "2024/2025", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "Arsenal", "season": "2024/2025", "kit_type": "Away", "brand": "Adidas", "year": 2024},
-        {"club": "Atletico Madrid", "season": "2024/2025", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Napoli", "season": "2024/2025", "kit_type": "Home", "brand": "EA7", "year": 2024},
-        {"club": "Brazil National Team", "season": "2024", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Argentina National Team", "season": "2024", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-        {"club": "France National Team", "season": "2024", "kit_type": "Home", "brand": "Nike", "year": 2024},
-        {"club": "Germany National Team", "season": "2024", "kit_type": "Home", "brand": "Adidas", "year": 2024},
-    ]
+    excel_path = Path("/tmp/Master_Kit_2005_2026.xlsx")
+    if not excel_path.exists():
+        raise HTTPException(status_code=404, detail="Excel file not found at /tmp/Master_Kit_2005_2026.xlsx")
 
-    for i, kit_data in enumerate(seed_kits):
-        kit_id = f"kit_{uuid.uuid4().hex[:12]}"
-        doc = {
-            **kit_data,
-            "kit_id": kit_id,
-            "front_photo": JERSEY_PHOTOS[i % len(JERSEY_PHOTOS)],
-            "created_by": "system",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.master_kits.insert_one(doc)
+    # Clear existing data (keep users and sessions)
+    for col_name in ["master_kits", "versions", "collections", "reviews", "reports", "submissions"]:
+        await db[col_name].delete_many({})
+    logger.info("Cleared existing data from master_kits, versions, collections, reviews, reports, submissions")
 
-        # Create 1-2 versions per kit
-        models = ["Replica", "Authentic"]
-        competitions = ["Domestic League", "Champions League 2024/2025", "Europa League 2024/2025", "Copa America 2024", "Euro 2024"]
-        for j, m in enumerate(models[:((i % 2) + 1)]):
-            ver_doc = {
-                "version_id": f"ver_{uuid.uuid4().hex[:12]}",
-                "kit_id": kit_id,
-                "competition": competitions[i % len(competitions)],
-                "model": m,
-                "gender": "Men",
-                "sku_code": f"SKU-{kit_data['brand'][:3].upper()}-{kit_data['year']}-{i:03d}{j}",
-                "front_photo": JERSEY_PHOTOS[i % len(JERSEY_PHOTOS)],
-                "back_photo": JERSEY_PHOTOS[(i + 1) % len(JERSEY_PHOTOS)],
-                "created_by": "system",
+    wb = openpyxl.load_workbook(excel_path, read_only=True)
+    imported = 0
+
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        rows = list(ws.iter_rows(values_only=True))
+        headers = rows[0]
+        col_map = {h: i for i, h in enumerate(headers) if h}
+
+        for idx, row in enumerate(rows[1:]):
+            start_year = 2005 + idx
+            season = f"{start_year}/{start_year + 1}"
+
+            team = row[col_map.get('Team', 0)] or ''
+            kit_type = row[col_map['Type']] if 'Type' in col_map else 'Home'
+            design = row[col_map['Design']] if 'Design' in col_map and row[col_map['Design']] else ''
+            colors = row[col_map['Colors']] if 'Colors' in col_map and row[col_map['Colors']] else ''
+            brand = row[col_map['Brand']] if 'Brand' in col_map and row[col_map['Brand']] else ''
+            sponsor = row[col_map['Sponsor (primary)']] if 'Sponsor (primary)' in col_map and row[col_map['Sponsor (primary)']] else ''
+            league = row[col_map['League']] if 'League' in col_map and row[col_map['League']] else ''
+            competition = row[col_map['Competition']] if 'Competition' in col_map and row[col_map['Competition']] else ''
+            source_url = row[col_map['URL']] if 'URL' in col_map and row[col_map['URL']] else ''
+            front_photo = row[col_map['Image URL']] if 'Image URL' in col_map and row[col_map['Image URL']] else ''
+
+            doc = {
+                "kit_id": f"kit_{uuid.uuid4().hex[:12]}",
+                "club": str(team).strip(),
+                "season": season,
+                "kit_type": str(kit_type).strip() if kit_type else "Home",
+                "brand": str(brand).strip() if brand else "",
+                "front_photo": str(front_photo).strip() if front_photo else "",
+                "year": start_year,
+                "design": str(design).strip() if design else "",
+                "colors": str(colors).strip() if colors else "",
+                "sponsor": str(sponsor).strip() if sponsor else "",
+                "league": str(league).strip() if league else "",
+                "competition": str(competition).strip() if competition else "",
+                "source_url": str(source_url).strip() if source_url else "",
+                "created_by": "import",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db.versions.insert_one(ver_doc)
+            await db.master_kits.insert_one(doc)
+            imported += 1
+
+    wb.close()
+    logger.info(f"Imported {imported} master kits from Excel")
+    return {"message": f"Successfully imported {imported} master kits", "count": imported}
 
     return {"message": "Seed data created", "count": len(seed_kits)}
 
