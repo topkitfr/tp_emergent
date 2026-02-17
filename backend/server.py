@@ -782,6 +782,43 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
     return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
 
 
+# ─── Image Upload ───
+
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+@api_router.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"File type {ext} not allowed. Use: {', '.join(ALLOWED_EXTENSIONS)}")
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Max 10MB")
+    filename = f"{uuid.uuid4().hex[:16]}{ext}"
+    filepath = UPLOAD_DIR / filename
+    async with aiofiles.open(filepath, "wb") as f:
+        await f.write(contents)
+    return {"filename": filename, "url": f"/api/uploads/{filename}"}
+
+@api_router.post("/upload/multiple")
+async def upload_multiple_images(files: List[UploadFile] = File(...)):
+    results = []
+    for file in files:
+        ext = Path(file.filename).suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            continue
+        contents = await file.read()
+        if len(contents) > MAX_FILE_SIZE:
+            continue
+        filename = f"{uuid.uuid4().hex[:16]}{ext}"
+        filepath = UPLOAD_DIR / filename
+        async with aiofiles.open(filepath, "wb") as f:
+            await f.write(contents)
+        results.append({"filename": filename, "url": f"/api/uploads/{filename}"})
+    return results
+
+
 # ─── Seed Data ───
 
 @api_router.post("/seed")
