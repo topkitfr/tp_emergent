@@ -16,6 +16,8 @@ class FootballJerseyAPITester:
         self.version_id = None
         self.collection_id = None
         self.review_id = None
+        self.submission_id = None
+        self.report_id = None
 
     def log_test(self, name, result, status_code=None, details=""):
         self.tests_run += 1
