@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, createReview, addToCollection, getVersionEstimates, createReport } from '@/lib/api';
+import { getVersion, createReview, addToCollection, getVersionEstimates, createReport, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
