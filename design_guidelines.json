@@ -1,0 +1,184 @@
+{
+  "brand_identity": {
+    "name": "KitLog",
+    "persona": "The Curator of the Beautiful Game",
+    "voice": "Passionate, Precise, Archival, Electric",
+    "theme": "Stadium Night Mode",
+    "core_philosophy": "Preserving football history, one kit at a time. Every thread tells a story."
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Barlow Condensed, sans-serif",
+      "weights": ["700", "800", "900"],
+      "usage": "Page titles, Hero sections, Kit Names (Year + Team)",
+      "letter_spacing": "tracking-tighter",
+      "transform": "uppercase"
+    },
+    "body": {
+      "font_family": "DM Sans, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "Descriptions, specs, user reviews",
+      "letter_spacing": "tracking-normal"
+    },
+    "data_mono": {
+      "font_family": "JetBrains Mono, monospace",
+      "weights": ["400"],
+      "usage": "SKUs, Catalog IDs, Sizes, Prices",
+      "size": "text-xs or text-sm"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#09090b", 
+      "foreground": "#fafafa",
+      "card": "#18181b",
+      "card_foreground": "#fafafa",
+      "popover": "#18181b",
+      "popover_foreground": "#fafafa",
+      "primary": "#22c55e", 
+      "primary_foreground": "#000000",
+      "secondary": "#27272a",
+      "secondary_foreground": "#fafafa",
+      "muted": "#27272a",
+      "muted_foreground": "#a1a1aa",
+      "accent": "#facc15",
+      "accent_foreground": "#000000",
+      "destructive": "#ef4444",
+      "destructive_foreground": "#fafafa",
+      "border": "#27272a",
+      "input": "#27272a",
+      "ring": "#22c55e"
+    },
+    "semantic": {
+      "pitch_green": "#22c55e",
+      "floodlight_white": "#ffffff",
+      "night_sky": "#09090b",
+      "trophy_gold": "#facc15",
+      "referee_black": "#000000",
+      "offside_red": "#ef4444"
+    },
+    "gradients": {
+      "hero_glow": "radial-gradient(circle at center, rgba(34, 197, 94, 0.15) 0%, rgba(9, 9, 11, 0) 70%)",
+      "card_shimmer": "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.05) 25%, transparent 30%)"
+    }
+  },
+  "visual_enhancers": {
+    "textures": {
+      "mesh_pattern": "url(\"data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%2327272a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E\")",
+      "noise_overlay": "opacity-5 mix-blend-overlay"
+    },
+    "borders": {
+      "default": "border border-border",
+      "active": "border-l-4 border-l-primary",
+      "rare_item": "border border-accent/50 shadow-[0_0_15px_rgba(250,204,21,0.1)]"
+    },
+    "shadows": {
+      "stadium_light": "0 0 40px -10px rgba(34, 197, 94, 0.2)",
+      "card_hover": "0 10px 30px -10px rgba(0,0,0,0.5)"
+    }
+  },
+  "layout_strategies": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_bento": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4",
+    "grid_catalog": "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8",
+    "spacing": {
+      "section_gap": "py-16 or py-24",
+      "element_gap": "gap-4 or gap-6"
+    }
+  },
+  "components": {
+    "jersey_card": {
+      "style": "Trading Card Style",
+      "aspect_ratio": "aspect-[3/4]",
+      "elements": [
+        "Image takes up 70% height",
+        "Info block at bottom with team, year, brand",
+        "Condition badge (Mint, Good, Worn) absolute top-right",
+        "Collection status (In Collection, Wanted) absolute top-left"
+      ]
+    },
+    "master_kit_header": {
+      "style": "Hero Split",
+      "elements": [
+        "Left: Large Jersey Photo (Front/Back toggle)",
+        "Right: Dense Data (Season, Manufacturer, League, Away/Home/Third)",
+        "Background: Stadium Night blurred"
+      ]
+    },
+    "filter_sidebar": {
+      "style": "Faceted Search",
+      "elements": ["Team", "Year Range", "Brand", "League", "Size", "Condition"],
+      "behavior": "Sticky on desktop, Sheet on mobile"
+    }
+  },
+  "motion": {
+    "hover_effects": "transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg",
+    "page_transition": "animate-in fade-in slide-in-from-bottom-4 duration-500",
+    "loading": "Pulse with 'pitch_green' glow"
+  },
+  "image_urls": {
+    "hero_backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1676746424139-77f8bd8922a8?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Stadium night lights, moody background"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1767884162073-b0e3741aad63?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Stadium light tower, dark sky"
+      }
+    ],
+    "jersey_placeholders": [
+      {
+        "url": "https://images.unsplash.com/photo-1763656812756-3539efd3e301?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Yellow Colombian jersey folded (use for 'Version' detail)"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1693683224122-0a8e206f248d?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Retro jersey close up number 16"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1752614654887-0b8d59c076b0?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Match action shot (use for 'Featured' section)"
+      }
+    ],
+    "textures": [
+      {
+        "url": "https://images.unsplash.com/photo-1671810458671-759db56dc405?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Jersey fabric texture (red/white stripes)"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1616479719489-a68220dc9d6e?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Green grass texture close up"
+      }
+    ]
+  },
+  "3d_libraries": {
+    "primary": "None required for MVP",
+    "optional": "React Three Fiber for 3D jersey rotation (future feature)"
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Ensure 'Barlow Condensed' and 'DM Sans' are imported in index.css from Google Fonts.",
+    "2. THEME: Force Dark Mode by default. The app should feel like a night match.",
+    "3. IMAGES: Use the provided 'jersey_placeholders' for the seed data/mock data. Do not leave empty images.",
+    "4. COMPONENTS: heavily customize Shadcn components. Remove the default 'radius' rounded-lg and go for 'rounded-md' or 'rounded-none' for a sharper, sportier look.",
+    "5. DATA-TESTID: Add data-testid to every interactive element (buttons, inputs, cards).",
+    "6. LISTS: For the 'Browse' page, use a dense grid. Do not use full-width cards for every item.",
+    "7. EMPTY STATES: If a user has no jerseys, show a 'Locker Room is Empty' state with a CTA to add the first kit.",
+    "8. DO NOT USE: Purple or Teal for main actions. Use Green (Pitch) or White (Chalk).",
+    "9. ICONS: Use Lucide-React. For 'Jersey' icon, use 'Shirt' icon."
+  ],
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) for sticky headers.",
+    "You MUST NOT apply universal transition. Eg: transition: all.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors.",
+    "Main agent relies on these image URLs. Missing categories = main agent will use placeholder text which is FORBIDDEN."
+  ]
+}
