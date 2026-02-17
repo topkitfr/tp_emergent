@@ -1,33 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, createReview, addToCollection } from '@/lib/api';
+import { getVersion, createReview, addToCollection, getVersionEstimates, createReport } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Star, Shirt, ChevronRight, Package, Tag, Users, FolderPlus, Check, Hash, User } from 'lucide-react';
+import { Star, Shirt, ChevronRight, Package, Tag, Users, FolderPlus, Check, Hash, User, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+const CONDITIONS = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function VersionDetail() {
   const { versionId } = useParams();
   const { user } = useAuth();
   const [version, setVersion] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [estimates, setEstimates] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewHover, setReviewHover] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [addingToCollection, setAddingToCollection] = useState(false);
-  const [collectionCategory, setCollectionCategory] = useState('General');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
+
+  // Collection form
+  const [collectionCategory, setCollectionCategory] = useState('General');
+  const [collectionCondition, setCollectionCondition] = useState('');
+  const [collectionSize, setCollectionSize] = useState('');
+  const [collectionValue, setCollectionValue] = useState('');
+  const [collectionNotes, setCollectionNotes] = useState('');
+
+  // Report form
+  const [reportNotes, setReportNotes] = useState('');
+  const [reportCorrections, setReportCorrections] = useState({});
 
   const fetchVersion = () => {
-    getVersion(versionId).then(r => {
-      setVersion(r.data);
+    Promise.all([
+      getVersion(versionId),
+      getVersionEstimates(versionId)
+    ]).then(([vRes, eRes]) => {
+      setVersion(vRes.data);
+      setEstimates(eRes.data);
       setLoading(false);
+      // Pre-fill report corrections
+      if (vRes.data.master_kit) {
+        setReportCorrections({
+          competition: vRes.data.competition,
+          model: vRes.data.model,
+          gender: vRes.data.gender,
+          sku_code: vRes.data.sku_code || ''
+        });
+      }
     }).catch(() => setLoading(false));
   };
 
@@ -53,7 +84,14 @@ export default function VersionDetail() {
   const handleAddToCollection = async () => {
     setAddingToCollection(true);
     try {
-      await addToCollection({ version_id: versionId, category: collectionCategory });
+      await addToCollection({
+        version_id: versionId,
+        category: collectionCategory,
+        condition: collectionCondition,
+        size: collectionSize,
+        value_estimate: collectionValue ? parseFloat(collectionValue) : null,
+        notes: collectionNotes
+      });
       toast.success('Added to collection');
       setShowAddForm(false);
       fetchVersion();
@@ -61,6 +99,22 @@ export default function VersionDetail() {
       toast.error(err.response?.data?.detail || 'Failed to add');
     } finally {
       setAddingToCollection(false);
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    try {
+      await createReport({
+        target_type: 'version',
+        target_id: versionId,
+        corrections: reportCorrections,
+        notes: reportNotes
+      });
+      toast.success('Report submitted for community review');
+      setShowReportForm(false);
+      setReportNotes('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit report');
     }
   };
 
@@ -87,6 +141,13 @@ export default function VersionDetail() {
   }
 
   const mk = version.master_kit;
+
+  // Prepare estimate chart data
+  const estimateChartData = estimates && estimates.count > 0 ? [
+    { name: 'Low', value: estimates.low, color: '#ef4444' },
+    { name: 'Average', value: estimates.average, color: '#facc15' },
+    { name: 'High', value: estimates.high, color: '#22c55e' }
+  ] : [];
 
   return (
     <div className="animate-fade-in-up">
@@ -132,7 +193,6 @@ export default function VersionDetail() {
               </h1>
             </div>
 
-            {/* Rating */}
             {version.avg_rating > 0 && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-0.5">
@@ -147,64 +207,166 @@ export default function VersionDetail() {
 
             <Separator className="bg-border" />
 
-            {/* Data */}
+            {/* Data Grid */}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Model</div>
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-primary" />
-                  <span className="text-sm">{version.model}</span>
-                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Model</div>
+                <div className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model}</span></div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-primary" />
-                  <span className="text-sm">{version.gender}</span>
-                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Gender</div>
+                <div className="flex items-center gap-2"><User className="w-4 h-4 text-primary" /><span className="text-sm">{version.gender}</span></div>
               </div>
               {version.sku_code && (
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>SKU</div>
-                  <div className="flex items-center gap-2">
-                    <Hash className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-mono">{version.sku_code}</span>
-                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>SKU</div>
+                  <div className="flex items-center gap-2"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.sku_code}</span></div>
                 </div>
               )}
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>In Collections</div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-mono">{version.collection_count || 0}</span>
-                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>In Collections</div>
+                <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.collection_count || 0}</span></div>
               </div>
             </div>
 
-            {/* Add to Collection */}
-            {user && (
-              <div>
-                {!showAddForm ? (
-                  <Button onClick={() => setShowAddForm(true)} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="add-to-collection-btn">
-                    <FolderPlus className="w-4 h-4 mr-2" /> Add to My Collection
-                  </Button>
-                ) : (
-                  <div className="border border-border p-4 space-y-3">
-                    <Input
-                      placeholder="Category (e.g., Champions League, Vintage)"
-                      value={collectionCategory}
-                      onChange={e => setCollectionCategory(e.target.value)}
-                      className="bg-card border-border rounded-none"
-                      data-testid="collection-category-input"
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={handleAddToCollection} disabled={addingToCollection} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="confirm-add-collection-btn">
-                        <Check className="w-4 h-4 mr-1" /> {addingToCollection ? 'Adding...' : 'Confirm'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setShowAddForm(false)} className="rounded-none" data-testid="cancel-add-collection-btn">Cancel</Button>
-                    </div>
+            {/* Estimation Stats */}
+            {estimates && estimates.count > 0 && (
+              <div className="border border-border p-4" data-testid="estimation-stats">
+                <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+                  VALUE ESTIMATION
+                  <span className="font-mono text-xs text-muted-foreground ml-2 normal-case">({estimates.count} estimates)</span>
+                </h3>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center p-3 bg-destructive/5 border border-destructive/20">
+                    <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
+                    <div className="font-mono text-lg">${estimates.low}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Low</div>
                   </div>
+                  <div className="text-center p-3 bg-accent/5 border border-accent/20">
+                    <Minus className="w-4 h-4 text-accent mx-auto mb-1" />
+                    <div className="font-mono text-lg">${estimates.average}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Average</div>
+                  </div>
+                  <div className="text-center p-3 bg-primary/5 border border-primary/20">
+                    <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
+                    <div className="font-mono text-lg">${estimates.high}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>High</div>
+                  </div>
+                </div>
+                <div className="h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={estimateChartData} barSize={40}>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: 0, fontSize: 12 }}
+                        formatter={(value) => [`$${value}`, 'Value']}
+                      />
+                      <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+                        {estimateChartData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            {user && (
+              <div className="flex flex-wrap gap-2">
+                {!showAddForm && (
+                  <Button onClick={() => setShowAddForm(true)} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="add-to-collection-btn">
+                    <FolderPlus className="w-4 h-4 mr-2" /> Add to Collection
+                  </Button>
                 )}
+                <Button variant="outline" onClick={() => setShowReportForm(!showReportForm)} className="rounded-none border-border" data-testid="report-btn">
+                  <AlertTriangle className="w-4 h-4 mr-2" /> Report Error
+                </Button>
+              </div>
+            )}
+
+            {/* Add to Collection Form */}
+            {showAddForm && user && (
+              <div className="border border-primary/30 p-4 space-y-3" data-testid="add-collection-form">
+                <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>ADD TO COLLECTION</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Category</Label>
+                    <Input value={collectionCategory} onChange={e => setCollectionCategory(e.target.value)} placeholder="General" className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-category-input" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Condition</Label>
+                    <Select value={collectionCondition} onValueChange={setCollectionCondition}>
+                      <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-condition-select"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Size</Label>
+                    <Select value={collectionSize} onValueChange={setCollectionSize}>
+                      <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-size-select"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Your Value Estimate ($)</Label>
+                    <Input type="number" value={collectionValue} onChange={e => setCollectionValue(e.target.value)} placeholder="0.00" className="bg-card border-border rounded-none h-9 text-sm font-mono" data-testid="collection-value-input" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                  <Textarea value={collectionNotes} onChange={e => setCollectionNotes(e.target.value)} placeholder="Personal notes..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="collection-notes-input" />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleAddToCollection} disabled={addingToCollection} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="confirm-add-collection-btn">
+                    <Check className="w-4 h-4 mr-1" /> {addingToCollection ? 'Adding...' : 'Confirm'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAddForm(false)} className="rounded-none" data-testid="cancel-add-collection-btn">Cancel</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Report Form */}
+            {showReportForm && user && (
+              <div className="border border-destructive/30 p-4 space-y-3" data-testid="report-form">
+                <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+                <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  Suggest corrections for this version. Community will vote on changes.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition</Label>
+                    <Input value={reportCorrections.competition || ''} onChange={e => setReportCorrections(p => ({...p, competition: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-competition" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model</Label>
+                    <Input value={reportCorrections.model || ''} onChange={e => setReportCorrections(p => ({...p, model: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-model" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
+                    <Input value={reportCorrections.gender || ''} onChange={e => setReportCorrections(p => ({...p, gender: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-gender" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
+                    <Input value={reportCorrections.sku_code || ''} onChange={e => setReportCorrections(p => ({...p, sku_code: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm font-mono" data-testid="report-sku" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                  <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="report-notes" />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSubmitReport} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="submit-report-btn">
+                    Submit Report
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowReportForm(false)} className="rounded-none">Cancel</Button>
+                </div>
               </div>
             )}
           </div>
@@ -216,38 +378,24 @@ export default function VersionDetail() {
             REVIEWS <span className="font-mono text-sm text-muted-foreground ml-2">{version.review_count || 0}</span>
           </h2>
 
-          {/* Write Review */}
           {user && (
             <div className="border border-border p-6 mb-8" data-testid="review-form">
-              <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>WRITE A REVIEW</h3>
+              <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'Barlow Condensed' }}>WRITE A REVIEW</h3>
               <div className="flex items-center gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setReviewRating(s)}
-                    onMouseEnter={() => setReviewHover(s)}
-                    onMouseLeave={() => setReviewHover(0)}
-                    data-testid={`star-rating-${s}`}
-                  >
+                  <button key={s} onClick={() => setReviewRating(s)} onMouseEnter={() => setReviewHover(s)} onMouseLeave={() => setReviewHover(0)} data-testid={`star-rating-${s}`}>
                     <Star className={`w-6 h-6 cursor-pointer ${s <= (reviewHover || reviewRating) ? 'text-accent fill-accent' : 'text-muted'}`} style={{ transition: 'color 0.15s ease' }} />
                   </button>
                 ))}
                 {reviewRating > 0 && <span className="text-sm font-mono text-accent ml-2">{reviewRating}/5</span>}
               </div>
-              <Textarea
-                placeholder="Share your thoughts on this jersey..."
-                value={reviewComment}
-                onChange={e => setReviewComment(e.target.value)}
-                className="bg-card border-border rounded-none mb-3 min-h-[80px]"
-                data-testid="review-comment-input"
-              />
+              <Textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Share your thoughts..." className="bg-card border-border rounded-none mb-3 min-h-[80px]" data-testid="review-comment-input" />
               <Button onClick={handleSubmitReview} disabled={submittingReview} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="submit-review-btn">
                 {submittingReview ? 'Submitting...' : 'Submit Review'}
               </Button>
             </div>
           )}
 
-          {/* Reviews List */}
           {version.reviews && version.reviews.length > 0 ? (
             <div className="space-y-4 stagger-children" data-testid="reviews-list">
               {version.reviews.map(r => (
@@ -269,7 +417,7 @@ export default function VersionDetail() {
                       {r.created_at ? new Date(r.created_at).toLocaleDateString() : ''}
                     </span>
                   </div>
-                  {r.comment && <p className="text-sm text-muted-foreground leading-relaxed" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>{r.comment}</p>}
+                  {r.comment && <p className="text-sm text-muted-foreground leading-relaxed" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{r.comment}</p>}
                 </div>
               ))}
             </div>
