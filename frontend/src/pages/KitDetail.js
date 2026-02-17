@@ -160,6 +160,30 @@ export default function KitDetail() {
                     <span className="text-sm font-mono">{kit.version_count}</span>
                   </div>
                 </div>
+                {kit.design && (
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
+                    <span className="text-sm">{kit.design}</span>
+                  </div>
+                )}
+                {kit.colors && (
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Colors</div>
+                    <span className="text-sm">{kit.colors}</span>
+                  </div>
+                )}
+                {kit.sponsor && (
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
+                    <span className="text-sm">{kit.sponsor}</span>
+                  </div>
+                )}
+                {kit.league && (
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</div>
+                    <span className="text-sm">{kit.league}</span>
+                  </div>
+                )}
               </div>
 
               {/* Report Button */}
