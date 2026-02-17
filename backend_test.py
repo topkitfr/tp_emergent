@@ -2,7 +2,10 @@ import requests
 import sys
 import json
 import subprocess
+import tempfile
 from datetime import datetime
+from io import BytesIO
+from PIL import Image
 
 class FootballJerseyAPITester:
     def __init__(self, base_url="https://squad-archive-1.preview.emergentagent.com"):
