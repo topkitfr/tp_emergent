@@ -585,9 +585,201 @@ async def get_user_profile(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     collection_count = await db.collections.count_documents({"user_id": user_id})
     review_count = await db.reviews.count_documents({"user_id": user_id})
+    submission_count = await db.submissions.count_documents({"submitted_by": user_id})
     user["collection_count"] = collection_count
     user["review_count"] = review_count
+    user["submission_count"] = submission_count
     return user
+
+@api_router.put("/users/profile")
+async def update_profile(update: ProfileUpdate, request: Request):
+    user = await get_current_user(request)
+    update_dict = {k: v for k, v in update.model_dump().items() if v is not None}
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    if "username" in update_dict:
+        existing = await db.users.find_one(
+            {"username": update_dict["username"], "user_id": {"$ne": user["user_id"]}}, {"_id": 0}
+        )
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+    await db.users.update_one({"user_id": user["user_id"]}, {"$set": update_dict})
+    updated = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    return updated
+
+
+# ─── Submission Routes ───
+
+@api_router.post("/submissions")
+async def create_submission(sub: SubmissionCreate, request: Request):
+    user = await get_current_user(request)
+    if sub.submission_type not in ("master_kit", "version"):
+        raise HTTPException(status_code=400, detail="Invalid submission type")
+    doc = {
+        "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
+        "submission_type": sub.submission_type,
+        "data": sub.data,
+        "submitted_by": user["user_id"],
+        "submitter_name": user.get("name", ""),
+        "status": "pending",
+        "votes_up": 0,
+        "votes_down": 0,
+        "voters": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.submissions.insert_one(doc)
+    result = await db.submissions.find_one({"submission_id": doc["submission_id"]}, {"_id": 0})
+    return result
+
+@api_router.get("/submissions")
+async def list_submissions(status: Optional[str] = "pending", skip: int = 0, limit: int = 50):
+    query = {}
+    if status:
+        query["status"] = status
+    subs = await db.submissions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return subs
+
+@api_router.get("/submissions/{submission_id}")
+async def get_submission(submission_id: str):
+    sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return sub
+
+@api_router.post("/submissions/{submission_id}/vote")
+async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Request):
+    user = await get_current_user(request)
+    # Check user has at least 1 jersey in collection
+    col_count = await db.collections.count_documents({"user_id": user["user_id"]})
+    if col_count == 0:
+        raise HTTPException(status_code=403, detail="You must have at least 1 jersey in your collection to vote")
+    sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if sub["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Submission is no longer pending")
+    if user["user_id"] in sub.get("voters", []):
+        raise HTTPException(status_code=400, detail="Already voted")
+    if vote.vote not in ("up", "down"):
+        raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
+    inc_field = "votes_up" if vote.vote == "up" else "votes_down"
+    await db.submissions.update_one(
+        {"submission_id": submission_id},
+        {"$inc": {inc_field: 1}, "$push": {"voters": user["user_id"]}}
+    )
+    # Check if threshold reached
+    updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
+    if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
+        # Approve: create the actual kit/version
+        data = updated_sub["data"]
+        if updated_sub["submission_type"] == "master_kit":
+            kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+            kit_doc = {
+                "kit_id": kit_id,
+                "club": data.get("club", ""),
+                "season": data.get("season", ""),
+                "kit_type": data.get("kit_type", ""),
+                "brand": data.get("brand", ""),
+                "front_photo": data.get("front_photo", ""),
+                "year": data.get("year", 2024),
+                "created_by": updated_sub["submitted_by"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.master_kits.insert_one(kit_doc)
+        elif updated_sub["submission_type"] == "version":
+            ver_doc = {
+                "version_id": f"ver_{uuid.uuid4().hex[:12]}",
+                "kit_id": data.get("kit_id", ""),
+                "competition": data.get("competition", ""),
+                "model": data.get("model", ""),
+                "gender": data.get("gender", ""),
+                "sku_code": data.get("sku_code", ""),
+                "front_photo": data.get("front_photo", ""),
+                "back_photo": data.get("back_photo", ""),
+                "created_by": updated_sub["submitted_by"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.versions.insert_one(ver_doc)
+        await db.submissions.update_one(
+            {"submission_id": submission_id},
+            {"$set": {"status": "approved"}}
+        )
+    return await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
+
+
+# ─── Report Routes ───
+
+@api_router.post("/reports")
+async def create_report(report: ReportCreate, request: Request):
+    user = await get_current_user(request)
+    if report.target_type == "master_kit":
+        target = await db.master_kits.find_one({"kit_id": report.target_id}, {"_id": 0})
+    elif report.target_type == "version":
+        target = await db.versions.find_one({"version_id": report.target_id}, {"_id": 0})
+    else:
+        raise HTTPException(status_code=400, detail="Invalid target type")
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
+    doc = {
+        "report_id": f"rep_{uuid.uuid4().hex[:12]}",
+        "target_type": report.target_type,
+        "target_id": report.target_id,
+        "original_data": target,
+        "corrections": report.corrections,
+        "notes": report.notes or "",
+        "reported_by": user["user_id"],
+        "reporter_name": user.get("name", ""),
+        "status": "pending",
+        "votes_up": 0,
+        "votes_down": 0,
+        "voters": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.reports.insert_one(doc)
+    result = await db.reports.find_one({"report_id": doc["report_id"]}, {"_id": 0})
+    return result
+
+@api_router.get("/reports")
+async def list_reports(status: Optional[str] = "pending", skip: int = 0, limit: int = 50):
+    query = {}
+    if status:
+        query["status"] = status
+    reports = await db.reports.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return reports
+
+@api_router.post("/reports/{report_id}/vote")
+async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
+    user = await get_current_user(request)
+    col_count = await db.collections.count_documents({"user_id": user["user_id"]})
+    if col_count == 0:
+        raise HTTPException(status_code=403, detail="You must have at least 1 jersey in your collection to vote")
+    report = await db.reports.find_one({"report_id": report_id}, {"_id": 0})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if report["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Report is no longer pending")
+    if user["user_id"] in report.get("voters", []):
+        raise HTTPException(status_code=400, detail="Already voted")
+    if vote.vote not in ("up", "down"):
+        raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
+    inc_field = "votes_up" if vote.vote == "up" else "votes_down"
+    await db.reports.update_one(
+        {"report_id": report_id},
+        {"$inc": {inc_field: 1}, "$push": {"voters": user["user_id"]}}
+    )
+    updated = await db.reports.find_one({"report_id": report_id}, {"_id": 0})
+    if updated["votes_up"] >= APPROVAL_THRESHOLD:
+        corrections = updated["corrections"]
+        if updated["target_type"] == "master_kit":
+            update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
+            if update_fields:
+                await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
+        elif updated["target_type"] == "version":
+            update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
+            if update_fields:
+                await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
+        await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
+    return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
 
 
 # ─── Seed Data ───
