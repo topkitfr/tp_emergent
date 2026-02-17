@@ -57,6 +57,12 @@ export default function Navbar() {
                     Add Jersey
                   </Button>
                 </Link>
+                <Link to="/contributions">
+                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-contributions">
+                    <FileCheck className="w-4 h-4 mr-1.5" />
+                    Contributions
+                  </Button>
+                </Link>
               </>
             )}
           </div>
