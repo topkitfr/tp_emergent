@@ -167,11 +167,11 @@ export default function VersionDetail() {
           {/* Left - Images */}
           <div className="space-y-4">
             <div className="aspect-[3/4] border border-border bg-card overflow-hidden" data-testid="version-front-image">
-              <img src={version.front_photo || mk?.front_photo} alt="Front" className="w-full h-full object-cover" />
+              <img src={proxyImageUrl(version.front_photo || mk?.front_photo)} alt="Front" className="w-full h-full object-cover" />
             </div>
             {version.back_photo && (
               <div className="aspect-[3/4] border border-border bg-card overflow-hidden" data-testid="version-back-image">
-                <img src={version.back_photo} alt="Back" className="w-full h-full object-cover" />
+                <img src={proxyImageUrl(version.back_photo)} alt="Back" className="w-full h-full object-cover" />
               </div>
             )}
           </div>
