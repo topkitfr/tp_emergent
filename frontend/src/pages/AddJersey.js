@@ -218,12 +218,12 @@ export default function AddJersey() {
                 <Input value={skuCode} onChange={e => setSkuCode(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none font-mono" data-testid="input-sku" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Front Photo URL</Label>
-                <Input value={verFrontPhoto} onChange={e => setVerFrontPhoto(e.target.value)} placeholder="https://..." className="bg-card border-border rounded-none" data-testid="input-ver-front-photo" />
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Front Photo</Label>
+                <ImageUpload value={verFrontPhoto} onChange={setVerFrontPhoto} label="Front" testId="upload-ver-front-photo" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Back Photo URL</Label>
-                <Input value={verBackPhoto} onChange={e => setVerBackPhoto(e.target.value)} placeholder="https://..." className="bg-card border-border rounded-none" data-testid="input-ver-back-photo" />
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Back Photo</Label>
+                <ImageUpload value={verBackPhoto} onChange={setVerBackPhoto} label="Back" testId="upload-ver-back-photo" />
               </div>
             </div>
 
