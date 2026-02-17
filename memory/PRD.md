@@ -31,15 +31,26 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - [x] Version Detail pages with full specs
 - [x] Personal Collection management (add/remove, categories)
 - [x] Rating & Review system (1-5 stars + comments)
-- [x] Add Jersey form (multi-step: Master Kit → Version)
+- [x] Add Jersey form (multi-step: Master Kit -> Version)
 - [x] User Profile page with collection stats
 - [x] Dark "Stadium Night" theme
 - [x] Responsive design
 - [x] Landing page with stats
 
+### Phase 2 Features (Feb 17, 2026) - COMPLETE
+- [x] Collection item details (condition, size, value estimate, notes)
+- [x] Contributions section with voting system (5 upvotes = auto-approved)
+- [x] User profile settings (username, description, profile picture URL)
+- [x] Collection privacy toggle (public/private)
+- [x] Version estimation statistics (low/avg/high with bar chart)
+- [x] Overall collection value estimation (low/avg/high)
+- [x] Category-specific value estimations
+- [x] Report & correct jerseys (with original vs proposed comparison, community re-voting)
+- [x] Inline collection item editing (condition, size, value, notes)
+
 ### Test Results
-- Backend: 100% (11/11 tests passed)
-- Frontend: 95% (1 minor route timing issue)
+- Backend: 100% (22/22 tests passed)
+- Frontend: 95%
 
 ## Prioritized Backlog
 
