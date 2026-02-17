@@ -488,9 +488,10 @@ async def seed_data():
     JERSEY_PHOTOS = [
         "https://images.unsplash.com/photo-1763656812756-3539efd3e301?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
         "https://images.unsplash.com/photo-1693683224122-0a8e206f248d?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
+        "https://images.unsplash.com/photo-1764116679127-dc9d2c1138a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
+        "https://images.unsplash.com/photo-1768146106244-e1ac5490504f?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
         "https://images.unsplash.com/photo-1671810458671-759db56dc405?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
         "https://images.unsplash.com/photo-1616479719489-a68220dc9d6e?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
-        "https://images.unsplash.com/photo-1752614654887-0b8d59c076b0?crop=entropy&cs=srgb&fm=jpg&q=85&w=600",
     ]
 
     seed_kits = [
