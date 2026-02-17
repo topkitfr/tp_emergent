@@ -230,7 +230,7 @@ export default function Profile() {
                   <Link to={`/version/${item.version_id}`} key={item.collection_id}>
                     <div className="border border-border bg-card overflow-hidden hover:border-primary/30" style={{ transition: 'border-color 0.2s ease' }} data-testid={`profile-collection-${item.collection_id}`}>
                       <div className="aspect-[3/4] bg-secondary overflow-hidden">
-                        <img src={item.version?.front_photo || item.master_kit?.front_photo} alt="" className="w-full h-full object-cover" />
+                        <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div className="p-2">
                         <p className="text-xs font-semibold truncate" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{item.master_kit?.club}</p>
