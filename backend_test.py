@@ -557,7 +557,7 @@ print('USER_ID:' + userId);
 
     def run_all_tests(self):
         print("=" * 60)
-        print("🏟️  FOOTBALL JERSEY CATALOG API TESTING")
+        print("🏟️  FOOTBALL JERSEY CATALOG API TESTING - PHASE 2")
         print("=" * 60)
         print(f"Testing API at: {self.api_url}")
         
@@ -568,13 +568,29 @@ print('USER_ID:' + userId);
         self.test_master_kits_list()
         self.test_master_kit_detail()
         self.test_version_detail()
+        self.test_version_estimates()
         
         # Create test session for authenticated endpoints
         if self.create_test_session():
+            # Basic auth tests
             self.test_auth_me()
             self.test_collections_get()
             self.test_collection_add()
             self.test_review_create()
+            
+            # Phase 2 features
+            self.test_collection_update()
+            self.test_collection_stats()
+            self.test_category_stats()
+            self.test_profile_update()
+            self.test_submissions_create()
+            self.test_submissions_list()
+            self.test_submission_vote()
+            self.test_reports_create()
+            self.test_reports_list()
+            self.test_report_vote()
+            
+            # Cleanup
             self.test_collection_remove()
         
         print("\n" + "=" * 60)
