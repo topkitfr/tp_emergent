@@ -47,6 +47,13 @@ export const getStats = () => api.get('/stats');
 // Seed
 export const seedData = () => api.post('/seed');
 
+// Upload
+export const uploadImage = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+
 // User Profile
 export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`);
 export const updateProfile = (data) => api.put('/users/profile', data);
