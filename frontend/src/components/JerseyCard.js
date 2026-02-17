@@ -51,6 +51,11 @@ export default function JerseyCard({ kit }) {
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">{kit.brand}</span>
           </div>
+          {kit.colors && (
+            <p className="text-[10px] text-muted-foreground truncate" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
+              {kit.colors}
+            </p>
+          )}
           {kit.avg_rating > 0 && (
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 text-accent fill-accent" />
