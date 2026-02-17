@@ -861,7 +861,7 @@ async def seed_data():
 # ─── Static File Serving ───
 
 from fastapi.staticfiles import StaticFiles
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # Include the router
 app.include_router(api_router)
