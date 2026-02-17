@@ -161,6 +161,55 @@ export default function KitDetail() {
                   </div>
                 </div>
               </div>
+
+              {/* Report Button */}
+              {user && (
+                <div>
+                  <Button variant="outline" size="sm" onClick={() => setShowReport(!showReport)} className="rounded-none border-border" data-testid="kit-report-btn">
+                    <AlertTriangle className="w-4 h-4 mr-1" /> Report Error
+                  </Button>
+                </div>
+              )}
+
+              {/* Report Form */}
+              {showReport && user && (
+                <div className="border border-destructive/30 p-4 space-y-3" data-testid="kit-report-form">
+                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Club</Label>
+                      <Input value={reportCorrections.club || ''} onChange={e => setReportCorrections(p => ({...p, club: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-club" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
+                      <Input value={reportCorrections.season || ''} onChange={e => setReportCorrections(p => ({...p, season: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-season" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
+                      <Select value={reportCorrections.kit_type || ''} onValueChange={v => setReportCorrections(p => ({...p, kit_type: v}))}>
+                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
+                      <Input value={reportCorrections.brand || ''} onChange={e => setReportCorrections(p => ({...p, brand: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-brand" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="kit-report-notes" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSubmitReport} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="kit-submit-report-btn">
+                      <Check className="w-3 h-3 mr-1" /> Submit Report
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
