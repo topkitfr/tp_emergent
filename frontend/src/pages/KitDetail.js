@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMasterKit } from '@/lib/api';
+import { getMasterKit, createReport } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, Shirt, ArrowLeft, Calendar, Tag, Package, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Star, Shirt, ArrowLeft, Calendar, Tag, Package, ChevronRight, AlertTriangle, Check } from 'lucide-react';
+
+const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special'];
 
 export default function KitDetail() {
   const { kitId } = useParams();
+  const { user } = useAuth();
   const [kit, setKit] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReport, setShowReport] = useState(false);
+  const [reportCorrections, setReportCorrections] = useState({});
+  const [reportNotes, setReportNotes] = useState('');
 
   useEffect(() => {
     getMasterKit(kitId).then(r => {
