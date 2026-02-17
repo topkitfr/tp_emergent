@@ -105,6 +105,30 @@ export default function Browse() {
           </SelectContent>
         </Select>
       </div>
+      <div>
+        <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</label>
+        <Select value={selectedDesign} onValueChange={setSelectedDesign}>
+          <SelectTrigger className="bg-card border-border rounded-none" data-testid="filter-design">
+            <SelectValue placeholder="All Designs" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            {filters.designs?.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {filters.leagues?.length > 0 && (
+        <div>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</label>
+          <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+            <SelectTrigger className="bg-card border-border rounded-none" data-testid="filter-league">
+              <SelectValue placeholder="All Leagues" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {filters.leagues.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       {activeFilterCount > 0 && (
         <Button variant="outline" size="sm" onClick={clearFilters} className="w-full rounded-none border-border" data-testid="clear-filters-btn">
           <X className="w-3 h-3 mr-1" /> Clear Filters
