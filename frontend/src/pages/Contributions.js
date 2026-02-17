@@ -181,8 +181,8 @@ export default function Contributions() {
                   <Input type="number" value={year} onChange={e => setYear(e.target.value)} className="bg-card border-border rounded-none" data-testid="sub-year" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Photo URL *</Label>
-                  <Input value={frontPhoto} onChange={e => setFrontPhoto(e.target.value)} placeholder="https://..." className="bg-card border-border rounded-none" data-testid="sub-photo" />
+                  <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Photo *</Label>
+                  <ImageUpload value={frontPhoto} onChange={setFrontPhoto} testId="sub-photo-upload" />
                 </div>
               </div>
             ) : (
