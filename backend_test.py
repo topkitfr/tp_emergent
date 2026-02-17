@@ -295,16 +295,26 @@ print('USER_ID:' + userId);
 
     def test_collection_update(self):
         """Test PUT /api/collections/{id} with Phase 2 fields"""
-        if not self.session_token:
-            self.log_test("Update Collection Item", False, details="No session token available")
+        if not self.session_token or not self.version_id:
+            self.log_test("Update Collection Item", False, details="No session token or version_id available")
             return False, {}
         
-        # First add an item to collection to update
+        # First add an item to collection to update (use different version if possible)
         try:
             headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            
+            # Get a list of versions to find a different one
+            versions_resp = requests.get(f"{self.api_url}/versions")
+            if versions_resp.status_code == 200:
+                versions = versions_resp.json()
+                # Find a version different from self.version_id 
+                test_version_id = next((v['version_id'] for v in versions if v['version_id'] != self.version_id), self.version_id)
+            else:
+                test_version_id = self.version_id
+                
             payload = {
-                'version_id': self.version_id,
-                'category': 'Test Category',
+                'version_id': test_version_id,
+                'category': 'Update Test',
                 'condition': 'Very good',
                 'size': 'L',
                 'value_estimate': 150.00,
@@ -312,7 +322,7 @@ print('USER_ID:' + userId);
             }
             response = requests.post(f"{self.api_url}/collections", headers=headers, json=payload)
             if response.status_code != 200:
-                self.log_test("Update Collection Item (Setup)", False, response.status_code, "Failed to create item for update")
+                self.log_test("Update Collection Item", False, response.status_code, f"Setup failed: {response.text[:100]}")
                 return False, {}
             
             collection_id = response.json().get('collection_id')
@@ -332,7 +342,7 @@ print('USER_ID:' + userId);
             requests.delete(f"{self.api_url}/collections/{collection_id}", headers=headers)
             
             self.log_test("Update Collection Item", success, update_response.status_code,
-                         f"Updated item with new condition/size/value" if success else update_response.text[:100])
+                         f"Updated condition/size/value" if success else update_response.text[:100])
             return success, data
         except Exception as e:
             self.log_test("Update Collection Item", False, details=str(e))
