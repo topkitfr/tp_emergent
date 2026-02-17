@@ -310,12 +310,16 @@ async def get_filters():
     seasons = await db.master_kits.distinct("season")
     years = await db.master_kits.distinct("year")
     kit_types = await db.master_kits.distinct("kit_type")
+    designs = await db.master_kits.distinct("design")
+    leagues = await db.master_kits.distinct("league")
     return {
-        "clubs": sorted(clubs),
-        "brands": sorted(brands),
-        "seasons": sorted(seasons),
-        "years": sorted(years, reverse=True),
-        "kit_types": sorted(kit_types)
+        "clubs": sorted([c for c in clubs if c]),
+        "brands": sorted([b for b in brands if b]),
+        "seasons": sorted([s for s in seasons if s]),
+        "years": sorted([y for y in years if y], reverse=True),
+        "kit_types": sorted([t for t in kit_types if t]),
+        "designs": sorted([d for d in designs if d]),
+        "leagues": sorted([l for l in leagues if l]),
     }
 
 @api_router.get("/master-kits/{kit_id}")
