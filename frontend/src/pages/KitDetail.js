@@ -252,7 +252,7 @@ export default function KitDetail() {
                   <div className="border border-border bg-card p-4 hover:border-primary/30 group" data-testid={`version-card-${v.version_id}`} style={{ transition: 'border-color 0.2s ease' }}>
                     <div className="flex gap-4">
                       <div className="w-20 h-24 bg-secondary overflow-hidden shrink-0">
-                        <img src={v.front_photo || kit.front_photo} alt="" className="w-full h-full object-cover" />
+                        <img src={proxyImageUrl(v.front_photo || kit.front_photo)} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0 space-y-1.5">
                         <Badge variant="outline" className="rounded-none text-[10px]">{v.model}</Badge>
