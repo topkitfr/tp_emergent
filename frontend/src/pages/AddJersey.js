@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Shirt, ArrowRight, ArrowLeft, Check, Plus } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special'];
 const MODELS = ['Replica', 'Authentic', 'Player Issue'];
