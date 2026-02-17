@@ -917,6 +917,21 @@ async def import_excel():
     return {"message": f"Successfully imported {imported} master kits", "count": imported}
 
 
+# ─── Image Proxy ───
+
+@api_router.get("/image-proxy")
+async def image_proxy(url: str):
+    """Proxy external images to avoid CORS/referrer issues"""
+    if not url.startswith("https://cdn.footballkitarchive.com/"):
+        raise HTTPException(status_code=400, detail="Only footballkitarchive CDN URLs allowed")
+    async with httpx.AsyncClient() as hc:
+        resp = await hc.get(url, timeout=10)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail="Failed to fetch image")
+        content_type = resp.headers.get("content-type", "image/jpeg")
+        return Response(content=resp.content, media_type=content_type, headers={"Cache-Control": "public, max-age=86400"})
+
+
 # ─── Static File Serving ───
 
 from fastapi.staticfiles import StaticFiles
