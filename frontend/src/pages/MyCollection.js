@@ -55,7 +55,7 @@ export default function MyCollection() {
           </p>
           <div className="flex flex-wrap items-center gap-3">
             {categories.length > 0 && (
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory || "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? "" : v)}>
                 <SelectTrigger className="bg-card border-border rounded-none w-48" data-testid="collection-category-filter">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
