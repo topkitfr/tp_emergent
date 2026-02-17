@@ -164,16 +164,10 @@ export default function AddJersey() {
                 <Input type="number" value={year} onChange={e => setYear(e.target.value)} className="bg-card border-border rounded-none" data-testid="input-year" />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Front Photo URL *</Label>
-                <Input value={frontPhoto} onChange={e => setFrontPhoto(e.target.value)} placeholder="https://..." className="bg-card border-border rounded-none" data-testid="input-front-photo" />
+                <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Front Photo *</Label>
+                <ImageUpload value={frontPhoto} onChange={setFrontPhoto} label="Front Photo" testId="upload-front-photo" />
               </div>
             </div>
-
-            {frontPhoto && (
-              <div className="w-32 aspect-[3/4] border border-border overflow-hidden">
-                <img src={frontPhoto} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
 
             <Button onClick={handleCreateKit} disabled={submitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="create-kit-btn">
               {submitting ? 'Creating...' : 'Create Master Kit'} <ArrowRight className="w-4 h-4 ml-1" />
