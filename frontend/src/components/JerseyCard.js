@@ -16,7 +16,6 @@ export default function JerseyCard({ kit }) {
               className="w-full h-full object-cover group-hover:scale-105"
               style={{ transition: 'transform 0.5s ease' }}
               loading="lazy"
-              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
