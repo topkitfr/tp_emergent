@@ -568,6 +568,185 @@ print('USER_ID:' + userId);
             self.log_test("Vote on Report", False, details=str(e))
             return False, {}
 
+    def create_test_image(self, format='JPEG', width=200, height=300):
+        """Create a test image file"""
+        try:
+            # Create a test image
+            img = Image.new('RGB', (width, height), color='red')
+            img_bytes = BytesIO()
+            img.save(img_bytes, format=format)
+            img_bytes.seek(0)
+            return img_bytes.getvalue()
+        except Exception as e:
+            print(f"Error creating test image: {e}")
+            return None
+
+    def test_upload_image_valid(self):
+        """Test POST /api/upload with valid image"""
+        try:
+            # Create a test image
+            image_data = self.create_test_image('JPEG')
+            if not image_data:
+                self.log_test("Upload Valid Image", False, details="Failed to create test image")
+                return False, {}
+            
+            files = {'file': ('test.jpg', image_data, 'image/jpeg')}
+            response = requests.post(f"{self.api_url}/upload", files=files)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            # Store uploaded filename for later testing
+            if success and 'filename' in data:
+                self.uploaded_filename = data['filename']
+                self.uploaded_url = data['url']
+            
+            self.log_test("Upload Valid Image", success, response.status_code,
+                         f"Filename: {data.get('filename', 'N/A')}, URL: {data.get('url', 'N/A')}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Upload Valid Image", False, details=str(e))
+            return False, {}
+
+    def test_upload_image_invalid_type(self):
+        """Test POST /api/upload with invalid file type"""
+        try:
+            # Create a text file instead of image
+            text_content = b"This is not an image"
+            files = {'file': ('test.txt', text_content, 'text/plain')}
+            response = requests.post(f"{self.api_url}/upload", files=files)
+            success = response.status_code == 400  # Should reject non-image files
+            
+            self.log_test("Upload Invalid File Type", success, response.status_code,
+                         "Correctly rejected non-image file" if success else f"Unexpected response: {response.text[:100]}")
+            return success, {}
+        except Exception as e:
+            self.log_test("Upload Invalid File Type", False, details=str(e))
+            return False, {}
+
+    def test_upload_image_too_large(self):
+        """Test POST /api/upload with file over 10MB"""
+        try:
+            # Create a large image (over 10MB)
+            large_image_data = self.create_test_image('PNG', width=2000, height=3000)
+            if not large_image_data:
+                self.log_test("Upload Large Image", False, details="Failed to create large test image")
+                return False, {}
+                
+            # Make it even larger by padding with zeros
+            large_data = large_image_data + b'0' * (11 * 1024 * 1024)  # Add 11MB of data
+            
+            files = {'file': ('large_test.png', large_data, 'image/png')}
+            response = requests.post(f"{self.api_url}/upload", files=files)
+            success = response.status_code == 400  # Should reject large files
+            
+            self.log_test("Upload Large Image", success, response.status_code,
+                         "Correctly rejected oversized file" if success else f"Unexpected response: {response.text[:100]}")
+            return success, {}
+        except Exception as e:
+            self.log_test("Upload Large Image", False, details=str(e))
+            return False, {}
+
+    def test_static_file_serving(self):
+        """Test GET /api/uploads/{filename} - static file serving"""
+        if not hasattr(self, 'uploaded_filename') or not self.uploaded_filename:
+            self.log_test("Static File Serving", False, details="No uploaded filename available")
+            return False, {}
+        
+        try:
+            # Test accessing the uploaded file
+            response = requests.get(f"{self.api_url}/uploads/{self.uploaded_filename}")
+            success = response.status_code == 200 and response.headers.get('content-type', '').startswith('image/')
+            
+            self.log_test("Static File Serving", success, response.status_code,
+                         f"Served image file, Content-Type: {response.headers.get('content-type', 'N/A')}" if success else response.text[:100])
+            return success, {}
+        except Exception as e:
+            self.log_test("Static File Serving", False, details=str(e))
+            return False, {}
+
+    def test_upload_multiple_images(self):
+        """Test POST /api/upload/multiple with multiple images"""
+        try:
+            # Create multiple test images
+            image1 = self.create_test_image('JPEG', 150, 200)
+            image2 = self.create_test_image('PNG', 200, 250)
+            
+            if not image1 or not image2:
+                self.log_test("Upload Multiple Images", False, details="Failed to create test images")
+                return False, {}
+            
+            files = [
+                ('files', ('test1.jpg', image1, 'image/jpeg')),
+                ('files', ('test2.png', image2, 'image/png'))
+            ]
+            response = requests.post(f"{self.api_url}/upload/multiple", files=files)
+            success = response.status_code == 200
+            data = response.json() if success else []
+            
+            self.log_test("Upload Multiple Images", success, response.status_code,
+                         f"Uploaded {len(data)} images" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Upload Multiple Images", False, details=str(e))
+            return False, []
+
+    def test_create_kit_with_uploaded_image(self):
+        """Test creating a master kit with an uploaded image URL"""
+        if not self.session_token or not hasattr(self, 'uploaded_url') or not self.uploaded_url:
+            self.log_test("Create Kit with Uploaded Image", False, details="No session token or uploaded URL available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'club': 'Test Upload FC',
+                'season': '2024/2025',
+                'kit_type': 'Home',
+                'brand': 'Upload Test',
+                'front_photo': self.uploaded_url,  # Use uploaded image URL
+                'year': 2024
+            }
+            response = requests.post(f"{self.api_url}/master-kits", headers=headers, json=payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            if success:
+                self.uploaded_kit_id = data.get('kit_id')
+            
+            self.log_test("Create Kit with Uploaded Image", success, response.status_code,
+                         f"Kit ID: {self.uploaded_kit_id}, Photo URL: {data.get('front_photo', 'N/A')}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Create Kit with Uploaded Image", False, details=str(e))
+            return False, {}
+
+    def test_create_version_with_uploaded_image(self):
+        """Test creating a version with an uploaded image URL"""
+        if not self.session_token or not hasattr(self, 'uploaded_kit_id') or not self.uploaded_kit_id:
+            self.log_test("Create Version with Uploaded Image", False, details="No session token or kit ID available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'kit_id': self.uploaded_kit_id,
+                'competition': 'Upload Test League',
+                'model': 'Replica',
+                'gender': 'Men',
+                'front_photo': self.uploaded_url,  # Use uploaded image URL
+                'back_photo': self.uploaded_url   # Use same URL for back photo
+            }
+            response = requests.post(f"{self.api_url}/versions", headers=headers, json=payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Create Version with Uploaded Image", success, response.status_code,
+                         f"Version ID: {data.get('version_id', 'N/A')}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Create Version with Uploaded Image", False, details=str(e))
+            return False, {}
+
     def run_all_tests(self):
         print("=" * 60)
         print("🏟️  FOOTBALL JERSEY CATALOG API TESTING - PHASE 2")
