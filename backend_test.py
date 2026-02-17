@@ -749,7 +749,7 @@ print('USER_ID:' + userId);
 
     def run_all_tests(self):
         print("=" * 60)
-        print("🏟️  FOOTBALL JERSEY CATALOG API TESTING - PHASE 2")
+        print("🏟️  FOOTBALL JERSEY CATALOG API TESTING - PHASE 3 (IMAGE UPLOAD)")
         print("=" * 60)
         print(f"Testing API at: {self.api_url}")
         
@@ -761,6 +761,14 @@ print('USER_ID:' + userId);
         self.test_master_kit_detail()
         self.test_version_detail()
         self.test_version_estimates()
+        
+        # Test image upload endpoints (Phase 3 features)
+        print(f"\n📸 TESTING IMAGE UPLOAD FEATURES")
+        self.test_upload_image_valid()
+        self.test_upload_image_invalid_type()
+        self.test_upload_image_too_large()
+        self.test_static_file_serving()
+        self.test_upload_multiple_images()
         
         # Create test session for authenticated endpoints
         if self.create_test_session():
@@ -781,6 +789,11 @@ print('USER_ID:' + userId);
             self.test_reports_create()
             self.test_reports_list()
             self.test_report_vote()
+            
+            # Test integration with uploaded images
+            print(f"\n🔗 TESTING INTEGRATION WITH UPLOADED IMAGES")
+            self.test_create_kit_with_uploaded_image()
+            self.test_create_version_with_uploaded_image()
             
             # Cleanup
             self.test_collection_remove()
