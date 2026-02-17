@@ -49,6 +49,12 @@ class MasterKitCreate(BaseModel):
     brand: str
     front_photo: str
     year: int
+    design: Optional[str] = ""
+    colors: Optional[str] = ""
+    sponsor: Optional[str] = ""
+    league: Optional[str] = ""
+    competition: Optional[str] = ""
+    source_url: Optional[str] = ""
 
 class MasterKitOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -59,6 +65,12 @@ class MasterKitOut(BaseModel):
     brand: str
     front_photo: str
     year: int
+    design: Optional[str] = ""
+    colors: Optional[str] = ""
+    sponsor: Optional[str] = ""
+    league: Optional[str] = ""
+    competition: Optional[str] = ""
+    source_url: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     version_count: Optional[int] = 0
