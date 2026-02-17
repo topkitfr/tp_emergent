@@ -204,7 +204,7 @@ export default function MyCollection() {
               <div key={item.collection_id} className="card-shimmer relative border border-border bg-card overflow-hidden group" data-testid={`collection-item-${item.collection_id}`}>
                 <Link to={`/version/${item.version_id}`}>
                   <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
-                    <img src={item.version?.front_photo || item.master_kit?.front_photo} alt={item.master_kit?.club} className="w-full h-full object-cover group-hover:scale-105" style={{ transition: 'transform 0.5s ease' }} />
+                    <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt={item.master_kit?.club} className="w-full h-full object-cover group-hover:scale-105" style={{ transition: 'transform 0.5s ease' }} />
                     <div className="absolute top-2 right-2">
                       <Badge className="rounded-none text-[10px] bg-primary/90 text-primary-foreground border-none">{item.category}</Badge>
                     </div>
@@ -246,7 +246,7 @@ export default function MyCollection() {
             {items.map(item => (
               <div key={item.collection_id} className="flex items-center gap-4 p-3 border border-border bg-card group" data-testid={`collection-list-item-${item.collection_id}`}>
                 <Link to={`/version/${item.version_id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                  <img src={item.version?.front_photo || item.master_kit?.front_photo} alt="" className="w-14 h-18 object-cover" />
+                  <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-14 h-18 object-cover" />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold truncate">{item.master_kit?.club}</h3>
                     <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
@@ -292,7 +292,7 @@ export default function MyCollection() {
               <div className="mb-6">
                 <div className="flex gap-4 mb-4">
                   <img
-                    src={detailItem.version?.front_photo || detailItem.master_kit?.front_photo}
+                    src={proxyImageUrl(detailItem.version?.front_photo || detailItem.master_kit?.front_photo)}
                     alt={detailItem.master_kit?.club}
                     className="w-20 h-28 object-cover border border-border"
                   />
