@@ -15,7 +15,7 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 3. **Community Member** - Wants to rate, review, and discuss jerseys
 
 ## Core Data Model (Hierarchy)
-- **Master Kit** (Reference): Club, Season, Type, Brand, Front Photo, Year
+- **Master Kit** (Reference): Club, Season, Type, Brand, Front Photo, Year, Design, Colors, Sponsor, League, Competition, Source URL
 - **Version** (Child of Master Kit): Competition, Model, Gender, SKU, Photos
 - **Item** (Child of Version): Printing/Player, Condition, Size, Value Estimate, Notes, Category
 
@@ -23,15 +23,14 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 
 ### MVP Features (Phase 1) - COMPLETE
 - [x] Emergent Google OAuth authentication
-- [x] Master Kit database with 24 seeded kits from popular teams
-- [x] Version system (36 seeded versions) linked to Master Kits
-- [x] Browse/Search page with filters (Club, Brand, Type, Year)
+- [x] Master Kit database with browsing and filtering
+- [x] Version system linked to Master Kits
+- [x] Browse/Search page with filters (Club, Brand, Type, Year, Design, League)
 - [x] Grid/List view toggle
 - [x] Kit Detail pages with version listings
 - [x] Version Detail pages with full specs
 - [x] Personal Collection management (add/remove, categories)
 - [x] Rating & Review system (1-5 stars + comments)
-- [x] Add Jersey form (multi-step: Master Kit -> Version)
 - [x] User Profile page with collection stats
 - [x] Dark "Stadium Night" theme
 - [x] Responsive design
@@ -42,35 +41,38 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - [x] Contributions section with voting system (5 upvotes = auto-approved)
 - [x] User profile settings (username, description, profile picture URL)
 - [x] Collection privacy toggle (public/private)
-- [x] Version estimation statistics (low/avg/high with bar chart)
-- [x] Overall collection value estimation (low/avg/high)
-- [x] Category-specific value estimations
-- [x] Report & correct jerseys (with original vs proposed comparison, community re-voting)
-- [x] Inline collection item editing (condition, size, value, notes)
+- [x] Value estimation statistics
+- [x] Report & correct jerseys
+- [x] Inline collection item editing
 
 ### Phase 3 Features - COMPLETE
-- [x] Image upload endpoint (POST /api/upload) with file validation (JPG/PNG/WebP/GIF, max 10MB)
-- [x] Static file serving at /api/uploads/ for uploaded images
-- [x] Reusable ImageUpload component with dual modes: file upload (click/drag-drop) and URL input
-- [x] Add Jersey form updated with ImageUpload
-- [x] Contributions submission form updated with ImageUpload
-- [x] Image preview with replace/clear overlay on hover
-- [x] Multiple file upload endpoint (POST /api/upload/multiple)
+- [x] Image upload endpoint with file validation
+- [x] Reusable ImageUpload component
+- [x] Multiple file upload support
 
 ### Phase 4 Features (Feb 17, 2026) - COMPLETE
-- [x] Correction Reports: Field-by-field comparison table (Field | Current | Proposed) replacing raw JSON
-- [x] Pending Submissions: Expandable cards showing all submission fields when clicked
-- [x] Button Management: Removed "+ Add Jersey" from header navbar; moved to Contributions page
-- [x] Add Jersey form on Contributions creates submissions (pending review) not direct records
-- [x] Multi-step Add Jersey form (Step 1: Master Kit, Step 2: Version) with "Use Existing Kit" option
-- [x] Jersey Hierarchy: Collection items now have "Printing / Player" field for item-level tracking
-- [x] MyCollection: Sheet panel for editing items (replaces inline editing in grid view)
-- [x] Jersey Hierarchy summary displayed in edit panel (Master → Version → Item)
-- [x] Grid & list views show printing/player info
+- [x] Correction Reports: Field-by-field comparison table
+- [x] Pending Submissions: Expandable detailed cards
+- [x] Button Management: "+ Add Jersey" moved from navbar to Contributions
+- [x] Multi-step Add Jersey form creates submissions (pending review)
+- [x] Jersey Hierarchy: "Printing/Player" field for collection items
+- [x] MyCollection: Sheet panel for editing items with hierarchy summary
 
-### Test Results (Phase 4)
-- Backend: 100% (9/9 tests passed)
-- Frontend: 100% (all features working correctly)
+### Phase 5: Excel Import (Feb 17, 2026) - COMPLETE
+- [x] Cleared old seed data (master_kits, versions, collections, reviews, reports, submissions)
+- [x] Imported 167 master kits from Excel file (8 teams × 21 seasons 2005-2026)
+- [x] 6 new fields added to master_kit schema: design, colors, sponsor, league, competition, source_url
+- [x] Teams: PSG, Marseille, Bayern München, Borussia Dortmund, AC Milan, Inter Milan, FC Barcelona, Real Madrid
+- [x] Image proxy endpoint (/api/image-proxy) for footballkitarchive CDN images
+- [x] proxyImageUrl utility for all frontend image rendering
+- [x] Design and League filter dropdowns added to Browse page
+- [x] Colors displayed on jersey cards
+- [x] Kit Detail page shows all new fields (design, colors, sponsor, league)
+- [x] Import endpoint (/api/import-excel) for re-importing data
+
+### Test Results (Phase 5)
+- Backend: 100% (27/27 tests passed)
+- Frontend: 100%
 
 ## Prioritized Backlog
 
@@ -87,8 +89,7 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - Community voting on jersey value estimations
 - Collection statistics & analytics dashboards
 - Export collection data (CSV/PDF)
-- 3D jersey viewer
 - Mobile app optimization
 
 ## Refactoring Notes
-- server.py is monolithic - should split into APIRouter modules (kits, users, submissions, etc.)
+- server.py is monolithic - should split into APIRouter modules
