@@ -3,6 +3,16 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Proxy external CDN images through our backend to avoid CORS/referrer issues
+export const proxyImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
+  if (url.startsWith('https://cdn.footballkitarchive.com/')) {
+    return `${API}/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const api = axios.create({
   baseURL: API,
   withCredentials: true,
