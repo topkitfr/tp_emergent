@@ -222,6 +222,10 @@ export default function Contributions() {
                   <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
                   <Input value={skuCode} onChange={e => setSkuCode(e.target.value)} className="bg-card border-border rounded-none font-mono" data-testid="sub-sku" />
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Photo</Label>
+                  <ImageUpload value={frontPhoto} onChange={setFrontPhoto} testId="sub-ver-photo-upload" />
+                </div>
               </div>
             )}
 
