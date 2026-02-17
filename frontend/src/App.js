@@ -2,6 +2,7 @@ import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
 import AuthCallback from "@/pages/AuthCallback";
 import Landing from "@/pages/Landing";
 import Browse from "@/pages/Browse";
@@ -17,7 +18,6 @@ function AppRouter() {
   const location = useLocation();
 
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Check URL fragment for session_id synchronously during render
   if (location.hash?.includes('session_id=')) {
     return <AuthCallback />;
   }
@@ -42,8 +42,10 @@ function App() {
   return (
     <div className="noise-overlay">
       <BrowserRouter>
-        <AppRouter />
-        <Toaster position="bottom-right" theme="dark" />
+        <AuthProvider>
+          <AppRouter />
+          <Toaster position="bottom-right" theme="dark" />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );
