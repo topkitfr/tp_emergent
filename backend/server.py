@@ -209,6 +209,9 @@ async def create_session(request: Request, response: Response):
             "email": email,
             "name": name,
             "picture": picture,
+            "username": name.replace(" ", "").lower() if name else "",
+            "description": "",
+            "collection_privacy": "public",
             "created_at": datetime.now(timezone.utc).isoformat()
         })
     await db.user_sessions.insert_one({
