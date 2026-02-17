@@ -428,6 +428,9 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "version_id": item.version_id,
         "category": item.category or "General",
         "notes": item.notes or "",
+        "condition": item.condition or "",
+        "size": item.size or "",
+        "value_estimate": item.value_estimate,
         "added_at": datetime.now(timezone.utc).isoformat()
     }
     await db.collections.insert_one(doc)
