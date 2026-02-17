@@ -95,6 +95,7 @@ class CollectionAdd(BaseModel):
     condition: Optional[str] = ""
     size: Optional[str] = ""
     value_estimate: Optional[float] = None
+    printing: Optional[str] = ""
 
 class CollectionUpdate(BaseModel):
     condition: Optional[str] = None
@@ -102,6 +103,7 @@ class CollectionUpdate(BaseModel):
     value_estimate: Optional[float] = None
     notes: Optional[str] = None
     category: Optional[str] = None
+    printing: Optional[str] = None
 
 class CollectionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -113,6 +115,7 @@ class CollectionOut(BaseModel):
     condition: Optional[str] = ""
     size: Optional[str] = ""
     value_estimate: Optional[float] = None
+    printing: Optional[str] = ""
     added_at: Optional[str] = None
 
 class ReviewCreate(BaseModel):
@@ -448,6 +451,7 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "condition": item.condition or "",
         "size": item.size or "",
         "value_estimate": item.value_estimate,
+        "printing": item.printing or "",
         "added_at": datetime.now(timezone.utc).isoformat()
     }
     await db.collections.insert_one(doc)
