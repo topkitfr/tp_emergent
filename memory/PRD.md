@@ -55,21 +55,21 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 ## Prioritized Backlog
 
 ### P0 (Next Sprint)
-- Item-level tracking (Printing, Condition, Size, Purchase price/date, Signed status)
+- Item-level tracking (Printing, Purchase price/date, Signed status, Proof of purchase)
 - Wishlist functionality with notifications
-- Image upload (not just URL)
+- Image upload (not just URL-based)
+- Notification system (wishlist updates, comment replies)
 
 ### P1
 - Discussion forums
-- Jersey Value Estimation (community voting)
-- Notification system (wishlist updates, comment replies)
-- User-to-user collection sharing
+- User-to-user collection sharing / public profile pages
+- Advanced search (fuzzy matching, multi-select filters)
 
 ### P2
-- Advanced search (fuzzy matching, multi-select filters)
-- Collection statistics & analytics
-- Export collection data
+- Collection statistics & analytics dashboards
+- Export collection data (CSV/PDF)
 - 3D jersey viewer
+- Mobile app optimization
 
 ## Next Tasks
 1. Implement Item-level tracking (child of Version)
