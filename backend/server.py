@@ -270,7 +270,7 @@ async def list_master_kits(
     league: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
-    limit: int = 50
+    limit: int = 200
 ):
     query = {}
     if club:
