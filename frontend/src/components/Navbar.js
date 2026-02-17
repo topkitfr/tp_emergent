@@ -91,6 +91,9 @@ export default function Navbar() {
                 <DropdownMenuItem onClick={() => navigate('/add-jersey')} className="cursor-pointer" data-testid="menu-add-jersey">
                   <Plus className="w-4 h-4 mr-2" /> Add Jersey
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/contributions')} className="cursor-pointer" data-testid="menu-contributions">
+                  <FileCheck className="w-4 h-4 mr-2" /> Contributions
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive" data-testid="menu-logout">
                   <LogOut className="w-4 h-4 mr-2" /> Logout
