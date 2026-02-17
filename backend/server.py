@@ -92,6 +92,16 @@ class CollectionAdd(BaseModel):
     version_id: str
     category: Optional[str] = "General"
     notes: Optional[str] = ""
+    condition: Optional[str] = ""
+    size: Optional[str] = ""
+    value_estimate: Optional[float] = None
+
+class CollectionUpdate(BaseModel):
+    condition: Optional[str] = None
+    size: Optional[str] = None
+    value_estimate: Optional[float] = None
+    notes: Optional[str] = None
+    category: Optional[str] = None
 
 class CollectionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -100,6 +110,9 @@ class CollectionOut(BaseModel):
     version_id: str
     category: str
     notes: Optional[str] = ""
+    condition: Optional[str] = ""
+    size: Optional[str] = ""
+    value_estimate: Optional[float] = None
     added_at: Optional[str] = None
 
 class ReviewCreate(BaseModel):
@@ -117,6 +130,27 @@ class ReviewOut(BaseModel):
     rating: int
     comment: Optional[str] = ""
     created_at: Optional[str] = None
+
+class SubmissionCreate(BaseModel):
+    submission_type: str  # master_kit or version
+    data: dict
+
+class VoteCreate(BaseModel):
+    vote: str  # up or down
+
+class ReportCreate(BaseModel):
+    target_type: str  # master_kit or version
+    target_id: str
+    corrections: dict
+    notes: Optional[str] = ""
+
+class ProfileUpdate(BaseModel):
+    username: Optional[str] = None
+    description: Optional[str] = None
+    collection_privacy: Optional[str] = None
+    profile_picture: Optional[str] = None
+
+APPROVAL_THRESHOLD = 5
 
 
 # ─── Auth Helpers ───
