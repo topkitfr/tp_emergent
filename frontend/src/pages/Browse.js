@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, X, Shirt, Star, LayoutGrid, List, Filter } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import JerseyCard from '@/components/JerseyCard';
+import { proxyImageUrl } from '@/lib/api';
 
 export default function Browse() {
   const [kits, setKits] = useState([]);
@@ -255,7 +256,7 @@ export default function Browse() {
                 {kits.map(kit => (
                   <Link to={`/kit/${kit.kit_id}`} key={kit.kit_id}>
                     <div className="flex items-center gap-4 p-3 border border-border bg-card hover:border-primary/30 group" data-testid={`kit-list-item-${kit.kit_id}`} style={{ transition: 'border-color 0.2s ease' }}>
-                      <img src={kit.front_photo} alt={kit.club} className="w-16 h-20 object-cover" />
+                      <img src={proxyImageUrl(kit.front_photo)} alt={kit.club} className="w-16 h-20 object-cover" />
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold tracking-tight truncate">{kit.club}</h3>
                         <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{kit.season} - {kit.kit_type}</p>
