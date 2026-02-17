@@ -355,6 +355,23 @@ async def get_version(version_id: str):
     version["collection_count"] = collection_count
     return version
 
+@api_router.get("/versions/{version_id}/estimates")
+async def get_version_estimates(version_id: str):
+    items = await db.collections.find(
+        {"version_id": version_id, "value_estimate": {"$gt": 0}},
+        {"_id": 0, "value_estimate": 1}
+    ).to_list(1000)
+    estimates = [i["value_estimate"] for i in items if i.get("value_estimate")]
+    if not estimates:
+        return {"low": 0, "average": 0, "high": 0, "count": 0, "estimates": []}
+    return {
+        "low": round(min(estimates), 2),
+        "average": round(sum(estimates) / len(estimates), 2),
+        "high": round(max(estimates), 2),
+        "count": len(estimates),
+        "estimates": sorted(estimates)
+    }
+
 @api_router.post("/versions", response_model=VersionOut)
 async def create_version(version: VersionCreate, request: Request):
     user = await get_current_user(request)
