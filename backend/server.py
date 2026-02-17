@@ -882,6 +882,8 @@ async def import_excel():
             season = f"{start_year}/{start_year + 1}"
 
             team = row[col_map.get('Team', 0)] or ''
+            if not team or str(team).strip() in ('', 'None'):
+                continue  # Skip empty rows
             kit_type = row[col_map['Type']] if 'Type' in col_map else 'Home'
             design = row[col_map['Design']] if 'Design' in col_map and row[col_map['Design']] else ''
             colors = row[col_map['Colors']] if 'Colors' in col_map and row[col_map['Colors']] else ''
