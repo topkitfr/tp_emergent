@@ -51,12 +51,6 @@ export default function Navbar() {
                     My Collection
                   </Button>
                 </Link>
-                <Link to="/add-jersey">
-                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/add-jersey') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-add-jersey">
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    Add Jersey
-                  </Button>
-                </Link>
                 <Link to="/contributions">
                   <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-contributions">
                     <FileCheck className="w-4 h-4 mr-1.5" />
@@ -87,9 +81,6 @@ export default function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/collection')} className="cursor-pointer" data-testid="menu-collection">
                   <FolderOpen className="w-4 h-4 mr-2" /> My Collection
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/add-jersey')} className="cursor-pointer" data-testid="menu-add-jersey">
-                  <Plus className="w-4 h-4 mr-2" /> Add Jersey
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/contributions')} className="cursor-pointer" data-testid="menu-contributions">
                   <FileCheck className="w-4 h-4 mr-2" /> Contributions
