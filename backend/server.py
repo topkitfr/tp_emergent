@@ -327,7 +327,7 @@ async def get_filters():
         "years": sorted([y for y in years if y], reverse=True),
         "kit_types": sorted([t for t in kit_types if t]),
         "designs": sorted([d for d in designs if d]),
-        "leagues": sorted([l for l in leagues if l]),
+        "leagues": sorted([lg for lg in leagues if lg]),
     }
 
 @api_router.get("/master-kits/{kit_id}")
@@ -915,8 +915,6 @@ async def import_excel():
     wb.close()
     logger.info(f"Imported {imported} master kits from Excel")
     return {"message": f"Successfully imported {imported} master kits", "count": imported}
-
-    return {"message": "Seed data created", "count": len(seed_kits)}
 
 
 # ─── Static File Serving ───
