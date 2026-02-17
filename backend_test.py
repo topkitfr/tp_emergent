@@ -291,6 +291,268 @@ print('USER_ID:' + userId);
             self.log_test("Remove from Collection", False, details=str(e))
             return False, {}
 
+    def test_collection_update(self):
+        """Test PUT /api/collections/{id} with Phase 2 fields"""
+        if not self.session_token:
+            self.log_test("Update Collection Item", False, details="No session token available")
+            return False, {}
+        
+        # First add an item to collection to update
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'version_id': self.version_id,
+                'category': 'Test Category',
+                'condition': 'Very good',
+                'size': 'L',
+                'value_estimate': 150.00,
+                'notes': 'Test item for update testing'
+            }
+            response = requests.post(f"{self.api_url}/collections", headers=headers, json=payload)
+            if response.status_code != 200:
+                self.log_test("Update Collection Item (Setup)", False, response.status_code, "Failed to create item for update")
+                return False, {}
+            
+            collection_id = response.json().get('collection_id')
+            
+            # Now update the item
+            update_payload = {
+                'condition': 'New with tag',
+                'size': 'XL', 
+                'value_estimate': 200.00,
+                'notes': 'Updated test item'
+            }
+            update_response = requests.put(f"{self.api_url}/collections/{collection_id}", headers=headers, json=update_payload)
+            success = update_response.status_code == 200
+            data = update_response.json() if success else {}
+            
+            # Clean up - remove the test item
+            requests.delete(f"{self.api_url}/collections/{collection_id}", headers=headers)
+            
+            self.log_test("Update Collection Item", success, update_response.status_code,
+                         f"Updated item with new condition/size/value" if success else update_response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Update Collection Item", False, details=str(e))
+            return False, {}
+
+    def test_collection_stats(self):
+        """Test GET /api/collections/stats"""
+        if not self.session_token:
+            self.log_test("Collection Stats", False, details="No session token available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}'}
+            response = requests.get(f"{self.api_url}/collections/stats", headers=headers)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Collection Stats", success, response.status_code,
+                         f"Total: {data.get('total_jerseys', 0)}, Est. Value: ${data.get('estimated_value', {}).get('average', 0)}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Collection Stats", False, details=str(e))
+            return False, {}
+
+    def test_category_stats(self):
+        """Test GET /api/collections/category-stats"""
+        if not self.session_token:
+            self.log_test("Category Stats", False, details="No session token available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}'}
+            response = requests.get(f"{self.api_url}/collections/category-stats", headers=headers)
+            success = response.status_code == 200
+            data = response.json() if success else []
+            
+            self.log_test("Category Stats", success, response.status_code,
+                         f"Found {len(data)} categories" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Category Stats", False, details=str(e))
+            return False, []
+
+    def test_version_estimates(self):
+        """Test GET /api/versions/{id}/estimates"""
+        if not self.version_id:
+            self.log_test("Version Estimates", False, details="No version_id available")
+            return False, {}
+        
+        try:
+            response = requests.get(f"{self.api_url}/versions/{self.version_id}/estimates")
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Version Estimates", success, response.status_code,
+                         f"Estimates count: {data.get('count', 0)}, Avg: ${data.get('average', 0)}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Version Estimates", False, details=str(e))
+            return False, {}
+
+    def test_profile_update(self):
+        """Test PUT /api/users/profile"""
+        if not self.session_token:
+            self.log_test("Profile Update", False, details="No session token available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'username': f'testuser_{int(datetime.now().timestamp())}',
+                'description': 'Updated test user description',
+                'collection_privacy': 'private'
+            }
+            response = requests.put(f"{self.api_url}/users/profile", headers=headers, json=payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Profile Update", success, response.status_code,
+                         f"Updated profile: {data.get('username', 'N/A')}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Profile Update", False, details=str(e))
+            return False, {}
+
+    def test_submissions_create(self):
+        """Test POST /api/submissions"""
+        if not self.session_token:
+            self.log_test("Create Submission", False, details="No session token available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'submission_type': 'master_kit',
+                'data': {
+                    'club': 'Test FC',
+                    'season': '2024/2025',
+                    'kit_type': 'Home',
+                    'brand': 'Test Brand',
+                    'front_photo': 'https://via.placeholder.com/400x600',
+                    'year': 2024
+                }
+            }
+            response = requests.post(f"{self.api_url}/submissions", headers=headers, json=payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            if success:
+                self.submission_id = data.get('submission_id')
+            
+            self.log_test("Create Submission", success, response.status_code,
+                         f"Submission ID: {self.submission_id}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Create Submission", False, details=str(e))
+            return False, {}
+
+    def test_submissions_list(self):
+        """Test GET /api/submissions"""
+        try:
+            response = requests.get(f"{self.api_url}/submissions", params={'status': 'pending'})
+            success = response.status_code == 200
+            data = response.json() if success else []
+            
+            self.log_test("List Submissions", success, response.status_code,
+                         f"Found {len(data)} pending submissions" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("List Submissions", False, details=str(e))
+            return False, []
+
+    def test_submission_vote(self):
+        """Test POST /api/submissions/{id}/vote"""
+        if not self.session_token or not hasattr(self, 'submission_id') or not self.submission_id:
+            self.log_test("Vote on Submission", False, details="No session token or submission_id available")
+            return False, {}
+        
+        # First add an item to collection so user can vote
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            # Add to collection first
+            requests.post(f"{self.api_url}/collections", headers=headers, json={'version_id': self.version_id, 'category': 'Test'})
+            
+            # Now vote
+            vote_payload = {'vote': 'up'}
+            response = requests.post(f"{self.api_url}/submissions/{self.submission_id}/vote", headers=headers, json=vote_payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Vote on Submission", success, response.status_code,
+                         f"Votes: {data.get('votes_up', 0)} up, {data.get('votes_down', 0)} down" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Vote on Submission", False, details=str(e))
+            return False, {}
+
+    def test_reports_create(self):
+        """Test POST /api/reports"""
+        if not self.session_token:
+            self.log_test("Create Report", False, details="No session token available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            payload = {
+                'target_type': 'version',
+                'target_id': self.version_id,
+                'corrections': {
+                    'competition': 'Corrected Competition Name',
+                    'model': 'Authentic'
+                },
+                'notes': 'Testing report creation'
+            }
+            response = requests.post(f"{self.api_url}/reports", headers=headers, json=payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            if success:
+                self.report_id = data.get('report_id')
+            
+            self.log_test("Create Report", success, response.status_code,
+                         f"Report ID: {self.report_id}" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Create Report", False, details=str(e))
+            return False, {}
+
+    def test_reports_list(self):
+        """Test GET /api/reports"""
+        try:
+            response = requests.get(f"{self.api_url}/reports", params={'status': 'pending'})
+            success = response.status_code == 200
+            data = response.json() if success else []
+            
+            self.log_test("List Reports", success, response.status_code,
+                         f"Found {len(data)} pending reports" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("List Reports", False, details=str(e))
+            return False, []
+
+    def test_report_vote(self):
+        """Test POST /api/reports/{id}/vote"""
+        if not self.session_token or not hasattr(self, 'report_id') or not self.report_id:
+            self.log_test("Vote on Report", False, details="No session token or report_id available")
+            return False, {}
+        
+        try:
+            headers = {'Authorization': f'Bearer {self.session_token}', 'Content-Type': 'application/json'}
+            vote_payload = {'vote': 'up'}
+            response = requests.post(f"{self.api_url}/reports/{self.report_id}/vote", headers=headers, json=vote_payload)
+            success = response.status_code == 200
+            data = response.json() if success else {}
+            
+            self.log_test("Vote on Report", success, response.status_code,
+                         f"Votes: {data.get('votes_up', 0)} up, {data.get('votes_down', 0)} down" if success else response.text[:100])
+            return success, data
+        except Exception as e:
+            self.log_test("Vote on Report", False, details=str(e))
+            return False, {}
+
     def run_all_tests(self):
         print("=" * 60)
         print("🏟️  FOOTBALL JERSEY CATALOG API TESTING")
