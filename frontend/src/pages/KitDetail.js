@@ -98,7 +98,7 @@ export default function KitDetail() {
             <div className="relative">
               <div className="aspect-[3/4] border border-border bg-card overflow-hidden" data-testid="kit-main-image">
                 <img
-                  src={kit.front_photo}
+                  src={proxyImageUrl(kit.front_photo)}
                   alt={`${kit.club} ${kit.season}`}
                   className="w-full h-full object-cover"
                 />
