@@ -11,13 +11,15 @@ import JerseyCard from '@/components/JerseyCard';
 
 export default function Browse() {
   const [kits, setKits] = useState([]);
-  const [filters, setFilters] = useState({ clubs: [], brands: [], seasons: [], years: [], kit_types: [] });
+  const [filters, setFilters] = useState({ clubs: [], brands: [], seasons: [], years: [], kit_types: [], designs: [], leagues: [] });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedClub, setSelectedClub] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedDesign, setSelectedDesign] = useState('');
+  const [selectedLeague, setSelectedLeague] = useState('');
   const [viewMode, setViewMode] = useState('grid');
 
   const fetchKits = useCallback(async () => {
@@ -29,6 +31,8 @@ export default function Browse() {
       if (selectedBrand) params.brand = selectedBrand;
       if (selectedType) params.kit_type = selectedType;
       if (selectedYear) params.year = parseInt(selectedYear);
+      if (selectedDesign) params.design = selectedDesign;
+      if (selectedLeague) params.league = selectedLeague;
       const res = await getMasterKits(params);
       setKits(res.data);
     } catch (err) {
@@ -36,7 +40,7 @@ export default function Browse() {
     } finally {
       setLoading(false);
     }
-  }, [search, selectedClub, selectedBrand, selectedType, selectedYear]);
+  }, [search, selectedClub, selectedBrand, selectedType, selectedYear, selectedDesign, selectedLeague]);
 
   useEffect(() => {
     getFilters().then(r => setFilters(r.data)).catch(() => {});
@@ -49,9 +53,11 @@ export default function Browse() {
     setSelectedBrand('');
     setSelectedType('');
     setSelectedYear('');
+    setSelectedDesign('');
+    setSelectedLeague('');
   };
 
-  const activeFilterCount = [selectedClub, selectedBrand, selectedType, selectedYear].filter(Boolean).length;
+  const activeFilterCount = [selectedClub, selectedBrand, selectedType, selectedYear, selectedDesign, selectedLeague].filter(Boolean).length;
 
   const FilterPanel = () => (
     <div className="space-y-6">
