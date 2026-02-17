@@ -1,51 +1,49 @@
-import { useEffect } from "react";
+import React from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
+import AuthCallback from "@/pages/AuthCallback";
+import Landing from "@/pages/Landing";
+import Browse from "@/pages/Browse";
+import KitDetail from "@/pages/KitDetail";
+import VersionDetail from "@/pages/VersionDetail";
+import MyCollection from "@/pages/MyCollection";
+import AddJersey from "@/pages/AddJersey";
+import Profile from "@/pages/Profile";
+import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+function AppRouter() {
+  const location = useLocation();
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  // Check URL fragment for session_id synchronously during render
+  if (location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route element={<Layout />}>
+        <Route path="/browse" element={<Browse />} />
+        <Route path="/kit/:kitId" element={<KitDetail />} />
+        <Route path="/version/:versionId" element={<VersionDetail />} />
+        <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
+        <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
-};
+}
 
 function App() {
   return (
-    <div className="App">
+    <div className="noise-overlay">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <AppRouter />
+        <Toaster position="bottom-right" theme="dark" />
       </BrowserRouter>
     </div>
   );
