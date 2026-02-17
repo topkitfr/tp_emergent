@@ -54,10 +54,22 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 
 ## Prioritized Backlog
 
+### Phase 3 Features (Feb 17, 2026) - COMPLETE
+- [x] Image upload endpoint (POST /api/upload) with file validation (JPG/PNG/WebP/GIF, max 10MB)
+- [x] Static file serving at /api/uploads/ for uploaded images
+- [x] Reusable ImageUpload component with dual modes: file upload (click/drag-drop) and URL input
+- [x] Add Jersey form updated: front photo (Step 1) + front/back photos (Step 2) use ImageUpload
+- [x] Contributions submission form updated with ImageUpload for both kit and version types
+- [x] Image preview with replace/clear overlay on hover
+- [x] Multiple file upload endpoint (POST /api/upload/multiple)
+
+### Test Results (Phase 3)
+- Backend: 100% (29/29 tests passed)
+- Frontend: 95%
+
 ### P0 (Next Sprint)
 - Item-level tracking (Printing, Purchase price/date, Signed status, Proof of purchase)
 - Wishlist functionality with notifications
-- Image upload (not just URL-based)
 - Notification system (wishlist updates, comment replies)
 
 ### P1
