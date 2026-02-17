@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getMyCollection, getCollectionCategories, removeFromCollection, updateCollectionItem, getCollectionStats, getCategoryStats } from '@/lib/api';
+import { getMyCollection, getCollectionCategories, removeFromCollection, updateCollectionItem, getCollectionStats, getCategoryStats, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
