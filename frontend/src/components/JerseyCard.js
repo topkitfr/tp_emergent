@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Shirt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { proxyImageUrl } from '@/lib/api';
 
 export default function JerseyCard({ kit }) {
   return (
@@ -11,7 +12,7 @@ export default function JerseyCard({ kit }) {
         <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
           {kit.front_photo ? (
             <img
-              src={kit.front_photo}
+              src={proxyImageUrl(kit.front_photo)}
               alt={`${kit.club} ${kit.season}`}
               className="w-full h-full object-cover group-hover:scale-105"
               style={{ transition: 'transform 0.5s ease' }}
