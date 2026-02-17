@@ -31,6 +31,7 @@ export default function VersionDetail() {
     }).catch(() => setLoading(false));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchVersion(); }, [versionId]);
 
   const handleSubmitReview = async () => {
