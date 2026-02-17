@@ -266,6 +266,8 @@ async def list_master_kits(
     brand: Optional[str] = None,
     kit_type: Optional[str] = None,
     year: Optional[int] = None,
+    design: Optional[str] = None,
+    league: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50
@@ -281,13 +283,19 @@ async def list_master_kits(
         query["kit_type"] = kit_type
     if year:
         query["year"] = year
+    if design:
+        query["design"] = design
+    if league:
+        query["league"] = league
     if search:
         query["$or"] = [
             {"club": {"$regex": search, "$options": "i"}},
             {"brand": {"$regex": search, "$options": "i"}},
-            {"season": {"$regex": search, "$options": "i"}}
+            {"season": {"$regex": search, "$options": "i"}},
+            {"design": {"$regex": search, "$options": "i"}},
+            {"colors": {"$regex": search, "$options": "i"}},
         ]
-    kits = await db.master_kits.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    kits = await db.master_kits.find(query, {"_id": 0}).sort("year", -1).skip(skip).limit(limit).to_list(limit)
     for kit in kits:
         version_count = await db.versions.count_documents({"kit_id": kit["kit_id"]})
         kit["version_count"] = version_count
