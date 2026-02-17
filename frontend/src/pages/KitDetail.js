@@ -26,9 +26,32 @@ export default function KitDetail() {
   useEffect(() => {
     getMasterKit(kitId).then(r => {
       setKit(r.data);
+      setReportCorrections({
+        club: r.data.club,
+        season: r.data.season,
+        kit_type: r.data.kit_type,
+        brand: r.data.brand,
+        year: r.data.year
+      });
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [kitId]);
+
+  const handleSubmitReport = async () => {
+    try {
+      await createReport({
+        target_type: 'master_kit',
+        target_id: kitId,
+        corrections: reportCorrections,
+        notes: reportNotes
+      });
+      toast.success('Report submitted for community review');
+      setShowReport(false);
+      setReportNotes('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit report');
+    }
+  };
 
   if (loading) {
     return (
