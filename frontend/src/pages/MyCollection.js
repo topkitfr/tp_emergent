@@ -302,11 +302,52 @@ export default function MyCollection() {
                     <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{detailItem.master_kit?.season} - {detailItem.master_kit?.kit_type}</p>
                     <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{detailItem.master_kit?.brand}</p>
                     <div className="flex gap-2 mt-2">
-                      <Badge variant="outline" className="rounded-none text-[10px]">{detailItem.version?.model}</Badge>
-                      <Badge variant="outline" className="rounded-none text-[10px]">{detailItem.version?.competition}</Badge>
+                      <Badge variant="outline" className="rounded-none text-[10px]">{detailItem.version?.model || 'None'}</Badge>
+                      <Badge variant="outline" className="rounded-none text-[10px]">{detailItem.version?.competition || 'None'}</Badge>
                     </div>
                   </div>
                 </div>
+                
+                {/* Current Values Summary */}
+                <div className="grid grid-cols-2 gap-2 p-3 bg-secondary/30 border border-border mb-4" data-testid="item-current-values">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Flocking</span>
+                    <p className="text-xs">{detailItem.flocking_detail || detailItem.flocking_type || 'None'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Origin</span>
+                    <p className="text-xs">{detailItem.condition_origin || 'None'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>State</span>
+                    <p className="text-xs">{detailItem.physical_state || 'None'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Size</span>
+                    <p className="text-xs">{detailItem.size || 'None'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Purchase Cost</span>
+                    <p className="text-xs font-mono">{detailItem.purchase_cost ? `${detailItem.purchase_cost}€` : 'None'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Signed</span>
+                    <p className="text-xs">{detailItem.signed ? (detailItem.signed_by || 'Yes') : 'No'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Proof/Certificate</span>
+                    <p className="text-xs">{detailItem.signed_proof ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Estimated Price</span>
+                    <p className="text-xs font-mono text-accent">{detailItem.estimated_price ? `${detailItem.estimated_price}€` : 'None'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Notes</span>
+                    <p className="text-xs">{detailItem.notes || 'None'}</p>
+                  </div>
+                </div>
+                
                 <div className="h-px bg-border" />
               </div>
 
