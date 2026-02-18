@@ -286,6 +286,9 @@ async def create_session(request: Request, response: Response):
 @api_router.get("/auth/me")
 async def get_me(request: Request):
     user = await get_current_user(request)
+    # Ensure role is included
+    if "role" not in user:
+        user["role"] = "moderator" if user.get("email") in MODERATOR_EMAILS else "user"
     return user
 
 @api_router.post("/auth/logout")
