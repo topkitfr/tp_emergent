@@ -157,10 +157,14 @@ async def get_version(version_id: str):
 @router.get("/versions/{version_id}/estimates")
 async def get_version_estimates(version_id: str):
     items = await db.collections.find(
-        {"version_id": version_id, "value_estimate": {"$gt": 0}},
-        {"_id": 0, "value_estimate": 1}
+        {"version_id": version_id},
+        {"_id": 0, "estimated_price": 1, "value_estimate": 1, "price_estimate": 1}
     ).to_list(1000)
-    estimates = [i["value_estimate"] for i in items if i.get("value_estimate")]
+    estimates = []
+    for i in items:
+        val = i.get("estimated_price") or i.get("value_estimate") or i.get("price_estimate") or 0
+        if val and val > 0:
+            estimates.append(val)
     if not estimates:
         return {"low": 0, "average": 0, "high": 0, "count": 0, "estimates": []}
     return {
