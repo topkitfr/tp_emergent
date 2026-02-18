@@ -1,7 +1,7 @@
 # Topkit - Football Jersey Database PRD
 
 ## Problem Statement
-Create a web application for cataloging football jerseys, similar to Discogs.com but focused on football jerseys. Extended with structured entity system for Teams, Leagues, Brands, and Players.
+Create a web application for cataloging football jerseys, similar to Discogs.com but focused on football jerseys. Extended with structured entity system for Teams, Leagues, Brands, and Players with moderation workflows.
 
 ## Architecture
 - **Frontend**: React + Tailwind CSS + Shadcn/UI
@@ -9,167 +9,67 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - **Database**: MongoDB
 - **Auth**: Emergent-managed Google OAuth
 
-## Core Data Model (Hierarchy)
+## Core Data Model
 
-### A. Master Kit (Reference)
-| Field | Type | Required |
-|-------|------|----------|
-| Team (club) | String | Yes |
-| Season | Date (YYYY/YYYY) | Yes |
-| League | String | No |
-| Type | Enum: Home/Away/Third/Fourth/GK/Special/Other | Yes |
-| Brand | String | Yes |
-| Design | String | No |
-| Sponsor | String | No |
-| Gender | Enum: Man/Woman/Kid | No |
-| Photo Front | Image | Yes |
-| team_id | String (FK to teams) | No |
-| league_id | String (FK to leagues) | No |
-| brand_id | String (FK to brands) | No |
+### Master Kit → Version → Item hierarchy
+- **Master Kit**: club, season, league, type, brand, design, sponsor, gender, front_photo + team_id, league_id, brand_id (FK)
+- **Version**: kit_id, competition, model, sku_code, ean_code, front/back_photo, main_player_id (FK)
+- **Item (Collection)**: version_id, flocking, condition, size, purchase_cost, signed, estimated_price
 
-### B. Version (Child of Master Kit)
-| Field | Type | Required |
-|-------|------|----------|
-| Competition | Enum: National Championship/National Cup/Continental Cup/Intercontinental Cup/World Cup | Yes |
-| Model | Enum: Authentic/Replica/Other | Yes |
-| Code SKU | String | No |
-| Code EAN | String | No |
-| Photo Front | Image | No |
-| Photo Back | Image | No |
-| main_player_id | String (FK to players) | No |
+### Entities
+- **Teams**: name, slug, country, city, founded, primary/secondary_color, crest_url, aka
+- **Leagues**: name, slug, country_or_region, level, organizer, logo_url
+- **Brands**: name, slug, country, founded, logo_url
+- **Players**: full_name, slug, nationality, birth_year, positions, preferred_number, photo_url
 
-### C. Item (Version added to collection)
-| Field | Type | Required |
-|-------|------|----------|
-| Flocking Type | Enum | No |
-| Flocking Origin | Enum | No |
-| Flocking Detail | String | No |
-| Condition (Origin) | Enum | No |
-| Physical State | Enum | No |
-| Size | String | No |
-| Purchase Cost | Number | No |
-| Signed | Boolean | No |
-| Signed By | String | No |
-| Signed Proof | Boolean | No |
-| Notes | Text | No |
-| Estimated Price | Number | Auto |
+### Submissions System
+- Types: master_kit, version, team, league, brand, player
+- Modes: create, edit (for entity submissions)
+- Approval: 5 community votes or 1 moderator vote
 
-### D. Entities (NEW in Phase 11)
-
-#### Teams
-| Field | Type | Required |
-|-------|------|----------|
-| name | String | Yes |
-| slug | String (unique, URL-safe) | Auto |
-| country | String | No |
-| city | String | No |
-| founded | Int | No |
-| primary_color | String | No |
-| secondary_color | String | No |
-| crest_url | String | No |
-| aka | Array[String] | No |
-
-#### Leagues
-| Field | Type | Required |
-|-------|------|----------|
-| name | String | Yes |
-| slug | String (unique) | Auto |
-| country_or_region | String | No |
-| level | Enum: domestic/continental/international/cup | No |
-| organizer | String | No |
-| logo_url | String | No |
-
-#### Brands
-| Field | Type | Required |
-|-------|------|----------|
-| name | String | Yes |
-| slug | String (unique) | Auto |
-| country | String | No |
-| founded | Int | No |
-| logo_url | String | No |
-
-#### Players
-| Field | Type | Required |
-|-------|------|----------|
-| full_name | String | Yes |
-| slug | String (unique) | Auto |
-| nationality | String | No |
-| birth_year | Int | No |
-| positions | Array[String] | No |
-| preferred_number | Int | No |
-| photo_url | String | No |
-
-## Estimation System (TopKit)
-**Formula**: `Estimated Price = Base Price x (1 + sum of coefficients)`
-- Base: Authentic=140, Replica=90, Other=60
-- Competition, Origin, State, Flocking, Signed, Age coefficients
-
-## User Roles System
-| Role | Description | Privileges |
-|------|-------------|------------|
-| user | Regular user | Vote (1 vote each) |
-| moderator | Trusted moderator | Single upvote = instant approval |
-| admin | Administrator | Full system access |
-
-**Moderator Emails**: topkitfr@gmail.com
+## User Roles
+- **user**: Vote on submissions (1 vote)
+- **moderator** (topkitfr@gmail.com): Single upvote = instant approval
+- **admin**: Full access
 
 ## Completed Phases
 
-### Phase 1-5: Foundation (COMPLETE)
-- Full CRUD for Master Kits, Versions, Collection Items
-- Google OAuth, Browse/Search, Ratings/Reviews, Wishlist
-- Image proxy, Excel import (167 kits), Contributions/Submissions, Autocomplete
-
-### Phase 6-8: Schema + Estimation (COMPLETE)
-- Estimation system with breakdown
-- Schema cleanup (removed deprecated fields)
-
-### Phase 9: Moderator Privileges (COMPLETE)
-- Role system, single-vote approval for moderators
-
-### Phase 10: Default Versions + Display All Fields (COMPLETE)
-- Migration for default versions, all fields displayed with "None" fallback
+### Phase 1-10: Foundation through Default Versions (COMPLETE)
+- Full CRUD, OAuth, Browse/Search, Reviews, Wishlist, Estimation system
+- Schema cleanup, moderator roles, default versions
 
 ### Phase 11: Structured Entity System (Feb 18, 2026) - COMPLETE
-- [x] Renamed app from KitLog to Topkit (logo, navbar, landing, title)
-- [x] Created MongoDB collections: teams, leagues, brands, players with Pydantic models
-- [x] Added CRUD endpoints: GET/POST/PUT for all 4 entity types with pagination, search, filters
-- [x] Entity detail endpoints return linked kits/versions with aggregated stats
-- [x] Extended autocomplete to support `type=team|league|brand|player` (returns {id, label, extra})
-- [x] Legacy field-based autocomplete preserved (backward compatible)
-- [x] Added team_id, league_id, brand_id fields to MasterKitCreate/Out models
-- [x] Added main_player_id field to VersionCreate/Out models
-- [x] Created MongoDB indexes for all entity collections (slug, name, foreign keys)
-- [x] Migration endpoint POST /api/migrate-entities-from-kits (idempotent)
-- [x] Migration ran: 11 teams, 5 leagues, 8 brands created from existing 170 kits
-- [x] EntityAutocomplete component with create-on-the-fly dialog
-- [x] Updated AddJersey.js with entity autocomplete for Team, Brand, League
-- [x] Updated Contributions.js with entity autocomplete for Team, Brand, League
-- [x] New pages: /teams, /teams/:slug, /leagues, /leagues/:slug, /brands, /brands/:slug, /players, /players/:slug
-- [x] Team detail page: header + kits grid with season/type/brand filters
-- [x] League detail page: header + kits grid with season/team filters
-- [x] Brand detail page: header + kits grid with season/team filters
-- [x] Player detail page: header + "Career in Shirts" timeline grouped by team
-- [x] Navbar updated with Database dropdown (Teams, Leagues, Brands, Players)
-- [x] All existing flows preserved: browse, collection, wishlist, estimation, contributions
+- Entity CRUD APIs (Teams, Leagues, Brands, Players)
+- Entity autocomplete + migration from existing kits
+- Entity pages with kits grids and filters
+- Navbar Database dropdown, Topkit branding
 
-### Test Results (Phase 11)
-- Backend: 28/28 tests passed (100%)
-- Frontend: All pages verified, all entity flows working
-- Migration: Idempotent, no duplicates on re-run
+### Phase 12: Entity Moderation + Logos (Feb 18, 2026) - COMPLETE
+- [x] Extended submissions to accept entity types (team/league/brand/player)
+- [x] Entity submissions support mode=create and mode=edit with entity_id
+- [x] Approval logic: create mode → creates entity doc; edit mode → patches entity doc
+- [x] EntityAutocomplete now creates submissions instead of direct entities
+- [x] EntityEditDialog reusable component with full entity fields + ImageUpload
+- [x] Suggest Edit button on all entity detail pages (team, league, brand, player)
+- [x] Contributions page shows entity submissions with type badges (Team/League/Brand/Player + New/Edit)
+- [x] Logo/crest/photo upload support via ImageUpload in EntityEditDialog
+- [x] All existing flows preserved: browse, collection, wishlist, estimation, kit contributions
+
+### Test Results (Phase 12)
+- Backend: 21/21 tests passed (100%)
+- Frontend: All pages verified, entity moderation flows working
 
 ## Prioritized Backlog
 
 ### P0
-- Phase 5: Entity submission moderation (entities created via forms go through moderation)
+- Refactor server.py into APIRouter modules (~1800 lines, needs splitting)
 
 ### P1
-- Refactor server.py into APIRouter modules
-- Notification system (wishlist updates, contribution votes)
 - Seed endpoints for bulk CSV/XLSX import of entities
+- Notification system (wishlist updates, contribution status)
 
 ### P2
-- Discussion forums (posts, comments, voting)
+- Discussion forums
 - Public profile pages / collection sharing
 - Collection analytics dashboards
 - Export collection data (CSV/PDF)
