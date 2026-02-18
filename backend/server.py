@@ -1668,6 +1668,103 @@ async def set_moderator_role():
     }
 
 
+@api_router.post("/migrate-entities-from-kits")
+async def migrate_entities_from_kits():
+    """Scan master_kits and create Team/League/Brand entities, then link them."""
+    all_kits = await db.master_kits.find({}, {"_id": 0}).to_list(5000)
+    now = datetime.now(timezone.utc).isoformat()
+
+    teams_created = 0
+    leagues_created = 0
+    brands_created = 0
+    kits_updated = 0
+
+    # Extract unique values
+    club_names = set(k.get("club", "").strip() for k in all_kits if k.get("club", "").strip())
+    league_names = set(k.get("league", "").strip() for k in all_kits if k.get("league", "").strip())
+    brand_names = set(k.get("brand", "").strip() for k in all_kits if k.get("brand", "").strip())
+
+    # Create Teams
+    team_map = {}
+    for name in sorted(club_names):
+        slug = slugify(name)
+        existing = await db.teams.find_one({"slug": slug}, {"_id": 0, "team_id": 1})
+        if existing:
+            team_map[name] = existing["team_id"]
+        else:
+            team_id = f"team_{uuid.uuid4().hex[:12]}"
+            await db.teams.insert_one({
+                "team_id": team_id, "name": name, "slug": slug,
+                "country": "", "city": "", "founded": None,
+                "primary_color": "", "secondary_color": "",
+                "crest_url": "", "aka": [],
+                "created_at": now, "updated_at": now
+            })
+            team_map[name] = team_id
+            teams_created += 1
+
+    # Create Leagues
+    league_map = {}
+    for name in sorted(league_names):
+        slug = slugify(name)
+        existing = await db.leagues.find_one({"slug": slug}, {"_id": 0, "league_id": 1})
+        if existing:
+            league_map[name] = existing["league_id"]
+        else:
+            league_id = f"league_{uuid.uuid4().hex[:12]}"
+            await db.leagues.insert_one({
+                "league_id": league_id, "name": name, "slug": slug,
+                "country_or_region": "", "level": "domestic",
+                "organizer": "", "logo_url": "",
+                "created_at": now, "updated_at": now
+            })
+            league_map[name] = league_id
+            leagues_created += 1
+
+    # Create Brands
+    brand_map = {}
+    for name in sorted(brand_names):
+        slug = slugify(name)
+        existing = await db.brands.find_one({"slug": slug}, {"_id": 0, "brand_id": 1})
+        if existing:
+            brand_map[name] = existing["brand_id"]
+        else:
+            brand_id = f"brand_{uuid.uuid4().hex[:12]}"
+            await db.brands.insert_one({
+                "brand_id": brand_id, "name": name, "slug": slug,
+                "country": "", "founded": None, "logo_url": "",
+                "created_at": now, "updated_at": now
+            })
+            brand_map[name] = brand_id
+            brands_created += 1
+
+    # Link master_kits to entities
+    for kit in all_kits:
+        update = {}
+        club = kit.get("club", "").strip()
+        league = kit.get("league", "").strip()
+        brand = kit.get("brand", "").strip()
+        if club and club in team_map:
+            update["team_id"] = team_map[club]
+        if league and league in league_map:
+            update["league_id"] = league_map[league]
+        if brand and brand in brand_map:
+            update["brand_id"] = brand_map[brand]
+        if update:
+            await db.master_kits.update_one({"kit_id": kit["kit_id"]}, {"$set": update})
+            kits_updated += 1
+
+    logger.info(f"Entity migration: {teams_created} teams, {leagues_created} leagues, {brands_created} brands, {kits_updated} kits updated")
+    return {
+        "message": "Entity migration complete",
+        "teams_created": teams_created,
+        "leagues_created": leagues_created,
+        "brands_created": brands_created,
+        "kits_updated": kits_updated,
+        "totals": {"teams": len(team_map), "leagues": len(league_map), "brands": len(brand_map)}
+    }
+
+
 # ─── Image Proxy ───
 
 @api_router.get("/image-proxy")
