@@ -1,13 +1,21 @@
 // Estimation logic matching backend formula exactly
 // Formula: Estimated Price = Base Price × (1 + sum of coefficients)
 
-const BASE_PRICES = { Authentic: 140, Replica: 90 };
+const BASE_PRICES = { Authentic: 140, Replica: 90, Other: 60 };
+
+const COMPETITION_COEFF = {
+  'National Championship': 0.0,
+  'National Cup': 0.05,
+  'Continental Cup': 1.0,
+  'Intercontinental Cup': 1.0,
+  'World Cup': 1.0,
+};
 
 const ORIGIN_COEFF = {
-  'Club Stock': 0.2,
-  'Match Prepared': 0.5,
-  'Match Worn': 1.0,
-  'Training': 0.05,
+  'Club Stock': 0.5,
+  'Match Prepared': 1.0,
+  'Match Worn': 1.5,
+  'Training': 0.0,
   'Shop': 0.0,
 };
 
@@ -24,13 +32,14 @@ const FLOCKING_COEFF = {
   'Personalized': 0.0,
 };
 
-const SIGNED_COEFF = 1.0;
+const SIGNED_COEFF = 1.5;
 const SIGNED_PROOF_COEFF = 1.0;
 const AGE_COEFF_PER_YEAR = 0.05;
 const AGE_MAX = 1.0;
 
 export function calculateEstimation({
   modelType = 'Replica',
+  competition = '',
   conditionOrigin = '',
   physicalState = '',
   flockingOrigin = '',
@@ -38,9 +47,16 @@ export function calculateEstimation({
   signedProof = false,
   seasonYear = 0,
 }) {
-  const base = BASE_PRICES[modelType] || 90;
+  const base = BASE_PRICES[modelType] || 60;
   let coeffSum = 0;
   const breakdown = [];
+
+  // Competition
+  const compC = COMPETITION_COEFF[competition] ?? 0;
+  coeffSum += compC;
+  if (competition) {
+    breakdown.push({ label: `Competition: ${competition}`, coeff: compC });
+  }
 
   // Origin
   const originC = ORIGIN_COEFF[conditionOrigin] ?? 0;

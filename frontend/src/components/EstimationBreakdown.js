@@ -3,11 +3,11 @@ import { calculateEstimation } from '@/utils/estimation';
 import { TrendingUp } from 'lucide-react';
 
 export default function EstimationBreakdown({
-  modelType, conditionOrigin, physicalState, flockingOrigin,
+  modelType, competition, conditionOrigin, physicalState, flockingOrigin,
   signed, signedProof, seasonYear
 }) {
   const est = calculateEstimation({
-    modelType, conditionOrigin, physicalState, flockingOrigin,
+    modelType, competition, conditionOrigin, physicalState, flockingOrigin,
     signed, signedProof, seasonYear,
   });
 
