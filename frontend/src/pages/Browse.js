@@ -96,13 +96,13 @@ export default function Browse() {
         </Select>
       </div>
       <div>
-        <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Year</label>
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="bg-card border-border rounded-none" data-testid="filter-year">
-            <SelectValue placeholder="All Years" />
+        <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Season</label>
+        <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+          <SelectTrigger className="bg-card border-border rounded-none" data-testid="filter-season">
+            <SelectValue placeholder="All Seasons" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            {filters.years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            {filters.seasons?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
