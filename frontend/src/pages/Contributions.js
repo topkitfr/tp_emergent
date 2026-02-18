@@ -40,8 +40,8 @@ const FIELD_LABELS = {
 
 function SubmissionDetail({ sub, existingKits }) {
   const fields = sub.submission_type === 'master_kit'
-    ? ['club', 'season', 'kit_type', 'brand', 'year']
-    : ['competition', 'model', 'gender', 'sku_code'];
+    ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
+    : ['competition', 'model', 'sku_code', 'ean_code'];
   const parentKit = sub.submission_type === 'version' && existingKits.find(k => k.kit_id === sub.data?.kit_id);
 
   return (
