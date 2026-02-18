@@ -111,7 +111,11 @@ async def get_collection_stats(request: Request):
     user = await get_current_user(request)
     items = await db.collections.find({"user_id": user["user_id"]}, {"_id": 0}).to_list(1000)
     total = len(items)
-    estimates = [i["value_estimate"] for i in items if i.get("value_estimate") and i["value_estimate"] > 0]
+    estimates = []
+    for i in items:
+        val = i.get("estimated_price") or i.get("value_estimate") or i.get("price_estimate") or 0
+        if val and val > 0:
+            estimates.append(val)
     low = min(estimates) * total if estimates else 0
     avg = sum(estimates) if estimates else 0
     high = max(estimates) * total if estimates else 0
@@ -132,8 +136,9 @@ async def get_category_stats(request: Request):
         if cat not in categories:
             categories[cat] = {"count": 0, "estimates": []}
         categories[cat]["count"] += 1
-        if item.get("value_estimate") and item["value_estimate"] > 0:
-            categories[cat]["estimates"].append(item["value_estimate"])
+        val = item.get("estimated_price") or item.get("value_estimate") or item.get("price_estimate") or 0
+        if val and val > 0:
+            categories[cat]["estimates"].append(val)
     result = []
     for cat, data in categories.items():
         est = data["estimates"]
