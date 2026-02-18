@@ -133,21 +133,37 @@ export default function KitDetail() {
 
               <Separator className="bg-border" />
 
-              {/* Data Grid */}
+              {/* Data Grid - All Fields */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Brand</div>
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{kit.brand}</span>
+                    <span className="text-sm">{kit.brand || 'None'}</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Type</div>
                   <div className="flex items-center gap-2">
                     <Shirt className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{kit.kit_type}</span>
+                    <span className="text-sm">{kit.kit_type || 'None'}</span>
                   </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</div>
+                  <span className="text-sm">{kit.league || 'None'}</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
+                  <span className="text-sm">{kit.design || 'None'}</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
+                  <span className="text-sm">{kit.sponsor || 'None'}</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
+                  <span className="text-sm">{kit.gender || 'None'}</span>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Versions</div>
@@ -156,30 +172,6 @@ export default function KitDetail() {
                     <span className="text-sm font-mono">{kit.version_count}</span>
                   </div>
                 </div>
-                {kit.design && (
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
-                    <span className="text-sm">{kit.design}</span>
-                  </div>
-                )}
-                {kit.sponsor && (
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
-                    <span className="text-sm">{kit.sponsor}</span>
-                  </div>
-                )}
-                {kit.league && (
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</div>
-                    <span className="text-sm">{kit.league}</span>
-                  </div>
-                )}
-                {kit.gender && (
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
-                    <span className="text-sm">{kit.gender}</span>
-                  </div>
-                )}
               </div>
 
               {/* Report Button */}
