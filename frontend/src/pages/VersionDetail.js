@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, createReview, addToCollection, getVersionEstimates, createReport, proxyImageUrl } from '@/lib/api';
+import { getVersion, createReview, addToCollection, getVersionEstimates, createReport, checkWishlist, addToWishlist, removeFromWishlist, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Star, Shirt, ChevronRight, Package, Tag, Users, FolderPlus, Check, Hash, User, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
+import { Star, Shirt, ChevronRight, Package, Tag, Users, FolderPlus, Check, Hash, User, TrendingUp, TrendingDown, Minus, AlertTriangle, Heart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const CONDITIONS = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const CONDITION_ORIGINS = ['Club Stock', 'Match Prepared', 'Match Worn', 'Training'];
+const PHYSICAL_STATES = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
+const FLOCKING_TYPES = ['Name+Number', 'Name', 'Number'];
+const FLOCKING_ORIGINS = ['Official', 'Perso'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+const fieldLabel = "text-[10px] uppercase tracking-wider text-muted-foreground";
+const fieldStyle = { fontFamily: 'Barlow Condensed' };
+const inputClass = "bg-card border-border rounded-none h-9 text-sm";
 
 export default function VersionDetail() {
   const { versionId } = useParams();
@@ -31,11 +39,24 @@ export default function VersionDetail() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
 
-  // Collection form
+  // Wishlist state
+  const [inWishlist, setInWishlist] = useState(false);
+  const [wishlistId, setWishlistId] = useState(null);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+
+  // Collection form - new schema
   const [collectionCategory, setCollectionCategory] = useState('General');
-  const [collectionCondition, setCollectionCondition] = useState('');
+  const [flockingType, setFlockingType] = useState('');
+  const [flockingOrigin, setFlockingOrigin] = useState('');
+  const [flockingDetail, setFlockingDetail] = useState('');
+  const [conditionOrigin, setConditionOrigin] = useState('');
+  const [physicalState, setPhysicalState] = useState('');
   const [collectionSize, setCollectionSize] = useState('');
-  const [collectionValue, setCollectionValue] = useState('');
+  const [purchaseCost, setPurchaseCost] = useState('');
+  const [priceEstimate, setPriceEstimate] = useState('');
+  const [valueEstimate, setValueEstimate] = useState('');
+  const [signed, setSigned] = useState(false);
+  const [signedBy, setSignedBy] = useState('');
   const [collectionNotes, setCollectionNotes] = useState('');
 
   // Report form
@@ -50,20 +71,50 @@ export default function VersionDetail() {
       setVersion(vRes.data);
       setEstimates(eRes.data);
       setLoading(false);
-      // Pre-fill report corrections
-      if (vRes.data.master_kit) {
+      if (vRes.data) {
         setReportCorrections({
           competition: vRes.data.competition,
           model: vRes.data.model,
-          gender: vRes.data.gender,
-          sku_code: vRes.data.sku_code || ''
+          sku_code: vRes.data.sku_code || '',
+          ean_code: vRes.data.ean_code || ''
         });
       }
     }).catch(() => setLoading(false));
   };
 
+  const fetchWishlistStatus = () => {
+    if (!user) return;
+    checkWishlist(versionId).then(res => {
+      setInWishlist(res.data.in_wishlist);
+      setWishlistId(res.data.wishlist_id);
+    }).catch(() => {});
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchVersion(); }, [versionId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchWishlistStatus(); }, [versionId, user]);
+
+  const handleToggleWishlist = async () => {
+    setTogglingWishlist(true);
+    try {
+      if (inWishlist && wishlistId) {
+        await removeFromWishlist(wishlistId);
+        setInWishlist(false);
+        setWishlistId(null);
+        toast.success('Removed from wishlist');
+      } else {
+        const res = await addToWishlist({ version_id: versionId });
+        setInWishlist(true);
+        setWishlistId(res.data.wishlist_id);
+        toast.success('Added to wishlist');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update wishlist');
+    } finally {
+      setTogglingWishlist(false);
+    }
+  };
 
   const handleSubmitReview = async () => {
     if (!reviewRating) { toast.error('Please select a rating'); return; }
@@ -87,9 +138,17 @@ export default function VersionDetail() {
       await addToCollection({
         version_id: versionId,
         category: collectionCategory,
-        condition: collectionCondition,
+        flocking_type: flockingType,
+        flocking_origin: flockingOrigin,
+        flocking_detail: flockingDetail,
+        condition_origin: conditionOrigin,
+        physical_state: physicalState,
         size: collectionSize,
-        value_estimate: collectionValue ? parseFloat(collectionValue) : null,
+        purchase_cost: purchaseCost ? parseFloat(purchaseCost) : null,
+        price_estimate: priceEstimate ? parseFloat(priceEstimate) : null,
+        value_estimate: valueEstimate ? parseFloat(valueEstimate) : null,
+        signed,
+        signed_by: signed ? signedBy : '',
         notes: collectionNotes
       });
       toast.success('Added to collection');
@@ -141,8 +200,6 @@ export default function VersionDetail() {
   }
 
   const mk = version.master_kit;
-
-  // Prepare estimate chart data
   const estimateChartData = estimates && estimates.count > 0 ? [
     { name: 'Low', value: estimates.low, color: '#ef4444' },
     { name: 'Average', value: estimates.average, color: '#facc15' },
@@ -181,7 +238,7 @@ export default function VersionDetail() {
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="outline" className="rounded-none text-xs">{version.model}</Badge>
-                <Badge variant="outline" className="rounded-none text-xs">{version.gender}</Badge>
+                {(mk?.gender || version.gender) && <Badge variant="outline" className="rounded-none text-xs">{mk?.gender || version.gender}</Badge>}
               </div>
               {mk && (
                 <p className="text-sm text-muted-foreground mb-1" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
@@ -210,29 +267,31 @@ export default function VersionDetail() {
             {/* Data Grid */}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Model</div>
-                <div className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model}</span></div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Gender</div>
-                <div className="flex items-center gap-2"><User className="w-4 h-4 text-primary" /><span className="text-sm">{version.gender}</span></div>
+                <div className={fieldLabel} style={fieldStyle}>Model</div>
+                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model}</span></div>
               </div>
               {version.sku_code && (
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>SKU</div>
-                  <div className="flex items-center gap-2"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.sku_code}</span></div>
+                  <div className={fieldLabel} style={fieldStyle}>SKU</div>
+                  <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.sku_code}</span></div>
+                </div>
+              )}
+              {version.ean_code && (
+                <div>
+                  <div className={fieldLabel} style={fieldStyle}>EAN</div>
+                  <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.ean_code}</span></div>
                 </div>
               )}
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed' }}>In Collections</div>
-                <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.collection_count || 0}</span></div>
+                <div className={fieldLabel} style={fieldStyle}>In Collections</div>
+                <div className="flex items-center gap-2 mt-1"><Users className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.collection_count || 0}</span></div>
               </div>
             </div>
 
             {/* Estimation Stats */}
             {estimates && estimates.count > 0 && (
               <div className="border border-border p-4" data-testid="estimation-stats">
-                <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+                <h3 className="text-sm uppercase tracking-wider mb-4" style={fieldStyle}>
                   VALUE ESTIMATION
                   <span className="font-mono text-xs text-muted-foreground ml-2 normal-case">({estimates.count} estimates)</span>
                 </h3>
@@ -240,17 +299,17 @@ export default function VersionDetail() {
                   <div className="text-center p-3 bg-destructive/5 border border-destructive/20">
                     <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
                     <div className="font-mono text-lg">${estimates.low}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Low</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Low</div>
                   </div>
                   <div className="text-center p-3 bg-accent/5 border border-accent/20">
                     <Minus className="w-4 h-4 text-accent mx-auto mb-1" />
                     <div className="font-mono text-lg">${estimates.average}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Average</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Average</div>
                   </div>
                   <div className="text-center p-3 bg-primary/5 border border-primary/20">
                     <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
                     <div className="font-mono text-lg">${estimates.high}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>High</div>
+                    <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>High</div>
                   </div>
                 </div>
                 <div className="h-32">
@@ -281,6 +340,16 @@ export default function VersionDetail() {
                     <FolderPlus className="w-4 h-4 mr-2" /> Add to Collection
                   </Button>
                 )}
+                <Button
+                  variant={inWishlist ? "default" : "outline"}
+                  onClick={handleToggleWishlist}
+                  disabled={togglingWishlist}
+                  className={`rounded-none ${inWishlist ? 'bg-red-600 hover:bg-red-700 text-white border-red-600' : 'border-border'}`}
+                  data-testid="toggle-wishlist-btn"
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${inWishlist ? 'fill-white' : ''}`} />
+                  {inWishlist ? 'In Wishlist' : 'Add to Wishlist'}
+                </Button>
                 <Button variant="outline" onClick={() => setShowReportForm(!showReportForm)} className="rounded-none border-border" data-testid="report-btn">
                   <AlertTriangle className="w-4 h-4 mr-2" /> Report Error
                 </Button>
@@ -289,38 +358,112 @@ export default function VersionDetail() {
 
             {/* Add to Collection Form */}
             {showAddForm && user && (
-              <div className="border border-primary/30 p-4 space-y-3" data-testid="add-collection-form">
-                <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>ADD TO COLLECTION</h4>
+              <div className="border border-primary/30 p-4 space-y-4" data-testid="add-collection-form">
+                <h4 className="text-sm uppercase tracking-wider" style={fieldStyle}>ADD TO COLLECTION</h4>
+
+                {/* Flocking Section */}
+                <div className="space-y-3">
+                  <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>FLOCKING</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fieldStyle}>Type</Label>
+                      <Select value={flockingType || "none"} onValueChange={v => setFlockingType(v === "none" ? "" : v)}>
+                        <SelectTrigger className={inputClass} data-testid="collection-flocking-type"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="none">None</SelectItem>
+                          {FLOCKING_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
+                      <Select value={flockingOrigin || "none"} onValueChange={v => setFlockingOrigin(v === "none" ? "" : v)}>
+                        <SelectTrigger className={inputClass} data-testid="collection-flocking-origin"><SelectValue placeholder="None" /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="none">None</SelectItem>
+                          {FLOCKING_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={fieldLabel} style={fieldStyle}>Detail</Label>
+                      <Input value={flockingDetail} onChange={e => setFlockingDetail(e.target.value)} placeholder="e.g., Messi 10" className={inputClass} data-testid="collection-flocking-detail" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Condition & State */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Category</Label>
-                    <Input value={collectionCategory} onChange={e => setCollectionCategory(e.target.value)} placeholder="General" className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-category-input" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Condition</Label>
-                    <Select value={collectionCondition} onValueChange={setCollectionCondition}>
-                      <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-condition-select"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <Label className={fieldLabel} style={fieldStyle}>Condition (Origin)</Label>
+                    <Select value={conditionOrigin || "none"} onValueChange={v => setConditionOrigin(v === "none" ? "" : v)}>
+                      <SelectTrigger className={inputClass} data-testid="collection-condition-origin"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent className="bg-card border-border">
-                        {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        <SelectItem value="none">None</SelectItem>
+                        {CONDITION_ORIGINS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Size</Label>
-                    <Select value={collectionSize} onValueChange={setCollectionSize}>
-                      <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="collection-size-select"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <Label className={fieldLabel} style={fieldStyle}>Physical State</Label>
+                    <Select value={physicalState || "none"} onValueChange={v => setPhysicalState(v === "none" ? "" : v)}>
+                      <SelectTrigger className={inputClass} data-testid="collection-physical-state"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {PHYSICAL_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Size & Values */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Size</Label>
+                    <Select value={collectionSize || "none"} onValueChange={v => setCollectionSize(v === "none" ? "" : v)}>
+                      <SelectTrigger className={inputClass} data-testid="collection-size-select"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
                         {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Your Value Estimate ($)</Label>
-                    <Input type="number" value={collectionValue} onChange={e => setCollectionValue(e.target.value)} placeholder="0.00" className="bg-card border-border rounded-none h-9 text-sm font-mono" data-testid="collection-value-input" />
+                    <Label className={fieldLabel} style={fieldStyle}>Category</Label>
+                    <Input value={collectionCategory} onChange={e => setCollectionCategory(e.target.value)} placeholder="General" className={inputClass} data-testid="collection-category-input" />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost</Label>
+                    <Input type="number" value={purchaseCost} onChange={e => setPurchaseCost(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-purchase-cost" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Price Estimate</Label>
+                    <Input type="number" value={priceEstimate} onChange={e => setPriceEstimate(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-price-estimate" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Est. Value</Label>
+                    <Input type="number" value={valueEstimate} onChange={e => setValueEstimate(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-value-input" />
+                  </div>
+                </div>
+
+                {/* Signed */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={signed} onCheckedChange={setSigned} data-testid="collection-signed-switch" />
+                    <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
+                  </div>
+                  {signed && (
+                    <div className="flex-1">
+                      <Input value={signedBy} onChange={e => setSignedBy(e.target.value)} placeholder="Signed by (player name)" className={inputClass} data-testid="collection-signed-by" />
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-1">
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                  <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
                   <Textarea value={collectionNotes} onChange={e => setCollectionNotes(e.target.value)} placeholder="Personal notes..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="collection-notes-input" />
                 </div>
                 <div className="flex gap-2">
@@ -335,30 +478,30 @@ export default function VersionDetail() {
             {/* Report Form */}
             {showReportForm && user && (
               <div className="border border-destructive/30 p-4 space-y-3" data-testid="report-form">
-                <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+                <h4 className="text-sm uppercase tracking-wider" style={fieldStyle}>REPORT ERROR</h4>
                 <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                   Suggest corrections for this version. Community will vote on changes.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition</Label>
-                    <Input value={reportCorrections.competition || ''} onChange={e => setReportCorrections(p => ({...p, competition: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-competition" />
+                    <Label className={fieldLabel} style={fieldStyle}>Competition</Label>
+                    <Input value={reportCorrections.competition || ''} onChange={e => setReportCorrections(p => ({...p, competition: e.target.value}))} className={inputClass} data-testid="report-competition" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model</Label>
-                    <Input value={reportCorrections.model || ''} onChange={e => setReportCorrections(p => ({...p, model: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-model" />
+                    <Label className={fieldLabel} style={fieldStyle}>Model</Label>
+                    <Input value={reportCorrections.model || ''} onChange={e => setReportCorrections(p => ({...p, model: e.target.value}))} className={inputClass} data-testid="report-model" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                    <Input value={reportCorrections.gender || ''} onChange={e => setReportCorrections(p => ({...p, gender: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-gender" />
+                    <Label className={fieldLabel} style={fieldStyle}>SKU Code</Label>
+                    <Input value={reportCorrections.sku_code || ''} onChange={e => setReportCorrections(p => ({...p, sku_code: e.target.value}))} className={`${inputClass} font-mono`} data-testid="report-sku" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
-                    <Input value={reportCorrections.sku_code || ''} onChange={e => setReportCorrections(p => ({...p, sku_code: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm font-mono" data-testid="report-sku" />
+                    <Label className={fieldLabel} style={fieldStyle}>EAN Code</Label>
+                    <Input value={reportCorrections.ean_code || ''} onChange={e => setReportCorrections(p => ({...p, ean_code: e.target.value}))} className={`${inputClass} font-mono`} data-testid="report-ean" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                  <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
                   <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="report-notes" />
                 </div>
                 <div className="flex gap-2">
@@ -380,7 +523,7 @@ export default function VersionDetail() {
 
           {user && (
             <div className="border border-border p-6 mb-8" data-testid="review-form">
-              <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'Barlow Condensed' }}>WRITE A REVIEW</h3>
+              <h3 className="text-sm font-semibold mb-4" style={fieldStyle}>WRITE A REVIEW</h3>
               <div className="flex items-center gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map(s => (
                   <button key={s} onClick={() => setReviewRating(s)} onMouseEnter={() => setReviewHover(s)} onMouseLeave={() => setReviewHover(0)} data-testid={`star-rating-${s}`}>
