@@ -336,7 +336,7 @@ export default function Contributions() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
-                    <Input value={club} onChange={e => setClub(e.target.value)} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" data-testid="add-club" />
+                    <EntityAutocomplete entityType="team" value={club} onChange={setClub} onSelect={(item) => { setClub(item.label); setTeamId(item.id); }} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" testId="add-club" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season *</Label>
@@ -344,7 +344,7 @@ export default function Contributions() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
-                    <Input value={league} onChange={e => setLeague(e.target.value)} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" data-testid="add-league" />
+                    <EntityAutocomplete entityType="league" value={league} onChange={setLeague} onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" testId="add-league" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type *</Label>
@@ -357,7 +357,7 @@ export default function Contributions() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Brand *</Label>
-                    <Input value={brand} onChange={e => setBrand(e.target.value)} placeholder="e.g., Nike" className="bg-card border-border rounded-none" data-testid="add-brand" />
+                    <EntityAutocomplete entityType="brand" value={brand} onChange={setBrand} onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }} placeholder="e.g., Nike" className="bg-card border-border rounded-none" testId="add-brand" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
