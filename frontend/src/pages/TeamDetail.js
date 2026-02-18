@@ -98,6 +98,18 @@ export default function TeamDetail() {
           </div>
         )}
       </div>
+
+      {team && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="team"
+          mode="edit"
+          entityId={team.team_id}
+          initialData={{ name: team.name, country: team.country, city: team.city, founded: team.founded, primary_color: team.primary_color, secondary_color: team.secondary_color, crest_url: team.crest_url }}
+          onSuccess={() => getTeam(id).then(r => setTeam(r.data))}
+        />
+      )}
     </div>
   );
 }
