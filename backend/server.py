@@ -1149,9 +1149,6 @@ async def import_excel():
 @api_router.post("/migrate-schema")
 async def migrate_schema():
     """Clean master_kits to match new schema: remove year, colors, competition, source_url fields"""
-    # Fields to keep on master_kits
-    valid_fields = {"kit_id", "club", "season", "kit_type", "brand", "front_photo",
-                    "league", "design", "sponsor", "gender", "created_by", "created_at"}
     # Fields to remove
     remove_fields = {"year", "colors", "competition", "source_url"}
 
