@@ -281,6 +281,10 @@ export default function VersionDetail() {
             {/* Data Grid */}
             <div className="grid grid-cols-2 gap-6">
               <div>
+                <div className={fieldLabel} style={fieldStyle}>Competition</div>
+                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.competition}</span></div>
+              </div>
+              <div>
                 <div className={fieldLabel} style={fieldStyle}>Model</div>
                 <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model}</span></div>
               </div>
