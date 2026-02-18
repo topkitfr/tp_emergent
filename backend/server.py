@@ -920,7 +920,7 @@ async def update_profile(update: ProfileUpdate, request: Request):
 @api_router.post("/submissions")
 async def create_submission(sub: SubmissionCreate, request: Request):
     user = await get_current_user(request)
-    if sub.submission_type not in ("master_kit", "version"):
+    if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player"):
         raise HTTPException(status_code=400, detail="Invalid submission type")
     doc = {
         "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
