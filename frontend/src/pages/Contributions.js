@@ -37,12 +37,46 @@ const FIELD_LABELS = {
   version_id: 'Version ID',
   created_by: 'Created By',
   created_at: 'Created At',
+  name: 'Name',
+  full_name: 'Full Name',
+  country: 'Country',
+  city: 'City',
+  founded: 'Founded',
+  primary_color: 'Primary Color',
+  secondary_color: 'Secondary Color',
+  crest_url: 'Crest / Badge',
+  logo_url: 'Logo',
+  photo_url: 'Photo',
+  country_or_region: 'Country / Region',
+  level: 'Level',
+  organizer: 'Organizer',
+  nationality: 'Nationality',
+  birth_year: 'Birth Year',
+  positions: 'Positions',
+  preferred_number: 'Preferred Number',
+};
+
+const ENTITY_DISPLAY_FIELDS = {
+  team: ['name', 'country', 'city', 'founded', 'primary_color', 'secondary_color'],
+  league: ['name', 'country_or_region', 'level', 'organizer'],
+  brand: ['name', 'country', 'founded'],
+  player: ['full_name', 'nationality', 'birth_year', 'positions', 'preferred_number'],
+};
+
+const ENTITY_IMAGE_FIELDS = { team: 'crest_url', league: 'logo_url', brand: 'logo_url', player: 'photo_url' };
+
+const TYPE_LABELS = {
+  master_kit: 'Master Kit', version: 'Version',
+  team: 'Team', league: 'League', brand: 'Brand', player: 'Player',
 };
 
 function SubmissionDetail({ sub, existingKits }) {
-  const fields = sub.submission_type === 'master_kit'
-    ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
-    : ['competition', 'model', 'sku_code', 'ean_code'];
+  const isEntity = ['team', 'league', 'brand', 'player'].includes(sub.submission_type);
+  const fields = isEntity
+    ? (ENTITY_DISPLAY_FIELDS[sub.submission_type] || [])
+    : sub.submission_type === 'master_kit'
+      ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
+      : ['competition', 'model', 'sku_code', 'ean_code'];
   const parentKit = sub.submission_type === 'version' && existingKits.find(k => k.kit_id === sub.data?.kit_id);
 
   return (
