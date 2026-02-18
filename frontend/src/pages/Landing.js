@@ -37,10 +37,7 @@ export default function Landing() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5">
         <Link to="/" className="flex items-center gap-2" data-testid="landing-logo">
-          <Shirt className="w-7 h-7 text-primary" />
-          <span className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Barlow Condensed, sans-serif', textTransform: 'uppercase' }}>
-            KitLog
-          </span>
+          <img src="/topkit-logo.png" alt="Topkit" className="h-7 w-auto" />
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/browse">
@@ -150,8 +147,7 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-border px-6 lg:px-12 py-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Shirt className="w-4 h-4" />
-            <span style={{ fontFamily: 'Barlow Condensed, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>KitLog</span>
+            <img src="/topkit-logo.png" alt="Topkit" className="h-4 w-auto opacity-60" />
           </div>
           <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans, sans-serif' }}>
             The football jersey database

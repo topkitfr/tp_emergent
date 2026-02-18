@@ -31,10 +31,7 @@ export default function Navbar() {
         {/* Left - Logo & Nav */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2" data-testid="navbar-logo">
-            <Shirt className="w-6 h-6 text-primary" />
-            <span className="text-lg font-bold tracking-tight" style={{ fontFamily: 'Barlow Condensed, sans-serif', textTransform: 'uppercase' }}>
-              KitLog
-            </span>
+            <img src="/topkit-logo.png" alt="Topkit" className="h-6 w-auto invert-0 brightness-200" />
           </Link>
           <div className="hidden md:flex items-center gap-1">
             <Link to="/browse">
