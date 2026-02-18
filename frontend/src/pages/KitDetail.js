@@ -184,6 +184,12 @@ export default function KitDetail() {
                     <span className="text-sm">{kit.league}</span>
                   </div>
                 )}
+                {kit.gender && (
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
+                    <span className="text-sm">{kit.gender}</span>
+                  </div>
+                )}
               </div>
 
               {/* Report Button */}
