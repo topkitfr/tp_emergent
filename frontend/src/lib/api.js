@@ -79,4 +79,13 @@ export const createReport = (data) => api.post('/reports', data);
 export const getReports = (params) => api.get('/reports', { params });
 export const voteOnReport = (id, vote) => api.post(`/reports/${id}/vote`, { vote });
 
+// Wishlist
+export const getWishlist = () => api.get('/wishlist');
+export const addToWishlist = (data) => api.post('/wishlist', data);
+export const removeFromWishlist = (id) => api.delete(`/wishlist/${id}`);
+export const checkWishlist = (versionId) => api.get(`/wishlist/check/${versionId}`);
+
+// Autocomplete
+export const getAutocomplete = (field, q) => api.get('/autocomplete', { params: { field, q } });
+
 export default api;
