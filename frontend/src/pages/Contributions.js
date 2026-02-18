@@ -561,7 +561,12 @@ export default function Contributions() {
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <Badge variant="outline" className="rounded-none text-[10px]">{sub.submission_type === 'master_kit' ? 'Master Kit' : 'Version'}</Badge>
+                          <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABELS[sub.submission_type] || sub.submission_type}</Badge>
+                          {['team', 'league', 'brand', 'player'].includes(sub.submission_type) && (
+                            <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">
+                              {sub.data?.mode === 'edit' ? 'Edit' : 'New'}
+                            </Badge>
+                          )}
                           <Badge className={`rounded-none text-[10px] ${sub.status === 'approved' ? 'bg-primary/20 text-primary' : sub.status === 'pending' ? 'bg-accent/20 text-accent' : 'bg-destructive/20 text-destructive'}`}>
                             {sub.status}
                           </Badge>
@@ -569,7 +574,11 @@ export default function Contributions() {
                         <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           {sub.submission_type === 'master_kit'
                             ? `${sub.data?.club || '?'} - ${sub.data?.season || '?'} (${sub.data?.kit_type || '?'})`
-                            : `${sub.data?.competition || '?'} - ${sub.data?.model || '?'}`}
+                            : sub.submission_type === 'version'
+                            ? `${sub.data?.competition || '?'} - ${sub.data?.model || '?'}`
+                            : sub.submission_type === 'player'
+                            ? (sub.data?.full_name || '?')
+                            : (sub.data?.name || '?')}
                         </h4>
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           by {sub.submitter_name || 'Unknown'} -- {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
