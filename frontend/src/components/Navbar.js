@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shirt, Search, FolderOpen, User, LogOut, FileCheck, Heart } from 'lucide-react';
+import { Search, FolderOpen, User, LogOut, FileCheck, Heart, Shield, Trophy, Tag, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +23,13 @@ export default function Navbar() {
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 glass-header border-b border-border" data-testid="main-navbar">
       <div className="flex items-center justify-between px-4 lg:px-8 h-16">
         {/* Left - Logo & Nav */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2" data-testid="navbar-logo">
             <img src="/topkit-logo.png" alt="Topkit" className="h-6 w-auto invert-0 brightness-200" />
           </Link>
@@ -40,6 +40,27 @@ export default function Navbar() {
                 Browse
               </Button>
             </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className={`rounded-none text-sm ${['/teams', '/leagues', '/brands', '/players'].some(p => isActive(p)) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-database">
+                  Database
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40 bg-card border-border">
+                <DropdownMenuItem onClick={() => navigate('/teams')} className="cursor-pointer" data-testid="nav-teams">
+                  <Shield className="w-4 h-4 mr-2" /> Teams
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/leagues')} className="cursor-pointer" data-testid="nav-leagues">
+                  <Trophy className="w-4 h-4 mr-2" /> Leagues
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/brands')} className="cursor-pointer" data-testid="nav-brands">
+                  <Tag className="w-4 h-4 mr-2" /> Brands
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/players')} className="cursor-pointer" data-testid="nav-players">
+                  <Users className="w-4 h-4 mr-2" /> Players
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {user && (
               <>
                 <Link to="/collection">
