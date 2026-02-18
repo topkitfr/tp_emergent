@@ -331,12 +331,16 @@ export default function Contributions() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Club / Team *</Label>
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
                     <Input value={club} onChange={e => setClub(e.target.value)} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" data-testid="add-club" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season *</Label>
                     <Input value={season} onChange={e => setSeason(e.target.value)} placeholder="e.g., 2024/2025" className="bg-card border-border rounded-none" data-testid="add-season" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
+                    <Input value={league} onChange={e => setLeague(e.target.value)} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" data-testid="add-league" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type *</Label>
@@ -352,11 +356,24 @@ export default function Contributions() {
                     <Input value={brand} onChange={e => setBrand(e.target.value)} placeholder="e.g., Nike" className="bg-card border-border rounded-none" data-testid="add-brand" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Year</Label>
-                    <Input type="number" value={year} onChange={e => setYear(e.target.value)} className="bg-card border-border rounded-none" data-testid="add-year" />
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
+                    <Input value={design} onChange={e => setDesign(e.target.value)} placeholder="e.g., Single stripe" className="bg-card border-border rounded-none" data-testid="add-design" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
+                    <Input value={sponsor} onChange={e => setSponsor(e.target.value)} placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" data-testid="add-sponsor" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
+                    <Select value={gender} onValueChange={setGender}>
+                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo *</Label>
                     <ImageUpload value={frontPhoto} onChange={setFrontPhoto} testId="add-front-photo" />
                   </div>
                 </div>
