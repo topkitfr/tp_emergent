@@ -48,6 +48,8 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
   };
 
   const nameKey = entityType === 'player' ? 'full_name' : 'name';
+  const createInitialData = {};
+  createInitialData[nameKey] = displayValue;
 
   return (
     <>
@@ -98,7 +100,7 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
         onOpenChange={setShowCreate}
         entityType={entityType}
         mode="create"
-        initialData={{ [nameKey]: displayValue }}
+        initialData={createInitialData}
         onSuccess={(name) => onChange(name)}
       />
     </>
