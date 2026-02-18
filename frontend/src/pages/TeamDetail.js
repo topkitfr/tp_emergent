@@ -3,16 +3,21 @@ import { useParams, Link } from 'react-router-dom';
 import { getTeam } from '@/lib/api';
 import { proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Shield, MapPin, Calendar, ArrowLeft, Shirt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Shield, MapPin, Calendar, ArrowLeft, Shirt, Pencil } from 'lucide-react';
 import JerseyCard from '@/components/JerseyCard';
+import EntityEditDialog from '@/components/EntityEditDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TeamDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterBrand, setFilterBrand] = useState('');
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -55,6 +60,11 @@ export default function TeamDetail() {
                 <Badge variant="secondary" className="rounded-none">{team.kit_count} kits</Badge>
                 {team.primary_color && <div className="w-4 h-4 border border-border" style={{ backgroundColor: team.primary_color }} />}
                 {team.secondary_color && <div className="w-4 h-4 border border-border" style={{ backgroundColor: team.secondary_color }} />}
+                {user && (
+                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
+                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                  </Button>
+                )}
               </div>
             </div>
           </div>
