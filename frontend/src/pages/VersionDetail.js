@@ -145,6 +145,7 @@ export default function VersionDetail() {
       const seasonYear = parseSeasonYear(mk?.season);
       const est = calculateEstimation({
         modelType: version?.model || 'Replica',
+        competition: version?.competition || '',
         conditionOrigin, physicalState, flockingOrigin,
         signed, signedProof, seasonYear,
       });
