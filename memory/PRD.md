@@ -82,6 +82,13 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - All 35 API tests passed (100%), all frontend pages verified
 - Zero breaking changes
 
+### Bug Fix: Estimation & Collection Stats (Feb 18, 2026) - COMPLETE
+- Fixed field name mismatch: stats endpoints read `value_estimate` but items stored estimation in `estimated_price`
+- Synced all 3 estimation fields (estimated_price, value_estimate, price_estimate) on create/update
+- Updated stats, category-stats, and version-estimates endpoints to read `estimated_price` with fallback
+- Backfilled existing collection documents
+- My Collection now correctly shows Low/Avg/High Est values
+
 ## Prioritized Backlog
 
 ### P1
