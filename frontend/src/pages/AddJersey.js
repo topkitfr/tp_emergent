@@ -145,7 +145,15 @@ export default function AddJersey() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Team *</Label>
-                <AutocompleteInput field="club" value={club} onChange={setClub} placeholder="e.g., FC Barcelona" className={inputClass} testId="input-club" />
+                <EntityAutocomplete
+                  entityType="team"
+                  value={club}
+                  onChange={setClub}
+                  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
+                  placeholder="e.g., FC Barcelona"
+                  className={inputClass}
+                  testId="input-club"
+                />
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Season *</Label>
@@ -162,7 +170,15 @@ export default function AddJersey() {
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Brand *</Label>
-                <AutocompleteInput field="brand" value={brand} onChange={setBrand} placeholder="e.g., Nike" className={inputClass} testId="input-brand" />
+                <EntityAutocomplete
+                  entityType="brand"
+                  value={brand}
+                  onChange={setBrand}
+                  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
+                  placeholder="e.g., Nike"
+                  className={inputClass}
+                  testId="input-brand"
+                />
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Design</Label>
@@ -183,7 +199,15 @@ export default function AddJersey() {
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>League</Label>
-                <AutocompleteInput field="league" value={league} onChange={setLeague} placeholder="e.g., Ligue 1" className={inputClass} testId="input-league" />
+                <EntityAutocomplete
+                  entityType="league"
+                  value={league}
+                  onChange={setLeague}
+                  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
+                  placeholder="e.g., Ligue 1"
+                  className={inputClass}
+                  testId="input-league"
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label className={fieldLabel} style={fieldStyle}>Front Photo *</Label>
