@@ -1,45 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
-import { getEntityAutocomplete, createTeam, createLeague, createBrand, createPlayer } from '@/lib/api';
-import { toast } from 'sonner';
-
-const API_MAP = { team: createTeam, league: createLeague, brand: createBrand, player: createPlayer };
-
-const ENTITY_FIELDS = {
-  team: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'country', label: 'Country' },
-    { key: 'city', label: 'City' },
-  ],
-  league: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'country_or_region', label: 'Country / Region' },
-    { key: 'level', label: 'Level', type: 'select', options: ['domestic', 'continental', 'international', 'cup'] },
-  ],
-  brand: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'country', label: 'Country' },
-  ],
-  player: [
-    { key: 'full_name', label: 'Full Name', required: true },
-    { key: 'nationality', label: 'Nationality' },
-    { key: 'positions', label: 'Positions (comma-separated)' },
-  ],
-};
-
-const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
+import { getEntityAutocomplete } from '@/lib/api';
+import EntityEditDialog from '@/components/EntityEditDialog';
 
 export default function EntityAutocomplete({ entityType, value, onChange, onSelect, placeholder, className, testId }) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState({});
-  const [creating, setCreating] = useState(false);
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
   const displayValue = typeof value === 'object' ? value?.label || '' : value || '';
@@ -73,49 +42,19 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
     setOpen(false);
   };
 
-  const handleInputChange = (text) => {
-    onChange(text);
-  };
-
   const openCreateDialog = () => {
-    const nameKey = entityType === 'player' ? 'full_name' : 'name';
-    setCreateForm({ [nameKey]: displayValue });
     setShowCreate(true);
     setOpen(false);
   };
 
-  const handleCreate = async () => {
-    const createFn = API_MAP[entityType];
-    if (!createFn) return;
-    setCreating(true);
-    try {
-      const payload = { ...createForm };
-      if (payload.positions && typeof payload.positions === 'string') {
-        payload.positions = payload.positions.split(',').map(p => p.trim()).filter(Boolean);
-      }
-      const res = await createFn(payload);
-      const entity = res.data;
-      const labelField = entityType === 'player' ? 'full_name' : 'name';
-      const idField = `${entityType}_id`;
-      if (onSelect) onSelect({ id: entity[idField], label: entity[labelField], extra: '' });
-      else onChange(entity[labelField]);
-      toast.success(`${entityType.charAt(0).toUpperCase() + entityType.slice(1)} created`);
-      setShowCreate(false);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || `Failed to create ${entityType}`);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const fields = ENTITY_FIELDS[entityType] || [];
+  const nameKey = entityType === 'player' ? 'full_name' : 'name';
 
   return (
     <>
       <div ref={wrapperRef} className="relative">
         <Input
           value={displayValue}
-          onChange={e => handleInputChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 200)}
           placeholder={placeholder}
@@ -154,50 +93,14 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
         )}
       </div>
 
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg tracking-tight" style={labelStyle}>
-              CREATE NEW {entityType.toUpperCase()}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            {fields.map(f => (
-              <div key={f.key} className="space-y-1">
-                <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
-                  {f.label} {f.required && '*'}
-                </Label>
-                {f.type === 'select' ? (
-                  <select
-                    value={createForm[f.key] || ''}
-                    onChange={e => setCreateForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    className="w-full h-9 px-3 bg-card border border-border rounded-none text-sm"
-                    data-testid={`create-${entityType}-${f.key}`}
-                  >
-                    <option value="">Select...</option>
-                    {f.options.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <Input
-                    value={createForm[f.key] || ''}
-                    onChange={e => setCreateForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    className="bg-card border-border rounded-none"
-                    data-testid={`create-${entityType}-${f.key}`}
-                  />
-                )}
-              </div>
-            ))}
-            <Button
-              onClick={handleCreate}
-              disabled={creating}
-              className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-              data-testid={`create-${entityType}-submit`}
-            >
-              {creating ? 'Creating...' : `Create ${entityType.charAt(0).toUpperCase() + entityType.slice(1)}`}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EntityEditDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        entityType={entityType}
+        mode="create"
+        initialData={{ [nameKey]: displayValue }}
+        onSuccess={(name) => onChange(name)}
+      />
     </>
   );
 }
