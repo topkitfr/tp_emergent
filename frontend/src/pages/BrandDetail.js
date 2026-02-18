@@ -88,6 +88,18 @@ export default function BrandDetail() {
           </div>
         )}
       </div>
+
+      {brand && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="brand"
+          mode="edit"
+          entityId={brand.brand_id}
+          initialData={{ name: brand.name, country: brand.country, founded: brand.founded, logo_url: brand.logo_url }}
+          onSuccess={() => getBrand(id).then(r => setBrand(r.data))}
+        />
+      )}
     </div>
   );
 }
