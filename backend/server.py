@@ -202,6 +202,7 @@ class ProfileUpdate(BaseModel):
     profile_picture: Optional[str] = None
 
 APPROVAL_THRESHOLD = 5
+MODERATOR_APPROVAL_THRESHOLD = 1  # Moderators can approve with single vote
 
 
 # ─── Auth Helpers ───
