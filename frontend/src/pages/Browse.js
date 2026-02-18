@@ -260,7 +260,9 @@ export default function Browse() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold tracking-tight truncate">{kit.club}</h3>
                         <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{kit.season} - {kit.kit_type}</p>
-                        {kit.colors && <p className="text-[10px] text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{kit.colors}</p>}
+                        <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                          {kit.season} {kit.brand && `- ${kit.brand}`}
+                        </p>
                       </div>
                       {kit.design && <Badge variant="outline" className="rounded-none text-[10px] shrink-0">{kit.design}</Badge>}
                       <Badge variant="outline" className="rounded-none text-xs shrink-0">{kit.brand}</Badge>
