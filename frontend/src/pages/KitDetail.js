@@ -197,7 +197,7 @@ export default function KitDetail() {
                   <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Club</Label>
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
                       <Input value={reportCorrections.club || ''} onChange={e => setReportCorrections(p => ({...p, club: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-club" />
                     </div>
                     <div className="space-y-1">
@@ -216,6 +216,22 @@ export default function KitDetail() {
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
                       <Input value={reportCorrections.brand || ''} onChange={e => setReportCorrections(p => ({...p, brand: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-brand" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
+                      <Input value={reportCorrections.design || ''} onChange={e => setReportCorrections(p => ({...p, design: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-design" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
+                      <Input value={reportCorrections.sponsor || ''} onChange={e => setReportCorrections(p => ({...p, sponsor: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-sponsor" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
+                      <Input value={reportCorrections.league || ''} onChange={e => setReportCorrections(p => ({...p, league: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-league" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
+                      <Input value={reportCorrections.gender || ''} onChange={e => setReportCorrections(p => ({...p, gender: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-gender" />
                     </div>
                   </div>
                   <div className="space-y-1">
