@@ -203,13 +203,13 @@ export default function Contributions() {
   };
 
   const handleSubmitKit = async () => {
-    if (!club || !season || !kitType || !brand) {
-      toast.error('Please fill all required fields');
+    if (!club || !season || !kitType || !brand || !frontPhoto) {
+      toast.error('Please fill all required fields (Team, Season, Type, Brand, Photo)');
       return;
     }
     setSubmitting(true);
     try {
-      const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, year: parseInt(year) };
+      const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, design, sponsor, league, gender };
       await createSubmission({ submission_type: 'master_kit', data });
       toast.success('Master Kit submitted for community review!');
       setAddStep(2);
