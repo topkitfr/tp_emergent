@@ -1030,6 +1030,83 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.versions.insert_one(ver_doc)
+        elif updated_sub["submission_type"] in ("team", "league", "brand", "player"):
+            entity_type = updated_sub["submission_type"]
+            mode = data.get("mode", "create")
+            now = datetime.now(timezone.utc).isoformat()
+            if mode == "create":
+                if entity_type == "team":
+                    slug = slugify(data.get("name", ""))
+                    if not await db.teams.find_one({"slug": slug}, {"_id": 1}):
+                        await db.teams.insert_one({
+                            "team_id": f"team_{uuid.uuid4().hex[:12]}",
+                            "name": data.get("name", ""), "slug": slug,
+                            "country": data.get("country", ""), "city": data.get("city", ""),
+                            "founded": data.get("founded"), "primary_color": data.get("primary_color", ""),
+                            "secondary_color": data.get("secondary_color", ""),
+                            "crest_url": data.get("crest_url", ""), "aka": data.get("aka", []),
+                            "created_at": now, "updated_at": now
+                        })
+                elif entity_type == "league":
+                    slug = slugify(data.get("name", ""))
+                    if not await db.leagues.find_one({"slug": slug}, {"_id": 1}):
+                        await db.leagues.insert_one({
+                            "league_id": f"league_{uuid.uuid4().hex[:12]}",
+                            "name": data.get("name", ""), "slug": slug,
+                            "country_or_region": data.get("country_or_region", ""),
+                            "level": data.get("level", "domestic"),
+                            "organizer": data.get("organizer", ""),
+                            "logo_url": data.get("logo_url", ""),
+                            "created_at": now, "updated_at": now
+                        })
+                elif entity_type == "brand":
+                    slug = slugify(data.get("name", ""))
+                    if not await db.brands.find_one({"slug": slug}, {"_id": 1}):
+                        await db.brands.insert_one({
+                            "brand_id": f"brand_{uuid.uuid4().hex[:12]}",
+                            "name": data.get("name", ""), "slug": slug,
+                            "country": data.get("country", ""),
+                            "founded": data.get("founded"),
+                            "logo_url": data.get("logo_url", ""),
+                            "created_at": now, "updated_at": now
+                        })
+                elif entity_type == "player":
+                    slug = slugify(data.get("full_name", ""))
+                    base_slug = slug
+                    counter = 1
+                    while await db.players.find_one({"slug": slug}, {"_id": 1}):
+                        slug = f"{base_slug}-{counter}"
+                        counter += 1
+                    await db.players.insert_one({
+                        "player_id": f"player_{uuid.uuid4().hex[:12]}",
+                        "full_name": data.get("full_name", ""), "slug": slug,
+                        "nationality": data.get("nationality", ""),
+                        "birth_year": data.get("birth_year"),
+                        "positions": data.get("positions", []),
+                        "preferred_number": data.get("preferred_number"),
+                        "photo_url": data.get("photo_url", ""),
+                        "created_at": now, "updated_at": now
+                    })
+            elif mode == "edit":
+                entity_id = data.get("entity_id", "")
+                update_fields = {k: v for k, v in data.items() if k not in ("mode", "entity_id", "entity_type") and v is not None}
+                update_fields["updated_at"] = now
+                if entity_type == "team" and entity_id:
+                    if "name" in update_fields:
+                        update_fields["slug"] = slugify(update_fields["name"])
+                    await db.teams.update_one({"team_id": entity_id}, {"$set": update_fields})
+                elif entity_type == "league" and entity_id:
+                    if "name" in update_fields:
+                        update_fields["slug"] = slugify(update_fields["name"])
+                    await db.leagues.update_one({"league_id": entity_id}, {"$set": update_fields})
+                elif entity_type == "brand" and entity_id:
+                    if "name" in update_fields:
+                        update_fields["slug"] = slugify(update_fields["name"])
+                    await db.brands.update_one({"brand_id": entity_id}, {"$set": update_fields})
+                elif entity_type == "player" and entity_id:
+                    if "full_name" in update_fields:
+                        update_fields["slug"] = slugify(update_fields["full_name"])
+                    await db.players.update_one({"player_id": entity_id}, {"$set": update_fields})
         await db.submissions.update_one(
             {"submission_id": submission_id},
             {"$set": {"status": "approved"}}
