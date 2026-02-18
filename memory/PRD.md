@@ -126,9 +126,21 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - [x] Moderator badge shown on Contributions page header
 - [x] Updated approval message for moderators: "As a moderator, your upvote approves instantly."
 
-### Test Results (Phase 9)
-- Backend: 100% (9/9 tests passed)
-- Frontend: 100% (all features verified)
+### Phase 10: Default Versions + Display All Fields (Feb 18, 2026) - COMPLETE
+- [x] Created migration endpoint `/api/migrate-create-default-versions` to add default versions to existing kits
+- [x] Ran migration: 168 default versions created for existing master kits
+- [x] Default version values: Competition="National Championship", Model="Replica", SKU="", EAN=""
+- [x] Auto-create default version when new Master Kit is created (via direct API or submission approval)
+- [x] Kit Detail page shows ALL fields with "None" for empty values (League, Design, Sponsor, Gender, Brand, Type, Versions)
+- [x] Version Detail page shows ALL fields with "None" for empty values (Competition, Model, SKU, EAN, In Collections)
+- [x] MyCollection item detail shows current values summary with "None" for empty fields
+- [x] Created `/api/set-moderator-role` endpoint to ensure moderator roles are properly set
+- [x] Verified topkitfr@gmail.com has moderator role with single-vote approval privileges
+
+### Test Results (Phase 10)
+- Migration: 168 versions created, 2 skipped (already had versions)
+- Frontend: All fields displayed with "None" fallback verified
+- Moderator: Role confirmed for topkitfr@gmail.com
 
 ## Prioritized Backlog
 
