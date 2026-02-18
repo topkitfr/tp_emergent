@@ -48,14 +48,10 @@ class MasterKitCreate(BaseModel):
     kit_type: str  # Home/Away/Third/Fourth/GK/Special/Other
     brand: str
     front_photo: str
-    year: int
-    sponsor: Optional[str] = ""
-    gender: Optional[str] = ""  # Man/Women/Kid
     league: Optional[str] = ""
     design: Optional[str] = ""
-    colors: Optional[str] = ""
-    competition: Optional[str] = ""
-    source_url: Optional[str] = ""
+    sponsor: Optional[str] = ""
+    gender: Optional[str] = ""  # Man/Woman/Kid
 
 class MasterKitOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -65,14 +61,10 @@ class MasterKitOut(BaseModel):
     kit_type: str
     brand: str
     front_photo: str
-    year: int
-    sponsor: Optional[str] = ""
-    gender: Optional[str] = ""
     league: Optional[str] = ""
     design: Optional[str] = ""
-    colors: Optional[str] = ""
-    competition: Optional[str] = ""
-    source_url: Optional[str] = ""
+    sponsor: Optional[str] = ""
+    gender: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     version_count: Optional[int] = 0
@@ -80,13 +72,12 @@ class MasterKitOut(BaseModel):
 
 class VersionCreate(BaseModel):
     kit_id: str
-    competition: str
-    model: str  # Authentic/Replica/Player Issue/Other
+    competition: str  # National Championship/National Cup/Continental Cup/Intercontinental Cup/World Cup
+    model: str  # Authentic/Replica/Other
     sku_code: Optional[str] = ""
     ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
-    gender: Optional[str] = ""  # kept for backward compat
 
 class VersionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -98,7 +89,6 @@ class VersionOut(BaseModel):
     ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
-    gender: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     avg_rating: Optional[float] = 0.0
