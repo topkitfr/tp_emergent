@@ -12,8 +12,8 @@ import ImageUpload from '@/components/ImageUpload';
 import AutocompleteInput from '@/components/AutocompleteInput';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const MODELS = ['Replica', 'Authentic', 'Player Issue', 'Other'];
-const GENDERS = ['Man', 'Women', 'Kid'];
+const MODELS = ['Authentic', 'Replica'];
+const GENDERS = ['Man', 'Woman', 'Kid'];
 
 const fieldLabel = "text-xs uppercase tracking-wider";
 const fieldStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
