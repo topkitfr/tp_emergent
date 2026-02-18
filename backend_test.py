@@ -8,7 +8,7 @@ from io import BytesIO
 from PIL import Image
 
 class FootballJerseyAPITester:
-    def __init__(self, base_url="https://football-heritage-2.preview.emergentagent.com"):
+    def __init__(self, base_url="https://jersey-vault-9.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.session_token = None
