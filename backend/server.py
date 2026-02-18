@@ -348,7 +348,6 @@ async def get_filters():
     clubs = await db.master_kits.distinct("club")
     brands = await db.master_kits.distinct("brand")
     seasons = await db.master_kits.distinct("season")
-    years = await db.master_kits.distinct("year")
     kit_types = await db.master_kits.distinct("kit_type")
     designs = await db.master_kits.distinct("design")
     leagues = await db.master_kits.distinct("league")
@@ -357,8 +356,7 @@ async def get_filters():
     return {
         "clubs": sorted([c for c in clubs if c]),
         "brands": sorted([b for b in brands if b]),
-        "seasons": sorted([s for s in seasons if s]),
-        "years": sorted([y for y in years if y], reverse=True),
+        "seasons": sorted([s for s in seasons if s], reverse=True),
         "kit_types": sorted([t for t in kit_types if t]),
         "designs": sorted([d for d in designs if d]),
         "leagues": sorted([lg for lg in leagues if lg]),
