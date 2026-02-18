@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shirt, Search, FolderOpen, User, LogOut, FileCheck } from 'lucide-react';
+import { Shirt, Search, FolderOpen, User, LogOut, FileCheck, Heart } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +51,12 @@ export default function Navbar() {
                     My Collection
                   </Button>
                 </Link>
+                <Link to="/wishlist">
+                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/wishlist') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-wishlist">
+                    <Heart className="w-4 h-4 mr-1.5" />
+                    Wishlist
+                  </Button>
+                </Link>
                 <Link to="/contributions">
                   <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-contributions">
                     <FileCheck className="w-4 h-4 mr-1.5" />
@@ -81,6 +87,9 @@ export default function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/collection')} className="cursor-pointer" data-testid="menu-collection">
                   <FolderOpen className="w-4 h-4 mr-2" /> My Collection
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer" data-testid="menu-wishlist">
+                  <Heart className="w-4 h-4 mr-2" /> Wishlist
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/contributions')} className="cursor-pointer" data-testid="menu-contributions">
                   <FileCheck className="w-4 h-4 mr-2" /> Contributions
