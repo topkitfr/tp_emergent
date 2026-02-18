@@ -105,6 +105,18 @@ export default function PlayerDetail() {
           </div>
         )}
       </div>
+
+      {player && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="player"
+          mode="edit"
+          entityId={player.player_id}
+          initialData={{ full_name: player.full_name, nationality: player.nationality, birth_year: player.birth_year, positions: player.positions?.join(', ') || '', preferred_number: player.preferred_number, photo_url: player.photo_url }}
+          onSuccess={() => getPlayer(id).then(r => setPlayer(r.data))}
+        />
+      )}
     </div>
   );
 }
