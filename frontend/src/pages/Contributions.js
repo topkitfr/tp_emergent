@@ -12,9 +12,10 @@ import { toast } from 'sonner';
 import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, Image } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
-const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special'];
-const MODELS = ['Replica', 'Authentic', 'Player Issue'];
-const GENDERS = ['Men', 'Women', 'Kids'];
+const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
+const MODELS = ['Authentic', 'Replica', 'Other'];
+const GENDERS = ['Man', 'Woman', 'Kid'];
+const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
 const FIELD_LABELS = {
   club: 'Club / Team',
