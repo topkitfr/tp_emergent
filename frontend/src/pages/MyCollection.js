@@ -414,6 +414,7 @@ export default function MyCollection() {
                 {/* Real-time Estimation */}
                 <EstimationBreakdown
                   modelType={detailItem.version?.model || 'Replica'}
+                  competition={detailItem.version?.competition || ''}
                   conditionOrigin={editForm.condition_origin || ''}
                   physicalState={editForm.physical_state || ''}
                   flockingOrigin={editForm.flocking_origin || ''}
