@@ -45,14 +45,15 @@ class UserOut(BaseModel):
 class MasterKitCreate(BaseModel):
     club: str
     season: str
-    kit_type: str  # Home/Away/Third/Fourth/GK/Special
+    kit_type: str  # Home/Away/Third/Fourth/GK/Special/Other
     brand: str
     front_photo: str
     year: int
+    sponsor: Optional[str] = ""
+    gender: Optional[str] = ""  # Man/Women/Kid
+    league: Optional[str] = ""
     design: Optional[str] = ""
     colors: Optional[str] = ""
-    sponsor: Optional[str] = ""
-    league: Optional[str] = ""
     competition: Optional[str] = ""
     source_url: Optional[str] = ""
 
@@ -65,10 +66,11 @@ class MasterKitOut(BaseModel):
     brand: str
     front_photo: str
     year: int
+    sponsor: Optional[str] = ""
+    gender: Optional[str] = ""
+    league: Optional[str] = ""
     design: Optional[str] = ""
     colors: Optional[str] = ""
-    sponsor: Optional[str] = ""
-    league: Optional[str] = ""
     competition: Optional[str] = ""
     source_url: Optional[str] = ""
     created_by: Optional[str] = None
@@ -79,11 +81,12 @@ class MasterKitOut(BaseModel):
 class VersionCreate(BaseModel):
     kit_id: str
     competition: str
-    model: str  # Authentic/Replica/Player Issue
-    gender: str  # Men/Women/Kids
+    model: str  # Authentic/Replica/Player Issue/Other
     sku_code: Optional[str] = ""
+    ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
+    gender: Optional[str] = ""  # kept for backward compat
 
 class VersionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -91,10 +94,11 @@ class VersionOut(BaseModel):
     kit_id: str
     competition: str
     model: str
-    gender: str
     sku_code: Optional[str] = ""
+    ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
+    gender: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     avg_rating: Optional[float] = 0.0
@@ -104,17 +108,40 @@ class CollectionAdd(BaseModel):
     version_id: str
     category: Optional[str] = "General"
     notes: Optional[str] = ""
-    condition: Optional[str] = ""
+    # Flocking
+    flocking_type: Optional[str] = ""  # Name+Number / Name / Number
+    flocking_origin: Optional[str] = ""  # Official / Perso
+    flocking_detail: Optional[str] = ""  # e.g., "Messi 10"
+    # Condition
+    condition_origin: Optional[str] = ""  # Club Stock / Match Prepared / Match Worn / Training
+    physical_state: Optional[str] = ""  # New with tag / Very good / Used / Damaged / Needs restoration
     size: Optional[str] = ""
+    # Values
+    purchase_cost: Optional[float] = None
+    price_estimate: Optional[float] = None
     value_estimate: Optional[float] = None
+    # Signed
+    signed: Optional[bool] = False
+    signed_by: Optional[str] = ""
+    # Legacy
+    condition: Optional[str] = ""
     printing: Optional[str] = ""
 
 class CollectionUpdate(BaseModel):
-    condition: Optional[str] = None
-    size: Optional[str] = None
-    value_estimate: Optional[float] = None
-    notes: Optional[str] = None
     category: Optional[str] = None
+    notes: Optional[str] = None
+    flocking_type: Optional[str] = None
+    flocking_origin: Optional[str] = None
+    flocking_detail: Optional[str] = None
+    condition_origin: Optional[str] = None
+    physical_state: Optional[str] = None
+    size: Optional[str] = None
+    purchase_cost: Optional[float] = None
+    price_estimate: Optional[float] = None
+    value_estimate: Optional[float] = None
+    signed: Optional[bool] = None
+    signed_by: Optional[str] = None
+    condition: Optional[str] = None
     printing: Optional[str] = None
 
 class CollectionOut(BaseModel):
@@ -124,9 +151,18 @@ class CollectionOut(BaseModel):
     version_id: str
     category: str
     notes: Optional[str] = ""
-    condition: Optional[str] = ""
+    flocking_type: Optional[str] = ""
+    flocking_origin: Optional[str] = ""
+    flocking_detail: Optional[str] = ""
+    condition_origin: Optional[str] = ""
+    physical_state: Optional[str] = ""
     size: Optional[str] = ""
+    purchase_cost: Optional[float] = None
+    price_estimate: Optional[float] = None
     value_estimate: Optional[float] = None
+    signed: Optional[bool] = False
+    signed_by: Optional[str] = ""
+    condition: Optional[str] = ""
     printing: Optional[str] = ""
     added_at: Optional[str] = None
 
