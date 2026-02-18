@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Star, Shirt, ArrowLeft, Tag, Package, ChevronRight, AlertTriangle, Check } from 'lucide-react';
 
-const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special'];
+const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 
 export default function KitDetail() {
   const { kitId } = useParams();
@@ -31,7 +31,10 @@ export default function KitDetail() {
         season: r.data.season,
         kit_type: r.data.kit_type,
         brand: r.data.brand,
-        year: r.data.year
+        design: r.data.design || '',
+        sponsor: r.data.sponsor || '',
+        league: r.data.league || '',
+        gender: r.data.gender || '',
       });
       setLoading(false);
     }).catch(() => setLoading(false));
