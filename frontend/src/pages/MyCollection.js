@@ -8,12 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import { Shirt, LayoutGrid, List, Trash2, FolderOpen, Edit2, X, Check, TrendingUp, TrendingDown, Minus, DollarSign } from 'lucide-react';
+import { Shirt, LayoutGrid, List, Trash2, FolderOpen, Edit2, Check, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-const CONDITIONS = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const CONDITION_ORIGINS = ['Club Stock', 'Match Prepared', 'Match Worn', 'Training'];
+const PHYSICAL_STATES = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
+const FLOCKING_TYPES = ['Name+Number', 'Name', 'Number'];
+const FLOCKING_ORIGINS = ['Official', 'Perso'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+const fieldLabel = "text-xs uppercase tracking-wider";
+const fieldStyle = { fontFamily: 'Barlow Condensed' };
+const inputClass = "bg-card border-border rounded-none";
 
 export default function MyCollection() {
   const { user } = useAuth();
@@ -64,12 +72,19 @@ export default function MyCollection() {
   const openDetail = (item) => {
     setDetailItem(item);
     setEditForm({
-      condition: item.condition || '',
+      flocking_type: item.flocking_type || '',
+      flocking_origin: item.flocking_origin || '',
+      flocking_detail: item.flocking_detail || item.printing || '',
+      condition_origin: item.condition_origin || '',
+      physical_state: item.physical_state || item.condition || '',
       size: item.size || '',
+      purchase_cost: item.purchase_cost || '',
+      price_estimate: item.price_estimate || '',
       value_estimate: item.value_estimate || '',
+      signed: item.signed || false,
+      signed_by: item.signed_by || '',
       notes: item.notes || '',
       category: item.category || 'General',
-      printing: item.printing || '',
     });
   };
 
@@ -78,7 +93,9 @@ export default function MyCollection() {
     try {
       const data = {
         ...editForm,
-        value_estimate: editForm.value_estimate ? parseFloat(editForm.value_estimate) : null
+        purchase_cost: editForm.purchase_cost ? parseFloat(editForm.purchase_cost) : null,
+        price_estimate: editForm.price_estimate ? parseFloat(editForm.price_estimate) : null,
+        value_estimate: editForm.value_estimate ? parseFloat(editForm.value_estimate) : null,
       };
       await updateCollectionItem(detailItem.collection_id, data);
       toast.success('Item updated');
@@ -87,6 +104,22 @@ export default function MyCollection() {
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to update');
     }
+  };
+
+  // Helper to get display label for an item
+  const getFlockingLabel = (item) => {
+    const detail = item.flocking_detail || item.printing;
+    if (!detail) return null;
+    const parts = [detail];
+    if (item.flocking_origin) parts.push(`(${item.flocking_origin})`);
+    return parts.join(' ');
+  };
+
+  const getConditionLabel = (item) => {
+    const parts = [];
+    if (item.condition_origin) parts.push(item.condition_origin);
+    if (item.physical_state || item.condition) parts.push(item.physical_state || item.condition);
+    return parts.join(' / ') || null;
   };
 
   return (
@@ -106,22 +139,22 @@ export default function MyCollection() {
               <div className="border border-border p-4 text-center">
                 <Shirt className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="font-mono text-2xl">{stats.total_jerseys}</div>
-                <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Total Jerseys</div>
+                <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Total Jerseys</div>
               </div>
               <div className="border border-destructive/20 p-4 text-center">
                 <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
                 <div className="font-mono text-2xl">${stats.estimated_value.low}</div>
-                <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Low Est.</div>
+                <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Low Est.</div>
               </div>
               <div className="border border-accent/20 p-4 text-center">
                 <Minus className="w-4 h-4 text-accent mx-auto mb-1" />
                 <div className="font-mono text-2xl">${stats.estimated_value.average}</div>
-                <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>Avg Est.</div>
+                <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Avg Est.</div>
               </div>
               <div className="border border-primary/20 p-4 text-center">
                 <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="font-mono text-2xl">${stats.estimated_value.high}</div>
-                <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>High Est.</div>
+                <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>High Est.</div>
               </div>
             </div>
           )}
@@ -129,7 +162,7 @@ export default function MyCollection() {
           {/* Category Stats */}
           {categoryStats.length > 0 && (
             <div className="mb-6" data-testid="category-stats">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={fieldStyle}>
                 CATEGORY BREAKDOWN
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -208,9 +241,14 @@ export default function MyCollection() {
                     <div className="absolute top-2 right-2">
                       <Badge className="rounded-none text-[10px] bg-primary/90 text-primary-foreground border-none">{item.category}</Badge>
                     </div>
-                    {item.condition && (
+                    {getConditionLabel(item) && (
                       <div className="absolute bottom-2 left-2">
-                        <Badge variant="secondary" className="rounded-none text-[10px]">{item.condition}</Badge>
+                        <Badge variant="secondary" className="rounded-none text-[10px]">{getConditionLabel(item)}</Badge>
+                      </div>
+                    )}
+                    {item.signed && (
+                      <div className="absolute bottom-2 right-2">
+                        <Badge className="rounded-none text-[10px] bg-accent/90 text-accent-foreground border-none">Signed</Badge>
                       </div>
                     )}
                   </div>
@@ -219,14 +257,16 @@ export default function MyCollection() {
                     <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                       {item.master_kit?.season} - {item.version?.model}
                     </p>
-                    {item.printing && (
+                    {getFlockingLabel(item) && (
                       <p className="text-xs text-primary/80 truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                        {item.printing}
+                        {getFlockingLabel(item)}
                       </p>
                     )}
                     <div className="flex items-center justify-between">
                       {item.size && <span className="font-mono text-[10px] text-muted-foreground">{item.size}</span>}
-                      {item.value_estimate > 0 && <span className="font-mono text-xs text-accent">${item.value_estimate}</span>}
+                      {(item.value_estimate > 0 || item.price_estimate > 0) && (
+                        <span className="font-mono text-xs text-accent">${item.price_estimate || item.value_estimate}</span>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -252,16 +292,16 @@ export default function MyCollection() {
                     <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                       {item.master_kit?.season} - {item.version?.competition}
                     </p>
-                    {item.printing && (
-                      <p className="text-xs text-primary/80 truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{item.printing}</p>
+                    {getFlockingLabel(item) && (
+                      <p className="text-xs text-primary/80 truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getFlockingLabel(item)}</p>
                     )}
-                    {item.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{item.notes}</p>}
                   </div>
                 </Link>
                 <Badge variant="outline" className="rounded-none text-[10px] shrink-0">{item.version?.model}</Badge>
-                {item.condition && <Badge variant="secondary" className="rounded-none text-[10px] shrink-0">{item.condition}</Badge>}
+                {getConditionLabel(item) && <Badge variant="secondary" className="rounded-none text-[10px] shrink-0">{getConditionLabel(item)}</Badge>}
                 {item.size && <span className="font-mono text-[10px] text-muted-foreground shrink-0">{item.size}</span>}
-                {item.value_estimate > 0 && <span className="font-mono text-xs text-accent shrink-0">${item.value_estimate}</span>}
+                {(item.value_estimate > 0 || item.price_estimate > 0) && <span className="font-mono text-xs text-accent shrink-0">${item.price_estimate || item.value_estimate}</span>}
+                {item.signed && <Badge className="rounded-none text-[10px] bg-accent/90 shrink-0">Signed</Badge>}
                 <Badge variant="secondary" className="rounded-none text-[10px] shrink-0">{item.category}</Badge>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0" style={{ transition: 'opacity 0.2s ease' }}>
                   <button onClick={() => openDetail(item)} className="p-1.5 text-muted-foreground hover:text-foreground" data-testid={`edit-list-${item.collection_id}`}>
@@ -317,70 +357,152 @@ export default function MyCollection() {
 
               {/* Item-level fields (editable) */}
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground" style={fieldStyle}>
                   ITEM DETAILS
                 </p>
 
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Printing / Player</Label>
-                  <Input
-                    value={editForm.printing || ''}
-                    onChange={e => setEditForm(p => ({...p, printing: e.target.value}))}
-                    placeholder="e.g., Vitinha #17"
-                    className="bg-card border-border rounded-none"
-                    data-testid="detail-printing"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Condition</Label>
-                    <Select value={editForm.condition || "none"} onValueChange={v => setEditForm(p => ({...p, condition: v === "none" ? "" : v}))}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="detail-condition"><SelectValue placeholder="Select" /></SelectTrigger>
+                {/* Flocking */}
+                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>FLOCKING</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Type</Label>
+                    <Select value={editForm.flocking_type || "none"} onValueChange={v => setEditForm(p => ({...p, flocking_type: v === "none" ? "" : v}))}>
+                      <SelectTrigger className={inputClass} data-testid="detail-flocking-type"><SelectValue placeholder="None" /></SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {FLOCKING_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
+                    <Select value={editForm.flocking_origin || "none"} onValueChange={v => setEditForm(p => ({...p, flocking_origin: v === "none" ? "" : v}))}>
+                      <SelectTrigger className={inputClass} data-testid="detail-flocking-origin"><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {FLOCKING_ORIGINS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={fieldLabel} style={fieldStyle}>Detail</Label>
+                    <Input
+                      value={editForm.flocking_detail || ''}
+                      onChange={e => setEditForm(p => ({...p, flocking_detail: e.target.value}))}
+                      placeholder="e.g., Messi 10"
+                      className={inputClass}
+                      data-testid="detail-flocking-detail"
+                    />
+                  </div>
+                </div>
+
+                {/* Condition & State */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className={fieldLabel} style={fieldStyle}>Condition (Origin)</Label>
+                    <Select value={editForm.condition_origin || "none"} onValueChange={v => setEditForm(p => ({...p, condition_origin: v === "none" ? "" : v}))}>
+                      <SelectTrigger className={inputClass} data-testid="detail-condition-origin"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {CONDITION_ORIGINS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Size</Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Physical State</Label>
+                    <Select value={editForm.physical_state || "none"} onValueChange={v => setEditForm(p => ({...p, physical_state: v === "none" ? "" : v}))}>
+                      <SelectTrigger className={inputClass} data-testid="detail-physical-state"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="none">None</SelectItem>
+                        {PHYSICAL_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Size & Category */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className={fieldLabel} style={fieldStyle}>Size</Label>
                     <Select value={editForm.size || "none"} onValueChange={v => setEditForm(p => ({...p, size: v === "none" ? "" : v}))}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="detail-size"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger className={inputClass} data-testid="detail-size"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
                         {SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Value Estimate ($)</Label>
-                    <Input
-                      type="number"
-                      value={editForm.value_estimate || ''}
-                      onChange={e => setEditForm(p => ({...p, value_estimate: e.target.value}))}
-                      placeholder="0"
-                      className="bg-card border-border rounded-none font-mono"
-                      data-testid="detail-value"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Category</Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Category</Label>
                     <Input
                       value={editForm.category || ''}
                       onChange={e => setEditForm(p => ({...p, category: e.target.value}))}
                       placeholder="General"
-                      className="bg-card border-border rounded-none"
+                      className={inputClass}
                       data-testid="detail-category"
                     />
                   </div>
                 </div>
 
+                {/* Values */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost</Label>
+                    <Input
+                      type="number"
+                      value={editForm.purchase_cost || ''}
+                      onChange={e => setEditForm(p => ({...p, purchase_cost: e.target.value}))}
+                      placeholder="0"
+                      className={`${inputClass} font-mono`}
+                      data-testid="detail-purchase-cost"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={fieldLabel} style={fieldStyle}>Price Est.</Label>
+                    <Input
+                      type="number"
+                      value={editForm.price_estimate || ''}
+                      onChange={e => setEditForm(p => ({...p, price_estimate: e.target.value}))}
+                      placeholder="0"
+                      className={`${inputClass} font-mono`}
+                      data-testid="detail-price-estimate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={fieldLabel} style={fieldStyle}>Est. Value</Label>
+                    <Input
+                      type="number"
+                      value={editForm.value_estimate || ''}
+                      onChange={e => setEditForm(p => ({...p, value_estimate: e.target.value}))}
+                      placeholder="0"
+                      className={`${inputClass} font-mono`}
+                      data-testid="detail-value"
+                    />
+                  </div>
+                </div>
+
+                {/* Signed */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={editForm.signed || false} onCheckedChange={v => setEditForm(p => ({...p, signed: v}))} data-testid="detail-signed-switch" />
+                    <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
+                  </div>
+                  {editForm.signed && (
+                    <div className="flex-1">
+                      <Input
+                        value={editForm.signed_by || ''}
+                        onChange={e => setEditForm(p => ({...p, signed_by: e.target.value}))}
+                        placeholder="Player name"
+                        className={inputClass}
+                        data-testid="detail-signed-by"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes */}
                 <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                  <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
                   <Textarea
                     value={editForm.notes || ''}
                     onChange={e => setEditForm(p => ({...p, notes: e.target.value}))}
@@ -392,7 +514,7 @@ export default function MyCollection() {
 
                 {/* Item hierarchy summary */}
                 <div className="p-3 bg-secondary/30 border border-border mt-4">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={fieldStyle}>
                     JERSEY HIERARCHY
                   </p>
                   <div className="space-y-1 text-xs" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
@@ -403,7 +525,9 @@ export default function MyCollection() {
                       <span className="text-foreground font-medium">Version:</span> {detailItem.version?.model}, {detailItem.version?.competition}
                     </p>
                     <p className="text-muted-foreground">
-                      <span className="text-foreground font-medium">Item:</span> {editForm.printing || '—'}, {editForm.condition || '—'}, {editForm.size || '—'}{editForm.value_estimate ? `, $${editForm.value_estimate}` : ''}
+                      <span className="text-foreground font-medium">Item:</span> {editForm.flocking_detail || '—'}, {editForm.physical_state || editForm.condition_origin || '—'}, {editForm.size || '—'}
+                      {editForm.value_estimate ? `, $${editForm.value_estimate}` : ''}
+                      {editForm.signed ? ` (Signed: ${editForm.signed_by || 'Yes'})` : ''}
                     </p>
                   </div>
                 </div>
