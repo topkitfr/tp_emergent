@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="5" time="1.613" timestamp="2026-02-18T12:20:18.215049+00:00" hostname="agent-env-8e34fe88-4c25-426f-bf72-bdfc7ea8b277"><testcase classname="backend.tests.test_iteration10_auto_version.TestAutoVersionCreation" name="test_create_master_kit_creates_default_version" time="0.463"><failure message="AssertionError: Expected 200, got 401: {&quot;detail&quot;:&quot;Invalid session&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_iteration10_auto_version.py:142: in test_create_master_kit_creates_default_version
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+E   AssertionError: Expected 200, got 401: {"detail":"Invalid session"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration10_auto_version.TestAutoVersionCreation" name="test_default_version_has_empty_sku_and_ean" time="0.049"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_iteration10_auto_version.py:195: in test_default_version_has_empty_sku_and_ean
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration10_auto_version.TestSubmissionApprovalAutoVersion" name="test_master_kit_submission_approval_creates_version" time="0.340"><failure message="AssertionError: Failed to create submission: {&quot;detail&quot;:&quot;Invalid session&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_iteration10_auto_version.py:247: in test_master_kit_submission_approval_creates_version
+    assert sub_response.status_code == 200, f"Failed to create submission: {sub_response.text}"
+E   AssertionError: Failed to create submission: {"detail":"Invalid session"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration10_auto_version.TestVersionDetailFields" name="test_version_returns_all_fields" time="0.050"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_iteration10_auto_version.py:325: in test_version_returns_all_fields
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration10_auto_version.TestMasterKitDetailFields" name="test_master_kit_returns_all_fields" time="0.614"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_iteration10_auto_version.py:379: in test_master_kit_returns_all_fields
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase></testsuite></testsuites>
