@@ -117,6 +117,14 @@ function SubmissionDetail({ sub, existingKits }) {
           <img src={sub.data.front_photo} alt="Jersey" className="w-24 h-32 object-cover border border-border" />
         </div>
       )}
+      {isEntity && ENTITY_IMAGE_FIELDS[sub.submission_type] && sub.data?.[ENTITY_IMAGE_FIELDS[sub.submission_type]] && (
+        <div className="mt-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
+            {FIELD_LABELS[ENTITY_IMAGE_FIELDS[sub.submission_type]] || 'Image'}
+          </p>
+          <img src={sub.data[ENTITY_IMAGE_FIELDS[sub.submission_type]]} alt="" className="w-20 h-20 object-contain border border-border bg-secondary" />
+        </div>
+      )}
     </div>
   );
 }
