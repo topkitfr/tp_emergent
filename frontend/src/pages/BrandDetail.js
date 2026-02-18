@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getBrand } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Tag, Globe, ArrowLeft, Shirt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tag, Globe, ArrowLeft, Shirt, Pencil } from 'lucide-react';
 import JerseyCard from '@/components/JerseyCard';
+import EntityEditDialog from '@/components/EntityEditDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function BrandDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [brand, setBrand] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -47,7 +52,14 @@ export default function BrandDetail() {
                 {brand.country && <span className="text-sm text-muted-foreground flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}><Globe className="w-3 h-3" /> {brand.country}</span>}
                 {brand.founded && <span className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Est. {brand.founded}</span>}
               </div>
-              <Badge variant="secondary" className="rounded-none mt-3">{brand.kit_count} kits</Badge>
+              <div className="flex items-center gap-2 mt-3">
+                <Badge variant="secondary" className="rounded-none">{brand.kit_count} kits</Badge>
+                {user && (
+                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
+                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
