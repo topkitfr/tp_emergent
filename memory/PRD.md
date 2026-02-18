@@ -79,6 +79,15 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 | Proof/Certificate | | +1.0 |
 | Age | | +0.05/year (max +1.0) |
 
+## User Roles System
+| Role | Description | Privileges |
+|------|-------------|------------|
+| user | Regular user | Vote on submissions/reports (1 vote each) |
+| moderator | Trusted moderator | Single upvote = instant approval (vote weight=5) |
+| admin | Administrator | Full system access |
+
+**Moderator Emails**: topkitfr@gmail.com
+
 ## Completed Phases
 
 ### Phase 1-5: Foundation (COMPLETE)
@@ -102,11 +111,29 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - [x] KitDetail: No Year/Colors, shows Design/Sponsor/League/Gender, report form has all fields
 - [x] Real-time EstimationBreakdown with Competition coefficient line
 
-### Test Results (Phase 8)
-- Backend: 100% (21/21 tests passed)
+### Phase 9: Moderator Privileges + Form Updates (Feb 18, 2026) - COMPLETE
+- [x] Implemented user role system (user/moderator/admin)
+- [x] Assigned moderator role to topkitfr@gmail.com via MODERATOR_EMAILS list
+- [x] Moderator single-vote approval for submissions (vote_weight=5)
+- [x] Moderator single-vote approval for reports (vote_weight=5)
+- [x] Updated Contributions page Master Kit form: Team, Season, League, Type, Brand, Design, Sponsor, Gender, Front Photo
+- [x] Updated Contributions page Version form: Competition (dropdown), Model (dropdown), SKU Code, EAN Code, Front Photo, Back Photo
+- [x] Version form uses Competition enum dropdown (5 options)
+- [x] Removed Gender from Version form (now on Master Kit level)
+- [x] Added EAN Code to Version form
+- [x] Kit Detail page displays all Master Kit fields conditionally
+- [x] Version Detail page shows Competition in data grid
+- [x] Moderator badge shown on Contributions page header
+- [x] Updated approval message for moderators: "As a moderator, your upvote approves instantly."
+
+### Test Results (Phase 9)
+- Backend: 100% (9/9 tests passed)
 - Frontend: 100% (all features verified)
 
 ## Prioritized Backlog
+
+### P0
+- Refactor server.py into APIRouter modules (kits, collections, estimation, wishlist, submissions)
 
 ### P1
 - Notification system (wishlist updates, contribution votes, comments)
