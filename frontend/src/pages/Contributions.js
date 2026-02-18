@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, Image } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
+import EntityAutocomplete from '@/components/EntityAutocomplete';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const MODELS = ['Authentic', 'Replica', 'Other'];
@@ -144,13 +145,16 @@ export default function Contributions() {
 
   // Master Kit form fields
   const [club, setClub] = useState('');
+  const [teamId, setTeamId] = useState('');
   const [season, setSeason] = useState('');
   const [kitType, setKitType] = useState('');
   const [brand, setBrand] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [frontPhoto, setFrontPhoto] = useState('');
   const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
   const [league, setLeague] = useState('');
+  const [leagueId, setLeagueId] = useState('');
   const [gender, setGender] = useState('');
 
   // Version form fields
@@ -209,7 +213,7 @@ export default function Contributions() {
     }
     setSubmitting(true);
     try {
-      const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, design, sponsor, league, gender };
+      const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, design, sponsor, league, gender, team_id: teamId || undefined, brand_id: brandId || undefined, league_id: leagueId || undefined };
       await createSubmission({ submission_type: 'master_kit', data });
       toast.success('Master Kit submitted for community review!');
       setAddStep(2);
@@ -244,8 +248,8 @@ export default function Contributions() {
     setShowAddForm(false);
     setAddStep(1);
     setSubType('master_kit');
-    setClub(''); setSeason(''); setKitType(''); setBrand('');
-    setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setGender('');
+    setClub(''); setTeamId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
+    setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setLeagueId(''); setGender('');
     setSelectedKit(''); setCompetition(''); setModel('');
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
   };
