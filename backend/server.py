@@ -40,7 +40,11 @@ class UserOut(BaseModel):
     email: str
     name: str
     picture: Optional[str] = None
+    role: Optional[str] = "user"  # user, moderator, admin
     created_at: Optional[str] = None
+
+# Moderator emails
+MODERATOR_EMAILS = ["topkitfr@gmail.com"]
 
 class MasterKitCreate(BaseModel):
     club: str
