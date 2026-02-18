@@ -148,14 +148,17 @@ export default function Contributions() {
   const [kitType, setKitType] = useState('');
   const [brand, setBrand] = useState('');
   const [frontPhoto, setFrontPhoto] = useState('');
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [design, setDesign] = useState('');
+  const [sponsor, setSponsor] = useState('');
+  const [league, setLeague] = useState('');
+  const [gender, setGender] = useState('');
 
   // Version form fields
   const [selectedKit, setSelectedKit] = useState('');
   const [competition, setCompetition] = useState('');
   const [model, setModel] = useState('');
-  const [gender, setGender] = useState('');
   const [skuCode, setSkuCode] = useState('');
+  const [eanCode, setEanCode] = useState('');
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto] = useState('');
 
