@@ -110,19 +110,21 @@ class CollectionAdd(BaseModel):
     notes: Optional[str] = ""
     # Flocking
     flocking_type: Optional[str] = ""  # Name+Number / Name / Number
-    flocking_origin: Optional[str] = ""  # Official / Perso
+    flocking_origin: Optional[str] = ""  # Official / Personalized
     flocking_detail: Optional[str] = ""  # e.g., "Messi 10"
     # Condition
-    condition_origin: Optional[str] = ""  # Club Stock / Match Prepared / Match Worn / Training
+    condition_origin: Optional[str] = ""  # Club Stock / Match Prepared / Match Worn / Training / Shop
     physical_state: Optional[str] = ""  # New with tag / Very good / Used / Damaged / Needs restoration
     size: Optional[str] = ""
     # Values
     purchase_cost: Optional[float] = None
+    estimated_price: Optional[float] = None
     price_estimate: Optional[float] = None
     value_estimate: Optional[float] = None
     # Signed
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
+    signed_proof: Optional[bool] = False
     # Legacy
     condition: Optional[str] = ""
     printing: Optional[str] = ""
@@ -137,10 +139,12 @@ class CollectionUpdate(BaseModel):
     physical_state: Optional[str] = None
     size: Optional[str] = None
     purchase_cost: Optional[float] = None
+    estimated_price: Optional[float] = None
     price_estimate: Optional[float] = None
     value_estimate: Optional[float] = None
     signed: Optional[bool] = None
     signed_by: Optional[str] = None
+    signed_proof: Optional[bool] = None
     condition: Optional[str] = None
     printing: Optional[str] = None
 
@@ -158,10 +162,12 @@ class CollectionOut(BaseModel):
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
     purchase_cost: Optional[float] = None
+    estimated_price: Optional[float] = None
     price_estimate: Optional[float] = None
     value_estimate: Optional[float] = None
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
+    signed_proof: Optional[bool] = False
     condition: Optional[str] = ""
     printing: Optional[str] = ""
     added_at: Optional[str] = None
