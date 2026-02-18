@@ -250,10 +250,12 @@ async def create_session(request: Request, response: Response):
     name = data.get("name", "")
     picture = data.get("picture", "")
     session_token = data["session_token"]
+    # Determine role based on email
+    role = "moderator" if email in MODERATOR_EMAILS else "user"
     existing = await db.users.find_one({"email": email}, {"_id": 0})
     if existing:
         user_id = existing["user_id"]
-        await db.users.update_one({"email": email}, {"$set": {"name": name, "picture": picture}})
+        await db.users.update_one({"email": email}, {"$set": {"name": name, "picture": picture, "role": role}})
     else:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         await db.users.insert_one({
@@ -261,6 +263,7 @@ async def create_session(request: Request, response: Response):
             "email": email,
             "name": name,
             "picture": picture,
+            "role": role,
             "username": name.replace(" ", "").lower() if name else "",
             "description": "",
             "collection_privacy": "public",
