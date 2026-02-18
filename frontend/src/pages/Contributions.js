@@ -419,7 +419,12 @@ export default function Contributions() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
-                    <Input value={competition} onChange={e => setCompetition(e.target.value)} placeholder="e.g., Champions League 2024/2025" className="bg-card border-border rounded-none" data-testid="add-competition" />
+                    <Select value={competition} onValueChange={setCompetition}>
+                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-competition"><SelectValue placeholder="Select competition" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
@@ -431,17 +436,12 @@ export default function Contributions() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender *</Label>
-                    <Select value={gender} onValueChange={setGender}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
                     <Input value={skuCode} onChange={e => setSkuCode(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none font-mono" data-testid="add-sku" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
+                    <Input value={eanCode} onChange={e => setEanCode(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none font-mono" data-testid="add-ean" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
