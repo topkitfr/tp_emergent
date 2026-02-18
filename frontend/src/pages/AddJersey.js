@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Shirt, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AutocompleteInput from '@/components/AutocompleteInput';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const MODELS = ['Authentic', 'Replica'];
+const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
+const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
 const fieldLabel = "text-xs uppercase tracking-wider";
 const fieldStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
@@ -31,11 +32,11 @@ export default function AddJersey() {
   const [season, setSeason] = useState('');
   const [kitType, setKitType] = useState('');
   const [brand, setBrand] = useState('');
+  const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
   const [gender, setGender] = useState('');
   const [league, setLeague] = useState('');
   const [frontPhoto, setFrontPhoto] = useState('');
-  const [year, setYear] = useState(new Date().getFullYear());
 
   // Version fields
   const [competition, setCompetition] = useState('');
@@ -60,7 +61,7 @@ export default function AddJersey() {
     try {
       const res = await createMasterKit({
         club, season, kit_type: kitType, brand, front_photo: frontPhoto,
-        year: parseInt(year), sponsor, gender, league
+        design, sponsor, gender, league
       });
       setCreatedKitId(res.data.kit_id);
       toast.success('Master Kit created');
@@ -96,13 +97,8 @@ export default function AddJersey() {
     <div className="animate-fade-in-up">
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl tracking-tighter mb-2" data-testid="add-jersey-title">
-            ADD JERSEY
-          </h1>
-          <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-            Contribute to the catalog by adding new kits and versions
-          </p>
-          {/* Steps */}
+          <h1 className="text-3xl sm:text-4xl tracking-tighter mb-2" data-testid="add-jersey-title">ADD JERSEY</h1>
+          <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Contribute to the catalog by adding new kits and versions</p>
           <div className="flex items-center gap-4 mt-6">
             <div className={`flex items-center gap-2 ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
               <div className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${step === 1 ? 'bg-primary text-primary-foreground' : step > 1 ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}`}>
@@ -112,9 +108,7 @@ export default function AddJersey() {
             </div>
             <div className="w-8 h-px bg-border" />
             <div className={`flex items-center gap-2 ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-              <div className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${step === 2 ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                2
-              </div>
+              <div className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${step === 2 ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>2</div>
               <span className="text-xs tracking-wider" style={fieldStyle}>VERSION</span>
             </div>
           </div>
@@ -127,13 +121,9 @@ export default function AddJersey() {
             <div className="border border-border p-6 mb-6">
               <h3 className="text-sm mb-4" style={fieldStyle}>USE EXISTING KIT</h3>
               <Select value={selectedExistingKit} onValueChange={(v) => { setSelectedExistingKit(v); }}>
-                <SelectTrigger className={inputClass} data-testid="select-existing-kit">
-                  <SelectValue placeholder="Select an existing Master Kit" />
-                </SelectTrigger>
+                <SelectTrigger className={inputClass} data-testid="select-existing-kit"><SelectValue placeholder="Select an existing Master Kit" /></SelectTrigger>
                 <SelectContent className="bg-card border-border max-h-60">
-                  {existingKits.map(k => (
-                    <SelectItem key={k.kit_id} value={k.kit_id}>{k.club} - {k.season} ({k.kit_type})</SelectItem>
-                  ))}
+                  {existingKits.map(k => <SelectItem key={k.kit_id} value={k.kit_id}>{k.club} - {k.season} ({k.kit_type})</SelectItem>)}
                 </SelectContent>
               </Select>
               {selectedExistingKit && (
@@ -143,9 +133,7 @@ export default function AddJersey() {
               )}
             </div>
 
-            <div className="text-center text-xs text-muted-foreground tracking-wider" style={fieldStyle}>
-              OR CREATE NEW
-            </div>
+            <div className="text-center text-xs text-muted-foreground tracking-wider" style={fieldStyle}>OR CREATE NEW</div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -159,9 +147,7 @@ export default function AddJersey() {
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Type *</Label>
                 <Select value={kitType} onValueChange={setKitType}>
-                  <SelectTrigger className={inputClass} data-testid="select-kit-type">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
+                  <SelectTrigger className={inputClass} data-testid="select-kit-type"><SelectValue placeholder="Select type" /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
@@ -172,15 +158,17 @@ export default function AddJersey() {
                 <AutocompleteInput field="brand" value={brand} onChange={setBrand} placeholder="e.g., Nike" className={inputClass} testId="input-brand" />
               </div>
               <div className="space-y-2">
+                <Label className={fieldLabel} style={fieldStyle}>Design</Label>
+                <Input value={design} onChange={e => setDesign(e.target.value)} placeholder="e.g., Single stripe" className={inputClass} data-testid="input-design" />
+              </div>
+              <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Sponsor</Label>
                 <AutocompleteInput field="sponsor" value={sponsor} onChange={setSponsor} placeholder="e.g., Qatar Airways" className={inputClass} testId="input-sponsor" />
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Gender</Label>
                 <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger className={inputClass} data-testid="select-gender">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
+                  <SelectTrigger className={inputClass} data-testid="select-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                   </SelectContent>
@@ -189,10 +177,6 @@ export default function AddJersey() {
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>League</Label>
                 <AutocompleteInput field="league" value={league} onChange={setLeague} placeholder="e.g., Ligue 1" className={inputClass} testId="input-league" />
-              </div>
-              <div className="space-y-2">
-                <Label className={fieldLabel} style={fieldStyle}>Year *</Label>
-                <Input type="number" value={year} onChange={e => setYear(e.target.value)} className={inputClass} data-testid="input-year" />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label className={fieldLabel} style={fieldStyle}>Front Photo *</Label>
@@ -209,9 +193,7 @@ export default function AddJersey() {
         {step === 2 && (
           <div className="space-y-6" data-testid="step-2-form">
             <div className="flex items-center gap-2 mb-4">
-              <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground" data-testid="back-to-step-1">
-                <ArrowLeft className="w-4 h-4" />
-              </button>
+              <button onClick={() => setStep(1)} className="text-muted-foreground hover:text-foreground" data-testid="back-to-step-1"><ArrowLeft className="w-4 h-4" /></button>
               <span className="text-xs text-muted-foreground" style={fieldStyle}>
                 ADDING VERSION {createdKitId ? 'TO NEW KIT' : `TO ${existingKits.find(k => k.kit_id === selectedExistingKit)?.club || 'SELECTED KIT'}`}
               </span>
@@ -220,14 +202,17 @@ export default function AddJersey() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Competition *</Label>
-                <AutocompleteInput field="competition" value={competition} onChange={setCompetition} placeholder="e.g., Champions League 2024/2025" className={inputClass} testId="input-competition" />
+                <Select value={competition} onValueChange={setCompetition}>
+                  <SelectTrigger className={inputClass} data-testid="select-competition"><SelectValue placeholder="Select competition" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className={fieldLabel} style={fieldStyle}>Model *</Label>
                 <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className={inputClass} data-testid="select-model">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
+                  <SelectTrigger className={inputClass} data-testid="select-model"><SelectValue placeholder="Select model" /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
