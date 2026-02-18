@@ -1,0 +1,64 @@
+{
+  "summary": "Iteration 13: Jersey Value Estimation System Fix VERIFIED. All 11 backend tests passed (100%). Frontend UI tested - My Collection page now shows correct Low/Avg/High Est values (not 0€). Root cause was field name mismatch: frontend sent 'estimated_price' but stats endpoints read 'value_estimate'. Fix syncs all 3 fields on save/update.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "VersionDetail", "issues": ["Console warning about chart width/height being -1 for VALUE ESTIMATION chart - minor, doesn't affect functionality"]}
+    ]
+  },
+  "passed_tests": [
+    "Backend: POST /api/estimate - Replica base price = 90€",
+    "Backend: POST /api/estimate - Authentic base price = 140€",
+    "Backend: POST /api/estimate - Full coefficient calculation with breakdown (7 items)",
+    "Backend: POST /api/estimate - Negative coefficient (Damaged state = -0.2)",
+    "Backend: GET /api/collections/stats - Returns non-zero Low=501€/Avg=727.5€/High=954€ (FIX VERIFIED)",
+    "Backend: GET /api/collections/category-stats - Per-category estimates working",
+    "Backend: GET /api/collections - Items have all 3 estimation fields synced",
+    "Backend: POST /api/collections - All 3 fields synced (estimated_price, value_estimate, price_estimate)",
+    "Backend: PUT /api/collections/{id} - Update syncs all 3 estimation fields",
+    "Backend: GET /api/versions/{id}/estimates - Correct estimates from collection items",
+    "Backend: Estimation formula verified: Base × (1 + coeff_sum)",
+    "Frontend: My Collection page shows collection stats (2 jerseys, Low=501€, Avg=727.5€, High=954€)",
+    "Frontend: Category breakdown shows per-category estimates (General ~477€, TEST_Category ~250.5€)",
+    "Frontend: Collection items display estimated price (250.5€, 477€)",
+    "Frontend: VersionDetail Add to Collection form shows EstimationBreakdown with real-time calculation",
+    "Frontend: Edit sheet shows current estimated price and real-time EstimationBreakdown component"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iteration13_estimation_fix.py",
+    "/app/test_reports/pytest/iteration13_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix correctly implemented: all 3 estimation fields (estimated_price, value_estimate, price_estimate) are now synced",
+    "Stats endpoints correctly read 'estimated_price' with fallback to value_estimate/price_estimate",
+    "Frontend calculateEstimation utility matches backend formula exactly",
+    "EstimationBreakdown component provides real-time feedback in add/edit forms"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration13_estimation_fix.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all tested flows working)"
+  },
+  "seed_data_creation": "Test added item to collection during test (TEST_Category, 250.5€)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Jersey estimation fix complete and verified. Collection stats now show correct values: User with session_token '5hCFW_A6ejPpe_a2qBAj5vRDWAdXNwj6jjjzjNZXMtA' has 2 collection items. Estimation formula: Base Price × (1 + sum of coefficients). Base prices: Authentic=140, Replica=90, Other=60. Key coefficients: Continental Cup +1.0, Match Worn +1.5, Signed +1.5, Official flocking +0.15, Age up to +1.0. All 3 estimation fields (estimated_price, value_estimate, price_estimate) are now kept in sync.",
+  "bug_fix_verification": {
+    "root_cause": "Field name mismatch - stats endpoints read 'value_estimate' but collection items stored estimation in 'estimated_price'",
+    "fix_applied": "Sync all 3 fields on POST/PUT, read 'estimated_price' with fallback in stats",
+    "verified_working": true,
+    "test_evidence": {
+      "stats_endpoint": "Low=501€, Avg=727.5€, High=954€ (not 0)",
+      "collection_items": "Both items show estimated_price=value_estimate=price_estimate",
+      "frontend_display": "My Collection shows correct stats, items show prices"
+    }
+  }
+}
