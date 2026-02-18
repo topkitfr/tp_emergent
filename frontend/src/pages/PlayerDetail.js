@@ -3,12 +3,17 @@ import { useParams, Link } from 'react-router-dom';
 import { getPlayer } from '@/lib/api';
 import { proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { User, Globe, ArrowLeft, Shirt, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, Globe, ArrowLeft, Shirt, Calendar, Pencil } from 'lucide-react';
+import EntityEditDialog from '@/components/EntityEditDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PlayerDetail() {
   const { id } = useParams();
+  const { user: authUser } = useAuth();
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -53,6 +58,11 @@ export default function PlayerDetail() {
               <div className="flex items-center gap-2 mt-3">
                 {player.positions?.length > 0 && player.positions.map(p => <Badge key={p} variant="outline" className="rounded-none">{p}</Badge>)}
                 <Badge variant="secondary" className="rounded-none">{player.kit_count} versions</Badge>
+                {authUser && (
+                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
+                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                  </Button>
+                )}
               </div>
             </div>
           </div>
