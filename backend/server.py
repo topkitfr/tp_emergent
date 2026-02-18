@@ -206,6 +206,105 @@ APPROVAL_THRESHOLD = 5
 MODERATOR_APPROVAL_THRESHOLD = 1  # Moderators can approve with single vote
 
 
+# ─── Slug Helper ───
+
+def slugify(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s-]', '', text)
+    text = re.sub(r'[\s_]+', '-', text)
+    text = re.sub(r'-+', '-', text)
+    return text.strip('-')
+
+
+# ─── Entity Pydantic Models ───
+
+class TeamCreate(BaseModel):
+    name: str
+    country: Optional[str] = ""
+    city: Optional[str] = ""
+    founded: Optional[int] = None
+    primary_color: Optional[str] = ""
+    secondary_color: Optional[str] = ""
+    crest_url: Optional[str] = ""
+    aka: Optional[List[str]] = []
+
+class TeamOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    team_id: str
+    name: str
+    slug: str
+    country: Optional[str] = ""
+    city: Optional[str] = ""
+    founded: Optional[int] = None
+    primary_color: Optional[str] = ""
+    secondary_color: Optional[str] = ""
+    crest_url: Optional[str] = ""
+    aka: Optional[List[str]] = []
+    kit_count: Optional[int] = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+class LeagueCreate(BaseModel):
+    name: str
+    country_or_region: Optional[str] = ""
+    level: Optional[str] = "domestic"
+    organizer: Optional[str] = ""
+    logo_url: Optional[str] = ""
+
+class LeagueOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    league_id: str
+    name: str
+    slug: str
+    country_or_region: Optional[str] = ""
+    level: Optional[str] = "domestic"
+    organizer: Optional[str] = ""
+    logo_url: Optional[str] = ""
+    kit_count: Optional[int] = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+class BrandCreate(BaseModel):
+    name: str
+    country: Optional[str] = ""
+    founded: Optional[int] = None
+    logo_url: Optional[str] = ""
+
+class BrandOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    brand_id: str
+    name: str
+    slug: str
+    country: Optional[str] = ""
+    founded: Optional[int] = None
+    logo_url: Optional[str] = ""
+    kit_count: Optional[int] = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+class PlayerCreate(BaseModel):
+    full_name: str
+    nationality: Optional[str] = ""
+    birth_year: Optional[int] = None
+    positions: Optional[List[str]] = []
+    preferred_number: Optional[int] = None
+    photo_url: Optional[str] = ""
+
+class PlayerOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    player_id: str
+    full_name: str
+    slug: str
+    nationality: Optional[str] = ""
+    birth_year: Optional[int] = None
+    positions: Optional[List[str]] = []
+    preferred_number: Optional[int] = None
+    photo_url: Optional[str] = ""
+    kit_count: Optional[int] = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
 # ─── Auth Helpers ───
 
 EMERGENT_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
