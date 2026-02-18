@@ -474,6 +474,7 @@ export default function VersionDetail() {
                 {/* Real-time Estimation */}
                 <EstimationBreakdown
                   modelType={version?.model || 'Replica'}
+                  competition={version?.competition || ''}
                   conditionOrigin={conditionOrigin}
                   physicalState={physicalState}
                   flockingOrigin={flockingOrigin}
