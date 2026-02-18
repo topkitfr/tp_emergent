@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import AutocompleteInput from '@/components/AutocompleteInput';
+import EntityAutocomplete from '@/components/EntityAutocomplete';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const MODELS = ['Authentic', 'Replica', 'Other'];
@@ -29,13 +30,16 @@ export default function AddJersey() {
 
   // Master Kit fields
   const [club, setClub] = useState('');
+  const [teamId, setTeamId] = useState('');
   const [season, setSeason] = useState('');
   const [kitType, setKitType] = useState('');
   const [brand, setBrand] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
   const [gender, setGender] = useState('');
   const [league, setLeague] = useState('');
+  const [leagueId, setLeagueId] = useState('');
   const [frontPhoto, setFrontPhoto] = useState('');
 
   // Version fields
@@ -61,7 +65,10 @@ export default function AddJersey() {
     try {
       const res = await createMasterKit({
         club, season, kit_type: kitType, brand, front_photo: frontPhoto,
-        design, sponsor, gender, league
+        design, sponsor, gender, league,
+        team_id: teamId || undefined,
+        brand_id: brandId || undefined,
+        league_id: leagueId || undefined,
       });
       setCreatedKitId(res.data.kit_id);
       toast.success('Master Kit created');
