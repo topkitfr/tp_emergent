@@ -278,28 +278,24 @@ export default function VersionDetail() {
 
             <Separator className="bg-border" />
 
-            {/* Data Grid */}
+            {/* Data Grid - All Fields */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <div className={fieldLabel} style={fieldStyle}>Competition</div>
-                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.competition}</span></div>
+                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.competition || 'None'}</span></div>
               </div>
               <div>
                 <div className={fieldLabel} style={fieldStyle}>Model</div>
-                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model}</span></div>
+                <div className="flex items-center gap-2 mt-1"><Package className="w-4 h-4 text-primary" /><span className="text-sm">{version.model || 'None'}</span></div>
               </div>
-              {version.sku_code && (
-                <div>
-                  <div className={fieldLabel} style={fieldStyle}>SKU</div>
-                  <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.sku_code}</span></div>
-                </div>
-              )}
-              {version.ean_code && (
-                <div>
-                  <div className={fieldLabel} style={fieldStyle}>EAN</div>
-                  <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.ean_code}</span></div>
-                </div>
-              )}
+              <div>
+                <div className={fieldLabel} style={fieldStyle}>SKU</div>
+                <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.sku_code || 'None'}</span></div>
+              </div>
+              <div>
+                <div className={fieldLabel} style={fieldStyle}>EAN</div>
+                <div className="flex items-center gap-2 mt-1"><Hash className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.ean_code || 'None'}</span></div>
+              </div>
               <div>
                 <div className={fieldLabel} style={fieldStyle}>In Collections</div>
                 <div className="flex items-center gap-2 mt-1"><Users className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{version.collection_count || 0}</span></div>
