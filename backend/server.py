@@ -1244,6 +1244,74 @@ async def migrate_schema():
     }
 
 
+@api_router.post("/migrate-create-default-versions")
+async def migrate_create_default_versions():
+    """Create default versions for all existing master kits that don't have any versions"""
+    all_kits = await db.master_kits.find({}, {"_id": 0, "kit_id": 1, "front_photo": 1}).to_list(2000)
+    
+    created_count = 0
+    skipped_count = 0
+    
+    for kit in all_kits:
+        kit_id = kit.get("kit_id")
+        if not kit_id:
+            continue
+            
+        # Check if this kit already has any versions
+        existing_version = await db.versions.find_one({"kit_id": kit_id}, {"_id": 1})
+        if existing_version:
+            skipped_count += 1
+            continue
+        
+        # Create default version
+        default_version = {
+            "version_id": f"ver_{uuid.uuid4().hex[:12]}",
+            "kit_id": kit_id,
+            "competition": "National Championship",
+            "model": "Replica",
+            "sku_code": "",
+            "ean_code": "",
+            "front_photo": kit.get("front_photo", ""),
+            "back_photo": "",
+            "created_by": "system_migration",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.versions.insert_one(default_version)
+        created_count += 1
+    
+    return {
+        "message": "Default versions migration complete",
+        "versions_created": created_count,
+        "kits_skipped": skipped_count,
+        "total_kits_processed": len(all_kits)
+    }
+
+
+@api_router.post("/set-moderator-role")
+async def set_moderator_role():
+    """Ensure moderator role is set for designated moderator emails"""
+    updated_count = 0
+    for email in MODERATOR_EMAILS:
+        result = await db.users.update_one(
+            {"email": email},
+            {"$set": {"role": "moderator"}}
+        )
+        if result.modified_count > 0:
+            updated_count += 1
+    
+    # Get current status
+    moderators = await db.users.find(
+        {"email": {"$in": MODERATOR_EMAILS}},
+        {"_id": 0, "email": 1, "role": 1, "name": 1}
+    ).to_list(100)
+    
+    return {
+        "message": "Moderator roles updated",
+        "updated_count": updated_count,
+        "moderators": moderators
+    }
+
+
 # ─── Image Proxy ───
 
 @api_router.get("/image-proxy")
