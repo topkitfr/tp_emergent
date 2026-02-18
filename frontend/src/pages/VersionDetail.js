@@ -252,7 +252,7 @@ export default function VersionDetail() {
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="outline" className="rounded-none text-xs">{version.model}</Badge>
-                {(mk?.gender || version.gender) && <Badge variant="outline" className="rounded-none text-xs">{mk?.gender || version.gender}</Badge>}
+                {mk?.gender && <Badge variant="outline" className="rounded-none text-xs">{mk.gender}</Badge>}
               </div>
               {mk && (
                 <p className="text-sm text-muted-foreground mb-1" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
