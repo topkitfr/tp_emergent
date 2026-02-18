@@ -525,10 +525,12 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "physical_state": item.physical_state or "",
         "size": item.size or "",
         "purchase_cost": item.purchase_cost,
+        "estimated_price": item.estimated_price,
         "price_estimate": item.price_estimate,
         "value_estimate": item.value_estimate,
         "signed": item.signed or False,
         "signed_by": item.signed_by or "",
+        "signed_proof": item.signed_proof or False,
         "condition": item.condition or "",
         "printing": item.printing or "",
         "added_at": datetime.now(timezone.utc).isoformat()
