@@ -1146,6 +1146,50 @@ async def import_excel():
     return {"message": f"Successfully imported {imported} master kits", "count": imported}
 
 
+@api_router.post("/migrate-schema")
+async def migrate_schema():
+    """Clean master_kits to match new schema: remove year, colors, competition, source_url fields"""
+    # Fields to keep on master_kits
+    valid_fields = {"kit_id", "club", "season", "kit_type", "brand", "front_photo",
+                    "league", "design", "sponsor", "gender", "created_by", "created_at"}
+    # Fields to remove
+    remove_fields = {"year", "colors", "competition", "source_url"}
+
+    # Remove deprecated fields from all master_kits
+    result = await db.master_kits.update_many(
+        {},
+        {"$unset": {f: "" for f in remove_fields}}
+    )
+    updated = result.modified_count
+
+    # Ensure all docs have required fields with defaults
+    all_kits = await db.master_kits.find({}, {"_id": 0}).to_list(1000)
+    patched = 0
+    for kit in all_kits:
+        patch = {}
+        if not kit.get("league"):
+            patch["league"] = ""
+        if not kit.get("design"):
+            patch["design"] = ""
+        if not kit.get("sponsor"):
+            patch["sponsor"] = ""
+        if not kit.get("gender"):
+            patch["gender"] = ""
+        if patch:
+            await db.master_kits.update_one({"kit_id": kit["kit_id"]}, {"$set": patch})
+            patched += 1
+
+    # Also remove gender from versions (moved to master_kit level)
+    ver_result = await db.versions.update_many({}, {"$unset": {"gender": ""}})
+
+    return {
+        "message": "Schema migration complete",
+        "master_kits_cleaned": updated,
+        "master_kits_patched": patched,
+        "versions_cleaned": ver_result.modified_count
+    }
+
+
 # ─── Image Proxy ───
 
 @api_router.get("/image-proxy")
