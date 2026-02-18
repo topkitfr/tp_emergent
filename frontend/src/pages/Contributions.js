@@ -222,13 +222,13 @@ export default function Contributions() {
   };
 
   const handleSubmitVersion = async () => {
-    if (!selectedKit || !competition || !model || !gender) {
-      toast.error('Please fill all required fields');
+    if (!selectedKit || !competition || !model) {
+      toast.error('Please fill all required fields (Parent Kit, Competition, Model)');
       return;
     }
     setSubmitting(true);
     try {
-      const data = { kit_id: selectedKit, competition, model, gender, sku_code: skuCode, front_photo: verFrontPhoto, back_photo: verBackPhoto };
+      const data = { kit_id: selectedKit, competition, model, sku_code: skuCode, ean_code: eanCode, front_photo: verFrontPhoto, back_photo: verBackPhoto };
       await createSubmission({ submission_type: 'version', data });
       toast.success('Version submitted for community review!');
       closeAddForm();
