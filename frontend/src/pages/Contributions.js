@@ -251,6 +251,7 @@ export default function Contributions() {
   };
 
   const hasVoted = (item) => item.voters?.includes(user?.user_id);
+  const isModerator = user?.role === 'moderator' || user?.role === 'admin';
 
   return (
     <div className="animate-fade-in-up">
@@ -262,8 +263,13 @@ export default function Contributions() {
                 CONTRIBUTIONS
               </h1>
               <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                Submit new jerseys and vote on community contributions. 5 upvotes required for approval.
+                Submit new jerseys and vote on community contributions. {isModerator ? 'As a moderator, your upvote approves instantly.' : '5 upvotes required for approval.'}
               </p>
+              {isModerator && (
+                <Badge className="mt-2 rounded-none bg-primary/20 text-primary border-primary/30" data-testid="moderator-badge">
+                  Moderator
+                </Badge>
+              )}
             </div>
             <Button
               onClick={() => setShowAddForm(!showAddForm)}
