@@ -204,7 +204,7 @@ export default function Browse() {
               {selectedClub && <Badge variant="secondary" className="rounded-none text-xs">{selectedClub} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedClub('')} /></Badge>}
               {selectedBrand && <Badge variant="secondary" className="rounded-none text-xs">{selectedBrand} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedBrand('')} /></Badge>}
               {selectedType && <Badge variant="secondary" className="rounded-none text-xs">{selectedType} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedType('')} /></Badge>}
-              {selectedYear && <Badge variant="secondary" className="rounded-none text-xs">{selectedYear} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedYear('')} /></Badge>}
+              {selectedSeason && <Badge variant="secondary" className="rounded-none text-xs">{selectedSeason} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedSeason('')} /></Badge>}
               {selectedDesign && <Badge variant="secondary" className="rounded-none text-xs">{selectedDesign} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedDesign('')} /></Badge>}
               {selectedLeague && <Badge variant="secondary" className="rounded-none text-xs">{selectedLeague} <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedLeague('')} /></Badge>}
             </div>
