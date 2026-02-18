@@ -89,6 +89,18 @@ export default function LeagueDetail() {
           </div>
         )}
       </div>
+
+      {league && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="league"
+          mode="edit"
+          entityId={league.league_id}
+          initialData={{ name: league.name, country_or_region: league.country_or_region, level: league.level, organizer: league.organizer, logo_url: league.logo_url }}
+          onSuccess={() => getLeague(id).then(r => setLeague(r.data))}
+        />
+      )}
     </div>
   );
 }
