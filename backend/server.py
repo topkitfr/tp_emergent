@@ -894,6 +894,20 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.master_kits.insert_one(kit_doc)
+            # Auto-create a default Version for this Master Kit
+            default_version = {
+                "version_id": f"ver_{uuid.uuid4().hex[:12]}",
+                "kit_id": kit_id,
+                "competition": "National Championship",
+                "model": "Replica",
+                "sku_code": "",
+                "ean_code": "",
+                "front_photo": data.get("front_photo", ""),
+                "back_photo": "",
+                "created_by": updated_sub["submitted_by"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.versions.insert_one(default_version)
         elif updated_sub["submission_type"] == "version":
             ver_doc = {
                 "version_id": f"ver_{uuid.uuid4().hex[:12]}",
