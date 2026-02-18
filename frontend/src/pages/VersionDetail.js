@@ -12,18 +12,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Star, Shirt, ChevronRight, Package, Tag, Users, FolderPlus, Check, Hash, User, TrendingUp, TrendingDown, Minus, AlertTriangle, Heart } from 'lucide-react';
+import { Star, Shirt, ChevronRight, Package, Users, FolderPlus, Check, Hash, TrendingUp, TrendingDown, Minus, AlertTriangle, Heart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import EstimationBreakdown from '@/components/EstimationBreakdown';
+import { calculateEstimation } from '@/utils/estimation';
 
-const CONDITION_ORIGINS = ['Club Stock', 'Match Prepared', 'Match Worn', 'Training'];
+const CONDITION_ORIGINS = ['Club Stock', 'Match Prepared', 'Match Worn', 'Training', 'Shop'];
 const PHYSICAL_STATES = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs restoration'];
 const FLOCKING_TYPES = ['Name+Number', 'Name', 'Number'];
-const FLOCKING_ORIGINS = ['Official', 'Perso'];
+const FLOCKING_ORIGINS = ['Official', 'Personalized'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 const fieldLabel = "text-[10px] uppercase tracking-wider text-muted-foreground";
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
 const inputClass = "bg-card border-border rounded-none h-9 text-sm";
+
+function parseSeasonYear(season) {
+  if (!season) return 0;
+  const match = season.match(/(\d{4})/);
+  return match ? parseInt(match[1]) : 0;
+}
 
 export default function VersionDetail() {
   const { versionId } = useParams();
@@ -44,8 +52,7 @@ export default function VersionDetail() {
   const [wishlistId, setWishlistId] = useState(null);
   const [togglingWishlist, setTogglingWishlist] = useState(false);
 
-  // Collection form - new schema
-  const [collectionCategory, setCollectionCategory] = useState('General');
+  // Collection form
   const [flockingType, setFlockingType] = useState('');
   const [flockingOrigin, setFlockingOrigin] = useState('');
   const [flockingDetail, setFlockingDetail] = useState('');
@@ -53,10 +60,9 @@ export default function VersionDetail() {
   const [physicalState, setPhysicalState] = useState('');
   const [collectionSize, setCollectionSize] = useState('');
   const [purchaseCost, setPurchaseCost] = useState('');
-  const [priceEstimate, setPriceEstimate] = useState('');
-  const [valueEstimate, setValueEstimate] = useState('');
   const [signed, setSigned] = useState(false);
   const [signedBy, setSignedBy] = useState('');
+  const [signedProof, setSignedProof] = useState(false);
   const [collectionNotes, setCollectionNotes] = useState('');
 
   // Report form
@@ -135,9 +141,15 @@ export default function VersionDetail() {
   const handleAddToCollection = async () => {
     setAddingToCollection(true);
     try {
+      const mk = version?.master_kit;
+      const seasonYear = parseSeasonYear(mk?.season);
+      const est = calculateEstimation({
+        modelType: version?.model || 'Replica',
+        conditionOrigin, physicalState, flockingOrigin,
+        signed, signedProof, seasonYear,
+      });
       await addToCollection({
         version_id: versionId,
-        category: collectionCategory,
         flocking_type: flockingType,
         flocking_origin: flockingOrigin,
         flocking_detail: flockingDetail,
@@ -145,10 +157,10 @@ export default function VersionDetail() {
         physical_state: physicalState,
         size: collectionSize,
         purchase_cost: purchaseCost ? parseFloat(purchaseCost) : null,
-        price_estimate: priceEstimate ? parseFloat(priceEstimate) : null,
-        value_estimate: valueEstimate ? parseFloat(valueEstimate) : null,
+        estimated_price: est.estimatedPrice,
         signed,
         signed_by: signed ? signedBy : '',
+        signed_proof: signed ? signedProof : false,
         notes: collectionNotes
       });
       toast.success('Added to collection');
@@ -200,6 +212,7 @@ export default function VersionDetail() {
   }
 
   const mk = version.master_kit;
+  const seasonYear = parseSeasonYear(mk?.season);
   const estimateChartData = estimates && estimates.count > 0 ? [
     { name: 'Low', value: estimates.low, color: '#ef4444' },
     { name: 'Average', value: estimates.average, color: '#facc15' },
@@ -298,17 +311,17 @@ export default function VersionDetail() {
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center p-3 bg-destructive/5 border border-destructive/20">
                     <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
-                    <div className="font-mono text-lg">${estimates.low}</div>
+                    <div className="font-mono text-lg">{estimates.low}&euro;</div>
                     <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Low</div>
                   </div>
                   <div className="text-center p-3 bg-accent/5 border border-accent/20">
                     <Minus className="w-4 h-4 text-accent mx-auto mb-1" />
-                    <div className="font-mono text-lg">${estimates.average}</div>
+                    <div className="font-mono text-lg">{estimates.average}&euro;</div>
                     <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Average</div>
                   </div>
                   <div className="text-center p-3 bg-primary/5 border border-primary/20">
                     <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
-                    <div className="font-mono text-lg">${estimates.high}</div>
+                    <div className="font-mono text-lg">{estimates.high}&euro;</div>
                     <div className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>High</div>
                   </div>
                 </div>
@@ -317,10 +330,7 @@ export default function VersionDetail() {
                     <BarChart data={estimateChartData} barSize={40}>
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a1a1aa', fontSize: 11 }} />
                       <YAxis hide />
-                      <Tooltip
-                        contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: 0, fontSize: 12 }}
-                        formatter={(value) => [`$${value}`, 'Value']}
-                      />
+                      <Tooltip contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: 0, fontSize: 12 }} formatter={(value) => [`${value}€`, 'Value']} />
                       <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                         {estimateChartData.map((entry, index) => (
                           <Cell key={index} fill={entry.color} />
@@ -416,7 +426,7 @@ export default function VersionDetail() {
                   </div>
                 </div>
 
-                {/* Size & Values */}
+                {/* Size & Purchase Cost */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Size</Label>
@@ -429,35 +439,28 @@ export default function VersionDetail() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Category</Label>
-                    <Input value={collectionCategory} onChange={e => setCollectionCategory(e.target.value)} placeholder="General" className={inputClass} data-testid="collection-category-input" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost</Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost (&euro;)</Label>
                     <Input type="number" value={purchaseCost} onChange={e => setPurchaseCost(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-purchase-cost" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Price Estimate</Label>
-                    <Input type="number" value={priceEstimate} onChange={e => setPriceEstimate(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-price-estimate" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>Est. Value</Label>
-                    <Input type="number" value={valueEstimate} onChange={e => setValueEstimate(e.target.value)} placeholder="0.00" className={`${inputClass} font-mono`} data-testid="collection-value-input" />
                   </div>
                 </div>
 
                 {/* Signed */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={signed} onCheckedChange={setSigned} data-testid="collection-signed-switch" />
-                    <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={signed} onCheckedChange={setSigned} data-testid="collection-signed-switch" />
+                      <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
+                    </div>
+                    {signed && (
+                      <div className="flex-1">
+                        <Input value={signedBy} onChange={e => setSignedBy(e.target.value)} placeholder="Signed by (player name)" className={inputClass} data-testid="collection-signed-by" />
+                      </div>
+                    )}
                   </div>
                   {signed && (
-                    <div className="flex-1">
-                      <Input value={signedBy} onChange={e => setSignedBy(e.target.value)} placeholder="Signed by (player name)" className={inputClass} data-testid="collection-signed-by" />
+                    <div className="flex items-center gap-2 ml-12">
+                      <Switch checked={signedProof} onCheckedChange={setSignedProof} data-testid="collection-signed-proof" />
+                      <Label className="text-[10px] text-muted-foreground" style={fieldStyle}>PROOF / CERTIFICATE</Label>
                     </div>
                   )}
                 </div>
@@ -466,6 +469,18 @@ export default function VersionDetail() {
                   <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
                   <Textarea value={collectionNotes} onChange={e => setCollectionNotes(e.target.value)} placeholder="Personal notes..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="collection-notes-input" />
                 </div>
+
+                {/* Real-time Estimation */}
+                <EstimationBreakdown
+                  modelType={version?.model || 'Replica'}
+                  conditionOrigin={conditionOrigin}
+                  physicalState={physicalState}
+                  flockingOrigin={flockingOrigin}
+                  signed={signed}
+                  signedProof={signedProof}
+                  seasonYear={seasonYear}
+                />
+
                 <div className="flex gap-2">
                   <Button onClick={handleAddToCollection} disabled={addingToCollection} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="confirm-add-collection-btn">
                     <Check className="w-4 h-4 mr-1" /> {addingToCollection ? 'Adding...' : 'Confirm'}
