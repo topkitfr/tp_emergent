@@ -1409,22 +1409,45 @@ async def update_player(player_id: str, player: PlayerCreate):
 # ─── Autocomplete Route ───
 
 @api_router.get("/autocomplete")
-async def autocomplete(field: str, q: str = ""):
-    field_map = {
-        "club": "master_kits",
-        "brand": "master_kits",
-        "league": "master_kits",
-        "sponsor": "master_kits",
-        "competition": "versions",
-    }
-    if field not in field_map:
-        return []
-    collection_name = field_map[field]
-    values = await db[collection_name].distinct(field)
-    if q:
-        q_lower = q.lower()
-        values = [v for v in values if v and q_lower in str(v).lower()]
-    return sorted([v for v in values if v])[:20]
+async def autocomplete(field: Optional[str] = None, type: Optional[str] = None, q: str = "", query: str = ""):
+    search_q = q or query
+
+    # Entity-based autocomplete (new)
+    if type:
+        entity_config = {
+            "team": {"collection": "teams", "search_field": "name", "id_field": "team_id", "label_field": "name", "extra_field": "country"},
+            "league": {"collection": "leagues", "search_field": "name", "id_field": "league_id", "label_field": "name", "extra_field": "country_or_region"},
+            "brand": {"collection": "brands", "search_field": "name", "id_field": "brand_id", "label_field": "name", "extra_field": "country"},
+            "player": {"collection": "players", "search_field": "full_name", "id_field": "player_id", "label_field": "full_name", "extra_field": "nationality"},
+        }
+        config = entity_config.get(type)
+        if not config:
+            return []
+        filter_q = {}
+        if search_q:
+            filter_q[config["search_field"]] = {"$regex": search_q, "$options": "i"}
+        docs = await db[config["collection"]].find(filter_q, {"_id": 0}).limit(20).to_list(20)
+        return [{"id": d[config["id_field"]], "label": d[config["label_field"]], "extra": d.get(config["extra_field"], "")} for d in docs]
+
+    # Legacy field-based autocomplete
+    if field:
+        field_map = {
+            "club": "master_kits",
+            "brand": "master_kits",
+            "league": "master_kits",
+            "sponsor": "master_kits",
+            "competition": "versions",
+        }
+        if field not in field_map:
+            return []
+        collection_name = field_map[field]
+        values = await db[collection_name].distinct(field)
+        if search_q:
+            q_lower = search_q.lower()
+            values = [v for v in values if v and q_lower in str(v).lower()]
+        return sorted([v for v in values if v])[:20]
+
+    return []
 
 
 # ─── Image Upload ───
