@@ -399,8 +399,24 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
     doc["created_by"] = user["user_id"]
     doc["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.master_kits.insert_one(doc)
+    
+    # Auto-create a default Version for this Master Kit
+    default_version = {
+        "version_id": f"ver_{uuid.uuid4().hex[:12]}",
+        "kit_id": doc["kit_id"],
+        "competition": "National Championship",
+        "model": "Replica",
+        "sku_code": "",
+        "ean_code": "",
+        "front_photo": doc.get("front_photo", ""),
+        "back_photo": "",
+        "created_by": user["user_id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.versions.insert_one(default_version)
+    
     result = await db.master_kits.find_one({"kit_id": doc["kit_id"]}, {"_id": 0})
-    result["version_count"] = 0
+    result["version_count"] = 1
     result["avg_rating"] = 0.0
     return result
 
