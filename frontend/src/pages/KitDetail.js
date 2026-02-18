@@ -140,13 +140,6 @@ export default function KitDetail() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Year</div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-mono">{kit.year}</span>
-                  </div>
-                </div>
-                <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Type</div>
                   <div className="flex items-center gap-2">
                     <Shirt className="w-4 h-4 text-primary" />
@@ -164,12 +157,6 @@ export default function KitDetail() {
                   <div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
                     <span className="text-sm">{kit.design}</span>
-                  </div>
-                )}
-                {kit.colors && (
-                  <div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Colors</div>
-                    <span className="text-sm">{kit.colors}</span>
                   </div>
                 )}
                 {kit.sponsor && (
