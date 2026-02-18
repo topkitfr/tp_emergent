@@ -594,21 +594,34 @@ async def get_category_stats(request: Request):
 
 # ─── Estimation Logic ───
 
-ESTIMATION_BASE_PRICES = {"Authentic": 140, "Replica": 90}
-ESTIMATION_ORIGIN_COEFF = {"Club Stock": 0.2, "Match Prepared": 0.5, "Match Worn": 1.0, "Training": 0.05, "Shop": 0.0}
+ESTIMATION_BASE_PRICES = {"Authentic": 140, "Replica": 90, "Other": 60}
+ESTIMATION_COMPETITION_COEFF = {
+    "National Championship": 0.0,
+    "National Cup": 0.05,
+    "Continental Cup": 1.0,
+    "Intercontinental Cup": 1.0,
+    "World Cup": 1.0,
+}
+ESTIMATION_ORIGIN_COEFF = {"Club Stock": 0.5, "Match Prepared": 1.0, "Match Worn": 1.5, "Training": 0.0, "Shop": 0.0}
 ESTIMATION_STATE_COEFF = {"New with tag": 0.3, "Very good": 0.1, "Used": 0.0, "Damaged": -0.2, "Needs restoration": -0.4}
 ESTIMATION_FLOCKING_COEFF = {"Official": 0.15, "Personalized": 0.0}
-ESTIMATION_SIGNED_COEFF = 1.0
+ESTIMATION_SIGNED_COEFF = 1.5
 ESTIMATION_SIGNED_PROOF_COEFF = 1.0
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
-def calculate_estimation(model_type: str, condition_origin: str, physical_state: str,
-                         flocking_origin: str, signed: bool, signed_proof: bool,
-                         season_year: int):
-    base = ESTIMATION_BASE_PRICES.get(model_type, 90)
+def calculate_estimation(model_type: str, competition: str, condition_origin: str,
+                         physical_state: str, flocking_origin: str,
+                         signed: bool, signed_proof: bool, season_year: int):
+    base = ESTIMATION_BASE_PRICES.get(model_type, 60)
     coeff_sum = 0.0
     breakdown = []
+
+    # Competition coefficient
+    comp_c = ESTIMATION_COMPETITION_COEFF.get(competition, 0.0)
+    coeff_sum += comp_c
+    if competition:
+        breakdown.append({"label": f"Competition: {competition}", "coeff": comp_c})
 
     # Origin coefficient
     origin_c = ESTIMATION_ORIGIN_COEFF.get(condition_origin, 0.0)
@@ -654,7 +667,8 @@ def calculate_estimation(model_type: str, condition_origin: str, physical_state:
     }
 
 class EstimationRequest(BaseModel):
-    model_type: str  # Authentic / Replica
+    model_type: str  # Authentic / Replica / Other
+    competition: Optional[str] = ""
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     flocking_origin: Optional[str] = ""
@@ -666,6 +680,7 @@ class EstimationRequest(BaseModel):
 async def estimate_price(req: EstimationRequest):
     result = calculate_estimation(
         model_type=req.model_type,
+        competition=req.competition or "",
         condition_origin=req.condition_origin or "",
         physical_state=req.physical_state or "",
         flocking_origin=req.flocking_origin or "",
