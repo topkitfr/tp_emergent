@@ -89,6 +89,7 @@ class VersionCreate(BaseModel):
     ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
+    main_player_id: Optional[str] = ""
 
 class VersionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -100,6 +101,7 @@ class VersionOut(BaseModel):
     ean_code: Optional[str] = ""
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
+    main_player_id: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     avg_rating: Optional[float] = 0.0
