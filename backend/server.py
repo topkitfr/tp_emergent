@@ -829,10 +829,13 @@ async def get_submission(submission_id: str):
 @api_router.post("/submissions/{submission_id}/vote")
 async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Request):
     user = await get_current_user(request)
-    # Check user has at least 1 jersey in collection
-    col_count = await db.collections.count_documents({"user_id": user["user_id"]})
-    if col_count == 0:
-        raise HTTPException(status_code=403, detail="You must have at least 1 jersey in your collection to vote")
+    # Check user has at least 1 jersey in collection (moderators exempt)
+    user_role = user.get("role", "user")
+    is_moderator = user_role in ("moderator", "admin")
+    if not is_moderator:
+        col_count = await db.collections.count_documents({"user_id": user["user_id"]})
+        if col_count == 0:
+            raise HTTPException(status_code=403, detail="You must have at least 1 jersey in your collection to vote")
     sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -842,10 +845,13 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         raise HTTPException(status_code=400, detail="Already voted")
     if vote.vote not in ("up", "down"):
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
+    
+    # Moderators can approve with single vote
+    vote_weight = APPROVAL_THRESHOLD if is_moderator and vote.vote == "up" else 1
     inc_field = "votes_up" if vote.vote == "up" else "votes_down"
     await db.submissions.update_one(
         {"submission_id": submission_id},
-        {"$inc": {inc_field: 1}, "$push": {"voters": user["user_id"]}}
+        {"$inc": {inc_field: vote_weight}, "$push": {"voters": user["user_id"]}}
     )
     # Check if threshold reached
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
@@ -861,7 +867,10 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "kit_type": data.get("kit_type", ""),
                 "brand": data.get("brand", ""),
                 "front_photo": data.get("front_photo", ""),
-                "year": data.get("year", 2024),
+                "league": data.get("league", ""),
+                "design": data.get("design", ""),
+                "sponsor": data.get("sponsor", ""),
+                "gender": data.get("gender", ""),
                 "created_by": updated_sub["submitted_by"],
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
@@ -872,8 +881,8 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "kit_id": data.get("kit_id", ""),
                 "competition": data.get("competition", ""),
                 "model": data.get("model", ""),
-                "gender": data.get("gender", ""),
                 "sku_code": data.get("sku_code", ""),
+                "ean_code": data.get("ean_code", ""),
                 "front_photo": data.get("front_photo", ""),
                 "back_photo": data.get("back_photo", ""),
                 "created_by": updated_sub["submitted_by"],
