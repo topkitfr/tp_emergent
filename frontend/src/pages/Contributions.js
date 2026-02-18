@@ -245,9 +245,9 @@ export default function Contributions() {
     setAddStep(1);
     setSubType('master_kit');
     setClub(''); setSeason(''); setKitType(''); setBrand('');
-    setFrontPhoto(''); setYear(new Date().getFullYear());
-    setSelectedKit(''); setCompetition(''); setModel(''); setGender('');
-    setSkuCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
+    setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setGender('');
+    setSelectedKit(''); setCompetition(''); setModel('');
+    setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
   };
 
   const hasVoted = (item) => item.voters?.includes(user?.user_id);
