@@ -81,6 +81,16 @@ function SubmissionDetail({ sub, existingKits }) {
 
   return (
     <div className="mt-4 pt-4 border-t border-border" data-testid={`submission-detail-${sub.submission_id}`}>
+      {isEntity && sub.data?.mode && (
+        <div className="mb-3">
+          <Badge variant="outline" className="rounded-none text-[10px]">
+            {sub.data.mode === 'create' ? 'New Entity' : 'Edit Suggestion'}
+          </Badge>
+          {sub.data.mode === 'edit' && sub.data.entity_id && (
+            <span className="text-[10px] font-mono text-muted-foreground ml-2">{sub.data.entity_id}</span>
+          )}
+        </div>
+      )}
       {parentKit && (
         <div className="mb-3 p-3 bg-secondary/30 border border-border">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Parent Master Kit</p>
