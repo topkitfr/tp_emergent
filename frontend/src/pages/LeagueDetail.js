@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getLeague } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Globe, ArrowLeft, Shirt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Globe, ArrowLeft, Shirt, Pencil } from 'lucide-react';
 import JerseyCard from '@/components/JerseyCard';
+import EntityEditDialog from '@/components/EntityEditDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LeagueDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
   const [filterTeam, setFilterTeam] = useState('');
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -50,6 +55,11 @@ export default function LeagueDetail() {
               <div className="flex items-center gap-2 mt-3">
                 <Badge variant="secondary" className="rounded-none">{league.kit_count} kits</Badge>
                 <Badge variant="outline" className="rounded-none">{league.level}</Badge>
+                {user && (
+                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
+                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                  </Button>
+                )}
               </div>
             </div>
           </div>
