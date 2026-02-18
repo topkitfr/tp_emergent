@@ -45,6 +45,8 @@ async def add_to_collection(item: CollectionAdd, request: Request):
     )
     if existing:
         raise HTTPException(status_code=400, detail="Already in collection")
+    # Use estimated_price as the canonical estimation value
+    est_price = item.estimated_price or item.value_estimate or item.price_estimate
     doc = {
         "collection_id": f"col_{uuid.uuid4().hex[:12]}",
         "user_id": user["user_id"],
@@ -58,9 +60,9 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "physical_state": item.physical_state or "",
         "size": item.size or "",
         "purchase_cost": item.purchase_cost,
-        "estimated_price": item.estimated_price,
-        "price_estimate": item.price_estimate,
-        "value_estimate": item.value_estimate,
+        "estimated_price": est_price,
+        "price_estimate": est_price,
+        "value_estimate": est_price,
         "signed": item.signed or False,
         "signed_by": item.signed_by or "",
         "signed_proof": item.signed_proof or False,
@@ -88,6 +90,12 @@ async def update_collection_item(collection_id: str, update: CollectionUpdate, r
     update_dict = {k: v for k, v in update.model_dump().items() if v is not None}
     if not update_dict:
         raise HTTPException(status_code=400, detail="No fields to update")
+    # Sync all estimation fields when any one is updated
+    est_price = update_dict.get("estimated_price") or update_dict.get("value_estimate") or update_dict.get("price_estimate")
+    if est_price:
+        update_dict["estimated_price"] = est_price
+        update_dict["price_estimate"] = est_price
+        update_dict["value_estimate"] = est_price
     result = await db.collections.update_one(
         {"collection_id": collection_id, "user_id": user["user_id"]},
         {"$set": update_dict}
