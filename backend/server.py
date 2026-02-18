@@ -57,6 +57,9 @@ class MasterKitCreate(BaseModel):
     design: Optional[str] = ""
     sponsor: Optional[str] = ""
     gender: Optional[str] = ""  # Man/Woman/Kid
+    team_id: Optional[str] = ""
+    league_id: Optional[str] = ""
+    brand_id: Optional[str] = ""
 
 class MasterKitOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -70,6 +73,9 @@ class MasterKitOut(BaseModel):
     design: Optional[str] = ""
     sponsor: Optional[str] = ""
     gender: Optional[str] = ""
+    team_id: Optional[str] = ""
+    league_id: Optional[str] = ""
+    brand_id: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     version_count: Optional[int] = 0
