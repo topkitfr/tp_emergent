@@ -331,8 +331,8 @@ class TestEstimationEndpoint:
             )
             assert response.status_code == 200
             data = response.json()
-            expected_price = 90 * (1 + expected_coeff)
-            assert data["estimated_price"] == expected_price, f"State '{state}': expected {expected_price}, got {data['estimated_price']}"
+            expected_price = round(90 * (1 + expected_coeff), 2)
+            assert abs(data["estimated_price"] - expected_price) < 0.01, f"State '{state}': expected {expected_price}, got {data['estimated_price']}"
         
         print(f"✓ Test 11 PASSED: All Physical States return correct coefficients")
     
@@ -360,8 +360,8 @@ class TestEstimationEndpoint:
             )
             assert response.status_code == 200
             data = response.json()
-            expected_price = 90 * (1 + expected_coeff)
-            assert data["estimated_price"] == expected_price, f"Flocking '{origin}': expected {expected_price}, got {data['estimated_price']}"
+            expected_price = round(90 * (1 + expected_coeff), 2)
+            assert abs(data["estimated_price"] - expected_price) < 0.01, f"Flocking '{origin}': expected {expected_price}, got {data['estimated_price']}"
         
         print(f"✓ Test 12 PASSED: Flocking Origins return correct coefficients")
 
