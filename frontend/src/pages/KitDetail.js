@@ -271,8 +271,8 @@ export default function KitDetail() {
                         <h4 className="text-sm font-semibold truncate" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                           {v.competition}
                         </h4>
-                        <p className="text-xs text-muted-foreground">{v.gender}</p>
                         {v.sku_code && <p className="font-mono text-[10px] text-muted-foreground">{v.sku_code}</p>}
+                        {v.ean_code && <p className="font-mono text-[10px] text-muted-foreground">EAN: {v.ean_code}</p>}
                         {v.avg_rating > 0 && (
                           <div className="flex items-center gap-1">
                             <Star className="w-3 h-3 text-accent fill-accent" />
