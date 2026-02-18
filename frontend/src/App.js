@@ -12,6 +12,7 @@ import MyCollection from "@/pages/MyCollection";
 import AddJersey from "@/pages/AddJersey";
 import Profile from "@/pages/Profile";
 import Contributions from "@/pages/Contributions";
+import Wishlist from "@/pages/Wishlist";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -31,6 +32,7 @@ function AppRouter() {
         <Route path="/kit/:kitId" element={<KitDetail />} />
         <Route path="/version/:versionId" element={<VersionDetail />} />
         <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
         <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
         <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
