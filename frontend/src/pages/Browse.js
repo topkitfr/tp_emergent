@@ -12,13 +12,13 @@ import { proxyImageUrl } from '@/lib/api';
 
 export default function Browse() {
   const [kits, setKits] = useState([]);
-  const [filters, setFilters] = useState({ clubs: [], brands: [], seasons: [], years: [], kit_types: [], designs: [], leagues: [] });
+  const [filters, setFilters] = useState({ clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [] });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedClub, setSelectedClub] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedSeason, setSelectedSeason] = useState('');
   const [selectedDesign, setSelectedDesign] = useState('');
   const [selectedLeague, setSelectedLeague] = useState('');
   const [viewMode, setViewMode] = useState('grid');
@@ -31,7 +31,7 @@ export default function Browse() {
       if (selectedClub) params.club = selectedClub;
       if (selectedBrand) params.brand = selectedBrand;
       if (selectedType) params.kit_type = selectedType;
-      if (selectedYear) params.year = parseInt(selectedYear);
+      if (selectedSeason) params.season = selectedSeason;
       if (selectedDesign) params.design = selectedDesign;
       if (selectedLeague) params.league = selectedLeague;
       const res = await getMasterKits(params);
@@ -41,7 +41,7 @@ export default function Browse() {
     } finally {
       setLoading(false);
     }
-  }, [search, selectedClub, selectedBrand, selectedType, selectedYear, selectedDesign, selectedLeague]);
+  }, [search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
 
   useEffect(() => {
     getFilters().then(r => setFilters(r.data)).catch(() => {});
@@ -53,12 +53,12 @@ export default function Browse() {
     setSelectedClub('');
     setSelectedBrand('');
     setSelectedType('');
-    setSelectedYear('');
+    setSelectedSeason('');
     setSelectedDesign('');
     setSelectedLeague('');
   };
 
-  const activeFilterCount = [selectedClub, selectedBrand, selectedType, selectedYear, selectedDesign, selectedLeague].filter(Boolean).length;
+  const activeFilterCount = [selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague].filter(Boolean).length;
 
   const FilterPanel = () => (
     <div className="space-y-6">
