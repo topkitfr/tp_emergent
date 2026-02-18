@@ -87,5 +87,33 @@ export const checkWishlist = (versionId) => api.get(`/wishlist/check/${versionId
 
 // Autocomplete
 export const getAutocomplete = (field, q) => api.get('/autocomplete', { params: { field, q } });
+export const getEntityAutocomplete = (type, query) => api.get('/autocomplete', { params: { type, query } });
+
+// Teams
+export const getTeams = (params) => api.get('/teams', { params });
+export const getTeam = (id) => api.get(`/teams/${id}`);
+export const createTeam = (data) => api.post('/teams', data);
+export const updateTeam = (id, data) => api.put(`/teams/${id}`, data);
+
+// Leagues
+export const getLeagues = (params) => api.get('/leagues', { params });
+export const getLeague = (id) => api.get(`/leagues/${id}`);
+export const createLeague = (data) => api.post('/leagues', data);
+export const updateLeague = (id, data) => api.put(`/leagues/${id}`, data);
+
+// Brands
+export const getBrands = (params) => api.get('/brands', { params });
+export const getBrand = (id) => api.get(`/brands/${id}`);
+export const createBrand = (data) => api.post('/brands', data);
+export const updateBrand = (id, data) => api.put(`/brands/${id}`, data);
+
+// Players
+export const getPlayers = (params) => api.get('/players', { params });
+export const getPlayer = (id) => api.get(`/players/${id}`);
+export const createPlayer = (data) => api.post('/players', data);
+export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
+
+// Migration
+export const migrateEntities = () => api.post('/migrate-entities-from-kits');
 
 export default api;
