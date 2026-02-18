@@ -1796,6 +1796,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def create_indexes():
+    """Create indexes for entity collections and foreign keys."""
+    await db.teams.create_index("team_id", unique=True)
+    await db.teams.create_index("slug", unique=True)
+    await db.teams.create_index("name")
+    await db.leagues.create_index("league_id", unique=True)
+    await db.leagues.create_index("slug", unique=True)
+    await db.leagues.create_index("name")
+    await db.brands.create_index("brand_id", unique=True)
+    await db.brands.create_index("slug", unique=True)
+    await db.brands.create_index("name")
+    await db.players.create_index("player_id", unique=True)
+    await db.players.create_index("slug", unique=True)
+    await db.players.create_index("full_name")
+    await db.master_kits.create_index("team_id")
+    await db.master_kits.create_index("league_id")
+    await db.master_kits.create_index("brand_id")
+    await db.versions.create_index("main_player_id")
+    logger.info("Entity indexes created")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
