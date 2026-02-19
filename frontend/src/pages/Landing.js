@@ -37,19 +37,10 @@ export default function Landing() {
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5">
         <Link to="/" className="flex items-center gap-2" data-testid="landing-logo">
-          <img src="/topkit-logo.png" alt="Topkit" className="h-7 w-auto" />
+          <img src="/topkit-logo.png" alt="Topkit" className="h-7 object-contain" style={{ aspectRatio: 'auto' }} />
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/browse">
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground" data-testid="nav-browse-btn">
-              Browse
-            </Button>
-          </Link>
-          {loading ? null : user ? (
-            <Button onClick={() => navigate('/browse')} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none" data-testid="go-to-app-btn">
-              Go to App
-            </Button>
-          ) : (
+          {loading ? null : user ? null : (
             <Button onClick={handleLogin} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none" data-testid="login-btn">
               Sign in with Google
             </Button>
