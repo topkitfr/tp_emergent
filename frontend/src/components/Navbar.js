@@ -63,18 +63,6 @@ export default function Navbar() {
             </DropdownMenu>
             {user && (
               <>
-                <Link to="/collection">
-                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/collection') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-collection">
-                    <FolderOpen className="w-4 h-4 mr-1.5" />
-                    My Collection
-                  </Button>
-                </Link>
-                <Link to="/wishlist">
-                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/wishlist') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-wishlist">
-                    <Heart className="w-4 h-4 mr-1.5" />
-                    Wishlist
-                  </Button>
-                </Link>
                 <Link to="/contributions">
                   <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-contributions">
                     <FileCheck className="w-4 h-4 mr-1.5" />
@@ -108,9 +96,6 @@ export default function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer" data-testid="menu-wishlist">
                   <Heart className="w-4 h-4 mr-2" /> Wishlist
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/contributions')} className="cursor-pointer" data-testid="menu-contributions">
-                  <FileCheck className="w-4 h-4 mr-2" /> Contributions
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive" data-testid="menu-logout">
