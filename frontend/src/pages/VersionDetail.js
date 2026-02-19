@@ -22,6 +22,8 @@ const PHYSICAL_STATES = ['New with tag', 'Very good', 'Used', 'Damaged', 'Needs 
 const FLOCKING_TYPES = ['Name+Number', 'Name', 'Number'];
 const FLOCKING_ORIGINS = ['Official', 'Personalized'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
+const MODELS = ['Authentic', 'Replica', 'Other'];
 
 const fieldLabel = "text-[10px] uppercase tracking-wider text-muted-foreground";
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
