@@ -247,7 +247,12 @@ export default function KitDetail() {
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                      <Input value={reportCorrections.gender || ''} onChange={e => setReportCorrections(p => ({...p, gender: e.target.value}))} className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-gender" />
+                      <Select value={reportCorrections.gender || ''} onValueChange={v => setReportCorrections(p => ({...p, gender: v}))}>
+                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="kit-report-gender"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-1">
