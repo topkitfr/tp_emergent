@@ -386,6 +386,9 @@ export default function VersionDetail() {
                 <Button variant="outline" onClick={() => setShowReportForm(!showReportForm)} className="rounded-none border-border" data-testid="report-btn">
                   <AlertTriangle className="w-4 h-4 mr-2" /> Report Error
                 </Button>
+                <Button variant="outline" onClick={() => setShowRemovalForm(!showRemovalForm)} className="rounded-none border-destructive/50 text-destructive hover:bg-destructive/10" data-testid="request-removal-btn">
+                  <Trash2 className="w-4 h-4 mr-2" /> Request Removal
+                </Button>
               </div>
             )}
 
