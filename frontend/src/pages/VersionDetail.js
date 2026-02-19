@@ -184,13 +184,31 @@ export default function VersionDetail() {
         target_type: 'version',
         target_id: versionId,
         corrections: reportCorrections,
-        notes: reportNotes
+        notes: reportNotes,
+        report_type: 'error'
       });
       toast.success('Report submitted for community review');
       setShowReportForm(false);
       setReportNotes('');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to submit report');
+    }
+  };
+
+  const handleRequestRemoval = async () => {
+    try {
+      await createReport({
+        target_type: 'version',
+        target_id: versionId,
+        corrections: {},
+        notes: removalNotes,
+        report_type: 'removal'
+      });
+      toast.success('Removal request submitted for community vote');
+      setShowRemovalForm(false);
+      setRemovalNotes('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit removal request');
     }
   };
 
