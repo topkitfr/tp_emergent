@@ -23,7 +23,7 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
     ├── collections.py # /api/collections/* + stats
     ├── estimation.py  # /api/estimate
     ├── reviews.py     # /api/reviews/*
-    ├── submissions.py # /api/submissions/*, /api/reports/* (moderation)
+    ├── submissions.py # /api/submissions/*, /api/reports/* (moderation + removal requests)
     ├── wishlist.py    # /api/wishlist/*
     ├── entities.py    # /api/teams/*, /api/leagues/*, /api/brands/*, /api/players/*, /api/autocomplete
     ├── uploads.py     # /api/upload/*, /api/image-proxy
@@ -47,6 +47,10 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - Types: master_kit, version, team, league, brand, player
 - Modes: create, edit (for entity submissions)
 - Approval: 5 community votes or 1 moderator vote
+
+### Reports System
+- report_type: "error" (corrections) or "removal" (deletion request)
+- On approval: error reports apply corrections; removal reports delete the target (and associated versions for master_kits)
 
 ## User Roles
 - **user**: Vote on submissions (1 vote)
@@ -89,6 +93,12 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - Backfilled existing collection documents
 - My Collection now correctly shows Low/Avg/High Est values
 
+### Phase 14: UI/UX Improvements (Feb 19, 2026) - COMPLETE
+- **A. Report Error Fixes**: Added Select dropdowns for Competition/Model (Version page) and Gender (Kit page). Added "Request Removal" button on both pages for community-voted deletion requests.
+- **B. Homepage Cleanup**: Made logo homothetic, removed duplicate Browse/Go to App buttons, kept only "Explore Catalog" and "Sign in with Google" for logged-out, nothing extra for logged-in.
+- **C. Header/Menu Reorganization**: Removed My Collection and Wishlist from header navbar (kept in user dropdown), removed Contributions from dropdown (kept in header navbar).
+- **D. Profile Enhancements**: Replaced URL input with ImageUpload component for profile photos, added username-based profile URLs (/profile/:username), public profile view support.
+
 ## Prioritized Backlog
 
 ### P1
@@ -98,7 +108,11 @@ Create a web application for cataloging football jerseys, similar to Discogs.com
 - Notification system (wishlist updates, contribution status)
 
 ### P3
+- Community page (content TBD)
 - Discussion forums
 - Public profile pages / collection sharing
 - Collection analytics dashboards
 - Export collection data (CSV/PDF)
+
+### Refactoring
+- Break down `frontend/src/pages/Contributions.js` into smaller sub-components
