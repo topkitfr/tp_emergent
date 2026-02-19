@@ -267,6 +267,26 @@ export default function KitDetail() {
                   </div>
                 </div>
               )}
+
+              {/* Removal Request Form */}
+              {showRemovalForm && user && (
+                <div className="border border-destructive/50 p-4 space-y-3" data-testid="kit-removal-form">
+                  <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
+                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                    Request removal of this master kit and all its versions. The community will vote on the request.
+                  </p>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Reason for removal</Label>
+                    <Textarea value={removalNotes} onChange={e => setRemovalNotes(e.target.value)} placeholder="Explain why this kit should be removed..." className="bg-card border-border rounded-none min-h-[80px] text-sm" data-testid="kit-removal-notes" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleRequestRemoval} disabled={!removalNotes.trim()} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="kit-submit-removal-btn">
+                      <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowRemovalForm(false)} className="rounded-none">Cancel</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
