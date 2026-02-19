@@ -27,6 +27,21 @@ async def get_stats():
 
 # ─── User Profile ───
 
+@router.get("/users/by-username/{username}")
+async def get_user_by_username(username: str):
+    user = await db.users.find_one({"username": username}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_id = user["user_id"]
+    collection_count = await db.collections.count_documents({"user_id": user_id})
+    review_count = await db.reviews.count_documents({"user_id": user_id})
+    submission_count = await db.submissions.count_documents({"submitted_by": user_id})
+    user["collection_count"] = collection_count
+    user["review_count"] = review_count
+    user["submission_count"] = submission_count
+    return user
+
+
 @router.get("/users/{user_id}/profile")
 async def get_user_profile(user_id: str):
     user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
