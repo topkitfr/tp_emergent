@@ -49,13 +49,31 @@ export default function KitDetail() {
         target_type: 'master_kit',
         target_id: kitId,
         corrections: reportCorrections,
-        notes: reportNotes
+        notes: reportNotes,
+        report_type: 'error'
       });
       toast.success('Report submitted for community review');
       setShowReport(false);
       setReportNotes('');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to submit report');
+    }
+  };
+
+  const handleRequestRemoval = async () => {
+    try {
+      await createReport({
+        target_type: 'master_kit',
+        target_id: kitId,
+        corrections: {},
+        notes: removalNotes,
+        report_type: 'removal'
+      });
+      toast.success('Removal request submitted for community vote');
+      setShowRemovalForm(false);
+      setRemovalNotes('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit removal request');
     }
   };
 
