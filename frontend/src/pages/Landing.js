@@ -138,7 +138,7 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-border px-6 lg:px-12 py-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <img src="/topkit-logo.png" alt="Topkit" className="h-4 w-auto opacity-60" />
+            <img src="/topkit-logo.png" alt="Topkit" className="h-4 object-contain opacity-60" style={{ aspectRatio: 'auto' }} />
           </div>
           <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans, sans-serif' }}>
             The football jersey database
