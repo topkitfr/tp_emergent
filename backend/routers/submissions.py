@@ -226,12 +226,16 @@ async def create_report(report: ReportCreate, request: Request):
         raise HTTPException(status_code=400, detail="Invalid target type")
     if not target:
         raise HTTPException(status_code=404, detail="Target not found")
+    report_type = report.report_type or "error"
+    if report_type not in ("error", "removal"):
+        raise HTTPException(status_code=400, detail="report_type must be 'error' or 'removal'")
     doc = {
         "report_id": f"rep_{uuid.uuid4().hex[:12]}",
         "target_type": report.target_type,
         "target_id": report.target_id,
+        "report_type": report_type,
         "original_data": target,
-        "corrections": report.corrections,
+        "corrections": report.corrections if report_type == "error" else {},
         "notes": report.notes or "",
         "reported_by": user["user_id"],
         "reporter_name": user.get("name", ""),
@@ -282,14 +286,22 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
     )
     updated = await db.reports.find_one({"report_id": report_id}, {"_id": 0})
     if updated["votes_up"] >= APPROVAL_THRESHOLD:
-        corrections = updated["corrections"]
-        if updated["target_type"] == "master_kit":
-            update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
-            if update_fields:
-                await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
-        elif updated["target_type"] == "version":
-            update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
-            if update_fields:
-                await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
+        report_type = updated.get("report_type", "error")
+        if report_type == "removal":
+            if updated["target_type"] == "master_kit":
+                await db.versions.delete_many({"kit_id": updated["target_id"]})
+                await db.master_kits.delete_one({"kit_id": updated["target_id"]})
+            elif updated["target_type"] == "version":
+                await db.versions.delete_one({"version_id": updated["target_id"]})
+        else:
+            corrections = updated["corrections"]
+            if updated["target_type"] == "master_kit":
+                update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
+                if update_fields:
+                    await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
+            elif updated["target_type"] == "version":
+                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
+                if update_fields:
+                    await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
     return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
