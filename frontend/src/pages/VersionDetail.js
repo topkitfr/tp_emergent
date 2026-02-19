@@ -70,6 +70,8 @@ export default function VersionDetail() {
   // Report form
   const [reportNotes, setReportNotes] = useState('');
   const [reportCorrections, setReportCorrections] = useState({});
+  const [showRemovalForm, setShowRemovalForm] = useState(false);
+  const [removalNotes, setRemovalNotes] = useState('');
 
   const fetchVersion = () => {
     Promise.all([
