@@ -23,6 +23,8 @@ export default function KitDetail() {
   const [showReport, setShowReport] = useState(false);
   const [reportCorrections, setReportCorrections] = useState({});
   const [reportNotes, setReportNotes] = useState('');
+  const [showRemovalForm, setShowRemovalForm] = useState(false);
+  const [removalNotes, setRemovalNotes] = useState('');
 
   useEffect(() => {
     getMasterKit(kitId).then(r => {
