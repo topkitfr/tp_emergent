@@ -172,8 +172,9 @@ class VoteCreate(BaseModel):
 class ReportCreate(BaseModel):
     target_type: str
     target_id: str
-    corrections: dict
+    corrections: dict = {}
     notes: Optional[str] = ""
+    report_type: Optional[str] = "error"  # "error" or "removal"
 
 
 class ProfileUpdate(BaseModel):
