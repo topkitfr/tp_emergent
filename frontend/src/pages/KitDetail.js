@@ -195,11 +195,14 @@ export default function KitDetail() {
                 </div>
               </div>
 
-              {/* Report Button */}
+              {/* Report & Removal Buttons */}
               {user && (
-                <div>
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={() => setShowReport(!showReport)} className="rounded-none border-border" data-testid="kit-report-btn">
                     <AlertTriangle className="w-4 h-4 mr-1" /> Report Error
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowRemovalForm(!showRemovalForm)} className="rounded-none border-destructive/50 text-destructive hover:bg-destructive/10" data-testid="kit-request-removal-btn">
+                    <Trash2 className="w-4 h-4 mr-1" /> Request Removal
                   </Button>
                 </div>
               )}
