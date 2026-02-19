@@ -527,11 +527,21 @@ export default function VersionDetail() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Competition</Label>
-                    <Input value={reportCorrections.competition || ''} onChange={e => setReportCorrections(p => ({...p, competition: e.target.value}))} className={inputClass} data-testid="report-competition" />
+                    <Select value={reportCorrections.competition || ''} onValueChange={v => setReportCorrections(p => ({...p, competition: v}))}>
+                      <SelectTrigger className={inputClass} data-testid="report-competition"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>Model</Label>
-                    <Input value={reportCorrections.model || ''} onChange={e => setReportCorrections(p => ({...p, model: e.target.value}))} className={inputClass} data-testid="report-model" />
+                    <Select value={reportCorrections.model || ''} onValueChange={v => setReportCorrections(p => ({...p, model: v}))}>
+                      <SelectTrigger className={inputClass} data-testid="report-model"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1">
                     <Label className={fieldLabel} style={fieldStyle}>SKU Code</Label>
@@ -551,6 +561,26 @@ export default function VersionDetail() {
                     Submit Report
                   </Button>
                   <Button variant="outline" onClick={() => setShowReportForm(false)} className="rounded-none">Cancel</Button>
+                </div>
+              </div>
+            )}
+
+            {/* Removal Request Form */}
+            {showRemovalForm && user && (
+              <div className="border border-destructive/50 p-4 space-y-3" data-testid="removal-form">
+                <h4 className="text-sm uppercase tracking-wider text-destructive" style={fieldStyle}>REQUEST REMOVAL</h4>
+                <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  Request removal of this version. The community will vote on the request.
+                </p>
+                <div className="space-y-1">
+                  <Label className={fieldLabel} style={fieldStyle}>Reason for removal</Label>
+                  <Textarea value={removalNotes} onChange={e => setRemovalNotes(e.target.value)} placeholder="Explain why this version should be removed..." className="bg-card border-border rounded-none min-h-[80px] text-sm" data-testid="removal-notes" />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleRequestRemoval} disabled={!removalNotes.trim()} className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="submit-removal-btn">
+                    <Trash2 className="w-4 h-4 mr-1" /> Submit Removal Request
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowRemovalForm(false)} className="rounded-none">Cancel</Button>
                 </div>
               </div>
             )}
