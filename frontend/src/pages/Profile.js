@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMyCollection, getCollectionStats, updateProfile, proxyImageUrl } from '@/lib/api';
+import { getMyCollection, getCollectionStats, updateProfile, getUserByUsername, proxyImageUrl } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,13 +11,17 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
 
 export default function Profile() {
+  const { username: urlUsername } = useParams();
   const { user, checkAuth } = useAuth();
+  const [profileUser, setProfileUser] = useState(null);
   const [collection, setCollection] = useState([]);
   const [stats, setStats] = useState(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(!!urlUsername);
   const [formData, setFormData] = useState({
     username: '',
     description: '',
@@ -25,20 +29,55 @@ export default function Profile() {
     profile_picture: ''
   });
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        username: user.username || '',
-        description: user.description || '',
-        collection_privacy: user.collection_privacy || 'public',
-        profile_picture: user.profile_picture || user.picture || ''
-      });
-    }
-    getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
-    getCollectionStats().then(r => setStats(r.data)).catch(() => {});
-  }, [user]);
+  const isOwnProfile = !urlUsername || (user && profileUser && user.user_id === profileUser.user_id);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (urlUsername) {
+      setLoadingProfile(true);
+      getUserByUsername(urlUsername)
+        .then(r => {
+          setProfileUser(r.data);
+          setLoadingProfile(false);
+        })
+        .catch(() => {
+          setProfileUser(null);
+          setLoadingProfile(false);
+        });
+    } else if (user) {
+      setProfileUser(user);
+    }
+  }, [urlUsername, user]);
+
+  useEffect(() => {
+    const displayUser = profileUser;
+    if (displayUser && isOwnProfile) {
+      setFormData({
+        username: displayUser.username || '',
+        description: displayUser.description || '',
+        collection_privacy: displayUser.collection_privacy || 'public',
+        profile_picture: displayUser.profile_picture || displayUser.picture || ''
+      });
+      getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
+      getCollectionStats().then(r => setStats(r.data)).catch(() => {});
+    }
+  }, [profileUser, isOwnProfile]);
+
+  if (loadingProfile) {
+    return (
+      <div className="animate-pulse max-w-4xl mx-auto px-4 lg:px-8 py-12">
+        <div className="flex items-start gap-6 mb-8">
+          <div className="w-20 h-20 rounded-full bg-card" />
+          <div className="flex-1 space-y-3">
+            <div className="h-8 w-48 bg-card" />
+            <div className="h-4 w-32 bg-card" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayUser = profileUser || user;
+  if (!displayUser) return null;
 
   const handleSave = async () => {
     setSaving(true);
@@ -67,6 +106,7 @@ export default function Profile() {
   };
 
   const categories = [...new Set(collection.map(c => c.category))];
+  const profileUrl = displayUser.username ? `${window.location.origin}/profile/${displayUser.username}` : null;
 
   return (
     <div className="animate-fade-in-up">
@@ -76,43 +116,50 @@ export default function Profile() {
           {/* Profile Header */}
           <div className="flex items-start gap-6 mb-8" data-testid="profile-header">
             <Avatar className="w-20 h-20 border-2 border-border">
-              <AvatarImage src={user.profile_picture || user.picture} alt={user.name} />
-              <AvatarFallback className="text-2xl bg-secondary">{user.name?.[0]}</AvatarFallback>
+              <AvatarImage src={displayUser.profile_picture || displayUser.picture} alt={displayUser.name} />
+              <AvatarFallback className="text-2xl bg-secondary">{displayUser.name?.[0]}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-3xl tracking-tighter mb-1" data-testid="profile-name">{user.name?.toUpperCase()}</h1>
-                  {user.username && (
-                    <p className="text-sm text-primary font-mono" data-testid="profile-username">@{user.username}</p>
+                  <h1 className="text-3xl tracking-tighter mb-1" data-testid="profile-name">{displayUser.name?.toUpperCase()}</h1>
+                  {displayUser.username && (
+                    <p className="text-sm text-primary font-mono" data-testid="profile-username">@{displayUser.username}</p>
                   )}
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setEditing(!editing)} className="rounded-none border-border" data-testid="edit-profile-btn">
-                  <Edit2 className="w-3 h-3 mr-1" /> {editing ? 'Cancel' : 'Edit'}
-                </Button>
+                {isOwnProfile && user && (
+                  <Button variant="outline" size="sm" onClick={() => setEditing(!editing)} className="rounded-none border-border" data-testid="edit-profile-btn">
+                    <Edit2 className="w-3 h-3 mr-1" /> {editing ? 'Cancel' : 'Edit'}
+                  </Button>
+                )}
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Mail className="w-3 h-3" />
-                  <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{user.email}</span>
+                  <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>{displayUser.email}</span>
                 </div>
-                {user.created_at && (
+                {displayUser.created_at && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3" />
-                    <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Joined {new Date(user.created_at).toLocaleDateString()}</span>
+                    <span style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Joined {new Date(displayUser.created_at).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
-              {user.description && !editing && (
+              {displayUser.description && !editing && (
                 <p className="text-sm text-muted-foreground mt-3 max-w-lg" style={{ textTransform: 'none', fontFamily: 'DM Sans' }} data-testid="profile-description">
-                  {user.description}
+                  {displayUser.description}
+                </p>
+              )}
+              {profileUrl && !editing && (
+                <p className="text-xs text-muted-foreground mt-2 font-mono" data-testid="profile-url">
+                  {profileUrl}
                 </p>
               )}
             </div>
           </div>
 
           {/* Edit Form */}
-          {editing && (
+          {editing && isOwnProfile && (
             <div className="border border-primary/30 p-6 mb-8 space-y-4" data-testid="profile-edit-form">
               <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EDIT PROFILE</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -121,8 +168,13 @@ export default function Profile() {
                   <Input value={formData.username} onChange={e => setFormData(p => ({...p, username: e.target.value}))} placeholder="username" className="bg-card border-border rounded-none" data-testid="input-username" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Profile Picture URL</Label>
-                  <Input value={formData.profile_picture} onChange={e => setFormData(p => ({...p, profile_picture: e.target.value}))} placeholder="https://..." className="bg-card border-border rounded-none" data-testid="input-picture" />
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Profile Picture</Label>
+                  <ImageUpload
+                    value={formData.profile_picture}
+                    onChange={(url) => setFormData(p => ({...p, profile_picture: url}))}
+                    label="Profile Picture"
+                    testId="profile-picture-upload"
+                  />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Description</Label>
@@ -140,54 +192,79 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Privacy Toggle */}
-          <div className="flex items-center justify-between border border-border p-4 mb-8" data-testid="privacy-toggle">
-            <div className="flex items-center gap-3">
-              {formData.collection_privacy === 'public' ? (
-                <Globe className="w-5 h-5 text-primary" />
-              ) : (
-                <Lock className="w-5 h-5 text-muted-foreground" />
-              )}
-              <div>
-                <p className="text-sm font-medium">Collection Privacy</p>
-                <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                  {formData.collection_privacy === 'public' ? 'Your collection is visible to everyone' : 'Your collection is private'}
-                </p>
+          {/* Privacy Toggle - only for own profile */}
+          {isOwnProfile && user && (
+            <div className="flex items-center justify-between border border-border p-4 mb-8" data-testid="privacy-toggle">
+              <div className="flex items-center gap-3">
+                {formData.collection_privacy === 'public' ? (
+                  <Globe className="w-5 h-5 text-primary" />
+                ) : (
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">Collection Privacy</p>
+                  <p className="text-xs text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
+                    {formData.collection_privacy === 'public' ? 'Your collection is visible to everyone' : 'Your collection is private'}
+                  </p>
+                </div>
               </div>
+              <Switch
+                checked={formData.collection_privacy === 'public'}
+                onCheckedChange={togglePrivacy}
+                data-testid="privacy-switch"
+              />
             </div>
-            <Switch
-              checked={formData.collection_privacy === 'public'}
-              onCheckedChange={togglePrivacy}
-              data-testid="privacy-switch"
-            />
-          </div>
+          )}
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 border border-border mb-8" data-testid="profile-stats">
-            <div className="p-5 text-center border-r border-border">
-              <FolderOpen className="w-5 h-5 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold font-mono">{collection.length}</div>
-              <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>JERSEYS</div>
+          {isOwnProfile && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 border border-border mb-8" data-testid="profile-stats">
+              <div className="p-5 text-center border-r border-border">
+                <FolderOpen className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{collection.length}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>JERSEYS</div>
+              </div>
+              <div className="p-5 text-center border-r border-border">
+                <Shirt className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{categories.length}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>CATEGORIES</div>
+              </div>
+              <div className="p-5 text-center border-r border-border">
+                <Star className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{displayUser.review_count || 0}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>REVIEWS</div>
+              </div>
+              <div className="p-5 text-center">
+                <FileCheck className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{displayUser.submission_count || 0}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SUBMISSIONS</div>
+              </div>
             </div>
-            <div className="p-5 text-center border-r border-border">
-              <Shirt className="w-5 h-5 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold font-mono">{categories.length}</div>
-              <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>CATEGORIES</div>
-            </div>
-            <div className="p-5 text-center border-r border-border">
-              <Star className="w-5 h-5 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold font-mono">{user.review_count || 0}</div>
-              <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>REVIEWS</div>
-            </div>
-            <div className="p-5 text-center">
-              <FileCheck className="w-5 h-5 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold font-mono">{user.submission_count || 0}</div>
-              <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SUBMISSIONS</div>
-            </div>
-          </div>
+          )}
 
-          {/* Collection Value */}
-          {stats && stats.items_with_estimates > 0 && (
+          {/* Public profile stats */}
+          {!isOwnProfile && profileUser && (
+            <div className="grid grid-cols-3 border border-border mb-8" data-testid="public-profile-stats">
+              <div className="p-5 text-center border-r border-border">
+                <FolderOpen className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{profileUser.collection_count || 0}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>JERSEYS</div>
+              </div>
+              <div className="p-5 text-center border-r border-border">
+                <Star className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{profileUser.review_count || 0}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>REVIEWS</div>
+              </div>
+              <div className="p-5 text-center">
+                <FileCheck className="w-5 h-5 text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold font-mono">{profileUser.submission_count || 0}</div>
+                <div className="text-xs text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SUBMISSIONS</div>
+              </div>
+            </div>
+          )}
+
+          {/* Collection Value - own profile only */}
+          {isOwnProfile && stats && stats.items_with_estimates > 0 && (
             <div className="border border-border p-6 mb-8" data-testid="collection-total-value">
               <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
                 <DollarSign className="w-4 h-4 inline mr-1" /> COLLECTION VALUE
@@ -214,45 +291,47 @@ export default function Profile() {
 
           <Separator className="bg-border mb-8" />
 
-          {/* Recent Collection */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl tracking-tight">RECENT COLLECTION</h2>
-              <Link to="/collection">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-none" data-testid="view-all-collection-btn">
-                  View All
-                </Button>
-              </Link>
-            </div>
-            {collection.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
-                {collection.slice(0, 8).map(item => (
-                  <Link to={`/version/${item.version_id}`} key={item.collection_id}>
-                    <div className="border border-border bg-card overflow-hidden hover:border-primary/30" style={{ transition: 'border-color 0.2s ease' }} data-testid={`profile-collection-${item.collection_id}`}>
-                      <div className="aspect-[3/4] bg-secondary overflow-hidden">
-                        <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <div className="p-2">
-                        <p className="text-xs font-semibold truncate" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{item.master_kit?.club}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{item.master_kit?.season}</p>
-                          {item.value_estimate > 0 && <span className="font-mono text-[10px] text-accent">${item.value_estimate}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 border border-dashed border-border">
-                <FolderOpen className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No jerseys in collection yet</p>
-                <Link to="/browse">
-                  <Button variant="outline" size="sm" className="rounded-none mt-3" data-testid="profile-browse-btn">Browse Catalog</Button>
+          {/* Recent Collection - own profile only */}
+          {isOwnProfile && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl tracking-tight">RECENT COLLECTION</h2>
+                <Link to="/collection">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-none" data-testid="view-all-collection-btn">
+                    View All
+                  </Button>
                 </Link>
               </div>
-            )}
-          </div>
+              {collection.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
+                  {collection.slice(0, 8).map(item => (
+                    <Link to={`/version/${item.version_id}`} key={item.collection_id}>
+                      <div className="border border-border bg-card overflow-hidden hover:border-primary/30" style={{ transition: 'border-color 0.2s ease' }} data-testid={`profile-collection-${item.collection_id}`}>
+                        <div className="aspect-[3/4] bg-secondary overflow-hidden">
+                          <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="p-2">
+                          <p className="text-xs font-semibold truncate" style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}>{item.master_kit?.club}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{item.master_kit?.season}</p>
+                            {item.value_estimate > 0 && <span className="font-mono text-[10px] text-accent">${item.value_estimate}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 border border-dashed border-border">
+                  <FolderOpen className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No jerseys in collection yet</p>
+                  <Link to="/browse">
+                    <Button variant="outline" size="sm" className="rounded-none mt-3" data-testid="profile-browse-btn">Browse Catalog</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
