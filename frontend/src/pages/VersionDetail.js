@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Star, Shirt, ChevronRight, Package, Users, FolderPlus, Check, Hash, TrendingUp, TrendingDown, Minus, AlertTriangle, Heart } from 'lucide-react';
+import { Star, Shirt, ChevronRight, Package, Users, FolderPlus, Check, Hash, TrendingUp, TrendingDown, Minus, AlertTriangle, Heart, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
