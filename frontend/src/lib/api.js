@@ -66,6 +66,7 @@ export const uploadImage = (file) => {
 
 // User Profile
 export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`);
+export const getUserByUsername = (username) => api.get(`/users/by-username/${username}`);
 export const updateProfile = (data) => api.put('/users/profile', data);
 
 // Submissions

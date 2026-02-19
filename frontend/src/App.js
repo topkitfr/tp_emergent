@@ -52,6 +52,7 @@ function AppRouter() {
         <Route path="/add-jersey" element={<ProtectedRoute><AddJersey /></ProtectedRoute>} />
         <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/:username" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
