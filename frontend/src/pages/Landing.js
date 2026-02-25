@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { getStats, seedData } from '@/lib/api';
 import { Shirt, Search, Star, Users, Database, ArrowRight } from 'lucide-react';
+import LatestAdditionsSection from '@/components/ui/LatestAdditionsSection';
+
 
 export default function Landing() {
   const { user, loading } = useAuth();
@@ -77,6 +79,14 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Latest additions */}
+      <section className="relative z-10 px-6 lg:px-12 py-16 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <LatestAdditionsSection />
+        </div>
+      </section>
+
 
       {/* Stats */}
       <section className="relative z-10 border-t border-border">

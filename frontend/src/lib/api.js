@@ -15,7 +15,7 @@ export const proxyImageUrl = (url) => {
 
 const api = axios.create({
   baseURL: API,
-  withCredentials: true,
+  // withCredentials: true, // désactivé pour le dev local
 });
 
 // Auth

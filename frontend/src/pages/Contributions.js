@@ -18,6 +18,7 @@ const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
+
 const FIELD_LABELS = {
   club: 'Club / Team',
   season: 'Season',
@@ -78,6 +79,13 @@ function SubmissionDetail({ sub, existingKits }) {
       ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
       : ['competition', 'model', 'sku_code', 'ean_code'];
   const parentKit = sub.submission_type === 'version' && existingKits.find(k => k.kit_id === sub.data?.kit_id);
+
+const filteredExistingKits = existingKits.filter((k) => {
+  const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
+  const query = searchExistingKit.toLowerCase();
+  return label.includes(query);
+});
+
 
   return (
     <div className="mt-4 pt-4 border-t border-border" data-testid={`submission-detail-${sub.submission_id}`}>
@@ -182,6 +190,8 @@ function ReportDetail({ rep }) {
 }
 
 export default function Contributions() {
+  // Recherche dans "Use Existing Kit"
+  const [searchExistingKit, setSearchExistingKit] = useState("");
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('pending');
   const [submissions, setSubmissions] = useState([]);
@@ -309,6 +319,14 @@ export default function Contributions() {
   const hasVoted = (item) => item.voters?.includes(user?.user_id);
   const isModerator = user?.role === 'moderator' || user?.role === 'admin';
 
+  const filteredExistingKits = existingKits.filter((k) => {
+  const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
+  const query = searchExistingKit.toLowerCase();
+  return label.includes(query);
+});
+
+  
+
   return (
     <div className="animate-fade-in-up">
       <div className="border-b border-border px-4 lg:px-8 py-8">
@@ -360,90 +378,262 @@ export default function Contributions() {
             </div>
 
             {addStep === 1 && (
-              <div>
-                {/* Use existing kit option */}
-                <div className="border border-border p-4 mb-4">
-                  <h4 className="text-xs uppercase tracking-wider mb-3" style={{ fontFamily: 'Barlow Condensed' }}>Use Existing Kit</h4>
-                  <Select value={selectedKit} onValueChange={setSelectedKit}>
-                    <SelectTrigger className="bg-card border-border rounded-none" data-testid="select-existing-kit">
-                      <SelectValue placeholder="Select an existing Master Kit" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border max-h-60">
-                      {existingKits.map(k => (
-                        <SelectItem key={k.kit_id} value={k.kit_id}>{k.club} - {k.season} ({k.kit_type})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedKit && (
-                    <Button onClick={() => { setAddStep(2); setSubType('version'); }} className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="use-existing-kit-btn">
-                      Continue with this Kit <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  )}
-                </div>
+  <div>
+    {/* Use existing kit option */}
+    <div className="border border-border p-4 mb-4">
+      <h4
+        className="text-xs uppercase tracking-wider mb-3"
+        style={{ fontFamily: "Barlow Condensed" }}
+      >
+        Use Existing Kit
+      </h4>
 
-                <div className="text-center text-xs text-muted-foreground tracking-wider my-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  OR CREATE NEW
-                </div>
+      {/* Champ de recherche */}
+      <input
+        type="text"
+        placeholder="Search kits (team, season, type)"
+        value={searchExistingKit}
+        onChange={(e) => setSearchExistingKit(e.target.value)}
+        className="w-full mb-2 bg-card border border-border px-3 py-2 text-xs"
+        style={{ fontFamily: "Barlow Condensed" }}
+      />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
-                    <EntityAutocomplete entityType="team" value={club} onChange={setClub} onSelect={(item) => { setClub(item.label); setTeamId(item.id); }} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" testId="add-club" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season *</Label>
-                    <Input value={season} onChange={e => setSeason(e.target.value)} placeholder="e.g., 2024/2025" className="bg-card border-border rounded-none" data-testid="add-season" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
-                    <EntityAutocomplete entityType="league" value={league} onChange={setLeague} onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" testId="add-league" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type *</Label>
-                    <Select value={kitType} onValueChange={setKitType}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-kit-type"><SelectValue placeholder="Select type" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Brand *</Label>
-                    <EntityAutocomplete entityType="brand" value={brand} onChange={setBrand} onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }} placeholder="e.g., Nike" className="bg-card border-border rounded-none" testId="add-brand" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
-                    <Input value={design} onChange={e => setDesign(e.target.value)} placeholder="e.g., Single stripe" className="bg-card border-border rounded-none" data-testid="add-design" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
-                    <Input value={sponsor} onChange={e => setSponsor(e.target.value)} placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" data-testid="add-sponsor" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                    <Select value={gender} onValueChange={setGender}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo *</Label>
-                    <ImageUpload value={frontPhoto} onChange={setFrontPhoto} testId="add-front-photo" />
-                  </div>
-                </div>
+      {/* Select filtré */}
+      <Select
+        value={selectedKit}
+        onValueChange={(value) => setSelectedKit(value)}
+        data-testid="select-existing-kit"
+      >
+        <SelectTrigger className="bg-card border-border rounded-none">
+          <SelectValue placeholder="Select an existing Master Kit" />
+        </SelectTrigger>
+        <SelectContent className="bg-card border-border max-h-60">
+          {filteredExistingKits.map((k) => (
+            <SelectItem key={k._id} value={k.kit_id}>
+              {k.club} – {k.season} ({k.type})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-                <div className="flex gap-2 mt-6">
-                  <Button onClick={handleSubmitKit} disabled={submitting} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="submit-kit-btn">
-                    {submitting ? 'Submitting...' : 'Submit Master Kit'} <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                  <Button variant="outline" onClick={closeAddForm} className="rounded-none" data-testid="cancel-add-btn">
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
+      {selectedKit && (
+        <Button
+          onClick={() => {
+            setAddStep(2);
+            setSubType("version");
+          }}
+          className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+          data-testid="use-existing-kit-btn"
+        >
+          Continue with this Kit <ArrowRight className="w-4 h-4 ml-1" />
+        </Button>
+      )}
+    </div>
+
+    <div
+      className="text-center text-xs text-muted-foreground tracking-wider my-4"
+      style={{ fontFamily: "Barlow Condensed" }}
+    >
+      OR CREATE NEW
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Team *
+        </Label>
+        <EntityAutocomplete
+          entityType="team"
+          value={club}
+          onChange={setClub}
+          onSelect={(item) => {
+            setClub(item.label);
+            setTeamId(item.id);
+          }}
+          placeholder="e.g., FC Barcelona"
+          className="bg-card border-border rounded-none"
+          testId="add-club"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Season *
+        </Label>
+        <Input
+          value={season}
+          onChange={(e) => setSeason(e.target.value)}
+          placeholder="e.g., 2024/2025"
+          className="bg-card border-border rounded-none"
+          data-testid="add-season"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          League
+        </Label>
+        <EntityAutocomplete
+          entityType="league"
+          value={league}
+          onChange={setLeague}
+          onSelect={(item) => {
+            setLeague(item.label);
+            setLeagueId(item.id);
+          }}
+          placeholder="e.g., Ligue 1"
+          className="bg-card border-border rounded-none"
+          testId="add-league"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Type *
+        </Label>
+        <Select value={kitType} onValueChange={setKitType}>
+          <SelectTrigger
+            className="bg-card border-border rounded-none"
+            data-testid="add-kit-type"
+          >
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            {KIT_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Brand *
+        </Label>
+        <EntityAutocomplete
+          entityType="brand"
+          value={brand}
+          onChange={setBrand}
+          onSelect={(item) => {
+            setBrand(item.label);
+            setBrandId(item.id);
+          }}
+          placeholder="e.g., Nike"
+          className="bg-card border-border rounded-none"
+          testId="add-brand"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Design
+        </Label>
+        <Input
+          value={design}
+          onChange={(e) => setDesign(e.target.value)}
+          placeholder="e.g., Single stripe"
+          className="bg-card border-border rounded-none"
+          data-testid="add-design"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Sponsor
+        </Label>
+        <Input
+          value={sponsor}
+          onChange={(e) => setSponsor(e.target.value)}
+          placeholder="e.g., Qatar Airways"
+          className="bg-card border-border rounded-none"
+          data-testid="add-sponsor"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Gender
+        </Label>
+        <Select value={gender} onValueChange={setGender}>
+          <SelectTrigger
+            className="bg-card border-border rounded-none"
+            data-testid="add-gender"
+          >
+            <SelectValue placeholder="Select gender" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            {GENDERS.map((g) => (
+              <SelectItem key={g} value={g}>
+                {g}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2 sm:col-span-2">
+        <Label
+          className="text-xs uppercase tracking-wider"
+          style={{ fontFamily: "Barlow Condensed" }}
+        >
+          Front Photo *
+        </Label>
+        <ImageUpload
+          value={frontPhoto}
+          onChange={setFrontPhoto}
+          testId="add-front-photo"
+        />
+      </div>
+    </div>
+
+    <div className="flex gap-2 mt-6">
+      <Button
+        onClick={handleSubmitKit}
+        disabled={submitting}
+        className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+        data-testid="submit-kit-btn"
+      >
+        {submitting ? "Submitting..." : "Submit Master Kit"}{" "}
+        <ArrowRight className="w-4 h-4 ml-1" />
+      </Button>
+      <Button
+        variant="outline"
+        onClick={closeAddForm}
+        className="rounded-none"
+        data-testid="cancel-add-btn"
+      >
+        Cancel
+      </Button>
+    </div>
+  </div>
+)}
+
 
             {addStep === 2 && (
               <div>
