@@ -60,6 +60,23 @@ async def create_team(team: TeamCreate):
     result["kit_count"] = 0
     return result
 
+@router.post("/teams/pending", response_model=TeamOut)
+async def create_team_pending(team: TeamCreate):
+    slug = slugify(team.name)
+    existing = await db.teams.find_one({"slug": slug}, {"_id": 0})
+    if existing:
+        return existing
+    doc = team.model_dump()
+    doc["team_id"] = f"team_{uuid.uuid4().hex[:12]}"
+    doc["slug"] = slug
+    doc["status"] = "for_review"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    await db.teams.insert_one(doc)
+    result = await db.teams.find_one({"team_id": doc["team_id"]}, {"_id": 0})
+    result["kit_count"] = 0
+    return result
+
 
 @router.put("/teams/{team_id}", response_model=TeamOut)
 async def update_team(team_id: str, team: TeamCreate):
@@ -120,6 +137,24 @@ async def create_league(league: LeagueCreate):
     result["kit_count"] = 0
     return result
 
+@router.post("/leagues/pending", response_model=LeagueOut)
+async def create_league_pending(league: LeagueCreate):
+    slug = slugify(league.name)
+    existing = await db.leagues.find_one({"slug": slug}, {"_id": 0})
+    if existing:
+        return existing
+    doc = league.model_dump()
+    doc["league_id"] = f"league_{uuid.uuid4().hex[:12]}"
+    doc["slug"] = slug
+    doc["status"] = "for_review"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    await db.leagues.insert_one(doc)
+    result = await db.leagues.find_one({"league_id": doc["league_id"]}, {"_id": 0})
+    result["kit_count"] = 0
+    return result
+
+
 
 @router.put("/leagues/{league_id}", response_model=LeagueOut)
 async def update_league(league_id: str, league: LeagueCreate):
@@ -177,6 +212,24 @@ async def create_brand(brand: BrandCreate):
     result = await db.brands.find_one({"brand_id": doc["brand_id"]}, {"_id": 0})
     result["kit_count"] = 0
     return result
+
+@router.post("/brands/pending", response_model=BrandOut)
+async def create_brand_pending(brand: BrandCreate):
+    slug = slugify(brand.name)
+    existing = await db.brands.find_one({"slug": slug}, {"_id": 0})
+    if existing:
+        return existing
+    doc = brand.model_dump()
+    doc["brand_id"] = f"brand_{uuid.uuid4().hex[:12]}"
+    doc["slug"] = slug
+    doc["status"] = "for_review"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    await db.brands.insert_one(doc)
+    result = await db.brands.find_one({"brand_id": doc["brand_id"]}, {"_id": 0})
+    result["kit_count"] = 0
+    return result
+
 
 
 @router.put("/brands/{brand_id}", response_model=BrandOut)
@@ -242,6 +295,25 @@ async def create_player(player: PlayerCreate):
     result["kit_count"] = 0
     return result
 
+@router.post("/players/pending", response_model=PlayerOut)
+async def create_player_pending(player: PlayerCreate):
+    slug = slugify(player.full_name)
+    base_slug = slug
+    counter = 1
+    while await db.players.find_one({"slug": slug}, {"_id": 1}):
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    doc = player.model_dump()
+    doc["player_id"] = f"player_{uuid.uuid4().hex[:12]}"
+    doc["slug"] = slug
+    doc["status"] = "for_review"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    await db.players.insert_one(doc)
+    result = await db.players.find_one({"player_id": doc["player_id"]}, {"_id": 0})
+    result["kit_count"] = 0
+    return result
+
 
 @router.put("/players/{player_id}", response_model=PlayerOut)
 async def update_player(player_id: str, player: PlayerCreate):
@@ -255,6 +327,52 @@ async def update_player(player_id: str, player: PlayerCreate):
     result = await db.players.find_one({"player_id": player_id}, {"_id": 0})
     result["kit_count"] = await db.versions.count_documents({"main_player_id": player_id})
     return result
+
+
+# ─── Pending Approval Routes ───
+
+ENTITY_CONFIG = {
+    "team":   {"collection": "teams",   "id_field": "team_id"},
+    "league": {"collection": "leagues", "id_field": "league_id"},
+    "brand":  {"collection": "brands",  "id_field": "brand_id"},
+    "player": {"collection": "players", "id_field": "player_id"},
+}
+
+@router.get("/pending")
+async def get_all_pending():
+    results = {}
+    for entity_type, config in ENTITY_CONFIG.items():
+        docs = await db[config["collection"]].find(
+            {"status": "for_review"}, {"_id": 0}
+        ).to_list(100)
+        results[entity_type] = docs
+    return results
+
+@router.patch("/{entity_type}/{entity_id}/approve")
+async def approve_entity(entity_type: str, entity_id: str):
+    config = ENTITY_CONFIG.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=400, detail="Unknown entity type")
+    result = await db[config["collection"]].update_one(
+        {config["id_field"]: entity_id},
+        {"$set": {"status": "approved", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    return {"message": f"{entity_type} approved"}
+
+@router.patch("/{entity_type}/{entity_id}/reject")
+async def reject_entity(entity_type: str, entity_id: str):
+    config = ENTITY_CONFIG.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=400, detail="Unknown entity type")
+    result = await db[config["collection"]].update_one(
+        {config["id_field"]: entity_id},
+        {"$set": {"status": "rejected", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    return {"message": f"{entity_type} rejected"}
 
 
 # ─── Autocomplete Route ───
@@ -297,3 +415,4 @@ async def autocomplete(field: Optional[str] = None, type: Optional[str] = None, 
         return sorted([v for v in values if v])[:20]
 
     return []
+

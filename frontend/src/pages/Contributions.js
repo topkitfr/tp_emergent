@@ -804,7 +804,11 @@ export default function Contributions() {
                     </div>
                     {expandedSubmission === sub.submission_id && (
                       <div className="px-4 pb-4">
-                        <SubmissionDetail sub={sub} existingKits={existingKits} />
+                        <SubmissionDetail 
+                         sub={sub} 
+                         existingKits={existingKits} 
+                        searchExistingKit={searchExistingKit} 
+                        />
                       </div>
                     )}
                   </div>
