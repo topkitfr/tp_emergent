@@ -71,7 +71,7 @@ const TYPE_LABELS = {
   team: 'Team', league: 'League', brand: 'Brand', player: 'Player',
 };
 
-function SubmissionDetail({ sub, existingKits }) {
+function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
   const isEntity = ['team', 'league', 'brand', 'player'].includes(sub.submission_type);
   const fields = isEntity
     ? (ENTITY_DISPLAY_FIELDS[sub.submission_type] || [])
