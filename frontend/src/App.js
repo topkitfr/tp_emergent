@@ -23,6 +23,8 @@ import Players from "@/pages/Players";
 import PlayerDetail from "@/pages/PlayerDetail";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminPanel from "@/pages/AdminPanel";
+
 
 function AppRouter() {
   const location = useLocation();
@@ -53,6 +55,7 @@ function AppRouter() {
         <Route path="/contributions" element={<ProtectedRoute><Contributions /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
