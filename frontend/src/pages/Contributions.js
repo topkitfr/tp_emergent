@@ -531,7 +531,7 @@ if (league && !leagueId) {
         <EntityAutocomplete
   entityType="league"
   value={league}
-  onChange={setLeague}
+  onChange={(val) => { setLeague(val); setLeagueId(''); }}
   onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
   placeholder="e.g., Ligue 1"
   className="bg-card border-border rounded-none"
