@@ -72,26 +72,6 @@ export default function AddJersey() {
   } catch (e) { console.warn('createTeamPending failed:', e); }
 }
 
-      if (brand && !brandId) {
-        try {
-          const res = await createBrand({ name: brand, status: 'for_review' });
-          resolvedBrandId = res.data?.brand_id;
-          toast.info(`Marque "${brand}" créée — en attente de validation`);
-        } catch (e) {
-          console.warn('createBrand for_review failed:', e);
-        }
-      }
-
-      if (league && !leagueId) {
-        try {
-          const res = await createLeague({ name: league, status: 'for_review' });
-          resolvedLeagueId = res.data?.league_id;
-          toast.info(`Ligue "${league}" créée — en attente de validation`);
-        } catch (e) {
-          console.warn('createLeague for_review failed:', e);
-        }
-      }
-
       const res = await createMasterKit({
         club,
         season,
