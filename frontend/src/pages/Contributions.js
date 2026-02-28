@@ -322,7 +322,20 @@ if (league && !leagueId) {
 
     setSubmitting(true);
     try {
-      const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, design, sponsor, league, gender, team_id: teamId || undefined, brand_id: brandId || undefined, league_id: leagueId || undefined };
+const data = { 
+  club, 
+  season, 
+  kit_type: kitType, 
+  brand, 
+  front_photo: frontPhoto, 
+  design, 
+  sponsor,
+  league,
+  gender,
+  team_id: resolvedTeamId || undefined,
+  brand_id: resolvedBrandId || undefined,
+  league_id: resolvedLeagueId || undefined
+};
       await createSubmission({ submission_type: 'master_kit', data });
       toast.success('Master Kit submitted for community review!');
       setAddStep(2);
