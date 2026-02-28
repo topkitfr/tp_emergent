@@ -232,12 +232,14 @@ if (league && !leagueId) {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Team *</Label>
                 <EntityAutocomplete
-                  entityType="team"
-                  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
-                  placeholder="e.g., FC Barcelona"
-                  className={inputClass}
-                  testId="input-club"
-                />
+  entityType="team"
+  value={club}
+  onChange={(val) => { setClub(val); setTeamId(''); }}
+  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
+  placeholder="e.g., FC Barcelona"
+  className={inputClass}
+  testId="input-club"
+/>
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Season *</Label>
@@ -257,12 +259,14 @@ if (league && !leagueId) {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Brand *</Label>
                 <EntityAutocomplete
-                  entityType="brand"
-                  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
-                  placeholder="e.g., Nike"
-                  className={inputClass}
-                  testId="input-brand"
-                />
+  entityType="brand"
+  value={brand}
+  onChange={(val) => { setBrand(val); setBrandId(''); }}
+  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
+  placeholder="e.g., Nike"
+  className={inputClass}
+  testId="input-brand"
+/>
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Design</Label>
@@ -286,12 +290,14 @@ if (league && !leagueId) {
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>League</Label>
                 <EntityAutocomplete
-                  entityType="league"
-                  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
-                  placeholder="e.g., Ligue 1"
-                  className={inputClass}
-                  testId="input-league"
-                />
+  entityType="league"
+  value={league}
+  onChange={(val) => { setLeague(val); setLeagueId(''); }}
+  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
+  placeholder="e.g., Ligue 1"
+  className={inputClass}
+  testId="input-league"
+/>
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Front Photo *</Label>
