@@ -270,14 +270,14 @@ const [loadingPending, setLoadingPending] = useState(false);
   };
 
   const fetchExistingKits = async () => {
-    try {
-      const res = await api.get('/kits');
-      setExistingKits(res.data || []);
-    } catch (e) {
-      console.error('Failed to fetch existing kits', e);
-      setExistingKits([]);
-    }
-  };
+  try {
+    const res = await api.get('/master-kits');
+    setExistingKits(res.data || []);
+  } catch (e) {
+    console.error('Failed to fetch existing kits', e);
+    setExistingKits([]);
+  }
+};
 
   fetchPendingEntities();
   fetchExistingKits();
