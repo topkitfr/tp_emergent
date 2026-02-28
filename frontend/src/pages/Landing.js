@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getStats, seedData } from '@/lib/api';
 import { Shirt, Search, Star, Users, Database, ArrowRight } from 'lucide-react';
 import LatestAdditionsSection from '@/components/ui/LatestAdditionsSection';
-
+import JerseyCard from '@/components/JerseyCard';
 
 export default function Landing() {
   const { user, loading } = useAuth();

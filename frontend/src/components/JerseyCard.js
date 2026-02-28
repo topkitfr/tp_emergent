@@ -4,7 +4,7 @@ import { Star, Shirt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { proxyImageUrl } from '@/lib/api';
 
-export default function JerseyCard({ kit }) {
+export default function JerseyCard({ kit, showNew = false }) {
   return (
     <Link to={`/kit/${kit.kit_id}`} data-testid={`jersey-card-${kit.kit_id}`}>
       <div className="card-shimmer relative border border-border bg-card overflow-hidden group hover:-translate-y-1 hover:border-primary/30" style={{ transition: 'transform 0.3s ease, border-color 0.3s ease' }}>
@@ -24,18 +24,27 @@ export default function JerseyCard({ kit }) {
             </div>
           )}
 
-          {/* Type badge */}
+          {/* Type badge — top right */}
           <div className="absolute top-2 right-2">
             <Badge className="rounded-none text-[10px] bg-background/80 text-foreground backdrop-blur-sm border-none">
               {kit.kit_type}
             </Badge>
           </div>
 
-          {/* Version count */}
+          {/* Version count — top left */}
           {kit.version_count > 0 && (
             <div className="absolute top-2 left-2">
               <span className="font-mono text-[10px] px-1.5 py-0.5 bg-primary/90 text-primary-foreground">
                 {kit.version_count}v
+              </span>
+            </div>
+          )}
+
+          {/* NEW badge — bottom left */}
+          {showNew && (
+            <div className="absolute bottom-2 left-2">
+              <span className="font-mono text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground uppercase tracking-wide">
+                NEW
               </span>
             </div>
           )}
