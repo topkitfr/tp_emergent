@@ -18,8 +18,7 @@ from routers.wishlist import router as wishlist_router
 from routers.entities import router as entities_router
 from routers.uploads import router as uploads_router
 from routers.admin import router as admin_router
-from routers.proxy import router as proxy_router app.include_router(proxy_router, prefix="/api")
-
+from routers.proxy import router as proxy_router
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -44,6 +43,7 @@ app.include_router(wishlist_router)
 app.include_router(entities_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
+app.include_router(proxy_router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,7 +52,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.on_event("startup")
 async def create_indexes():
@@ -73,7 +72,6 @@ async def create_indexes():
     await db.master_kits.create_index("brand_id")
     await db.versions.create_index("main_player_id")
     logger.info("Entity indexes created")
-
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
