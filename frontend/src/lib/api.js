@@ -3,7 +3,6 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Proxy external CDN images through our backend to avoid CORS/referrer issues
 export const proxyImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
@@ -15,7 +14,6 @@ export const proxyImageUrl = (url) => {
 
 const api = axios.create({
   baseURL: API,
-  // withCredentials: true, // désactivé pour le dev local
 });
 
 // Auth
@@ -116,5 +114,10 @@ export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
 
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
+
+// Pending entities
+export const createTeamPending = (data) => api.post('/teams/pending', data);
+export const createBrandPending = (data) => api.post('/brands/pending', data);
+export const createLeaguePending = (data) => api.post('/leagues/pending', data);
 
 export default api;

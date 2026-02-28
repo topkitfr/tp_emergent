@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Plus } from 'lucide-react';
 import { getEntityAutocomplete } from '@/lib/api';
-import EntityEditDialog from '@/components/EntityEditDialog';
 
 export default function EntityAutocomplete({ entityType, value, onChange, onSelect, placeholder, className, testId }) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
   const displayValue = typeof value === 'object' ? value?.label || '' : value || '';
@@ -21,7 +18,7 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
         .then(res => {
           const data = res.data || [];
           setSuggestions(data);
-          setOpen(data.length > 0 || displayValue.length >= 2);
+          setOpen(data.length > 0);
         })
         .catch(() => setSuggestions([]));
     }, 200);
@@ -42,67 +39,38 @@ export default function EntityAutocomplete({ entityType, value, onChange, onSele
     setOpen(false);
   };
 
-  const openCreateDialog = () => {
-    setShowCreate(true);
-    setOpen(false);
-  };
-
-  const nameKey = entityType === 'player' ? 'full_name' : 'name';
-  const createInitialData = {};
-  createInitialData[nameKey] = displayValue;
-
   return (
-    <>
-      <div ref={wrapperRef} className="relative">
-        <Input
-          value={displayValue}
-          onChange={e => onChange(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 200)}
-          placeholder={placeholder}
-          className={className}
-          data-testid={testId}
-          autoComplete="off"
-        />
-        {open && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 border border-border bg-card max-h-48 overflow-y-auto shadow-lg" data-testid={`${testId}-suggestions`}>
-            {suggestions.map((s, i) => (
-              <button
-                key={s.id || i}
-                type="button"
-                className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center justify-between"
-                style={{ transition: 'background-color 0.15s' }}
-                onMouseDown={() => handleSelect(s)}
-                data-testid={`${testId}-suggestion-${i}`}
-              >
-                <span className="truncate">{s.label}</span>
-                {s.extra && <span className="text-xs text-muted-foreground ml-2 shrink-0">{s.extra}</span>}
-              </button>
-            ))}
-            {displayValue.length >= 2 && (
-              <button
-                type="button"
-                className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-primary/10 flex items-center gap-2 border-t border-border"
-                style={{ transition: 'background-color 0.15s' }}
-                onMouseDown={openCreateDialog}
-                data-testid={`${testId}-create-new`}
-              >
-                <Plus className="w-3 h-3" />
-                Create "{displayValue}"
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      <EntityEditDialog
-        open={showCreate}
-        onOpenChange={setShowCreate}
-        entityType={entityType}
-        mode="create"
-        initialData={createInitialData}
-        onSuccess={(name) => onChange(name)}
+    <div ref={wrapperRef} className="relative">
+      <Input
+        value={displayValue}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 200)}
+        placeholder={placeholder}
+        className={className}
+        data-testid={testId}
+        autoComplete="off"
       />
-    </>
+      {open && suggestions.length > 0 && (
+        <div
+          className="absolute z-50 top-full left-0 right-0 mt-1 border border-border bg-card max-h-48 overflow-y-auto shadow-lg"
+          data-testid={`${testId}-suggestions`}
+        >
+          {suggestions.map((s, i) => (
+            <button
+              key={s.id || i}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center justify-between"
+              style={{ transition: 'background-color 0.15s' }}
+              onMouseDown={() => handleSelect(s)}
+              data-testid={`${testId}-suggestion-${i}`}
+            >
+              <span className="truncate">{s.label}</span>
+              {s.extra && <span className="text-xs text-muted-foreground ml-2 shrink-0">{s.extra}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

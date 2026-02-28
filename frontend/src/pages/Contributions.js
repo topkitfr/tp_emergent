@@ -1,3 +1,4 @@
+import api from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits } from '@/lib/api';
@@ -204,6 +205,10 @@ export default function Contributions() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
   const [expandedReport, setExpandedReport] = useState(null);
+  const [pendingEntities, setPendingEntities] = useState({
+  team: [], league: [], brand: [], player: []
+});
+const [loadingPending, setLoadingPending] = useState(false);
 
   // Master Kit form fields
   const [club, setClub] = useState('');
@@ -244,9 +249,27 @@ export default function Contributions() {
   };
 
   useEffect(() => {
-    fetchData();
-    getMasterKits({}).then(r => setExistingKits(r.data)).catch(() => {});
-  }, [activeTab]);
+  if (activeTab !== 'pending') return;
+  const fetchPendingEntities = async () => {
+    setLoadingPending(true);
+    try {
+      const res = await api.get('/pending');
+      setPendingEntities({
+        team: res.data.team || [],
+        league: res.data.league || [],
+        brand: res.data.brand || [],
+        player: res.data.player || [],
+      });
+    } catch (e) {
+      console.error('Failed to fetch pending entities', e);
+      setPendingEntities({ team: [], league: [], brand: [], player: [] });
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+  fetchPendingEntities();
+}, [activeTab]);
+
 
   const handleVoteSub = async (subId, vote) => {
     try {
@@ -269,10 +292,30 @@ export default function Contributions() {
   };
 
   const handleSubmitKit = async () => {
-    if (!club || !season || !kitType || !brand || !frontPhoto) {
-      toast.error('Please fill all required fields (Team, Season, Type, Brand, Photo)');
-      return;
-    }
+    if (club && !teamId) {
+  try {
+    const res = await createTeamPending({ name: club });
+    resolvedTeamId = res.data?.team_id;
+    toast.info(`Équipe "${club}" créée — en attente de validation`);
+  } catch (e) { console.warn('createTeamPending failed:', e); }
+}
+
+if (brand && !brandId) {
+  try {
+    const res = await createBrandPending({ name: brand });
+    resolvedBrandId = res.data?.brand_id;
+    toast.info(`Marque "${brand}" créée — en attente de validation`);
+  } catch (e) { console.warn('createBrandPending failed:', e); }
+}
+
+if (league && !leagueId) {
+  try {
+    const res = await createLeaguePending({ name: league });
+    resolvedLeagueId = res.data?.league_id;
+    toast.info(`Ligue "${league}" créée — en attente de validation`);
+  } catch (e) { console.warn('createLeaguePending failed:', e); }
+}
+
     setSubmitting(true);
     try {
       const data = { club, season, kit_type: kitType, brand, front_photo: frontPhoto, design, sponsor, league, gender, team_id: teamId || undefined, brand_id: brandId || undefined, league_id: leagueId || undefined };
@@ -815,6 +858,55 @@ export default function Contributions() {
                 ))}
               </div>
             )}
+{/* Références à valider */}
+{activeTab === 'pending' && (
+  <div className="mb-10">
+    <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+      <AlertTriangle className="w-4 h-4 inline mr-1" /> RÉFÉRENCES À VALIDER
+    </h3>
+    {loadingPending ? (
+      <div className="h-16 bg-card animate-pulse border border-border" />
+    ) : Object.values(pendingEntities).every(arr => arr.length === 0) ? (
+      <div className="text-center py-8 border border-dashed border-border mb-8">
+        <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
+          Aucune référence en attente de validation
+        </p>
+      </div>
+    ) : (
+      <div className="space-y-4 mb-8">
+        {[
+          { key: 'team', label: 'Équipes' },
+          { key: 'league', label: 'Compétitions' },
+          { key: 'brand', label: 'Marques' },
+          { key: 'player', label: 'Joueurs' },
+        ].map(({ key, label }) => {
+          const list = pendingEntities[key] || [];
+          if (!list.length) return null;
+          return (
+            <div key={key} className="border border-border bg-card p-4">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
+                {label} ({list.length})
+              </p>
+              <div className="space-y-2">
+                {list.map(item => (
+                  <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item._id}
+                    className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
+                    <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                      {item.name || item.full_name || '—'}
+                    </span>
+                    <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">
+                      for review
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
 
             {/* Reports */}
             <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
