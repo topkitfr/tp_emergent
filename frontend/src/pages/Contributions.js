@@ -248,9 +248,26 @@ const [loadingPending, setLoadingPending] = useState(false);
     }
   };
 
- useEffect(() => {
-  if (activeTab !== 'pending') return;
-  
+useEffect(() => {
+  // Fetch des submissions et rapports
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const status = activeTab === 'approved' ? 'approved' : 'pending';
+      const [subsRes, repsRes] = await Promise.all([
+        getSubmissions({ status }),
+        getReports({ status })
+      ]);
+      setSubmissions(subsRes.data);
+      setReports(repsRes.data);
+    } catch (e) {
+      console.error('Failed to fetch submissions', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch des entités en attente
   const fetchPendingEntities = async () => {
     setLoadingPending(true);
     try {
@@ -269,16 +286,19 @@ const [loadingPending, setLoadingPending] = useState(false);
     }
   };
 
+  // Fetch des kits existants
   const fetchExistingKits = async () => {
-  try {
-    const res = await api.get('/master-kits');
-    setExistingKits(res.data || []);
-  } catch (e) {
-    console.error('Failed to fetch existing kits', e);
-    setExistingKits([]);
-  }
-};
+    try {
+      const res = await api.get('/master-kits');
+      setExistingKits(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch existing kits', e);
+      setExistingKits([]);
+    }
+  };
 
+  // Exécuter tous les fetch
+  fetchData();
   fetchPendingEntities();
   fetchExistingKits();
 }, [activeTab]);
