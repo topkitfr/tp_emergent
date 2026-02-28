@@ -18,6 +18,8 @@ from routers.wishlist import router as wishlist_router
 from routers.entities import router as entities_router
 from routers.uploads import router as uploads_router
 from routers.admin import router as admin_router
+from routers.proxy import router as proxy_router app.include_router(proxy_router, prefix="/api")
+
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
