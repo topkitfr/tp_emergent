@@ -13,6 +13,15 @@ const LABELS = {
 
 export default function AdminPanel() {
   const { user } = useAuth();
+
+  // TEMPORAIRE : accès forcé pour debug, tu remettras la condition plus tard
+  const isAdmin = true;
+  // Si tu veux la vraie condition ensuite :
+  // const isAdmin = user && (user.role === "admin" || user.role === "moderator");
+
+  console.log("ADMIN USER =", user);
+  console.log("IS_ADMIN =", isAdmin);
+
   const [pending, setPending] = useState({
     team: [],
     league: [],
@@ -21,21 +30,33 @@ export default function AdminPanel() {
   });
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = user?.role === "admin";
-
   const fetchPending = async () => {
-    setLoading(true);
-    const res = await fetch(`${API}/entities/pending`, {
-      credentials: "include",
-    });
-    const data = await res.json();
-    setPending({
-      team: data.team || [],
-      league: data.league || [],
-      brand: data.brand || [],
-      player: data.player || [],
-    });
-    setLoading(false);
+    try {
+      setLoading(true);
+      const res = await fetch(`${API}/entities/pending`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        console.error("Failed to fetch pending entities", res.status);
+        setPending({ team: [], league: [], brand: [], player: [] });
+        return;
+      }
+
+      const data = await res.json();
+
+      setPending({
+        team: data.team || [],
+        league: data.league || [],
+        brand: data.brand || [],
+        player: data.player || [],
+      });
+    } catch (err) {
+      console.error("Error fetching pending entities", err);
+      setPending({ team: [], league: [], brand: [], player: [] });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -54,11 +75,24 @@ export default function AdminPanel() {
   );
 
   const handleAction = async (entityType, entityId, action) => {
-    await fetch(`${API}/entities/${entityType}/${entityId}/${action}`, {
-      method: "PATCH",
-      credentials: "include",
-    });
-    fetchPending();
+    try {
+      const res = await fetch(
+        `${API}/entities/${entityType}/${entityId}/${action}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Failed to update entity", res.status);
+        return;
+      }
+
+      await fetchPending();
+    } catch (err) {
+      console.error("Error updating entity", err);
+    }
   };
 
   return (
