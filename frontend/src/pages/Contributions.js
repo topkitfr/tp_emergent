@@ -1,7 +1,7 @@
 import api from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits } from '@/lib/api';
+import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, createTeamPending, createBrandPending, createLeaguePending } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -292,13 +292,17 @@ const [loadingPending, setLoadingPending] = useState(false);
   };
 
   const handleSubmitKit = async () => {
-    if (club && !teamId) {
-  try {
-    const res = await createTeamPending({ name: club });
-    resolvedTeamId = res.data?.team_id;
-    toast.info(`Équipe "${club}" créée — en attente de validation`);
-  } catch (e) { console.warn('createTeamPending failed:', e); }
-}
+  let resolvedTeamId = teamId;
+  let resolvedBrandId = brandId;
+  let resolvedLeagueId = leagueId;
+
+  if (club && !teamId) {
+    try {
+      const res = await createTeamPending({ name: club });
+      resolvedTeamId = res.data?.team_id;
+      toast.info(`Équipe "${club}" créée — en attente de validation`);
+    } catch (e) { console.warn('createTeamPending failed:', e); }
+  }
 
 if (brand && !brandId) {
   try {
@@ -489,17 +493,16 @@ if (league && !leagueId) {
           Team *
         </Label>
         <EntityAutocomplete
-          entityType="team"
-          value={club}
-          onChange={setClub}
-          onSelect={(item) => {
-            setClub(item.label);
-            setTeamId(item.id);
-          }}
-          placeholder="e.g., FC Barcelona"
-          className="bg-card border-border rounded-none"
-          testId="add-club"
-        />
+  entityType="team"
+  value={club}
+  onChange={(val) => { setClub(val); setTeamId(''); }}
+  onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
+  placeholder="e.g., FC Barcelona"
+  className="bg-card border-border rounded-none"
+  testId="add-club"
+/>
+
+
       </div>
 
       <div className="space-y-2">
@@ -526,17 +529,14 @@ if (league && !leagueId) {
           League
         </Label>
         <EntityAutocomplete
-          entityType="league"
-          value={league}
-          onChange={setLeague}
-          onSelect={(item) => {
-            setLeague(item.label);
-            setLeagueId(item.id);
-          }}
-          placeholder="e.g., Ligue 1"
-          className="bg-card border-border rounded-none"
-          testId="add-league"
-        />
+  entityType="league"
+  value={league}
+  onChange={setLeague}
+  onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
+  placeholder="e.g., Ligue 1"
+  className="bg-card border-border rounded-none"
+  testId="add-league"
+/>
       </div>
 
       <div className="space-y-2">
@@ -571,17 +571,14 @@ if (league && !leagueId) {
           Brand *
         </Label>
         <EntityAutocomplete
-          entityType="brand"
-          value={brand}
-          onChange={setBrand}
-          onSelect={(item) => {
-            setBrand(item.label);
-            setBrandId(item.id);
-          }}
-          placeholder="e.g., Nike"
-          className="bg-card border-border rounded-none"
-          testId="add-brand"
-        />
+  entityType="brand"
+  value={brand}
+  onChange={(val) => { setBrand(val); setBrandId(''); }}
+  onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
+  placeholder="e.g., Nike"
+  className="bg-card border-border rounded-none"
+  testId="add-brand"
+/>
       </div>
 
       <div className="space-y-2">

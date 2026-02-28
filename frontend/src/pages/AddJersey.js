@@ -72,23 +72,6 @@ export default function AddJersey() {
   } catch (e) { console.warn('createTeamPending failed:', e); }
 }
 
-if (brand && !brandId) {
-  try {
-    const res = await createBrandPending({ name: brand });
-    resolvedBrandId = res.data?.brand_id;
-    toast.info(`Marque "${brand}" créée — en attente de validation`);
-  } catch (e) { console.warn('createBrandPending failed:', e); }
-}
-
-if (league && !leagueId) {
-  try {
-    const res = await createLeaguePending({ name: league });
-    resolvedLeagueId = res.data?.league_id;
-    toast.info(`Ligue "${league}" créée — en attente de validation`);
-  } catch (e) { console.warn('createLeaguePending failed:', e); }
-}
-
-
       if (brand && !brandId) {
         try {
           const res = await createBrand({ name: brand, status: 'for_review' });
@@ -231,7 +214,7 @@ if (league && !leagueId) {
             <div className="space-y-4">
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Team *</Label>
-                <EntityAutocomplete
+               <EntityAutocomplete
   entityType="team"
   value={club}
   onChange={(val) => { setClub(val); setTeamId(''); }}
@@ -240,6 +223,7 @@ if (league && !leagueId) {
   className={inputClass}
   testId="input-club"
 />
+
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Season *</Label>
