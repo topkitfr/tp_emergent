@@ -248,8 +248,9 @@ const [loadingPending, setLoadingPending] = useState(false);
     }
   };
 
-  useEffect(() => {
+ useEffect(() => {
   if (activeTab !== 'pending') return;
+  
   const fetchPendingEntities = async () => {
     setLoadingPending(true);
     try {
@@ -267,8 +268,21 @@ const [loadingPending, setLoadingPending] = useState(false);
       setLoadingPending(false);
     }
   };
+
+  const fetchExistingKits = async () => {
+    try {
+      const res = await api.get('/kits');
+      setExistingKits(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch existing kits', e);
+      setExistingKits([]);
+    }
+  };
+
   fetchPendingEntities();
+  fetchExistingKits();
 }, [activeTab]);
+
 
 
   const handleVoteSub = async (subId, vote) => {
