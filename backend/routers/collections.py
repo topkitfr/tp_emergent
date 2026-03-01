@@ -8,7 +8,6 @@ from auth import get_current_user
 
 router = APIRouter(prefix="/api/collections", tags=["collections"])
 
-
 @router.get("")
 async def get_my_collection(request: Request, category: Optional[str] = None):
     user = await get_current_user(request)
@@ -26,13 +25,11 @@ async def get_my_collection(request: Request, category: Optional[str] = None):
         enriched.append(item)
     return enriched
 
-
 @router.get("/categories")
 async def get_collection_categories(request: Request):
     user = await get_current_user(request)
     cats = await db.collections.distinct("category", {"user_id": user["user_id"]})
     return sorted(cats)
-
 
 @router.post("")
 async def add_to_collection(item: CollectionAdd, request: Request):
@@ -45,7 +42,6 @@ async def add_to_collection(item: CollectionAdd, request: Request):
     )
     if existing:
         raise HTTPException(status_code=400, detail="Already in collection")
-    # Use estimated_price as the canonical estimation value
     est_price = item.estimated_price or item.value_estimate or item.price_estimate
     doc = {
         "collection_id": f"col_{uuid.uuid4().hex[:12]}",
@@ -56,6 +52,7 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "flocking_type": item.flocking_type or "",
         "flocking_origin": item.flocking_origin or "",
         "flocking_detail": item.flocking_detail or "",
+        "flocking_player_id": item.flocking_player_id or "",   # ← NOUVEAU
         "condition_origin": item.condition_origin or "",
         "physical_state": item.physical_state or "",
         "size": item.size or "",
@@ -65,6 +62,7 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "value_estimate": est_price,
         "signed": item.signed or False,
         "signed_by": item.signed_by or "",
+        "signed_by_player_id": item.signed_by_player_id or "",  # ← NOUVEAU
         "signed_proof": item.signed_proof or False,
         "condition": item.condition or "",
         "printing": item.printing or "",
@@ -74,7 +72,6 @@ async def add_to_collection(item: CollectionAdd, request: Request):
     result = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
     return result
 
-
 @router.delete("/{collection_id}")
 async def remove_from_collection(collection_id: str, request: Request):
     user = await get_current_user(request)
@@ -83,14 +80,12 @@ async def remove_from_collection(collection_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Removed from collection"}
 
-
 @router.put("/{collection_id}")
 async def update_collection_item(collection_id: str, update: CollectionUpdate, request: Request):
     user = await get_current_user(request)
     update_dict = {k: v for k, v in update.model_dump().items() if v is not None}
     if not update_dict:
         raise HTTPException(status_code=400, detail="No fields to update")
-    # Sync all estimation fields when any one is updated
     est_price = update_dict.get("estimated_price") or update_dict.get("value_estimate") or update_dict.get("price_estimate")
     if est_price:
         update_dict["estimated_price"] = est_price
@@ -104,7 +99,6 @@ async def update_collection_item(collection_id: str, update: CollectionUpdate, r
         raise HTTPException(status_code=404, detail="Item not found")
     updated = await db.collections.find_one({"collection_id": collection_id}, {"_id": 0})
     return updated
-
 
 @router.get("/stats")
 async def get_collection_stats(request: Request):
@@ -124,7 +118,6 @@ async def get_collection_stats(request: Request):
         "estimated_value": {"low": round(low, 2), "average": round(avg, 2), "high": round(high, 2)},
         "items_with_estimates": len(estimates)
     }
-
 
 @router.get("/category-stats")
 async def get_category_stats(request: Request):

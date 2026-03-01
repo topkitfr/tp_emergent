@@ -83,6 +83,7 @@ class CollectionAdd(BaseModel):
     flocking_type: Optional[str] = ""
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
+    flocking_player_id: Optional[str] = ""          # link to players collection
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -92,6 +93,7 @@ class CollectionAdd(BaseModel):
     value_estimate: Optional[float] = None
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
+    signed_by_player_id: Optional[str] = ""         # link to players collection
     signed_proof: Optional[bool] = False
     condition: Optional[str] = ""
     printing: Optional[str] = ""
@@ -103,6 +105,7 @@ class CollectionUpdate(BaseModel):
     flocking_type: Optional[str] = None
     flocking_origin: Optional[str] = None
     flocking_detail: Optional[str] = None
+    flocking_player_id: Optional[str] = None
     condition_origin: Optional[str] = None
     physical_state: Optional[str] = None
     size: Optional[str] = None
@@ -112,6 +115,7 @@ class CollectionUpdate(BaseModel):
     value_estimate: Optional[float] = None
     signed: Optional[bool] = None
     signed_by: Optional[str] = None
+    signed_by_player_id: Optional[str] = None
     signed_proof: Optional[bool] = None
     condition: Optional[str] = None
     printing: Optional[str] = None
@@ -127,6 +131,7 @@ class CollectionOut(BaseModel):
     flocking_type: Optional[str] = ""
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
+    flocking_player_id: Optional[str] = ""
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -136,6 +141,7 @@ class CollectionOut(BaseModel):
     value_estimate: Optional[float] = None
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
+    signed_by_player_id: Optional[str] = ""
     signed_proof: Optional[bool] = False
     condition: Optional[str] = ""
     printing: Optional[str] = ""

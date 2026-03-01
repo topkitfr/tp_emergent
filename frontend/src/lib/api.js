@@ -86,7 +86,8 @@ export const checkWishlist = (versionId) => api.get(`/wishlist/check/${versionId
 
 // Autocomplete
 export const getAutocomplete = (field, q) => api.get('/autocomplete', { params: { field, q } });
-export const getEntityAutocomplete = (type, query) => api.get('/autocomplete', { params: { type, query } });
+export const getEntityAutocomplete = (type, query) =>
+  api.get('/autocomplete', { params: { type, query } });
 
 // Teams
 export const getTeams = (params) => api.get('/teams', { params });
@@ -119,5 +120,6 @@ export const migrateEntities = () => api.post('/migrate-entities-from-kits');
 export const createTeamPending = (data) => api.post('/teams/pending', data);
 export const createBrandPending = (data) => api.post('/brands/pending', data);
 export const createLeaguePending = (data) => api.post('/leagues/pending', data);
+export const createPlayerPending = (data) => api.post('/players/pending', data);
 
 export default api;
