@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getPlayers } from '@/lib/api';
+import { getPlayers, proxyImageUrl } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, User, Globe } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function Players() {
       if (nationality) params.nationality = nationality;
       const res = await getPlayers(params);
       setPlayers(res.data);
-    } catch { /* ignore */ } finally {
+    } catch { } finally {
       setLoading(false);
     }
   }, [search, nationality]);
@@ -66,7 +66,9 @@ export default function Players() {
               <Link to={`/players/${player.slug || player.player_id}`} key={player.player_id}>
                 <div className="border border-border bg-card p-5 hover:border-primary/30 group flex items-start gap-4" style={{ transition: 'border-color 0.2s' }} data-testid={`player-card-${player.player_id}`}>
                   <div className="w-12 h-12 bg-secondary flex items-center justify-center shrink-0 rounded-full overflow-hidden">
-                    {player.photo_url ? <img src={player.photo_url} alt={player.full_name} className="w-12 h-12 object-cover" /> : <User className="w-6 h-6 text-muted-foreground" />}
+                    {player.photo_url
+                      ? <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-12 h-12 object-cover" />
+                      : <User className="w-6 h-6 text-muted-foreground" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold tracking-tight truncate group-hover:text-primary" style={{ transition: 'color 0.2s' }}>{player.full_name}</h3>

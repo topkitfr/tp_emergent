@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Star, Shirt, ArrowLeft, Tag, Package, ChevronRight, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload'; // ← AJOUT
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const GENDERS = ['Men', 'Women', 'Youth', 'Unisex'];
@@ -38,6 +39,7 @@ export default function KitDetail() {
         sponsor: r.data.sponsor || '',
         league: r.data.league || '',
         gender: r.data.gender || '',
+        front_photo: r.data.front_photo || '', // ← AJOUT
       });
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -154,7 +156,7 @@ export default function KitDetail() {
 
               <Separator className="bg-border" />
 
-              {/* Data Grid - All Fields */}
+              {/* Data Grid */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Brand</div>
@@ -195,7 +197,7 @@ export default function KitDetail() {
                 </div>
               </div>
 
-              {/* Report & Removal Buttons */}
+              {/* Buttons */}
               {user && (
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={() => setShowReport(!showReport)} className="rounded-none border-border" data-testid="kit-report-btn">
@@ -207,7 +209,7 @@ export default function KitDetail() {
                 </div>
               )}
 
-              {/* Report Form */}
+              {/* Report Error Form */}
               {showReport && user && (
                 <div className="border border-destructive/30 p-4 space-y-3" data-testid="kit-report-form">
                   <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
@@ -254,7 +256,18 @@ export default function KitDetail() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* ← AJOUT : Front Photo */}
+                    <div className="space-y-1 col-span-2">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
+                      <ImageUpload
+                        value={reportCorrections.front_photo || ''}
+                        onChange={v => setReportCorrections(p => ({ ...p, front_photo: v }))}
+                        testId="kit-report-front-photo"
+                      />
+                    </div>
                   </div>
+
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
                     <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[60px] text-sm" data-testid="kit-report-notes" />

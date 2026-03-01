@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getLeagues } from '@/lib/api';
+import { getLeagues, proxyImageUrl } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Trophy, Globe } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function Leagues() {
       if (level) params.level = level;
       const res = await getLeagues(params);
       setLeagues(res.data);
-    } catch { /* ignore */ } finally {
+    } catch { } finally {
       setLoading(false);
     }
   }, [search, level]);
@@ -64,7 +64,9 @@ export default function Leagues() {
               <Link to={`/leagues/${league.slug || league.league_id}`} key={league.league_id}>
                 <div className="border border-border bg-card p-5 hover:border-primary/30 group flex items-start gap-4" style={{ transition: 'border-color 0.2s' }} data-testid={`league-card-${league.league_id}`}>
                   <div className="w-12 h-12 bg-secondary flex items-center justify-center shrink-0">
-                    {league.logo_url ? <img src={league.logo_url} alt={league.name} className="w-10 h-10 object-contain" /> : <Trophy className="w-6 h-6 text-muted-foreground" />}
+                    {league.logo_url
+                      ? <img src={proxyImageUrl(league.logo_url)} alt={league.name} className="w-10 h-10 object-contain" />
+                      : <Trophy className="w-6 h-6 text-muted-foreground" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold tracking-tight truncate group-hover:text-primary" style={{ transition: 'color 0.2s' }}>{league.name}</h3>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getPlayer } from '@/lib/api';
-import { proxyImageUrl } from '@/lib/api';
+import { getPlayer, proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, Globe, ArrowLeft, Shirt, Calendar, Pencil } from 'lucide-react';
@@ -25,14 +24,12 @@ export default function PlayerDetail() {
 
   const versions = player.versions || [];
 
-  // Group versions by team
   const byTeam = {};
   for (const v of versions) {
     const teamName = v.master_kit?.club || 'Unknown';
     if (!byTeam[teamName]) byTeam[teamName] = [];
     byTeam[teamName].push(v);
   }
-  // Sort each team's versions by season
   for (const team of Object.keys(byTeam)) {
     byTeam[team].sort((a, b) => (b.master_kit?.season || '').localeCompare(a.master_kit?.season || ''));
   }
@@ -46,7 +43,9 @@ export default function PlayerDetail() {
           </Link>
           <div className="flex items-start gap-6">
             <div className="w-24 h-24 bg-secondary flex items-center justify-center shrink-0 rounded-full overflow-hidden">
-              {player.photo_url ? <img src={player.photo_url} alt={player.full_name} className="w-24 h-24 object-cover" /> : <User className="w-12 h-12 text-muted-foreground" />}
+              {player.photo_url
+                ? <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-24 h-24 object-cover" />
+                : <User className="w-12 h-12 text-muted-foreground" />}
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl tracking-tighter" data-testid="player-name">{player.full_name}</h1>
@@ -71,7 +70,6 @@ export default function PlayerDetail() {
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <h2 className="text-lg tracking-tighter mb-6">CAREER IN SHIRTS</h2>
-
         {versions.length === 0 ? (
           <div className="text-center py-16">
             <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

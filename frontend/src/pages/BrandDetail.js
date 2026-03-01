@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getBrand } from '@/lib/api';
+import { getBrand, proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tag, Globe, ArrowLeft, Shirt, Pencil } from 'lucide-react';
@@ -44,7 +44,9 @@ export default function BrandDetail() {
           </Link>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 bg-secondary flex items-center justify-center shrink-0">
-              {brand.logo_url ? <img src={brand.logo_url} alt={brand.name} className="w-16 h-16 object-contain" /> : <Tag className="w-10 h-10 text-muted-foreground" />}
+              {brand.logo_url
+                ? <img src={proxyImageUrl(brand.logo_url)} alt={brand.name} className="w-16 h-16 object-contain" />
+                : <Tag className="w-10 h-10 text-muted-foreground" />}
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl tracking-tighter" data-testid="brand-name">{brand.name}</h1>

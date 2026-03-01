@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getLeague } from '@/lib/api';
+import { getLeague, proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, Globe, ArrowLeft, Shirt, Pencil } from 'lucide-react';
@@ -44,7 +44,9 @@ export default function LeagueDetail() {
           </Link>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 bg-secondary flex items-center justify-center shrink-0">
-              {league.logo_url ? <img src={league.logo_url} alt={league.name} className="w-16 h-16 object-contain" /> : <Trophy className="w-10 h-10 text-muted-foreground" />}
+              {league.logo_url
+                ? <img src={proxyImageUrl(league.logo_url)} alt={league.name} className="w-16 h-16 object-contain" />
+                : <Trophy className="w-10 h-10 text-muted-foreground" />}
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl tracking-tighter" data-testid="league-name">{league.name}</h1>

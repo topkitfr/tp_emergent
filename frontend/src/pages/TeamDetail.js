@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getTeam } from '@/lib/api';
-import { proxyImageUrl } from '@/lib/api';
+import { getTeam, proxyImageUrl } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Shield, MapPin, Calendar, ArrowLeft, Shirt, Pencil } from 'lucide-react';
@@ -48,7 +47,9 @@ export default function TeamDetail() {
           </Link>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 bg-secondary flex items-center justify-center shrink-0">
-              {team.crest_url ? <img src={team.crest_url} alt={team.name} className="w-16 h-16 object-contain" /> : <Shield className="w-10 h-10 text-muted-foreground" />}
+              {team.crest_url
+                ? <img src={proxyImageUrl(team.crest_url)} alt={team.name} className="w-16 h-16 object-contain" />
+                : <Shield className="w-10 h-10 text-muted-foreground" />}
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl tracking-tighter" data-testid="team-name">{team.name}</h1>

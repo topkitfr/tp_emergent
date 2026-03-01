@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getBrands } from '@/lib/api';
+import { getBrands, proxyImageUrl } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Tag, Globe } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function Brands() {
       if (search) params.search = search;
       const res = await getBrands(params);
       setBrands(res.data);
-    } catch { /* ignore */ } finally {
+    } catch { } finally {
       setLoading(false);
     }
   }, [search]);
@@ -53,7 +53,9 @@ export default function Brands() {
               <Link to={`/brands/${brand.slug || brand.brand_id}`} key={brand.brand_id}>
                 <div className="border border-border bg-card p-5 hover:border-primary/30 group flex items-start gap-4" style={{ transition: 'border-color 0.2s' }} data-testid={`brand-card-${brand.brand_id}`}>
                   <div className="w-12 h-12 bg-secondary flex items-center justify-center shrink-0">
-                    {brand.logo_url ? <img src={brand.logo_url} alt={brand.name} className="w-10 h-10 object-contain" /> : <Tag className="w-6 h-6 text-muted-foreground" />}
+                    {brand.logo_url
+                      ? <img src={proxyImageUrl(brand.logo_url)} alt={brand.name} className="w-10 h-10 object-contain" />
+                      : <Tag className="w-6 h-6 text-muted-foreground" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold tracking-tight truncate group-hover:text-primary" style={{ transition: 'color 0.2s' }}>{brand.name}</h3>

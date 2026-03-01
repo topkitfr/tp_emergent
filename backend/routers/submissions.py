@@ -7,10 +7,12 @@ from models import SubmissionCreate, VoteCreate, ReportCreate
 from auth import get_current_user
 from utils import slugify, APPROVAL_THRESHOLD
 
+
 router = APIRouter(prefix="/api", tags=["submissions"])
 
 
 # ─── Submission Routes ───
+
 
 @router.post("/submissions")
 async def create_submission(sub: SubmissionCreate, request: Request):
@@ -133,11 +135,11 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 
 
 async def _apply_entity_submission(updated_sub: dict):
-    """Apply an approved entity submission (create or edit)."""
     entity_type = updated_sub["submission_type"]
     data = updated_sub["data"]
     mode = data.get("mode", "create")
     now = datetime.now(timezone.utc).isoformat()
+
     if mode == "create":
         if entity_type == "team":
             slug = slugify(data.get("name", ""))
@@ -191,6 +193,7 @@ async def _apply_entity_submission(updated_sub: dict):
                 "photo_url": data.get("photo_url", ""),
                 "created_at": now, "updated_at": now
             })
+
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
         update_fields = {k: v for k, v in data.items() if k not in ("mode", "entity_id", "entity_type") and v is not None}
@@ -212,8 +215,21 @@ async def _apply_entity_submission(updated_sub: dict):
                 update_fields["slug"] = slugify(update_fields["full_name"])
             await db.players.update_one({"player_id": entity_id}, {"$set": update_fields})
 
+    elif mode == "removal":
+        # ← AJOUT : suppression d'entité après approbation communautaire
+        entity_id = data.get("entity_id", "")
+        if entity_type == "team" and entity_id:
+            await db.teams.delete_one({"team_id": entity_id})
+        elif entity_type == "league" and entity_id:
+            await db.leagues.delete_one({"league_id": entity_id})
+        elif entity_type == "brand" and entity_id:
+            await db.brands.delete_one({"brand_id": entity_id})
+        elif entity_type == "player" and entity_id:
+            await db.players.delete_one({"player_id": entity_id})
+
 
 # ─── Report Routes ───
+
 
 @router.post("/reports")
 async def create_report(report: ReportCreate, request: Request):
