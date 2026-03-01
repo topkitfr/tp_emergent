@@ -1,4 +1,3 @@
-# clean_import.py
 import asyncio
 import os
 from pathlib import Path
@@ -10,8 +9,8 @@ client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
 
 async def clean():
-    result = await db['kits'].delete_many({})
-    print(f"Supprime {result.deleted_count} docs de kits")
+    result = await db['master_kits'].delete_many({})
+    print(f"Supprime {result.deleted_count} docs de master_kits")
     client.close()
 
 asyncio.run(clean())
