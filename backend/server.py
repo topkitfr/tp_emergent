@@ -55,17 +55,32 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def create_indexes():
-    await db.teams.create_index("team_id", unique=True)
-    await db.teams.create_index("slug", unique=True)
+    # Supprime les anciens index conflictuels avant de les recréer
+    for collection, index_name in [
+        ('teams',   'team_id_1'),
+        ('leagues', 'league_id_1'),
+        ('brands',  'brand_id_1'),
+        ('players', 'player_id_1'),
+        ('players', 'slug_1'),
+    ]:
+        try:
+            await db[collection].drop_index(index_name)
+            logger.info(f"Index {index_name} supprime sur {collection}")
+        except Exception:
+            pass
+
+    # Recrée les index proprement
+    await db.teams.create_index("team_id",     unique=True, sparse=True)
+    await db.teams.create_index("slug",         unique=True)
     await db.teams.create_index("name")
-    await db.leagues.create_index("league_id", unique=True)
-    await db.leagues.create_index("slug", unique=True)
+    await db.leagues.create_index("league_id", unique=True, sparse=True)
+    await db.leagues.create_index("slug",       unique=True)
     await db.leagues.create_index("name")
-    await db.brands.create_index("brand_id", unique=True)
-    await db.brands.create_index("slug", unique=True)
+    await db.brands.create_index("brand_id",   unique=True, sparse=True)
+    await db.brands.create_index("slug",        unique=True)
     await db.brands.create_index("name")
-    await db.players.create_index("player_id", unique=True)
-    await db.players.create_index("slug", unique=True)
+    await db.players.create_index("player_id", unique=True, sparse=True)
+    await db.players.create_index("slug",       unique=True, sparse=True)
     await db.players.create_index("full_name")
     await db.master_kits.create_index("team_id")
     await db.master_kits.create_index("league_id")

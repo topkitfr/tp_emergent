@@ -8,7 +8,6 @@ from auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["kits"])
 
-
 # ─── Master Kit Routes ───
 
 @router.get("/master-kits", response_model=List[MasterKitOut])
@@ -49,21 +48,20 @@ async def list_master_kits(
         ]
     kits = await db.master_kits.find(query, {"_id": 0}).sort("season", -1).skip(skip).limit(limit).to_list(limit)
     for kit in kits:
-        version_count = await db.versions.count_documents({"kit_id": kit["kit_id"]})
+        kit_id = kit.get("kit_id", "")
+        version_count = await db.versions.count_documents({"kit_id": kit_id}) if kit_id else 0
         kit["version_count"] = version_count
-        reviews = await db.reviews.find({"kit_id": kit["kit_id"]}, {"_id": 0, "rating": 1}).to_list(1000)
+        reviews = await db.reviews.find({"kit_id": kit_id}, {"_id": 0, "rating": 1}).to_list(1000) if kit_id else []
         if reviews:
             kit["avg_rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
         else:
-            kit["avg_rating"] = 0.0
+            kit["avg_rating"] = kit.get("avg_rating", 0.0)
     return kits
-
 
 @router.get("/master-kits/count")
 async def count_master_kits():
     count = await db.master_kits.count_documents({})
     return {"count": count}
-
 
 @router.get("/master-kits/filters")
 async def get_filters():
@@ -86,7 +84,6 @@ async def get_filters():
         "genders": sorted([g for g in genders if g]),
     }
 
-
 @router.get("/master-kits/{kit_id}")
 async def get_master_kit(kit_id: str):
     kit = await db.master_kits.find_one({"kit_id": kit_id}, {"_id": 0})
@@ -94,7 +91,7 @@ async def get_master_kit(kit_id: str):
         raise HTTPException(status_code=404, detail="Kit not found")
     versions = await db.versions.find({"kit_id": kit_id}, {"_id": 0}).to_list(100)
     for v in versions:
-        reviews = await db.reviews.find({"version_id": v["version_id"]}, {"_id": 0, "rating": 1}).to_list(1000)
+        reviews = await db.reviews.find({"version_id": v.get("version_id", "")}, {"_id": 0, "rating": 1}).to_list(1000)
         v["avg_rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else 0.0
         v["review_count"] = len(reviews)
     kit["versions"] = versions
@@ -102,7 +99,6 @@ async def get_master_kit(kit_id: str):
     all_reviews = await db.reviews.find({"kit_id": kit_id}, {"_id": 0, "rating": 1}).to_list(1000)
     kit["avg_rating"] = round(sum(r["rating"] for r in all_reviews) / len(all_reviews), 1) if all_reviews else 0.0
     return kit
-
 
 @router.post("/master-kits", response_model=MasterKitOut)
 async def create_master_kit(kit: MasterKitCreate, request: Request):
@@ -130,7 +126,6 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
     result["avg_rating"] = 0.0
     return result
 
-
 # ─── Version Routes ───
 
 @router.get("/versions/{version_id}")
@@ -138,7 +133,7 @@ async def get_version(version_id: str):
     version = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
-    kit = await db.master_kits.find_one({"kit_id": version["kit_id"]}, {"_id": 0})
+    kit = await db.master_kits.find_one({"kit_id": version.get("kit_id", "")}, {"_id": 0})
     version["master_kit"] = kit
     reviews = await db.reviews.find({"version_id": version_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
     for r in reviews:
@@ -152,7 +147,6 @@ async def get_version(version_id: str):
     collection_count = await db.collections.count_documents({"version_id": version_id})
     version["collection_count"] = collection_count
     return version
-
 
 @router.get("/versions/{version_id}/estimates")
 async def get_version_estimates(version_id: str):
@@ -175,7 +169,6 @@ async def get_version_estimates(version_id: str):
         "estimates": sorted(estimates)
     }
 
-
 @router.post("/versions", response_model=VersionOut)
 async def create_version(version: VersionCreate, request: Request):
     user = await get_current_user(request)
@@ -194,7 +187,6 @@ async def create_version(version: VersionCreate, request: Request):
     result["review_count"] = 0
     return result
 
-
 @router.get("/versions", response_model=List[VersionOut])
 async def list_versions(kit_id: Optional[str] = None, skip: int = 0, limit: int = 50):
     query = {}
@@ -202,7 +194,7 @@ async def list_versions(kit_id: Optional[str] = None, skip: int = 0, limit: int 
         query["kit_id"] = kit_id
     versions = await db.versions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     for v in versions:
-        reviews = await db.reviews.find({"version_id": v["version_id"]}, {"_id": 0, "rating": 1}).to_list(1000)
+        reviews = await db.reviews.find({"version_id": v.get("version_id", "")}, {"_id": 0, "rating": 1}).to_list(1000)
         v["avg_rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else 0.0
         v["review_count"] = len(reviews)
     return versions
