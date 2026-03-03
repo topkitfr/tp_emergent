@@ -24,6 +24,8 @@ import PlayerDetail from "@/pages/PlayerDetail";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminPanel from "@/pages/AdminPanel";
+import Sponsors from '@/pages/Sponsors';
+import SponsorDetail from '@/pages/SponsorDetail';
 
 
 function AppRouter() {
@@ -56,6 +58,8 @@ function AppRouter() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/database/sponsors" element={<Sponsors />} />
+<Route path="/database/sponsors/:name" element={<SponsorDetail />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

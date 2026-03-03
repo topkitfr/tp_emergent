@@ -122,4 +122,7 @@ export const createBrandPending = (data) => api.post('/brands/pending', data);
 export const createLeaguePending = (data) => api.post('/leagues/pending', data);
 export const createPlayerPending = (data) => api.post('/players/pending', data);
 
+// Players who wore this kit (AJOUT)
+export const getKitPlayers = (kitId) => api.get(`/kits/${kitId}/players`);
+
 export default api;

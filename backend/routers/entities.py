@@ -65,16 +65,35 @@ async def create_team_pending(team: TeamCreate):
     existing = await db.teams.find_one({"slug": slug}, {"_id": 0})
     if existing:
         return existing
+    now = datetime.now(timezone.utc).isoformat()
+    team_id = f"team_{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+
     doc = team.model_dump()
-    doc["team_id"]   = f"team_{uuid.uuid4().hex[:12]}"
-    doc["slug"]       = slug
-    doc["status"]     = "for_review"
-    doc["created_at"] = datetime.now(timezone.utc).isoformat()
-    doc["updated_at"] = doc["created_at"]
+    doc["team_id"]       = team_id
+    doc["slug"]          = slug
+    doc["status"]        = "for_review"
+    doc["submission_id"] = submission_id  # ← AJOUT
+    doc["created_at"]    = now
+    doc["updated_at"]    = now
     await db.teams.insert_one(doc)
-    result = await db.teams.find_one({"team_id": doc["team_id"]}, {"_id": 0})
+
+    # Créer la submission liée
+    await db.submissions.insert_one({
+        "submission_id":   submission_id,
+        "submission_type": "team",
+        "data":            {"mode": "create", "name": team.name, "entity_id": team_id},
+        "status":          "pending",
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
+        "created_at":      now,
+    })
+
+    result = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
     result["kit_count"] = 0
     return result
+
 
 @router.put("/teams/{team_id}", response_model=TeamOut)
 async def update_team(team_id: str, team: TeamCreate):
@@ -140,16 +159,34 @@ async def create_league_pending(league: LeagueCreate):
     existing = await db.leagues.find_one({"slug": slug}, {"_id": 0})
     if existing:
         return existing
+    now = datetime.now(timezone.utc).isoformat()
+    league_id = f"league_{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+
     doc = league.model_dump()
-    doc["league_id"]  = f"league_{uuid.uuid4().hex[:12]}"
-    doc["slug"]        = slug
-    doc["status"]      = "for_review"
-    doc["created_at"]  = datetime.now(timezone.utc).isoformat()
-    doc["updated_at"]  = doc["created_at"]
+    doc["league_id"]     = league_id
+    doc["slug"]          = slug
+    doc["status"]        = "for_review"
+    doc["submission_id"] = submission_id  # ← AJOUT
+    doc["created_at"]    = now
+    doc["updated_at"]    = now
     await db.leagues.insert_one(doc)
-    result = await db.leagues.find_one({"league_id": doc["league_id"]}, {"_id": 0})
+
+    await db.submissions.insert_one({
+        "submission_id":   submission_id,
+        "submission_type": "league",
+        "data":            {"mode": "create", "name": league.name, "entity_id": league_id},
+        "status":          "pending",
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
+        "created_at":      now,
+    })
+
+    result = await db.leagues.find_one({"league_id": league_id}, {"_id": 0})
     result["kit_count"] = 0
     return result
+
 
 @router.put("/leagues/{league_id}", response_model=LeagueOut)
 async def update_league(league_id: str, league: LeagueCreate):
@@ -213,16 +250,34 @@ async def create_brand_pending(brand: BrandCreate):
     existing = await db.brands.find_one({"slug": slug}, {"_id": 0})
     if existing:
         return existing
+    now = datetime.now(timezone.utc).isoformat()
+    brand_id = f"brand_{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+
     doc = brand.model_dump()
-    doc["brand_id"]   = f"brand_{uuid.uuid4().hex[:12]}"
-    doc["slug"]        = slug
-    doc["status"]      = "for_review"
-    doc["created_at"]  = datetime.now(timezone.utc).isoformat()
-    doc["updated_at"]  = doc["created_at"]
+    doc["brand_id"]      = brand_id
+    doc["slug"]          = slug
+    doc["status"]        = "for_review"
+    doc["submission_id"] = submission_id  # ← AJOUT
+    doc["created_at"]    = now
+    doc["updated_at"]    = now
     await db.brands.insert_one(doc)
-    result = await db.brands.find_one({"brand_id": doc["brand_id"]}, {"_id": 0})
+
+    await db.submissions.insert_one({
+        "submission_id":   submission_id,
+        "submission_type": "brand",
+        "data":            {"mode": "create", "name": brand.name, "entity_id": brand_id},
+        "status":          "pending",
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
+        "created_at":      now,
+    })
+
+    result = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     result["kit_count"] = 0
     return result
+
 
 @router.put("/brands/{brand_id}", response_model=BrandOut)
 async def update_brand(brand_id: str, brand: BrandCreate):
@@ -294,16 +349,34 @@ async def create_player_pending(player: PlayerCreate):
     while await db.players.find_one({"slug": slug}, {"_id": 1}):
         slug = f"{base_slug}-{counter}"
         counter += 1
+    now = datetime.now(timezone.utc).isoformat()
+    player_id = f"player_{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"
+
     doc = player.model_dump()
-    doc["player_id"]  = f"player_{uuid.uuid4().hex[:12]}"
-    doc["slug"]        = slug
-    doc["status"]      = "for_review"
-    doc["created_at"]  = datetime.now(timezone.utc).isoformat()
-    doc["updated_at"]  = doc["created_at"]
+    doc["player_id"]     = player_id
+    doc["slug"]          = slug
+    doc["status"]        = "for_review"
+    doc["submission_id"] = submission_id  # ← AJOUT
+    doc["created_at"]    = now
+    doc["updated_at"]    = now
     await db.players.insert_one(doc)
-    result = await db.players.find_one({"player_id": doc["player_id"]}, {"_id": 0})
+
+    await db.submissions.insert_one({
+        "submission_id":   submission_id,
+        "submission_type": "player",
+        "data":            {"mode": "create", "full_name": player.full_name, "entity_id": player_id},
+        "status":          "pending",
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
+        "created_at":      now,
+    })
+
+    result = await db.players.find_one({"player_id": player_id}, {"_id": 0})
     result["kit_count"] = 0
     return result
+
 
 @router.put("/players/{player_id}", response_model=PlayerOut)
 async def update_player(player_id: str, player: PlayerCreate):
@@ -331,7 +404,10 @@ ENTITY_CONFIG = {
 async def get_all_pending():
     results = {}
     for entity_type, config in ENTITY_CONFIG.items():
-        docs = await db[config["collection"]].find({"status": "for_review"}, {"_id": 0}).to_list(100)
+        docs = await db[config["collection"]].find(
+            {"status": "for_review"},
+            {"_id": 0}  # on renvoie TOUT le doc, submission_id inclus
+        ).to_list(100)
         results[entity_type] = docs
     return results
 

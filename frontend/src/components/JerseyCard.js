@@ -7,7 +7,10 @@ import { proxyImageUrl } from '@/lib/api';
 export default function JerseyCard({ kit, showNew = false }) {
   return (
     <Link to={`/kit/${kit.kit_id}`} data-testid={`jersey-card-${kit.kit_id}`}>
-      <div className="card-shimmer relative border border-border bg-card overflow-hidden group hover:-translate-y-1 hover:border-primary/30" style={{ transition: 'transform 0.3s ease, border-color 0.3s ease' }}>
+      <div
+        className="card-shimmer relative border border-border bg-card overflow-hidden group hover:-translate-y-1 hover:border-primary/30"
+        style={{ transition: 'transform 0.3s ease, border-color 0.3s ease' }}
+      >
         {/* Image */}
         <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
           {kit.front_photo ? (
@@ -52,17 +55,26 @@ export default function JerseyCard({ kit, showNew = false }) {
 
         {/* Info */}
         <div className="p-3 space-y-1.5">
-          <h3 className="text-sm font-semibold tracking-tight truncate" style={{ fontFamily: 'Barlow Condensed, sans-serif', textTransform: 'uppercase' }}>
+          <h3
+            className="text-sm font-semibold tracking-tight truncate"
+            style={{ fontFamily: 'Barlow Condensed, sans-serif', textTransform: 'uppercase' }}
+          >
             {kit.club}
           </h3>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
+            <span
+              className="text-xs text-muted-foreground"
+              style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}
+            >
               {kit.season}
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">{kit.brand}</span>
           </div>
           {kit.colors && (
-            <p className="text-[10px] text-muted-foreground truncate" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
+            <p
+              className="text-[10px] text-muted-foreground truncate"
+              style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}
+            >
               {kit.colors}
             </p>
           )}

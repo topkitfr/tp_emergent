@@ -12,13 +12,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUrl = window.location.origin + '/browse';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
@@ -35,14 +35,32 @@ export default function Navbar() {
           </Link>
           <div className="hidden md:flex items-center gap-1">
             <Link to="/browse">
-              <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/browse') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-browse">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`rounded-none text-sm ${
+                  isActive('/browse') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
+                data-testid="nav-browse"
+              >
                 <Search className="w-4 h-4 mr-1.5" />
                 Browse
               </Button>
             </Link>
+
+            {/* Database dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className={`rounded-none text-sm ${['/teams', '/leagues', '/brands', '/players'].some(p => isActive(p)) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-database">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-none text-sm ${
+                    ['/teams', '/leagues', '/brands', '/players', '/database/sponsors'].some(p => isActive(p))
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="nav-database"
+                >
                   Database
                 </Button>
               </DropdownMenuTrigger>
@@ -59,17 +77,31 @@ export default function Navbar() {
                 <DropdownMenuItem onClick={() => navigate('/players')} className="cursor-pointer" data-testid="nav-players">
                   <Users className="w-4 h-4 mr-2" /> Players
                 </DropdownMenuItem>
+                {/* Sponsors */}
+                <DropdownMenuItem
+                  onClick={() => navigate('/database/sponsors')}
+                  className="cursor-pointer"
+                  data-testid="nav-sponsors"
+                >
+                  <Tag className="w-4 h-4 mr-2" /> Sponsors
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
             {user && (
-              <>
-                <Link to="/contributions">
-                  <Button variant="ghost" size="sm" className={`rounded-none text-sm ${isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} data-testid="nav-contributions">
-                    <FileCheck className="w-4 h-4 mr-1.5" />
-                    Contributions
-                  </Button>
-                </Link>
-              </>
+              <Link to="/contributions">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-none text-sm ${
+                    isActive('/contributions') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid="nav-contributions"
+                >
+                  <FileCheck className="w-4 h-4 mr-1.5" />
+                  Contributions
+                </Button>
+              </Link>
             )}
           </div>
         </div>
@@ -82,29 +114,50 @@ export default function Navbar() {
                 <button className="flex items-center gap-2 focus:outline-none" data-testid="user-menu-trigger">
                   <Avatar className="w-8 h-8 border border-border">
                     <AvatarImage src={user.picture} alt={user.name} />
-                    <AvatarFallback className="bg-secondary text-xs">{user.name?.[0]}</AvatarFallback>
+                    <AvatarFallback className="bg-secondary text-xs">
+                      {user.name?.[0]}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:block text-sm text-muted-foreground">{user.name?.split(' ')[0]}</span>
+                  <span className="hidden md:block text-sm text-muted-foreground">
+                    {user.name?.split(' ')[0]}
+                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-card border-border">
                 <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer" data-testid="menu-profile">
                   <User className="w-4 h-4 mr-2" /> Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/collection')} className="cursor-pointer" data-testid="menu-collection">
+                <DropdownMenuItem
+                  onClick={() => navigate('/collection')}
+                  className="cursor-pointer"
+                  data-testid="menu-collection"
+                >
                   <FolderOpen className="w-4 h-4 mr-2" /> My Collection
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer" data-testid="menu-wishlist">
+                <DropdownMenuItem
+                  onClick={() => navigate('/wishlist')}
+                  className="cursor-pointer"
+                  data-testid="menu-wishlist"
+                >
                   <Heart className="w-4 h-4 mr-2" /> Wishlist
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive" data-testid="menu-logout">
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer text-destructive"
+                  data-testid="menu-logout"
+                >
                   <LogOut className="w-4 h-4 mr-2" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleLogin} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none" data-testid="navbar-login-btn">
+            <Button
+              onClick={handleLogin}
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none"
+              data-testid="navbar-login-btn"
+            >
               Sign in
             </Button>
           )}

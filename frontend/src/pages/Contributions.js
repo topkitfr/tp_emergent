@@ -18,6 +18,7 @@ const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
+
 const FIELD_LABELS = {
   club: 'Club / Team', season: 'Season', kit_type: 'Type', brand: 'Brand',
   design: 'Design', sponsor: 'Sponsor', league: 'League', gender: 'Gender',
@@ -274,7 +275,38 @@ export default function Contributions() {
       toast.error(err.response?.data?.detail || 'Failed to vote');
     }
   };
+const handleVotePendingReference = async (item, vote) => {
+  const subId = item.submission_id;
 
+  if (!subId) {
+    toast.error('No submission linked to this reference');
+    return;
+  }
+
+  try {
+    await voteOnSubmission(subId, vote);
+    toast.success(`Vote recorded: ${vote}`);
+
+    // 1) on rafraîchit les submissions (pour que status/votes se mettent à jour)
+    fetchData();
+
+    // 2) on rafraîchit les pending entities (si la submission est passée approved,
+    //    ton backend doit mettre à jour l’entité et éventuellement la retirer de /pending)
+    try {
+      const res = await api.get('/pending');
+      setPendingEntities({
+        team: res.data.team || [],
+        league: res.data.league || [],
+        brand: res.data.brand || [],
+        player: res.data.player || [],
+      });
+    } catch (e) {
+      console.error('Failed to refresh pending entities', e);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.detail || 'Failed to vote on reference');
+  }
+};
   const handleVoteReport = async (repId, vote) => {
     try {
       await voteOnReport(repId, vote);
@@ -372,10 +404,19 @@ export default function Contributions() {
 
   // ← AJOUT : séparer les submissions selon leur destination
   const entityEditSubs = submissions.filter(s =>
-    ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
-    ['edit', 'removal'].includes(s.data?.mode)
-  );
-  const jerseyAndCreateSubs = submissions.filter(s => !entityEditSubs.includes(s));
+  ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
+  ['edit', 'removal'].includes(s.data?.mode)
+);
+
+// On exclut aussi les "create" d'entités (ils sont déjà dans RÉFÉRENCES À VALIDER)
+const entityCreateSubs = submissions.filter(s =>
+  ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
+  s.data?.mode === 'create'
+);
+
+const jerseyAndCreateSubs = submissions.filter(s =>
+  !entityEditSubs.includes(s) && !entityCreateSubs.includes(s)
+);
 
   return (
     <div className="animate-fade-in-up">
@@ -747,14 +788,52 @@ export default function Contributions() {
                           </p>
                           <div className="space-y-2">
                             {list.map(item => (
-                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item._id}
-                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
-                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                                  {item.name || item.full_name || '—'}
-                                </span>
-                                <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">for review</Badge>
-                              </div>
-                            ))}
+  <div
+    key={
+      item.team_id ||
+      item.league_id ||
+      item.brand_id ||
+      item.player_id ||
+      item._id
+    }
+    className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
+  >
+    <span
+      className="text-sm"
+      style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+    >
+      {item.name || item.full_name || '—'}
+    </span>
+
+    <div className="flex items-center gap-2">
+      <Badge
+        variant="outline"
+        className="rounded-none text-[10px] border-accent/40 text-accent"
+      >
+        for review
+      </Badge>
+
+      {/* Boutons de vote reliés à la submission */}
+      <div className="flex gap-1">
+        <button
+          onClick={() => handleVotePendingReference(item, 'up')}
+          className="p-1 border border-border hover:border-primary hover:text-primary"
+          data-testid={`vote-up-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
+        >
+          <ThumbsUp className="w-3 h-3" />
+        </button>
+        <button
+          onClick={() => handleVotePendingReference(item, 'down')}
+          className="p-1 border border-border hover:border-destructive hover:text-destructive"
+          data-testid={`vote-down-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
+        >
+          <ThumbsDown className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  </div>
+))}
+
                           </div>
                         </div>
                       );
