@@ -1,349 +1,299 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { getMasterKits, getFilters, getVersions, addToCollection } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, X, Shirt, LayoutGrid, List, Filter, Plus } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import JerseyCard from '@/components/JerseyCard';
-import { proxyImageUrl } from '@/lib/api';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+// src/pages/Browse.js
+import { useState, useEffect } from "react";
+import {
+  Search, SlidersHorizontal, LayoutGrid, List, Shirt, X
+} from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import JerseyCard from "@/components/JerseyCard";
+import VersionCard from "@/components/VersionCard";
 
-export default function Browse() {
-  const { user } = useAuth();
-  const [viewMode, setViewMode]       = useState('grid');
-  const [browseMode, setBrowseMode]   = useState('master'); // ← toggle master/version
-  const [kits, setKits]               = useState([]);
-  const [versions, setVersions]       = useState([]);
-  const [filters, setFilters]         = useState({ clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [] });
-  const [loading, setLoading]         = useState(true);
-  const [addingId, setAddingId]       = useState(null); // version_id en cours d'ajout
+const EMPTY_FILTER = "__all__";
 
-  const [search, setSearch]               = useState('');
-  const [selectedClub, setSelectedClub]   = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [selectedType, setSelectedType]   = useState('');
-  const [selectedSeason, setSelectedSeason] = useState('');
-  const [selectedDesign, setSelectedDesign] = useState('');
-  const [selectedLeague, setSelectedLeague] = useState('');
+// ── Composant panneau filtres — défini HORS du composant principal ──
+function FiltersPanel({
+  browseMode, setBrowseMode,
+  search, setSearch,
+  filterItems, activeFilterCount, clearFilters,
+}) {
+  return (
+    <div className="space-y-4">
 
-  // ── Fetch master kits ──
-  const fetchKits = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (search)         params.search   = search;
-      if (selectedClub)   params.club     = selectedClub;
-      if (selectedBrand)  params.brand    = selectedBrand;
-      if (selectedType)   params.kit_type = selectedType;
-      if (selectedSeason) params.season   = selectedSeason;
-      if (selectedDesign) params.design   = selectedDesign;
-      if (selectedLeague) params.league   = selectedLeague;
-      const res = await getMasterKits(params);
-      setKits(res.data);
-    } catch (err) {
-      console.error('Failed to fetch kits:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
+{/* Toggle Kits / Versions */}
+<div className="space-y-1.5">
+  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+    View
+  </label>
+  <div className="flex items-center gap-2">
+    {[
+      { id: "master",  label: "Master" },
+      { id: "version", label: "Version" },
+    ].map(({ id, label }) => (
+      <button
+        key={id}
+        onClick={() => setBrowseMode(id)}
+        className={`flex-1 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide transition-colors border ${
+          browseMode === id
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground"
+        }`}
+        style={{ fontFamily: 'Barlow Condensed, sans-serif' }}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+</div>
 
-  // ── Fetch versions ──
-  const fetchVersions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (search)         params.search   = search;
-      if (selectedClub)   params.club     = selectedClub;
-      if (selectedBrand)  params.brand    = selectedBrand;
-      if (selectedType)   params.kit_type = selectedType;
-      if (selectedSeason) params.season   = selectedSeason;
-      if (selectedLeague) params.league   = selectedLeague;
-      const res = await getVersions(params);
-      setVersions(res.data);
-    } catch (err) {
-      console.error('Failed to fetch versions:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
 
-  useEffect(() => {
-    getFilters().then(r => setFilters(r.data)).catch(() => {});
-  }, []);
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search kits..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
 
-  useEffect(() => {
-    if (browseMode === 'master') fetchKits();
-    else fetchVersions();
-  }, [browseMode, fetchKits, fetchVersions]);
-
-  const clearFilters = () => {
-    setSearch(''); setSelectedClub(''); setSelectedBrand('');
-    setSelectedType(''); setSelectedSeason(''); setSelectedDesign(''); setSelectedLeague('');
-  };
-
-  const activeFilterCount = [selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague].filter(Boolean).length;
-
-  // ── Ajouter une version à la collection ──
-  const handleAddToCollection = async (version) => {
-    if (!user) { toast.error('You must be logged in'); return; }
-    setAddingId(version.version_id);
-    try {
-      await addToCollection({
-        version_id:  version.version_id,
-        kit_id:      version.kit_id,
-        condition:   'Unknown',
-        size:        '',
-        notes:       '',
-      });
-      toast.success('New jersey added! 🎽', {
-        description: `${version.master_kit?.club || ''} ${version.master_kit?.season || ''} — ${version.competition || ''}`,
-        duration: 3000,
-      });
-    } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Failed to add jersey');
-    } finally {
-      setAddingId(null);
-    }
-  };
-
-  const FilterPanel = () => (
-    <div className="space-y-6">
-      {/* Toggle Master / Version */}
-      <div>
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
-          View
-        </p>
-        <div className="flex border border-border">
-          <button
-            onClick={() => setBrowseMode('master')}
-            className={`flex-1 py-2 text-xs tracking-wider transition-colors ${browseMode === 'master' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
-            style={{ fontFamily: 'Barlow Condensed' }}
+      {/* Dropdowns */}
+      {filterItems.map(({ label, value, set, options }) => (
+        <div key={label} className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {label}
+          </label>
+          <Select
+            value={value || EMPTY_FILTER}
+            onValueChange={(v) => set(v === EMPTY_FILTER ? "" : v)}
           >
-            MASTER
-          </button>
-          <button
-            onClick={() => setBrowseMode('version')}
-            className={`flex-1 py-2 text-xs tracking-wider transition-colors ${browseMode === 'version' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
-            style={{ fontFamily: 'Barlow Condensed' }}
-          >
-            VERSION
-          </button>
+            <SelectTrigger>
+              <SelectValue placeholder={`All ${label.toLowerCase()}s`} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={EMPTY_FILTER}>All {label.toLowerCase()}s</SelectItem>
+              {options.map((o) => (
+                <SelectItem key={o} value={o}>{o}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+      ))}
 
-      {/* Filters */}
-      <div className="space-y-4">
-        {filters.clubs.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Club</label>
-            <Select value={selectedClub} onValueChange={setSelectedClub}>
-              <SelectTrigger className="bg-card border-border rounded-none text-xs"><SelectValue placeholder="All clubs" /></SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-60">
-                {filters.clubs.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {filters.brands.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</label>
-            <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="bg-card border-border rounded-none text-xs"><SelectValue placeholder="All brands" /></SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-60">
-                {filters.brands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {filters.seasons.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Season</label>
-            <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-              <SelectTrigger className="bg-card border-border rounded-none text-xs"><SelectValue placeholder="All seasons" /></SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-60">
-                {filters.seasons.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {filters.kit_types.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Type</label>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="bg-card border-border rounded-none text-xs"><SelectValue placeholder="All types" /></SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {filters.kit_types.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {filters.leagues?.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</label>
-            <Select value={selectedLeague} onValueChange={setSelectedLeague}>
-              <SelectTrigger className="bg-card border-border rounded-none text-xs"><SelectValue placeholder="All leagues" /></SelectTrigger>
-              <SelectContent className="bg-card border-border max-h-60">
-                {filters.leagues.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {activeFilterCount > 0 && (
-          <Button variant="outline" onClick={clearFilters} className="w-full rounded-none text-xs">
-            <X className="w-3 h-3 mr-1" /> Clear filters ({activeFilterCount})
-          </Button>
-        )}
-      </div>
+      {/* Clear filters */}
+      {activeFilterCount > 0 && (
+        <Button variant="ghost" onClick={clearFilters} className="w-full text-muted-foreground">
+          <X className="w-4 h-4 mr-2" /> Clear filters
+        </Button>
+      )}
     </div>
   );
+}
+
+// ── Composant principal ───────────────────────────────
+export default function Browse() {
+
+  const [browseMode,      setBrowseMode]      = useState("master");
+  const [kits,            setKits]            = useState([]);
+  const [versions,        setVersions]        = useState([]);
+  const [filters,         setFilters]         = useState({
+    clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [],
+  });
+  const [loading,         setLoading]         = useState(true);
+  const [viewMode,        setViewMode]        = useState("grid");
+  const [search,          setSearch]          = useState("");
+  const [selectedClub,    setSelectedClub]    = useState("");
+  const [selectedBrand,   setSelectedBrand]   = useState("");
+  const [selectedType,    setSelectedType]    = useState("");
+  const [selectedSeason,  setSelectedSeason]  = useState("");
+  const [selectedDesign,  setSelectedDesign]  = useState("");
+  const [selectedLeague,  setSelectedLeague]  = useState("");
+  const [quickAddVersion, setQuickAddVersion] = useState(null);
+
+  const activeFilterCount = [
+    search, selectedClub, selectedBrand, selectedType,
+    selectedSeason, selectedDesign, selectedLeague,
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setSearch(""); setSelectedClub(""); setSelectedBrand("");
+    setSelectedType(""); setSelectedSeason(""); setSelectedDesign(""); setSelectedLeague("");
+  };
+
+  // ── Fetch filtres ──────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/master-kits/filters")
+      .then((r) => { if (!r.ok) throw new Error(`filters: ${r.status}`); return r.json(); })
+      .then(setFilters)
+      .catch((e) => console.error("Filters error:", e));
+  }, []);
+
+  // ── Fetch master kits ──────────────────────────────────
+  useEffect(() => {
+    if (browseMode !== "master") return;
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (search)         params.set("search",   search);
+    if (selectedClub)   params.set("club",     selectedClub);
+    if (selectedBrand)  params.set("brand",    selectedBrand);
+    if (selectedType)   params.set("kit_type", selectedType);
+    if (selectedSeason) params.set("season",   selectedSeason);
+    if (selectedDesign) params.set("design",   selectedDesign);
+    if (selectedLeague) params.set("league",   selectedLeague);
+
+    fetch(`/api/master-kits?${params}`)
+      .then((r) => { if (!r.ok) throw new Error(`master-kits: ${r.status}`); return r.json(); })
+      .then((data) => { setKits(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch((e) => { console.error("Kits error:", e); setLoading(false); });
+  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
+
+  // ── Fetch versions ─────────────────────────────────────
+  useEffect(() => {
+    if (browseMode !== "version") return;
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (search)         params.set("search",   search);
+    if (selectedClub)   params.set("club",     selectedClub);
+    if (selectedBrand)  params.set("brand",    selectedBrand);
+    if (selectedType)   params.set("kit_type", selectedType);
+    if (selectedSeason) params.set("season",   selectedSeason);
+    if (selectedLeague) params.set("league",   selectedLeague);
+
+    fetch(`/api/versions?${params}`)
+      .then((r) => { if (!r.ok) throw new Error(`versions: ${r.status}`); return r.json(); })
+      .then((data) => { setVersions(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch((e) => { console.error("Versions error:", e); setLoading(false); });
+  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
+
+  // ── Props du panneau filtres ───────────────────────────
+  const filterItems = [
+    { label: "Club",     value: selectedClub,   set: setSelectedClub,   options: filters.clubs },
+    { label: "Brand",    value: selectedBrand,  set: setSelectedBrand,  options: filters.brands },
+    { label: "Season",   value: selectedSeason, set: setSelectedSeason, options: filters.seasons },
+    { label: "Kit type", value: selectedType,   set: setSelectedType,   options: filters.kit_types },
+    { label: "League",   value: selectedLeague, set: setSelectedLeague, options: filters.leagues },
+    ...(browseMode === "master"
+      ? [{ label: "Design", value: selectedDesign, set: setSelectedDesign, options: filters.designs }]
+      : []),
+  ];
+
+  const filtersPanelProps = {
+    browseMode, setBrowseMode,
+    search, setSearch,
+    filterItems, activeFilterCount, clearFilters,
+  };
+
+  // ── Rendu ──────────────────────────────────────────────
+  const gridClass = viewMode === "grid"
+    ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+    : "flex flex-col gap-3";
+
+  const isEmpty = browseMode === "master" ? kits.length === 0 : versions.length === 0;
 
   return (
-    <div className="animate-fade-in-up">
-      {/* Header */}
-      <div className="border-b border-border px-4 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl tracking-tighter mb-4">BROWSE</h1>
-          <div className="flex gap-2">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search jerseys..."
-                className="pl-9 bg-card border-border rounded-none"
-              />
-              {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-            <div className="flex border border-border">
-              <button onClick={() => setViewMode('grid')} className={`px-3 py-2 ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground'}`}>
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button onClick={() => setViewMode('list')} className={`px-3 py-2 ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground'}`}>
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-            {/* Mobile filter */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="lg:hidden rounded-none relative">
-                  <Filter className="w-4 h-4" />
-                  {activeFilterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="bg-card border-border w-72">
-                <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
-                <div className="mt-6"><FilterPanel /></div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="flex gap-8">
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 flex gap-8">
         {/* Sidebar desktop */}
         <aside className="hidden lg:block w-56 shrink-0">
-          <FilterPanel />
+          <FiltersPanel {...filtersPanelProps} />
         </aside>
 
-        {/* Main content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-              {browseMode === 'master' ? kits.length : versions.length} {browseMode === 'master' ? 'master kits' : 'versions'} found
-            </p>
-            <Badge variant="outline" className="rounded-none text-[10px]">
-              {browseMode === 'master' ? 'MASTER VIEW' : 'VERSION VIEW'}
-            </Badge>
+        {/* Contenu principal */}
+        <div className="flex-1 min-w-0 space-y-5">
+
+          {/* Topbar */}
+          <div className="flex items-center justify-between gap-3">
+
+            <span className="text-sm text-muted-foreground">
+              {loading ? "Loading..." : (
+                browseMode === "master"
+                  ? `${kits.length} kits found`
+                  : `${versions.length} versions found`
+              )}
+            </span>
+
+            <div className="flex items-center gap-2">
+
+              {/* Filtres mobile */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="lg:hidden relative">
+                    <SlidersHorizontal className="w-4 h-4 mr-2" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72">
+                  <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+                  <div className="mt-4">
+                    <FiltersPanel {...filtersPanelProps} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              {/* Toggle Grid / List */}
+              <div className="flex items-center gap-1 border rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-muted" : "hover:bg-muted"}`}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "bg-muted" : "hover:bg-muted"}`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
+          {/* Grille */}
           {loading ? (
-            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-              {[...Array(8)].map((_, i) => <div key={i} className="aspect-[3/4] bg-card animate-pulse border border-border" />)}
+            <div className={gridClass}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-xl border bg-muted animate-pulse aspect-[3/4]" />
+              ))}
             </div>
-          ) : browseMode === 'master' ? (
-            /* ── MASTER VIEW ── */
-            kits.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-border">
-                <Shirt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No kits found</p>
-              </div>
-            ) : (
-              <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-                {kits.map(kit => (
-                  <JerseyCard key={kit.kit_id} kit={kit} viewMode={viewMode} />
-                ))}
-              </div>
-            )
+          ) : isEmpty ? (
+            <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">
+              <Shirt className="w-10 h-10" />
+              <p>Try adjusting your filters or search term.</p>
+              {activeFilterCount > 0 && (
+                <Button variant="outline" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          ) : browseMode === "master" ? (
+            <div className={gridClass}>
+              {kits.map((kit) => (
+                <JerseyCard key={kit.kit_id} kit={kit} />
+              ))}
+            </div>
           ) : (
-            /* ── VERSION VIEW ── */
-            versions.length === 0 ? (
-              <div className="text-center py-20 border border-dashed border-border">
-                <Shirt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No versions found</p>
-              </div>
-            ) : (
-              <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-                {versions.map(version => (
-                  <div key={version.version_id} className="relative group border border-border bg-card hover:border-primary/50 transition-colors">
-                    <Link to={`/version/${version.version_id}`}>
-                      <div className="aspect-[3/4] overflow-hidden bg-secondary/20">
-                        {version.front_photo || version.master_kit?.front_photo ? (
-                          <img
-                            src={proxyImageUrl(version.front_photo || version.master_kit?.front_photo)}
-                            alt={version.master_kit?.club}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Shirt className="w-12 h-12 text-muted-foreground/30" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <p className="text-xs font-semibold truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {version.master_kit?.club || '—'}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate" style={{ fontFamily: 'Barlow Condensed' }}>
-                          {version.master_kit?.season} · {version.master_kit?.kit_type}
-                        </p>
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {version.competition && (
-                            <Badge variant="outline" className="rounded-none text-[9px] px-1">{version.competition}</Badge>
-                          )}
-                          {version.model && (
-                            <Badge variant="outline" className="rounded-none text-[9px] px-1">{version.model}</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-
-                    {/* ── BOUTON + ── */}
-                    <button
-                      onClick={() => handleAddToCollection(version)}
-                      disabled={addingId === version.version_id}
-                      className="absolute top-2 right-2 w-8 h-8 bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/80 disabled:opacity-50"
-                      data-testid={`add-to-collection-${version.version_id}`}
-                      title="Add to my collection"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )
+            <div className={gridClass}>
+              {versions.map((v) => (
+                <VersionCard
+                  key={v.version_id}
+                  version={v}
+                  onAddToCollection={setQuickAddVersion}
+                />
+              ))}
+            </div>
           )}
+
         </div>
       </div>
     </div>
