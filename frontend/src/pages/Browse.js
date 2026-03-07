@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/select";
 import JerseyCard from "@/components/JerseyCard";
 import VersionCard from "@/components/VersionCard";
+import AddToCollectionDialog from "@/components/AddToCollectionDialog";
 
 const EMPTY_FILTER = "__all__";
 
-// ── Composant panneau filtres — défini HORS du composant principal ──
+// ── FiltersPanel — composant externe (évite re-render React) ──
 function FiltersPanel({
   browseMode, setBrowseMode,
   search, setSearch,
@@ -24,32 +25,31 @@ function FiltersPanel({
   return (
     <div className="space-y-4">
 
-{/* Toggle Kits / Versions */}
-<div className="space-y-1.5">
-  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-    View
-  </label>
-  <div className="flex items-center gap-2">
-    {[
-      { id: "master",  label: "Master" },
-      { id: "version", label: "Version" },
-    ].map(({ id, label }) => (
-      <button
-        key={id}
-        onClick={() => setBrowseMode(id)}
-        className={`flex-1 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide transition-colors border ${
-          browseMode === id
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground"
-        }`}
-        style={{ fontFamily: 'Barlow Condensed, sans-serif' }}
-      >
-        {label}
-      </button>
-    ))}
-  </div>
-</div>
-
+      {/* Toggle VIEW Master / Version */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          View
+        </label>
+        <div className="flex items-center gap-2">
+          {[
+            { id: "master",  label: "Master" },
+            { id: "version", label: "Version" },
+          ].map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setBrowseMode(id)}
+              className={`flex-1 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide transition-colors border ${
+                browseMode === id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground"
+              }`}
+              style={{ fontFamily: "Barlow Condensed, sans-serif" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Search */}
       <div className="relative">
@@ -170,7 +170,7 @@ export default function Browse() {
       .catch((e) => { console.error("Versions error:", e); setLoading(false); });
   }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
 
-  // ── Props du panneau filtres ───────────────────────────
+  // ── Props FiltersPanel ─────────────────────────────────
   const filterItems = [
     { label: "Club",     value: selectedClub,   set: setSelectedClub,   options: filters.clubs },
     { label: "Brand",    value: selectedBrand,  set: setSelectedBrand,  options: filters.brands },
@@ -293,9 +293,19 @@ export default function Browse() {
               ))}
             </div>
           )}
-
         </div>
       </div>
+
+      {/* Dialog ajout rapide */}
+      {quickAddVersion && (
+        <AddToCollectionDialog
+          version={quickAddVersion}
+          onClose={() => setQuickAddVersion(null)}
+          onSuccess={() => {
+            setQuickAddVersion(null);
+          }}
+        />
+      )}
     </div>
   );
 }

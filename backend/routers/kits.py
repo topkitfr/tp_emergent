@@ -1,3 +1,4 @@
+# backend/routers/kits.py
 from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -6,40 +7,67 @@ from database import db
 from models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
 from auth import get_current_user
 
+
 router = APIRouter(prefix="/api", tags=["kits"])
 
-# ─────────────────────────────────────────
-# MASTER KITS
-# ─────────────────────────────────────────
 
-@router.get("/master-kits", response_model=List[MasterKitOut])
+
+# ═══════════════════════════════════════════════════════════════════
+# MASTER KITS
+# ═══════════════════════════════════════════════════════════════════
+
+
+@router.get("/master-kits/count")
+async def count_master_kits():
+    count = await db.master_kits.count_documents({})
+    return {"count": count}
+
+
+
+@router.get("/master-kits/filters")
+async def get_filters():
+    clubs     = await db.master_kits.distinct("club")
+    brands    = await db.master_kits.distinct("brand")
+    seasons   = await db.master_kits.distinct("season")
+    kit_types = await db.master_kits.distinct("kit_type")
+    designs   = await db.master_kits.distinct("design")
+    leagues   = await db.master_kits.distinct("league")
+    sponsors  = await db.master_kits.distinct("sponsor")
+    genders   = await db.master_kits.distinct("gender")
+    return {
+        "clubs":     sorted([c for c in clubs     if c]),
+        "brands":    sorted([b for b in brands    if b]),
+        "seasons":   sorted([s for s in seasons   if s], reverse=True),
+        "kit_types": sorted([t for t in kit_types if t]),
+        "designs":   sorted([d for d in designs   if d]),
+        "leagues":   sorted([l for l in leagues   if l]),
+        "sponsors":  sorted([s for s in sponsors  if s]),
+        "genders":   sorted([g for g in genders   if g]),
+    }
+
+
+
+@router.get("/master-kits")
 async def list_master_kits(
-    club: Optional[str] = None,
-    season: Optional[str] = None,
-    brand: Optional[str] = None,
+    club:     Optional[str] = None,
+    season:   Optional[str] = None,
+    brand:    Optional[str] = None,
     kit_type: Optional[str] = None,
-    design: Optional[str] = None,
-    league: Optional[str] = None,
-    gender: Optional[str] = None,
-    search: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 200
+    design:   Optional[str] = None,
+    league:   Optional[str] = None,
+    gender:   Optional[str] = None,
+    search:   Optional[str] = None,
+    skip:     int = 0,
+    limit:    int = 200,
 ):
     query = {}
-    if club:
-        query["club"] = {"$regex": club, "$options": "i"}
-    if season:
-        query["season"] = {"$regex": season, "$options": "i"}
-    if brand:
-        query["brand"] = {"$regex": brand, "$options": "i"}
-    if kit_type:
-        query["kit_type"] = kit_type
-    if design:
-        query["design"] = design
-    if league:
-        query["league"] = league
-    if gender:
-        query["gender"] = gender
+    if club:     query["club"]     = {"$regex": club,   "$options": "i"}
+    if season:   query["season"]   = {"$regex": season, "$options": "i"}
+    if brand:    query["brand"]    = {"$regex": brand,  "$options": "i"}
+    if kit_type: query["kit_type"] = kit_type
+    if design:   query["design"]   = design
+    if league:   query["league"]   = league
+    if gender:   query["gender"]   = gender
     if search:
         query["$or"] = [
             {"club":    {"$regex": search, "$options": "i"}},
@@ -49,59 +77,26 @@ async def list_master_kits(
             {"sponsor": {"$regex": search, "$options": "i"}},
         ]
 
-    kits = await db.master_kits.find(query, {"_id": 0}).sort("season", -1).skip(skip).limit(limit).to_list(limit)
+    kits = await db.master_kits.find(query, {"_id": 0}) \
+        .sort("season", -1).skip(skip).limit(limit).to_list(limit)
 
     result = []
     for kit in kits:
-        kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
-        kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
-        kit["club"]        = kit.get("club") or kit.get("team_id", "")
-        kit["brand"]       = kit.get("brand") or kit.get("brand_id", "")
-        kit["league"]      = kit.get("league") or kit.get("league_id", "")
-
-        ca = kit.get("created_at", "")
+        kit["kit_id"]        = kit.get("kit_id")      or kit.get("id", "")
+        kit["kit_type"]      = kit.get("kit_type")    or kit.get("type", "")
+        kit["front_photo"]   = kit.get("front_photo") or kit.get("img_url", "")
+        kit["version_count"] = kit.get("version_count", 0)
+        kit["avg_rating"]    = kit.get("avg_rating",   0.0)
+        kit["review_count"]  = kit.get("review_count", 0)
+        ca = kit.get("created_at")
         if hasattr(ca, "isoformat"):
             kit["created_at"] = ca.isoformat()
         elif not isinstance(ca, str):
-            kit["created_at"] = str(ca)
-
-        kit_id = kit["kit_id"]
-        kit["version_count"] = await db.versions.count_documents({"kit_id": kit_id}) if kit_id else 0
-
-        reviews = await db.reviews.find({"kit_id": kit_id}, {"_id": 0, "rating": 1}).to_list(1000) if kit_id else []
-        kit["avg_rating"] = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else kit.get("avg_rating", 0.0)
-
+            kit["created_at"] = str(ca) if ca else ""
         result.append(kit)
+
     return result
 
-
-@router.get("/master-kits/count")
-async def count_master_kits():
-    count = await db.master_kits.count_documents({})
-    return {"count": count}
-
-
-@router.get("/master-kits/filters")
-async def get_filters():
-    clubs    = await db.master_kits.distinct("club")
-    brands   = await db.master_kits.distinct("brand")
-    seasons  = await db.master_kits.distinct("season")
-    kit_types = await db.master_kits.distinct("kit_type")
-    designs  = await db.master_kits.distinct("design")
-    leagues  = await db.master_kits.distinct("league")
-    sponsors = await db.master_kits.distinct("sponsor")
-    genders  = await db.master_kits.distinct("gender")
-    return {
-        "clubs":      sorted([c for c in clubs if c]),
-        "brands":     sorted([b for b in brands if b]),
-        "seasons":    sorted([s for s in seasons if s], reverse=True),
-        "kit_types":  sorted([t for t in kit_types if t]),
-        "designs":    sorted([d for d in designs if d]),
-        "leagues":    sorted([lg for lg in leagues if lg]),
-        "sponsors":   sorted([s for s in sponsors if s]),
-        "genders":    sorted([g for g in genders if g]),
-    }
 
 
 @router.get("/master-kits/{kit_id}")
@@ -115,96 +110,103 @@ async def get_master_kit(kit_id: str):
     kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
     kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
     kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
-
-    ca = kit.get("created_at", "")
+    ca = kit.get("created_at")
     if hasattr(ca, "isoformat"):
         kit["created_at"] = ca.isoformat()
     elif not isinstance(ca, str):
-        kit["created_at"] = str(ca)
+        kit["created_at"] = str(ca) if ca else ""
 
-    versions = await db.versions.find({"kit_id": kit_id}, {"_id": 0}).to_list(100)
+    kit_id_val = kit["kit_id"]
+
+    versions = await db.versions.find({"kit_id": kit_id_val}, {"_id": 0}).to_list(100)
     for v in versions:
-        reviews = await db.reviews.find({"version_id": v.get("version_id", "")}, {"_id": 0, "rating": 1}).to_list(1000)
-        v["avg_rating"]   = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else 0.0
-        v["review_count"] = len(reviews)
-
+        v["avg_rating"]   = v.get("avg_rating",   0.0)
+        v["review_count"] = v.get("review_count", 0)
     kit["versions"]      = versions
     kit["version_count"] = len(versions)
 
-    all_reviews = await db.reviews.find({"kit_id": kit_id}, {"_id": 0, "rating": 1}).to_list(1000)
-    kit["avg_rating"] = round(sum(r["rating"] for r in all_reviews) / len(all_reviews), 1) if all_reviews else 0.0
+    version_ids = [v.get("version_id") for v in versions if v.get("version_id")]
+    if version_ids:
+        all_reviews = await db.reviews.find(
+            {"version_id": {"$in": version_ids}}, {"rating": 1, "_id": 0}
+        ).to_list(5000)
+        kit["avg_rating"]   = round(sum(r["rating"] for r in all_reviews) / len(all_reviews), 1) if all_reviews else kit.get("avg_rating", 0.0)
+        kit["review_count"] = len(all_reviews) if all_reviews else kit.get("review_count", 0)
+    else:
+        kit["avg_rating"]   = kit.get("avg_rating", 0.0)
+        kit["review_count"] = kit.get("review_count", 0)
 
     return kit
+
 
 
 @router.post("/master-kits", response_model=MasterKitOut)
 async def create_master_kit(kit: MasterKitCreate, request: Request):
     user = await get_current_user(request)
     doc  = kit.model_dump()
-    doc["kit_id"]     = f"kit_{uuid.uuid4().hex[:12]}"
-    doc["created_by"] = user["user_id"]
-    doc["created_at"] = datetime.now(timezone.utc).isoformat()
-
+    doc["kit_id"]        = f"kit{uuid.uuid4().hex[:12]}"
+    doc["created_by"]    = user["user_id"]
+    doc["created_at"]    = datetime.now(timezone.utc).isoformat()
+    doc["avg_rating"]    = 0.0
+    doc["review_count"]  = 0
+    doc["version_count"] = 1
     await db.master_kits.insert_one(doc)
 
     default_version = {
-        "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-        "kit_id":      doc["kit_id"],
-        "competition": "National Championship",
-        "model":       "Replica",
-        "sku_code":    "",
-        "ean_code":    "",
-        "front_photo": doc.get("front_photo", ""),
-        "back_photo":  "",
-        "created_by":  user["user_id"],
-        "created_at":  datetime.now(timezone.utc).isoformat(),
+        "version_id":   f"ver{uuid.uuid4().hex[:12]}",
+        "kit_id":       doc["kit_id"],
+        "competition":  "National Championship",
+        "model":        "Replica",
+        "sku_code":     "",
+        "ean_code":     "",
+        "front_photo":  doc.get("front_photo", ""),
+        "back_photo":   "",
+        "created_by":   user["user_id"],
+        "created_at":   datetime.now(timezone.utc).isoformat(),
+        "avg_rating":   0.0,
+        "review_count": 0,
     }
     await db.versions.insert_one(default_version)
 
     result = await db.master_kits.find_one({"kit_id": doc["kit_id"]}, {"_id": 0})
-    result["version_count"] = 1
-    result["avg_rating"]    = 0.0
     return result
 
 
-# ─────────────────────────────────────────
-# VERSIONS
-# ─────────────────────────────────────────
 
-# ✅ 1. Liste — AVANT toutes les routes /{version_id}/*
+# ═══════════════════════════════════════════════════════════════════
+# VERSIONS
+# ═══════════════════════════════════════════════════════════════════
+
+
 @router.get("/versions", response_model=List[VersionOut])
 async def list_versions(
-    kit_id:      Optional[str] = None,
-    search:      Optional[str] = None,
-    club:        Optional[str] = None,
-    brand:       Optional[str] = None,
-    kit_type:    Optional[str] = None,
-    season:      Optional[str] = None,
-    league:      Optional[str] = None,
-    competition: Optional[str] = None,
-    skip:  int = 0,
-    limit: int = 200,
+    kit_id:   Optional[str] = None,
+    search:   Optional[str] = None,
+    club:     Optional[str] = None,
+    brand:    Optional[str] = None,
+    kit_type: Optional[str] = None,
+    season:   Optional[str] = None,
+    league:   Optional[str] = None,
+    skip:     int = 0,
+    limit:    int = 200,
 ):
     kit_ids = None
     if club or brand or kit_type or season or league or search:
         kit_query = {}
-        if club:
-            kit_query["club"]   = {"$regex": club,  "$options": "i"}
-        if brand:
-            kit_query["brand"]  = {"$regex": brand, "$options": "i"}
-        if kit_type:
-            kit_query["kit_type"] = kit_type
-        if season:
-            kit_query["season"] = {"$regex": season, "$options": "i"}
-        if league:
-            kit_query["league"] = league
+        if club:     kit_query["club"]     = {"$regex": club,   "$options": "i"}
+        if brand:    kit_query["brand"]    = {"$regex": brand,  "$options": "i"}
+        if kit_type: kit_query["kit_type"] = kit_type
+        if season:   kit_query["season"]   = {"$regex": season, "$options": "i"}
+        if league:   kit_query["league"]   = league
         if search:
             kit_query["$or"] = [
                 {"club":   {"$regex": search, "$options": "i"}},
                 {"brand":  {"$regex": search, "$options": "i"}},
                 {"season": {"$regex": search, "$options": "i"}},
             ]
-        matching_kits = await db.master_kits.find(kit_query, {"_id": 0, "kit_id": 1}).to_list(2000)
+        matching_kits = await db.master_kits.find(
+            kit_query, {"_id": 0, "kit_id": 1}
+        ).to_list(2000)
         kit_ids = [k["kit_id"] for k in matching_kits]
         if not kit_ids:
             return []
@@ -214,137 +216,190 @@ async def list_versions(
         version_query["kit_id"] = kit_id
     elif kit_ids is not None:
         version_query["kit_id"] = {"$in": kit_ids}
-    if competition:
-        version_query["competition"] = {"$regex": competition, "$options": "i"}
 
     versions = await db.versions.find(version_query, {"_id": 0}) \
         .sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
 
+    # Batch masterkits — 1 seule requête pour tous
+    kid_list = list({v.get("kit_id") for v in versions if v.get("kit_id")})
+    kits_map = {}
+    if kid_list:
+        kits_docs = await db.master_kits.find(
+            {"kit_id": {"$in": kid_list}}, {"_id": 0}
+        ).to_list(len(kid_list))
+        for k in kits_docs:
+            k["kit_id"]      = k.get("kit_id") or k.get("id", "")
+            k["kit_type"]    = k.get("kit_type") or k.get("type", "")
+            k["front_photo"] = k.get("front_photo") or k.get("img_url", "")
+            kits_map[k["kit_id"]] = k
+
     result = []
     for v in versions:
-        parent = await db.master_kits.find_one({"kit_id": v.get("kit_id", "")}, {"_id": 0})
-        if parent:
-            parent["kit_id"]      = parent.get("kit_id") or parent.get("id", "")
-            parent["kit_type"]    = parent.get("kit_type") or parent.get("type", "")
-            parent["front_photo"] = parent.get("front_photo") or parent.get("img_url", "")
-
-            # Résolution team_slug
-            team_slug = None
-            if parent.get("team_id"):
-                team = await db.teams.find_one({"team_id": parent["team_id"]}, {"_id": 0, "slug": 1})
-                if team:
-                    team_slug = team.get("slug")
-            parent["team_slug"] = team_slug
-            v["master_kit"] = parent
-
-        reviews = await db.reviews.find(
-            {"version_id": v.get("version_id", "")}, {"_id": 0, "rating": 1}
-        ).to_list(1000)
-        v["avg_rating"]   = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else 0.0
-        v["review_count"] = len(reviews)
+        v["master_kit"]   = kits_map.get(v.get("kit_id"))
+        v["avg_rating"]   = v.get("avg_rating",   0.0)
+        v["review_count"] = v.get("review_count", 0)
         result.append(v)
 
     return result
 
 
-# ✅ 2. Estimates — statique, AVANT /{version_id}
+
+# ── Routes statiques AVANT /{version_id} ─────────────────────────
+
+
 @router.get("/versions/{version_id}/estimates")
 async def get_version_estimates(version_id: str):
     items = await db.collections.find(
         {"version_id": version_id},
         {"_id": 0, "estimated_price": 1, "value_estimate": 1, "price_estimate": 1}
     ).to_list(1000)
-
     estimates = []
     for i in items:
         val = i.get("estimated_price") or i.get("value_estimate") or i.get("price_estimate") or 0
         if val and val > 0:
             estimates.append(val)
-
     if not estimates:
-        return {"low": 0, "average": 0, "high": 0, "count": 0, "estimates": []}
-
+        return {"low": 0, "average": 0, "high": 0, "count": 0}
     return {
-        "low":       round(min(estimates), 2),
-        "average":   round(sum(estimates) / len(estimates), 2),
-        "high":      round(max(estimates), 2),
-        "count":     len(estimates),
+        "low":      round(min(estimates), 2),
+        "average":  round(sum(estimates) / len(estimates), 2),
+        "high":     round(max(estimates), 2),
+        "count":    len(estimates),
         "estimates": sorted(estimates),
     }
 
 
-# ✅ 3. Worn-by — statique, AVANT /{version_id}
+
 @router.get("/versions/{version_id}/worn-by")
-async def get_worn_by_players(version_id: str):
-    pipeline = [
-        {"$match": {"version_id": version_id}},
-        {
-            "$project": {
-                "player_ids": {
-                    "$filter": {
-                        "input": ["$flocking_player_id", "$signed_by_player_id"],
-                        "as": "pid",
-                        "cond": {
-                            "$and": [
-                                {"$ne": ["$$pid", None]},
-                                {"$ne": ["$$pid", ""]},
-                            ]
-                        },
-                    }
-                }
-            }
-        },
-        {"$unwind": "$player_ids"},
-        {"$group": {"_id": "$player_ids"}},
-    ]
-    results  = await db.collections.aggregate(pipeline).to_list(None)
-    player_ids = [r["_id"] for r in results]
-
-    if not player_ids:
-        return []
-
-    players = await db.players.find(
-        {"player_id": {"$in": player_ids}},
-        {"_id": 0, "player_id": 1, "full_name": 1,
-         "slug": 1, "photo_url": 1, "nationality": 1, "positions": 1}
-    ).to_list(6)
-
+async def get_version_worn_by(version_id: str):
+    items = await db.collections.find(
+        {"version_id": version_id, "flocking_player_id": {"$exists": True, "$ne": ""}},
+        {"_id": 0, "flocking_player_id": 1}
+    ).to_list(200)
+    player_ids = list({i["flocking_player_id"] for i in items if i.get("flocking_player_id")})
+    players = []
+    for pid in player_ids:
+        p = await db.players.find_one(
+            {"$or": [{"player_id": pid}, {"_id": pid}]}, {"_id": 0}
+        )
+        if p:
+            players.append({
+                "player_id": p.get("player_id") or pid,
+                "full_name": p.get("full_name") or p.get("name", ""),
+                "slug":      p.get("slug", ""),
+                "photo_url": p.get("photo_url") or p.get("photo", ""),
+            })
     return players
 
 
-# ✅ 4. Détail — DYNAMIQUE, toujours en dernier
-@router.get("/versions/{version_id}")
+
+@router.get("/versions/{version_id}/reviews")
+async def get_version_reviews(version_id: str):
+    reviews = await db.reviews.find(
+        {"version_id": version_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(200)
+    return reviews
+
+
+
+@router.post("/versions/{version_id}/reviews")
+async def post_version_review(version_id: str, request: Request):
+    user    = await get_current_user(request)
+    body    = await request.json()
+    rating  = int(body.get("rating",  0))
+    comment = str(body.get("comment", "")).strip()
+
+    if not (1 <= rating <= 5):
+        raise HTTPException(status_code=422, detail="Rating must be between 1 and 5")
+
+    existing = await db.reviews.find_one(
+        {"version_id": version_id, "user_id": user["user_id"]}
+    )
+    if existing:
+        await db.reviews.update_one(
+            {"version_id": version_id, "user_id": user["user_id"]},
+            {"$set": {"rating": rating, "comment": comment}}
+        )
+    else:
+        await db.reviews.insert_one({
+            "review_id":    f"rev{uuid.uuid4().hex[:12]}",
+            "version_id":   version_id,
+            "user_id":      user["user_id"],
+            "user_name":    user.get("name", "Anonymous"),
+            "user_picture": user.get("picture", ""),
+            "rating":       rating,
+            "comment":      comment,
+            "created_at":   datetime.now(timezone.utc).isoformat(),
+        })
+
+    all_reviews = await db.reviews.find(
+        {"version_id": version_id}, {"rating": 1, "_id": 0}
+    ).to_list(1000)
+    avg = round(sum(r["rating"] for r in all_reviews) / len(all_reviews), 1) if all_reviews else 0.0
+    await db.versions.update_one(
+        {"version_id": version_id},
+        {"$set": {"avg_rating": avg, "review_count": len(all_reviews)}}
+    )
+
+    version_doc = await db.versions.find_one(
+        {"version_id": version_id}, {"kit_id": 1, "_id": 0}
+    )
+    if version_doc:
+        kit_id = version_doc.get("kit_id")
+        sibling_ids = [
+            v["version_id"] for v in
+            await db.versions.find(
+                {"kit_id": kit_id}, {"version_id": 1, "_id": 0}
+            ).to_list(500)
+        ]
+        kit_reviews = await db.reviews.find(
+            {"version_id": {"$in": sibling_ids}}, {"rating": 1, "_id": 0}
+        ).to_list(5000)
+        kit_avg = round(sum(r["rating"] for r in kit_reviews) / len(kit_reviews), 1) if kit_reviews else 0.0
+        await db.master_kits.update_one(
+            {"kit_id": kit_id},
+            {"$set": {"avg_rating": kit_avg, "review_count": len(kit_reviews)}}
+        )
+
+    return {"ok": True, "avg_rating": avg, "review_count": len(all_reviews)}
+
+
+
+# ── /{version_id} EN DERNIER ─────────────────────────────────────
+
+
+@router.get("/versions/{version_id}", response_model=VersionOut)
 async def get_version(version_id: str):
     version = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
 
-    kit = await db.master_kits.find_one({"kit_id": version.get("kit_id", "")}, {"_id": 0})
+    kit = await db.master_kits.find_one({"kit_id": version.get("kit_id")}, {"_id": 0})
     if kit:
-        team_slug = None
-        if kit.get("team_id"):
-            team = await db.teams.find_one({"team_id": kit["team_id"]}, {"_id": 0, "slug": 1})
-            if team:
-                team_slug = team.get("slug")
-        kit["team_slug"] = team_slug
-    version["master_kit"] = kit
+        kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
+        kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
+        kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
+        version["master_kit"] = kit
 
-    reviews = await db.reviews.find({"version_id": version_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    reviews = await db.reviews.find(
+        {"version_id": version_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
     for r in reviews:
-        u = await db.users.find_one({"user_id": r["user_id"]}, {"_id": 0, "name": 1, "picture": 1})
+        u = await db.users.find_one(
+            {"user_id": r.get("user_id")}, {"_id": 0, "name": 1, "picture": 1}
+        )
         if u:
-            r["user_name"]    = u.get("name", "")
-            r["user_picture"] = u.get("picture", "")
+            r["user_name"]    = u.get("name")
+            r["user_picture"] = u.get("picture")
 
-    version["reviews"]          = reviews
-    version["avg_rating"]       = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else 0.0
-    version["review_count"]     = len(reviews)
+    version["reviews"]         = reviews
+    version["avg_rating"]      = round(sum(r["rating"] for r in reviews) / len(reviews), 1) if reviews else version.get("avg_rating", 0.0)
+    version["review_count"]    = len(reviews) if reviews else version.get("review_count", 0)
     version["collection_count"] = await db.collections.count_documents({"version_id": version_id})
-
     return version
 
 
-# ✅ 5. Création
+
 @router.post("/versions", response_model=VersionOut)
 async def create_version(version: VersionCreate, request: Request):
     user = await get_current_user(request)
@@ -353,15 +408,148 @@ async def create_version(version: VersionCreate, request: Request):
         raise HTTPException(status_code=404, detail="Master Kit not found")
 
     doc = version.model_dump()
-    doc["version_id"] = f"ver_{uuid.uuid4().hex[:12]}"
-    doc["created_by"] = user["user_id"]
-    doc["created_at"] = datetime.now(timezone.utc).isoformat()
-    if not doc["front_photo"]:
+    doc["version_id"]   = f"ver{uuid.uuid4().hex[:12]}"
+    doc["created_by"]   = user["user_id"]
+    doc["created_at"]   = datetime.now(timezone.utc).isoformat()
+    doc["avg_rating"]   = 0.0
+    doc["review_count"] = 0
+    if not doc.get("front_photo"):
         doc["front_photo"] = kit.get("front_photo", "")
-
     await db.versions.insert_one(doc)
 
+    await db.master_kits.update_one(
+        {"kit_id": version.kit_id},
+        {"$inc": {"version_count": 1}}
+    )
+
     result = await db.versions.find_one({"version_id": doc["version_id"]}, {"_id": 0})
-    result["avg_rating"]   = 0.0
-    result["review_count"] = 0
     return result
+
+
+
+# ═══════════════════════════════════════════════════════════════════
+# PLAYERS PAR KIT
+# ═══════════════════════════════════════════════════════════════════
+
+
+@router.get("/kits/{kit_id}/players")
+async def get_kit_players(kit_id: str):
+    players = await db.players.find({"kit_id": kit_id}).limit(6).to_list(6)
+    return [
+        {
+            "id":    str(p.get("player_id", p.get("_id", ""))),
+            "name":  p.get("full_name", ""),
+            "photo": p.get("photo_url", ""),
+        }
+        for p in players
+    ]
+
+# ═══════════════════════════════════════════════════════════════════
+# ENTITÉS → KITS (teams, brands, leagues, sponsors, players)
+# ═══════════════════════════════════════════════════════════════════
+
+
+async def _normalize_kit(doc: dict) -> dict:
+    if not doc:
+        return {}
+    doc["kit_id"]        = doc.get("kit_id")      or doc.get("id", "")
+    doc["kit_type"]      = doc.get("kit_type")    or doc.get("type", "")
+    doc["front_photo"]   = doc.get("front_photo") or doc.get("img_url", "")
+    doc["avg_rating"]    = doc.get("avg_rating", 0.0)
+    doc["review_count"]  = doc.get("review_count", 0)
+    doc["version_count"] = doc.get("version_count", 0)
+    return doc
+
+
+@router.get("/leagues/{slug}/kits")
+async def get_league_kits(slug: str):
+    league = await db.leagues.find_one({"slug": slug}, {"_id": 0})
+    if not league:
+        raise HTTPException(status_code=404, detail="League not found")
+
+    league_id = league.get("league_id") or league.get("id")
+    if not league_id:
+        raise HTTPException(status_code=500, detail="League has no league_id")
+
+    cursor = db.master_kits.find({"league_id": league_id}, {"_id": 0}).sort("season", -1)
+    kits = await cursor.to_list(length=200)
+    kits = [await _normalize_kit(k) for k in kits]
+    return kits
+
+
+@router.get("/brands/{slug}/kits")
+async def get_brand_kits(slug: str):
+    brand = await db.brands.find_one({"slug": slug}, {"_id": 0})
+    if not brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+
+    brand_id = brand.get("brand_id") or brand.get("id")
+    if not brand_id:
+        raise HTTPException(status_code=500, detail="Brand has no brand_id")
+
+    cursor = db.master_kits.find({"brand_id": brand_id}, {"_id": 0}).sort("season", -1)
+    kits = await cursor.to_list(length=200)
+    kits = [await _normalize_kit(k) for k in kits]
+    return kits
+
+
+@router.get("/teams/{slug}/kits")
+async def get_team_kits(slug: str):
+    team = await db.teams.find_one({"slug": slug}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team_id = team.get("team_id") or team.get("id")
+    if not team_id:
+        raise HTTPException(status_code=500, detail="Team has no team_id")
+
+    cursor = db.master_kits.find({"team_id": team_id}, {"_id": 0}).sort("season", -1)
+    kits = await cursor.to_list(length=200)
+    kits = [await _normalize_kit(k) for k in kits]
+    return kits
+
+
+@router.get("/players/{slug}/kits")
+async def get_player_kits(slug: str):
+    player = await db.players.find_one({"slug": slug}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    player_id = player.get("player_id") or player.get("id")
+    if not player_id:
+        raise HTTPException(status_code=500, detail="Player has no player_id")
+
+    # On passe par collections pour savoir quels maillots ce joueur a portés
+    items = await db.collections.find(
+        {"flocking_player_id": player_id},
+        {"_id": 0, "version_id": 1}
+    ).to_list(2000)
+    version_ids = list({i["version_id"] for i in items if i.get("version_id")})
+    if not version_ids:
+        return []
+
+    versions = await db.versions.find(
+        {"version_id": {"$in": version_ids}},
+        {"_id": 0, "kit_id": 1}
+    ).to_list(len(version_ids))
+    kit_ids = list({v["kit_id"] for v in versions if v.get("kit_id")})
+    if not kit_ids:
+        return []
+
+    cursor = db.master_kits.find({"kit_id": {"$in": kit_ids}}, {"_id": 0}).sort("season", -1)
+    kits = await cursor.to_list(length=200)
+    kits = [await _normalize_kit(k) for k in kits]
+    return kits
+
+
+@router.get("/sponsors/{name}/kits")
+async def get_sponsor_kits(name: str):
+    # name vient de l'URL, on matche sur le champ sponsor (ex: "Fly Emirates")
+    sponsor_name = name  # si besoin tu peux faire urllib.parse.unquote(name) côté frontend
+    cursor = db.master_kits.find(
+        {"sponsor": sponsor_name},
+        {"_id": 0},
+    ).sort("season", -1)
+    kits = await cursor.to_list(length=200)
+    kits = [await _normalize_kit(k) for k in kits]
+    return kits

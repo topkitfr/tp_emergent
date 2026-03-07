@@ -208,6 +208,7 @@ class EstimationRequest(BaseModel):
 
 # Entity models
 
+
 class TeamCreate(BaseModel):
     name: str
     country: Optional[str] = ""

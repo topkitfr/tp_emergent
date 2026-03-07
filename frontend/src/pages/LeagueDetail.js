@@ -1,3 +1,4 @@
+// src/pages/LeagueDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getLeague, proxyImageUrl } from '@/lib/api';
@@ -9,8 +10,9 @@ import EntityEditDialog from '@/components/EntityEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LeagueDetail() {
-  const { id } = useParams();
+  const { id } = useParams(); // "ligue-1"
   const { user } = useAuth();
+
   const [league, setLeague] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
@@ -18,14 +20,52 @@ export default function LeagueDetail() {
   const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    getLeague(id).then(r => setLeague(r.data)).catch(() => {}).finally(() => setLoading(false));
+    async function loadData() {
+      setLoading(true);
+      try {
+        // 1) league
+        const leagueRes = await getLeague(id);
+
+        // 2) kits de la league (endpoint qu’on vient de créer)
+        const kitsRes = await fetch(`/api/leagues/${id}/kits`);
+        const kitsData = await kitsRes.json();
+
+        // on injecte les kits dans l’objet league
+        const leagueWithKits = {
+          ...leagueRes.data,
+          kits: kitsData || [],
+        };
+
+        setLeague(leagueWithKits);
+      } catch (e) {
+        console.error(e);
+        setLeague(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
   }, [id]);
 
-  if (loading) return <div className="animate-fade-in-up px-4 lg:px-8 py-16"><div className="h-48 bg-card animate-pulse max-w-4xl mx-auto" /></div>;
-  if (!league) return <div className="px-4 lg:px-8 py-16 text-center"><p className="text-muted-foreground">League not found</p></div>;
+  if (loading) {
+    return (
+      <div className="animate-fade-in-up px-4 lg:px-8 py-16">
+        <div className="h-48 bg-card animate-pulse max-w-4xl mx-auto" />
+      </div>
+    );
+  }
+
+  if (!league) {
+    return (
+      <div className="px-4 lg:px-8 py-16 text-center">
+        <p className="text-muted-foreground">League not found</p>
+      </div>
+    );
+  }
 
   const kits = league.kits || [];
+
   const seasons = [...new Set(kits.map(k => k.season).filter(Boolean))].sort().reverse();
   const teamNames = [...new Set(kits.map(k => k.club).filter(Boolean))].sort();
 
@@ -37,29 +77,80 @@ export default function LeagueDetail() {
 
   return (
     <div className="animate-fade-in-up" data-testid="league-detail-page">
+      {/* Header */}
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-          <Link to="/leagues" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4" data-testid="back-to-leagues">
-            <ArrowLeft className="w-3 h-3" /> Leagues
+          <Link
+            to="/leagues"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4"
+            data-testid="back-to-leagues"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Leagues
           </Link>
+
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 bg-secondary flex items-center justify-center shrink-0">
-              {league.logo_url
-                ? <img src={proxyImageUrl(league.logo_url)} alt={league.name} className="w-16 h-16 object-contain" />
-                : <Trophy className="w-10 h-10 text-muted-foreground" />}
+              {league.logo_url ? (
+                <img
+                  src={proxyImageUrl(league.logo_url)}
+                  alt={league.name}
+                  className="w-16 h-16 object-contain"
+                />
+              ) : (
+                <Trophy className="w-10 h-10 text-muted-foreground" />
+              )}
             </div>
+
             <div>
-              <h1 className="text-3xl sm:text-4xl tracking-tighter" data-testid="league-name">{league.name}</h1>
+              <h1
+                className="text-3xl sm:text-4xl tracking-tighter"
+                data-testid="league-name"
+              >
+                {league.name}
+              </h1>
+
               <div className="flex flex-wrap items-center gap-3 mt-2">
-                {league.country_or_region && <span className="text-sm text-muted-foreground flex items-center gap-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}><Globe className="w-3 h-3" /> {league.country_or_region}</span>}
-                {league.organizer && <span className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>by {league.organizer}</span>}
+                {league.country_or_region && (
+                  <span
+                    className="text-sm text-muted-foreground flex items-center gap-1"
+                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+                  >
+                    <Globe className="w-3 h-3" />
+                    {league.country_or_region}
+                  </span>
+                )}
+
+                {league.organizer && (
+                  <span
+                    className="text-sm text-muted-foreground"
+                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+                  >
+                    by {league.organizer}
+                  </span>
+                )}
               </div>
+
               <div className="flex items-center gap-2 mt-3">
-                <Badge variant="secondary" className="rounded-none">{league.kit_count} kits</Badge>
-                <Badge variant="outline" className="rounded-none">{league.level}</Badge>
+                <Badge variant="secondary" className="rounded-none">
+                  {league.kit_count || kits.length} kits
+                </Badge>
+                {league.level && (
+                  <Badge variant="outline" className="rounded-none">
+                    {league.level}
+                  </Badge>
+                )}
+
                 {user && (
-                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
-                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-none border-border ml-2"
+                    onClick={() => setShowEdit(true)}
+                    data-testid="suggest-edit-btn"
+                  >
+                    <Pencil className="w-3 h-3 mr-1" />
+                    Suggest Edit
                   </Button>
                 )}
               </div>
@@ -68,41 +159,81 @@ export default function LeagueDetail() {
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        {/* Filtres */}
         <div className="flex flex-wrap gap-3 mb-6">
-          <select value={filterSeason} onChange={e => setFilterSeason(e.target.value)} className="h-9 px-3 bg-card border border-border rounded-none text-sm" data-testid="league-filter-season">
+          <select
+            value={filterSeason}
+            onChange={e => setFilterSeason(e.target.value)}
+            className="h-9 px-3 bg-card border border-border rounded-none text-sm"
+            data-testid="league-filter-season"
+          >
             <option value="">All Seasons</option>
-            {seasons.map(s => <option key={s} value={s}>{s}</option>)}
+            {seasons.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
           </select>
-          <select value={filterTeam} onChange={e => setFilterTeam(e.target.value)} className="h-9 px-3 bg-card border border-border rounded-none text-sm" data-testid="league-filter-team">
+
+          <select
+            value={filterTeam}
+            onChange={e => setFilterTeam(e.target.value)}
+            className="h-9 px-3 bg-card border border-border rounded-none text-sm"
+            data-testid="league-filter-team"
+          >
             <option value="">All Teams</option>
-            {teamNames.map(t => <option key={t} value={t}>{t}</option>)}
+            {teamNames.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
           </select>
         </div>
 
+        {/* Grid de kits */}
         {filteredKits.length === 0 ? (
           <div className="text-center py-16">
             <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>No kits found in this league</p>
+            <p
+              className="text-sm text-muted-foreground"
+              style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
+            >
+              No kits found in this league
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children" data-testid="league-kits-grid">
-            {filteredKits.map(kit => <JerseyCard key={kit.kit_id} kit={kit} />)}
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children"
+            data-testid="league-kits-grid"
+          >
+            {filteredKits.map(kit => (
+              <JerseyCard
+                key={kit.kit_id}
+                kit={kit}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      {league && (
-        <EntityEditDialog
-          open={showEdit}
-          onOpenChange={setShowEdit}
-          entityType="league"
-          mode="edit"
-          entityId={league.league_id}
-          initialData={{ name: league.name, country_or_region: league.country_or_region, level: league.level, organizer: league.organizer, logo_url: league.logo_url }}
-          onSuccess={() => getLeague(id).then(r => setLeague(r.data))}
-        />
-      )}
+      {/* Dialog édition entité */}
+      <EntityEditDialog
+        open={showEdit}
+        onOpenChange={setShowEdit}
+        entityType="league"
+        mode="edit"
+        entityId={league.league_id}
+        initialData={{
+          name: league.name,
+          country_or_region: league.country_or_region,
+          level: league.level,
+          organizer: league.organizer,
+          logo_url: league.logo_url,
+        }}
+        onSuccess={() => {
+          getLeague(id).then(r =>
+            setLeague(prev => ({ ...(prev || {}), ...r.data }))
+          );
+        }}
+      />
     </div>
   );
 }
