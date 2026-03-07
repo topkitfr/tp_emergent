@@ -1,3 +1,4 @@
+# backend/submission.py
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
@@ -5,9 +6,11 @@ import uuid
 from database import db
 from models import SubmissionCreate, VoteCreate, ReportCreate
 from auth import get_current_user
-from utils import slugify, APPROVAL_THRESHOLD
+from utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
+
 
 router = APIRouter(prefix="/api", tags=["submissions"])
+
 
 ENTITY_COLLECTIONS = {
     "team":   {"collection": "teams",   "id_field": "team_id"},
@@ -16,7 +19,9 @@ ENTITY_COLLECTIONS = {
     "player": {"collection": "players", "id_field": "player_id"},
 }
 
+
 # ─── Submission Routes ───
+
 
 @router.post("/submissions")
 async def create_submission(sub: SubmissionCreate, request: Request):
@@ -189,17 +194,15 @@ async def _apply_entity_submission(updated_sub: dict):
     if mode == "create":
         entity_id = data.get("entity_id")
         if entity_id:
-            # ✅ L'entité existe déjà en for_review → on la passe approved
             await db[config["collection"]].update_one(
                 {config["id_field"]: entity_id},
                 {"$set": {"status": "approved", "updated_at": now}}
             )
         else:
-            # Cas rare : pas encore en base → on crée
-            name      = data.get("name") or data.get("full_name", "")
-            slug      = slugify(name)
-            new_id    = f"{entity_type}_{uuid.uuid4().hex[:12]}"
-            doc       = {k: v for k, v in data.items() if k != "mode"}
+            name   = data.get("name") or data.get("full_name", "")
+            slug   = slugify(name)
+            new_id = f"{entity_type}_{uuid.uuid4().hex[:12]}"
+            doc    = {k: v for k, v in data.items() if k != "mode"}
             doc[config["id_field"]] = new_id
             doc["slug"]             = slug
             doc["status"]           = "approved"
@@ -208,24 +211,28 @@ async def _apply_entity_submission(updated_sub: dict):
             await db[config["collection"]].insert_one(doc)
 
     elif mode == "edit":
-        entity_id    = data.get("entity_id", "")
+        entity_id     = data.get("entity_id", "")
         update_fields = {
             k: v for k, v in data.items()
             if k not in ("mode", "entity_id", "entity_type") and v is not None
         }
         update_fields["updated_at"] = now
+
         if entity_type == "team" and entity_id:
             if "name" in update_fields:
                 update_fields["slug"] = slugify(update_fields["name"])
             await db.teams.update_one({"team_id": entity_id}, {"$set": update_fields})
+
         elif entity_type == "league" and entity_id:
             if "name" in update_fields:
                 update_fields["slug"] = slugify(update_fields["name"])
             await db.leagues.update_one({"league_id": entity_id}, {"$set": update_fields})
+
         elif entity_type == "brand" and entity_id:
             if "name" in update_fields:
                 update_fields["slug"] = slugify(update_fields["name"])
             await db.brands.update_one({"brand_id": entity_id}, {"$set": update_fields})
+
         elif entity_type == "player" and entity_id:
             if "full_name" in update_fields:
                 update_fields["slug"] = slugify(update_fields["full_name"])
@@ -244,6 +251,7 @@ async def _apply_entity_submission(updated_sub: dict):
 
 
 # ─── Report Routes ───
+
 
 @router.post("/reports")
 async def create_report(report: ReportCreate, request: Request):
@@ -330,13 +338,35 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
         else:
             corrections = updated["corrections"]
             if updated["target_type"] == "master_kit":
-                update_fields = {k: v for k, v in corrections.items() if k not in ("kit_id", "_id")}
+                update_fields = {
+                    k: v for k, v in corrections.items()
+                    if k not in ("kit_id", "_id")
+                }
+
+                # Nouveau comportement : correction du club → création / liaison team
+                new_club = corrections.get("club")
+                if new_club:
+                    team_id = await get_or_create_team_by_name(new_club)
+                    update_fields["club"] = new_club
+                    update_fields["team_id"] = team_id
+
                 if update_fields:
-                    await db.master_kits.update_one({"kit_id": updated["target_id"]}, {"$set": update_fields})
+                    await db.master_kits.update_one(
+                        {"kit_id": updated["target_id"]},
+                        {"$set": update_fields}
+                    )
+
             elif updated["target_type"] == "version":
-                update_fields = {k: v for k, v in corrections.items() if k not in ("version_id", "_id")}
+                update_fields = {
+                    k: v for k, v in corrections.items()
+                    if k not in ("version_id", "_id")
+                }
                 if update_fields:
-                    await db.versions.update_one({"version_id": updated["target_id"]}, {"$set": update_fields})
+                    await db.versions.update_one(
+                        {"version_id": updated["target_id"]},
+                        {"$set": update_fields}
+                    )
+
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
 
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:

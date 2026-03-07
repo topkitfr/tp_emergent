@@ -1,5 +1,9 @@
 import re
 from datetime import datetime, timezone
+import uuid
+
+from database import db
+
 
 MODERATOR_EMAILS = ["topkitfr@gmail.com"]
 APPROVAL_THRESHOLD = 5
@@ -11,10 +15,52 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 def slugify(text: str) -> str:
     text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_]+', '-', text)
-    text = re.sub(r'-+', '-', text)
-    return text.strip('-')
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+async def get_or_create_team_by_name(name: str) -> str:
+    """
+    Retourne un team_id pour 'name'.
+    - Si la team existe déjà (match exact sur name), renvoie son team_id.
+    - Sinon crée une team minimale et renvoie le nouveau team_id.
+    """
+    if not name:
+        raise ValueError("Team name is required")
+
+    # 1) Chercher une team existante
+    existing = await db.teams.find_one(
+        {"name": name},
+        {"_id": 0, "team_id": 1}
+    )
+    if existing and existing.get("team_id"):
+        return existing["team_id"]
+
+    # 2) Créer une nouvelle team minimale
+    now = datetime.now(timezone.utc).isoformat()
+    team_id = f"team_{uuid.uuid4().hex[:12]}"
+    slug = slugify(name)
+
+    doc = {
+        "team_id": team_id,
+        "name": name,
+        "slug": slug,
+        "country": "",
+        "city": "",
+        "founded": None,
+        "primary_color": "",
+        "secondary_color": "",
+        "crest_url": "",
+        "aka": [],
+        "kit_count": 0,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    await db.teams.insert_one(doc)
+    return team_id
 
 
 # Estimation constants
@@ -26,8 +72,20 @@ ESTIMATION_COMPETITION_COEFF = {
     "Intercontinental Cup": 1.0,
     "World Cup": 1.0,
 }
-ESTIMATION_ORIGIN_COEFF = {"Club Stock": 0.5, "Match Prepared": 1.0, "Match Worn": 1.5, "Training": 0.0, "Shop": 0.0}
-ESTIMATION_STATE_COEFF = {"New with tag": 0.3, "Very good": 0.1, "Used": 0.0, "Damaged": -0.2, "Needs restoration": -0.4}
+ESTIMATION_ORIGIN_COEFF = {
+    "Club Stock": 0.5,
+    "Match Prepared": 1.0,
+    "Match Worn": 1.5,
+    "Training": 0.0,
+    "Shop": 0.0,
+}
+ESTIMATION_STATE_COEFF = {
+    "New with tag": 0.3,
+    "Very good": 0.1,
+    "Used": 0.0,
+    "Damaged": -0.2,
+    "Needs restoration": -0.4,
+}
 ESTIMATION_FLOCKING_COEFF = {"Official": 0.15, "Personalized": 0.0}
 ESTIMATION_SIGNED_COEFF = 1.5
 ESTIMATION_SIGNED_PROOF_COEFF = 1.0
@@ -35,9 +93,16 @@ ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
 
 
-def calculate_estimation(model_type: str, competition: str, condition_origin: str,
-                         physical_state: str, flocking_origin: str,
-                         signed: bool, signed_proof: bool, season_year: int):
+def calculate_estimation(
+    model_type: str,
+    competition: str,
+    condition_origin: str,
+    physical_state: str,
+    flocking_origin: str,
+    signed: bool,
+    signed_proof: bool,
+    season_year: int,
+):
     base = ESTIMATION_BASE_PRICES.get(model_type, 60)
     coeff_sum = 0.0
     breakdown = []
@@ -82,5 +147,5 @@ def calculate_estimation(model_type: str, competition: str, condition_origin: st
         "model_type": model_type,
         "coeff_sum": round(coeff_sum, 2),
         "estimated_price": estimated_price,
-        "breakdown": breakdown
+        "breakdown": breakdown,
     }
