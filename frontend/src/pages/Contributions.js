@@ -1,7 +1,8 @@
 import api from '@/lib/api';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, createTeamPending, createBrandPending, createLeaguePending, proxyImageUrl } from '@/lib/api';import { Button } from '@/components/ui/button';
+import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, proxyImageUrl } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +18,6 @@ const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
-
 
 const FIELD_LABELS = {
   club: 'Club / Team', season: 'Season', kit_type: 'Type', brand: 'Brand',
@@ -46,6 +46,22 @@ const TYPE_LABELS = {
   master_kit: 'Master Kit', version: 'Version',
   team: 'Team', league: 'League', brand: 'Brand', player: 'Player',
 };
+
+// ─── FIX #1 : helper universel pour le nom d'affichage ───────────────────────
+function getDisplayName(item) {
+  return (
+    item?.display_name  ||
+    item?.name          ||
+    item?.full_name     ||
+    item?.data?.name    ||
+    item?.data?.full_name ||
+    '—'
+  );
+}
+function normalizeEntities(items = []) {
+  return items.map(item => ({ ...item, display_name: getDisplayName(item) }));
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
   const isEntity = ['team', 'league', 'brand', 'player'].includes(sub.submission_type);
@@ -215,8 +231,26 @@ export default function Contributions() {
     }
   };
 
+  // ─── FIX #2 : fetchLinkedRefs ────────────────────────────────────────────
+  const fetchLinkedRefs = async (masterKitSubmissionId) => {
+    if (!masterKitSubmissionId) return;
+    try {
+      const res = await api.get(`/pending/refs?master_kit_submission_id=${masterKitSubmissionId}`);
+      const linked = res.data || {};
+      setPendingEntities(prev => ({
+        team:   normalizeEntities([...(linked.team   || []), ...prev.team.filter(i => !(linked.team   || []).some(n => n.submission_id === i.submission_id))]),
+        league: normalizeEntities([...(linked.league || []), ...prev.league.filter(i => !(linked.league || []).some(n => n.submission_id === i.submission_id))]),
+        brand:  normalizeEntities([...(linked.brand  || []), ...prev.brand.filter(i => !(linked.brand  || []).some(n => n.submission_id === i.submission_id))]),
+        player: normalizeEntities([...(linked.player || []), ...prev.player.filter(i => !(linked.player || []).some(n => n.submission_id === i.submission_id))]),
+      }));
+    } catch (e) {
+      console.error('Failed to fetch linked refs', e);
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDataInner = async () => {
       setLoading(true);
       try {
         const status = activeTab === 'approved' ? 'approved' : 'pending';
@@ -233,15 +267,16 @@ export default function Contributions() {
       }
     };
 
+    // ─── FIX #3 : normalizeEntities ──────────────────────────────────────
     const fetchPendingEntities = async () => {
       setLoadingPending(true);
       try {
         const res = await api.get('/pending');
         setPendingEntities({
-          team: res.data.team || [],
-          league: res.data.league || [],
-          brand: res.data.brand || [],
-          player: res.data.player || [],
+          team:   normalizeEntities(res.data.team   || []),
+          league: normalizeEntities(res.data.league || []),
+          brand:  normalizeEntities(res.data.brand  || []),
+          player: normalizeEntities(res.data.player || []),
         });
       } catch (e) {
         console.error('Failed to fetch pending entities', e);
@@ -250,6 +285,7 @@ export default function Contributions() {
         setLoadingPending(false);
       }
     };
+    // ─────────────────────────────────────────────────────────────────────
 
     const fetchExistingKits = async () => {
       try {
@@ -261,7 +297,7 @@ export default function Contributions() {
       }
     };
 
-    fetchData();
+    fetchDataInner();
     fetchPendingEntities();
     fetchExistingKits();
   }, [activeTab]);
@@ -275,38 +311,33 @@ export default function Contributions() {
       toast.error(err.response?.data?.detail || 'Failed to vote');
     }
   };
-const handleVotePendingReference = async (item, vote) => {
-  const subId = item.submission_id;
 
-  if (!subId) {
-    toast.error('No submission linked to this reference');
-    return;
-  }
-
-  try {
-    await voteOnSubmission(subId, vote);
-    toast.success(`Vote recorded: ${vote}`);
-
-    // 1) on rafraîchit les submissions (pour que status/votes se mettent à jour)
-    fetchData();
-
-    // 2) on rafraîchit les pending entities (si la submission est passée approved,
-    //    ton backend doit mettre à jour l’entité et éventuellement la retirer de /pending)
-    try {
-      const res = await api.get('/pending');
-      setPendingEntities({
-        team: res.data.team || [],
-        league: res.data.league || [],
-        brand: res.data.brand || [],
-        player: res.data.player || [],
-      });
-    } catch (e) {
-      console.error('Failed to refresh pending entities', e);
+  const handleVotePendingReference = async (item, vote) => {
+    const subId = item.submission_id;
+    if (!subId) {
+      toast.error('No submission linked to this reference');
+      return;
     }
-  } catch (err) {
-    toast.error(err.response?.data?.detail || 'Failed to vote on reference');
-  }
-};
+    try {
+      await voteOnSubmission(subId, vote);
+      toast.success(`Vote recorded: ${vote}`);
+      fetchData();
+      try {
+        const res = await api.get('/pending');
+        setPendingEntities({
+          team:   normalizeEntities(res.data.team   || []),
+          league: normalizeEntities(res.data.league || []),
+          brand:  normalizeEntities(res.data.brand  || []),
+          player: normalizeEntities(res.data.player || []),
+        });
+      } catch (e) {
+        console.error('Failed to refresh pending entities', e);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to vote on reference');
+    }
+  };
+
   const handleVoteReport = async (repId, vote) => {
     try {
       await voteOnReport(repId, vote);
@@ -317,44 +348,21 @@ const handleVotePendingReference = async (item, vote) => {
     }
   };
 
+  // ─── FIX #4 : handleSubmitKit atomique ──────────────────────────────────
   const handleSubmitKit = async () => {
-    let resolvedTeamId = teamId;
-    let resolvedBrandId = brandId;
-    let resolvedLeagueId = leagueId;
-
-    if (club && !teamId) {
-      try {
-        const res = await createTeamPending({ name: club });
-        resolvedTeamId = res.data?.team_id;
-        toast.info(`Équipe "${club}" créée — en attente de validation`);
-      } catch (e) { console.warn('createTeamPending failed:', e); }
-    }
-    if (brand && !brandId) {
-      try {
-        const res = await createBrandPending({ name: brand });
-        resolvedBrandId = res.data?.brand_id;
-        toast.info(`Marque "${brand}" créée — en attente de validation`);
-      } catch (e) { console.warn('createBrandPending failed:', e); }
-    }
-    if (league && !leagueId) {
-      try {
-        const res = await createLeaguePending({ name: league });
-        resolvedLeagueId = res.data?.league_id;
-        toast.info(`Ligue "${league}" créée — en attente de validation`);
-      } catch (e) { console.warn('createLeaguePending failed:', e); }
-    }
-
     setSubmitting(true);
     try {
       const data = {
         club, season, kit_type: kitType, brand, front_photo: frontPhoto,
         design, sponsor, league, gender,
-        team_id: resolvedTeamId || undefined,
-        brand_id: resolvedBrandId || undefined,
-        league_id: resolvedLeagueId || undefined
+        ...(teamId   && { team_id:   teamId }),
+        ...(brandId  && { brand_id:  brandId }),
+        ...(leagueId && { league_id: leagueId }),
       };
-      await createSubmission({ submission_type: 'master_kit', data });
+      const res = await api.post('/master-kits/submit', data);
+      const newSubmissionId = res.data?.submission_id;
       toast.success('Master Kit submitted for community review!');
+      if (newSubmissionId) await fetchLinkedRefs(newSubmissionId);
       setAddStep(2);
       setSubType('version');
     } catch (err) {
@@ -363,6 +371,7 @@ const handleVotePendingReference = async (item, vote) => {
       setSubmitting(false);
     }
   };
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleSubmitVersion = async () => {
     if (!selectedKit || !competition || !model) {
@@ -402,21 +411,17 @@ const handleVotePendingReference = async (item, vote) => {
     return label.includes(query);
   });
 
-  // ← AJOUT : séparer les submissions selon leur destination
   const entityEditSubs = submissions.filter(s =>
-  ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
-  ['edit', 'removal'].includes(s.data?.mode)
-);
-
-// On exclut aussi les "create" d'entités (ils sont déjà dans RÉFÉRENCES À VALIDER)
-const entityCreateSubs = submissions.filter(s =>
-  ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
-  s.data?.mode === 'create'
-);
-
-const jerseyAndCreateSubs = submissions.filter(s =>
-  !entityEditSubs.includes(s) && !entityCreateSubs.includes(s)
-);
+    ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
+    ['edit', 'removal'].includes(s.data?.mode)
+  );
+  const entityCreateSubs = submissions.filter(s =>
+    ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
+    s.data?.mode === 'create'
+  );
+  const jerseyAndCreateSubs = submissions.filter(s =>
+    !entityEditSubs.includes(s) && !entityCreateSubs.includes(s)
+  );
 
   return (
     <div className="animate-fade-in-up">
@@ -682,7 +687,7 @@ const jerseyAndCreateSubs = submissions.filter(s =>
               <div className="space-y-3">
                 {[1, 2, 3].map(i => <div key={i} className="h-20 bg-card animate-pulse border border-border" />)}
               </div>
-            ) : jerseyAndCreateSubs.length === 0 ? ( // ← MODIFIÉ
+            ) : jerseyAndCreateSubs.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-border mb-8">
                 <FileCheck className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
@@ -691,7 +696,7 @@ const jerseyAndCreateSubs = submissions.filter(s =>
               </div>
             ) : (
               <div className="space-y-3 mb-8" data-testid="submissions-list">
-                {jerseyAndCreateSubs.map(sub => ( // ← MODIFIÉ
+                {jerseyAndCreateSubs.map(sub => (
                   <div key={sub.submission_id} className="border border-border bg-card" data-testid={`submission-${sub.submission_id}`}>
                     <div
                       className="flex items-start justify-between gap-4 p-4 cursor-pointer hover:bg-secondary/20"
@@ -788,52 +793,37 @@ const jerseyAndCreateSubs = submissions.filter(s =>
                           </p>
                           <div className="space-y-2">
                             {list.map(item => (
-  <div
-    key={
-      item.team_id ||
-      item.league_id ||
-      item.brand_id ||
-      item.player_id ||
-      item._id
-    }
-    className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
-  >
-    <span
-      className="text-sm"
-      style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-    >
-      {item.name || item.full_name || '—'}
-    </span>
-
-    <div className="flex items-center gap-2">
-      <Badge
-        variant="outline"
-        className="rounded-none text-[10px] border-accent/40 text-accent"
-      >
-        for review
-      </Badge>
-
-      {/* Boutons de vote reliés à la submission */}
-      <div className="flex gap-1">
-        <button
-          onClick={() => handleVotePendingReference(item, 'up')}
-          className="p-1 border border-border hover:border-primary hover:text-primary"
-          data-testid={`vote-up-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
-        >
-          <ThumbsUp className="w-3 h-3" />
-        </button>
-        <button
-          onClick={() => handleVotePendingReference(item, 'down')}
-          className="p-1 border border-border hover:border-destructive hover:text-destructive"
-          data-testid={`vote-down-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
-        >
-          <ThumbsDown className="w-3 h-3" />
-        </button>
-      </div>
-    </div>
-  </div>
-))}
-
+                              <div
+                                key={item.team_id || item.league_id || item.brand_id || item.player_id || item._id}
+                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
+                              >
+                                {/* FIX #5 : getDisplayName() */}
+                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                                  {getDisplayName(item)}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">
+                                    for review
+                                  </Badge>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => handleVotePendingReference(item, 'up')}
+                                      className="p-1 border border-border hover:border-primary hover:text-primary"
+                                      data-testid={`vote-up-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
+                                    >
+                                      <ThumbsUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleVotePendingReference(item, 'down')}
+                                      className="p-1 border border-border hover:border-destructive hover:text-destructive"
+                                      data-testid={`vote-down-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
+                                    >
+                                      <ThumbsDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       );
@@ -856,8 +846,6 @@ const jerseyAndCreateSubs = submissions.filter(s =>
               </div>
             ) : (
               <div className="space-y-3" data-testid="reports-list">
-
-                {/* Reports classiques kits/versions */}
                 {reports.map(rep => (
                   <div key={rep.report_id} className="border border-border bg-card" data-testid={`report-${rep.report_id}`}>
                     <div
@@ -913,7 +901,6 @@ const jerseyAndCreateSubs = submissions.filter(s =>
                   </div>
                 ))}
 
-                {/* ← AJOUT : Suggest Edit / Removal entités */}
                 {entityEditSubs.map(sub => (
                   <div key={sub.submission_id} className="border border-border bg-card" data-testid={`submission-${sub.submission_id}`}>
                     <div
@@ -975,7 +962,6 @@ const jerseyAndCreateSubs = submissions.filter(s =>
                     )}
                   </div>
                 ))}
-
               </div>
             )}
           </TabsContent>
