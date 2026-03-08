@@ -65,9 +65,14 @@ export default function TeamDetail() {
     );
   }
 
+  const isPending = team.status === 'pending';
+  const isAdminOrModerator = user && (user.role === 'admin' || user.role === 'moderator');
+
   const kits = team.kits || [];
 
-  const seasons = [...new Set(kits.map(k => k.season).filter(Boolean))].sort().reverse();
+  const seasons = [...new Set(kits.map(k => k.season).filter(Boolean))]
+    .sort()
+    .reverse();
   const brands = [...new Set(kits.map(k => k.brand).filter(Boolean))].sort();
 
   const filteredKits = kits.filter(k => {
@@ -143,7 +148,14 @@ export default function TeamDetail() {
                   {team.kit_count || kits.length} kits
                 </Badge>
 
-                {user && (
+                <Badge
+                  variant={isPending ? 'outline' : 'secondary'}
+                  className="rounded-none text-[10px] uppercase tracking-wider ml-2"
+                >
+                  {isPending ? 'Pending' : 'Approved'}
+                </Badge>
+
+                {isAdminOrModerator && !isPending && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -161,6 +173,19 @@ export default function TeamDetail() {
         </div>
       </div>
 
+      {/* Message si pending */}
+      {isPending && (
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6">
+          <div className="border border-border bg-card p-4 mb-4">
+            <p className="text-sm text-muted-foreground">
+              This team reference is pending approval with its jersey submission
+              and cannot be edited yet. Once the related jersey is approved,
+              you will be able to submit correction reports from this page.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         {/* Filtres */}
@@ -173,7 +198,9 @@ export default function TeamDetail() {
           >
             <option value="">All Seasons</option>
             {seasons.map(s => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
 
@@ -185,7 +212,9 @@ export default function TeamDetail() {
           >
             <option value="">All Brands</option>
             {brands.map(b => (
-              <option key={b} value={b}>{b}</option>
+              <option key={b} value={b}>
+                {b}
+              </option>
             ))}
           </select>
         </div>
@@ -207,39 +236,38 @@ export default function TeamDetail() {
             data-testid="team-kits-grid"
           >
             {filteredKits.map(kit => (
-              <JerseyCard
-                key={kit.kit_id}
-                kit={kit}
-              />
+              <JerseyCard key={kit.kit_id} kit={kit} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Dialog édition entité */}
-      <EntityEditDialog
-        open={showEdit}
-        onOpenChange={setShowEdit}
-        entityType="team"
-        mode="edit"
-        entityId={team.team_id}
-        initialData={{
-          name: team.name,
-          country: team.country,
-          city: team.city,
-          founded: team.founded,
-          primary_color: team.primary_color,
-          secondary_color: team.secondary_color,
-          crest_url: team.crest_url,
-        }}
-        onSuccess={async () => {
-          const res = await fetch(`/api/teams/${id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setTeam(prev => ({ ...(prev || {}), ...data }));
-          }
-        }}
-      />
+      {/* Dialog édition entité : seulement si approved */}
+      {showEdit && !isPending && (
+        <EntityEditDialog
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          entityType="team"
+          mode="edit"
+          entityId={team.team_id}
+          initialData={{
+            name: team.name,
+            country: team.country,
+            city: team.city,
+            founded: team.founded,
+            primary_color: team.primary_color,
+            secondary_color: team.secondary_color,
+            crest_url: team.crest_url,
+          }}
+          onSuccess={async () => {
+            const res = await fetch(`/api/teams/${id}`);
+            if (res.ok) {
+              const data = await res.json();
+              setTeam(prev => ({ ...(prev || {}), ...data }));
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

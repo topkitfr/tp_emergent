@@ -1,4 +1,4 @@
-# backend/submission.py
+# backend/routers/submissions.py
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
@@ -8,20 +8,18 @@ from models import SubmissionCreate, VoteCreate, ReportCreate
 from auth import get_current_user
 from utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
 
-
 router = APIRouter(prefix="/api", tags=["submissions"])
 
-
 ENTITY_COLLECTIONS = {
-    "team":   {"collection": "teams",   "id_field": "team_id"},
-    "league": {"collection": "leagues", "id_field": "league_id"},
-    "brand":  {"collection": "brands",  "id_field": "brand_id"},
-    "player": {"collection": "players", "id_field": "player_id"},
+    "team":   {"collection": "teams",   "id_field": "team_id",   "name_field": "name"},
+    "league": {"collection": "leagues", "id_field": "league_id", "name_field": "name"},
+    "brand":  {"collection": "brands",  "id_field": "brand_id",  "name_field": "name"},
+    "player": {"collection": "players", "id_field": "player_id", "name_field": "full_name"},
 }
 
-
-# ─── Submission Routes ───
-
+# ─────────────────────────────────────────────
+# Submission Routes
+# ─────────────────────────────────────────────
 
 @router.post("/submissions")
 async def create_submission(sub: SubmissionCreate, request: Request):
@@ -29,27 +27,75 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player"):
         raise HTTPException(status_code=400, detail="Invalid submission type")
     doc = {
-        "submission_id":   f"sub_{uuid.uuid4().hex[:12]}",
+        "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
         "submission_type": sub.submission_type,
-        "data":            sub.data,
-        "submitted_by":    user["user_id"],
-        "submitter_name":  user.get("name", ""),
-        "status":          "pending",
-        "votes_up":        0,
-        "votes_down":      0,
-        "voters":          [],
-        "created_at":      datetime.now(timezone.utc).isoformat()
+        "data": sub.data,
+        "submitted_by": user["user_id"],
+        "submitter_name": user.get("name", ""),
+        "status": "pending",
+        "votes_up": 0,
+        "votes_down": 0,
+        "voters": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.submissions.insert_one(doc)
     result = await db.submissions.find_one({"submission_id": doc["submission_id"]}, {"_id": 0})
     return result
 
 
+# ─────────────────────────────────────────────
+# NOUVEAU — GET /api/pending/refs
+# Retourne les refs d'entités en attente liées
+# à un master_kit submission donné, avec leur nom.
+#
+# Usage : GET /api/pending/refs?master_kit_submission_id=sub_xxx
+#
+# Réponse :
+# {
+#   "team":   [{"submission_id": "...", "name": "FC Test",  "status": "pending"}],
+#   "brand":  [{"submission_id": "...", "name": "Nike",     "status": "pending"}],
+#   "league": [{"submission_id": "...", "name": "Ligue 1",  "status": "pending"}],
+#   "player": []  ← réservé pour la phase item/collection
+# }
+# ─────────────────────────────────────────────
+@router.get("/pending/refs")
+async def get_pending_refs(master_kit_submission_id: str):
+    refs = {}
+    for etype, cfg in ENTITY_COLLECTIONS.items():
+        subs = await db.submissions.find(
+            {
+                "submission_type": etype,
+                "status": "pending",
+                "data.parent_submission_id": master_kit_submission_id
+            },
+            {"_id": 0}
+        ).to_list(50)
+
+        items = []
+        for s in subs:
+            name = (
+                s.get("data", {}).get("name")
+                or s.get("data", {}).get("full_name")
+                or "—"
+            )
+            items.append({
+                "submission_id": s["submission_id"],
+                "name": name,
+                "status": s["status"],
+                "entity_type": etype,
+            })
+        if items:
+            refs[etype] = items
+
+    return refs
+
+
+# Conservé pour compat ascendante
 @router.get("/pending/submission-id")
 async def get_submission_for_entity(entity_type: str, entity_id: str):
     doc = await db["submissions"].find_one({
         "submission_type": entity_type,
-        "data.entity_id":  entity_id
+        "data.entity_id": entity_id
     })
     if not doc:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -75,8 +121,8 @@ async def get_submission(submission_id: str):
 
 @router.post("/submissions/{submission_id}/vote")
 async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Request):
-    user         = await get_current_user(request)
-    user_role    = user.get("role", "user")
+    user = await get_current_user(request)
+    user_role = user.get("role", "user")
     is_moderator = user_role in ("moderator", "admin")
 
     if not is_moderator:
@@ -87,6 +133,14 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
+
+    # Les refs d'entités sont approuvées en cascade via le master_kit — pas de vote direct
+    if sub["submission_type"] in ("team", "league", "brand", "player"):
+        raise HTTPException(
+            status_code=400,
+            detail="Entity reference submissions are approved automatically when their parent kit is approved."
+        )
+
     if sub["status"] != "pending":
         raise HTTPException(status_code=400, detail="Submission is no longer pending")
     if user["user_id"] in sub.get("voters", []):
@@ -95,7 +149,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
 
     vote_weight = APPROVAL_THRESHOLD if is_moderator and vote.vote == "up" else 1
-    inc_field   = "votes_up" if vote.vote == "up" else "votes_down"
+    inc_field = "votes_up" if vote.vote == "up" else "votes_down"
 
     await db.submissions.update_one(
         {"submission_id": submission_id},
@@ -104,12 +158,14 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
-    # ── APPROBATION ──
+    # ─── APPROBATION ───────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
         data = updated_sub["data"]
+        # FIX: renommé kit_submission_id pour ne pas écraser le param d'URL `submission_id`
+        kit_submission_id = updated_sub["submission_id"]
 
         if updated_sub["submission_type"] == "master_kit":
-            kit_id  = f"kit_{uuid.uuid4().hex[:12]}"
+            kit_id = f"kit_{uuid.uuid4().hex[:12]}"
             kit_doc = {
                 "kit_id":      kit_id,
                 "club":        data.get("club", ""),
@@ -121,8 +177,11 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "design":      data.get("design", ""),
                 "sponsor":     data.get("sponsor", ""),
                 "gender":      data.get("gender", ""),
+                "team_id":     data.get("team_id", ""),
+                "league_id":   data.get("league_id", ""),
+                "brand_id":    data.get("brand_id", ""),
                 "created_by":  updated_sub["submitted_by"],
-                "created_at":  datetime.now(timezone.utc).isoformat()
+                "created_at":  datetime.now(timezone.utc).isoformat(),
             }
             await db.master_kits.insert_one(kit_doc)
             await db.versions.insert_one({
@@ -138,6 +197,32 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "created_at":  datetime.now(timezone.utc).isoformat()
             })
 
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            # ── CASCADE — nouveau flow : submissions avec parent_submission_id ──
+            linked_entity_subs = await db.submissions.find(
+                {
+                    "submission_type": {"$in": ["team", "league", "brand", "player"]},
+                    "status": "pending",
+                    "data.parent_submission_id": kit_submission_id
+                },
+                {"_id": 0}
+            ).to_list(50)
+
+            for entity_sub in linked_entity_subs:
+                await _apply_entity_submission(entity_sub)
+                await db.submissions.update_one(
+                    {"submission_id": entity_sub["submission_id"]},
+                    {"$set": {"status": "approved", "updated_at": now_iso}}
+                )
+
+            # ── CASCADE — compat ascendante : entités pré-créées avec submission_id = kit_submission_id ──
+            for cfg in ENTITY_COLLECTIONS.values():
+                await db[cfg["collection"]].update_many(
+                    {"submission_id": kit_submission_id, "status": "pending"},
+                    {"$set": {"status": "approved", "updated_at": now_iso}}
+                )
+
         elif updated_sub["submission_type"] == "version":
             await db.versions.insert_one({
                 "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
@@ -152,28 +237,33 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 "created_at":  datetime.now(timezone.utc).isoformat()
             })
 
-        elif updated_sub["submission_type"] in ("team", "league", "brand", "player"):
-            await _apply_entity_submission(updated_sub)
-
         await db.submissions.update_one(
             {"submission_id": submission_id},
             {"$set": {"status": "approved"}}
         )
 
-    # ── REJET ──
+    # ─── REJET ────────────────────────────────────────────────────────────────
     elif updated_sub["votes_down"] >= APPROVAL_THRESHOLD:
-        entity_type = updated_sub["submission_type"]
-        if entity_type in ENTITY_COLLECTIONS:
-            entity_id = updated_sub["data"].get("entity_id")
-            config    = ENTITY_COLLECTIONS[entity_type]
-            if entity_id:
-                await db[config["collection"]].update_one(
-                    {config["id_field"]: entity_id},
-                    {"$set": {
-                        "status":     "rejected",
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }}
+        now_iso = datetime.now(timezone.utc).isoformat()
+        kit_submission_id = updated_sub["submission_id"]
+
+        if updated_sub["submission_type"] == "master_kit":
+            # Rejette toutes les refs liées (nouveau flow)
+            await db.submissions.update_many(
+                {
+                    "submission_type": {"$in": ["team", "league", "brand", "player"]},
+                    "status": "pending",
+                    "data.parent_submission_id": kit_submission_id
+                },
+                {"$set": {"status": "rejected", "updated_at": now_iso}}
+            )
+            # Compat ascendante
+            for cfg in ENTITY_COLLECTIONS.values():
+                await db[cfg["collection"]].update_many(
+                    {"submission_id": kit_submission_id, "status": "pending"},
+                    {"$set": {"status": "rejected", "updated_at": now_iso}}
                 )
+
         await db.submissions.update_one(
             {"submission_id": submission_id},
             {"$set": {"status": "rejected"}}
@@ -182,76 +272,74 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     return await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
 
+# ─────────────────────────────────────────────
+# Helper interne — applique une submission d'entité
+# Appelé uniquement en cascade depuis vote_on_submission (master_kit approved)
+# ─────────────────────────────────────────────
 async def _apply_entity_submission(updated_sub: dict):
     entity_type = updated_sub["submission_type"]
-    data        = updated_sub["data"]
-    mode        = data.get("mode", "create")
-    now         = datetime.now(timezone.utc).isoformat()
-    config      = ENTITY_COLLECTIONS.get(entity_type)
+    data = updated_sub["data"]
+    mode = data.get("mode", "create")
+    now = datetime.now(timezone.utc).isoformat()
+    config = ENTITY_COLLECTIONS.get(entity_type)
     if not config:
         return
+
+    sub_id = updated_sub.get("submission_id")
 
     if mode == "create":
         entity_id = data.get("entity_id")
         if entity_id:
+            # Entité pré-créée (ancien flow) : on l'approuve juste
             await db[config["collection"]].update_one(
                 {config["id_field"]: entity_id},
                 {"$set": {"status": "approved", "updated_at": now}}
             )
         else:
-            name   = data.get("name") or data.get("full_name", "")
-            slug   = slugify(name)
+            # Nouveau flow : création directement en approved
+            name = data.get("name") or data.get("full_name", "")
+            slug = slugify(name)
             new_id = f"{entity_type}_{uuid.uuid4().hex[:12]}"
-            doc    = {k: v for k, v in data.items() if k != "mode"}
+            doc = {k: v for k, v in data.items() if k not in ("mode", "parent_submission_id")}
             doc[config["id_field"]] = new_id
-            doc["slug"]             = slug
-            doc["status"]           = "approved"
-            doc["created_at"]       = now
-            doc["updated_at"]       = now
+            doc["slug"]       = slug
+            doc["status"]     = "approved"
+            doc["created_at"] = now
+            doc["updated_at"] = now
+            if sub_id:
+                doc["submission_id"] = sub_id
             await db[config["collection"]].insert_one(doc)
 
     elif mode == "edit":
-        entity_id     = data.get("entity_id", "")
+        entity_id = data.get("entity_id", "")
         update_fields = {
             k: v for k, v in data.items()
-            if k not in ("mode", "entity_id", "entity_type") and v is not None
+            if k not in ("mode", "entity_id", "entity_type", "parent_submission_id") and v is not None
         }
         update_fields["updated_at"] = now
+        update_fields["status"]     = "approved"  # déverrouille après approbation
 
-        if entity_type == "team" and entity_id:
-            if "name" in update_fields:
-                update_fields["slug"] = slugify(update_fields["name"])
-            await db.teams.update_one({"team_id": entity_id}, {"$set": update_fields})
+        name_key = "full_name" if entity_type == "player" else "name"
+        if name_key in update_fields:
+            update_fields["slug"] = slugify(update_fields[name_key])
 
-        elif entity_type == "league" and entity_id:
-            if "name" in update_fields:
-                update_fields["slug"] = slugify(update_fields["name"])
-            await db.leagues.update_one({"league_id": entity_id}, {"$set": update_fields})
-
-        elif entity_type == "brand" and entity_id:
-            if "name" in update_fields:
-                update_fields["slug"] = slugify(update_fields["name"])
-            await db.brands.update_one({"brand_id": entity_id}, {"$set": update_fields})
-
-        elif entity_type == "player" and entity_id:
-            if "full_name" in update_fields:
-                update_fields["slug"] = slugify(update_fields["full_name"])
-            await db.players.update_one({"player_id": entity_id}, {"$set": update_fields})
+        if entity_id:
+            await db[config["collection"]].update_one(
+                {config["id_field"]: entity_id},
+                {"$set": update_fields}
+            )
 
     elif mode == "removal":
         entity_id = data.get("entity_id", "")
-        if entity_type == "team" and entity_id:
-            await db.teams.delete_one({"team_id": entity_id})
-        elif entity_type == "league" and entity_id:
-            await db.leagues.delete_one({"league_id": entity_id})
-        elif entity_type == "brand" and entity_id:
-            await db.brands.delete_one({"brand_id": entity_id})
-        elif entity_type == "player" and entity_id:
-            await db.players.delete_one({"player_id": entity_id})
+        if entity_id:
+            await db[config["collection"]].delete_one(
+                {config["id_field"]: entity_id}
+            )
 
 
-# ─── Report Routes ───
-
+# ─────────────────────────────────────────────
+# Report Routes
+# ─────────────────────────────────────────────
 
 @router.post("/reports")
 async def create_report(report: ReportCreate, request: Request):
@@ -264,9 +352,11 @@ async def create_report(report: ReportCreate, request: Request):
         raise HTTPException(status_code=400, detail="Invalid target type")
     if not target:
         raise HTTPException(status_code=404, detail="Target not found")
+
     report_type = report.report_type or "error"
     if report_type not in ("error", "removal"):
         raise HTTPException(status_code=400, detail="report_type must be 'error' or 'removal'")
+
     doc = {
         "report_id":     f"rep_{uuid.uuid4().hex[:12]}",
         "target_type":   report.target_type,
@@ -299,8 +389,8 @@ async def list_reports(status: Optional[str] = "pending", skip: int = 0, limit: 
 
 @router.post("/reports/{report_id}/vote")
 async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
-    user         = await get_current_user(request)
-    user_role    = user.get("role", "user")
+    user = await get_current_user(request)
+    user_role = user.get("role", "user")
     is_moderator = user_role in ("moderator", "admin")
 
     if not is_moderator:
@@ -319,7 +409,7 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
         raise HTTPException(status_code=400, detail="Vote must be 'up' or 'down'")
 
     vote_weight = APPROVAL_THRESHOLD if is_moderator and vote.vote == "up" else 1
-    inc_field   = "votes_up" if vote.vote == "up" else "votes_down"
+    inc_field = "votes_up" if vote.vote == "up" else "votes_down"
 
     await db.reports.update_one(
         {"report_id": report_id},
@@ -342,20 +432,16 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                     k: v for k, v in corrections.items()
                     if k not in ("kit_id", "_id")
                 }
-
-                # Nouveau comportement : correction du club → création / liaison team
                 new_club = corrections.get("club")
                 if new_club:
                     team_id = await get_or_create_team_by_name(new_club)
-                    update_fields["club"] = new_club
+                    update_fields["club"]    = new_club
                     update_fields["team_id"] = team_id
-
                 if update_fields:
                     await db.master_kits.update_one(
                         {"kit_id": updated["target_id"]},
                         {"$set": update_fields}
                     )
-
             elif updated["target_type"] == "version":
                 update_fields = {
                     k: v for k, v in corrections.items()
@@ -366,7 +452,6 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                         {"version_id": updated["target_id"]},
                         {"$set": update_fields}
                     )
-
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
 
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:

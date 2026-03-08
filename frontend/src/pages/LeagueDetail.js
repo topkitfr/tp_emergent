@@ -26,16 +26,14 @@ export default function LeagueDetail() {
         // 1) league
         const leagueRes = await getLeague(id);
 
-        // 2) kits de la league (endpoint qu’on vient de créer)
+        // 2) kits de la league
         const kitsRes = await fetch(`/api/leagues/${id}/kits`);
         const kitsData = await kitsRes.json();
 
-        // on injecte les kits dans l’objet league
         const leagueWithKits = {
           ...leagueRes.data,
           kits: kitsData || [],
         };
-
         setLeague(leagueWithKits);
       } catch (e) {
         console.error(e);
@@ -44,196 +42,202 @@ export default function LeagueDetail() {
         setLoading(false);
       }
     }
-
     loadData();
   }, [id]);
 
   if (loading) {
     return (
-      <div className="animate-fade-in-up px-4 lg:px-8 py-16">
-        <div className="h-48 bg-card animate-pulse max-w-4xl mx-auto" />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <p>Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (!league) {
     return (
-      <div className="px-4 lg:px-8 py-16 text-center">
-        <p className="text-muted-foreground">League not found</p>
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <p>League not found</p>
+        </div>
       </div>
     );
   }
 
-  const kits = league.kits || [];
+  const isPending = league.status === 'pending';
+  const isAdminOrModerator = user && (user.role === 'admin' || user.role === 'moderator');
 
-  const seasons = [...new Set(kits.map(k => k.season).filter(Boolean))].sort().reverse();
-  const teamNames = [...new Set(kits.map(k => k.club).filter(Boolean))].sort();
+  const seasons = Array.from(
+    new Set((league.kits || []).map(k => k.season).filter(Boolean))
+  )
+    .sort()
+    .reverse();
 
-  const filteredKits = kits.filter(k => {
+  const teams = Array.from(
+    new Set((league.kits || []).map(k => k.club).filter(Boolean))
+  ).sort();
+
+  const filteredKits = (league.kits || []).filter(k => {
     if (filterSeason && k.season !== filterSeason) return false;
     if (filterTeam && k.club !== filterTeam) return false;
     return true;
   });
 
   return (
-    <div className="animate-fade-in-up" data-testid="league-detail-page">
-      {/* Header */}
-      <div className="border-b border-border px-4 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-6">
           <Link
-            to="/leagues"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4"
-            data-testid="back-to-leagues"
+            to="/database/leagues"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
           >
-            <ArrowLeft className="w-3 h-3" />
-            Leagues
+            <ArrowLeft className="w-4 h-4" />
+            Back to leagues
           </Link>
 
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-secondary flex items-center justify-center shrink-0">
-              {league.logo_url ? (
-                <img
-                  src={proxyImageUrl(league.logo_url)}
-                  alt={league.name}
-                  className="w-16 h-16 object-contain"
-                />
-              ) : (
-                <Trophy className="w-10 h-10 text-muted-foreground" />
+          {isAdminOrModerator && !isPending && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-none"
+              onClick={() => setShowEdit(true)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Suggest edit
+            </Button>
+          )}
+        </div>
+
+        {/* League header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1
+              className="text-2xl font-black uppercase mb-1"
+              style={{ fontFamily: 'Barlow Condensed, sans-serif' }}
+            >
+              {league.name}
+            </h1>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="rounded-none text-[10px] uppercase tracking-wider"
+              >
+                League
+              </Badge>
+              <Badge
+                variant={isPending ? 'outline' : 'secondary'}
+                className="rounded-none text-[10px] uppercase tracking-wider"
+              >
+                {isPending ? 'Pending' : 'Approved'}
+              </Badge>
+              {league.country_or_region && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Globe className="w-3 h-3" />
+                  {league.country_or_region}
+                </span>
+              )}
+              {league.level && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Trophy className="w-3 h-3" />
+                  {league.level}
+                </span>
               )}
             </div>
-
-            <div>
-              <h1
-                className="text-3xl sm:text-4xl tracking-tighter"
-                data-testid="league-name"
-              >
-                {league.name}
-              </h1>
-
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                {league.country_or_region && (
-                  <span
-                    className="text-sm text-muted-foreground flex items-center gap-1"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                  >
-                    <Globe className="w-3 h-3" />
-                    {league.country_or_region}
-                  </span>
-                )}
-
-                {league.organizer && (
-                  <span
-                    className="text-sm text-muted-foreground"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-                  >
-                    by {league.organizer}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 mt-3">
-                <Badge variant="secondary" className="rounded-none">
-                  {league.kit_count || kits.length} kits
-                </Badge>
-                {league.level && (
-                  <Badge variant="outline" className="rounded-none">
-                    {league.level}
-                  </Badge>
-                )}
-
-                {user && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-none border-border ml-2"
-                    onClick={() => setShowEdit(true)}
-                    data-testid="suggest-edit-btn"
-                  >
-                    <Pencil className="w-3 h-3 mr-1" />
-                    Suggest Edit
-                  </Button>
-                )}
-              </div>
-            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-        {/* Filtres */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <select
-            value={filterSeason}
-            onChange={e => setFilterSeason(e.target.value)}
-            className="h-9 px-3 bg-card border border-border rounded-none text-sm"
-            data-testid="league-filter-season"
-          >
-            <option value="">All Seasons</option>
-            {seasons.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          <select
-            value={filterTeam}
-            onChange={e => setFilterTeam(e.target.value)}
-            className="h-9 px-3 bg-card border border-border rounded-none text-sm"
-            data-testid="league-filter-team"
-          >
-            <option value="">All Teams</option>
-            {teamNames.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          {league.logo && (
+            <div className="w-16 h-16 bg-card border border-border flex items-center justify-center">
+              <img
+                src={proxyImageUrl(league.logo)}
+                alt={league.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Grid de kits */}
-        {filteredKits.length === 0 ? (
-          <div className="text-center py-16">
-            <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p
-              className="text-sm text-muted-foreground"
-              style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
-            >
-              No kits found in this league
+        {/* Message si pending */}
+        {isPending && (
+          <div className="mb-8 border border-border bg-card p-4">
+            <p className="text-sm text-muted-foreground">
+              This league reference is pending approval with its jersey submission
+              and cannot be edited yet. Once the related jersey is approved,
+              you will be able to submit correction reports from this page.
             </p>
           </div>
-        ) : (
-          <div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children"
-            data-testid="league-kits-grid"
-          >
-            {filteredKits.map(kit => (
-              <JerseyCard
-                key={kit.kit_id}
-                kit={kit}
-              />
-            ))}
+        )}
+
+        {/* Filtres + kits */}
+        <div className="mb-4 flex flex-wrap gap-3 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Filter by season
+            </span>
+            <select
+              className="bg-card border border-border text-xs px-2 py-1 rounded-none"
+              value={filterSeason}
+              onChange={e => setFilterSeason(e.target.value)}
+            >
+              <option value="">All</option>
+              {seasons.map(s => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Filter by club
+            </span>
+            <select
+              className="bg-card border border-border text-xs px-2 py-1 rounded-none"
+              value={filterTeam}
+              onChange={e => setFilterTeam(e.target.value)}
+            >
+              <option value="">All</option>
+              {teams.map(t => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <h2
+            className="text-sm uppercase tracking-wider text-muted-foreground mb-2"
+            style={{ fontFamily: 'Barlow Condensed, sans-serif' }}
+          >
+            <Shirt className="w-4 h-4 inline mr-1" /> Kits
+          </h2>
+          {filteredKits.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No kits found for this league with current filters.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {filteredKits.map(kit => (
+                <JerseyCard key={kit.kit_id} kit={kit} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Dialog d'édition uniquement si league approuvée */}
+        {showEdit && !isPending && (
+          <EntityEditDialog
+            entityType="league"
+            entity={league}
+            open={showEdit}
+            onOpenChange={setShowEdit}
+          />
         )}
       </div>
-
-      {/* Dialog édition entité */}
-      <EntityEditDialog
-        open={showEdit}
-        onOpenChange={setShowEdit}
-        entityType="league"
-        mode="edit"
-        entityId={league.league_id}
-        initialData={{
-          name: league.name,
-          country_or_region: league.country_or_region,
-          level: league.level,
-          organizer: league.organizer,
-          logo_url: league.logo_url,
-        }}
-        onSuccess={() => {
-          getLeague(id).then(r =>
-            setLeague(prev => ({ ...(prev || {}), ...r.data }))
-          );
-        }}
-      />
     </div>
   );
 }
