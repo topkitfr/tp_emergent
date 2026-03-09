@@ -48,8 +48,6 @@ const TYPE_LABELS = {
 };
 
 // ─── FIX #1 : helper universel pour le nom d'affichage ───────────────────────
-// Couvre item.name, item.full_name, item.display_name (backend enrichi),
-// et les cas où le nom est imbriqué dans item.data.
 function getDisplayName(item) {
   return (
     item?.display_name  ||
@@ -60,7 +58,6 @@ function getDisplayName(item) {
     '—'
   );
 }
-// Normalise un tableau en injectant display_name sur chaque item
 function normalizeEntities(items = []) {
   return items.map(item => ({ ...item, display_name: getDisplayName(item) }));
 }
@@ -234,7 +231,7 @@ export default function Contributions() {
     }
   };
 
-  // ─── FIX #2 : fetchLinkedRefs — merge les refs liées après soumission ────────
+  // ─── FIX #2 : fetchLinkedRefs ────────────────────────────────────────────
   const fetchLinkedRefs = async (masterKitSubmissionId) => {
     if (!masterKitSubmissionId) return;
     try {
@@ -250,7 +247,7 @@ export default function Contributions() {
       console.error('Failed to fetch linked refs', e);
     }
   };
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const fetchDataInner = async () => {
@@ -270,7 +267,7 @@ export default function Contributions() {
       }
     };
 
-    // ─── FIX #3 : normalizeEntities sur chaque tableau ────────────────────────
+    // ─── FIX #3 : normalizeEntities ──────────────────────────────────────
     const fetchPendingEntities = async () => {
       setLoadingPending(true);
       try {
@@ -288,7 +285,7 @@ export default function Contributions() {
         setLoadingPending(false);
       }
     };
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
 
     const fetchExistingKits = async () => {
       try {
@@ -351,7 +348,7 @@ export default function Contributions() {
     }
   };
 
-  // ─── FIX #4 : handleSubmitKit — 1 appel atomique au lieu de 3+1 ──────────
+  // ─── FIX #4 : handleSubmitKit atomique ──────────────────────────────────
   const handleSubmitKit = async () => {
     setSubmitting(true);
     try {
@@ -362,19 +359,10 @@ export default function Contributions() {
         ...(brandId  && { brand_id:  brandId }),
         ...(leagueId && { league_id: leagueId }),
       };
-      // POST /api/master-kits/submit crée atomiquement :
-      //   1. la submission master_kit
-      //   2. les submissions d'entités manquantes avec parent_submission_id
       const res = await api.post('/master-kits/submit', data);
       const newSubmissionId = res.data?.submission_id;
-
       toast.success('Master Kit submitted for community review!');
-
-      // Récupère immédiatement les refs liées → elles apparaissent dans RÉFÉRENCES À VALIDER
-      if (newSubmissionId) {
-        await fetchLinkedRefs(newSubmissionId);
-      }
-
+      if (newSubmissionId) await fetchLinkedRefs(newSubmissionId);
       setAddStep(2);
       setSubType('version');
     } catch (err) {
@@ -809,7 +797,7 @@ export default function Contributions() {
                                 key={item.team_id || item.league_id || item.brand_id || item.player_id || item._id}
                                 className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
                               >
-                                {/* FIX #5 : getDisplayName() au lieu de item.name || item.full_name || '—' */}
+                                {/* FIX #5 : getDisplayName() */}
                                 <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                                   {getDisplayName(item)}
                                 </span>
