@@ -813,27 +813,24 @@ export default function Contributions() {
                                 <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                                   {getDisplayName(item)}
                                 </span>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">
-                                    for review
-                                  </Badge>
-                                  <div className="flex gap-1">
-                                    <button
-                                      onClick={() => handleVotePendingReference(item, 'up')}
-                                      className="p-1 border border-border hover:border-primary hover:text-primary"
-                                      data-testid={`vote-up-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
-                                    >
-                                      <ThumbsUp className="w-3 h-3" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleVotePendingReference(item, 'down')}
-                                      className="p-1 border border-border hover:border-destructive hover:text-destructive"
-                                      data-testid={`vote-down-pending-${item.submission_id || item.team_id || item.league_id || item.brand_id || item.player_id}`}
-                                    >
-                                      <ThumbsDown className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
+                               <div
+  key={item.team_id || item.league_id || item.brand_id || item.player_id || item._id}
+  className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
+>
+  <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+    {getDisplayName(item)}
+  </span>
+  <div className="flex items-center gap-2">
+    <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">
+      for review
+    </Badge>
+    {/* Fix 2 : pas de vote sur les refs — approuvées en cascade avec le kit */}
+    <span className="text-[10px] text-muted-foreground italic">
+      Approved with kit
+    </span>
+  </div>
+</div>
+
                               </div>
                             ))}
                           </div>

@@ -512,10 +512,11 @@ async def update_player(player_id: str, player: PlayerCreate):
 # ─────────────────────────────────────────────
 
 ENTITY_CONFIG = {
-    "team":   {"collection": "teams",   "id_field": "team_id"},
-    "league": {"collection": "leagues", "id_field": "league_id"},
-    "brand":  {"collection": "brands",  "id_field": "brand_id"},
-    "player": {"collection": "players", "id_field": "player_id"},
+    "team":    {"collection": "teams",    "id_field": "team_id"},
+    "league":  {"collection": "leagues",  "id_field": "league_id"},
+    "brand":   {"collection": "brands",   "id_field": "brand_id"},
+    "player":  {"collection": "players",  "id_field": "player_id"},
+    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id"},  # ← AJOUT
 }
 
 

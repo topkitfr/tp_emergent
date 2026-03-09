@@ -11,11 +11,13 @@ from utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
 router = APIRouter(prefix="/api", tags=["submissions"])
 
 ENTITY_COLLECTIONS = {
-    "team":   {"collection": "teams",   "id_field": "team_id",   "name_field": "name"},
-    "league": {"collection": "leagues", "id_field": "league_id", "name_field": "name"},
-    "brand":  {"collection": "brands",  "id_field": "brand_id",  "name_field": "name"},
-    "player": {"collection": "players", "id_field": "player_id", "name_field": "full_name"},
+    "team":    {"collection": "teams",    "id_field": "team_id",    "name_field": "name"},
+    "league":  {"collection": "leagues",  "id_field": "league_id",  "name_field": "name"},
+    "brand":   {"collection": "brands",   "id_field": "brand_id",   "name_field": "name"},
+    "player":  {"collection": "players",  "id_field": "player_id",  "name_field": "full_name"},
+    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},  # ← AJOUT
 }
+
 
 # ─────────────────────────────────────────────
 # Submission Routes
