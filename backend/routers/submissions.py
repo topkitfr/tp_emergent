@@ -43,141 +43,6 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     return result
 
 
-# ─── NEW: Atomic Master Kit Submit ───────────────────────────────────────────
-# Crée en une seule requête :
-#   1. la submission master_kit
-#   2. une submission pending par entité manquante (team / brand / league)
-#      avec parent_submission_id → affiché dans RÉFÉRENCES À VALIDER
-# Retourne { submission_id, entity_submissions[] }
-@router.post("/master-kits/submit")
-async def submit_master_kit_atomic(request: Request):
-    user = await get_current_user(request)
-    body = await request.json()
-    now  = datetime.now(timezone.utc).isoformat()
-
-    club      = body.get("club", "").strip()
-    brand     = body.get("brand", "").strip()
-    league    = body.get("league", "").strip()
-    team_id   = body.get("team_id")
-    brand_id  = body.get("brand_id")
-    league_id = body.get("league_id")
-
-    # 1. Submission master_kit
-    kit_sub_id = f"sub_{uuid.uuid4().hex[:12]}"
-    kit_sub_doc = {
-        "submission_id":   kit_sub_id,
-        "submission_type": "master_kit",
-        "data": {
-            "club":        club,
-            "season":      body.get("season", ""),
-            "kit_type":    body.get("kit_type", ""),
-            "brand":       brand,
-            "front_photo": body.get("front_photo", ""),
-            "design":      body.get("design", ""),
-            "sponsor":     body.get("sponsor", ""),
-            "league":      league,
-            "gender":      body.get("gender", ""),
-            **({"team_id":   team_id}   if team_id   else {}),
-            **({"brand_id":  brand_id}  if brand_id  else {}),
-            **({"league_id": league_id} if league_id else {}),
-        },
-        "submitted_by":   user["user_id"],
-        "submitter_name": user.get("name", ""),
-        "status":         "pending",
-        "votes_up":       0,
-        "votes_down":     0,
-        "voters":         [],
-        "created_at":     now,
-    }
-    await db.submissions.insert_one(kit_sub_doc)
-
-    entity_submissions = []
-
-    async def _create_entity_pending(etype: str, name: str, extra_fields: dict = {}):
-        """Insère une entité pending + sa submission liée au master_kit."""
-        entity_id_field = f"{etype}_id"
-        entity_id       = f"{etype}_{uuid.uuid4().hex[:12]}"
-        sub_id          = f"sub_{uuid.uuid4().hex[:12]}"
-        collection      = ENTITY_COLLECTIONS[etype]["collection"]
-
-        # Entité pending dans sa collection
-        entity_doc = {
-            entity_id_field: entity_id,
-            "name":          name,
-            "slug":          slugify(name),
-            "status":        "pending",
-            "created_at":    now,
-            **extra_fields,
-        }
-        await db[collection].insert_one(entity_doc)
-
-        # Submission liée
-        await db.submissions.insert_one({
-            "submission_id":        sub_id,
-            "submission_type":      etype,
-            "data":                 {"mode": "create", "name": name, "entity_id": entity_id},
-            "parent_submission_id": kit_sub_id,
-            "submitted_by":         user["user_id"],
-            "submitter_name":       user.get("name", ""),
-            "status":               "pending",
-            "votes_up":             0,
-            "votes_down":           0,
-            "voters":               [],
-            "created_at":           now,
-        })
-        entity_submissions.append({"type": etype, "submission_id": sub_id, "name": name})
-        return entity_id
-
-    # 2a. Team
-    if club and not team_id:
-        existing = await db.teams.find_one({"name": {"$regex": f"^{club}$", "$options": "i"}}, {"_id": 0})
-        if existing:
-            # Equipe déjà approuvée → on lie son id dans la submission
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.team_id": existing["team_id"]}}
-            )
-        else:
-            new_team_id = await _create_entity_pending("team", club)
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.team_id": new_team_id}}
-            )
-
-    # 2b. Brand
-    if brand and not brand_id:
-        existing = await db.brands.find_one({"name": {"$regex": f"^{brand}$", "$options": "i"}}, {"_id": 0})
-        if existing:
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.brand_id": existing["brand_id"]}}
-            )
-        else:
-            new_brand_id = await _create_entity_pending("brand", brand)
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.brand_id": new_brand_id}}
-            )
-
-    # 2c. League
-    if league and not league_id:
-        existing = await db.leagues.find_one({"name": {"$regex": f"^{league}$", "$options": "i"}}, {"_id": 0})
-        if existing:
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.league_id": existing["league_id"]}}
-            )
-        else:
-            new_league_id = await _create_entity_pending("league", league)
-            await db.submissions.update_one(
-                {"submission_id": kit_sub_id},
-                {"$set": {"data.league_id": new_league_id}}
-            )
-
-    return {"submission_id": kit_sub_id, "entity_submissions": entity_submissions}
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 # ─────────────────────────────────────────────
 # NOUVEAU — GET /api/pending/refs
 # Retourne les refs d'entités en attente liées
@@ -235,37 +100,6 @@ async def get_submission_for_entity(entity_type: str, entity_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Submission not found")
     return {"submission_id": doc["submission_id"]}
-
-
-# ─── NEW: Linked Refs for a master_kit submission ────────────────────────────
-# Utilisé par fetchLinkedRefs() côté frontend après submit_master_kit_atomic
-@router.get("/pending/refs")
-async def get_pending_refs_for_submission(master_kit_submission_id: str):
-    """Retourne les submissions d'entités liées à un master_kit submission."""
-    subs = await db.submissions.find(
-        {
-            "parent_submission_id": master_kit_submission_id,
-            "status": "pending",
-        },
-        {"_id": 0}
-    ).to_list(100)
-
-    result = {"team": [], "league": [], "brand": [], "player": []}
-    for sub in subs:
-        etype = sub.get("submission_type")
-        if etype not in result:
-            continue
-        entity_id = sub["data"].get("entity_id")
-        name      = sub["data"].get("name") or sub["data"].get("full_name", "")
-        item = {
-            "submission_id": sub["submission_id"],
-            "name":          name,
-            f"{etype}_id":   entity_id,
-        }
-        result[etype].append(item)
-
-    return result
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get("/submissions")
@@ -598,8 +432,6 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                     k: v for k, v in corrections.items()
                     if k not in ("kit_id", "_id")
                 }
-
-                # Nouveau comportement : correction du club → création / liaison team
                 new_club = corrections.get("club")
                 if new_club:
                     team_id = await get_or_create_team_by_name(new_club)
