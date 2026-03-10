@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { User, Globe, ArrowLeft, Shirt, Calendar, Pencil } from 'lucide-react';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 export default function PlayerDetail() {
   const { id } = useParams();
@@ -14,13 +16,18 @@ export default function PlayerDetail() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
 
+
   useEffect(() => {
     setLoading(true);
     getPlayer(id).then(r => setPlayer(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
+
   if (loading) return <div className="animate-fade-in-up px-4 lg:px-8 py-16"><div className="h-48 bg-card animate-pulse max-w-4xl mx-auto" /></div>;
   if (!player) return <div className="px-4 lg:px-8 py-16 text-center"><p className="text-muted-foreground">Player not found</p></div>;
+
+  const isPending = player.status === 'pending' || player.status === 'for_review';
+  const isAdminOrModerator = authUser && (authUser.role === 'admin' || authUser.role === 'moderator');
 
   const versions = player.versions || [];
 
@@ -33,6 +40,7 @@ export default function PlayerDetail() {
   for (const team of Object.keys(byTeam)) {
     byTeam[team].sort((a, b) => (b.master_kit?.season || '').localeCompare(a.master_kit?.season || ''));
   }
+
 
   return (
     <div className="animate-fade-in-up" data-testid="player-detail-page">
@@ -57,16 +65,54 @@ export default function PlayerDetail() {
               <div className="flex items-center gap-2 mt-3">
                 {player.positions?.length > 0 && player.positions.map(p => <Badge key={p} variant="outline" className="rounded-none">{p}</Badge>)}
                 <Badge variant="secondary" className="rounded-none">{player.kit_count} versions</Badge>
-                {authUser && (
-                  <Button variant="outline" size="sm" className="rounded-none border-border ml-2" onClick={() => setShowEdit(true)} data-testid="suggest-edit-btn">
-                    <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
-                  </Button>
+                <Badge
+                  variant={player.status === 'approved' ? 'secondary' : 'outline'}
+                  className={`rounded-none text-[10px] uppercase tracking-wider ${
+                    player.status === 'for_review' ? 'border-accent/40 text-accent' : ''
+                  }`}
+                >
+                  {player.status === 'approved' ? 'Approved' : player.status === 'for_review' ? 'For Review' : 'Pending'}
+                </Badge>
+                {isAdminOrModerator && !isPending && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="rounded-none border-border ml-2" 
+                          onClick={() => setShowEdit(true)}
+                          disabled={player?.status !== 'approved'}
+                          data-testid="suggest-edit-btn"
+                        >
+                          <Pencil className="w-3 h-3 mr-1" /> Suggest Edit
+                        </Button>
+                      </TooltipTrigger>
+                      {player?.status !== 'approved' && (
+                        <TooltipContent>
+                          <p>Waiting for approval</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {isPending && (
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6">
+          <div className="border border-border bg-card p-4 mb-4">
+            <p className="text-sm text-muted-foreground">
+              This player reference is pending approval with its jersey submission
+              and cannot be edited yet. Once the related jersey is approved,
+              you will be able to submit correction reports from this page.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <h2 className="text-lg tracking-tighter mb-6">CAREER IN SHIRTS</h2>
@@ -104,7 +150,7 @@ export default function PlayerDetail() {
         )}
       </div>
 
-      {player && (
+      {player && !isPending && (
         <EntityEditDialog
           open={showEdit}
           onOpenChange={setShowEdit}

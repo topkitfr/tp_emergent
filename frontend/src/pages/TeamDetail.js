@@ -8,6 +8,8 @@ import JerseyCard from '@/components/JerseyCard';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { proxyImageUrl } from '@/lib/api';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 export default function TeamDetail() {
   const { id } = useParams(); // slug de la team
@@ -65,7 +67,8 @@ export default function TeamDetail() {
     );
   }
 
-  const isPending = team.status === 'pending';
+  const isPending = team.status === 'pending' || team.status === 'for_review';
+
   const isAdminOrModerator = user && (user.role === 'admin' || user.role === 'moderator');
 
   const kits = team.kits || [];
@@ -149,24 +152,41 @@ export default function TeamDetail() {
                 </Badge>
 
                 <Badge
-                  variant={isPending ? 'outline' : 'secondary'}
-                  className="rounded-none text-[10px] uppercase tracking-wider ml-2"
-                >
-                  {isPending ? 'Pending' : 'Approved'}
-                </Badge>
+  variant={team.status === 'approved' ? 'secondary' : 'outline'}
+  className={`rounded-none text-[10px] uppercase tracking-wider ml-2 ${
+    team.status === 'for_review' ? 'border-accent/40 text-accent' : ''
+  }`}
+>
+  {team.status === 'approved' ? 'Approved' : team.status === 'for_review' ? 'For Review' : 'Pending'}
+</Badge>
 
-                {isAdminOrModerator && !isPending && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-none border-border ml-2"
-                    onClick={() => setShowEdit(true)}
-                    data-testid="suggest-edit-team-btn"
-                  >
-                    <Pencil className="w-3 h-3 mr-1" />
-                    Suggest Edit
-                  </Button>
-                )}
+
+ {isAdminOrModerator && !isPending && (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-none border-border ml-2"
+          onClick={() => setShowEdit(true)}
+          disabled={team?.status !== 'approved'}
+          data-testid="suggest-edit-team-btn"
+        >
+          <Pencil className="w-3 h-3 mr-1" />
+          Suggest Edit
+        </Button>
+      </TooltipTrigger>
+      {team?.status !== 'approved' && (
+        <TooltipContent>
+          <p>Waiting for approval</p>
+        </TooltipContent>
+      )}
+    </Tooltip>
+  </TooltipProvider>
+)}
+
+                
               </div>
             </div>
           </div>

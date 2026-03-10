@@ -65,7 +65,8 @@ export default function LeagueDetail() {
     );
   }
 
-  const isPending = league.status === 'pending';
+  const isPending = league.status === 'pending' || league.status === 'for_review';
+
   const isAdminOrModerator = user && (user.role === 'admin' || user.role === 'moderator');
 
   const seasons = Array.from(
@@ -120,31 +121,34 @@ export default function LeagueDetail() {
               {league.name}
             </h1>
             <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className="rounded-none text-[10px] uppercase tracking-wider"
-              >
-                League
-              </Badge>
-              <Badge
-                variant={isPending ? 'outline' : 'secondary'}
-                className="rounded-none text-[10px] uppercase tracking-wider"
-              >
-                {isPending ? 'Pending' : 'Approved'}
-              </Badge>
-              {league.country_or_region && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Globe className="w-3 h-3" />
-                  {league.country_or_region}
-                </span>
-              )}
-              {league.level && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Trophy className="w-3 h-3" />
-                  {league.level}
-                </span>
-              )}
-            </div>
+  <Badge
+    variant="outline"
+    className="rounded-none text-[10px] uppercase tracking-wider"
+  >
+    League
+  </Badge>
+  <Badge
+    variant={league.status === 'approved' ? 'secondary' : 'outline'}
+    className={`rounded-none text-[10px] uppercase tracking-wider ${
+      league.status === 'for_review' ? 'border-accent/40 text-accent' : ''
+    }`}
+  >
+    {league.status === 'approved' ? 'Approved' : league.status === 'for_review' ? 'For Review' : 'Pending'}
+  </Badge>
+  {league.country_or_region && (
+    <span className="text-xs text-muted-foreground flex items-center gap-1">
+      <Globe className="w-3 h-3" />
+      {league.country_or_region}
+    </span>
+  )}
+  {league.level && (
+    <span className="text-xs text-muted-foreground flex items-center gap-1">
+      <Trophy className="w-3 h-3" />
+      {league.level}
+    </span>
+  )}
+</div>
+
           </div>
 
           {league.logo && (

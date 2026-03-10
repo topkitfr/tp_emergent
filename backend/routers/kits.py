@@ -153,28 +153,36 @@ async def _create_missing_entity_submissions(
     fk_patch = {}
 
     ENTITY_MAP = [
-        {
-            "id_field":    "team_id",
-            "name_field":  "club",           # champ texte du kit
-            "collection":  "teams",
-            "sub_type":    "team",
-            "name_key":    "name",
-        },
-        {
-            "id_field":    "league_id",
-            "name_field":  "league",
-            "collection":  "leagues",
-            "sub_type":    "league",
-            "name_key":    "name",
-        },
-        {
-            "id_field":    "brand_id",
-            "name_field":  "brand",
-            "collection":  "brands",
-            "sub_type":    "brand",
-            "name_key":    "name",
-        },
-    ]
+    {
+        "id_field": "team_id",
+        "name_field": "club",
+        "collection": "teams",
+        "sub_type": "team",
+        "name_key": "name",
+    },
+    {
+        "id_field": "league_id",
+        "name_field": "league",
+        "collection": "leagues",
+        "sub_type": "league",
+        "name_key": "name",
+    },
+    {
+        "id_field": "brand_id",
+        "name_field": "brand",
+        "collection": "brands",
+        "sub_type": "brand",
+        "name_key": "name",
+    },
+    {
+        "id_field": "sponsor_id",
+        "name_field": "sponsor",
+        "collection": "sponsors",
+        "sub_type": "sponsor",
+        "name_key": "name",
+    },
+]
+
 
     for cfg in ENTITY_MAP:
         entity_id = data.get(cfg["id_field"], "")

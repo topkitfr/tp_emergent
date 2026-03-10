@@ -8,9 +8,11 @@ import JerseyCard from '@/components/JerseyCard';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { proxyImageUrl } from '@/lib/api';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 export default function BrandDetail() {
-  const { id } = useParams(); // slug de la brand
+  const { id } = useParams();
   const { user } = useAuth();
   const [brand, setBrand] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,11 +20,11 @@ export default function BrandDetail() {
   const [filterTeam, setFilterTeam] = useState('');
   const [showEdit, setShowEdit] = useState(false);
 
+
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        // Infos de la brand
         const brandRes = await fetch(`/api/brands/${id}`);
         if (!brandRes.ok) {
           setBrand(null);
@@ -30,7 +32,6 @@ export default function BrandDetail() {
         }
         const brandData = await brandRes.json();
 
-        // Kits de la brand
         const kitsRes = await fetch(`/api/brands/${id}/kits`);
         const kitsData = await kitsRes.json();
 
@@ -47,6 +48,7 @@ export default function BrandDetail() {
     }
     loadData();
   }, [id]);
+
 
   if (loading) {
     return (
@@ -68,14 +70,12 @@ export default function BrandDetail() {
     );
   }
 
-  const isPending = brand.status === 'pending';
+  const isPending = brand.status === 'pending' || brand.status === 'for_review';
   const isAdminOrModerator = user && (user.role === 'admin' || user.role === 'moderator');
 
   const seasons = Array.from(
     new Set((brand.kits || []).map(k => k.season).filter(Boolean))
-  )
-    .sort()
-    .reverse();
+  ).sort().reverse();
 
   const teams = Array.from(
     new Set((brand.kits || []).map(k => k.club).filter(Boolean))
@@ -101,15 +101,27 @@ export default function BrandDetail() {
           </Link>
 
           {isAdminOrModerator && !isPending && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-none"
-              onClick={() => setShowEdit(true)}
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Suggest edit
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-none"
+                    onClick={() => setShowEdit(true)}
+                    disabled={brand?.status !== 'approved'}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Suggest edit
+                  </Button>
+                </TooltipTrigger>
+                {brand?.status !== 'approved' && (
+                  <TooltipContent>
+                    <p>Waiting for approval</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
 
@@ -130,10 +142,12 @@ export default function BrandDetail() {
                 Brand
               </Badge>
               <Badge
-                variant={isPending ? 'outline' : 'secondary'}
-                className="rounded-none text-[10px] uppercase tracking-wider"
+                variant={brand.status === 'approved' ? 'secondary' : 'outline'}
+                className={`rounded-none text-[10px] uppercase tracking-wider ${
+                  brand.status === 'for_review' ? 'border-accent/40 text-accent' : ''
+                }`}
               >
-                {isPending ? 'Pending' : 'Approved'}
+                {brand.status === 'approved' ? 'Approved' : brand.status === 'for_review' ? 'For Review' : 'Pending'}
               </Badge>
               {brand.country && (
                 <span className="text-xs text-muted-foreground">
@@ -165,7 +179,7 @@ export default function BrandDetail() {
           </div>
         )}
 
-        {/* Filtres et liste de kits (toujours visibles) */}
+        {/* Filtres et liste de kits */}
         <div className="mb-4 flex flex-wrap gap-3 items-center">
           <div className="flex items-center gap-2">
             <span className="text-xs uppercase tracking-wider text-muted-foreground">
