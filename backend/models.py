@@ -279,6 +279,26 @@ class BrandOut(BaseModel):
     updated_at: Optional[str] = None
 
 
+class SponsorCreate(BaseModel):
+    name: str
+    country: Optional[str] = ""
+    founded: Optional[int] = None
+    logo_url: Optional[str] = ""
+
+class SponsorOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    sponsor_id: str
+    name: str
+    slug: str
+    country: Optional[str] = ""
+    founded: Optional[int] = None
+    logo_url: Optional[str] = ""
+    kit_count: Optional[int] = 0
+    status: Optional[str] = "approved"  # Par défaut
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
 class PlayerCreate(BaseModel):
     full_name: str
     nationality: Optional[str] = ""

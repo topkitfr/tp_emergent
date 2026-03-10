@@ -113,6 +113,11 @@ export const getPlayer = (id) => api.get(`/players/${id}`);
 export const createPlayer = (data) => api.post('/players', data);
 export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
 
+// Sponsors
+export const getSponsors = (params = {}) => {
+return api.get('/api/sponsors', { params });
+};
+
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
 

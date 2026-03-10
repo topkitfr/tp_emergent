@@ -9,6 +9,7 @@ from models import (
     LeagueCreate, LeagueOut,
     BrandCreate, BrandOut,
     PlayerCreate, PlayerOut,
+    SponsorOut  # Ajout du modèle SponsorOut
 )
 from utils import slugify
 
@@ -20,10 +21,6 @@ router = APIRouter(prefix="/api", tags=["entities"])
 LOCKED_STATUSES = ("for_review", "pending")
 
 async def _assert_not_locked(collection: str, id_field: str, entity_id: str):
-    """
-    Lève 423 si l'entité est en cours d'approbation (for_review / pending).
-    Doit être appelé en début de chaque PUT/PATCH d'entité.
-    """
     doc = await db[collection].find_one({id_field: entity_id}, {"_id": 0, "status": 1})
     if doc and doc.get("status") in LOCKED_STATUSES:
         raise HTTPException(
@@ -506,6 +503,59 @@ async def update_player(player_id: str, player: PlayerCreate):
     result["kit_count"] = await db.versions.count_documents({"main_player_id": player_id})
     return result
 
+# ─────────────────────────────────────────────
+# Sponsors Routes
+# ─────────────────────────────────────────────
+router.get("/sponsors", response_model=List[SponsorOut])
+async def list_sponsors(
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    status: Optional[str] = "approved",
+    skip: int = 0,
+    limit: int = 100
+):
+    query = {}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+    if country:
+        query["country"] = {"$regex": country, "$options": "i"}
+    if status:
+        query["status"] = status
+
+    sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
+
+    for s in sponsors:
+        s["kit_count"] = await db.master_kits.count_documents({"sponsor": s["name"]})
+
+    return sponsors
+
+@router.get("/sponsors/{sponsor_id}", response_model=SponsorOut)
+async def get_sponsor(sponsor_id: str):
+    sponsor = await db.sponsors.find_one({"$or": [{"sponsor_id": sponsor_id}, {"slug": sponsor_id}]}, {"_id": 0})
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    sponsor["kit_count"] = await db.master_kits.count_documents({"sponsor": sponsor["name"]})
+    return sponsor
+
+@router.patch("/sponsors/{sponsor_id}/approve")
+async def approve_sponsor(sponsor_id: str):
+    result = await db.sponsors.update_one(
+        {"sponsor_id": sponsor_id},
+        {"$set": {"status": "approved", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    return {"message": "Sponsor approved"}
+
+@router.patch("/sponsors/{sponsor_id}/reject")
+async def reject_sponsor(sponsor_id: str):
+    result = await db.sponsors.update_one(
+        {"sponsor_id": sponsor_id},
+        {"$set": {"status": "rejected", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    return {"message": "Sponsor rejected"}
 
 # ─────────────────────────────────────────────
 # Pending Approval Routes
