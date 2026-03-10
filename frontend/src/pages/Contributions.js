@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, proxyImageUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
 
+// ===== CONSTANTES =====
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const MODELS = ['Authentic', 'Replica', 'Other'];
 const GENDERS = ['Man', 'Woman', 'Kid'];
@@ -39,15 +40,23 @@ const ENTITY_DISPLAY_FIELDS = {
   league: ['name', 'country_or_region', 'level', 'organizer'],
   brand: ['name', 'country', 'founded'],
   player: ['full_name', 'nationality', 'birth_year', 'positions', 'preferred_number'],
+  sponsor: ['name', 'country'],
 };
 
-const ENTITY_IMAGE_FIELDS = { team: 'crest_url', league: 'logo_url', brand: 'logo_url', player: 'photo_url' };
+const ENTITY_IMAGE_FIELDS = {
+  team: 'crest_url',
+  league: 'logo_url',
+  brand: 'logo_url',
+  player: 'photo_url',
+  sponsor: 'logo_url',
+};
 
 const TYPE_LABELS = {
   master_kit: 'Master Kit', version: 'Version',
   team: 'Team', league: 'League', brand: 'Brand', player: 'Player', sponsor: 'Sponsor',
 };
 
+// ===== FONCTIONS UTILITAIRES =====
 function getDisplayName(item) {
   return item?.display_name || item?.name || item?.full_name || item?.data?.name || item?.data?.full_name || '—';
 }
@@ -56,9 +65,15 @@ function normalizeEntities(items = []) {
   return items.map(item => ({ ...item, display_name: getDisplayName(item) }));
 }
 
+// ===== COMPOSANT: DÉTAILS DE SOUMISSION =====
 function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
   const isEntity = ['team', 'league', 'brand', 'player', 'sponsor'].includes(sub.submission_type);
-  const fields = isEntity ? (ENTITY_DISPLAY_FIELDS[sub.submission_type] || []) : sub.submission_type === 'master_kit' ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender'] : ['competition', 'model', 'sku_code', 'ean_code'];
+  const fields = isEntity
+    ? (ENTITY_DISPLAY_FIELDS[sub.submission_type] || [])
+    : sub.submission_type === 'master_kit'
+      ? ['club', 'season', 'kit_type', 'brand', 'league', 'design', 'sponsor', 'gender']
+      : ['competition', 'model', 'sku_code', 'ean_code'];
+
   const parentKit = sub.submission_type === 'version' && existingKits.find(k => k.kit_id === sub.data?.kit_id);
 
   return (
@@ -73,14 +88,18 @@ function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
           )}
         </div>
       )}
+
       {parentKit && (
         <div className="mb-3 p-3 bg-secondary/30 border border-border">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>Parent Master Kit</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1" style={{ fontFamily: 'Barlow Condensed' }}>
+            Parent Master Kit
+          </p>
           <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
             {parentKit.club} - {parentKit.season} ({parentKit.kit_type})
           </p>
         </div>
       )}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {fields.map(field => (
           <div key={field} className="space-y-1">
@@ -93,12 +112,16 @@ function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
           </div>
         ))}
       </div>
+
       {sub.data?.front_photo && (
         <div className="mt-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>Photo</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
+            Photo
+          </p>
           <img src={proxyImageUrl(sub.data.front_photo)} alt="Jersey" className="w-24 h-32 object-cover border border-border" />
         </div>
       )}
+
       {isEntity && ENTITY_IMAGE_FIELDS[sub.submission_type] && sub.data?.[ENTITY_IMAGE_FIELDS[sub.submission_type]] && (
         <div className="mt-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -111,6 +134,7 @@ function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
   );
 }
 
+// ===== COMPOSANT: DÉTAILS DE RAPPORT =====
 function ReportDetail({ rep }) {
   const skipFields = ['_id', 'kit_id', 'version_id', 'created_by', 'created_at', 'version_count', 'avg_rating', 'review_count'];
   const allFields = [...new Set([...Object.keys(rep.original_data || {}).filter(f => !skipFields.includes(f)), ...Object.keys(rep.corrections || {}).filter(f => !skipFields.includes(f))])];
@@ -158,8 +182,8 @@ function ReportDetail({ rep }) {
   );
 }
 
+// ===== COMPOSANT PRINCIPAL: CONTRIBUTIONS =====
 export default function Contributions() {
-  const [searchExistingKit, setSearchExistingKit] = useState("");
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('pending');
   const [submissions, setSubmissions] = useState([]);
@@ -175,7 +199,9 @@ export default function Contributions() {
   const [pendingEntities, setPendingEntities] = useState({ team: [], league: [], brand: [], player: [], sponsor: [] });
   const [approvedEntities, setApprovedEntities] = useState({ team: [], league: [], brand: [], player: [], sponsor: [] });
   const [loadingPending, setLoadingPending] = useState(false);
+  const [searchExistingKit, setSearchExistingKit] = useState('');
 
+  // Form state - Master Kit
   const [club, setClub] = useState('');
   const [teamId, setTeamId] = useState('');
   const [season, setSeason] = useState('');
@@ -185,10 +211,11 @@ export default function Contributions() {
   const [frontPhoto, setFrontPhoto] = useState('');
   const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
-  const [league, setLeague] = useState('');
   const [leagueId, setLeagueId] = useState('');
+  const [league, setLeague] = useState('');
   const [gender, setGender] = useState('');
 
+  // Form state - Version
   const [selectedKit, setSelectedKit] = useState('');
   const [competition, setCompetition] = useState('');
   const [model, setModel] = useState('');
@@ -197,62 +224,114 @@ export default function Contributions() {
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto] = useState('');
 
-  useEffect(() => {
-    const fetchDataInner = async () => {
-      setLoading(true);
-      try {
-        const status = activeTab === 'approved' ? 'approved' : 'pending';
-        const [subsRes, repsRes] = await Promise.all([
-          getSubmissions({ status }),
-          getReports({ status })
-        ]);
-        setSubmissions(subsRes.data);
-        setReports(repsRes.data);
-      } catch (e) {
-        console.error('Failed to fetch submissions', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchPendingEntities = async () => {
-      setLoadingPending(true);
-      try {
-        const res = await api.get('/pending');
-        setPendingEntities({
-          team: normalizeEntities(res.data.team || []),
-          league: normalizeEntities(res.data.league || []),
-          brand: normalizeEntities(res.data.brand || []),
-          player: normalizeEntities(res.data.player || []),
-          sponsor: normalizeEntities(res.data.sponsor || []),
-        });
-      } catch (e) {
-        console.error('Failed to fetch pending entities', e);
-        setPendingEntities({ team: [], league: [], brand: [], player: [], sponsor: [] });
-      } finally {
-        setLoadingPending(false);
-      }
-    };
-  // ───────────────────────────────────────────────────────────────────────────
-
-  const handleSubmitVersion = async () => {
-    if (!selectedKit || !competition || !model) {
-      toast.error('Please fill all required fields (Parent Kit, Competition, Model)');
-      return;
-    }
-    setSubmitting(true);
+  // ===== FONCTIONS PRINCIPALE =====
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = { kit_id: selectedKit, competition, model, sku_code: skuCode, ean_code: eanCode, front_photo: verFrontPhoto, back_photo: verBackPhoto };
-      await createSubmission({ submission_type: 'version', data });
-      toast.success('Version submitted for community review!');
-      closeAddForm();
-      fetchData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit');
+      const status = activeTab === 'approved' ? 'approved' : 'pending';
+      const [subsRes, repsRes] = await Promise.all([
+        getSubmissions({ status }),
+        getReports({ status })
+      ]);
+      setSubmissions(subsRes.data || []);
+      setReports(repsRes.data || []);
+    } catch (e) {
+      console.error('Failed to fetch submissions:', e);
+      toast.error('Erreur lors du chargement des données');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  const fetchPendingEntities = useCallback(async () => {
+    setLoadingPending(true);
+    try {
+      const res = await api.get('/pending');
+      setPendingEntities({
+        team: normalizeEntities(res.data?.team || []),
+        league: normalizeEntities(res.data?.league || []),
+        brand: normalizeEntities(res.data?.brand || []),
+        player: normalizeEntities(res.data?.player || []),
+        sponsor: normalizeEntities(res.data?.sponsor || []),
+      });
+    } catch (e) {
+      console.error('Failed to fetch pending entities', e);
+      setPendingEntities({ team: [], league: [], brand: [], player: [], sponsor: [] });
+    } finally {
+      setLoadingPending(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+    fetchPendingEntities();
+  }, [activeTab, fetchData, fetchPendingEntities]);
+
+const handleSubmitKit = async () => {
+  if (!teamId || !season || !kitType || !brandId || !leagueId || !gender) {
+    toast.error('Please fill all required fields (Club, Season, Type, Brand, League, Gender)');
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    const data = {
+      team_id: teamId,
+      season,
+      kit_type: kitType,
+      brand_id: brandId,
+      league_id: leagueId,
+      sponsor,
+      design,
+      gender,
+      front_photo: frontPhoto,
+    };
+
+    await createSubmission({ submission_type: 'master_kit', data });
+    toast.success('Master kit submitted for community review!');
+    closeAddForm();
+    await fetchData();
+    const kitsRes = await getMasterKits();
+    setExistingKits(kitsRes.data || []);
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.detail || 'Failed to submit');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+const handleSubmitVersion = async () => {
+  if (!selectedKit || !competition || !model) {
+    toast.error('Please fill all required fields (Parent Kit, Competition, Model)');
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    const data = {
+      kit_id: selectedKit,
+      competition,
+      model,
+      sku_code: skuCode,
+      ean_code: eanCode,
+      front_photo: verFrontPhoto,
+      back_photo: verBackPhoto,
+    };
+
+    await createSubmission({ submission_type: 'version', data });
+    toast.success('Version submitted for community review!');
+    closeAddForm();
+    await fetchData();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.detail || 'Failed to submit');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
 
   const closeAddForm = () => {
     setShowAddForm(false);
@@ -264,8 +343,29 @@ export default function Contributions() {
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
   };
 
-  const hasVoted = (item) => item.voters?.includes(user?.user_id);
-  const isModerator = user?.role === 'moderator' || user?.role === 'admin';
+const hasVoted = (item) => item.voters?.includes(user?.user_id);
+const isModerator = user?.role === 'moderator' || user?.role === 'admin';
+
+const handleVoteSubmission = async (submissionId, isUpvote) => {
+  try {
+    await voteOnSubmission(submissionId, { upvote: isUpvote });
+    await fetchData();
+  } catch (e) {
+    console.error('Failed to vote on submission', e);
+    toast.error('Failed to register vote');
+  }
+};
+
+const handleVoteReport = async (reportId, isUpvote) => {
+  try {
+    await voteOnReport(reportId, { upvote: isUpvote });
+    await fetchData();
+  } catch (e) {
+    console.error('Failed to vote on report', e);
+    toast.error('Failed to register vote');
+  }
+};
+
 
   const filteredExistingKits = existingKits.filter((k) => {
     const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
@@ -868,7 +968,7 @@ export default function Contributions() {
                       <div className="px-4 pb-4">
                         <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
                       </div>
-                      )}
+                        )}
                   </div>
                 ))}
               </div>
