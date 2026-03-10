@@ -10,17 +10,18 @@ export default function Brands() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const fetchBrands = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (search) params.search = search;
-      const res = await getBrands(params);
-      setBrands(res.data);
-    } catch { } finally {
-      setLoading(false);
-    }
-  }, [search]);
+const fetchBrands = useCallback(async () => {
+  setLoading(true);
+  try {
+    const params = { status: 'approved' }; // Filtre par défaut
+    if (search) params.search = search;
+    const res = await getBrands(params);
+    setBrands(res.data);
+  } catch { } finally {
+    setLoading(false);
+  }
+}, [search]);
+
 
   useEffect(() => { fetchBrands(); }, [fetchBrands]);
 

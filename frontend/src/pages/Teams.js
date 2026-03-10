@@ -11,18 +11,19 @@ export default function Teams() {
   const [search, setSearch] = useState('');
   const [country, setCountry] = useState('');
 
-  const fetchTeams = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (search) params.search = search;
-      if (country) params.country = country;
-      const res = await getTeams(params);
-      setTeams(res.data);
-    } catch { } finally {
-      setLoading(false);
-    }
-  }, [search, country]);
+const fetchTeams = useCallback(async () => {
+  setLoading(true);
+  try {
+    const params = { status: 'approved' }; // Ajout du filtre par défaut
+    if (search) params.search = search;
+    if (country) params.country = country;
+    const res = await getTeams(params);
+    setTeams(res.data);
+  } catch { } finally {
+    setLoading(false);
+  }
+}, [search, country]);
+
 
   useEffect(() => { fetchTeams(); }, [fetchTeams]);
 
