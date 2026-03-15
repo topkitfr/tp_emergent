@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
-
 class UserOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
@@ -10,7 +9,6 @@ class UserOut(BaseModel):
     picture: Optional[str] = None
     role: Optional[str] = "user"
     created_at: Optional[str] = None
-
 
 class MasterKitCreate(BaseModel):
     club: str
@@ -25,7 +23,6 @@ class MasterKitCreate(BaseModel):
     team_id: Optional[str] = ""
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
-
 
 class MasterKitOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -47,7 +44,6 @@ class MasterKitOut(BaseModel):
     version_count: Optional[int] = 0
     avg_rating: Optional[float] = 0.0
 
-
 class VersionCreate(BaseModel):
     kit_id: str
     competition: str
@@ -57,7 +53,6 @@ class VersionCreate(BaseModel):
     front_photo: Optional[str] = ""
     back_photo: Optional[str] = ""
     main_player_id: Optional[str] = ""
-
 
 class VersionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -75,7 +70,6 @@ class VersionOut(BaseModel):
     avg_rating: Optional[float] = 0.0
     review_count: Optional[int] = 0
 
-
 class CollectionAdd(BaseModel):
     version_id: str
     category: Optional[str] = "General"
@@ -83,7 +77,7 @@ class CollectionAdd(BaseModel):
     flocking_type: Optional[str] = ""
     flocking_origin: Optional[str] = ""
     flocking_detail: Optional[str] = ""
-    flocking_player_id: Optional[str] = ""          # link to players collection
+    flocking_player_id: Optional[str] = ""
     condition_origin: Optional[str] = ""
     physical_state: Optional[str] = ""
     size: Optional[str] = ""
@@ -93,11 +87,10 @@ class CollectionAdd(BaseModel):
     value_estimate: Optional[float] = None
     signed: Optional[bool] = False
     signed_by: Optional[str] = ""
-    signed_by_player_id: Optional[str] = ""         # link to players collection
+    signed_by_player_id: Optional[str] = ""
     signed_proof: Optional[bool] = False
     condition: Optional[str] = ""
     printing: Optional[str] = ""
-
 
 class CollectionUpdate(BaseModel):
     category: Optional[str] = None
@@ -119,7 +112,6 @@ class CollectionUpdate(BaseModel):
     signed_proof: Optional[bool] = None
     condition: Optional[str] = None
     printing: Optional[str] = None
-
 
 class CollectionOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -147,12 +139,10 @@ class CollectionOut(BaseModel):
     printing: Optional[str] = ""
     added_at: Optional[str] = None
 
-
 class ReviewCreate(BaseModel):
     version_id: str
     rating: int
     comment: Optional[str] = ""
-
 
 class ReviewOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -165,23 +155,19 @@ class ReviewOut(BaseModel):
     comment: Optional[str] = ""
     created_at: Optional[str] = None
 
-
 class SubmissionCreate(BaseModel):
     submission_type: str
     data: dict
 
-
 class VoteCreate(BaseModel):
     vote: str
-
 
 class ReportCreate(BaseModel):
     target_type: str
     target_id: str
     corrections: dict = {}
     notes: Optional[str] = ""
-    report_type: Optional[str] = "error"  # "error" or "removal"
-
+    report_type: Optional[str] = "error"
 
 class ProfileUpdate(BaseModel):
     username: Optional[str] = None
@@ -189,11 +175,9 @@ class ProfileUpdate(BaseModel):
     collection_privacy: Optional[str] = None
     profile_picture: Optional[str] = None
 
-
 class WishlistAdd(BaseModel):
     version_id: str
     notes: Optional[str] = ""
-
 
 class EstimationRequest(BaseModel):
     model_type: str
@@ -205,10 +189,7 @@ class EstimationRequest(BaseModel):
     signed_proof: Optional[bool] = False
     season_year: Optional[int] = 0
 
-
 # Entity models
-
-
 class TeamCreate(BaseModel):
     name: str
     country: Optional[str] = ""
@@ -219,10 +200,10 @@ class TeamCreate(BaseModel):
     crest_url: Optional[str] = ""
     aka: Optional[List[str]] = []
 
-
 class TeamOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     team_id: str
+    status: Optional[str] = "approved"
     name: str
     slug: str
     country: Optional[str] = ""
@@ -236,7 +217,6 @@ class TeamOut(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
-
 class LeagueCreate(BaseModel):
     name: str
     country_or_region: Optional[str] = ""
@@ -244,10 +224,10 @@ class LeagueCreate(BaseModel):
     organizer: Optional[str] = ""
     logo_url: Optional[str] = ""
 
-
 class LeagueOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     league_id: str
+    status: Optional[str] = "approved"
     name: str
     slug: str
     country_or_region: Optional[str] = ""
@@ -258,17 +238,16 @@ class LeagueOut(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
-
 class BrandCreate(BaseModel):
     name: str
     country: Optional[str] = ""
     founded: Optional[int] = None
     logo_url: Optional[str] = ""
 
-
 class BrandOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     brand_id: str
+    status: Optional[str] = "approved"
     name: str
     slug: str
     country: Optional[str] = ""
@@ -277,7 +256,6 @@ class BrandOut(BaseModel):
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-
 
 class PlayerCreate(BaseModel):
     full_name: str
@@ -287,10 +265,10 @@ class PlayerCreate(BaseModel):
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
 
-
 class PlayerOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
     player_id: str
+    status: Optional[str] = "approved"
     full_name: str
     slug: str
     nationality: Optional[str] = ""
