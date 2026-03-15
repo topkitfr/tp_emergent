@@ -16,8 +16,7 @@ export default function Brands() {
       const params = {};
       if (search) params.search = search;
       const res = await getBrands(params);
-      setBrands(res.data);
-    } catch { } finally {
+setBrands(res.data.filter(brand => brand.status !== 'rejected'));    } catch { } finally {
       setLoading(false);
     }
   }, [search]);
