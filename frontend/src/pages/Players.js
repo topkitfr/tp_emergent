@@ -18,8 +18,7 @@ export default function Players() {
       if (search) params.search = search;
       if (nationality) params.nationality = nationality;
       const res = await getPlayers(params);
-      setPlayers(res.data);
-    } catch { } finally {
+setPlayers(res.data.filter(player => player.status !== 'rejected'));    } catch { } finally {
       setLoading(false);
     }
   }, [search, nationality]);
