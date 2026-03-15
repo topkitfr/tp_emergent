@@ -268,7 +268,7 @@ export default function Contributions() {
   }, [activeTab, fetchData, fetchPendingEntities]);
 
 const handleSubmitKit = async () => {
-  if (!teamId || !season || !kitType || !brandId || !leagueId || !gender) {
+  if (!club.trim() || !season.trim() || !kitType || !brand.trim() || !frontPhoto) {
     toast.error('Please fill all required fields (Club, Season, Type, Brand, League, Gender)');
     return;
   }
