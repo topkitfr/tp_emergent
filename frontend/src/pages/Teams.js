@@ -18,8 +18,7 @@ export default function Teams() {
       if (search) params.search = search;
       if (country) params.country = country;
       const res = await getTeams(params);
-      setTeams(res.data);
-    } catch { } finally {
+setTeams(res.data.filter(team => team.status !== 'rejected'));    } catch { } finally {
       setLoading(false);
     }
   }, [search, country]);
