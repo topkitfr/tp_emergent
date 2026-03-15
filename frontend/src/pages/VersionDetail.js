@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import EntityAutocomplete from '@/components/EntityAutocomplete';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
   Check, Trash2, User, Plus, Loader2,
@@ -83,6 +86,14 @@ export default function VersionDetail() {
   const [addStatus,     setAddStatus]     = useState("idle");
   const [showReport,    setShowReport]    = useState(false);
   const [reportNotes,   setReportNotes]   = useState('');
+    const [reportCompetition, setReportCompetition] = useState('');
+  const [reportModel, setReportModel] = useState('');
+  const [reportClub, setReportClub] = useState('');
+  const [reportBrand, setReportBrand] = useState('');
+  const [reportLeague, setReportLeague] = useState('');
+  const [reportGender, setReportGender] = useState('');
+  const [reportSku, setReportSku] = useState('');
+  const [reportEan, setReportEan] = useState('');
   const [showRemoval,   setShowRemoval]   = useState(false);
   const [removalNotes,  setRemovalNotes]  = useState('');
   const [reviewRating,  setReviewRating]  = useState(0);
@@ -136,13 +147,31 @@ export default function VersionDetail() {
       await createReport({
         target_type: 'version',
         target_id:   versionId,
-        corrections: {},
+        corrections: {
+          competition: reportCompetition,
+          model: reportModel,
+          club: reportClub,
+          brand: reportBrand,
+          league: reportLeague,
+          gender: reportGender,
+          sku: reportSku,
+          ean: reportEan
+        },
         notes:       reportNotes,
         report_type: 'error',
       });
       toast.success('Report submitted for community review');
       setShowReport(false);
       setReportNotes('');
+              setReportCompetition('');
+        setReportModel('');
+        setReportClub('');
+        setReportBrand('');
+        setReportLeague('');
+        setReportGender('');
+        setReportSku('');
+        setReportEan('')
+      
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to submit report');
     }
@@ -347,11 +376,72 @@ export default function VersionDetail() {
                     REPORT ERROR
                   </h4>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                      style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)}
-                      placeholder="Describe the error..."
-                      className="bg-card border-border rounded-none min-h-[60px] text-sm" />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
+                  <Select value={reportCompetition} onValueChange={setReportCompetition}>
+                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
+                      <SelectValue placeholder="Select competition" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'].map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
+                  <Select value={reportModel} onValueChange={setReportModel}>
+                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {['Authentic', 'Replica', 'Other'].map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Club</Label>
+                  <EntityAutocomplete entityType="team" value={reportClub} onChange={setReportClub} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
+                  <EntityAutocomplete entityType="brand" value={reportBrand} onChange={setReportBrand} placeholder="e.g., Nike" className="bg-card border-border rounded-none text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
+                  <EntityAutocomplete entityType="league" value={reportLeague} onChange={setReportLeague} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
+                  <Select value={reportGender} onValueChange={setReportGender}>
+                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {['Man', 'Woman', 'Kid'].map(g => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
+                  <Input value={reportSku} onChange={e => setReportSku(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none text-sm font-mono" />
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
+                  <Input value={reportEan} onChange={e => setReportEan(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none text-sm font-mono" />
+                </div>
+              </div>
+              <div className="space-y-1 mb-4">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[80px] text-sm" />
+              </div>
+                    
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSubmitReport}
