@@ -18,8 +18,7 @@ export default function Leagues() {
       if (search) params.search = search;
       if (level) params.level = level;
       const res = await getLeagues(params);
-      setLeagues(res.data);
-    } catch { } finally {
+setLeagues(res.data.filter(league => league.status !== 'rejected'));    } catch { } finally {
       setLoading(false);
     }
   }, [search, level]);
