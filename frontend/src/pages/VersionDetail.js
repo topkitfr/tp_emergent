@@ -11,11 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import EntityAutocomplete from '@/components/EntityAutocomplete';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
   Check, Trash2, User, Plus, Loader2,
 } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload';
+
+const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
+const MODELS       = ['Authentic', 'Replica', 'Other'];
 
 // ── Slider ────────────────────────────────────────────────────────────────────
 function KitSlider({ photos }) {
@@ -49,9 +52,7 @@ function KitSlider({ photos }) {
               <ChevronRight className="w-4 h-4" />
             </button>
             <div className="absolute bottom-2 right-2 bg-background/80 border border-border px-2 py-0.5">
-              <span className="text-[10px] font-mono text-muted-foreground">
-                {current + 1}/{photos.length}
-              </span>
+              <span className="text-[10px] font-mono text-muted-foreground">{current + 1}/{photos.length}</span>
             </div>
           </>
         )}
@@ -63,8 +64,7 @@ function KitSlider({ photos }) {
               className={`w-16 h-20 border overflow-hidden shrink-0 transition-colors ${
                 i === current ? 'border-primary' : 'border-border hover:border-primary/50'
               }`}>
-              <img src={proxyImageUrl(photo)} alt={i === 0 ? 'Front' : 'Back'}
-                className="w-full h-full object-cover" />
+              <img src={proxyImageUrl(photo)} alt={i === 0 ? 'Front' : 'Back'} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -83,23 +83,27 @@ export default function VersionDetail() {
   const [estimates,     setEstimates]     = useState(null);
   const [reviews,       setReviews]       = useState([]);
   const [loading,       setLoading]       = useState(true);
-  const [addStatus,     setAddStatus]     = useState("idle");
+  const [addStatus,     setAddStatus]     = useState('idle');
   const [showReport,    setShowReport]    = useState(false);
-  const [reportNotes,   setReportNotes]   = useState('');
-    const [reportCompetition, setReportCompetition] = useState('');
-  const [reportModel, setReportModel] = useState('');
-  const [reportClub, setReportClub] = useState('');
-  const [reportBrand, setReportBrand] = useState('');
-  const [reportLeague, setReportLeague] = useState('');
-  const [reportGender, setReportGender] = useState('');
-  const [reportSku, setReportSku] = useState('');
-  const [reportEan, setReportEan] = useState('');
   const [showRemoval,   setShowRemoval]   = useState(false);
   const [removalNotes,  setRemovalNotes]  = useState('');
   const [reviewRating,  setReviewRating]  = useState(0);
   const [reviewHover,   setReviewHover]   = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submitting,    setSubmitting]    = useState(false);
+
+  // ── Report state — uniquement les champs d'une VERSION
+  const [reportCorrections, setReportCorrections] = useState({
+    competition: '',
+    model:       '',
+    sku_code:    '',
+    ean_code:    '',
+    front_photo: '',
+    back_photo:  '',
+  });
+  const [reportNotes, setReportNotes] = useState('');
+
+  const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
   const fetchReviews = async () => {
     try {
@@ -116,28 +120,38 @@ export default function VersionDetail() {
       fetch(`/api/versions/${versionId}/worn-by`).then(r => r.ok ? r.json() : []),
       getVersionEstimates(versionId).catch(() => null),
     ]).then(async ([versionRes, wornByData, estimatesRes]) => {
-      setVersion(versionRes.data);
+      const v = versionRes.data;
+      setVersion(v);
       setWornBy(Array.isArray(wornByData) ? wornByData : []);
       setEstimates(estimatesRes?.data || null);
+      // Pré-remplir le form de report avec les valeurs actuelles de la version
+      setReportCorrections({
+        competition: v.competition || '',
+        model:       v.model       || '',
+        sku_code:    v.sku_code    || '',
+        ean_code:    v.ean_code    || '',
+        front_photo: v.front_photo || '',
+        back_photo:  v.back_photo  || '',
+      });
       await fetchReviews();
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [versionId]);
 
   const handleAdd = async () => {
-    if (addStatus !== "idle") return;
-    setAddStatus("loading");
+    if (addStatus !== 'idle') return;
+    setAddStatus('loading');
     try {
       await addToCollection({ version_id: versionId });
-      setAddStatus("done");
-      toast.success("Added to your collection 🎽");
+      setAddStatus('done');
+      toast.success('Added to your collection 🎽');
     } catch (err) {
       if (err?.response?.status === 400) {
-        setAddStatus("done");
-        toast.info("Already in your collection");
+        setAddStatus('done');
+        toast.info('Already in your collection');
       } else {
-        setAddStatus("error");
-        setTimeout(() => setAddStatus("idle"), 2000);
+        setAddStatus('error');
+        setTimeout(() => setAddStatus('idle'), 2000);
       }
     }
   };
@@ -147,31 +161,13 @@ export default function VersionDetail() {
       await createReport({
         target_type: 'version',
         target_id:   versionId,
-        corrections: {
-          competition: reportCompetition,
-          model: reportModel,
-          club: reportClub,
-          brand: reportBrand,
-          league: reportLeague,
-          gender: reportGender,
-          sku: reportSku,
-          ean: reportEan
-        },
+        corrections: reportCorrections,
         notes:       reportNotes,
         report_type: 'error',
       });
       toast.success('Report submitted for community review');
       setShowReport(false);
       setReportNotes('');
-              setReportCompetition('');
-        setReportModel('');
-        setReportClub('');
-        setReportBrand('');
-        setReportLeague('');
-        setReportGender('');
-        setReportSku('');
-        setReportEan('')
-      
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to submit report');
     }
@@ -219,10 +215,7 @@ export default function VersionDetail() {
       <div className="h-8 w-32 bg-card mb-8" />
       <div className="grid md:grid-cols-2 gap-8">
         <div className="aspect-[3/4] bg-card" />
-        <div className="space-y-4">
-          <div className="h-10 w-3/4 bg-card" />
-          <div className="h-6 w-1/2 bg-card" />
-        </div>
+        <div className="space-y-4"><div className="h-10 w-3/4 bg-card" /><div className="h-6 w-1/2 bg-card" /></div>
       </div>
     </div>
   );
@@ -231,9 +224,7 @@ export default function VersionDetail() {
     <div className="px-4 lg:px-8 py-20 text-center">
       <Shirt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
       <h2 className="text-2xl tracking-tight mb-2">VERSION NOT FOUND</h2>
-      <Link to="/browse">
-        <Button variant="outline" className="rounded-none mt-4">Back to Browse</Button>
-      </Link>
+      <Link to="/browse"><Button variant="outline" className="rounded-none mt-4">Back to Browse</Button></Link>
     </div>
   );
 
@@ -248,8 +239,7 @@ export default function VersionDetail() {
         <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-muted-foreground">
           <Link to="/browse" className="hover:text-foreground" style={{ transition: 'color 0.2s ease' }}>Browse</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link to={`/kit/${kit.kit_id}`} className="hover:text-foreground truncate"
-            style={{ transition: 'color 0.2s ease' }}>
+          <Link to={`/kit/${kit.kit_id}`} className="hover:text-foreground truncate" style={{ transition: 'color 0.2s ease' }}>
             {kit.club} {kit.season}
           </Link>
           <ChevronRight className="w-3 h-3" />
@@ -263,12 +253,8 @@ export default function VersionDetail() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12">
           <div className="grid md:grid-cols-[1fr_1.2fr] gap-8 lg:gap-16">
 
-            {/* Left — Slider */}
-            <div className="relative">
-              <KitSlider photos={photos} />
-            </div>
+            <div className="relative"><KitSlider photos={photos} /></div>
 
-            {/* Right — Info */}
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -280,8 +266,7 @@ export default function VersionDetail() {
                     {kit.club}
                   </Link>
                 </h1>
-                <p className="text-lg text-muted-foreground"
-                  style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
+                <p className="text-lg text-muted-foreground" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                   {kit.season} Season
                 </p>
               </div>
@@ -290,9 +275,7 @@ export default function VersionDetail() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-4 h-4 ${
-                        s <= Math.round(version.avg_rating) ? 'text-accent fill-accent' : 'text-muted'
-                      }`} />
+                      <Star key={s} className={`w-4 h-4 ${s <= Math.round(version.avg_rating) ? 'text-accent fill-accent' : 'text-muted'}`} />
                     ))}
                   </div>
                   <span className="text-sm font-mono text-accent">{version.avg_rating}</span>
@@ -305,17 +288,16 @@ export default function VersionDetail() {
               {/* Data Grid */}
               <div className="grid grid-cols-2 gap-6">
                 {[
-                  { label: "Brand",          value: kit.brand },
-                  { label: "Type",           value: kit.kit_type },
-                  { label: "Competition",    value: version.competition },
-                  { label: "Model",          value: version.model },
-                  { label: "SKU",            value: version.sku_code },
-                  { label: "EAN",            value: version.ean_code },
-                  { label: "In collections", value: version.collection_count > 0 ? `${version.collection_count} collectors` : null },
+                  { label: 'Brand',          value: kit.brand },
+                  { label: 'Type',           value: kit.kit_type },
+                  { label: 'Competition',    value: version.competition },
+                  { label: 'Model',          value: version.model },
+                  { label: 'SKU',            value: version.sku_code },
+                  { label: 'EAN',            value: version.ean_code },
+                  { label: 'In collections', value: version.collection_count > 0 ? `${version.collection_count} collectors` : null },
                 ].filter(f => f.value).map(({ label, value }) => (
                   <div key={label}>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                      style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</div>
                     <span className="text-sm font-mono">{value}</span>
                   </div>
                 ))}
@@ -324,20 +306,12 @@ export default function VersionDetail() {
               {/* Estimated Value */}
               {estimates && (
                 <div className="space-y-3">
-                  <h5 className="text-xs uppercase tracking-wider text-muted-foreground"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Estimated Value</h5>
+                  <h5 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Estimated Value</h5>
                   <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Low",     value: estimates.low },
-                      { label: "Average", value: estimates.average },
-                      { label: "High",    value: estimates.high },
-                    ].map(({ label, value }) => (
+                    {[{ label: 'Low', value: estimates.low }, { label: 'Average', value: estimates.average }, { label: 'High', value: estimates.high }].map(({ label, value }) => (
                       <div key={label} className="border border-border bg-card p-3 text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
-                          style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</p>
-                        <p className="font-semibold font-mono text-primary">
-                          {value != null ? `€${value}` : "—"}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>{label}</p>
+                        <p className="font-semibold font-mono text-primary">{value != null ? `€${value}` : '—'}</p>
                       </div>
                     ))}
                   </div>
@@ -348,11 +322,11 @@ export default function VersionDetail() {
               <div className="flex flex-wrap gap-2">
                 {user && (
                   <Button onClick={handleAdd} size="sm"
-                    className={`rounded-none ${addStatus === "done" ? "bg-green-500 hover:bg-green-500" : ""}`}>
-                    {addStatus === "loading" && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-                    {addStatus === "done"    && <Check   className="w-4 h-4 mr-1" />}
-                    {addStatus === "idle"    && <Plus    className="w-4 h-4 mr-1" />}
-                    {addStatus === "done" ? "In collection" : "Add to collection"}
+                    className={`rounded-none ${addStatus === 'done' ? 'bg-green-500 hover:bg-green-500' : ''}`}>
+                    {addStatus === 'loading' && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+                    {addStatus === 'done'    && <Check   className="w-4 h-4 mr-1" />}
+                    {addStatus === 'idle'    && <Plus    className="w-4 h-4 mr-1" />}
+                    {addStatus === 'done' ? 'In collection' : 'Add to collection'}
                   </Button>
                 )}
                 {user && (
@@ -369,112 +343,124 @@ export default function VersionDetail() {
                 )}
               </div>
 
-              {/* Report Form */}
+              {/* ── Report Form (Version uniquement) ── */}
               {showReport && user && (
-                <div className="border border-destructive/30 p-4 space-y-3">
-                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
-                    REPORT ERROR
-                  </h4>
-                  <div className="space-y-1">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
-                  <Select value={reportCompetition} onValueChange={setReportCompetition}>
-                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
-                      <SelectValue placeholder="Select competition" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      {['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'].map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
-                  <Select value={reportModel} onValueChange={setReportModel}>
-                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      {['Authentic', 'Replica', 'Other'].map(m => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Club</Label>
-                  <EntityAutocomplete entityType="team" value={reportClub} onChange={setReportClub} placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none text-sm" />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
-                  <EntityAutocomplete entityType="brand" value={reportBrand} onChange={setReportBrand} placeholder="e.g., Nike" className="bg-card border-border rounded-none text-sm" />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
-                  <EntityAutocomplete entityType="league" value={reportLeague} onChange={setReportLeague} placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none text-sm" />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                  <Select value={reportGender} onValueChange={setReportGender}>
-                    <SelectTrigger className="bg-card border-border rounded-none text-sm">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      {['Man', 'Woman', 'Kid'].map(g => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
-                  <Input value={reportSku} onChange={e => setReportSku(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none text-sm font-mono" />
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
-                  <Input value={reportEan} onChange={e => setReportEan(e.target.value)} placeholder="Optional" className="bg-card border-border rounded-none text-sm font-mono" />
-                </div>
-              </div>
-              <div className="space-y-1 mb-4">
-                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} placeholder="Describe the error..." className="bg-card border-border rounded-none min-h-[80px] text-sm" />
-              </div>
-                    
+                <div className="border border-destructive/30 p-4 space-y-4">
+                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                    {/* Competition — Select */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
+                      <Select value={reportCorrections.competition} onValueChange={setField('competition')}>
+                        <SelectTrigger className="bg-card border-border rounded-none text-sm" data-testid="report-competition">
+                          <SelectValue placeholder="Select competition" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Model — Select */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
+                      <Select value={reportCorrections.model} onValueChange={setField('model')}>
+                        <SelectTrigger className="bg-card border-border rounded-none text-sm" data-testid="report-model">
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* SKU Code */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>SKU Code</Label>
+                      <Input
+                        value={reportCorrections.sku_code}
+                        onChange={e => setField('sku_code')(e.target.value)}
+                        placeholder="Optional"
+                        className="bg-card border-border rounded-none text-sm font-mono"
+                        data-testid="report-sku"
+                      />
+                    </div>
+
+                    {/* EAN Code */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>EAN Code</Label>
+                      <Input
+                        value={reportCorrections.ean_code}
+                        onChange={e => setField('ean_code')(e.target.value)}
+                        placeholder="Optional"
+                        className="bg-card border-border rounded-none text-sm font-mono"
+                        data-testid="report-ean"
+                      />
+                    </div>
+
+                    {/* Front Photo */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
+                      <ImageUpload
+                        value={reportCorrections.front_photo}
+                        onChange={setField('front_photo')}
+                        testId="report-ver-front-photo"
+                      />
+                    </div>
+
+                    {/* Back Photo */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Back Photo</Label>
+                      <ImageUpload
+                        value={reportCorrections.back_photo}
+                        onChange={setField('back_photo')}
+                        testId="report-ver-back-photo"
+                      />
+                    </div>
                   </div>
+
+                  {/* Notes */}
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                    <Textarea
+                      value={reportNotes}
+                      onChange={e => setReportNotes(e.target.value)}
+                      placeholder="Describe the error..."
+                      className="bg-card border-border rounded-none min-h-[80px] text-sm"
+                    />
+                  </div>
+
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSubmitReport}
                       className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       <Check className="w-3 h-3 mr-1" /> Submit Report
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
 
-              {/* Removal Form */}
+              {/* ── Removal Form ── */}
               {showRemoval && user && (
                 <div className="border border-destructive/50 p-4 space-y-3">
-                  <h4 className="text-sm uppercase tracking-wider text-destructive"
-                    style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
+                  <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                      style={{ fontFamily: 'Barlow Condensed' }}>Reason</Label>
-                    <Textarea value={removalNotes} onChange={e => setRemovalNotes(e.target.value)}
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Reason</Label>
+                    <Textarea
+                      value={removalNotes}
+                      onChange={e => setRemovalNotes(e.target.value)}
                       placeholder="Explain why this version should be removed..."
-                      className="bg-card border-border rounded-none min-h-[80px] text-sm" />
+                      className="bg-card border-border rounded-none min-h-[80px] text-sm"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleRequestRemoval} disabled={!removalNotes.trim()}
                       className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowRemoval(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
@@ -497,17 +483,14 @@ export default function VersionDetail() {
                   className="flex-shrink-0 w-20 hover:scale-105 transition-transform">
                   <div className="w-20 h-24 bg-secondary overflow-hidden border border-border">
                     {player.photo_url ? (
-                      <img src={proxyImageUrl(player.photo_url)} alt={player.full_name}
-                        className="w-full h-full object-cover" />
+                      <img src={proxyImageUrl(player.photo_url)} alt={player.full_name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <User className="w-8 h-8 text-muted-foreground" />
                       </div>
                     )}
                   </div>
-                  <p className="text-[11px] text-center mt-1 font-mono truncate leading-tight">
-                    {player.full_name}
-                  </p>
+                  <p className="text-[11px] text-center mt-1 font-mono truncate leading-tight">{player.full_name}</p>
                 </Link>
               ))}
             </div>
@@ -523,13 +506,9 @@ export default function VersionDetail() {
             <span className="font-mono text-sm text-muted-foreground ml-2">{reviews.length}</span>
           </h2>
 
-          {/* Formulaire full-width compact */}
           {user ? (
             <div className="border border-border bg-card p-5 mb-6">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-4"
-                style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>
-                Leave a Review
-              </h3>
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Leave a Review</h3>
               <div className="flex flex-col sm:flex-row gap-4 items-start">
                 <div className="flex items-center gap-1 shrink-0 pt-1">
                   {[1,2,3,4,5].map(s => (
@@ -538,14 +517,10 @@ export default function VersionDetail() {
                       onMouseEnter={() => setReviewHover(s)}
                       onMouseLeave={() => setReviewHover(0)}
                       className="transition-transform hover:scale-110">
-                      <Star className={`w-6 h-6 transition-colors ${
-                        s <= (reviewHover || reviewRating) ? 'fill-accent text-accent' : 'text-muted-foreground'
-                      }`} />
+                      <Star className={`w-6 h-6 transition-colors ${s <= (reviewHover || reviewRating) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                     </button>
                   ))}
-                  {reviewRating > 0 && (
-                    <span className="text-xs font-mono text-accent ml-1">{reviewRating}/5</span>
-                  )}
+                  {reviewRating > 0 && <span className="text-xs font-mono text-accent ml-1">{reviewRating}/5</span>}
                 </div>
                 <Textarea
                   value={reviewComment}
@@ -554,9 +529,7 @@ export default function VersionDetail() {
                   className="bg-background border-border rounded-none min-h-[60px] text-sm resize-none flex-1"
                   style={{ fontFamily: 'DM Sans', textTransform: 'none' }}
                 />
-                <Button size="sm" onClick={handleSubmitReview}
-                  disabled={!reviewRating || submitting}
-                  className="rounded-none shrink-0 self-end">
+                <Button size="sm" onClick={handleSubmitReview} disabled={!reviewRating || submitting} className="rounded-none shrink-0 self-end">
                   {submitting
                     ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Submitting...</>
                     : <><Check   className="w-3 h-3 mr-1" /> Submit</>
@@ -567,29 +540,21 @@ export default function VersionDetail() {
           ) : (
             <div className="border border-dashed border-border p-4 flex items-center gap-3 mb-6">
               <Star className="w-5 h-5 text-muted-foreground shrink-0" />
-              <p className="text-sm text-muted-foreground"
-                style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                Sign in to leave a review
-              </p>
+              <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Sign in to leave a review</p>
             </div>
           )}
 
-          {/* Liste full-width */}
           <div className="space-y-3">
             {reviews.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-border">
                 <Star className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground"
-                  style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                  No reviews yet — be the first!
-                </p>
+                <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>No reviews yet — be the first!</p>
               </div>
             ) : reviews.map(review => (
               <div key={review.review_id} className="border border-border bg-card p-4">
                 <div className="flex items-center gap-3 mb-2">
                   {review.user_picture ? (
-                    <img src={proxyImageUrl(review.user_picture)} alt=""
-                      className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    <img src={proxyImageUrl(review.user_picture)} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <User className="w-4 h-4 text-muted-foreground" />
@@ -598,18 +563,13 @@ export default function VersionDetail() {
                   <span className="font-medium text-sm">{review.user_name || 'Anonymous'}</span>
                   <div className="flex items-center gap-0.5 ml-auto">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${
-                        i < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground'
-                      }`} />
+                      <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                     ))}
                     <span className="text-xs font-mono text-accent ml-1">{review.rating}/5</span>
                   </div>
                 </div>
                 {review.comment && (
-                  <p className="text-sm text-muted-foreground pl-11"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                    {review.comment}
-                  </p>
+                  <p className="text-sm text-muted-foreground pl-11" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{review.comment}</p>
                 )}
               </div>
             ))}
@@ -617,6 +577,6 @@ export default function VersionDetail() {
         </div>
       </div>
 
-    </div> // ← ferme animate-fade-in-up
+    </div>
   );
 }

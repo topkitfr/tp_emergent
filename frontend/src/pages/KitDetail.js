@@ -16,9 +16,10 @@ import {
   AlertTriangle, Check, Trash2, User,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
+import EntityAutocomplete from '@/components/EntityAutocomplete';
 
 const KIT_TYPES = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
-const GENDERS   = ['Men', 'Women', 'Youth', 'Unisex'];
+const GENDERS   = ['Man', 'Woman', 'Kid'];
 
 export default function KitDetail() {
   const { kitId } = useParams();
@@ -39,10 +40,10 @@ export default function KitDetail() {
       .then(async r => {
         setKit(r.data);
         setReportCorrections({
-          club:        r.data.club,
-          season:      r.data.season,
-          kit_type:    r.data.kit_type,
-          brand:       r.data.brand,
+          club:        r.data.club        || '',
+          season:      r.data.season      || '',
+          kit_type:    r.data.kit_type    || '',
+          brand:       r.data.brand       || '',
           design:      r.data.design      || '',
           sponsor:     r.data.sponsor     || '',
           league:      r.data.league      || '',
@@ -91,6 +92,8 @@ export default function KitDetail() {
       toast.error(err.response?.data?.detail || 'Failed to submit removal request');
     }
   };
+
+  const set = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
   if (loading) return (
     <div className="animate-pulse px-4 lg:px-8 py-8 max-w-7xl mx-auto">
@@ -149,7 +152,6 @@ export default function KitDetail() {
             {/* Right — Info */}
             <div className="space-y-6">
 
-              {/* Titre + saison + étoiles */}
               <div>
                 <Badge variant="outline" className="rounded-none text-xs mb-3">{kit.kit_type}</Badge>
                 <h1 className="text-4xl sm:text-5xl tracking-tighter leading-none mb-2" data-testid="kit-title">
@@ -162,31 +164,21 @@ export default function KitDetail() {
                   style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
                   {kit.season} Season
                 </p>
-
-                {/* ★ Moyenne — toujours affichée */}
                 {(kit.review_count ?? 0) > 0 ? (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => (
                         <Star key={s} className={`w-4 h-4 ${
-                          s <= Math.round(kit.avg_rating ?? 0)
-                            ? 'text-accent fill-accent'
-                            : 'text-muted-foreground'
+                          s <= Math.round(kit.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'
                         }`} />
                       ))}
                     </div>
-                    <span className="text-sm font-mono text-accent">
-                      {(kit.avg_rating ?? 0).toFixed(1)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({kit.review_count} review{kit.review_count > 1 ? 's' : ''})
-                    </span>
+                    <span className="text-sm font-mono text-accent">{(kit.avg_rating ?? 0).toFixed(1)}</span>
+                    <span className="text-xs text-muted-foreground">({kit.review_count} review{kit.review_count > 1 ? 's' : ''})</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 mt-2">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className="w-4 h-4 text-muted-foreground/30" />
-                    ))}
+                    {[1,2,3,4,5].map(s => <Star key={s} className="w-4 h-4 text-muted-foreground/30" />)}
                     <span className="text-xs text-muted-foreground ml-1">No reviews yet</span>
                   </div>
                 )}
@@ -197,65 +189,44 @@ export default function KitDetail() {
               {/* Data Grid */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Brand</div>
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{kit.brand || 'None'}</span>
-                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Brand</div>
+                  <div className="flex items-center gap-2"><Tag className="w-4 h-4 text-primary" /><span className="text-sm">{kit.brand || 'None'}</span></div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Type</div>
-                  <div className="flex items-center gap-2">
-                    <Shirt className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{kit.kit_type || 'None'}</span>
-                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Type</div>
+                  <div className="flex items-center gap-2"><Shirt className="w-4 h-4 text-primary" /><span className="text-sm">{kit.kit_type || 'None'}</span></div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>League</div>
                   <span className="text-sm">{kit.league || 'None'}</span>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Design</div>
                   <span className="text-sm">{kit.design || 'None'}</span>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Sponsor</div>
                   <span className="text-sm">{kit.sponsor || 'None'}</span>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Gender</div>
                   <span className="text-sm">{kit.gender || 'None'}</span>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Versions</div>
-                  <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-mono">{kit.version_count}</span>
-                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Versions</div>
+                  <div className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /><span className="text-sm font-mono">{kit.version_count}</span></div>
                 </div>
               </div>
 
               {/* Players */}
               {players.length > 0 && (
                 <div className="space-y-3">
-                  <h5 className="text-xs uppercase tracking-wider text-muted-foreground"
-                    style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>
-                    Players who wore this kit
-                  </h5>
+                  <h5 className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed, sans-serif' }}>Players who wore this kit</h5>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {players.slice(0, 6).map(player => (
-                      <Link key={player.id} to={`/players/${player.id}`}
-                        className="flex-shrink-0 w-16 hover:scale-105 transition-transform">
+                      <Link key={player.id} to={`/players/${player.id}`} className="flex-shrink-0 w-16 hover:scale-105 transition-transform">
                         <div className="w-16 h-20 bg-secondary rounded overflow-hidden">
-                          <img src={proxyImageUrl(player.photo)} alt={player.name}
-                            className="w-full h-full object-cover" />
+                          <img src={proxyImageUrl(player.photo)} alt={player.name} className="w-full h-full object-cover" />
                         </div>
                         <p className="text-[11px] text-center mt-1 font-mono truncate">{player.name}</p>
                       </Link>
@@ -279,35 +250,43 @@ export default function KitDetail() {
                 </div>
               )}
 
-              {/* Report Form */}
+              {/* ── Report Form (Master Kit) ── */}
               {showReport && user && (
-                <div className="border border-destructive/30 p-4 space-y-3" data-testid="kit-report-form">
-                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>
-                    REPORT ERROR
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { key: 'club',    label: 'Team'    },
-                      { key: 'season',  label: 'Season'  },
-                      { key: 'brand',   label: 'Brand'   },
-                      { key: 'design',  label: 'Design'  },
-                      { key: 'sponsor', label: 'Sponsor' },
-                      { key: 'league',  label: 'League'  },
-                    ].map(({ key, label }) => (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                          style={{ fontFamily: 'Barlow Condensed' }}>{label}</Label>
-                        <Input value={reportCorrections[key] || ''}
-                          onChange={e => setReportCorrections(p => ({ ...p, [key]: e.target.value }))}
-                          className="bg-card border-border rounded-none h-9 text-sm" />
-                      </div>
-                    ))}
+                <div className="border border-destructive/30 p-4 space-y-4" data-testid="kit-report-form">
+                  <h4 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>REPORT ERROR</h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                    {/* Club — autocomplete team */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                        style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
-                      <Select value={reportCorrections.kit_type || ''}
-                        onValueChange={v => setReportCorrections(p => ({ ...p, kit_type: v }))}>
-                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Team</Label>
+                      <EntityAutocomplete
+                        entityType="team"
+                        value={reportCorrections.club || ''}
+                        onChange={set('club')}
+                        onSelect={(item) => set('club')(item.label)}
+                        placeholder="e.g., FC Barcelona"
+                        className="bg-card border-border rounded-none"
+                        testId="report-club"
+                      />
+                    </div>
+
+                    {/* Season — Input libre */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Season</Label>
+                      <Input
+                        value={reportCorrections.season || ''}
+                        onChange={e => set('season')(e.target.value)}
+                        className="bg-card border-border rounded-none h-9 text-sm"
+                        data-testid="report-season"
+                      />
+                    </div>
+
+                    {/* Kit Type — Select */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Type</Label>
+                      <Select value={reportCorrections.kit_type || ''} onValueChange={set('kit_type')}>
+                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-kit-type">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border">
@@ -315,12 +294,40 @@ export default function KitDetail() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Brand — autocomplete */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                        style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
-                      <Select value={reportCorrections.gender || ''}
-                        onValueChange={v => setReportCorrections(p => ({ ...p, gender: v }))}>
-                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Brand</Label>
+                      <EntityAutocomplete
+                        entityType="brand"
+                        value={reportCorrections.brand || ''}
+                        onChange={set('brand')}
+                        onSelect={(item) => set('brand')(item.label)}
+                        placeholder="e.g., Nike"
+                        className="bg-card border-border rounded-none"
+                        testId="report-brand"
+                      />
+                    </div>
+
+                    {/* League — autocomplete */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
+                      <EntityAutocomplete
+                        entityType="league"
+                        value={reportCorrections.league || ''}
+                        onChange={set('league')}
+                        onSelect={(item) => set('league')(item.label)}
+                        placeholder="e.g., Ligue 1"
+                        className="bg-card border-border rounded-none"
+                        testId="report-league"
+                      />
+                    </div>
+
+                    {/* Gender — Select */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
+                      <Select value={reportCorrections.gender || ''} onValueChange={set('gender')}>
+                        <SelectTrigger className="bg-card border-border rounded-none h-9 text-sm" data-testid="report-gender">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border">
@@ -328,53 +335,78 @@ export default function KitDetail() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1 col-span-2">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                        style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
+
+                    {/* Design — Input libre */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
+                      <Input
+                        value={reportCorrections.design || ''}
+                        onChange={e => set('design')(e.target.value)}
+                        className="bg-card border-border rounded-none h-9 text-sm"
+                        data-testid="report-design"
+                      />
+                    </div>
+
+                    {/* Sponsor — Input libre */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
+                      <Input
+                        value={reportCorrections.sponsor || ''}
+                        onChange={e => set('sponsor')(e.target.value)}
+                        className="bg-card border-border rounded-none h-9 text-sm"
+                        data-testid="report-sponsor"
+                      />
+                    </div>
+
+                    {/* Front Photo */}
+                    <div className="space-y-1 col-span-full">
+                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Front Photo</Label>
                       <ImageUpload
                         value={reportCorrections.front_photo || ''}
-                        onChange={v => setReportCorrections(p => ({ ...p, front_photo: v }))}
+                        onChange={set('front_photo')}
                         testId="kit-report-front-photo"
                       />
                     </div>
                   </div>
+
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                      style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
-                    <Textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)}
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Notes</Label>
+                    <Textarea
+                      value={reportNotes}
+                      onChange={e => setReportNotes(e.target.value)}
                       placeholder="Describe the error..."
                       className="bg-card border-border rounded-none min-h-[60px] text-sm"
-                      data-testid="kit-report-notes" />
+                      data-testid="kit-report-notes"
+                    />
                   </div>
+
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSubmitReport}
                       className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       data-testid="kit-submit-report-btn">
                       <Check className="w-3 h-3 mr-1" /> Submit Report
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowReport(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
 
-              {/* Removal Form */}
+              {/* ── Removal Form ── */}
               {showRemovalForm && user && (
                 <div className="border border-destructive/50 p-4 space-y-3" data-testid="kit-removal-form">
-                  <h4 className="text-sm uppercase tracking-wider text-destructive"
-                    style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
-                  <p className="text-xs text-muted-foreground"
-                    style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                  <h4 className="text-sm uppercase tracking-wider text-destructive" style={{ fontFamily: 'Barlow Condensed' }}>REQUEST REMOVAL</h4>
+                  <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                     Request removal of this master kit and all its versions. The community will vote on the request.
                   </p>
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground"
-                      style={{ fontFamily: 'Barlow Condensed' }}>Reason for removal</Label>
-                    <Textarea value={removalNotes} onChange={e => setRemovalNotes(e.target.value)}
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Reason for removal</Label>
+                    <Textarea
+                      value={removalNotes}
+                      onChange={e => setRemovalNotes(e.target.value)}
                       placeholder="Explain why this kit should be removed..."
                       className="bg-card border-border rounded-none min-h-[80px] text-sm"
-                      data-testid="kit-removal-notes" />
+                      data-testid="kit-removal-notes"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleRequestRemoval} disabled={!removalNotes.trim()}
@@ -382,9 +414,7 @@ export default function KitDetail() {
                       data-testid="kit-submit-removal-btn">
                       <Trash2 className="w-3 h-3 mr-1" /> Submit Removal Request
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowRemovalForm(false)} className="rounded-none">
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowRemovalForm(false)} className="rounded-none">Cancel</Button>
                   </div>
                 </div>
               )}
@@ -398,13 +428,10 @@ export default function KitDetail() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
           <h2 className="text-xl tracking-tight mb-6" data-testid="versions-section-title">
             VERSIONS{' '}
-            <span className="font-mono text-sm text-muted-foreground ml-2">
-              {kit.versions?.length || 0}
-            </span>
+            <span className="font-mono text-sm text-muted-foreground ml-2">{kit.versions?.length || 0}</span>
           </h2>
           {kit.versions?.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children"
-              data-testid="versions-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children" data-testid="versions-grid">
               {kit.versions.map(v => (
                 <Link to={`/version/${v.version_id}`} key={v.version_id}>
                   <div className="border border-border bg-card p-4 hover:border-primary/30 group"
@@ -412,30 +439,18 @@ export default function KitDetail() {
                     style={{ transition: 'border-color 0.2s ease' }}>
                     <div className="flex gap-4">
                       <div className="w-20 h-24 bg-secondary overflow-hidden shrink-0">
-                        <img src={proxyImageUrl(v.front_photo || kit.front_photo)} alt=""
-                          className="w-full h-full object-cover" />
+                        <img src={proxyImageUrl(v.front_photo || kit.front_photo)} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0 space-y-1.5">
                         <Badge variant="outline" className="rounded-none text-[10px]">{v.model}</Badge>
-                        <h4 className="text-sm font-semibold truncate"
-                          style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>
-                          {v.competition}
-                        </h4>
-                        {v.sku_code && (
-                          <p className="font-mono text-[10px] text-muted-foreground">{v.sku_code}</p>
-                        )}
-                        {v.ean_code && (
-                          <p className="font-mono text-[10px] text-muted-foreground">EAN: {v.ean_code}</p>
-                        )}
+                        <h4 className="text-sm font-semibold truncate" style={{ fontFamily: 'DM Sans, sans-serif', textTransform: 'none' }}>{v.competition}</h4>
+                        {v.sku_code && <p className="font-mono text-[10px] text-muted-foreground">{v.sku_code}</p>}
+                        {v.ean_code && <p className="font-mono text-[10px] text-muted-foreground">EAN: {v.ean_code}</p>}
                         {(v.review_count ?? 0) > 0 ? (
                           <div className="flex items-center gap-1">
                             <div className="flex gap-0.5">
                               {[1,2,3,4,5].map(s => (
-                                <Star key={s} className={`w-3 h-3 ${
-                                  s <= Math.round(v.avg_rating ?? 0)
-                                    ? 'text-accent fill-accent'
-                                    : 'text-muted-foreground'
-                                }`} />
+                                <Star key={s} className={`w-3 h-3 ${s <= Math.round(v.avg_rating ?? 0) ? 'text-accent fill-accent' : 'text-muted-foreground'}`} />
                               ))}
                             </div>
                             <span className="text-xs font-mono text-accent">{(v.avg_rating ?? 0).toFixed(1)}</span>
@@ -443,9 +458,7 @@ export default function KitDetail() {
                           </div>
                         ) : (
                           <div className="flex gap-0.5">
-                            {[1,2,3,4,5].map(s => (
-                              <Star key={s} className="w-3 h-3 text-muted-foreground/30" />
-                            ))}
+                            {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 text-muted-foreground/30" />)}
                           </div>
                         )}
                       </div>
@@ -457,9 +470,7 @@ export default function KitDetail() {
           ) : (
             <div className="text-center py-12 border border-dashed border-border">
               <Package className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                No versions added yet
-              </p>
+              <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>No versions added yet</p>
             </div>
           )}
         </div>
@@ -471,30 +482,20 @@ export default function KitDetail() {
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
             <h2 className="text-xl tracking-tight mb-6">
               RATINGS{' '}
-              <span className="font-mono text-sm text-muted-foreground ml-2">
-                {kit.review_count} review{kit.review_count > 1 ? 's' : ''} across all versions
-              </span>
+              <span className="font-mono text-sm text-muted-foreground ml-2">{kit.review_count} review{kit.review_count > 1 ? 's' : ''} across all versions</span>
             </h2>
             <div className="flex items-center gap-6">
               <div className="border border-border bg-card p-6 text-center min-w-[120px]">
-                <p className="text-4xl font-mono font-bold text-accent">
-                  {(kit.avg_rating ?? 0).toFixed(1)}
-                </p>
+                <p className="text-4xl font-mono font-bold text-accent">{(kit.avg_rating ?? 0).toFixed(1)}</p>
                 <div className="flex items-center justify-center gap-0.5 mt-2">
                   {[1,2,3,4,5].map(s => (
-                    <Star key={s} className={`w-4 h-4 ${
-                      s <= Math.round(kit.avg_rating ?? 0) ? 'fill-accent text-accent' : 'text-muted-foreground'
-                    }`} />
+                    <Star key={s} className={`w-4 h-4 ${s <= Math.round(kit.avg_rating ?? 0) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                   ))}
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-2"
-                  style={{ fontFamily: 'Barlow Condensed' }}>
-                  Global average
-                </p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-2" style={{ fontFamily: 'Barlow Condensed' }}>Global average</p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground"
-                  style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                   Ratings are based on individual version reviews.<br />
                   Select a version above to read or leave a review.
                 </p>
@@ -509,7 +510,6 @@ export default function KitDetail() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
