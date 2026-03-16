@@ -71,11 +71,13 @@ export const updateProfile = (data) => api.put('/users/profile', data);
 export const createSubmission = (data) => api.post('/submissions', data);
 export const getSubmissions = (params) => api.get('/submissions', { params });
 export const getSubmission = (id) => api.get(`/submissions/${id}`);
+// vote doit être la string "up" ou "down"
 export const voteOnSubmission = (id, vote) => api.post(`/submissions/${id}/vote`, { vote });
 
 // Reports
 export const createReport = (data) => api.post('/reports', data);
 export const getReports = (params) => api.get('/reports', { params });
+// vote doit être la string "up" ou "down"
 export const voteOnReport = (id, vote) => api.post(`/reports/${id}/vote`, { vote });
 
 // Wishlist
@@ -116,13 +118,28 @@ export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
 
-// Pending entities
-export const createTeamPending = (data) => api.post('/teams/pending', data);
-export const createBrandPending = (data) => api.post('/brands/pending', data);
-export const createLeaguePending = (data) => api.post('/leagues/pending', data);
-export const createPlayerPending = (data) => api.post('/players/pending', data);
+// Pending entities — acceptent un parent_submission_id pour lier les refs au master kit
+export const createTeamPending = (data, parentSubmissionId = null) =>
+  api.post('/teams/pending', data, {
+    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
+  });
 
-// Players who wore this kit (AJOUT)
+export const createBrandPending = (data, parentSubmissionId = null) =>
+  api.post('/brands/pending', data, {
+    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
+  });
+
+export const createLeaguePending = (data, parentSubmissionId = null) =>
+  api.post('/leagues/pending', data, {
+    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
+  });
+
+export const createPlayerPending = (data, parentSubmissionId = null) =>
+  api.post('/players/pending', data, {
+    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
+  });
+
+// Players who wore this kit
 export const getKitPlayers = (kitId) => api.get(`/kits/${kitId}/players`);
 
 export default api;
