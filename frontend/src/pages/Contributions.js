@@ -269,7 +269,7 @@ export default function Contributions() {
 
 const handleSubmitKit = async () => {
   if (!club.trim() || !season.trim() || !kitType || !brand.trim() || !frontPhoto) {
-    toast.error('Please fill all required fields (Club, Season, Type, Brand, League, Gender)');
+    toast.error('Please fill all required fields (Club, Season, Type, Brand, Photo)');
     return;
   }
 
