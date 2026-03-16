@@ -276,16 +276,19 @@ const handleSubmitKit = async () => {
   setSubmitting(true);
   try {
     const data = {
-      team_id: teamId,
-      season,
-      kit_type: kitType,
-      brand_id: brandId,
-      league_id: leagueId,
-      sponsor,
-      design,
-      gender,
-      front_photo: frontPhoto,
-    };
+  club,           // ← AJOUTER : nom textuel du club
+  team_id: teamId,
+  season,
+  kit_type: kitType,
+  brand,          // ← AJOUTER : nom textuel de la brand
+  brand_id: brandId,
+  league,         // ← AJOUTER : nom textuel de la league
+  league_id: leagueId,
+  sponsor,
+  design,
+  gender,
+  front_photo: frontPhoto,
+};
 
     await createSubmission({ submission_type: 'master_kit', data });
     toast.success('Master kit submitted for community review!');
@@ -704,10 +707,10 @@ const handleVoteReport = async (reportId, isUpvote) => {
                         </div>
                         {sub.status === 'pending' && !hasVoted(sub) && (
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => handleVoteSub(sub.submission_id, 'up')} className="p-2 border border-border hover:border-primary hover:text-primary" data-testid={`vote-up-${sub.submission_id}`}>
+                            <button onClick={() => handleVoteSubmission(sub.submission_id, true)} className="p-2 border border-border hover:border-primary hover:text-primary" data-testid={`vote-up-${sub.submission_id}`}>
                               <ThumbsUp className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleVoteSub(sub.submission_id, 'down')} className="p-2 border border-border hover:border-destructive hover:text-destructive" data-testid={`vote-down-${sub.submission_id}`}>
+                            <button onClick={() => handleVoteSubmission(sub.submission_id, false)} className="p-2 border border-border hover:border-destructive hover:text-destructive" data-testid={`vote-down-${sub.submission_id}`}>
                               <ThumbsDown className="w-4 h-4" />
                             </button>
                           </div>
@@ -952,10 +955,10 @@ const handleVoteReport = async (reportId, isUpvote) => {
                         </div>
                         {sub.status === 'pending' && !hasVoted(sub) && (
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => handleVoteSub(sub.submission_id, 'up')} className="p-2 border border-border hover:border-primary hover:text-primary">
+                            <button onClick={() => handleVoteSubmission(sub.submission_id, true)} className="p-2 border border-border hover:border-primary hover:text-primary">
                               <ThumbsUp className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleVoteSub(sub.submission_id, 'down')} className="p-2 border border-border hover:border-destructive hover:text-destructive">
+                            <button onClick={() => handleVoteSubmission(sub.submission_id, false)} className="p-2 border border-border hover:border-destructive hover:text-destructive">
                               <ThumbsDown className="w-4 h-4" />
                             </button>
                           </div>
