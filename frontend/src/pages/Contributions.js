@@ -276,19 +276,19 @@ const handleSubmitKit = async () => {
   setSubmitting(true);
   try {
     const data = {
-  club,           // ← AJOUTER : nom textuel du club
-  team_id: teamId,
-  season,
-  kit_type: kitType,
-  brand,          // ← AJOUTER : nom textuel de la brand
-  brand_id: brandId,
-  league,         // ← AJOUTER : nom textuel de la league
-  league_id: leagueId,
-  sponsor,
-  design,
-  gender,
-  front_photo: frontPhoto,
-};
+      club,
+      team_id: teamId,
+      season,
+      kit_type: kitType,
+      brand,
+      brand_id: brandId,
+      league,
+      league_id: leagueId,
+      sponsor,
+      design,
+      gender,
+      front_photo: frontPhoto,
+    };
 
     await createSubmission({ submission_type: 'master_kit', data });
     toast.success('Master kit submitted for community review!');
@@ -334,8 +334,6 @@ const handleSubmitVersion = async () => {
   }
 };
 
-
-
   const closeAddForm = () => {
     setShowAddForm(false);
     setAddStep(1);
@@ -369,7 +367,6 @@ const handleVoteReport = async (reportId, isUpvote) => {
   }
 };
 
-
   const filteredExistingKits = existingKits.filter((k) => {
     const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
     const query = searchExistingKit.toLowerCase();
@@ -387,8 +384,6 @@ const handleVoteReport = async (reportId, isUpvote) => {
   const jerseyAndCreateSubs = submissions.filter(s =>
     !entityEditSubs.includes(s) && !entityCreateSubs.includes(s) && s.submission_type === 'master_kit'
   );
-
-
 
   return (
     <div className="animate-fade-in-up">
@@ -963,7 +958,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
                             </button>
                           </div>
                         )}
-                                                {hasVoted(sub) && <Badge variant="secondary" className="rounded-none text-[10px]">Voted</Badge>}
+                        {hasVoted(sub) && <Badge variant="secondary" className="rounded-none text-[10px]">Voted</Badge>}
                         {expandedSubmission === sub.submission_id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                       </div>
                     </div>
@@ -971,7 +966,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
                       <div className="px-4 pb-4">
                         <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
                       </div>
-                        )}
+                    )}
                   </div>
                 ))}
               </div>
