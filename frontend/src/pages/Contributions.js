@@ -1,7 +1,11 @@
 import api from '@/lib/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, proxyImageUrl } from '@/lib/api';
+import {
+  getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission,
+  getMasterKits, proxyImageUrl,
+  createTeamPending, createBrandPending, createLeaguePending,
+} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -65,6 +69,36 @@ function normalizeEntities(items = []) {
   return items.map(item => ({ ...item, display_name: getDisplayName(item) }));
 }
 
+function emptyEntityBuckets() {
+  return { team: [], league: [], brand: [], player: [], sponsor: [] };
+}
+
+/**
+ * Construit les buckets d'entités (pending ou approved) directement depuis
+ * les submissions déjà chargées, sans appel API supplémentaire.
+ */
+function buildEntityBucketsFromSubmissions(items = []) {
+  const buckets = emptyEntityBuckets();
+  items.forEach((sub) => {
+    const ENTITY_TYPES = ['team', 'league', 'brand', 'player', 'sponsor'];
+    if (!ENTITY_TYPES.includes(sub.submission_type)) return;
+    if ((sub.data?.mode || 'create') !== 'create') return;
+
+    const entityId = sub.data?.entity_id || sub.submission_id;
+    const display_name = sub.data?.full_name || sub.data?.name || '—';
+    const item = { ...sub.data, submission_id: sub.submission_id, display_name, status: sub.status, _id: entityId };
+
+    if (sub.submission_type === 'team')   item.team_id   = entityId;
+    if (sub.submission_type === 'league') item.league_id = entityId;
+    if (sub.submission_type === 'brand')  item.brand_id  = entityId;
+    if (sub.submission_type === 'player') item.player_id = entityId;
+    if (sub.submission_type === 'sponsor') item.sponsor_id = entityId;
+
+    buckets[sub.submission_type].push(item);
+  });
+  return buckets;
+}
+
 // ===== COMPOSANT: DÉTAILS DE SOUMISSION =====
 function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
   const isEntity = ['team', 'league', 'brand', 'player', 'sponsor'].includes(sub.submission_type);
@@ -115,9 +149,7 @@ function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
 
       {sub.data?.front_photo && (
         <div className="mt-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>
-            Photo
-          </p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2" style={{ fontFamily: 'Barlow Condensed' }}>Photo</p>
           <img src={proxyImageUrl(sub.data.front_photo)} alt="Jersey" className="w-24 h-32 object-cover border border-border" />
         </div>
       )}
@@ -137,7 +169,10 @@ function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
 // ===== COMPOSANT: DÉTAILS DE RAPPORT =====
 function ReportDetail({ rep }) {
   const skipFields = ['_id', 'kit_id', 'version_id', 'created_by', 'created_at', 'version_count', 'avg_rating', 'review_count'];
-  const allFields = [...new Set([...Object.keys(rep.original_data || {}).filter(f => !skipFields.includes(f)), ...Object.keys(rep.corrections || {}).filter(f => !skipFields.includes(f))])];
+  const allFields = [...new Set([
+    ...Object.keys(rep.original_data || {}).filter(f => !skipFields.includes(f)),
+    ...Object.keys(rep.corrections || {}).filter(f => !skipFields.includes(f))
+  ])];
 
   return (
     <div className="mt-4 pt-4 border-t border-border" data-testid={`report-detail-${rep.report_id}`}>
@@ -196,8 +231,8 @@ export default function Contributions() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
   const [expandedReport, setExpandedReport] = useState(null);
-  const [pendingEntities, setPendingEntities] = useState({ team: [], league: [], brand: [], player: [], sponsor: [] });
-  const [approvedEntities, setApprovedEntities] = useState({ team: [], league: [], brand: [], player: [], sponsor: [] });
+  const [pendingEntities, setPendingEntities] = useState(emptyEntityBuckets());
+  const [approvedEntities, setApprovedEntities] = useState(emptyEntityBuckets());
   const [loadingPending, setLoadingPending] = useState(false);
   const [searchExistingKit, setSearchExistingKit] = useState('');
 
@@ -224,153 +259,141 @@ export default function Contributions() {
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto] = useState('');
 
-  // ===== FONCTIONS PRINCIPALE =====
+  // ===== CHARGEMENT PRINCIPAL =====
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadingPending(true);
     try {
       const status = activeTab === 'approved' ? 'approved' : 'pending';
       const [subsRes, repsRes] = await Promise.all([
         getSubmissions({ status }),
-        getReports({ status })
+        getReports({ status }),
       ]);
-      setSubmissions(subsRes.data || []);
+      const nextSubs = subsRes.data || [];
+      setSubmissions(nextSubs);
       setReports(repsRes.data || []);
+
+      // Construit les buckets d'entités directement depuis les submissions
+      const entityBuckets = buildEntityBucketsFromSubmissions(nextSubs);
+      if (status === 'approved') {
+        setApprovedEntities(entityBuckets);
+        setPendingEntities(emptyEntityBuckets());
+      } else {
+        setPendingEntities(entityBuckets);
+        setApprovedEntities(emptyEntityBuckets());
+      }
     } catch (e) {
       console.error('Failed to fetch submissions:', e);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
-    }
-  }, [activeTab]);
-
-  const fetchPendingEntities = useCallback(async () => {
-    setLoadingPending(true);
-    try {
-      const res = await api.get('/pending');
-      setPendingEntities({
-        team: normalizeEntities(res.data?.team || []),
-        league: normalizeEntities(res.data?.league || []),
-        brand: normalizeEntities(res.data?.brand || []),
-        player: normalizeEntities(res.data?.player || []),
-        sponsor: normalizeEntities(res.data?.sponsor || []),
-      });
-    } catch (e) {
-      console.error('Failed to fetch pending entities', e);
-      setPendingEntities({ team: [], league: [], brand: [], player: [], sponsor: [] });
-    } finally {
       setLoadingPending(false);
     }
   }, [activeTab]);
 
   useEffect(() => {
     fetchData();
-    fetchPendingEntities();
-  }, [activeTab, fetchData, fetchPendingEntities]);
+  }, [activeTab, fetchData]);
 
-const handleSubmitKit = async () => {
-  if (!club.trim() || !season.trim() || !kitType || !brand.trim() || !frontPhoto) {
-    toast.error('Please fill all required fields (Club, Season, Type, Brand, Photo)');
-    return;
-  }
+  // ===== SUBMIT MASTER KIT =====
+  const handleSubmitKit = async () => {
+    if (!club.trim() || !season.trim() || !kitType || !brand.trim() || !frontPhoto) {
+      toast.error('Please fill all required fields (Club, Season, Type, Brand, Photo)');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const data = {
+        club, team_id: teamId, season, kit_type: kitType,
+        brand, brand_id: brandId, league, league_id: leagueId,
+        sponsor, design, gender, front_photo: frontPhoto,
+      };
 
-  setSubmitting(true);
-  try {
-    const data = {
-      club,
-      team_id: teamId,
-      season,
-      kit_type: kitType,
-      brand,
-      brand_id: brandId,
-      league,
-      league_id: leagueId,
-      sponsor,
-      design,
-      gender,
-      front_photo: frontPhoto,
-    };
+      const submissionRes = await createSubmission({ submission_type: 'master_kit', data });
+      const masterKitSubmissionId = submissionRes?.data?.submission_id;
 
-    await createSubmission({ submission_type: 'master_kit', data });
-    toast.success('Master kit submitted for community review!');
-    closeAddForm();
-    await fetchData();
-    const kitsRes = await getMasterKits();
-    setExistingKits(kitsRes.data || []);
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.detail || 'Failed to submit');
-  } finally {
-    setSubmitting(false);
-  }
-};
+      // Crée les entités manquantes en pending, liées au master kit
+      if (masterKitSubmissionId) {
+        const pendingJobs = [];
+        if (!teamId   && club.trim())    pendingJobs.push(createTeamPending(  { name: club.trim()   }, masterKitSubmissionId));
+        if (!brandId  && brand.trim())   pendingJobs.push(createBrandPending( { name: brand.trim()  }, masterKitSubmissionId));
+        if (!leagueId && league.trim())  pendingJobs.push(createLeaguePending({ name: league.trim() }, masterKitSubmissionId));
+        await Promise.allSettled(pendingJobs);
+      }
 
-const handleSubmitVersion = async () => {
-  if (!selectedKit || !competition || !model) {
-    toast.error('Please fill all required fields (Parent Kit, Competition, Model)');
-    return;
-  }
+      toast.success('Master kit submitted for community review!');
+      closeAddForm();
+      await fetchData();
+      const kitsRes = await getMasterKits();
+      setExistingKits(kitsRes.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Failed to submit');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  setSubmitting(true);
-  try {
-    const data = {
-      kit_id: selectedKit,
-      competition,
-      model,
-      sku_code: skuCode,
-      ean_code: eanCode,
-      front_photo: verFrontPhoto,
-      back_photo: verBackPhoto,
-    };
-
-    await createSubmission({ submission_type: 'version', data });
-    toast.success('Version submitted for community review!');
-    closeAddForm();
-    await fetchData();
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.detail || 'Failed to submit');
-  } finally {
-    setSubmitting(false);
-  }
-};
+  // ===== SUBMIT VERSION =====
+  const handleSubmitVersion = async () => {
+    if (!selectedKit || !competition || !model) {
+      toast.error('Please fill all required fields (Parent Kit, Competition, Model)');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const data = {
+        kit_id: selectedKit, competition, model,
+        sku_code: skuCode, ean_code: eanCode,
+        front_photo: verFrontPhoto, back_photo: verBackPhoto,
+      };
+      await createSubmission({ submission_type: 'version', data });
+      toast.success('Version submitted for community review!');
+      closeAddForm();
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || 'Failed to submit');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const closeAddForm = () => {
-    setShowAddForm(false);
-    setAddStep(1);
-    setSubType('master_kit');
+    setShowAddForm(false); setAddStep(1); setSubType('master_kit');
     setClub(''); setTeamId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
     setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setLeagueId(''); setGender('');
     setSelectedKit(''); setCompetition(''); setModel('');
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
   };
 
-const hasVoted = (item) => item.voters?.includes(user?.user_id);
-const isModerator = user?.role === 'moderator' || user?.role === 'admin';
+  const hasVoted = (item) => item.voters?.includes(user?.user_id);
+  const isModerator = user?.role === 'moderator' || user?.role === 'admin';
 
-const handleVoteSubmission = async (submissionId, isUpvote) => {
-  try {
-    await voteOnSubmission(submissionId, { upvote: isUpvote });
-    await fetchData();
-  } catch (e) {
-    console.error('Failed to vote on submission', e);
-    toast.error('Failed to register vote');
-  }
-};
+  // FIX: vote doit être la string "up" ou "down", pas un objet booléen
+  const handleVoteSubmission = async (submissionId, isUpvote) => {
+    try {
+      await voteOnSubmission(submissionId, isUpvote ? 'up' : 'down');
+      await fetchData();
+    } catch (e) {
+      console.error('Failed to vote on submission', e);
+      toast.error(e.response?.data?.detail || 'Failed to register vote');
+    }
+  };
 
-const handleVoteReport = async (reportId, isUpvote) => {
-  try {
-    await voteOnReport(reportId, { upvote: isUpvote });
-    await fetchData();
-  } catch (e) {
-    console.error('Failed to vote on report', e);
-    toast.error('Failed to register vote');
-  }
-};
+  const handleVoteReport = async (reportId, vote) => {
+    try {
+      await voteOnReport(reportId, vote);
+      await fetchData();
+    } catch (e) {
+      console.error('Failed to vote on report', e);
+      toast.error(e.response?.data?.detail || 'Failed to register vote');
+    }
+  };
 
   const filteredExistingKits = existingKits.filter((k) => {
     const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
-    const query = searchExistingKit.toLowerCase();
-    return label.includes(query);
+    return label.includes(searchExistingKit.toLowerCase());
   });
 
   const entityEditSubs = submissions.filter(s =>
@@ -391,23 +414,15 @@ const handleVoteReport = async (reportId, isUpvote) => {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl sm:text-4xl tracking-tighter mb-2" data-testid="contributions-title">
-                CONTRIBUTIONS
-              </h1>
+              <h1 className="text-3xl sm:text-4xl tracking-tighter mb-2" data-testid="contributions-title">CONTRIBUTIONS</h1>
               <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
                 Submit new jerseys and vote on community contributions. {isModerator ? 'As a moderator, your upvote approves instantly.' : '5 upvotes required for approval.'}
               </p>
               {isModerator && (
-                <Badge className="mt-2 rounded-none bg-primary/20 text-primary border-primary/30" data-testid="moderator-badge">
-                  Moderator
-                </Badge>
+                <Badge className="mt-2 rounded-none bg-primary/20 text-primary border-primary/30" data-testid="moderator-badge">Moderator</Badge>
               )}
             </div>
-            <Button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
-              data-testid="add-jersey-btn"
-            >
+            <Button onClick={() => setShowAddForm(!showAddForm)} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shrink-0" data-testid="add-jersey-btn">
               <Plus className="w-4 h-4 mr-1" /> Add Jersey
             </Button>
           </div>
@@ -415,7 +430,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 lg:px-8 py-8">
-        {/* Add Jersey Form */}
+        {/* ── Add Jersey Form ── */}
         {showAddForm && (
           <div className="border border-primary/30 p-6 mb-8" data-testid="add-jersey-form">
             <div className="flex items-center gap-4 mb-6">
@@ -427,9 +442,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
               </div>
               <div className="w-8 h-px bg-border" />
               <div className={`flex items-center gap-2 ${addStep === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <div className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${addStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                  2
-                </div>
+                <div className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${addStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>2</div>
                 <span className="text-xs tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>VERSION</span>
               </div>
             </div>
@@ -439,50 +452,35 @@ const handleVoteReport = async (reportId, isUpvote) => {
                 <div className="border border-border p-4 mb-4">
                   <h4 className="text-xs uppercase tracking-wider mb-3" style={{ fontFamily: 'Barlow Condensed' }}>Use Existing Kit</h4>
                   <input
-                    type="text"
-                    placeholder="Search kits (team, season, type)"
-                    value={searchExistingKit}
-                    onChange={(e) => setSearchExistingKit(e.target.value)}
+                    type="text" placeholder="Search kits (team, season, type)"
+                    value={searchExistingKit} onChange={(e) => setSearchExistingKit(e.target.value)}
                     className="w-full mb-2 bg-card border border-border px-3 py-2 text-xs"
                     style={{ fontFamily: 'Barlow Condensed' }}
                   />
-                  <Select value={selectedKit} onValueChange={(value) => setSelectedKit(value)} data-testid="select-existing-kit">
-                    <SelectTrigger className="bg-card border-border rounded-none">
-                      <SelectValue placeholder="Select an existing Master Kit" />
-                    </SelectTrigger>
+                  <Select value={selectedKit} onValueChange={setSelectedKit} data-testid="select-existing-kit">
+                    <SelectTrigger className="bg-card border-border rounded-none"><SelectValue placeholder="Select an existing Master Kit" /></SelectTrigger>
                     <SelectContent className="bg-card border-border max-h-60">
                       {filteredExistingKits.map((k) => (
-                        <SelectItem key={k._id} value={k.kit_id}>
-                          {k.club} – {k.season} ({k.type})
-                        </SelectItem>
+                        <SelectItem key={k._id} value={k.kit_id}>{k.club} – {k.season} ({k.type})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   {selectedKit && (
-                    <Button
-                      onClick={() => { setAddStep(2); setSubType('version'); }}
-                      className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
-                      data-testid="use-existing-kit-btn"
-                    >
+                    <Button onClick={() => { setAddStep(2); setSubType('version'); }} className="mt-3 rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="use-existing-kit-btn">
                       Continue with this Kit <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   )}
                 </div>
 
-                <div className="text-center text-xs text-muted-foreground tracking-wider my-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  OR CREATE NEW
-                </div>
+                <div className="text-center text-xs text-muted-foreground tracking-wider my-4" style={{ fontFamily: 'Barlow Condensed' }}>OR CREATE NEW</div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Team *</Label>
-                    <EntityAutocomplete
-                      entityType="team" value={club}
+                    <EntityAutocomplete entityType="team" value={club}
                       onChange={(val) => { setClub(val); setTeamId(''); }}
                       onSelect={(item) => { setClub(item.label); setTeamId(item.id); }}
-                      placeholder="e.g., FC Barcelona"
-                      className="bg-card border-border rounded-none" testId="add-club"
-                    />
+                      placeholder="e.g., FC Barcelona" className="bg-card border-border rounded-none" testId="add-club" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Season *</Label>
@@ -490,34 +488,24 @@ const handleVoteReport = async (reportId, isUpvote) => {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>League</Label>
-                    <EntityAutocomplete
-                      entityType="league" value={league}
+                    <EntityAutocomplete entityType="league" value={league}
                       onChange={(val) => { setLeague(val); setLeagueId(''); }}
                       onSelect={(item) => { setLeague(item.label); setLeagueId(item.id); }}
-                      placeholder="e.g., Ligue 1"
-                      className="bg-card border-border rounded-none" testId="add-league"
-                    />
+                      placeholder="e.g., Ligue 1" className="bg-card border-border rounded-none" testId="add-league" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Type *</Label>
                     <Select value={kitType} onValueChange={setKitType}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-kit-type">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {KIT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
+                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-kit-type"><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">{KIT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Brand *</Label>
-                    <EntityAutocomplete
-                      entityType="brand" value={brand}
+                    <EntityAutocomplete entityType="brand" value={brand}
                       onChange={(val) => { setBrand(val); setBrandId(''); }}
                       onSelect={(item) => { setBrand(item.label); setBrandId(item.id); }}
-                      placeholder="e.g., Nike"
-                      className="bg-card border-border rounded-none" testId="add-brand"
-                    />
+                      placeholder="e.g., Nike" className="bg-card border-border rounded-none" testId="add-brand" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Design</Label>
@@ -530,12 +518,8 @@ const handleVoteReport = async (reportId, isUpvote) => {
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
                     <Select value={gender} onValueChange={setGender}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-gender">
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                      </SelectContent>
+                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">{GENDERS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2 sm:col-span-2">
@@ -568,9 +552,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
                   <div className="mb-4">
                     <Label className="text-xs uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Barlow Condensed' }}>Select Parent Kit *</Label>
                     <Select value={selectedKit} onValueChange={setSelectedKit}>
-                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="version-kit-select">
-                        <SelectValue placeholder="Select a Master Kit" />
-                      </SelectTrigger>
+                      <SelectTrigger className="bg-card border-border rounded-none" data-testid="version-kit-select"><SelectValue placeholder="Select a Master Kit" /></SelectTrigger>
                       <SelectContent className="bg-card border-border max-h-60">
                         {existingKits.map(k => (
                           <SelectItem key={k.kit_id} value={k.kit_id}>{k.club} - {k.season} ({k.kit_type})</SelectItem>
@@ -585,18 +567,14 @@ const handleVoteReport = async (reportId, isUpvote) => {
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Competition *</Label>
                     <Select value={competition} onValueChange={setCompetition}>
                       <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-competition"><SelectValue placeholder="Select competition" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
+                      <SelectContent className="bg-card border-border">{COMPETITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Model *</Label>
                     <Select value={model} onValueChange={setModel}>
                       <SelectTrigger className="bg-card border-border rounded-none" data-testid="add-model"><SelectValue placeholder="Select model" /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                      </SelectContent>
+                      <SelectContent className="bg-card border-border">{MODELS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
@@ -628,7 +606,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
           </div>
         )}
 
-        {/* Tabs */}
+        {/* ── Tabs ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-card border border-border rounded-none mb-6">
             <TabsTrigger value="pending" className="rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-pending">
@@ -646,15 +624,11 @@ const handleVoteReport = async (reportId, isUpvote) => {
               <Shirt className="w-4 h-4 inline mr-1" /> JERSEY SUBMISSIONS
             </h3>
             {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <div key={i} className="h-20 bg-card animate-pulse border border-border" />)}
-              </div>
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-card animate-pulse border border-border" />)}</div>
             ) : jerseyAndCreateSubs.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-border mb-8">
                 <FileCheck className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                  No {activeTab} submissions
-                </p>
+                <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No {activeTab} submissions</p>
               </div>
             ) : (
               <div className="space-y-3 mb-8" data-testid="submissions-list">
@@ -669,14 +643,16 @@ const handleVoteReport = async (reportId, isUpvote) => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABELS[sub.submission_type] || sub.submission_type}</Badge>
-                          {['team', 'league', 'brand', 'player'].includes(sub.submission_type) && (
+                          {['team','league','brand','player'].includes(sub.submission_type) && (
                             <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">
                               {sub.data?.mode === 'edit' ? 'Edit' : 'New'}
                             </Badge>
                           )}
-                          <Badge className={`rounded-none text-[10px] ${sub.status === 'approved' ? 'bg-primary/20 text-primary' : sub.status === 'pending' ? 'bg-accent/20 text-accent' : 'bg-destructive/20 text-destructive'}`}>
-                            {sub.status}
-                          </Badge>
+                          <Badge className={`rounded-none text-[10px] ${
+                            sub.status === 'approved' ? 'bg-primary/20 text-primary' :
+                            sub.status === 'pending'  ? 'bg-accent/20 text-accent' :
+                            'bg-destructive/20 text-destructive'
+                          }`}>{sub.status}</Badge>
                         </div>
                         <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           {sub.submission_type === 'master_kit'
@@ -724,7 +700,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
               </div>
             )}
 
-            {/* ── RÉFÉRENCES À VALIDER ── */}
+            {/* ── RÉFÉRENCES À VALIDER (pending) ── */}
             {activeTab === 'pending' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -734,42 +710,30 @@ const handleVoteReport = async (reportId, isUpvote) => {
                   <div className="h-16 bg-card animate-pulse border border-border" />
                 ) : Object.values(pendingEntities).every(arr => arr.length === 0) ? (
                   <div className="text-center py-8 border border-dashed border-border mb-8">
-                    <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                      Aucune référence en attente de validation
-                    </p>
+                    <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Aucune référence en attente de validation</p>
                   </div>
                 ) : (
                   <div className="space-y-4 mb-8">
                     {[
-                      { key: 'team',    label: 'Équipes' },
-                      { key: 'league',  label: 'Compétitions' },
-                      { key: 'brand',   label: 'Marques' },
-                      { key: 'player',  label: 'Joueurs' },
+                      { key: 'team', label: 'Équipes' },
+                      { key: 'league', label: 'Compétitions' },
+                      { key: 'brand', label: 'Marques' },
+                      { key: 'player', label: 'Joueurs' },
                       { key: 'sponsor', label: 'Sponsors' },
                     ].map(({ key, label }) => {
                       const list = pendingEntities[key] || [];
                       if (!list.length) return null;
                       return (
                         <div key={key} className="border border-border bg-card p-4">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
-                            {label} ({list.length})
-                          </p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>{label} ({list.length})</p>
                           <div className="space-y-2">
                             {list.map(item => (
-                              <div
-                                key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
-                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
-                              >
-                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                                  {getDisplayName(item)}
-                                </span>
+                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
+                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
+                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getDisplayName(item)}</span>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">
-                                    for review
-                                  </Badge>
-                                  <span className="text-[10px] text-muted-foreground italic">
-                                    Approved with kit
-                                  </span>
+                                  <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">for review</Badge>
+                                  <span className="text-[10px] text-muted-foreground italic">Approved with kit</span>
                                 </div>
                               </div>
                             ))}
@@ -782,7 +746,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
               </div>
             )}
 
-            {/* ── RÉFÉRENCES VALIDÉES (Approved) ── */}
+            {/* ── RÉFÉRENCES VALIDÉES (approved) ── */}
             {activeTab === 'approved' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -792,42 +756,30 @@ const handleVoteReport = async (reportId, isUpvote) => {
                   <div className="h-16 bg-card animate-pulse border border-border" />
                 ) : Object.values(approvedEntities).every(arr => arr.length === 0) ? (
                   <div className="text-center py-8 border border-dashed border-border mb-8">
-                    <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                      No approved references yet
-                    </p>
+                    <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No approved references yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4 mb-8">
                     {[
-                      { key: 'team',    label: 'Équipes' },
-                      { key: 'league',  label: 'Compétitions' },
-                      { key: 'brand',   label: 'Marques' },
-                      { key: 'player',  label: 'Joueurs' },
+                      { key: 'team', label: 'Équipes' },
+                      { key: 'league', label: 'Compétitions' },
+                      { key: 'brand', label: 'Marques' },
+                      { key: 'player', label: 'Joueurs' },
                       { key: 'sponsor', label: 'Sponsors' },
                     ].map(({ key, label }) => {
                       const list = approvedEntities[key] || [];
                       if (!list.length) return null;
                       return (
                         <div key={key} className="border border-border bg-card p-4">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>
-                            {label} ({list.length})
-                          </p>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>{label} ({list.length})</p>
                           <div className="space-y-2">
                             {list.map(item => (
-                              <div
-                                key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
-                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50"
-                              >
-                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                                  {getDisplayName(item)}
-                                </span>
+                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
+                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
+                                <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getDisplayName(item)}</span>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="rounded-none text-[10px] border-primary/40 text-primary">
-                                    approved
-                                  </Badge>
-                                  <Link to={`/${key}/${item.slug || item._id}`} className="text-xs text-primary hover:underline">
-                                    View
-                                  </Link>
+                                  <Badge variant="outline" className="rounded-none text-[10px] border-primary/40 text-primary">approved</Badge>
+                                  <Link to={`/${key}/${item.slug || item._id}`} className="text-xs text-primary hover:underline">View</Link>
                                 </div>
                               </div>
                             ))}
@@ -847,9 +799,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
             {reports.length === 0 && entityEditSubs.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-border">
                 <AlertTriangle className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
-                  No {activeTab} reports
-                </p>
+                <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>No {activeTab} reports</p>
               </div>
             ) : (
               <div className="space-y-3" data-testid="reports-list">
@@ -866,13 +816,9 @@ const handleVoteReport = async (reportId, isUpvote) => {
                           <Badge variant="outline" className="rounded-none text-[10px]">
                             {rep.report_type === 'removal' ? 'Removal Request' : rep.target_type === 'master_kit' ? 'Kit Correction' : 'Version Correction'}
                           </Badge>
-                          <Badge className={`rounded-none text-[10px] ${rep.status === 'approved' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
-                            {rep.status}
-                          </Badge>
+                          <Badge className={`rounded-none text-[10px] ${rep.status === 'approved' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>{rep.status}</Badge>
                         </div>
-                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                          {rep.notes || 'Correction submitted'}
-                        </p>
+                        <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{rep.notes || 'Correction submitted'}</p>
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           by {rep.reporter_name || 'Unknown'} — {rep.created_at ? new Date(rep.created_at).toLocaleDateString() : ''}
                         </p>
@@ -901,9 +847,7 @@ const handleVoteReport = async (reportId, isUpvote) => {
                       </div>
                     </div>
                     {expandedReport === rep.report_id && (
-                      <div className="px-4 pb-4">
-                        <ReportDetail rep={rep} />
-                      </div>
+                      <div className="px-4 pb-4"><ReportDetail rep={rep} /></div>
                     )}
                   </div>
                 ))}
@@ -920,20 +864,14 @@ const handleVoteReport = async (reportId, isUpvote) => {
                           <Badge variant="outline" className="rounded-none text-[10px]">
                             {sub.data?.mode === 'removal' ? 'Removal Request' : 'Entity Edit'}
                           </Badge>
-                          <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">
-                            {TYPE_LABELS[sub.submission_type]}
-                          </Badge>
-                          <Badge className={`rounded-none text-[10px] ${sub.status === 'approved' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
-                            {sub.status}
-                          </Badge>
+                          <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">{TYPE_LABELS[sub.submission_type]}</Badge>
+                          <Badge className={`rounded-none text-[10px] ${sub.status === 'approved' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>{sub.status}</Badge>
                         </div>
                         <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           {sub.data?.full_name || sub.data?.name || '?'}
                         </h4>
                         {sub.data?.mode === 'removal' && sub.data?.notes && (
-                          <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                            Reason: {sub.data.notes}
-                          </p>
+                          <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>Reason: {sub.data.notes}</p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
