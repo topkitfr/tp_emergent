@@ -7,7 +7,6 @@ import logging
 
 from database import db, client
 
-# Import all routers
 from routers.auth import router as auth_router
 from routers.kits import router as kits_router
 from routers.collections import router as collections_router
@@ -29,10 +28,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Static files
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
-# Include all routers
 app.include_router(auth_router)
 app.include_router(kits_router)
 app.include_router(collections_router)
@@ -45,17 +42,22 @@ app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(proxy_router, prefix="/api")
 
+# ✅ CORS corrigé : allow_origins explicite, jamais "*" avec credentials
+CORS_ORIGINS = os.environ.get(
+    'CORS_ORIGINS',
+    'http://localhost:3000,http://127.0.0.1:3000'
+).split(',')
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @app.on_event("startup")
 async def create_indexes():
-    # Supprime les anciens index conflictuels avant de les recréer
     for collection, index_name in [
         ('teams',   'team_id_1'),
         ('leagues', 'league_id_1'),
@@ -69,7 +71,6 @@ async def create_indexes():
         except Exception:
             pass
 
-    # Recrée les index proprement
     await db.teams.create_index("team_id",     unique=True, sparse=True)
     await db.teams.create_index("slug",         unique=True)
     await db.teams.create_index("name")

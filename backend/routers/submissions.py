@@ -121,12 +121,13 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
 
-    # Les refs d'entités sont approuvées en cascade via le master_kit — pas de vote direct
+       # Les refs d'entités sont approuvées en cascade via le master_kit — pas de vote direct
     if sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
-        raise HTTPException(
-            status_code=400,
-            detail="Entity reference submissions are approved automatically when their parent kit is approved."
-        )
+        if sub["data"].get("mode", "create") == "create":
+            raise HTTPException(
+                status_code=400,
+                detail="Entity reference submissions are approved automatically when their parent kit is approved."
+            )
 
     if sub["status"] != "pending":
         raise HTTPException(status_code=400, detail="Submission is no longer pending")
@@ -142,6 +143,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         {"submission_id": submission_id},
         {"$inc": {inc_field: vote_weight}, "$push": {"voters": user["user_id"]}}
     )
+
 
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 

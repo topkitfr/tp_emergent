@@ -13,7 +13,7 @@ const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 
 const ENTITY_CONFIGS = {
   team: {
-    label: 'Team', nameField: 'name', imageField: 'crest_url', imageLabel: 'Crest / Badge',
+    label: 'Team', nameField: 'name', imageField: 'logo_url', imageLabel: 'Crest / Badge',
     fields: [
       { key: 'name', label: 'Name', required: true },
       { key: 'country', label: 'Country' },
@@ -32,15 +32,13 @@ const ENTITY_CONFIGS = {
       { key: 'organizer', label: 'Organizer' },
     ],
   },
-
-sponsor: {
-  label: 'Sponsor', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
-  fields: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'country', label: 'Country' },
-  ],
-},
-
+  sponsor: {
+    label: 'Sponsor', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
+    fields: [
+      { key: 'name', label: 'Name', required: true },
+      { key: 'country', label: 'Country' },
+    ],
+  },
   brand: {
     label: 'Brand', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
     fields: [
@@ -140,7 +138,6 @@ export default function EntityEditDialog({ open, onOpenChange, entityType, mode 
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          {/* Champs texte / select */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => (
               <div key={f.key} className={`space-y-1 ${f.key === config.nameField ? 'sm:col-span-2' : ''}`}>
@@ -170,7 +167,6 @@ export default function EntityEditDialog({ open, onOpenChange, entityType, mode 
             ))}
           </div>
 
-          {/* Image upload */}
           <div className="space-y-1">
             <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
               {config.imageLabel}
@@ -197,7 +193,6 @@ export default function EntityEditDialog({ open, onOpenChange, entityType, mode 
             {submitting ? 'Submitting...' : mode === 'create' ? 'Submit for Review' : 'Submit Edit'}
           </Button>
 
-          {/* Request Removal — mode edit uniquement */}
           {mode === 'edit' && entityId && (
             <div className="border-t border-border pt-4">
               {!showRemoval ? (
