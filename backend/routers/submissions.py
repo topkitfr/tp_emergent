@@ -26,7 +26,7 @@ ENTITY_COLLECTIONS = {
 @router.post("/submissions")
 async def create_submission(sub: SubmissionCreate, request: Request):
     user = await get_current_user(request)
-    if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player"):
+    if sub.submission_type not in ("master_kit", "version", "team", "league", "brand", "player", "sponsor"):
         raise HTTPException(status_code=400, detail="Invalid submission type")
     doc = {
         "submission_id": f"sub_{uuid.uuid4().hex[:12]}",
@@ -204,7 +204,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             # ── CASCADE — nouveau flow : submissions avec parent_submission_id ──
             linked_entity_subs = await db.submissions.find(
                 {
-                    "submission_type": {"$in": ["team", "league", "brand", "player"]},
+                    "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
                     "status": "pending",
                     "data.parent_submission_id": kit_submission_id
                 },
@@ -253,7 +253,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             # Rejette toutes les refs liées (nouveau flow)
             await db.submissions.update_many(
                 {
-                    "submission_type": {"$in": ["team", "league", "brand", "player"]},
+                    "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
                     "status": "pending",
                     "data.parent_submission_id": kit_submission_id
                 },
