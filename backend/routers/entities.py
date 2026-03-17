@@ -385,6 +385,78 @@ async def update_brand(brand_id: str, brand: BrandCreate):
     result["kit_count"] = await db.master_kits.count_documents({"brand_id": brand_id})
     return result
 
+# ── SPONSORS ──────────────────────────────────────────────────────────────────
+
+@router.get("/sponsors", response_model=List[dict])
+async def list_sponsors(search: Optional[str] = None, skip: int = 0, limit: int = 100):
+    query = {}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+    sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
+    return sponsors
+
+@router.get("/sponsors/{sponsor_id}")
+async def get_sponsor(sponsor_id: str):
+    sponsor = await db.sponsors.find_one({"$or": [{"sponsorid": sponsor_id}, {"slug": sponsor_id}]}, {"_id": 0})
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    return sponsor
+
+@router.post("/sponsors")
+async def create_sponsor(sponsor: dict):
+    slug = slugify(sponsor.get("name", ""))
+    if await db.sponsors.find_one({"slug": slug}, {"_id": 0}):
+        raise HTTPException(status_code=400, detail="Sponsor already exists")
+    doc = {**sponsor}
+    doc["sponsorid"] = f"spon{uuid.uuid4().hex[:12]}"
+    doc["slug"] = slug
+    doc["status"] = "approved"
+    doc["created_at"] = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"] = doc["created_at"]
+    await db.sponsors.insert_one(doc)
+    return await db.sponsors.find_one({"sponsorid": doc["sponsorid"]}, {"_id": 0})
+
+@router.post("/sponsors/pending")
+async def create_sponsor_pending(sponsor: dict, parent_submission_id: Optional[str] = Query(default=None)):
+    slug = slugify(sponsor.get("name", ""))
+    existing = await db.sponsors.find_one({"slug": slug}, {"_id": 0})
+    if existing:
+        return existing
+    now = datetime.now(timezone.utc).isoformat()
+    sponsor_id = f"spon{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub{uuid.uuid4().hex[:12]}"
+    doc = {**sponsor}
+    doc["sponsorid"] = sponsor_id
+    doc["slug"] = slug
+    doc["status"] = "for-review"
+    doc["submission_id"] = submission_id
+    doc["created_at"] = now
+    doc["updated_at"] = now
+    await db.sponsors.insert_one(doc)
+    sub_data = {"mode": "create", "name": sponsor.get("name"), "entityid": sponsor_id}
+    if parent_submission_id:
+        sub_data["parent_submission_id"] = parent_submission_id
+    await db.submissions.insert_one({
+        "submissionid": submission_id,
+        "submission_type": "sponsor",
+        "data": sub_data,
+        "status": "pending",
+        "votes_up": 0, "votes_down": 0, "voters": [],
+        "created_at": now,
+    })
+    return await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
+
+@router.put("/sponsors/{sponsor_id}")
+async def update_sponsor(sponsor_id: str, sponsor: dict):
+    await assert_not_locked("sponsors", "sponsorid", sponsor_id)
+    existing = await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    update_data = {k: v for k, v in sponsor.items() if v is not None}
+    update_data["slug"] = slugify(sponsor.get("name", ""))
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.sponsors.update_one({"sponsorid": sponsor_id}, {"$set": update_data})
+    return await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
 
 # ─────────────────────────────────────────────
 # Player Routes
