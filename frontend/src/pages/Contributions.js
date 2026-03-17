@@ -292,6 +292,13 @@ export default function Contributions() {
     fetchData();
   }, [activeTab, fetchData]);
 
+useEffect(() => {
+  if (showAddForm) {
+    getMasterKits({ limit: 500 }).then(res => setExistingKits(res.data)).catch(console.error);
+  }
+}, [showAddForm]);
+
+
   // ===== SUBMIT MASTER KIT =====
   const handleSubmitKit = async () => {
     if (!club.trim() || !season.trim() || !kitType || !brand.trim() || !frontPhoto) {
@@ -389,19 +396,19 @@ if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: 
     }
   };
 
-  const filteredExistingKits = existingKits.filter((k) => {
-    const label = `${k.club} ${k.season} ${k.type}`.toLowerCase();
-    return label.includes(searchExistingKit.toLowerCase());
-  });
+  const filteredExistingKits = (existingKits || []).filter(k => {
+  const label = `${k.club ?? ''} ${k.season ?? ''} ${k.kit_type ?? ''}`.toLowerCase()
+  return label.includes(searchExistingKit.toLowerCase())
+})
 
   const entityEditSubs = submissions.filter(s =>
-    ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
-    ['edit', 'removal'].includes(s.data?.mode)
-  );
-  const entityCreateSubs = submissions.filter(s =>
-    ['team', 'league', 'brand', 'player'].includes(s.submission_type) &&
-    s.data?.mode === 'create'
-  );
+  ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
+  ["edit", "removal"].includes(s.data?.mode)
+);
+const entityCreateSubs = submissions.filter(s =>
+  ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
+  s.data?.mode === "create"
+);
   const jerseyAndCreateSubs = submissions.filter(s =>
     !entityEditSubs.includes(s) && !entityCreateSubs.includes(s) && s.submission_type === 'master_kit'
   );

@@ -32,6 +32,15 @@ const ENTITY_CONFIGS = {
       { key: 'organizer', label: 'Organizer' },
     ],
   },
+
+sponsor: {
+  label: 'Sponsor', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
+  fields: [
+    { key: 'name', label: 'Name', required: true },
+    { key: 'country', label: 'Country' },
+  ],
+},
+
   brand: {
     label: 'Brand', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
     fields: [
