@@ -1,11 +1,7 @@
 import api from '@/lib/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission,
-  getMasterKits, proxyImageUrl,
-  createTeamPending, createBrandPending, createLeaguePending,
-} from '@/lib/api';
+import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, proxyImageUrl, createTeamPending, createBrandPending, createLeaguePending, createSponsorPending } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -318,6 +314,7 @@ export default function Contributions() {
         if (!teamId   && club.trim())    pendingJobs.push(createTeamPending(  { name: club.trim()   }, masterKitSubmissionId));
         if (!brandId  && brand.trim())   pendingJobs.push(createBrandPending( { name: brand.trim()  }, masterKitSubmissionId));
         if (!leagueId && league.trim())  pendingJobs.push(createLeaguePending({ name: league.trim() }, masterKitSubmissionId));
+        if (sponsor.trim())             pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId))
         await Promise.allSettled(pendingJobs);
       }
 
