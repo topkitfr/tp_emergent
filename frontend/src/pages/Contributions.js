@@ -399,7 +399,7 @@ if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: 
   const filteredExistingKits = (existingKits || []).filter(k => {
   const label = `${k.club ?? ''} ${k.season ?? ''} ${k.kit_type ?? ''}`.toLowerCase()
   return label.includes(searchExistingKit.toLowerCase())
-})
+});
 
   const entityEditSubs = submissions.filter(s =>
   ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
