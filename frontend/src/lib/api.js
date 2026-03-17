@@ -14,10 +14,12 @@ export const proxyImageUrl = (url) => {
 
 const api = axios.create({
   baseURL: API,
+  withCredentials: true,
 });
 
 // Auth
-export const createSession = (session_id) => api.post('/auth/session', { session_id });
+export const loginUser = (email, password) => api.post('/auth/login', { email, password });
+export const registerUser = (email, password, name) => api.post('/auth/register', { email, password, name });
 export const getMe = () => api.get('/auth/me');
 export const logout = () => api.post('/auth/logout');
 
@@ -71,13 +73,11 @@ export const updateProfile = (data) => api.put('/users/profile', data);
 export const createSubmission = (data) => api.post('/submissions', data);
 export const getSubmissions = (params) => api.get('/submissions', { params });
 export const getSubmission = (id) => api.get(`/submissions/${id}`);
-// vote doit être la string "up" ou "down"
 export const voteOnSubmission = (id, vote) => api.post(`/submissions/${id}/vote`, { vote });
 
 // Reports
 export const createReport = (data) => api.post('/reports', data);
 export const getReports = (params) => api.get('/reports', { params });
-// vote doit être la string "up" ou "down"
 export const voteOnReport = (id, vote) => api.post(`/reports/${id}/vote`, { vote });
 
 // Wishlist
@@ -122,7 +122,7 @@ export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
 
-// Pending entities — acceptent un parent_submission_id pour lier les refs au master kit
+// Pending entities
 export const createTeamPending = (data, parentSubmissionId = null) =>
   api.post('/teams/pending', data, {
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},

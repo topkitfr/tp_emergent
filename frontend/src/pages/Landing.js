@@ -28,10 +28,7 @@ export default function Landing() {
   }, []);
 
 
-  const handleLogin = () => {
-    const redirectUrl = window.location.origin + '/browse';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-  };
+  const handleLogin = () => navigate('/login');
 
 
   return (

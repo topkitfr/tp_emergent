@@ -2,26 +2,21 @@ from fastapi import HTTPException, Request
 from datetime import datetime, timezone
 from database import db
 from utils import MODERATOR_EMAILS
-import os  # ← ajouté
+import os
 
-EMERGENT_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
-
-# Nouveau: flag pour activer le dev-login
 IS_DEV_LOGIN = os.getenv("DEV_LOGIN", "false").lower() == "true"
 
 
 async def get_current_user(request: Request) -> dict:
-    # Mode dev: retourner un faux user sans vérifier la session
     if IS_DEV_LOGIN:
         return {
             "user_id": "dev-user-1",
             "email": "dev@topkit.local",
             "name": "Dev User",
             "picture": "",
-            "role": "moderator",  # ← force moderateur
+            "role": "moderator",
         }
 
-    # Mode normal (Emergent + cookies session_token)
     session_token = request.cookies.get("session_token")
     if not session_token:
         auth_header = request.headers.get("Authorization", "")
@@ -46,7 +41,8 @@ async def get_current_user(request: Request) -> dict:
     if not user_doc:
         raise HTTPException(status_code=401, detail="User not found")
 
-    # Compléter le rôle si besoin
     if "role" not in user_doc:
         user_doc["role"] = "moderator" if user_doc.get("email") in MODERATOR_EMAILS else "user"
+
+    user_doc.pop("password_hash", None)
     return user_doc
