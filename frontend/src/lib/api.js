@@ -109,6 +109,10 @@ export const getBrand = (id) => api.get(`/brands/${id}`);
 export const createBrand = (data) => api.post('/brands', data);
 export const updateBrand = (id, data) => api.put(`/brands/${id}`, data);
 
+// Sponsors
+export const getSponsors = (params) => api.get('/sponsors', { params });
+export const getSponsor  = (id)     => api.get(`/sponsors/${id}`);
+
 // Players
 export const getPlayers = (params) => api.get('/players', { params });
 export const getPlayer = (id) => api.get(`/players/${id}`);

@@ -45,21 +45,6 @@ async def create_submission(sub: SubmissionCreate, request: Request):
     return result
 
 
-# ─────────────────────────────────────────────
-# NOUVEAU — GET /api/pending/refs
-# Retourne les refs d'entités en attente liées
-# à un master_kit submission donné, avec leur nom.
-#
-# Usage : GET /api/pending/refs?master_kit_submission_id=sub_xxx
-#
-# Réponse :
-# {
-#   "team":   [{"submission_id": "...", "name": "FC Test",  "status": "pending"}],
-#   "brand":  [{"submission_id": "...", "name": "Nike",     "status": "pending"}],
-#   "league": [{"submission_id": "...", "name": "Ligue 1",  "status": "pending"}],
-#   "player": []  ← réservé pour la phase item/collection
-# }
-# ─────────────────────────────────────────────
 @router.get("/pending/refs")
 async def get_pending_refs(master_kit_submission_id: str):
     refs = {}
@@ -137,7 +122,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         raise HTTPException(status_code=404, detail="Submission not found")
 
     # Les refs d'entités sont approuvées en cascade via le master_kit — pas de vote direct
-    if sub["submission_type"] in ("team", "league", "brand", "player"):
+    if sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
         raise HTTPException(
             status_code=400,
             detail="Entity reference submissions are approved automatically when their parent kit is approved."
@@ -160,89 +145,92 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
-    # ─── APPROBATION ───────────────────────────────────────────────────────────
+        # ─── APPROBATION ───────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
-        data = updated_sub["data"]
-        # FIX: renommé kit_submission_id pour ne pas écraser le param d'URL `submission_id`
-        kit_submission_id = updated_sub["submission_id"]
+        try:
+            data = updated_sub["data"]
+            kit_submission_id = updated_sub["submission_id"]
 
-        if updated_sub["submission_type"] == "master_kit":
-            kit_id = f"kit_{uuid.uuid4().hex[:12]}"
-            kit_doc = {
-                "kit_id":      kit_id,
-                "club":        data.get("club", ""),
-                "season":      data.get("season", ""),
-                "kit_type":    data.get("kit_type", ""),
-                "brand":       data.get("brand", ""),
-                "front_photo": data.get("front_photo", ""),
-                "league":      data.get("league", ""),
-                "design":      data.get("design", ""),
-                "sponsor":     data.get("sponsor", ""),
-                "gender":      data.get("gender", ""),
-                "team_id":     data.get("team_id", ""),
-                "league_id":   data.get("league_id", ""),
-                "brand_id":    data.get("brand_id", ""),
-                "created_by":  updated_sub["submitted_by"],
-                "created_at":  datetime.now(timezone.utc).isoformat(),
-            }
-            await db.master_kits.insert_one(kit_doc)
-            await db.versions.insert_one({
-                "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-                "kit_id":      kit_id,
-                "competition": "National Championship",
-                "model":       "Replica",
-                "sku_code":    "",
-                "ean_code":    "",
-                "front_photo": data.get("front_photo", ""),
-                "back_photo":  "",
-                "created_by":  updated_sub["submitted_by"],
-                "created_at":  datetime.now(timezone.utc).isoformat()
-            })
+            if updated_sub["submission_type"] == "master_kit":
+                kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+                kit_doc = {
+                    "kit_id":      kit_id,
+                    "club":        data.get("club", ""),
+                    "season":      data.get("season", ""),
+                    "kit_type":    data.get("kit_type", ""),
+                    "brand":       data.get("brand", ""),
+                    "front_photo": data.get("front_photo", ""),
+                    "league":      data.get("league", ""),
+                    "design":      data.get("design", ""),
+                    "sponsor":     data.get("sponsor", ""),
+                    "gender":      data.get("gender", ""),
+                    "team_id":     data.get("team_id", ""),
+                    "league_id":   data.get("league_id", ""),
+                    "brand_id":    data.get("brand_id", ""),
+                    "created_by":  updated_sub["submitted_by"],
+                    "created_at":  datetime.now(timezone.utc).isoformat(),
+                }
+                await db.master_kits.insert_one(kit_doc)
+                await db.versions.insert_one({
+                    "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                    "kit_id":      kit_id,
+                    "competition": "National Championship",
+                    "model":       "Replica",
+                    "sku_code":    "",
+                    "ean_code":    "",
+                    "front_photo": data.get("front_photo", ""),
+                    "back_photo":  "",
+                    "created_by":  updated_sub["submitted_by"],
+                    "created_at":  datetime.now(timezone.utc).isoformat()
+                })
 
-            now_iso = datetime.now(timezone.utc).isoformat()
+                now_iso = datetime.now(timezone.utc).isoformat()
 
-            # ── CASCADE — nouveau flow : submissions avec parent_submission_id ──
-            linked_entity_subs = await db.submissions.find(
-                {
-                    "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
-                    "status": "pending",
-                    "data.parent_submission_id": kit_submission_id
-                },
-                {"_id": 0}
-            ).to_list(50)
+                linked_entity_subs = await db.submissions.find(
+                    {
+                        "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
+                        "status": "pending",
+                        "data.parent_submission_id": kit_submission_id
+                    },
+                    {"_id": 0}
+                ).to_list(50)
 
-            for entity_sub in linked_entity_subs:
-                await _apply_entity_submission(entity_sub)
-                await db.submissions.update_one(
-                    {"submission_id": entity_sub["submission_id"]},
-                    {"$set": {"status": "approved", "updated_at": now_iso}}
-                )
+                for entity_sub in linked_entity_subs:
+                    await _apply_entity_submission(entity_sub)
+                    await db.submissions.update_one(
+                        {"submission_id": entity_sub["submission_id"]},
+                        {"$set": {"status": "approved", "updated_at": now_iso}}
+                    )
 
-            # ── CASCADE — compat ascendante : entités pré-créées avec submission_id = kit_submission_id ──
-            for cfg in ENTITY_COLLECTIONS.values():
-                await db[cfg["collection"]].update_many(
-                    {"submission_id": kit_submission_id, "status": "pending"},
-                    {"$set": {"status": "approved", "updated_at": now_iso}}
-                )
+                for cfg in ENTITY_COLLECTIONS.values():
+                    await db[cfg["collection"]].update_many(
+                        {"submission_id": kit_submission_id, "status": "pending"},
+                        {"$set": {"status": "approved", "updated_at": now_iso}}
+                    )
 
-        elif updated_sub["submission_type"] == "version":
-            await db.versions.insert_one({
-                "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-                "kit_id":      data.get("kit_id", ""),
-                "competition": data.get("competition", ""),
-                "model":       data.get("model", ""),
-                "sku_code":    data.get("sku_code", ""),
-                "ean_code":    data.get("ean_code", ""),
-                "front_photo": data.get("front_photo", ""),
-                "back_photo":  data.get("back_photo", ""),
-                "created_by":  updated_sub["submitted_by"],
-                "created_at":  datetime.now(timezone.utc).isoformat()
-            })
+            elif updated_sub["submission_type"] == "version":
+                await db.versions.insert_one({
+                    "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
+                    "kit_id":      data.get("kit_id", ""),
+                    "competition": data.get("competition", ""),
+                    "model":       data.get("model", ""),
+                    "sku_code":    data.get("sku_code", ""),
+                    "ean_code":    data.get("ean_code", ""),
+                    "front_photo": data.get("front_photo", ""),
+                    "back_photo":  data.get("back_photo", ""),
+                    "created_by":  updated_sub["submitted_by"],
+                    "created_at":  datetime.now(timezone.utc).isoformat()
+                })
 
-        await db.submissions.update_one(
-            {"submission_id": submission_id},
-            {"$set": {"status": "approved"}}
-        )
+            await db.submissions.update_one(
+                {"submission_id": submission_id},
+                {"$set": {"status": "approved"}}
+            )
+
+        except Exception as e:
+            print(f"[CASCADE ERROR] {e}")
+            # Le vote est enregistré mais la cascade a planté — on ne crash pas le endpoint
+
 
     # ─── REJET ────────────────────────────────────────────────────────────────
     elif updated_sub["votes_down"] >= APPROVAL_THRESHOLD:

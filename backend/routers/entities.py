@@ -395,12 +395,17 @@ async def list_sponsors(search: Optional[str] = None, skip: int = 0, limit: int 
     sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     return sponsors
 
+
 @router.get("/sponsors/{sponsor_id}")
 async def get_sponsor(sponsor_id: str):
-    sponsor = await db.sponsors.find_one({"$or": [{"sponsorid": sponsor_id}, {"slug": sponsor_id}]}, {"_id": 0})
+    sponsor = await db.sponsors.find_one(
+        {"$or": [{"sponsor_id": sponsor_id}, {"slug": sponsor_id}]},  # ← sponsor_id avec underscore
+        {"_id": 0}
+    )
     if not sponsor:
         raise HTTPException(status_code=404, detail="Sponsor not found")
     return sponsor
+
 
 @router.post("/sponsors")
 async def create_sponsor(sponsor: dict):
@@ -408,13 +413,14 @@ async def create_sponsor(sponsor: dict):
     if await db.sponsors.find_one({"slug": slug}, {"_id": 0}):
         raise HTTPException(status_code=400, detail="Sponsor already exists")
     doc = {**sponsor}
-    doc["sponsorid"] = f"spon{uuid.uuid4().hex[:12]}"
-    doc["slug"] = slug
-    doc["status"] = "approved"
-    doc["created_at"] = datetime.now(timezone.utc).isoformat()
-    doc["updated_at"] = doc["created_at"]
+    doc["sponsor_id"]  = f"sponsor_{uuid.uuid4().hex[:12]}"  # ← sponsor_id + préfixe cohérent
+    doc["slug"]        = slug
+    doc["status"]      = "approved"
+    doc["created_at"]  = datetime.now(timezone.utc).isoformat()
+    doc["updated_at"]  = doc["created_at"]
     await db.sponsors.insert_one(doc)
-    return await db.sponsors.find_one({"sponsorid": doc["sponsorid"]}, {"_id": 0})
+    return await db.sponsors.find_one({"sponsor_id": doc["sponsor_id"]}, {"_id": 0})
+
 
 @router.post("/sponsors/pending")
 async def create_sponsor_pending(sponsor: dict, parent_submission_id: Optional[str] = Query(default=None)):
@@ -422,41 +428,46 @@ async def create_sponsor_pending(sponsor: dict, parent_submission_id: Optional[s
     existing = await db.sponsors.find_one({"slug": slug}, {"_id": 0})
     if existing:
         return existing
-    now = datetime.now(timezone.utc).isoformat()
-    sponsor_id = f"spon{uuid.uuid4().hex[:12]}"
-    submission_id = f"sub{uuid.uuid4().hex[:12]}"
+    now           = datetime.now(timezone.utc).isoformat()
+    sponsor_id    = f"sponsor_{uuid.uuid4().hex[:12]}"  # ← préfixe cohérent
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"      # ← underscore
+
     doc = {**sponsor}
-    doc["sponsorid"] = sponsor_id
-    doc["slug"] = slug
-    doc["status"] = "for-review"
+    doc["sponsor_id"]    = sponsor_id    # ← underscore
+    doc["slug"]          = slug
+    doc["status"]        = "for_review"  # ← underscore (pas "for-review")
     doc["submission_id"] = submission_id
-    doc["created_at"] = now
-    doc["updated_at"] = now
+    doc["created_at"]    = now
+    doc["updated_at"]    = now
     await db.sponsors.insert_one(doc)
-    sub_data = {"mode": "create", "name": sponsor.get("name"), "entityid": sponsor_id}
+
+    sub_data = {"mode": "create", "name": sponsor.get("name"), "entity_id": sponsor_id}  # ← entity_id underscore
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
+
     await db.submissions.insert_one({
-        "submissionid": submission_id,
+        "submission_id":   submission_id,   # ← underscore
         "submission_type": "sponsor",
-        "data": sub_data,
-        "status": "pending",
+        "data":            sub_data,
+        "status":          "pending",
         "votes_up": 0, "votes_down": 0, "voters": [],
-        "created_at": now,
+        "created_at":      now,
     })
-    return await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
+    return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
+
 
 @router.put("/sponsors/{sponsor_id}")
 async def update_sponsor(sponsor_id: str, sponsor: dict):
-    await assert_not_locked("sponsors", "sponsorid", sponsor_id)
-    existing = await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
+    await _assert_not_locked("sponsors", "sponsor_id", sponsor_id)  # ← _assert_not_locked avec underscore
+    existing = await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Sponsor not found")
     update_data = {k: v for k, v in sponsor.items() if v is not None}
-    update_data["slug"] = slugify(sponsor.get("name", ""))
+    update_data["slug"]       = slugify(sponsor.get("name", ""))
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.sponsors.update_one({"sponsorid": sponsor_id}, {"$set": update_data})
-    return await db.sponsors.find_one({"sponsorid": sponsor_id}, {"_id": 0})
+    await db.sponsors.update_one({"sponsor_id": sponsor_id}, {"$set": update_data})
+    return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
+
 
 # ─────────────────────────────────────────────
 # Player Routes
@@ -672,11 +683,12 @@ async def autocomplete(
 
     if type:
         entity_config = {
-            "team":   {"collection": "teams",   "search_field": "name",      "id_field": "team_id",   "label_field": "name",      "extra_field": "country"},
-            "league": {"collection": "leagues", "search_field": "name",      "id_field": "league_id", "label_field": "name",      "extra_field": "country_or_region"},
-            "brand":  {"collection": "brands",  "search_field": "name",      "id_field": "brand_id",  "label_field": "name",      "extra_field": "country"},
-            "player": {"collection": "players", "search_field": "full_name", "id_field": "player_id", "label_field": "full_name", "extra_field": "nationality"},
-        }
+    "team":    {"collection": "teams",    "search_field": "name",      "id_field": "team_id",    "label_field": "name",      "extra_field": "country"},
+    "league":  {"collection": "leagues",  "search_field": "name",      "id_field": "league_id",  "label_field": "name",      "extra_field": "country_or_region"},
+    "brand":   {"collection": "brands",   "search_field": "name",      "id_field": "brand_id",   "label_field": "name",      "extra_field": "country"},
+    "player":  {"collection": "players",  "search_field": "full_name", "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
+    "sponsor": {"collection": "sponsors", "search_field": "name",      "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
+}
         config = entity_config.get(type)
         if not config:
             return []

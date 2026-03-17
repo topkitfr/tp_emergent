@@ -242,6 +242,7 @@ export default function Contributions() {
   const [frontPhoto, setFrontPhoto] = useState('');
   const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
+  const [sponsorId, setSponsorId] = useState('');
   const [leagueId, setLeagueId] = useState('');
   const [league, setLeague] = useState('');
   const [gender, setGender] = useState('');
@@ -301,8 +302,8 @@ export default function Contributions() {
     try {
       const data = {
         club, team_id: teamId, season, kit_type: kitType,
-        brand, brand_id: brandId, league, league_id: leagueId,
-        sponsor, design, gender, front_photo: frontPhoto,
+        brand, brand_id: brandId, league, league_id: leagueId, 
+        sponsor, sponsor_id: sponsorId, design, gender, front_photo: frontPhoto,
       };
 
       const submissionRes = await createSubmission({ submission_type: 'master_kit', data });
@@ -314,8 +315,8 @@ export default function Contributions() {
         if (!teamId   && club.trim())    pendingJobs.push(createTeamPending(  { name: club.trim()   }, masterKitSubmissionId));
         if (!brandId  && brand.trim())   pendingJobs.push(createBrandPending( { name: brand.trim()  }, masterKitSubmissionId));
         if (!leagueId && league.trim())  pendingJobs.push(createLeaguePending({ name: league.trim() }, masterKitSubmissionId));
-        if (sponsor.trim())             pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId))
-        await Promise.allSettled(pendingJobs);
+if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId));      
+    await Promise.allSettled(pendingJobs);
       }
 
       toast.success('Master kit submitted for community review!');
@@ -358,7 +359,7 @@ export default function Contributions() {
 
   const closeAddForm = () => {
     setShowAddForm(false); setAddStep(1); setSubType('master_kit');
-    setClub(''); setTeamId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
+    setClub(''); setTeamId(''); setSponsorId(''); setSeason(''); setKitType(''); setBrand(''); setBrandId('');
     setFrontPhoto(''); setDesign(''); setSponsor(''); setLeague(''); setLeagueId(''); setGender('');
     setSelectedKit(''); setCompetition(''); setModel('');
     setSkuCode(''); setEanCode(''); setVerFrontPhoto(''); setVerBackPhoto('');
@@ -510,7 +511,10 @@ export default function Contributions() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Sponsor</Label>
-                    <Input value={sponsor} onChange={(e) => setSponsor(e.target.value)} placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" data-testid="add-sponsor" />
+                    <EntityAutocomplete entityType="sponsor" value={sponsor}
+                      onChange={(val) => { setSponsor(val); setSponsorId(''); }}
+                      onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }}
+                      placeholder="e.g., Qatar Airways" className="bg-card border-border rounded-none" testId="add-sponsor" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>Gender</Label>
