@@ -139,6 +139,11 @@ export const createPlayerPending = (data, parentSubmissionId = null) =>
     params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
   });
 
+export const createSponsorPending = (data, parentSubmissionId = null) =>
+  api.post('/sponsors/pending', data, {
+    params: parentSubmissionId ? { parent_submission_id: parentSubmissionId } : {},
+  });
+
 // Players who wore this kit
 export const getKitPlayers = (kitId) => api.get(`/kits/${kitId}/players`);
 
