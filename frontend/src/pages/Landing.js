@@ -7,10 +7,12 @@ import { Shirt, Search, Star, Users, Database, ArrowRight } from 'lucide-react';
 import LatestAdditionsSection from '@/components/ui/LatestAdditionsSection';
 import JerseyCard from '@/components/JerseyCard';
 
+
 export default function Landing() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ master_kits: 0, versions: 0, users: 0, reviews: 0 });
+
 
   useEffect(() => {
     const init = async () => {
@@ -25,11 +27,12 @@ export default function Landing() {
     init();
   }, []);
 
+
   const handleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUrl = window.location.origin + '/browse';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
+
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -50,33 +53,54 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative z-10 px-6 lg:px-12 pt-20 pb-32 lg:pt-32 lg:pb-44">
-        <div className="max-w-5xl">
-          <div className="inline-block mb-6 px-3 py-1 border border-primary/30 text-primary text-xs font-mono tracking-wider">
-            THE FOOTBALL JERSEY DATABASE
+      {/* ✅ Hero — hero-2.jpg en background plein section */}
+      <section
+        className="relative z-10 px-6 lg:px-12 pt-20 pb-32 lg:pt-32 lg:pb-44 overflow-hidden"
+        style={{
+          backgroundImage: "url('/hero2.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Gradient overlay : opaque à gauche → transparent à droite */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background: 'linear-gradient(to right, hsl(var(--background)) 35%, hsl(var(--background) / 0.8) 55%, hsl(var(--background) / 0.15) 100%)',
+          }}
+        />
+
+        <div className="relative z-10 max-w-7xl mx-auto flex items-center justify-between gap-12">
+          {/* Texte gauche */}
+          <div className="max-w-2xl">
+            <div className="inline-block mb-6 px-3 py-1 border border-primary/30 text-primary text-xs font-mono tracking-wider">
+              THE FOOTBALL JERSEY DATABASE
+            </div>
+            <h1 className="text-5xl sm:text-6xl lg:text-8xl leading-none tracking-tighter mb-8" data-testid="hero-title">
+              CATALOG.<br />
+              <span className="text-primary">COLLECT.</span><br />
+              CONNECT.
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl mb-12 font-normal" style={{ textTransform: 'none', fontFamily: 'DM Sans, sans-serif' }}>
+              The definitive database for football jersey collectors. Browse, catalog, and share your collection with the community.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link to="/browse">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none text-base px-8 h-12" data-testid="explore-catalog-btn">
+                  Explore Catalog
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+              {!user && !loading && (
+                <Button size="lg" variant="outline" onClick={handleLogin} className="rounded-none text-base px-8 h-12 border-border hover:bg-secondary" data-testid="join-community-btn">
+                  Join the Community
+                </Button>
+              )}
+            </div>
           </div>
-          <h1 className="text-5xl sm:text-6xl lg:text-8xl leading-none tracking-tighter mb-8" data-testid="hero-title">
-            CATALOG.<br />
-            <span className="text-primary">COLLECT.</span><br />
-            CONNECT.
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-xl mb-12 font-normal" style={{ textTransform: 'none', fontFamily: 'DM Sans, sans-serif' }}>
-            The definitive database for football jersey collectors. Browse, catalog, and share your collection with the community.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/browse">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none text-base px-8 h-12" data-testid="explore-catalog-btn">
-                Explore Catalog
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            {!user && !loading && (
-              <Button size="lg" variant="outline" onClick={handleLogin} className="rounded-none text-base px-8 h-12 border-border hover:bg-secondary" data-testid="join-community-btn">
-                Join the Community
-              </Button>
-            )}
-          </div>
+
+          {/* ✅ Div image droite supprimée — remplacée par le background */}
         </div>
       </section>
 
@@ -86,7 +110,6 @@ export default function Landing() {
           <LatestAdditionsSection />
         </div>
       </section>
-
 
       {/* Stats */}
       <section className="relative z-10 border-t border-border">
