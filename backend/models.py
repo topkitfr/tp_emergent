@@ -276,7 +276,7 @@ class PlayerOut(BaseModel):
     player_id: str
     status: Optional[str] = "approved"
     full_name: str
-    slug: str
+    slug: Optional[str] = ""
     nationality: Optional[str] = ""
     birth_date: Optional[str] = ""
     birth_year: Optional[int] = None

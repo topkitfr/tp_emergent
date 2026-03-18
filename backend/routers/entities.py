@@ -169,7 +169,7 @@ async def list_leagues(
     skip: int = 0,
     limit: int = 100
 ):
-    query = {}
+    query = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
     if country_or_region:
@@ -284,7 +284,7 @@ async def list_brands(
     skip: int = 0,
     limit: int = 100
 ):
-    query = {}
+    query = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
     if country:
@@ -480,7 +480,7 @@ async def list_players(
     skip: int = 0,
     limit: int = 100
 ):
-    query = {}
+    query = {"status": {"$ne": "rejected"}}
     if search:
         query["full_name"] = {"$regex": search, "$options": "i"}
     if nationality:
@@ -531,6 +531,7 @@ async def create_player(player: PlayerCreate):
 @router.post("/players/pending", response_model=PlayerOut)
 async def create_player_pending(
     player: PlayerCreate,
+    request: Request,
     parent_submission_id: Optional[str] = Query(default=None)
 ):
     slug = slugify(player.full_name)
@@ -556,10 +557,20 @@ async def create_player_pending(
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
+    try:
+        current_user = await get_current_user(request)
+        submitted_by   = current_user.get("user_id", "")
+        submitter_name = current_user.get("name", "")
+    except Exception:
+        submitted_by   = ""
+        submitter_name = ""
+
     await db.submissions.insert_one({
         "submission_id":   submission_id,
         "submission_type": "player",
         "data":            sub_data,
+        "submitted_by":    submitted_by,
+        "submitter_name":  submitter_name,
         "status":          "pending",
         "votes_up":        0,
         "votes_down":      0,
@@ -695,7 +706,7 @@ async def autocomplete(
         if not config:
             return []
 
-        filter_q: dict = {}
+        filter_q: dict = {"status": {"$ne": "rejected"}}
         if search_q:
             filter_q[config["search_field"]] = {"$regex": search_q, "$options": "i"}
 

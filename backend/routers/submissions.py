@@ -350,7 +350,8 @@ async def _apply_entity_submission(updated_sub: dict):
         entity_id = data.get("entity_id", "")
         update_fields = {
             k: v for k, v in data.items()
-            if k not in ("mode", "entity_id", "entity_type", "parent_submission_id") and v is not None
+            if k not in ("mode", "entity_id", "entity_type", "parent_submission_id")
+            and v is not None and v != "" and v != []
         }
         update_fields["updated_at"] = now
         update_fields["status"]     = "approved"
