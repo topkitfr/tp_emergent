@@ -1,3 +1,4 @@
+// frontend/src/components/Navbar.js
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import NotificationBell from '@/components/NotificationBell';
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -77,7 +78,6 @@ export default function Navbar() {
                 <DropdownMenuItem onClick={() => navigate('/players')} className="cursor-pointer" data-testid="nav-players">
                   <Users className="w-4 h-4 mr-2" /> Players
                 </DropdownMenuItem>
-                {/* Sponsors */}
                 <DropdownMenuItem
                   onClick={() => navigate('/database/sponsors')}
                   className="cursor-pointer"
@@ -106,8 +106,11 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right - Auth */}
+        {/* Right - Notifications + Auth */}
         <div className="flex items-center gap-3">
+          {/* 🔔 Cloche de notifications — visible uniquement si connecté */}
+          {!loading && user && <NotificationBell />}
+
           {loading ? null : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -118,47 +121,53 @@ export default function Navbar() {
                       {user.name?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:block text-sm text-muted-foreground">
-                    {user.name?.split(' ')[0]}
-                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer" data-testid="menu-profile">
-                  <User className="w-4 h-4 mr-2" /> Profile
+                <div className="px-3 py-2 border-b border-border">
+                  <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  {(user.role === 'moderator' || user.role === 'admin') && (
+                    <span className="inline-flex items-center mt-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary/20 text-primary rounded">
+                      {user.role === 'admin' ? 'Admin' : 'Modérateur'}
+                    </span>
+                  )}
+                </div>
+                <DropdownMenuItem onClick={() => navigate('/collection')} className="cursor-pointer" data-testid="nav-collection">
+                  <FolderOpen className="w-4 h-4 mr-2" /> Ma Collection
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => navigate('/collection')}
-                  className="cursor-pointer"
-                  data-testid="menu-collection"
-                >
-                  <FolderOpen className="w-4 h-4 mr-2" /> My Collection
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => navigate('/wishlist')}
-                  className="cursor-pointer"
-                  data-testid="menu-wishlist"
-                >
+                <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer" data-testid="nav-wishlist">
                   <Heart className="w-4 h-4 mr-2" /> Wishlist
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer" data-testid="nav-profile">
+                  <User className="w-4 h-4 mr-2" /> Profil
+                </DropdownMenuItem>
+                {(user.role === 'moderator' || user.role === 'admin') && (
+                  <>
+                    <DropdownMenuSeparator className="bg-border" />
+                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer text-primary" data-testid="nav-admin">
+                      <Shield className="w-4 h-4 mr-2" /> Admin
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={logout}
-                  className="cursor-pointer text-destructive"
-                  data-testid="menu-logout"
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  data-testid="nav-logout"
                 >
-                  <LogOut className="w-4 h-4 mr-2" /> Logout
+                  <LogOut className="w-4 h-4 mr-2" /> Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button
-              onClick={handleLogin}
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-none"
-              data-testid="navbar-login-btn"
+              onClick={handleLogin}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-testid="nav-login"
             >
-              Sign in
+              Se connecter
             </Button>
           )}
         </div>
