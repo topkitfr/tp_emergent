@@ -7,6 +7,7 @@ from database import db
 from models import SubmissionCreate, VoteCreate, ReportCreate
 from auth import get_current_user
 from utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
+from routers.notifications import create_notification
 
 router = APIRouter(prefix="/api", tags=["submissions"])
 
@@ -15,8 +16,30 @@ ENTITY_COLLECTIONS = {
     "league":  {"collection": "leagues",  "id_field": "league_id",  "name_field": "name"},
     "brand":   {"collection": "brands",   "id_field": "brand_id",   "name_field": "name"},
     "player":  {"collection": "players",  "id_field": "player_id",  "name_field": "full_name"},
-    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},  # ← AJOUT
+    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},
 }
+
+# ─── Labels lisibles pour les types de soumissions ───
+SUBMISSION_TYPE_LABELS = {
+    "master_kit": "maillot",
+    "version":    "version de maillot",
+    "team":       "équipe",
+    "league":     "championnat",
+    "brand":      "marque",
+    "player":     "joueur",
+    "sponsor":    "sponsor",
+}
+
+
+def _submission_name(sub: dict) -> str:
+    """Retourne un label lisible pour identifier la soumission."""
+    data = sub.get("data", {})
+    return (
+        data.get("club")
+        or data.get("name")
+        or data.get("full_name")
+        or sub.get("submission_id", "")
+    )
 
 
 # ─────────────────────────────────────────────
@@ -77,7 +100,6 @@ async def get_pending_refs(master_kit_submission_id: str):
     return refs
 
 
-# Conservé pour compat ascendante
 @router.get("/pending/submission-id")
 async def get_submission_for_entity(entity_type: str, entity_id: str):
     doc = await db["submissions"].find_one({
@@ -121,7 +143,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
 
-       # Les refs d'entités sont approuvées en cascade via le master_kit — pas de vote direct
     if sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
         if sub["data"].get("mode", "create") == "create":
             raise HTTPException(
@@ -144,10 +165,12 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         {"$inc": {inc_field: vote_weight}, "$push": {"voters": user["user_id"]}}
     )
 
-
     updated_sub = await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
+    submitter_id = updated_sub.get("submitted_by", "")
+    sub_name = _submission_name(updated_sub)
+    sub_type_label = SUBMISSION_TYPE_LABELS.get(updated_sub["submission_type"], updated_sub["submission_type"])
 
-        # ─── APPROBATION ───────────────────────────────────────────────────────────
+    # ─── APPROBATION ───────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
         try:
             data = updated_sub["data"]
@@ -229,10 +252,20 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 {"$set": {"status": "approved"}}
             )
 
+            # 🔔 Notification — soumission approuvée
+            if submitter_id:
+                await create_notification(
+                    user_id=submitter_id,
+                    notif_type="submission_approved",
+                    title="Soumission approuvée ✅",
+                    message=f"Votre {sub_type_label} « {sub_name} » a été approuvé(e) par la communauté.",
+                    target_type=updated_sub["submission_type"],
+                    target_id=updated_sub.get("data", {}).get("kit_id", ""),
+                    submission_id=submission_id,
+                )
+
         except Exception as e:
             print(f"[CASCADE ERROR] {e}")
-            # Le vote est enregistré mais la cascade a planté — on ne crash pas le endpoint
-
 
     # ─── REJET ────────────────────────────────────────────────────────────────
     elif updated_sub["votes_down"] >= APPROVAL_THRESHOLD:
@@ -240,7 +273,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         kit_submission_id = updated_sub["submission_id"]
 
         if updated_sub["submission_type"] == "master_kit":
-            # Rejette toutes les refs liées (nouveau flow)
             await db.submissions.update_many(
                 {
                     "submission_type": {"$in": ["team", "league", "brand", "player", "sponsor"]},
@@ -249,7 +281,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 },
                 {"$set": {"status": "rejected", "updated_at": now_iso}}
             )
-            # Compat ascendante
             for cfg in ENTITY_COLLECTIONS.values():
                 await db[cfg["collection"]].update_many(
                     {"submission_id": kit_submission_id, "status": "pending"},
@@ -261,12 +292,22 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             {"$set": {"status": "rejected"}}
         )
 
+        # 🔔 Notification — soumission rejetée
+        if submitter_id:
+            await create_notification(
+                user_id=submitter_id,
+                notif_type="submission_rejected",
+                title="Soumission rejetée ❌",
+                message=f"Votre {sub_type_label} « {sub_name} » a été rejeté(e) par la communauté.",
+                target_type=updated_sub["submission_type"],
+                submission_id=submission_id,
+            )
+
     return await db.submissions.find_one({"submission_id": submission_id}, {"_id": 0})
 
 
 # ─────────────────────────────────────────────
-# Helper interne — applique une submission d'entité
-# Appelé uniquement en cascade depuis vote_on_submission (master_kit approved)
+# Helper interne
 # ─────────────────────────────────────────────
 async def _apply_entity_submission(updated_sub: dict):
     entity_type = updated_sub["submission_type"]
@@ -282,13 +323,11 @@ async def _apply_entity_submission(updated_sub: dict):
     if mode == "create":
         entity_id = data.get("entity_id")
         if entity_id:
-            # Entité pré-créée (ancien flow) : on l'approuve juste
             await db[config["collection"]].update_one(
                 {config["id_field"]: entity_id},
                 {"$set": {"status": "approved", "updated_at": now}}
             )
         else:
-            # Nouveau flow : création directement en approved
             name = data.get("name") or data.get("full_name", "")
             slug = slugify(name)
             new_id = f"{entity_type}_{uuid.uuid4().hex[:12]}"
@@ -309,7 +348,7 @@ async def _apply_entity_submission(updated_sub: dict):
             if k not in ("mode", "entity_id", "entity_type", "parent_submission_id") and v is not None
         }
         update_fields["updated_at"] = now
-        update_fields["status"]     = "approved"  # déverrouille après approbation
+        update_fields["status"]     = "approved"
 
         name_key = "full_name" if entity_type == "player" else "name"
         if name_key in update_fields:
@@ -408,6 +447,10 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
         {"$inc": {inc_field: vote_weight}, "$push": {"voters": user["user_id"]}}
     )
     updated = await db.reports.find_one({"report_id": report_id}, {"_id": 0})
+    reporter_id = updated.get("reported_by", "")
+
+    target_label = "maillot" if updated["target_type"] == "master_kit" else "version"
+    target_name = updated.get("original_data", {}).get("club", updated["target_id"])
 
     if updated["votes_up"] >= APPROVAL_THRESHOLD:
         report_type = updated.get("report_type", "error")
@@ -446,7 +489,34 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                     )
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
 
+        # 🔔 Notification — rapport approuvé
+        if reporter_id:
+            msg = (
+                f"Votre demande de correction sur le {target_label} « {target_name} » a été approuvée."
+                if report_type == "error"
+                else f"Votre demande de suppression du {target_label} « {target_name} » a été approuvée."
+            )
+            await create_notification(
+                user_id=reporter_id,
+                notif_type="report_approved",
+                title="Signalement approuvé ✅",
+                message=msg,
+                target_type=updated["target_type"],
+                target_id=updated["target_id"],
+            )
+
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "rejected"}})
+
+        # 🔔 Notification — rapport rejeté
+        if reporter_id:
+            await create_notification(
+                user_id=reporter_id,
+                notif_type="report_rejected",
+                title="Signalement rejeté ❌",
+                message=f"Votre signalement sur le {target_label} « {target_name} » a été rejeté par la communauté.",
+                target_type=updated["target_type"],
+                target_id=updated["target_id"],
+            )
 
     return await db.reports.find_one({"report_id": report_id}, {"_id": 0})
