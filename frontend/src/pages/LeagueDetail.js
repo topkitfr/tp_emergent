@@ -49,7 +49,7 @@ export default function LeagueDetail() {
       entityType="league"
       entity={league}
       entityId={league.league_id}
-      backTo={{ path: '/database/leagues', label: 'Leagues' }}
+      backTo={{ path: '/leagues', label: 'Leagues' }}
       image={league.logo_url}
       icon={Trophy}
       title={league.name}
