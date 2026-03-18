@@ -35,6 +35,7 @@ export default function Players() {
   const nationalities = [...new Set(players.map(p => p.nationality).filter(Boolean))].sort();
 
   return (
+    <>
     <EntityListPage
       title="PLAYERS"
       icon={User}
@@ -88,5 +89,6 @@ export default function Players() {
     entityType="player"
     onSuccess={fetchPlayers}
   />
+    </>
   );
 }
