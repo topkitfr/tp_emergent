@@ -489,6 +489,9 @@ async def list_players(
     for p in players:
         pid = p.get("player_id", "")
         p["kit_count"] = await db.versions.count_documents({"main_player_id": pid}) if pid else 0
+        # Sanitize list fields that may be stored as "" in old DB docs
+        if not isinstance(p.get("positions"), list):
+            p["positions"] = []
     return players
 
 
@@ -497,6 +500,9 @@ async def get_player(player_id: str):
     player = await db.players.find_one({"$or": [{"player_id": player_id}, {"slug": player_id}]}, {"_id": 0})
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
+    # Sanitize list fields that may be stored as "" in old DB docs
+    if not isinstance(player.get("positions"), list):
+        player["positions"] = []
     pid = player.get("player_id", "")
     player["kit_count"] = await db.versions.count_documents({"main_player_id": pid}) if pid else 0
     versions = await db.versions.find({"main_player_id": pid}, {"_id": 0}).to_list(500) if pid else []
