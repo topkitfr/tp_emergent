@@ -32,6 +32,7 @@ export default function Leagues() {
   const regions = [...new Set(leagues.map(l => l.country_or_region).filter(Boolean))].sort();
 
   return (
+    <>
     <EntityListPage
       title="LEAGUES"
       icon={Trophy}
@@ -89,5 +90,6 @@ export default function Leagues() {
     entityType="league"
     onSuccess={fetchLeagues}
   />
+    </>
   );
 }
