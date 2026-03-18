@@ -37,6 +37,8 @@ const SIGNED_PROOF_COEFF = 1.0;
 const AGE_COEFF_PER_YEAR = 0.05;
 const AGE_MAX = 1.0;
 
+const AURA_COEFF = { 1: 0.05, 2: 0.25, 3: 0.50, 4: 0.75, 5: 1.00 };
+
 export function calculateEstimation({
   modelType = 'Replica',
   competition = '',
@@ -46,6 +48,7 @@ export function calculateEstimation({
   signed = false,
   signedProof = false,
   seasonYear = 0,
+  auraLevel = 0,
 }) {
   const base = BASE_PRICES[modelType] || 60;
   let coeffSum = 0;
@@ -86,6 +89,13 @@ export function calculateEstimation({
     if (signedProof) {
       coeffSum += SIGNED_PROOF_COEFF;
       breakdown.push({ label: 'Proof/Certificate', coeff: SIGNED_PROOF_COEFF });
+    }
+    // Aura (only when signed)
+    const auraC = AURA_COEFF[auraLevel] ?? 0;
+    if (auraLevel >= 1 && auraC > 0) {
+      coeffSum += auraC;
+      const stars = '\u2605'.repeat(auraLevel);
+      breakdown.push({ label: `Aura ${stars} (level ${auraLevel})`, coeff: auraC });
     }
   }
 
