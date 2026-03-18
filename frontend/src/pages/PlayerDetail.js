@@ -1,5 +1,4 @@
 // frontend/src/pages/PlayerDetail.js
-// Le player a une structure différente : "career in shirts" groupée par équipe, pas une grille de kits simple
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { User, Globe, Calendar, Shirt } from 'lucide-react';
@@ -14,8 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function PlayerDetail() {
   const { id } = useParams();
   const { user: authUser } = useAuth();
-  const [player, setPlayer]   = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [player, setPlayer]     = useState(null);
+  const [loading, setLoading]   = useState(true);
   const [showEdit, setShowEdit] = useState(false);
 
   const loadData = useCallback(() => {
@@ -38,26 +37,31 @@ export default function PlayerDetail() {
   const isPending = player.status === 'pending' || player.status === 'for_review';
   const canEdit   = !!authUser;
 
-  // Group versions by team
+  // Déduplique les MasterKits depuis les versions floquées, groupés par équipe
   const versions = player.versions || [];
+  const kitsSeen = new Set();
   const byTeam   = {};
   for (const v of versions) {
-    const teamName = v.master_kit?.club || 'Unknown';
+    const kit = v.master_kit;
+    if (!kit || kitsSeen.has(kit.kit_id)) continue;
+    kitsSeen.add(kit.kit_id);
+    const teamName = kit.club || 'Unknown';
     if (!byTeam[teamName]) byTeam[teamName] = [];
-    byTeam[teamName].push(v);
+    byTeam[teamName].push({ ...kit, version_id: v.version_id });
   }
   for (const team of Object.keys(byTeam)) {
-    byTeam[team].sort((a, b) => (b.master_kit?.season || '').localeCompare(a.master_kit?.season || ''));
+    byTeam[team].sort((a, b) => (b.season || '').localeCompare(a.season || ''));
   }
+
+  const kitCount = kitsSeen.size;
 
   return (
     <div className="animate-fade-in-up" data-testid="player-detail-page">
 
-      {/* ── Header (même structure qu'EntityDetailPage) ── */}
+      {/* ── Header ── */}
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
 
-          {/* Breadcrumb */}
           <Link
             to="/players"
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
@@ -93,13 +97,21 @@ export default function PlayerDetail() {
                     {player.nationality && (
                       <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{player.nationality}</span>
                     )}
-                    {player.birth_year && (
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Born {player.birth_year}</span>
+                    {(player.birth_date || player.birth_year) && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {player.birth_date || `Born ${player.birth_year}`}
+                      </span>
                     )}
                     {player.preferred_number && (
                       <span className="font-mono text-primary">#{player.preferred_number}</span>
                     )}
                   </div>
+                  {player.bio && (
+                    <p className="mt-2 text-sm text-muted-foreground max-w-lg" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                      {player.bio}
+                    </p>
+                  )}
                 </div>
 
                 {canEdit && (
@@ -122,7 +134,7 @@ export default function PlayerDetail() {
                   <Badge key={p} variant="outline" className="rounded-none">{p}</Badge>
                 ))}
                 <Badge variant="secondary" className="rounded-none">
-                  {player.kit_count ?? versions.length} versions
+                  {kitCount} kit{kitCount !== 1 ? 's' : ''}
                 </Badge>
                 <Badge
                   variant={player.status === 'approved' ? 'secondary' : 'outline'}
@@ -142,43 +154,43 @@ export default function PlayerDetail() {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <h2 className="text-lg tracking-tighter mb-6">CAREER IN SHIRTS</h2>
 
-        {versions.length === 0 ? (
+        {kitCount === 0 ? (
           <div className="text-center py-16 border border-dashed border-border">
             <Shirt className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
             <p className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-              No jersey versions linked to this player yet
+              No jersey linked to this player yet
             </p>
           </div>
         ) : (
           <div className="space-y-8" data-testid="player-career">
-            {Object.entries(byTeam).map(([teamName, teamVersions]) => (
+            {Object.entries(byTeam).map(([teamName, kits]) => (
               <div key={teamName}>
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3"
                   style={{ fontFamily: 'Barlow Condensed' }}>
                   {teamName}
                 </h3>
                 <div className="space-y-2">
-                  {teamVersions.map(v => (
-                    <Link to={`/version/${v.version_id}`} key={v.version_id}>
+                  {kits.map(kit => (
+                    <Link to={`/kit/${kit.kit_id}`} key={kit.kit_id}>
                       <div
                         className="flex items-center gap-4 p-3 border border-border bg-card hover:border-primary/30 transition-colors duration-200"
-                        data-testid={`career-version-${v.version_id}`}
+                        data-testid={`career-kit-${kit.kit_id}`}
                       >
                         <img
-                          src={proxyImageUrl(v.front_photo || v.master_kit?.front_photo)}
+                          src={proxyImageUrl(kit.front_photo)}
                           alt=""
                           className="w-12 h-16 object-cover border border-border"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                            {v.master_kit?.season || ''} — {v.master_kit?.kit_type || ''}
+                            {kit.season} — {kit.kit_type}
                           </p>
                           <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
-                            {v.competition} / {v.model}
+                            {kit.league || ''}
                           </p>
                         </div>
                         <Badge variant="outline" className="rounded-none text-[10px] shrink-0">
-                          {v.master_kit?.brand}
+                          {kit.brand}
                         </Badge>
                       </div>
                     </Link>
@@ -201,7 +213,9 @@ export default function PlayerDetail() {
           initialData={{
             full_name:        player.full_name,
             nationality:      player.nationality,
+            birth_date:       player.birth_date || '',
             birth_year:       player.birth_year,
+            bio:              player.bio || '',
             positions:        player.positions?.join(', ') || '',
             preferred_number: player.preferred_number,
             photo_url:        player.photo_url,
