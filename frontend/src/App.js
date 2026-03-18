@@ -37,7 +37,7 @@ function App() {
           <NotificationProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/Login" element={<Login />} />
+              <Route path="/login" element={<Login />} />
 
               <Route element={<Layout />}>
                 {/* ── Navigation principale ── */}
