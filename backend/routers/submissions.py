@@ -144,7 +144,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
         raise HTTPException(status_code=404, detail="Submission not found")
 
     if sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
-        if sub["data"].get("mode", "create") == "create":
+        if sub["data"].get("mode", "create") == "create" and sub["data"].get("parent_submission_id"):
             raise HTTPException(
                 status_code=400,
                 detail="Entity reference submissions are approved automatically when their parent kit is approved."
@@ -246,6 +246,11 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     "created_by":  updated_sub["submitted_by"],
                     "created_at":  datetime.now(timezone.utc).isoformat()
                 })
+
+            elif updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
+                # Standalone entity submission (no parent kit) — approve directly
+                if not data.get("parent_submission_id"):
+                    await _apply_entity_submission(updated_sub)
 
             await db.submissions.update_one(
                 {"submission_id": submission_id},
