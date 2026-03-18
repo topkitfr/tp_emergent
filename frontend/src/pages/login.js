@@ -79,12 +79,12 @@ export default function Login() {
           />
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="Password (8 chars min)"
             value={form.password}
             onChange={e => setForm({ ...form, password: e.target.value })}
             className="rounded-none"
             required
-            minLength={6}
+            minLength={8}
           />
 
           {error && <p className="text-sm text-red-500">{error}</p>}
