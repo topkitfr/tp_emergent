@@ -1,3 +1,4 @@
+// frontend/src/lib/api.js
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -15,7 +16,29 @@ export const proxyImageUrl = (url) => {
 const api = axios.create({
   baseURL: API,
   withCredentials: true,
+  timeout: 15000, // timeout 15s pour éviter les requêtes bloquées indéfiniment
 });
+
+// ─── Intercepteur de réponse — gestion globale des erreurs ─────────────────────
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 429 — Rate limit
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers?.['retry-after'];
+      error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
+    }
+    // 401 — Session expirée (sauf sur /auth/me pour éviter les redirections en boucle)
+    if (
+      error.response?.status === 401 &&
+      !error.config?.url?.includes('/auth/me') &&
+      !error.config?.url?.includes('/auth/login')
+    ) {
+      // On peut ajouter ici une redirection vers /login si besoin
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth
 export const loginUser = (email, password) => api.post('/auth/login', { email, password });
@@ -150,5 +173,11 @@ export const createSponsorPending = (data, parentSubmissionId = null) =>
 
 // Players who wore this kit
 export const getKitPlayers = (kitId) => api.get(`/kits/${kitId}/players`);
+
+// Notifications
+export const getNotifications = () => api.get('/notifications');
+export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`);
+export const markAllNotificationsRead = () => api.patch('/notifications/read-all');
+export const deleteNotification = (id) => api.delete(`/notifications/${id}`);
 
 export default api;
