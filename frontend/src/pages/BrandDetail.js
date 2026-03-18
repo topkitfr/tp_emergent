@@ -50,7 +50,7 @@ export default function BrandDetail() {
       entityType="brand"
       entity={brand}
       entityId={brand.brand_id}
-      backTo={{ path: '/database/brands', label: 'Brands' }}
+      backTo={{ path: '/brands', label: 'Brands' }}
       image={brand.logo_url}
       icon={Zap}
       title={brand.name}
