@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import Landing from "@/pages/Landing";
-import Login from "@/pages/login";
+import Login from "@/pages/Login";
 import Browse from "@/pages/Browse";
 import KitDetail from "@/pages/KitDetail";
 import VersionDetail from "@/pages/VersionDetail";
