@@ -388,11 +388,16 @@ async def update_brand(brand_id: str, brand: BrandCreate):
 # ── SPONSORS ──────────────────────────────────────────────────────────────────
 
 @router.get("/sponsors", response_model=List[dict])
-async def list_sponsors(search: Optional[str] = None, skip: int = 0, limit: int = 100):
-    query = {}
+async def list_sponsors(search: Optional[str] = None, country: Optional[str] = None, skip: int = 0, limit: int = 100):
+    query: dict = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
+    if country:
+        query["country"] = {"$regex": country, "$options": "i"}
     sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
+    for s in sponsors:
+        sid = s.get("sponsor_id", "")
+        s["kit_count"] = await db.master_kits.count_documents({"sponsor_id": sid}) if sid else 0
     return sponsors
 
 
