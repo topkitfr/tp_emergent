@@ -3,10 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getBrands } from '@/lib/api';
 import { Tag, Globe } from 'lucide-react';
 import EntityListPage, { EntityCard } from '@/components/EntityListPage';
+import AddEntityDialog from '@/components/AddEntityDialog';
 
 export default function Brands() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [country, setCountry] = useState('');
 
@@ -36,6 +38,7 @@ export default function Brands() {
       search={search}
       onSearchChange={setSearch}
       totalLabel="brands"
+      onAddNew={() => setAddDialogOpen(true)}
       testId="brands-page"
       emptyMessage="Try a different search or filter"
       filters={[
@@ -65,5 +68,11 @@ export default function Brands() {
         />
       )}
     />
+  <AddEntityDialog
+    open={addDialogOpen}
+    onClose={() => setAddDialogOpen(false)}
+    entityType="brand"
+    onSuccess={fetchBrands}
+  />
   );
 }
