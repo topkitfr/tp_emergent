@@ -1,5 +1,5 @@
 // src/pages/VersionDetail.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getVersion, getVersionEstimates, addToCollection, createReport, proxyImageUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -105,13 +105,13 @@ export default function VersionDetail() {
 
   const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res  = await fetch(`/api/versions/${versionId}/reviews`);
       const data = res.ok ? await res.json() : [];
       setReviews(Array.isArray(data) ? data : []);
     } catch { setReviews([]); }
-  };
+  }, [versionId]);
 
   useEffect(() => {
     setLoading(true);
@@ -136,7 +136,7 @@ export default function VersionDetail() {
       await fetchReviews();
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [versionId]);
+  }, [versionId, fetchReviews]);
 
   const handleAdd = async () => {
     if (addStatus !== 'idle') return;
