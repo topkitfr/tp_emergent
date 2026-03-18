@@ -36,6 +36,7 @@ export default function AddJersey() {
   const [brandId, setBrandId] = useState('');
   const [design, setDesign] = useState('');
   const [sponsor, setSponsor] = useState('');
+  const [sponsorId, setSponsorId] = useState('');
   const [gender, setGender] = useState('');
   const [league, setLeague] = useState('');
   const [leagueId, setLeagueId] = useState('');
@@ -80,6 +81,7 @@ export default function AddJersey() {
         front_photo: frontPhoto,
         design,
         sponsor,
+        sponsor_id: sponsorId || undefined,
         gender,
         league,
         team_id: resolvedTeamId || undefined,
@@ -238,7 +240,15 @@ export default function AddJersey() {
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Sponsor</Label>
-                <Input value={sponsor} onChange={e => setSponsor(e.target.value)} placeholder="e.g., Qatar Airways" className={inputClass} data-testid="input-sponsor" />
+                <EntityAutocomplete
+                  entityType="sponsor"
+                  value={sponsor}
+                  onChange={(val) => { setSponsor(val); setSponsorId(''); }}
+                  onSelect={(item) => { setSponsor(item.label); setSponsorId(item.id); }}
+                  placeholder="e.g., Qatar Airways"
+                  className={inputClass}
+                  testId="input-sponsor"
+                />
               </div>
               <div>
                 <Label className={fieldLabel} style={fieldStyle}>Gender</Label>
