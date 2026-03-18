@@ -13,7 +13,9 @@ const labelStyle = { fontFamily: 'Barlow Condensed, sans-serif' };
 
 const ENTITY_CONFIGS = {
   team: {
-    label: 'Team', nameField: 'name', imageField: 'logo_url', imageLabel: 'Crest / Badge',
+    label: 'Team', nameField: 'name',
+    // FIXED: était 'logo_url' — le champ réel en DB est 'crest_url'
+    imageField: 'crest_url', imageLabel: 'Crest / Badge',
     fields: [
       { key: 'name', label: 'Name', required: true },
       { key: 'country', label: 'Country' },
