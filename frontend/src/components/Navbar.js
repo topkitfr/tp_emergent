@@ -19,10 +19,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogin = () => {
-    const redirectUrl = window.location.origin + '/browse';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-  };
+  const handleLogin = () => navigate('/login');
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
