@@ -509,14 +509,24 @@ async def get_player(player_id: str):
     if not isinstance(player.get("positions"), list):
         player["positions"] = []
     pid = player.get("player_id", "")
-    player["kit_count"] = await db.versions.count_documents({"main_player_id": pid}) if pid else 0
-    versions = await db.versions.find({"main_player_id": pid}, {"_id": 0}).to_list(500) if pid else []
-    enriched = []
-    for v in versions:
-        kit = await db.master_kits.find_one({"kit_id": v.get("kit_id", "")}, {"_id": 0})
-        v["master_kit"] = kit
-        enriched.append(v)
-    player["versions"] = enriched
+    # Lien via flocage : on cherche les items de collection floqués à ce joueur
+    collection_items = await db.collections.find(
+        {"flocking_player_id": pid}, {"_id": 0, "version_id": 1}
+    ).to_list(2000) if pid else []
+    version_ids = list({i["version_id"] for i in collection_items if i.get("version_id")})
+    kit_ids_set = set()
+    enriched_versions = []
+    if version_ids:
+        versions = await db.versions.find(
+            {"version_id": {"$in": version_ids}}, {"_id": 0}
+        ).to_list(len(version_ids))
+        for v in versions:
+            kit = await db.master_kits.find_one({"kit_id": v.get("kit_id", "")}, {"_id": 0})
+            v["master_kit"] = kit
+            kit_ids_set.add(v.get("kit_id", ""))
+            enriched_versions.append(v)
+    player["kit_count"] = len(kit_ids_set)
+    player["versions"]  = enriched_versions
     return player
 
 
