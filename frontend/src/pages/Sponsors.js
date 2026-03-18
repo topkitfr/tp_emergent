@@ -50,6 +50,7 @@ export default function Sponsors() {
   useEffect(() => { fetchSponsors(); }, [fetchSponsors]);
 
   return (
+    <>
     <EntityListPage
       title="SPONSORS"
       icon={Tag}
@@ -89,5 +90,6 @@ export default function Sponsors() {
     entityType="sponsor"
     onSuccess={fetchSponsors}
   />
+    </>
   );
 }
