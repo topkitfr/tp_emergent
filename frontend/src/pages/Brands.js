@@ -30,6 +30,7 @@ export default function Brands() {
   const countries = [...new Set(brands.map(b => b.country).filter(Boolean))].sort();
 
   return (
+    <>
     <EntityListPage
       title="BRANDS"
       icon={Tag}
@@ -74,5 +75,6 @@ export default function Brands() {
     entityType="brand"
     onSuccess={fetchBrands}
   />
+    </>
   );
 }
