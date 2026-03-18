@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Optional
 
 class UserOut(BaseModel):
@@ -287,3 +287,13 @@ class PlayerOut(BaseModel):
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+
+    @field_validator("positions", mode="before")
+    @classmethod
+    def coerce_positions(cls, v):
+        if v is None or v == "":
+            return []
+        if isinstance(v, list):
+            return v
+        # single string → wrap in list
+        return [v]
