@@ -5,7 +5,7 @@ import uuid
 from database import db
 
 
-MODERATOR_EMAILS = ["topkitfr@gmail.com"]
+MODERATOR_EMAILS = ["topkitfr@gmail.com", "dev@topkit.fr", "steinmetzolivier@gmail.com"]
 APPROVAL_THRESHOLD = 5
 MODERATOR_APPROVAL_THRESHOLD = 1
 
