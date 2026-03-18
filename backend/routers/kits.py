@@ -652,7 +652,13 @@ async def get_player_kits(slug: str):
     return [await _normalize_kit(k) for k in kits]
 
 
-@router.get("/sponsors/{name}/kits")
-async def get_sponsor_kits(name: str):
-    kits = await db.master_kits.find({"sponsor": name}, {"_id": 0}).sort("season", -1).to_list(200)
+@router.get("/sponsors/{slug}/kits")
+async def get_sponsor_kits(slug: str):
+    sponsor = await db.sponsors.find_one({"slug": slug}, {"_id": 0})
+    if not sponsor:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+    sponsor_id = sponsor.get("sponsor_id") or sponsor.get("id")
+    if not sponsor_id:
+        raise HTTPException(status_code=500, detail="Sponsor has no sponsor_id")
+    kits = await db.master_kits.find({"sponsor_id": sponsor_id}, {"_id": 0}).sort("season", -1).to_list(200)
     return [await _normalize_kit(k) for k in kits]
