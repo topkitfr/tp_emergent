@@ -23,6 +23,7 @@ class MasterKitCreate(BaseModel):
     team_id: Optional[str] = ""
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
+    sponsor_id: Optional[str] = ""
 
 class MasterKitOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -39,6 +40,7 @@ class MasterKitOut(BaseModel):
     team_id: Optional[str] = ""
     league_id: Optional[str] = ""
     brand_id: Optional[str] = ""
+    sponsor_id: Optional[str] = ""
     created_by: Optional[str] = None
     created_at: Optional[str] = None
     version_count: Optional[int] = 0
