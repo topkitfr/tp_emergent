@@ -2,11 +2,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShieldAlert } from 'lucide-react';
 
 /**
  * ProtectedRoute — Protège une route contre les accès non authentifiés.
- * 
+ *
  * Props:
  * - requireRole: "moderator" | "admin" — restreint aux rôles spécifiés
  *   (les admins ont toujours accès aux routes moderator)
@@ -34,16 +33,8 @@ export default function ProtectedRoute({ children, requireRole }) {
     const requiredLevel = ROLE_HIERARCHY[requireRole] || 1;
 
     if (userLevel < requiredLevel) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-          <ShieldAlert className="w-12 h-12 text-destructive opacity-60" />
-          <h2 className="text-xl font-bold text-foreground">Accès refusé</h2>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
-          </p>
-          <Navigate to="/" replace />
-        </div>
-      );
+      // Redirection simple — pas de JSX wrapper autour de Navigate
+      return <Navigate to="/" replace />;
     }
   }
 
