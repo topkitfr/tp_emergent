@@ -89,6 +89,7 @@ class CollectionAdd(BaseModel):
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
     signed_proof: Optional[bool] = False
+    aura_level: Optional[int] = 0   # 1-5 étoiles d'aura (uniquement si signed=True)
     condition: Optional[str] = ""
     printing: Optional[str] = ""
 
@@ -110,6 +111,7 @@ class CollectionUpdate(BaseModel):
     signed_by: Optional[str] = None
     signed_by_player_id: Optional[str] = None
     signed_proof: Optional[bool] = None
+    aura_level: Optional[int] = None   # 1-5 étoiles d'aura
     condition: Optional[str] = None
     printing: Optional[str] = None
 
@@ -135,6 +137,7 @@ class CollectionOut(BaseModel):
     signed_by: Optional[str] = ""
     signed_by_player_id: Optional[str] = ""
     signed_proof: Optional[bool] = False
+    aura_level: Optional[int] = 0
     condition: Optional[str] = ""
     printing: Optional[str] = ""
     added_at: Optional[str] = None
@@ -188,6 +191,7 @@ class EstimationRequest(BaseModel):
     signed: Optional[bool] = False
     signed_proof: Optional[bool] = False
     season_year: Optional[int] = 0
+    aura_level: Optional[int] = 0   # 0 = non défini, 1-5 = niveau d'aura (s'applique uniquement si signed=True)
 
 # Entity models
 class TeamCreate(BaseModel):
@@ -260,10 +264,12 @@ class BrandOut(BaseModel):
 class PlayerCreate(BaseModel):
     full_name: str
     nationality: Optional[str] = ""
+    birth_date: Optional[str] = ""     # ex: "15/06/1987"
     birth_year: Optional[int] = None
     positions: Optional[List[str]] = []
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
+    bio: Optional[str] = ""
 
 class PlayerOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -272,10 +278,12 @@ class PlayerOut(BaseModel):
     full_name: str
     slug: str
     nationality: Optional[str] = ""
+    birth_date: Optional[str] = ""
     birth_year: Optional[int] = None
     positions: Optional[List[str]] = []
     preferred_number: Optional[int] = None
     photo_url: Optional[str] = ""
+    bio: Optional[str] = ""
     kit_count: Optional[int] = 0
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
