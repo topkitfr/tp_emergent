@@ -91,6 +91,7 @@ ESTIMATION_SIGNED_COEFF = 1.5
 ESTIMATION_SIGNED_PROOF_COEFF = 1.0
 ESTIMATION_AGE_COEFF_PER_YEAR = 0.05
 ESTIMATION_AGE_MAX = 1.0
+ESTIMATION_AURA_COEFF = {1: 0.05, 2: 0.25, 3: 0.50, 4: 0.75, 5: 1.00}
 
 
 def calculate_estimation(
@@ -102,6 +103,7 @@ def calculate_estimation(
     signed: bool,
     signed_proof: bool,
     season_year: int,
+    aura_level: int = 0,
 ):
     base = ESTIMATION_BASE_PRICES.get(model_type, 60)
     coeff_sum = 0.0
@@ -133,6 +135,11 @@ def calculate_estimation(
         if signed_proof:
             coeff_sum += ESTIMATION_SIGNED_PROOF_COEFF
             breakdown.append({"label": "Proof/Certificate", "coeff": ESTIMATION_SIGNED_PROOF_COEFF})
+        aura_c = ESTIMATION_AURA_COEFF.get(aura_level, 0.0)
+        if aura_level >= 1 and aura_c > 0:
+            coeff_sum += aura_c
+            stars = "\u2605" * aura_level
+            breakdown.append({"label": f"Aura {stars} (level {aura_level})", "coeff": aura_c})
 
     current_year = datetime.now(timezone.utc).year
     age = max(0, current_year - season_year) if season_year else 0
