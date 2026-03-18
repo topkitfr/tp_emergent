@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from pathlib import Path
 import os
 import logging
+import time
+from collections import defaultdict
+from fastapi.responses import JSONResponse
 
 from database import db, client
 
@@ -18,6 +21,7 @@ from routers.entities import router as entities_router
 from routers.uploads import router as uploads_router
 from routers.admin import router as admin_router
 from routers.proxy import router as proxy_router
+from routers.notifications import router as notifications_router
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -27,6 +31,62 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# ─── Rate Limiting (simple in-memory) ──────────────────────────────────────────
+# Limite : 60 req/min par IP pour les routes /api/auth/*
+# et 200 req/min par IP pour le reste
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+
+RATE_LIMITS = {
+    "/api/auth/login":    (10, 60),   # 10 requêtes par minute
+    "/api/auth/register": (5,  60),   # 5 requêtes par minute
+    "/api/submissions":   (30, 60),   # 30 soumissions par minute
+    "/api/upload":        (20, 60),   # 20 uploads par minute
+}
+DEFAULT_RATE_LIMIT = (200, 60)  # 200 req/min pour tout le reste
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    path = request.url.path
+
+    # Trouver la limite applicable
+    limit, window = DEFAULT_RATE_LIMIT
+    for prefix, (lim, win) in RATE_LIMITS.items():
+        if path.startswith(prefix):
+            limit, window = lim, win
+            break
+
+    key = f"{client_ip}:{path}"
+    now = time.time()
+    # Nettoyer les timestamps anciens
+    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if now - t < window]
+
+    if len(_rate_limit_store[key]) >= limit:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please slow down."},
+            headers={"Retry-After": str(window)},
+        )
+
+    _rate_limit_store[key].append(now)
+    return await call_next(request)
+
+
+# ─── Security Headers ───────────────────────────────────────────────────────────
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Supprimer les headers qui exposent l'infra
+    response.headers.pop("Server", None)
+    return response
+
 
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
@@ -41,8 +101,9 @@ app.include_router(entities_router)
 app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(proxy_router, prefix="/api")
+app.include_router(notifications_router)
 
-# ✅ CORS corrigé : allow_origins explicite, jamais "*" avec credentials
+# ─── CORS ───────────────────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
     'CORS_ORIGINS',
     'http://localhost:3000,http://127.0.0.1:3000'
@@ -52,9 +113,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=CORS_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
+
 
 @app.on_event("startup")
 async def create_indexes():
@@ -81,14 +143,12 @@ async def create_indexes():
     await db.brands.create_index("slug",        unique=True)
     await db.brands.create_index("name")
     await db.players.create_index("player_id", unique=True, sparse=True)
-    await db.players.create_index("slug",       unique=True, sparse=True)
+    await db.players.create_index("slug",       unique=True)
     await db.players.create_index("full_name")
-    await db.master_kits.create_index("team_id")
-    await db.master_kits.create_index("league_id")
-    await db.master_kits.create_index("brand_id")
-    await db.versions.create_index("main_player_id")
-    logger.info("Entity indexes created")
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+    # Index notifications
+    await db.notifications.create_index("user_id")
+    await db.notifications.create_index([("user_id", 1), ("read", 1)])
+    await db.notifications.create_index("created_at")
+
+    logger.info("Indexes created successfully")
