@@ -84,7 +84,10 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     # Supprimer les headers qui exposent l'infra
-    response.headers.pop("Server", None)
+    try:
+        del response.headers["server"]
+    except KeyError:
+        pass
     return response
 
 
