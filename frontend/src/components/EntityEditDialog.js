@@ -54,9 +54,11 @@ const ENTITY_CONFIGS = {
     fields: [
       { key: 'full_name', label: 'Full Name', required: true },
       { key: 'nationality', label: 'Nationality' },
+      { key: 'birth_date', label: 'Date of birth (DD/MM/YYYY)' },
       { key: 'birth_year', label: 'Birth Year', type: 'number' },
       { key: 'positions', label: 'Positions (comma-separated)' },
       { key: 'preferred_number', label: 'Preferred Number', type: 'number' },
+      { key: 'bio', label: 'Bio', type: 'textarea', span: 2 },
     ],
   },
 };
@@ -142,7 +144,7 @@ export default function EntityEditDialog({ open, onOpenChange, entityType, mode 
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.fields.map(f => (
-              <div key={f.key} className={`space-y-1 ${f.key === config.nameField ? 'sm:col-span-2' : ''}`}>
+              <div key={f.key} className={`space-y-1 ${f.key === config.nameField || f.span === 2 ? 'sm:col-span-2' : ''}`}>
                 <Label className="text-xs uppercase tracking-wider" style={labelStyle}>
                   {f.label} {f.required && '*'}
                 </Label>
@@ -156,6 +158,14 @@ export default function EntityEditDialog({ open, onOpenChange, entityType, mode 
                     <option value="">Select...</option>
                     {f.options.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
+                ) : f.type === 'textarea' ? (
+                  <Textarea
+                    value={form[f.key] ?? ''}
+                    onChange={e => handleChange(f.key, e.target.value)}
+                    className="bg-card border-border rounded-none min-h-[80px] text-sm"
+                    placeholder="..."
+                    data-testid={`entity-edit-${f.key}`}
+                  />
                 ) : (
                   <Input
                     type={f.type === 'number' ? 'number' : 'text'}
