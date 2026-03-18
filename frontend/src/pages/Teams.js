@@ -3,10 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getTeams } from '@/lib/api';
 import { Shield, MapPin } from 'lucide-react';
 import EntityListPage, { EntityCard } from '@/components/EntityListPage';
+import AddEntityDialog from '@/components/AddEntityDialog';
 
 export default function Teams() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [country, setCountry] = useState('');
 
@@ -36,6 +38,7 @@ export default function Teams() {
       search={search}
       onSearchChange={setSearch}
       totalLabel="teams"
+      onAddNew={() => setAddDialogOpen(true)}
       testId="teams-page"
       emptyMessage="Try a different search or filter"
       filters={[
@@ -66,5 +69,11 @@ export default function Teams() {
         />
       )}
     />
+  <AddEntityDialog
+    open={addDialogOpen}
+    onClose={() => setAddDialogOpen(false)}
+    entityType="team"
+    onSuccess={fetchTeams}
+  />
   );
 }
