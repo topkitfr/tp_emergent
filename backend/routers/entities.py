@@ -689,6 +689,8 @@ async def autocomplete(
     "player":  {"collection": "players",  "search_field": "full_name", "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
     "sponsor": {"collection": "sponsors", "search_field": "name",      "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
 }
+
+# Expose
         config = entity_config.get(type)
         if not config:
             return []
