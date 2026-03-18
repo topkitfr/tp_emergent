@@ -656,12 +656,22 @@ async def approve_entity(entity_type: str, entity_id: str):
     config = ENTITY_CONFIG.get(entity_type)
     if not config:
         raise HTTPException(status_code=400, detail="Unknown entity type")
+    now = datetime.now(timezone.utc).isoformat()
     result = await db[config["collection"]].update_one(
         {config["id_field"]: entity_id},
-        {"$set": {"status": "approved", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {"status": "approved", "updated_at": now}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Entity not found")
+    # Also close the corresponding submission
+    await db.submissions.update_one(
+        {
+            "submission_type": entity_type,
+            "data.entity_id": entity_id,
+            "status": {"$in": ["pending", "for_review"]},
+        },
+        {"$set": {"status": "approved", "updated_at": now}}
+    )
     return {"message": f"{entity_type} approved"}
 
 
@@ -670,12 +680,22 @@ async def reject_entity(entity_type: str, entity_id: str):
     config = ENTITY_CONFIG.get(entity_type)
     if not config:
         raise HTTPException(status_code=400, detail="Unknown entity type")
+    now = datetime.now(timezone.utc).isoformat()
     result = await db[config["collection"]].update_one(
         {config["id_field"]: entity_id},
-        {"$set": {"status": "rejected", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {"status": "rejected", "updated_at": now}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Entity not found")
+    # Also close the corresponding submission
+    await db.submissions.update_one(
+        {
+            "submission_type": entity_type,
+            "data.entity_id": entity_id,
+            "status": {"$in": ["pending", "for_review"]},
+        },
+        {"$set": {"status": "rejected", "updated_at": now}}
+    )
     return {"message": f"{entity_type} rejected"}
 
 
