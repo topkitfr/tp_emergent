@@ -3,10 +3,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getLeagues } from '@/lib/api';
 import { Trophy, Globe } from 'lucide-react';
 import EntityListPage, { EntityCard } from '@/components/EntityListPage';
+import AddEntityDialog from '@/components/AddEntityDialog';
 
 export default function Leagues() {
   const [leagues, setLeagues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState('');
   const [region, setRegion] = useState('');
@@ -38,6 +40,7 @@ export default function Leagues() {
       search={search}
       onSearchChange={setSearch}
       totalLabel="leagues"
+      onAddNew={() => setAddDialogOpen(true)}
       testId="leagues-page"
       emptyMessage="Try a different search or filter"
       filters={[
@@ -80,5 +83,11 @@ export default function Leagues() {
         />
       )}
     />
+  <AddEntityDialog
+    open={addDialogOpen}
+    onClose={() => setAddDialogOpen(false)}
+    entityType="league"
+    onSuccess={fetchLeagues}
+  />
   );
 }
