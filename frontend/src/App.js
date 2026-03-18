@@ -69,7 +69,7 @@ function App() {
 
                 {/* ── Database — Sponsors ── */}
                 <Route path="/database/sponsors" element={<Sponsors />} />
-                <Route path="/database/sponsors/:name" element={<SponsorDetail />} />
+                <Route path="/database/sponsors/:id" element={<SponsorDetail />} />
 
                 {/* ── Pages protégées ── */}
                 <Route path="/collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
