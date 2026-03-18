@@ -30,6 +30,7 @@ export default function Teams() {
   const countries = [...new Set(teams.map(t => t.country).filter(Boolean))].sort();
 
   return (
+    <>
     <EntityListPage
       title="TEAMS"
       icon={Shield}
@@ -75,5 +76,6 @@ export default function Teams() {
     entityType="team"
     onSuccess={fetchTeams}
   />
+    </>
   );
 }
