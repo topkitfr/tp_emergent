@@ -4,7 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { proxyImageUrl } from '@/lib/api';
 
 /**
@@ -36,15 +36,29 @@ export default function EntityListPage({
   emptyMessage = 'No results found',
   totalLabel = 'items',
   testId,
+  onAddNew,
 }) {
   return (
     <div className="animate-fade-in-up" data-testid={testId}>
       {/* ── Header ── */}
       <div className="border-b border-border px-4 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-5">
-            {Icon && <Icon className="w-7 h-7 text-primary" />}
-            <h1 className="text-3xl sm:text-4xl tracking-tighter">{title}</h1>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              {Icon && <Icon className="w-7 h-7 text-primary" />}
+              <h1 className="text-3xl sm:text-4xl tracking-tighter">{title}</h1>
+            </div>
+            {onAddNew && (
+              <button
+                onClick={onAddNew}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-card hover:border-primary/60 hover:bg-primary/5 text-xs tracking-wider transition-colors"
+                style={{ fontFamily: 'Barlow Condensed' }}
+                data-testid={`${testId}-add-btn`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                ADD NEW
+              </button>
+            )}
           </div>
 
           {/* Barre de recherche + filtres */}
