@@ -409,6 +409,10 @@ const entityCreateSubs = submissions.filter(s =>
   ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
   s.data?.mode === "create"
 );
+  // Standalone entity submissions (no parent kit) → votable by community
+  const standaloneEntitySubs = entityCreateSubs.filter(s => !s.data?.parent_submission_id);
+  // Kit-linked entity submissions → approved automatically with parent kit
+  const kitLinkedEntitySubs = entityCreateSubs.filter(s => !!s.data?.parent_submission_id);
   const jerseyAndCreateSubs = submissions.filter(s =>
     !entityEditSubs.includes(s) && !entityCreateSubs.includes(s) && s.submission_type === 'master_kit'
   );
@@ -708,20 +712,85 @@ const entityCreateSubs = submissions.filter(s =>
               </div>
             )}
 
-            {/* ── RÉFÉRENCES À VALIDER (pending) ── */}
+            {/* ── NOUVELLES RÉFÉRENCES VOTABLES (standalone) ── */}
+            {standaloneEntitySubs.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+                  <ThumbsUp className="w-4 h-4 inline mr-1" /> NOUVELLES RÉFÉRENCES
+                </h3>
+                <div className="space-y-3 mb-8">
+                  {standaloneEntitySubs.map(sub => (
+                    <div key={sub.submission_id} className="border border-border bg-card" data-testid={`entity-sub-${sub.submission_id}`}>
+                      <div
+                        className="flex items-start justify-between gap-4 p-4 cursor-pointer hover:bg-secondary/20"
+                        onClick={() => setExpandedSubmission(expandedSubmission === sub.submission_id ? null : sub.submission_id)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABELS[sub.submission_type] || sub.submission_type}</Badge>
+                            <Badge variant="outline" className="rounded-none text-[10px] border-primary/30 text-primary">New</Badge>
+                            <Badge className={`rounded-none text-[10px] ${
+                              sub.status === 'approved' ? 'bg-primary/20 text-primary' :
+                              sub.status === 'pending'  ? 'bg-accent/20 text-accent' :
+                              'bg-destructive/20 text-destructive'
+                            }`}>{sub.status}</Badge>
+                          </div>
+                          <h4 className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                            {sub.submission_type === 'player' ? (sub.data?.full_name || '?') : (sub.data?.name || '?')}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+                            by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-center">
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono text-sm text-primary">{sub.votes_up}</span>
+                              <span className="text-muted-foreground">/</span>
+                              <span className="font-mono text-sm text-destructive">{sub.votes_down}</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">votes</span>
+                          </div>
+                          {sub.status === 'pending' && !hasVoted(sub) && (
+                            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                              <button onClick={() => handleVoteSubmission(sub.submission_id, true)} className="p-2 border border-border hover:border-primary hover:text-primary" data-testid={`vote-up-${sub.submission_id}`}>
+                                <ThumbsUp className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleVoteSubmission(sub.submission_id, false)} className="p-2 border border-border hover:border-destructive hover:text-destructive" data-testid={`vote-down-${sub.submission_id}`}>
+                                <ThumbsDown className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                          {hasVoted(sub) && <Badge variant="secondary" className="rounded-none text-[10px]">Voted</Badge>}
+                          {expandedSubmission === sub.submission_id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </div>
+                      {expandedSubmission === sub.submission_id && (
+                        <div className="px-4 pb-4">
+                          <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── RÉFÉRENCES LIÉES À UN KIT (en attente d'approbation du kit parent) ── */}
             {activeTab === 'pending' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  <AlertTriangle className="w-4 h-4 inline mr-1" /> RÉFÉRENCES À VALIDER
+                  <AlertTriangle className="w-4 h-4 inline mr-1" /> RÉFÉRENCES LIÉES À UN KIT
                 </h3>
                 {loadingPending ? (
                   <div className="h-16 bg-card animate-pulse border border-border" />
-                ) : Object.values(pendingEntities).every(arr => arr.length === 0) ? (
+                ) : Object.values(pendingEntities).every(arr => arr.length === 0) && kitLinkedEntitySubs.length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-border mb-8">
                     <p className="text-sm text-muted-foreground" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>Aucune référence en attente de validation</p>
                   </div>
                 ) : (
                   <div className="space-y-4 mb-8">
+                    {/* Refs créées via ajout de maillot — affichées en buckets groupés */}
                     {[
                       { key: 'team', label: 'Équipes' },
                       { key: 'league', label: 'Compétitions' },
@@ -741,7 +810,7 @@ const entityCreateSubs = submissions.filter(s =>
                                 <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getDisplayName(item)}</span>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">for review</Badge>
-                                  <span className="text-[10px] text-muted-foreground italic">Approved with kit</span>
+                                  <span className="text-[10px] text-muted-foreground italic">En attente d'approbation du kit</span>
                                 </div>
                               </div>
                             ))}
