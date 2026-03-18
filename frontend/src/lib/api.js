@@ -138,10 +138,11 @@ export const getSponsor     = (id)     => api.get(`/sponsors/${id}`);
 export const getSponsorKits = (slug)   => api.get(`/sponsors/${slug}/kits`);
 
 // Players
-export const getPlayers = (params) => api.get('/players', { params });
-export const getPlayer = (id) => api.get(`/players/${id}`);
-export const createPlayer = (data) => api.post('/players', data);
-export const updatePlayer = (id, data) => api.put(`/players/${id}`, data);
+export const getPlayers    = (params) => api.get('/players', { params });
+export const getPlayer     = (id)     => api.get(`/players/${id}`);
+export const getPlayerKits = (slug)   => api.get(`/players/${slug}/kits`);
+export const createPlayer  = (data)   => api.post('/players', data);
+export const updatePlayer  = (id, data) => api.put(`/players/${id}`, data);
 
 // Migration
 export const migrateEntities = () => api.post('/migrate-entities-from-kits');
