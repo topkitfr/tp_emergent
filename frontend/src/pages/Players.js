@@ -3,12 +3,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getPlayers } from '@/lib/api';
 import { User, Globe } from 'lucide-react';
 import EntityListPage, { EntityCard } from '@/components/EntityListPage';
+import AddEntityDialog from '@/components/AddEntityDialog';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 
 export default function Players() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [nationality, setNationality] = useState('');
   const [position, setPosition] = useState('');
@@ -41,6 +43,7 @@ export default function Players() {
       search={search}
       onSearchChange={setSearch}
       totalLabel="players"
+      onAddNew={() => setAddDialogOpen(true)}
       testId="players-page"
       emptyMessage="Players are linked to jersey versions"
       filters={[
@@ -79,5 +82,11 @@ export default function Players() {
         />
       )}
     />
+  <AddEntityDialog
+    open={addDialogOpen}
+    onClose={() => setAddDialogOpen(false)}
+    entityType="player"
+    onSuccess={fetchPlayers}
+  />
   );
 }
