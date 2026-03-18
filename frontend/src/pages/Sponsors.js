@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getMasterKits } from '@/lib/api';
 import { Tag } from 'lucide-react';
 import EntityListPage, { EntityCard } from '@/components/EntityListPage';
+import AddEntityDialog from '@/components/AddEntityDialog';
 
 export default function Sponsors() {
   const [sponsors, setSponsors] = useState([]);
@@ -57,6 +58,7 @@ export default function Sponsors() {
       search={search}
       onSearchChange={setSearch}
       totalLabel="sponsors"
+      onAddNew={() => setAddDialogOpen(true)}
       testId="sponsors-page"
       emptyMessage="Sponsors are extracted from jersey submissions"
       filters={[]}
@@ -81,5 +83,11 @@ export default function Sponsors() {
         />
       )}
     />
+  <AddEntityDialog
+    open={addDialogOpen}
+    onClose={() => setAddDialogOpen(false)}
+    entityType="sponsor"
+    onSuccess={fetchSponsors}
+  />
   );
 }
