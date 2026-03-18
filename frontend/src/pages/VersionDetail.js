@@ -1,7 +1,7 @@
 // src/pages/VersionDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, getVersionEstimates, addToCollection, createReport, proxyImageUrl } from '@/lib/api';
+import { getVersion, getVersionEstimates, addToCollection, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   Star, Shirt, ChevronRight, ChevronLeft, AlertTriangle,
-  Check, Trash2, User, Plus, Loader2,
+  Check, Trash2, User, Plus, Loader2, Heart,
 } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
@@ -84,6 +84,8 @@ export default function VersionDetail() {
   const [reviews,       setReviews]       = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [addStatus,     setAddStatus]     = useState('idle');
+  const [wishStatus,    setWishStatus]    = useState('idle'); // 'idle' | 'loading' | 'done'
+  const [wishlistId,    setWishlistId]    = useState(null);
   const [showReport,    setShowReport]    = useState(false);
   const [showRemoval,   setShowRemoval]   = useState(false);
   const [removalNotes,  setRemovalNotes]  = useState('');
@@ -107,7 +109,7 @@ export default function VersionDetail() {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const res  = await fetch(`/api/versions/${versionId}/reviews`);
+      const res  = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reviews?version_id=${versionId}`, { credentials: 'include' });
       const data = res.ok ? await res.json() : [];
       setReviews(Array.isArray(data) ? data : []);
     } catch { setReviews([]); }
@@ -134,6 +136,14 @@ export default function VersionDetail() {
         back_photo:  v.back_photo  || '',
       });
       await fetchReviews();
+      // Charger statut wishlist
+      try {
+        const wRes = await checkWishlist(v.version_id);
+        if (wRes.data?.in_wishlist) {
+          setWishStatus('done');
+          setWishlistId(wRes.data.wishlist_id);
+        }
+      } catch {}
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [versionId, fetchReviews]);
@@ -194,19 +204,41 @@ export default function VersionDetail() {
     if (!reviewRating) return toast.error('Please select a rating');
     setSubmitting(true);
     try {
-      await fetch(`/api/versions/${versionId}/reviews`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ rating: reviewRating, comment: reviewComment }),
-      });
+      await createReview({ version_id: versionId, rating: reviewRating, comment: reviewComment });
       toast.success('Review submitted!');
       setReviewRating(0);
       setReviewComment('');
       await fetchReviews();
-    } catch {
-      toast.error('Failed to submit review');
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Failed to submit review');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleWishlist = async () => {
+    if (wishStatus === 'loading') return;
+    setWishStatus('loading');
+    try {
+      if (wishStatus === 'done' && wishlistId) {
+        await removeFromWishlist(wishlistId);
+        setWishStatus('idle');
+        setWishlistId(null);
+        toast.success('Removed from wishlist');
+      } else {
+        const res = await addToWishlist({ version_id: versionId });
+        setWishStatus('done');
+        setWishlistId(res.data?.wishlist_id || null);
+        toast.success('Added to wishlist ❤️');
+      }
+    } catch (err) {
+      if (err?.response?.status === 400) {
+        setWishStatus('done');
+        toast.info('Already in your wishlist');
+      } else {
+        setWishStatus('idle');
+        toast.error('Failed to update wishlist');
+      }
     }
   };
 
@@ -327,6 +359,19 @@ export default function VersionDetail() {
                     {addStatus === 'done'    && <Check   className="w-4 h-4 mr-1" />}
                     {addStatus === 'idle'    && <Plus    className="w-4 h-4 mr-1" />}
                     {addStatus === 'done' ? 'In collection' : 'Add to collection'}
+                  </Button>
+                )}
+                {user && (
+                  <Button
+                    variant="outline" size="sm"
+                    onClick={handleWishlist}
+                    className={`rounded-none border-border transition-colors ${wishStatus === 'done' ? 'border-red-400/60 text-red-400 hover:bg-red-400/10' : 'hover:border-red-400/40 hover:text-red-400'}`}
+                  >
+                    {wishStatus === 'loading'
+                      ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      : <Heart className={`w-4 h-4 mr-1 transition-all ${wishStatus === 'done' ? 'fill-red-400 text-red-400' : ''}`} />
+                    }
+                    {wishStatus === 'done' ? 'In wishlist' : 'Add to wishlist'}
                   </Button>
                 )}
                 {user && (
