@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMyCollection, getCollectionStats, updateProfile, updateCredentials, getUserBadges, getUserByUsername, proxyImageUrl } from '@/lib/api';
+import { getMyCollection, getCollectionStats, updateProfile, updateCredentials, getUserBadges, getUserByUsername, getFollows, proxyImageUrl } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck, Shield, KeyRound } from 'lucide-react';
+import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck, Shield, KeyRound, Users, User } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
 export default function Profile() {
@@ -23,6 +23,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(!!urlUsername);
   const [badges, setBadges] = useState([]);
+  const [follows, setFollows] = useState([]);
   const [credForm, setCredForm] = useState({ current_password: '', new_email: '', new_password: '' });
   const [savingCreds, setSavingCreds] = useState(false);
   const [formData, setFormData] = useState({
@@ -63,6 +64,7 @@ export default function Profile() {
       getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
       getCollectionStats().then(r => setStats(r.data)).catch(() => {});
       getUserBadges().then(r => setBadges(r.data?.badges || [])).catch(() => {});
+      getFollows().then(r => setFollows(r.data?.follows || [])).catch(() => {});
     }
   }, [profileUser, isOwnProfile]);
 
@@ -89,6 +91,8 @@ export default function Profile() {
       await updateProfile(formData);
       toast.success('Profile updated');
       setEditing(false);
+      // Met à jour profileUser localement sans dépendre de checkAuth (DEV_LOGIN renvoie un objet hardcodé)
+      setProfileUser(prev => ({ ...prev, ...formData }));
       checkAuth();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to update');
@@ -146,7 +150,12 @@ export default function Profile() {
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-3xl tracking-tighter mb-1" data-testid="profile-name">{displayUser.name?.toUpperCase()}</h1>
+                  <h1 className="text-3xl tracking-tighter mb-1" data-testid="profile-name">
+                    {(displayUser.username || displayUser.name)?.toUpperCase()}
+                  </h1>
+                  {displayUser.username && displayUser.name && displayUser.username.toLowerCase() !== displayUser.name.toLowerCase().replace(/\s/g, '') && (
+                    <p className="text-sm text-muted-foreground font-normal" data-testid="profile-fullname" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{displayUser.name}</p>
+                  )}
                   {displayUser.username && (
                     <p className="text-sm text-primary font-mono" data-testid="profile-username">@{displayUser.username}</p>
                   )}
@@ -363,6 +372,32 @@ export default function Profile() {
                     {b.club} CLUBID FAN
                     <span className="ml-1 opacity-60 font-mono text-[10px]">{b.kit_count} kits</span>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Following ── */}
+          {isOwnProfile && follows.length > 0 && (
+            <div className="mb-8" data-testid="following-section">
+              <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+                <Users className="w-4 h-4 inline mr-1" /> FOLLOWING ({follows.length})
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {follows.map(f => (
+                  <Link
+                    key={f.follow_id}
+                    to={f.target_type === 'team' ? `/teams/${f.target_id}` : `/players/${f.target_id}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border hover:border-primary/50 transition-colors"
+                    style={{ fontFamily: 'Barlow Condensed' }}
+                    data-testid={`follow-item-${f.follow_id}`}
+                  >
+                    {f.target_type === 'team'
+                      ? <Shield className="w-3 h-3 text-primary" />
+                      : <User   className="w-3 h-3 text-accent" />}
+                    <span className="uppercase">{f.target_name || f.target_id}</span>
+                    <span className="text-muted-foreground/50 text-[10px] lowercase">{f.target_type}</span>
+                  </Link>
                 ))}
               </div>
             </div>
