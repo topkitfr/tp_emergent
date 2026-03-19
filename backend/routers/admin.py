@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File
-from typing import Optional
+from typing import Optional, List, Dict
 from datetime import datetime, timezone
 from pathlib import Path
 import uuid
@@ -444,9 +444,9 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     all_league_names = sorted(set(r["league"] for r in valid_rows if r["league"]))
     all_brand_names  = sorted(set(r["brand"]  for r in valid_rows if r["brand"]))
 
-    team_map:   dict[str, str] = {}
-    league_map: dict[str, str] = {}
-    brand_map:  dict[str, str] = {}
+    team_map: Dict[str, str] = {}
+    league_map: Dict[str, str] = {}
+    brand_map: Dict[str, str] = {}
 
     for name in all_team_names:
         team_id = f"team_{uuid.uuid4().hex[:12]}"
@@ -594,7 +594,7 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
     now = datetime.now(timezone.utc).isoformat()
     created_kits = 0
     skipped_kits = 0
-    import_errors: list[str] = []
+    import_errors = []  # type: List[str]
 
     async def _get_or_create(collection, id_field, slug_val, doc):
         existing = await db[collection].find_one({"slug": slug_val}, {"_id": 0, id_field: 1})
