@@ -449,38 +449,53 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     brand_map: Dict[str, str] = {}
 
     for name in all_team_names:
-        team_id = f"team_{uuid.uuid4().hex[:12]}"
+        new_team_id = f"team_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
-        await db.teams.insert_one({
-            "team_id": team_id, "name": name, "slug": sl,
-            "country": "", "city": "", "founded": None,
-            "primary_color": "", "secondary_color": "",
-            "crest_url": "", "aka": [], "kit_count": 0,
-            "status": "approved", "created_at": now, "updated_at": now,
-        })
-        team_map[name] = team_id
+        await db.teams.update_one(
+            {"slug": sl},
+            {"$setOnInsert": {
+                "team_id": new_team_id, "name": name, "slug": sl,
+                "country": "", "city": "", "founded": None,
+                "primary_color": "", "secondary_color": "",
+                "crest_url": "", "aka": [], "kit_count": 0,
+                "status": "approved", "created_at": now, "updated_at": now,
+            }},
+            upsert=True,
+        )
+        doc = await db.teams.find_one({"slug": sl}, {"_id": 0, "team_id": 1})
+        team_map[name] = doc["team_id"] if doc else new_team_id
 
     for name in all_league_names:
-        league_id = f"league_{uuid.uuid4().hex[:12]}"
+        new_league_id = f"league_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
-        await db.leagues.insert_one({
-            "league_id": league_id, "name": name, "slug": sl,
-            "country_or_region": "", "level": "domestic",
-            "organizer": "", "logo_url": "", "kit_count": 0,
-            "status": "approved", "created_at": now, "updated_at": now,
-        })
-        league_map[name] = league_id
+        await db.leagues.update_one(
+            {"slug": sl},
+            {"$setOnInsert": {
+                "league_id": new_league_id, "name": name, "slug": sl,
+                "country_or_region": "", "level": "domestic",
+                "organizer": "", "logo_url": "", "kit_count": 0,
+                "status": "approved", "created_at": now, "updated_at": now,
+            }},
+            upsert=True,
+        )
+        doc = await db.leagues.find_one({"slug": sl}, {"_id": 0, "league_id": 1})
+        league_map[name] = doc["league_id"] if doc else new_league_id
 
     for name in all_brand_names:
-        brand_id = f"brand_{uuid.uuid4().hex[:12]}"
+        new_brand_id = f"brand_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
-        await db.brands.insert_one({
-            "brand_id": brand_id, "name": name, "slug": sl,
-            "country": "", "founded": None, "logo_url": "",
-            "kit_count": 0, "status": "approved",
-            "created_at": now, "updated_at": now,
-        })
-        brand_map[name] = brand_id
+        await db.brands.update_one(
+            {"slug": sl},
+            {"$setOnInsert": {
+                "brand_id": new_brand_id, "name": name, "slug": sl,
+                "country": "", "founded": None, "logo_url": "",
+                "kit_count": 0, "status": "approved",
+                "created_at": now, "updated_at": now,
+            }},
+            upsert=True,
+        )
+        doc = await db.brands.find_one({"slug": sl}, {"_id": 0, "brand_id": 1})
+        brand_map[name] = doc["brand_id"] if doc else new_brand_id
 
     # ── 5. Insérer les master_kits + une version par défaut ────────────────────
     kits_to_insert     = []
