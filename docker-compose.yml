@@ -10,25 +10,30 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: ${DB_NAME}
-    # Pas exposé à l'extérieur — accessible uniquement par le backend
 
   # ── API FastAPI ──────────────────────────────────────────────────────────────
   backend:
-    image: ghcr.io/topkitfr/tp_emergent/backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     restart: always
     depends_on:
       - mongodb
     env_file:
       - .env.backend
     volumes:
-      # Les uploads persistés sur le disque du NAS
       - uploads_data:/app/uploads
     expose:
       - "8000"
 
   # ── Frontend React ───────────────────────────────────────────────────────────
   frontend:
-    image: ghcr.io/topkitfr/tp_emergent/frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: https://topkit.app
+        REACT_APP_API_URL: https://topkit.app/api
     restart: always
     expose:
       - "80"
@@ -48,14 +53,12 @@ services:
       - frontend
       - backend
 
-  # ── Certificat Let's Encrypt ──────────────────────────────────────────────────
+  # ── Certificat Let's Encrypt ─────────────────────────────────────────────────
   certbot:
     image: certbot/certbot
     volumes:
       - certbot_certs:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    # Utilisé manuellement pour générer/renouveler le certificat
-    # Commande : docker compose run --rm certbot certonly --webroot ...
 
 volumes:
   mongo_data:
