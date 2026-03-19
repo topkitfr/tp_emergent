@@ -186,9 +186,22 @@ async def unfollow_entity(body: FollowRequest, request: Request):
 
 @router.get("/users/follows")
 async def get_follows(request: Request):
-    user   = await get_current_user(request)
-    uid    = user["user_id"]
+    user    = await get_current_user(request)
+    uid     = user["user_id"]
     follows = await db.follows.find({"user_id": uid}, {"_id": 0}).to_list(500)
+
+    # Enrichit chaque follow avec target_name
+    for f in follows:
+        try:
+            if f["target_type"] == "team":
+                doc = await db.teams.find_one({"team_id": f["target_id"]}, {"name": 1})
+                f["target_name"] = doc["name"] if doc else f["target_id"]
+            elif f["target_type"] == "player":
+                doc = await db.players.find_one({"player_id": f["target_id"]}, {"full_name": 1})
+                f["target_name"] = doc["full_name"] if doc else f["target_id"]
+        except Exception:
+            f["target_name"] = f["target_id"]
+
     return {"follows": follows}
 
 
