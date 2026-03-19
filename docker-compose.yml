@@ -2,7 +2,7 @@ services:
 
   # ── Base de données ──────────────────────────────────────────────────────────
   mongodb:
-    image: mongo:6
+    image: mongo:4.4
     restart: always
     volumes:
       - mongo_data:/data/db
