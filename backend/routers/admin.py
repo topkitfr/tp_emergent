@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
 from typing import Optional
 from datetime import datetime, timezone
 from pathlib import Path
 import uuid
 import logging
+import csv
+import io
+import re
 from database import db
 from models import ProfileUpdate
 from auth import get_current_user
@@ -321,4 +324,157 @@ async def migrate_entities_from_kits():
         "brands_created": brands_created,
         "kits_updated": kits_updated,
         "totals": {"teams": len(team_map), "leagues": len(league_map), "brands": len(brand_map)}
+    }
+
+
+# ─── Import CSV via upload (admin/moderator only) ─────────────────────────────
+
+def _csv_make_slug(text: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '-', text.lower().strip()).strip('-')
+
+def _csv_normalize_season(season: str) -> str:
+    s = re.sub(r'\s*\(carry-over\)', '', season, flags=re.IGNORECASE).strip()
+    m = re.match(r'(\d{2,4})[\-/](\d{2,4})$', s)
+    if m:
+        y1_str = m.group(1)
+        if len(y1_str) == 2:
+            n1 = int(y1_str)
+            full_y1 = 1900 + n1 if n1 >= 85 else 2000 + n1
+        else:
+            full_y1 = int(y1_str)
+        return f"{full_y1}/{full_y1 + 1}"
+    return s
+
+def _csv_normalize_gender(gender: str) -> str:
+    g = (gender or "").strip().upper()
+    mapping = {"MAN": "MEN", "MALE": "MEN", "WOMAN": "WOMEN", "FEMALE": "WOMEN",
+               "KID": "YOUTH", "KIDS": "YOUTH", "CHILD": "YOUTH", "": "MEN"}
+    return g if g in ("MEN", "WOMEN", "YOUTH", "UNISEX") else mapping.get(g, "MEN")
+
+
+@router.post("/admin/import-csv")
+async def import_csv_upload(request: Request, file: UploadFile = File(...)):
+    """
+    Upload un fichier CSV et importe les kits dans la base de données.
+    Réservé aux admins et modérateurs.
+    Colonnes attendues : team, season, type, design, colors, brand, sponsor, league, gender, img_url, source_url
+    """
+    user = await get_current_user(request)
+    if user.get("role") not in ("admin", "moderator"):
+        raise HTTPException(status_code=403, detail="Rôle admin ou modérateur requis")
+
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un CSV (.csv)")
+
+    content = await file.read()
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    if not rows:
+        raise HTTPException(status_code=400, detail="CSV vide ou mal formaté")
+
+    now = datetime.now(timezone.utc).isoformat()
+    created_kits = 0
+    skipped_kits = 0
+    import_errors: list[str] = []
+
+    async def _get_or_create(collection, slug_field, slug_val, doc):
+        existing = await db[collection].find_one({slug_field: slug_val}, {"_id": 0})
+        if existing:
+            return (existing.get("team_id") or existing.get("brand_id")
+                    or existing.get("league_id") or existing.get("id", ""))
+        await db[collection].insert_one(doc)
+        return doc.get("team_id") or doc.get("brand_id") or doc.get("league_id") or doc.get("id", "")
+
+    for i, row in enumerate(rows, 1):
+        try:
+            team_name   = (row.get("team") or "").strip()
+            season_raw  = (row.get("season") or "").strip()
+            kit_type    = (row.get("type") or "Home").strip()
+            design      = (row.get("design") or "").strip()
+            colors      = (row.get("colors") or "").strip()
+            brand_name  = (row.get("brand") or "").strip()
+            sponsor     = (row.get("sponsor") or "").strip()
+            league_name = (row.get("league") or "").strip()
+            gender_raw  = (row.get("gender") or "").strip()
+            img_url     = (row.get("img_url") or row.get("Image URL") or "").strip()
+            source_url  = (row.get("source_url") or row.get("URL") or "").strip()
+
+            if not team_name or not season_raw:
+                skipped_kits += 1
+                continue
+
+            season = _csv_normalize_season(season_raw)
+            gender = _csv_normalize_gender(gender_raw)
+
+            # Team
+            team_slug = _csv_make_slug(team_name)
+            team_id = await _get_or_create("teams", "slug", team_slug, {
+                "team_id": f"team_{uuid.uuid4().hex[:12]}",
+                "name": team_name, "slug": team_slug,
+                "country": "", "city": "", "founded": None,
+                "primary_color": "", "secondary_color": "",
+                "crest_url": "", "aka": [], "kit_count": 0,
+                "status": "approved", "created_at": now, "updated_at": now
+            })
+
+            # Brand
+            brand_id = ""
+            if brand_name:
+                brand_slug = _csv_make_slug(brand_name)
+                brand_id = await _get_or_create("brands", "slug", brand_slug, {
+                    "brand_id": f"brand_{uuid.uuid4().hex[:12]}",
+                    "name": brand_name, "slug": brand_slug,
+                    "country": "", "founded": None, "logo_url": "",
+                    "kit_count": 0, "status": "approved",
+                    "created_at": now, "updated_at": now
+                })
+
+            # League
+            league_id = ""
+            if league_name:
+                league_slug = _csv_make_slug(league_name)
+                league_id = await _get_or_create("leagues", "slug", league_slug, {
+                    "league_id": f"league_{uuid.uuid4().hex[:12]}",
+                    "name": league_name, "slug": league_slug,
+                    "country_or_region": "", "level": "domestic",
+                    "organizer": "", "logo_url": "", "kit_count": 0,
+                    "status": "approved", "created_at": now, "updated_at": now
+                })
+
+            # Master Kit — skip si doublon (même slug)
+            kit_slug = _csv_make_slug(f"{team_name}-{season}-{kit_type}")
+            if await db["master_kits"].find_one({"slug": kit_slug}):
+                skipped_kits += 1
+                continue
+
+            kit_id = f"kit_{uuid.uuid4().hex[:12]}"
+            await db["master_kits"].insert_one({
+                "kit_id": kit_id, "slug": kit_slug,
+                "team_id": team_id, "brand_id": brand_id, "league_id": league_id,
+                "club": team_name, "brand": brand_name, "league": league_name,
+                "season": season, "kit_type": kit_type, "type": kit_type,
+                "design": design, "colors": colors, "sponsor": sponsor,
+                "gender": gender, "front_photo": img_url, "img_url": img_url,
+                "source_url": source_url, "status": "approved", "avg_rating": 0.0,
+                "created_by": user.get("user_id", "admin"),
+                "created_at": now,
+            })
+            created_kits += 1
+
+        except Exception as e:
+            if len(import_errors) < 20:
+                import_errors.append(f"Ligne {i} ({row.get('team', '?')}): {type(e).__name__}: {e}")
+
+    logger.info(f"import-csv by {user.get('email')}: {created_kits} créés, {skipped_kits} skippés, {len(import_errors)} erreurs")
+    return {
+        "message": "Import terminé",
+        "created": created_kits,
+        "skipped": skipped_kits,
+        "total_rows": len(rows),
+        "errors": import_errors,
     }
