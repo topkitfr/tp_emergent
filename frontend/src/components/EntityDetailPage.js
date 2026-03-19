@@ -28,6 +28,7 @@ import { proxyImageUrl } from '@/lib/api';
  * - kits: array — les kits/maillots associés
  * - filters: array de { key, label, value, onChange, options }
  * - onEditSuccess: fn — callback après édition réussie
+ * - extraActions: ReactNode — actions supplémentaires à côté du bouton Suggest Edit (ex: Follow)
  * - testId: string
  */
 export default function EntityDetailPage({
@@ -45,6 +46,7 @@ export default function EntityDetailPage({
   kits = [],
   filters = [],
   onEditSuccess,
+  extraActions,
   testId,
 }) {
   const { user } = useAuth();
@@ -115,7 +117,9 @@ export default function EntityDetailPage({
                   )}
                 </div>
 
-                {/* Bouton Suggest Edit */}
+                {/* Bouton Suggest Edit + actions extra (Follow, etc.) */}
+                <div className="flex items-center gap-2 shrink-0">
+                {extraActions}
                 {canEdit && (
                   <Button
                     variant="outline"
@@ -128,6 +132,7 @@ export default function EntityDetailPage({
                     Suggest Edit
                   </Button>
                 )}
+                </div>
               </div>
 
               {/* Meta items (fondation, niveau, etc.) */}
