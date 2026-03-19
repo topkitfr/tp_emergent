@@ -5,6 +5,7 @@ import uuid
 from database import db
 from models import CollectionAdd, CollectionUpdate
 from auth import get_current_user
+from routers.notifications import create_notification
 
 router = APIRouter(prefix="/api/collections", tags=["collections"])
 
@@ -69,6 +70,26 @@ async def add_to_collection(item: CollectionAdd, request: Request):
         "added_at": datetime.now(timezone.utc).isoformat()
     }
     await db.collections.insert_one(doc)
+
+    # ── Notifier les followers du joueur flocqué ──
+    flocking_player_id = doc.get("flocking_player_id", "")
+    if flocking_player_id:
+        player = await db.players.find_one({"player_id": flocking_player_id}, {"_id": 0, "full_name": 1})
+        player_name = player.get("full_name", "") if player else ""
+        followers = await db.follows.find(
+            {"target_type": "player", "target_id": flocking_player_id}, {"_id": 0, "user_id": 1}
+        ).to_list(1000)
+        for f in followers:
+            if f["user_id"] != user["user_id"]:
+                await create_notification(
+                    user_id=f["user_id"],
+                    notif_type="new_kit",
+                    title=f"New kit flocké {player_name}",
+                    message=f"Un maillot flocké {player_name} vient d’être ajouté à la catalog.",
+                    target_type="version",
+                    target_id=doc["version_id"],
+                )
+
     result = await db.collections.find_one({"collection_id": doc["collection_id"]}, {"_id": 0})
     return result
 
