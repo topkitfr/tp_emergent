@@ -100,6 +100,15 @@ export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/
 export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
 export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
+// ── Listes personnalisées ──────────────────────────────────────────────────
+export const getUserLists       = ()                      => api.get('/lists');
+export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
+export const createList         = (data)                  => api.post('/lists', data);
+export const updateList         = (listId, data)          => api.patch(`/lists/${listId}`, data);
+export const deleteList         = (listId)                => api.delete(`/lists/${listId}`);
+export const addItemToList      = (listId, collectionId)  => api.post(`/lists/${listId}/items`, { collection_id: collectionId });
+export const removeItemFromList = (listId, collectionId)  => api.delete(`/lists/${listId}/items/${collectionId}`);
+
 // Submissions
 export const createSubmission = (data) => api.post('/submissions', data);
 export const getSubmissions = (params) => api.get('/submissions', { params });
