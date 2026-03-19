@@ -23,6 +23,7 @@ from routers.admin import router as admin_router
 from routers.proxy import router as proxy_router
 from routers.notifications import router as notifications_router
 from routers.users import router as users_router
+from routers.user_lists import router as user_lists_router
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -110,6 +111,7 @@ app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads"
 
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(user_lists_router)
 app.include_router(kits_router)
 app.include_router(collections_router)
 app.include_router(estimation_router)
