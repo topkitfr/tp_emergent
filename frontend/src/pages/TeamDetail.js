@@ -5,7 +5,7 @@ import { Shield, Globe, MapPin, Calendar, UserPlus, UserMinus } from 'lucide-rea
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { getTeam, followEntity, unfollowEntity, isFollowing } from '@/lib/api';
 import api from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TeamDetail() {
   const { id } = useParams();
