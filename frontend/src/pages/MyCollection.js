@@ -9,6 +9,7 @@ import {
   getCategoryStats,
   proxyImageUrl,
   createPlayerPending,
+  getPlayerAura,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function MyCollection() {
   const [stats, setStats] = useState(null);
   const [categoryStats, setCategoryStats] = useState([]);
   const [detailItem, setDetailItem] = useState(null);
+  const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
 
   const fetchCollection = async () => {
@@ -105,6 +107,13 @@ export default function MyCollection() {
 
   const openDetail = (item) => {
     setDetailItem(item);
+    setSignedPlayerAuraLevel(0); // reset
+    // Charge l'aura du joueur signataire si présent
+    if (item.signed_by_player_id) {
+      getPlayerAura(item.signed_by_player_id)
+        .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
+        .catch(() => {});
+    }
     setEditForm({
       flocking_type: item.flocking_type || '',
       flocking_origin: item.flocking_origin || '',
@@ -160,6 +169,7 @@ export default function MyCollection() {
         signed: editForm.signed || false,
         signedProof: editForm.signed_proof || false,
         seasonYear,
+        auraLevel: signedPlayerAuraLevel,
       });
 
       const data = {
@@ -921,13 +931,19 @@ export default function MyCollection() {
                               signed_by_player_id: '',
                             }))
                           }
-                          onSelect={(item) =>
+                          onSelect={(item) => {
                             setEditForm((p) => ({
                               ...p,
                               signed_by: item.label,
                               signed_by_player_id: item.id,
-                            }))
-                          }
+                            }));
+                            // Recharge l'aura du nouveau joueur sélectionné
+                            if (item.id) {
+                              getPlayerAura(item.id)
+                                .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
+                                .catch(() => setSignedPlayerAuraLevel(0));
+                            }
+                          }}
                           placeholder="Player name"
                           className={inputClass}
                           testId="detail-signed-by"
@@ -971,7 +987,7 @@ export default function MyCollection() {
                   />
                 </div>
 
-                <EstimationBreakdown
+<EstimationBreakdown
                   modelType={detailItem.version?.model || 'Replica'}
                   competition={detailItem.version?.competition || ''}
                   conditionOrigin={editForm.condition_origin || ''}
@@ -980,6 +996,7 @@ export default function MyCollection() {
                   signed={editForm.signed || false}
                   signedProof={editForm.signed_proof || false}
                   seasonYear={parseSeasonYear(detailItem.master_kit?.season)}
+                  auraLevel={signedPlayerAuraLevel}
                 />
               </div>
 
