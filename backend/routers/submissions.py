@@ -19,7 +19,14 @@ ENTITY_COLLECTIONS = {
     "sponsor": {"collection": "sponsors", "id_field": "sponsor_id", "name_field": "name"},
 }
 
-# ─── Labels lisibles pour les types de soumissions ───
+# ← FIX 1 : mapping entity_type → champ dans master_kit
+KIT_ID_FIELDS = {
+    "team":    "team_id",
+    "brand":   "brand_id",
+    "league":  "league_id",
+    "sponsor": "sponsor_id",
+}
+
 SUBMISSION_TYPE_LABELS = {
     "master_kit": "maillot",
     "version":    "version de maillot",
@@ -32,7 +39,6 @@ SUBMISSION_TYPE_LABELS = {
 
 
 def _submission_name(sub: dict) -> str:
-    """Retourne un label lisible pour identifier la soumission."""
     data = sub.get("data", {})
     return (
         data.get("club")
@@ -170,7 +176,7 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
     sub_name = _submission_name(updated_sub)
     sub_type_label = SUBMISSION_TYPE_LABELS.get(updated_sub["submission_type"], updated_sub["submission_type"])
 
-    # ─── APPROBATION ───────────────────────────────────────────────────────────
+    # ─── APPROBATION ──────────────────────────────────────────────────────────
     if updated_sub["votes_up"] >= APPROVAL_THRESHOLD:
         try:
             data = updated_sub["data"]
@@ -220,11 +226,23 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                     {"_id": 0}
                 ).to_list(50)
 
+                # ← FIX 2 : on récupère le vrai ID retourné par _apply_entity_submission
+                kit_patch = {}
                 for entity_sub in linked_entity_subs:
-                    await _apply_entity_submission(entity_sub)
+                    new_entity_id = await _apply_entity_submission(entity_sub)
                     await db.submissions.update_one(
                         {"submission_id": entity_sub["submission_id"]},
                         {"$set": {"status": "approved", "updated_at": now_iso}}
+                    )
+                    etype = entity_sub["submission_type"]
+                    if etype in KIT_ID_FIELDS and new_entity_id:
+                        kit_patch[KIT_ID_FIELDS[etype]] = new_entity_id
+
+                # ← FIX 2 (suite) : on patche le master_kit avec les vrais IDs
+                if kit_patch:
+                    await db.master_kits.update_one(
+                        {"kit_id": kit_id},
+                        {"$set": kit_patch}
                     )
 
                 for cfg in ENTITY_COLLECTIONS.values():
@@ -248,7 +266,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 })
 
             elif updated_sub["submission_type"] in ("team", "league", "brand", "player", "sponsor"):
-                # Standalone entity submission (no parent kit) — approve directly
                 if not data.get("parent_submission_id"):
                     await _apply_entity_submission(updated_sub)
 
@@ -257,7 +274,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
                 {"$set": {"status": "approved"}}
             )
 
-            # 🔔 Notification — soumission approuvée
             if submitter_id:
                 await create_notification(
                     user_id=submitter_id,
@@ -297,7 +313,6 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
             {"$set": {"status": "rejected"}}
         )
 
-        # 🔔 Notification — soumission rejetée
         if submitter_id:
             await create_notification(
                 user_id=submitter_id,
@@ -314,14 +329,20 @@ async def vote_on_submission(submission_id: str, vote: VoteCreate, request: Requ
 # ─────────────────────────────────────────────
 # Helper interne
 # ─────────────────────────────────────────────
-async def _apply_entity_submission(updated_sub: dict):
+
+# ← FIX 3 : retourne Optional[str] au lieu de None implicite
+async def _apply_entity_submission(updated_sub: dict) -> Optional[str]:
+    """
+    Applique la soumission d'une entité.
+    Retourne l'entity_id créé ou résolu (None si removal).
+    """
     entity_type = updated_sub["submission_type"]
     data = updated_sub["data"]
     mode = data.get("mode", "create")
     now = datetime.now(timezone.utc).isoformat()
     config = ENTITY_COLLECTIONS.get(entity_type)
     if not config:
-        return
+        return None
 
     sub_id = updated_sub.get("submission_id")
 
@@ -332,6 +353,7 @@ async def _apply_entity_submission(updated_sub: dict):
                 {config["id_field"]: entity_id},
                 {"$set": {"status": "approved", "updated_at": now}}
             )
+            return entity_id  # ← retourne l'ID existant
         else:
             name = data.get("name") or data.get("full_name", "")
             slug = slugify(name)
@@ -345,6 +367,7 @@ async def _apply_entity_submission(updated_sub: dict):
             if sub_id:
                 doc["submission_id"] = sub_id
             await db[config["collection"]].insert_one(doc)
+            return new_id  # ← retourne le nouvel ID
 
     elif mode == "edit":
         entity_id = data.get("entity_id", "")
@@ -365,6 +388,7 @@ async def _apply_entity_submission(updated_sub: dict):
                 {config["id_field"]: entity_id},
                 {"$set": update_fields}
             )
+        return entity_id
 
     elif mode == "removal":
         entity_id = data.get("entity_id", "")
@@ -372,6 +396,9 @@ async def _apply_entity_submission(updated_sub: dict):
             await db[config["collection"]].delete_one(
                 {config["id_field"]: entity_id}
             )
+        return None
+
+    return None
 
 
 # ─────────────────────────────────────────────
@@ -495,7 +522,6 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
                     )
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "approved"}})
 
-        # 🔔 Notification — rapport approuvé
         if reporter_id:
             msg = (
                 f"Votre demande de correction sur le {target_label} « {target_name} » a été approuvée."
@@ -514,7 +540,6 @@ async def vote_on_report(report_id: str, vote: VoteCreate, request: Request):
     elif updated["votes_down"] >= APPROVAL_THRESHOLD:
         await db.reports.update_one({"report_id": report_id}, {"$set": {"status": "rejected"}})
 
-        # 🔔 Notification — rapport rejeté
         if reporter_id:
             await create_notification(
                 user_id=reporter_id,
