@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getMyCollection,
@@ -10,6 +10,12 @@ import {
   proxyImageUrl,
   createPlayerPending,
   getPlayerAura,
+  getUserLists,
+  createList,
+  updateList,
+  deleteList,
+  addItemToList,
+  removeItemFromList,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -33,6 +39,13 @@ import {
   TrendingDown,
   Minus,
   Star,
+  Plus,
+  BookMarked,
+  X,
+  ChevronRight,
+  ArrowLeft,
+  MoreHorizontal,
+  Pencil,
 } from 'lucide-react';
 import EstimationBreakdown from '@/components/EstimationBreakdown';
 import { calculateEstimation } from '@/utils/estimation';
@@ -63,6 +76,17 @@ export default function MyCollection() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [categoryStats, setCategoryStats] = useState([]);
+  // ── Listes personnalisées ──
+  const [lists, setLists] = useState([]);
+  const [activeListId, setActiveListId] = useState(null);   // null = vue "Toute la collection"
+  const [showCreateList, setShowCreateList] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [newListColor, setNewListColor] = useState('#6366f1');
+  const [creatingList, setCreatingList] = useState(false);
+  const [editingListId, setEditingListId] = useState(null);
+  const [editingListName, setEditingListName] = useState('');
+  const [addToListItem, setAddToListItem] = useState(null); // collection_id à ajouter à une liste
+  // ──────────────────────────────────
   const [detailItem, setDetailItem] = useState(null);
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
@@ -87,12 +111,85 @@ export default function MyCollection() {
     }
   };
 
+  const fetchLists = async () => {
+    try {
+      const r = await getUserLists();
+      setLists(r.data || []);
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     fetchCollection();
+    fetchLists();
     getCollectionCategories()
       .then((r) => setCategories(r.data))
       .catch(() => {});
   }, [selectedCategory]);
+
+  // ── Handlers listes ─────────────────────────────────────────────────────────
+
+  const handleCreateList = async () => {
+    if (!newListName.trim()) return;
+    setCreatingList(true);
+    try {
+      const r = await createList({ name: newListName.trim(), color: newListColor });
+      setLists(prev => [...prev, r.data]);
+      setNewListName('');
+      setShowCreateList(false);
+      toast.success(`Liste "${r.data.name}" créée`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erreur lors de la création');
+    } finally {
+      setCreatingList(false);
+    }
+  };
+
+  const handleDeleteList = async (listId) => {
+    try {
+      await deleteList(listId);
+      setLists(prev => prev.filter(l => l.list_id !== listId));
+      if (activeListId === listId) setActiveListId(null);
+      toast.success('Liste supprimée');
+    } catch { toast.error('Erreur'); }
+  };
+
+  const handleRenameList = async (listId) => {
+    if (!editingListName.trim()) return;
+    try {
+      const r = await updateList(listId, { name: editingListName.trim() });
+      setLists(prev => prev.map(l => l.list_id === listId ? { ...l, name: r.data.name } : l));
+      setEditingListId(null);
+      toast.success('Liste renommée');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erreur');
+    }
+  };
+
+  const handleAddToList = async (listId) => {
+    if (!addToListItem) return;
+    try {
+      await addItemToList(listId, addToListItem);
+      await fetchLists();
+      setAddToListItem(null);
+      toast.success('Ajouté à la liste');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Déjà dans la liste');
+    }
+  };
+
+  const handleRemoveFromList = async (listId, collectionId) => {
+    try {
+      await removeItemFromList(listId, collectionId);
+      await fetchLists();
+      toast.success('Retiré de la liste');
+    } catch { toast.error('Erreur'); }
+  };
+
+  // Items filtrés selon la liste active
+  const activeList = lists.find(l => l.list_id === activeListId);
+  const displayedItems = activeListId && activeList
+    ? items.filter(it => (activeList.collection_ids || []).includes(it.collection_id))
+    : items;
 
   const handleRemove = async (collectionId) => {
     try {
@@ -217,7 +314,7 @@ export default function MyCollection() {
             className="text-sm text-muted-foreground mb-6"
             style={{ textTransform: 'none', fontFamily: 'DM Sans' }}
           >
-            {items.length} jerseys in your locker room
+            {items.length} jerseys in your locker room{activeList ? ` — ${activeList.name}` : ''}
           </p>
 
           {stats && stats.total_jerseys > 0 && (
@@ -253,48 +350,127 @@ export default function MyCollection() {
             </div>
           )}
 
-          {categoryStats.length > 0 && (
-            <div className="mb-6" data-testid="category-stats">
-              <h3
-                className="text-xs uppercase tracking-wider text-muted-foreground mb-3"
-                style={fieldStyle}
-              >
-                CATEGORY BREAKDOWN
+          {/* ── MES LISTES ── */}
+          <div className="mb-6" data-testid="my-lists">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs uppercase tracking-wider text-muted-foreground" style={fieldStyle}>
+                <BookMarked className="w-3.5 h-3.5 inline mr-1" /> MES LISTES
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {categoryStats.map((cs) => (
-                  <button
-                    key={cs.category}
-                    onClick={() =>
-                      setSelectedCategory(selectedCategory === cs.category ? '' : cs.category)
-                    }
-                    className={`border px-3 py-2 text-left ${
-                      selectedCategory === cs.category
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/30'
-                    }`}
-                    style={{ transition: 'border-color 0.2s' }}
-                    data-testid={`category-stat-${cs.category}`}
-                  >
-                    <div
-                      className="text-xs font-semibold"
-                      style={{ fontFamily: 'Barlow Condensed', textTransform: 'uppercase' }}
-                    >
-                      {cs.category}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-xs">{cs.count} jerseys</span>
-                      {cs.estimated_value.average > 0 && (
-                        <span className="font-mono text-[10px] text-accent">
-                          ~{cs.estimated_value.average}&euro;
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <button
+                onClick={() => setShowCreateList(v => !v)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                style={fieldStyle}
+                data-testid="create-list-btn"
+              >
+                <Plus className="w-3.5 h-3.5" /> Nouvelle liste
+              </button>
             </div>
-          )}
+
+            {/* Formulaire de création */}
+            {showCreateList && (
+              <div className="flex items-center gap-2 mb-3 p-3 border border-primary/30 bg-primary/5">
+                <input
+                  type="color"
+                  value={newListColor}
+                  onChange={e => setNewListColor(e.target.value)}
+                  className="w-7 h-7 rounded cursor-pointer border-0 bg-transparent"
+                  title="Couleur"
+                />
+                <Input
+                  value={newListName}
+                  onChange={e => setNewListName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreateList()}
+                  placeholder="Nom de la liste (ex: Vintage 90, World Cup...)"
+                  className="bg-card border-border rounded-none flex-1 h-8 text-xs"
+                  autoFocus
+                  data-testid="new-list-name-input"
+                />
+                <Button onClick={handleCreateList} disabled={creatingList || !newListName.trim()}
+                  className="rounded-none h-8 px-3 text-xs bg-primary text-primary-foreground"
+                  data-testid="confirm-create-list-btn">
+                  <Check className="w-3.5 h-3.5" />
+                </Button>
+                <Button variant="outline" onClick={() => { setShowCreateList(false); setNewListName(''); }}
+                  className="rounded-none h-8 px-3 text-xs">
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+
+            {/* Chips de listes */}
+            <div className="flex flex-wrap gap-2">
+              {/* Chip "Tout" */}
+              <button
+                onClick={() => setActiveListId(null)}
+                className={`flex items-center gap-1.5 border px-3 py-1.5 text-xs transition-colors ${
+                  !activeListId ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/40'
+                }`}
+                style={fieldStyle}
+                data-testid="list-all-btn"
+              >
+                <Shirt className="w-3 h-3" /> Toute la collection
+                <span className="font-mono ml-1 opacity-60">{items.length}</span>
+              </button>
+
+              {lists.map(lst => (
+                <div key={lst.list_id} className="relative group/chip">
+                  {editingListId === lst.list_id ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editingListName}
+                        onChange={e => setEditingListName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleRenameList(lst.list_id);
+                          if (e.key === 'Escape') setEditingListId(null);
+                        }}
+                        className="bg-card border-border rounded-none h-7 text-xs w-36"
+                        autoFocus
+                      />
+                      <button onClick={() => handleRenameList(lst.list_id)}
+                        className="p-1 text-primary hover:text-primary/80">
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => setEditingListId(null)}
+                        className="p-1 text-muted-foreground hover:text-foreground">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setActiveListId(activeListId === lst.list_id ? null : lst.list_id)}
+                      className={`flex items-center gap-1.5 border px-3 py-1.5 text-xs transition-colors ${
+                        activeListId === lst.list_id
+                          ? 'text-white'
+                          : 'border-border text-muted-foreground hover:border-primary/40'
+                      }`}
+                      style={{
+                        ...fieldStyle,
+                        borderColor: activeListId === lst.list_id ? (lst.color || '#6366f1') : undefined,
+                        backgroundColor: activeListId === lst.list_id ? (lst.color || '#6366f1') + '22' : undefined,
+                        color: activeListId === lst.list_id ? (lst.color || '#6366f1') : undefined,
+                      }}
+                      data-testid={`list-chip-${lst.list_id}`}
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: lst.color || '#6366f1' }} />
+                      {lst.name}
+                      <span className="font-mono opacity-60">{lst.item_count}</span>
+                      {/* Actions au hover */}
+                      <span className="hidden group-hover/chip:flex items-center gap-0.5 ml-1">
+                        <span onClick={e => { e.stopPropagation(); setEditingListId(lst.list_id); setEditingListName(lst.name); }}
+                          className="p-0.5 hover:text-foreground" title="Renommer">
+                          <Pencil className="w-3 h-3" />
+                        </span>
+                        <span onClick={e => { e.stopPropagation(); handleDeleteList(lst.list_id); }}
+                          className="p-0.5 hover:text-destructive" title="Supprimer">
+                          <Trash2 className="w-3 h-3" />
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {categories.length > 0 && !categoryStats.length && (
@@ -351,7 +527,7 @@ export default function MyCollection() {
               <div key={i} className="aspect-[3/4] bg-card animate-pulse border border-border" />
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : displayedItems.length === 0 ? (
           <div className="text-center py-20" data-testid="empty-collection">
             <FolderOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-2xl tracking-tight mb-2">LOCKER ROOM IS EMPTY</h3>
@@ -375,7 +551,7 @@ export default function MyCollection() {
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children"
             data-testid="collection-grid"
           >
-            {items.map((item) => (
+            {displayedItems.map((item) => (
               <div
                 key={item.collection_id}
                 className="card-shimmer relative border border-border bg-card overflow-hidden group"
@@ -454,6 +630,33 @@ export default function MyCollection() {
                   >
                     <Edit2 className="w-3 h-3" />
                   </button>
+                  {activeListId ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRemoveFromList(activeListId, item.collection_id);
+                      }}
+                      className="p-1.5 bg-card/90 border border-primary/40 text-primary hover:text-destructive"
+                      title="Retirer de la liste"
+                      data-testid={`remove-from-list-${item.collection_id}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setAddToListItem(item.collection_id);
+                      }}
+                      className="p-1.5 bg-card/90 border border-border text-muted-foreground hover:text-primary"
+                      title="Ajouter à une liste"
+                      data-testid={`add-to-list-${item.collection_id}`}
+                    >
+                      <BookMarked className="w-3 h-3" />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -471,7 +674,7 @@ export default function MyCollection() {
           </div>
         ) : (
           <div className="space-y-2 stagger-children" data-testid="collection-list">
-            {items.map((item) => (
+            {displayedItems.map((item) => (
               <div
                 key={item.collection_id}
                 className="flex items-center gap-4 p-3 border border-border bg-card group"
@@ -1021,6 +1224,81 @@ export default function MyCollection() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* ── Modal "Ajouter à une liste" ── */}
+      {addToListItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setAddToListItem(null)}
+          data-testid="add-to-list-modal"
+        >
+          <div
+            className="bg-card border border-border w-full max-w-sm mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm uppercase tracking-wider" style={fieldStyle}>
+                <BookMarked className="w-4 h-4 inline mr-1" /> Ajouter à une liste
+              </h3>
+              <button onClick={() => setAddToListItem(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {lists.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground mb-4" style={{ textTransform: 'none', fontFamily: 'DM Sans' }}>
+                  Tu n'as pas encore de liste.
+                </p>
+                <Button
+                  onClick={() => { setAddToListItem(null); setShowCreateList(true); }}
+                  className="rounded-none text-xs bg-primary text-primary-foreground"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Créer une liste
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {lists.map(lst => {
+                  const alreadyIn = (lst.collection_ids || []).includes(addToListItem);
+                  return (
+                    <button
+                      key={lst.list_id}
+                      onClick={() => alreadyIn
+                        ? handleRemoveFromList(lst.list_id, addToListItem).then(() => setAddToListItem(null))
+                        : handleAddToList(lst.list_id)
+                      }
+                      className={`w-full flex items-center justify-between px-3 py-2.5 border text-left text-xs transition-colors ${
+                        alreadyIn
+                          ? 'border-primary/40 bg-primary/5'
+                          : 'border-border hover:border-primary/30'
+                      }`}
+                      data-testid={`add-to-list-option-${lst.list_id}`}
+                    >
+                      <span className="flex items-center gap-2" style={fieldStyle}>
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: lst.color || '#6366f1' }} />
+                        <span className="uppercase">{lst.name}</span>
+                        <span className="font-mono text-muted-foreground">{lst.item_count}</span>
+                      </span>
+                      {alreadyIn
+                        ? <span className="text-primary text-[10px] font-mono">DANS LA LISTE • retirer</span>
+                        : <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                      }
+                    </button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  onClick={() => { setAddToListItem(null); setShowCreateList(true); }}
+                  className="w-full rounded-none text-xs mt-2"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Nouvelle liste
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
