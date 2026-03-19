@@ -50,6 +50,21 @@ class AuraVote(BaseModel):
 
 # ─── Profile ──────────────────────────────────────────────────────────────────
 
+@router.get("/users/by-username/{username}")
+async def get_user_by_username(username: str, request: Request):
+    """Profil public d'un utilisateur par son username."""
+    user_doc = await db.users.find_one(
+        {"username": username},
+        {"_id": 0, "password_hash": 0}
+    )
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Stats publiques
+    col_count = await db.collections.count_documents({"user_id": user_doc["user_id"]})
+    user_doc["collection_count"] = col_count
+    return user_doc
+
+
 @router.put("/users/profile")
 async def update_profile(update: ProfileUpdate, request: Request):
     user = await get_current_user(request)
