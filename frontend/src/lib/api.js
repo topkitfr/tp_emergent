@@ -88,9 +88,17 @@ export const uploadImage = (file) => {
 };
 
 // User Profile
-export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`);
-export const getUserByUsername = (username) => api.get(`/users/by-username/${username}`);
-export const updateProfile = (data) => api.put('/users/profile', data);
+export const getUserProfile     = (userId)   => api.get(`/users/${userId}/profile`);
+export const getUserByUsername  = (username) => api.get(`/users/by-username/${username}`);
+export const updateProfile      = (data)     => api.put('/users/profile', data);
+export const updateCredentials  = (data)     => api.put('/users/credentials', data);
+export const getUserBadges      = ()         => api.get('/users/profile/badges');
+export const followEntity       = (data)     => api.post('/users/follow', data);
+export const unfollowEntity     = (data)     => api.delete('/users/follow', { data });
+export const getFollows         = ()         => api.get('/users/follows');
+export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/${id}`);
+export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
+export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
 // Submissions
 export const createSubmission = (data) => api.post('/submissions', data);
