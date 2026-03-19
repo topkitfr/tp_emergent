@@ -674,7 +674,7 @@ const entityCreateSubs = submissions.filter(s =>
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
                         </p>
-                      </div>
+                     </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-center">
                           <div className="flex items-center gap-1">
