@@ -5,7 +5,7 @@ import { User, Globe, Calendar, Shirt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Pencil } from 'lucide-react';
-import { getPlayer, proxyImageUrl } from '@/lib/api';
+import { getPlayer, proxyImageUrl, followEntity, unfollowEntity, isFollowing, votePlayerAura, getPlayerAura } from '@/lib/api';
 import EntityEditDialog from '@/components/EntityEditDialog';
 import { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,9 @@ export default function PlayerDetail() {
   const [player, setPlayer]     = useState(null);
   const [loading, setLoading]   = useState(true);
   const [showEdit, setShowEdit] = useState(false);
+  const [following, setFollowing]   = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [aura, setAura]             = useState(null); // { aura_level, aura_avg, aura_votes, your_vote }
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -24,6 +27,46 @@ export default function PlayerDetail() {
       .catch(() => setPlayer(null))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Load follow status + aura when player is loaded
+  useEffect(() => {
+    if (!player) return;
+    const pid = player.player_id;
+    if (authUser) {
+      isFollowing('player', pid).then(r => setFollowing(r.data?.following || false)).catch(() => {});
+    }
+    getPlayerAura(pid).then(r => setAura(r.data)).catch(() => {});
+  }, [player, authUser]);
+
+  const handleFollow = async () => {
+    if (!authUser || !player) return;
+    setFollowLoading(true);
+    try {
+      if (following) {
+        await unfollowEntity({ target_type: 'player', target_id: player.player_id });
+        setFollowing(false);
+      } else {
+        await followEntity({ target_type: 'player', target_id: player.player_id });
+        setFollowing(true);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleAuraVote = async (score) => {
+    if (!authUser || !player) return;
+    try {
+      const res = await votePlayerAura(player.player_id, score);
+      setAura(res.data);
+      // Mettre à jour aura_level sur le player local
+      setPlayer(p => ({ ...p, aura_level: res.data.aura_level }));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -114,18 +157,32 @@ export default function PlayerDetail() {
                   )}
                 </div>
 
-                {canEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowEdit(true)}
-                    className="rounded-none border-border hover:border-primary/50 shrink-0"
-                    data-testid="suggest-edit-player-btn"
-                  >
-                    <Pencil className="w-3 h-3 mr-1.5" />
-                    Suggest Edit
-                  </Button>
-                )}
+                <div className="flex gap-2 shrink-0">
+                  {authUser && (
+                    <Button
+                      variant={following ? 'secondary' : 'outline'}
+                      size="sm"
+                      onClick={handleFollow}
+                      disabled={followLoading}
+                      className="rounded-none border-border hover:border-primary/50"
+                      data-testid="follow-player-btn"
+                    >
+                      {following ? 'Following' : '+ Follow'}
+                    </Button>
+                  )}
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEdit(true)}
+                      className="rounded-none border-border hover:border-primary/50"
+                      data-testid="suggest-edit-player-btn"
+                    >
+                      <Pencil className="w-3 h-3 mr-1.5" />
+                      Suggest Edit
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Badges */}
@@ -151,6 +208,49 @@ export default function PlayerDetail() {
       </div>
 
       {/* ── Career in shirts ── */}
+      {/* ── Aura communautaire ── */}
+      <div className="border-b border-border px-4 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>AURA — NOTE COMMUNAUTAIRE</h3>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              {[1,2,3,4,5].map(level => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => handleAuraVote(level)}
+                  disabled={!authUser}
+                  title={authUser ? `Voter ${level} étoile${level > 1 ? 's' : ''}` : 'Connecté-vous pour voter'}
+                  className={`p-0.5 transition-transform hover:scale-110 focus:outline-none ${!authUser ? 'cursor-default' : 'cursor-pointer'}`}
+                  data-testid={`aura-vote-${level}`}
+                >
+                  <svg
+                    className={`w-6 h-6 ${
+                      level <= (aura?.aura_level || player?.aura_level || 1)
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-muted-foreground/30 fill-transparent'
+                    }`}
+                    viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <div className="text-sm text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
+              {aura ? (
+                <>
+                  <span className="font-mono text-foreground">{aura.aura_avg?.toFixed(1) || '—'}</span>
+                  <span className="ml-1">/ 5</span>
+                  <span className="ml-2 text-xs">({aura.aura_votes} vote{aura.aura_votes !== 1 ? 's' : ''})</span>
+                  {aura.your_vote && <span className="ml-2 text-xs text-primary">Your vote: {aura.your_vote}★</span>}
+                </>
+              ) : <span className="text-xs">No votes yet</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <h2 className="text-lg tracking-tighter mb-6">CAREER IN SHIRTS</h2>
 
