@@ -39,7 +39,7 @@ export default function TeamDetail() {
 
   useEffect(() => {
     if (!user || !id) return;
-    isFollowing('team', id).then(setFollowing).catch(() => {});
+    isFollowing('team', id).then(r => setFollowing(r.data?.following || false)).catch(() => {});
   }, [user, id]);
 
   const handleFollow = async () => {
@@ -47,10 +47,10 @@ export default function TeamDetail() {
     setFollowLoading(true);
     try {
       if (following) {
-        await unfollowEntity('team', id);
+        await unfollowEntity({ target_type: 'team', target_id: id });
         setFollowing(false);
       } else {
-        await followEntity('team', id);
+        await followEntity({ target_type: 'team', target_id: id });
         setFollowing(true);
       }
     } catch (e) {
