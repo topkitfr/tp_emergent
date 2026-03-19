@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timezone
 import uuid
+from typing import Optional
 
 from database import db
 
@@ -105,6 +106,10 @@ def calculate_estimation(
     season_year: int,
     aura_level: int = 0,
 ):
+    """
+    Fonction pure de calcul d'estimation.
+    L'appelant est responsable de déterminer le niveau d'aura (par ex. depuis Player.aura_level).
+    """
     base = ESTIMATION_BASE_PRICES.get(model_type, 60)
     coeff_sum = 0.0
     breakdown = []
@@ -138,7 +143,7 @@ def calculate_estimation(
         aura_c = ESTIMATION_AURA_COEFF.get(aura_level, 0.0)
         if aura_level >= 1 and aura_c > 0:
             coeff_sum += aura_c
-            stars = "\u2605" * aura_level
+            stars = "★" * aura_level
             breakdown.append({"label": f"Aura {stars} (level {aura_level})", "coeff": aura_c})
 
     current_year = datetime.now(timezone.utc).year
@@ -156,3 +161,57 @@ def calculate_estimation(
         "estimated_price": estimated_price,
         "breakdown": breakdown,
     }
+
+
+async def get_player_aura_level_from_flocking(flocking_player_id: Optional[str]) -> int:
+    """
+    Récupère aura_level à partir d'un flocking_player_id (Player.aura_level).
+    Retourne 0 si pas de joueur ou pas d'aura définie.
+    """
+    if not flocking_player_id:
+        return 0
+
+    player = await db.players.find_one(
+        {"player_id": flocking_player_id},
+        {"_id": 0, "aura_level": 1},
+    )
+    if not player:
+        return 0
+
+    try:
+        return int(player.get("aura_level") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+async def calculate_estimation_for_collection_item(
+    model_type: str,
+    competition: str,
+    condition_origin: str,
+    physical_state: str,
+    flocking_origin: str,
+    signed: bool,
+    signed_proof: bool,
+    season_year: int,
+    flocking_player_id: Optional[str] = None,
+):
+    """
+    Helper haut niveau pour estimer un item de collection.
+    - Va chercher Player.aura_level via flocking_player_id si le maillot est signé.
+    - Passe ensuite ce niveau d'aura à la fonction pure calculate_estimation().
+    """
+    aura_level = 0
+    if signed and flocking_player_id:
+        aura_level = await get_player_aura_level_from_flocking(flocking_player_id)
+
+    return calculate_estimation(
+        model_type=model_type,
+        competition=competition,
+        condition_origin=condition_origin,
+        physical_state=physical_state,
+        flocking_origin=flocking_origin,
+        signed=signed,
+        signed_proof=signed_proof,
+        season_year=season_year,
+        aura_level=aura_level,
+    )

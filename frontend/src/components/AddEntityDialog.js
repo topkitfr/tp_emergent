@@ -14,6 +14,7 @@ import ImageUpload from '@/components/ImageUpload';
 
 const POSITIONS = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'SS', 'CF', 'ST'];
 const LEAGUE_LEVELS = ['domestic', 'continental', 'international', 'cup'];
+const AURA_LEVELS = [1, 2, 3, 4, 5];
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
 const fieldStyle = { fontFamily: 'Barlow Condensed' };
@@ -162,6 +163,7 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                     ))}
                   </div>
                 </div>
+
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Bio</Label>
                   <Textarea
@@ -171,6 +173,29 @@ export default function AddEntityDialog({ open, onClose, entityType, onSuccess }
                     className={`${inputClass} min-h-[80px]`}
                   />
                 </div>
+
+                {/* Aura level */}
+                <div className="col-span-2 space-y-1.5">
+                  <Label className={fieldLabel} style={fieldStyle}>Aura (1–5)</Label>
+                  <div className="flex gap-1">
+                    {AURA_LEVELS.map(level => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => set('aura_level', level)}
+                        className={`px-2 py-1 text-xs border rounded-none ${
+                          form.aura_level === level
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-card border-border text-muted-foreground hover:border-primary/50'
+                        }`}
+                        style={fieldStyle}
+                      >
+                        {'★'.repeat(level)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="col-span-2 space-y-1.5">
                   <Label className={fieldLabel} style={fieldStyle}>Photo</Label>
                   <ImageUpload
