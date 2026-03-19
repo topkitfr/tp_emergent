@@ -1,4 +1,3 @@
-import api from '@/lib/api';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSubmissions, getReports, voteOnSubmission, voteOnReport, createSubmission, getMasterKits, proxyImageUrl, createTeamPending, createBrandPending, createLeaguePending, createSponsorPending } from '@/lib/api';
@@ -8,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, Image, CheckCircle2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Shirt, FileCheck, AlertTriangle, Plus, Check, Clock, X, ChevronDown, ChevronUp, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ImageUpload from '@/components/ImageUpload';
 import EntityAutocomplete from '@/components/EntityAutocomplete';
@@ -61,10 +59,6 @@ function getDisplayName(item) {
   return item?.display_name || item?.name || item?.full_name || item?.data?.name || item?.data?.full_name || '—';
 }
 
-function normalizeEntities(items = []) {
-  return items.map(item => ({ ...item, display_name: getDisplayName(item) }));
-}
-
 function emptyEntityBuckets() {
   return { team: [], league: [], brand: [], player: [], sponsor: [] };
 }
@@ -96,7 +90,7 @@ function buildEntityBucketsFromSubmissions(items = []) {
 }
 
 // ===== COMPOSANT: DÉTAILS DE SOUMISSION =====
-function SubmissionDetail({ sub, existingKits, searchExistingKit }) {
+function SubmissionDetail({ sub, existingKits }) {
   const isEntity = ['team', 'league', 'brand', 'player', 'sponsor'].includes(sub.submission_type);
   const fields = isEntity
     ? (ENTITY_DISPLAY_FIELDS[sub.submission_type] || [])
@@ -222,7 +216,6 @@ export default function Contributions() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addStep, setAddStep] = useState(1);
-  const [subType, setSubType] = useState('master_kit');
   const [existingKits, setExistingKits] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
@@ -256,37 +249,37 @@ export default function Contributions() {
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto] = useState('');
 
-  // ===== CHARGEMENT PRINCIPAL =====
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setLoadingPending(true);
-    try {
-      const status = activeTab === 'approved' ? 'approved' : 'pending';
-      const [subsRes, repsRes] = await Promise.all([
-        getSubmissions({ status }),
-        getReports({ status }),
-      ]);
-      const nextSubs = subsRes.data || [];
-      setSubmissions(nextSubs);
-      setReports(repsRes.data || []);
+// ===== CHARGEMENT PRINCIPAL =====
+const fetchData = useCallback(async () => {
+  setLoading(true);
+  setLoadingPending(true);
+  try {
+    const status = activeTab === 'approved' ? 'approved' : activeTab === 'rejected' ? 'rejected' : 'pending';
 
-      // Construit les buckets d'entités directement depuis les submissions
-      const entityBuckets = buildEntityBucketsFromSubmissions(nextSubs);
-      if (status === 'approved') {
-        setApprovedEntities(entityBuckets);
-        setPendingEntities(emptyEntityBuckets());
-      } else {
-        setPendingEntities(entityBuckets);
-        setApprovedEntities(emptyEntityBuckets());
-      }
-    } catch (e) {
-      console.error('Failed to fetch submissions:', e);
-      toast.error('Erreur lors du chargement des données');
-    } finally {
-      setLoading(false);
-      setLoadingPending(false);
+    const [subsRes, repsRes] = await Promise.all([   // ← cette ligne manquait entièrement
+      getSubmissions({ status }),
+      getReports({ status }),
+    ]);
+    const nextSubs = subsRes.data || [];
+    setSubmissions(nextSubs);
+    setReports(repsRes.data || []);
+
+    const entityBuckets = buildEntityBucketsFromSubmissions(nextSubs);
+    if (status === 'approved') {
+      setApprovedEntities(entityBuckets);
+      setPendingEntities(emptyEntityBuckets());
+    } else {
+      setPendingEntities(entityBuckets);
+      setApprovedEntities(emptyEntityBuckets());
     }
-  }, [activeTab]);
+  } catch (e) {
+    console.error('Failed to fetch submissions:', e);
+    toast.error('Erreur lors du chargement des données');
+  } finally {
+    setLoading(false);
+    setLoadingPending(false);
+  }
+}, [activeTab]);
 
   useEffect(() => {
     fetchData();
@@ -618,7 +611,7 @@ const entityCreateSubs = submissions.filter(s =>
           </div>
         )}
 
-        {/* ── Tabs ── */}
+             {/* ── Tabs ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-card border border-border rounded-none mb-6">
             <TabsTrigger value="pending" className="rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-pending">
@@ -626,6 +619,9 @@ const entityCreateSubs = submissions.filter(s =>
             </TabsTrigger>
             <TabsTrigger value="approved" className="rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-approved">
               <Check className="w-3 h-3 mr-1" /> Approved
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="rounded-none data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground" data-testid="tab-rejected">
+              <X className="w-3 h-3 mr-1" /> Rejected
             </TabsTrigger>
           </TabsList>
 
@@ -704,7 +700,7 @@ const entityCreateSubs = submissions.filter(s =>
                     </div>
                     {expandedSubmission === sub.submission_id && (
                       <div className="px-4 pb-4">
-                        <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
+                        <SubmissionDetail sub={sub} existingKits={existingKits} />
                       </div>
                     )}
                   </div>
@@ -716,7 +712,7 @@ const entityCreateSubs = submissions.filter(s =>
             {standaloneEntitySubs.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  <ThumbsUp className="w-4 h-4 inline mr-1" /> NOUVELLES RÉFÉRENCES
+                  <ThumbsUp className="w-4 h-4 inline mr-1" /> DATABASE REFRENCES
                 </h3>
                 <div className="space-y-3 mb-8">
                   {standaloneEntitySubs.map(sub => (
@@ -767,7 +763,7 @@ const entityCreateSubs = submissions.filter(s =>
                       </div>
                       {expandedSubmission === sub.submission_id && (
                         <div className="px-4 pb-4">
-                          <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
+                          <SubmissionDetail sub={sub} existingKits={existingKits} />
                         </div>
                       )}
                     </div>
@@ -780,7 +776,7 @@ const entityCreateSubs = submissions.filter(s =>
             {activeTab === 'pending' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  <AlertTriangle className="w-4 h-4 inline mr-1" /> RÉFÉRENCES LIÉES À UN KIT
+                  <AlertTriangle className="w-4 h-4 inline mr-1" /> DATABASE REFRENCES
                 </h3>
                 {loadingPending ? (
                   <div className="h-16 bg-card animate-pulse border border-border" />
@@ -893,7 +889,11 @@ const entityCreateSubs = submissions.filter(s =>
                           <Badge variant="outline" className="rounded-none text-[10px]">
                             {rep.report_type === 'removal' ? 'Removal Request' : rep.target_type === 'master_kit' ? 'Kit Correction' : 'Version Correction'}
                           </Badge>
-                          <Badge className={`rounded-none text-[10px] ${rep.status === 'approved' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>{rep.status}</Badge>
+                          <Badge className={`rounded-none text-[10px] ${
+                            rep.status === 'approved' ? 'bg-primary/20 text-primary' :
+                            rep.status === 'rejected' ? 'bg-destructive/20 text-destructive' :
+                            'bg-accent/20 text-accent'
+                          }`}>{rep.status}</Badge>
                         </div>
                         <p className="text-sm font-semibold" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{rep.notes || 'Correction submitted'}</p>
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
@@ -979,7 +979,7 @@ const entityCreateSubs = submissions.filter(s =>
                     </div>
                     {expandedSubmission === sub.submission_id && sub.data?.mode !== 'removal' && (
                       <div className="px-4 pb-4">
-                        <SubmissionDetail sub={sub} existingKits={existingKits} searchExistingKit={searchExistingKit} />
+                        <SubmissionDetail sub={sub} existingKits={existingKits} />
                       </div>
                     )}
                   </div>
