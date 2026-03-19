@@ -22,6 +22,7 @@ from routers.uploads import router as uploads_router
 from routers.admin import router as admin_router
 from routers.proxy import router as proxy_router
 from routers.notifications import router as notifications_router
+from routers.users import router as users_router
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -108,6 +109,7 @@ async def security_headers_middleware(request: Request, call_next):
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.include_router(auth_router)
+app.include_router(users_router)
 app.include_router(kits_router)
 app.include_router(collections_router)
 app.include_router(estimation_router)
