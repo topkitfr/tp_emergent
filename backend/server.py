@@ -32,6 +32,20 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# ─── CORS en PREMIER ──────────────────────────────────────────────────────────
+CORS_ORIGINS = os.environ.get(
+    'CORS_ORIGINS',
+    'http://localhost:3000,http://127.0.0.1:3000'
+).split(',')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+)
+
 # ─── Rate Limiting (simple in-memory) ──────────────────────────────────────────
 # Limite : 60 req/min par IP pour les routes /api/auth/*
 # et 200 req/min par IP pour le reste
@@ -105,21 +119,6 @@ app.include_router(uploads_router)
 app.include_router(admin_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
-
-# ─── CORS ───────────────────────────────────────────────────────────────────────
-CORS_ORIGINS = os.environ.get(
-    'CORS_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000'
-).split(',')
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=CORS_ORIGINS,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-)
-
 
 @app.on_event("startup")
 async def create_indexes():
