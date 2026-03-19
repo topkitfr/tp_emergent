@@ -1,24 +1,13 @@
 services:
 
-  # ── Base de données ──────────────────────────────────────────────────────────
-  mongodb:
-    image: mongo:4.4
-    restart: always
-    volumes:
-      - mongo_data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${DB_NAME}
-
   # ── API FastAPI ──────────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
-    depends_on:
-      - mongodb
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env.backend
     volumes:
@@ -61,7 +50,6 @@ services:
       - certbot_www:/var/www/certbot
 
 volumes:
-  mongo_data:
   uploads_data:
   certbot_certs:
   certbot_www:
