@@ -1,17 +1,21 @@
 // frontend/src/pages/TeamDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Shield, Globe, MapPin, Calendar } from 'lucide-react';
+import { Shield, Globe, MapPin, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
-import { getTeam } from '@/lib/api';
+import { getTeam, followEntity, unfollowEntity, isFollowing } from '@/lib/api';
 import api from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function TeamDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [team, setTeam]         = useState(null);
   const [loading, setLoading]   = useState(true);
   const [filterSeason, setFilterSeason] = useState('');
   const [filterBrand,  setFilterBrand]  = useState('');
+  const [following, setFollowing]       = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -32,6 +36,29 @@ export default function TeamDetail() {
   }, [id]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    isFollowing('team', id).then(setFollowing).catch(() => {});
+  }, [user, id]);
+
+  const handleFollow = async () => {
+    if (!user) return;
+    setFollowLoading(true);
+    try {
+      if (following) {
+        await unfollowEntity('team', id);
+        setFollowing(false);
+      } else {
+        await followEntity('team', id);
+        setFollowing(true);
+      }
+    } catch (e) {
+      console.error('Follow error:', e);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) return <EntityDetailSkeleton />;
   if (!team)   return (
@@ -77,6 +104,24 @@ export default function TeamDetail() {
       ]}
       onEditSuccess={loadData}
       testId="team-detail-page"
+      extraActions={
+        user ? (
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-none transition-colors ${
+              following
+                ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/80'
+                : 'bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground'
+            }`}
+            data-testid="follow-btn"
+          >
+            {following
+              ? <><UserMinus className="w-3.5 h-3.5" /> Unfollow</>
+              : <><UserPlus  className="w-3.5 h-3.5" /> Follow</>}
+          </button>
+        ) : null
+      }
     />
   );
 }
