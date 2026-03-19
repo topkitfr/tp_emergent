@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getMyCollection, getCollectionStats, updateProfile, getUserByUsername, proxyImageUrl } from '@/lib/api';
+import { getMyCollection, getCollectionStats, updateProfile, updateCredentials, getUserBadges, getUserByUsername, proxyImageUrl } from '@/lib/api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck } from 'lucide-react';
+import { Shirt, FolderOpen, Star, Mail, Calendar, Edit2, Check, X, Lock, Globe, DollarSign, TrendingUp, TrendingDown, Minus, FileCheck, Shield, KeyRound } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 
 export default function Profile() {
@@ -22,6 +22,9 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(!!urlUsername);
+  const [badges, setBadges] = useState([]);
+  const [credForm, setCredForm] = useState({ current_password: '', new_email: '', new_password: '' });
+  const [savingCreds, setSavingCreds] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     description: '',
@@ -59,6 +62,7 @@ export default function Profile() {
       });
       getMyCollection({}).then(r => setCollection(r.data)).catch(() => {});
       getCollectionStats().then(r => setStats(r.data)).catch(() => {});
+      getUserBadges().then(r => setBadges(r.data?.badges || [])).catch(() => {});
     }
   }, [profileUser, isOwnProfile]);
 
@@ -90,6 +94,26 @@ export default function Profile() {
       toast.error(err.response?.data?.detail || 'Failed to update');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCreds = async () => {
+    if (!credForm.current_password) { toast.error('Current password required'); return; }
+    if (!credForm.new_email && !credForm.new_password) { toast.error('Enter a new email or new password'); return; }
+    setSavingCreds(true);
+    try {
+      await updateCredentials({
+        current_password: credForm.current_password,
+        new_email:        credForm.new_email    || undefined,
+        new_password:     credForm.new_password || undefined,
+      });
+      toast.success('Credentials updated');
+      setCredForm({ current_password: '', new_email: '', new_password: '' });
+      checkAuth();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update credentials');
+    } finally {
+      setSavingCreds(false);
     }
   };
 
@@ -160,33 +184,60 @@ export default function Profile() {
 
           {/* Edit Form */}
           {editing && isOwnProfile && (
-            <div className="border border-primary/30 p-6 mb-8 space-y-4" data-testid="profile-edit-form">
-              <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EDIT PROFILE</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Username</Label>
-                  <Input value={formData.username} onChange={e => setFormData(p => ({...p, username: e.target.value}))} placeholder="username" className="bg-card border-border rounded-none" data-testid="input-username" />
+            <div className="space-y-6 mb-8">
+              {/* ── Edit Profile ── */}
+              <div className="border border-primary/30 p-6 space-y-4" data-testid="profile-edit-form">
+                <h3 className="text-sm uppercase tracking-wider" style={{ fontFamily: 'Barlow Condensed' }}>EDIT PROFILE</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Username</Label>
+                    <Input value={formData.username} onChange={e => setFormData(p => ({...p, username: e.target.value}))} placeholder="username" className="bg-card border-border rounded-none" data-testid="input-username" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Profile Picture</Label>
+                    <ImageUpload
+                      value={formData.profile_picture}
+                      onChange={(url) => setFormData(p => ({...p, profile_picture: url}))}
+                      label="Profile Picture"
+                      testId="profile-picture-upload"
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Bio</Label>
+                    <Textarea value={formData.description} onChange={e => setFormData(p => ({...p, description: e.target.value}))} placeholder="Tell others about yourself..." className="bg-card border-border rounded-none min-h-[80px]" data-testid="input-description" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Profile Picture</Label>
-                  <ImageUpload
-                    value={formData.profile_picture}
-                    onChange={(url) => setFormData(p => ({...p, profile_picture: url}))}
-                    label="Profile Picture"
-                    testId="profile-picture-upload"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Description</Label>
-                  <Textarea value={formData.description} onChange={e => setFormData(p => ({...p, description: e.target.value}))} placeholder="Tell others about yourself..." className="bg-card border-border rounded-none min-h-[80px]" data-testid="input-description" />
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} disabled={saving} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="save-profile-btn">
+                    <Check className="w-4 h-4 mr-1" /> {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditing(false)} className="rounded-none">
+                    <X className="w-4 h-4 mr-1" /> Cancel
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleSave} disabled={saving} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="save-profile-btn">
-                  <Check className="w-4 h-4 mr-1" /> {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-                <Button variant="outline" onClick={() => setEditing(false)} className="rounded-none">
-                  <X className="w-4 h-4 mr-1" /> Cancel
+
+              {/* ── Credentials ── */}
+              <div className="border border-border p-6 space-y-4" data-testid="credentials-form">
+                <h3 className="text-sm uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Barlow Condensed' }}>
+                  <KeyRound className="w-4 h-4" /> CHANGE EMAIL / PASSWORD
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>Current Password *</Label>
+                    <Input type="password" value={credForm.current_password} onChange={e => setCredForm(p => ({...p, current_password: e.target.value}))} placeholder="Required to change credentials" className="bg-card border-border rounded-none" data-testid="input-current-password" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>New Email</Label>
+                    <Input type="email" value={credForm.new_email} onChange={e => setCredForm(p => ({...p, new_email: e.target.value}))} placeholder="Leave blank to keep current" className="bg-card border-border rounded-none" data-testid="input-new-email" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground" style={{ fontFamily: 'Barlow Condensed' }}>New Password</Label>
+                    <Input type="password" value={credForm.new_password} onChange={e => setCredForm(p => ({...p, new_password: e.target.value}))} placeholder="Min. 8 characters" className="bg-card border-border rounded-none" data-testid="input-new-password" />
+                  </div>
+                </div>
+                <Button onClick={handleSaveCreds} disabled={savingCreds} className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90" data-testid="save-credentials-btn">
+                  <Check className="w-4 h-4 mr-1" /> {savingCreds ? 'Saving...' : 'Update Credentials'}
                 </Button>
               </div>
             </div>
@@ -285,6 +336,34 @@ export default function Profile() {
                   <div className="font-mono text-xl">${stats.estimated_value.high}</div>
                   <div className="text-[10px] text-muted-foreground uppercase" style={{ fontFamily: 'Barlow Condensed' }}>High</div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Badges ClubID ── */}
+          {isOwnProfile && badges.length > 0 && (
+            <div className="mb-8" data-testid="clubid-badges">
+              <h3 className="text-sm uppercase tracking-wider mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
+                <Shield className="w-4 h-4 inline mr-1" /> CLUBID BADGES
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {badges.map(b => (
+                  <div
+                    key={b.team_id}
+                    className="flex items-center gap-2 px-3 py-2 border text-xs font-bold uppercase tracking-wider"
+                    style={{
+                      borderColor: b.primary_color || '#6366f1',
+                      color: b.primary_color || '#6366f1',
+                      background: `${b.primary_color || '#6366f1'}15`,
+                      fontFamily: 'Barlow Condensed',
+                    }}
+                    data-testid={`badge-${b.team_id}`}
+                  >
+                    <Shield className="w-3.5 h-3.5" style={{ color: b.primary_color }} />
+                    {b.club} CLUBID FAN
+                    <span className="ml-1 opacity-60 font-mono text-[10px]">{b.kit_count} kits</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
