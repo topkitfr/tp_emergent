@@ -118,7 +118,6 @@ export default function MyCollection() {
       signed_by: item.signed_by || '',
       signed_by_player_id: item.signed_by_player_id || '',
       signed_proof: item.signed_proof || false,
-      aura_level: item.aura_level || 0,
       notes: item.notes || '',
       category: item.category || 'General',
     });
@@ -161,7 +160,6 @@ export default function MyCollection() {
         signed: editForm.signed || false,
         signedProof: editForm.signed_proof || false,
         seasonYear,
-        auraLevel: editForm.aura_level || 0,
       });
 
       const data = {
@@ -954,43 +952,7 @@ export default function MyCollection() {
                       </Label>
                     </div>
                   )}
-                  {editForm.signed && (
-                    <div className="space-y-2 ml-12" data-testid="aura-section">
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wider" style={fieldStyle}>
-                        AURA
-                      </Label>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((level) => (
-                          <button
-                            key={level}
-                            type="button"
-                            onClick={() =>
-                              setEditForm((p) => ({
-                                ...p,
-                                aura_level: p.aura_level === level ? 0 : level,
-                              }))
-                            }
-                            className="p-0.5 transition-transform hover:scale-110 focus:outline-none"
-                            data-testid={`aura-star-${level}`}
-                            title={`Aura level ${level}`}
-                          >
-                            <Star
-                              className={`w-5 h-5 ${
-                                level <= (editForm.aura_level || 0)
-                                  ? 'text-yellow-400 fill-yellow-400'
-                                  : 'text-muted-foreground/40'
-                              }`}
-                            />
-                          </button>
-                        ))}
-                        {(editForm.aura_level || 0) > 0 && (
-                          <span className="ml-2 text-[10px] text-muted-foreground" style={fieldStyle}>
-                            +{[0, 0.05, 0.25, 0.50, 0.75, 1.00][editForm.aura_level || 0].toFixed(2)} coef
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
 
                 {/* Notes */}
@@ -1018,7 +980,6 @@ export default function MyCollection() {
                   signed={editForm.signed || false}
                   signedProof={editForm.signed_proof || false}
                   seasonYear={parseSeasonYear(detailItem.master_kit?.season)}
-                  auraLevel={editForm.aura_level || 0}
                 />
               </div>
 
