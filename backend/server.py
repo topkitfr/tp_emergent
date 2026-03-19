@@ -90,16 +90,31 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ─── Security Headers ───────────────────────────────────────────────────────────
+# ─── Security Headers + CORS sur erreurs 500 ─────────────────────────────────
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        # Catch toutes les exceptions non gérées pour garantir les headers CORS
+        origin = request.headers.get("origin", "")
+        cors_headers = {}
+        if origin in CORS_ORIGINS:
+            cors_headers = {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+            }
+        logger.error(f"Unhandled exception on {request.url.path}: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
+            headers=cors_headers,
+        )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    # Supprimer les headers qui exposent l'infra
     try:
         del response.headers["server"]
     except KeyError:
