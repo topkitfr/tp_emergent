@@ -6,6 +6,7 @@ import uuid
 from database import db
 from models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
 from auth import get_current_user
+from routers.notifications import create_notification
 
 router = APIRouter(prefix="/api", tags=["kits"])
 
@@ -269,6 +270,23 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
     doc.update(fk_patch)
 
     await db.master_kits.insert_one(doc)
+
+    # ── Notifier les followers de la team ──
+    team_id = doc.get("team_id", "")
+    if team_id:
+        followers = await db.follows.find(
+            {"target_type": "team", "target_id": team_id}, {"_id": 0, "user_id": 1}
+        ).to_list(1000)
+        for f in followers:
+            await create_notification(
+                user_id=f["user_id"],
+                notif_type="new_kit",
+                title=f"New kit — {doc.get('club', '')}",
+                message=f"{doc.get('club', '')} {doc.get('season', '')} {doc.get('kit_type', '')} just added to the catalog.",
+                target_type="master_kit",
+                target_id=doc["kit_id"],
+            )
+
     default_version = {
         "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
         "kit_id":      doc["kit_id"],
