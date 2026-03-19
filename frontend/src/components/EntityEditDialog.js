@@ -63,7 +63,6 @@ const ENTITY_CONFIGS = {
       { key: 'birth_date',       label: 'Date of Birth (DD/MM/YYYY)' },
       { key: 'preferred_number', label: 'Preferred Number',       type: 'number' },
       { key: 'positions',        label: 'Positions',              type: 'positions', span: 2 },
-      { key: 'aura_level',       label: 'Aura (1–5)',             type: 'aura',      span: 2 },
       { key: 'bio',              label: 'Bio',                    type: 'textarea',  span: 2 },
     ],
   },
