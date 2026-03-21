@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request
 from datetime import datetime, timezone
-from ..database import db, client
+from .database import db, client
 from ..utils import MODERATOR_EMAILS
 import os
 
