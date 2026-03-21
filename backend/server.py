@@ -25,28 +25,40 @@ from routers.notifications import router as notifications_router
 from routers.users import router as users_router
 from routers.user_lists import router as user_lists_router
 
+# --- Debug PORT from environment ---------------------------------------------
+PORT = os.environ.get("PORT")
+print("DEBUG PORT FROM ENV:", PORT)
+# -----------------------------------------------------------------------------
+
+
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
 
 @app.get("/")
 async def root():
     return {"status": "ok"}
 
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
+
 # ─── CORS en PREMIER ──────────────────────────────────────────────────────────
 CORS_ORIGINS = os.environ.get(
-    'CORS_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000'
-).split(',')
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,16 +68,16 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
-# ─── Rate Limiting (simple in-memory) ──────────────────────────────────────────
+# ─── Rate Limiting (simple in-memory) ─────────────────────────────────────────
 # Limite : 60 req/min par IP pour les routes /api/auth/*
 # et 200 req/min par IP pour le reste
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
-    "/api/auth/login":    (10, 60),   # 10 requêtes par minute
-    "/api/auth/register": (5,  60),   # 5 requêtes par minute
-    "/api/submissions":   (30, 60),   # 30 soumissions par minute
-    "/api/upload":        (20, 60),   # 20 uploads par minute
+    "/api/auth/login": (10, 60),      # 10 requêtes par minute
+    "/api/auth/register": (5, 60),    # 5 requêtes par minute
+    "/api/submissions": (30, 60),     # 30 soumissions par minute
+    "/api/upload": (20, 60),          # 20 uploads par minute
 }
 DEFAULT_RATE_LIMIT = (200, 60)  # 200 req/min pour tout le reste
 
@@ -85,7 +97,9 @@ async def rate_limit_middleware(request: Request, call_next):
     key = f"{client_ip}:{path}"
     now = time.time()
     # Nettoyer les timestamps anciens
-    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if now - t < window]
+    _rate_limit_store[key] = [
+        t for t in _rate_limit_store[key] if now - t < window
+    ]
 
     if len(_rate_limit_store[key]) >= limit:
         return JSONResponse(
@@ -122,7 +136,9 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=()"
+    )
     try:
         del response.headers["server"]
     except KeyError:
@@ -147,14 +163,15 @@ app.include_router(admin_router)
 app.include_router(proxy_router, prefix="/api")
 app.include_router(notifications_router)
 
+
 @app.on_event("startup")
 async def create_indexes():
     for collection, index_name in [
-        ('teams',   'team_id_1'),
-        ('leagues', 'league_id_1'),
-        ('brands',  'brand_id_1'),
-        ('players', 'player_id_1'),
-        ('players', 'slug_1'),
+        ("teams", "team_id_1"),
+        ("leagues", "league_id_1"),
+        ("brands", "brand_id_1"),
+        ("players", "player_id_1"),
+        ("players", "slug_1"),
     ]:
         try:
             await db[collection].drop_index(index_name)
@@ -162,17 +179,17 @@ async def create_indexes():
         except Exception:
             pass
 
-    await db.teams.create_index("team_id",     unique=True, sparse=True)
-    await db.teams.create_index("slug",         unique=True)
+    await db.teams.create_index("team_id", unique=True, sparse=True)
+    await db.teams.create_index("slug", unique=True)
     await db.teams.create_index("name")
     await db.leagues.create_index("league_id", unique=True, sparse=True)
-    await db.leagues.create_index("slug",       unique=True)
+    await db.leagues.create_index("slug", unique=True)
     await db.leagues.create_index("name")
-    await db.brands.create_index("brand_id",   unique=True, sparse=True)
-    await db.brands.create_index("slug",        unique=True)
+    await db.brands.create_index("brand_id", unique=True, sparse=True)
+    await db.brands.create_index("slug", unique=True)
     await db.brands.create_index("name")
     await db.players.create_index("player_id", unique=True, sparse=True)
-    await db.players.create_index("slug",       unique=True)
+    await db.players.create_index("slug", unique=True)
     await db.players.create_index("full_name")
 
     # Index notifications
