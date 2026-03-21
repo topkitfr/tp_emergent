@@ -10,20 +10,20 @@ from fastapi.responses import JSONResponse
 
 from .database import db, client
 
-from routers.auth import router as auth_router
-from routers.kits import router as kits_router
-from routers.collections import router as collections_router
-from routers.estimation import router as estimation_router
-from routers.reviews import router as reviews_router
-from routers.submissions import router as submissions_router
-from routers.wishlist import router as wishlist_router
-from routers.entities import router as entities_router
-from routers.uploads import router as uploads_router
-from routers.admin import router as admin_router
-from routers.proxy import router as proxy_router
-from routers.notifications import router as notifications_router
-from routers.users import router as users_router
-from routers.user_lists import router as user_lists_router
+from .routers.auth import router as auth_router
+from .routers.kits import router as kits_router
+from .routers.collections import router as collections_router
+from .routers.estimation import router as estimation_router
+from .routers.reviews import router as reviews_router
+from .routers.submissions import router as submissions_router
+from .routers.wishlist import router as wishlist_router
+from .routers.entities import router as entities_router
+from .routers.uploads import router as uploads_router
+from .routers.admin import router as admin_router
+from .routers.proxy import router as proxy_router
+from .routers.notifications import router as notifications_router
+from .routers.users import router as users_router
+from .routers.user_lists import router as user_lists_router
 
 # --- Debug PORT from environment ---------------------------------------------
 PORT = os.environ.get("PORT")
