@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request
 from datetime import datetime, timezone
 from ..database import db, client
-from utils import MODERATOR_EMAILS
+from ..utils import MODERATOR_EMAILS
 import os
 
 IS_DEV_LOGIN = os.getenv("DEV_LOGIN", "false").lower() == "true"
