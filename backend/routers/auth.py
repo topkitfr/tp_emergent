@@ -3,9 +3,11 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 import uuid
+
 from ..database import db, client
-from auth import get_current_user
-from utils import MODERATOR_EMAILS
+from ..auth import get_current_user
+from ..utils import MODERATOR_EMAILS
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -30,10 +32,10 @@ def set_session_cookie(response: Response, session_token: str):
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=IS_PRODUCTION,   # True en production HTTPS
+        secure=IS_PRODUCTION,  # True en production HTTPS
         samesite="lax",
         path="/",
-        max_age=7 * 24 * 60 * 60
+        max_age=7 * 24 * 60 * 60,
     )
 
 
@@ -41,11 +43,20 @@ def set_session_cookie(response: Response, session_token: str):
 async def register(body: RegisterBody, response: Response):
     # Validation renforcée du mot de passe
     if len(body.password) < 8:
-        raise HTTPException(status_code=400, detail="Le mot de passe doit contenir au moins 8 caractères")
+        raise HTTPException(
+            status_code=400,
+            detail="Le mot de passe doit contenir au moins 8 caractères",
+        )
     if len(body.name.strip()) < 2:
-        raise HTTPException(status_code=400, detail="Le nom doit contenir au moins 2 caractères")
+        raise HTTPException(
+            status_code=400,
+            detail="Le nom doit contenir au moins 2 caractères",
+        )
     if len(body.name) > 50:
-        raise HTTPException(status_code=400, detail="Le nom ne peut pas dépasser 50 caractères")
+        raise HTTPException(
+            status_code=400,
+            detail="Le nom ne peut pas dépasser 50 caractères",
+        )
 
     existing = await db.users.find_one({"email": body.email})
     if existing:
@@ -54,49 +65,63 @@ async def register(body: RegisterBody, response: Response):
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     role = "moderator" if body.email in MODERATOR_EMAILS else "user"
 
-    await db.users.insert_one({
-        "user_id": user_id,
-        "email": body.email,
-        "name": body.name.strip(),
-        "picture": "",
-        "role": role,
-        "username": body.name.replace(" ", "").lower() if body.name else "",
-        "description": "",
-        "collection_privacy": "public",
-        "password_hash": pwd_context.hash(body.password),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    })
+    await db.users.insert_one(
+        {
+            "user_id": user_id,
+            "email": body.email,
+            "name": body.name.strip(),
+            "picture": "",
+            "role": role,
+            "username": body.name.replace(" ", "").lower() if body.name else "",
+            "description": "",
+            "collection_privacy": "public",
+            "password_hash": pwd_context.hash(body.password),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
     session_token = uuid.uuid4().hex
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    })
+    await db.user_sessions.insert_one(
+        {
+            "user_id": user_id,
+            "session_token": session_token,
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
     set_session_cookie(response, session_token)
-    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    user_doc = await db.users.find_one(
+        {"user_id": user_id}, {"_id": 0, "password_hash": 0}
+    )
     return user_doc
 
 
 @router.post("/login")
 async def login(body: LoginBody, response: Response):
     user = await db.users.find_one({"email": body.email})
-    if not user or not pwd_context.verify(body.password, user.get("password_hash", "")):
+    if not user or not pwd_context.verify(
+        body.password, user.get("password_hash", "")
+    ):
         # Message générique pour ne pas confirmer si l'email existe
-        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+        raise HTTPException(
+            status_code=401, detail="Email ou mot de passe incorrect"
+        )
 
     session_token = uuid.uuid4().hex
-    await db.user_sessions.insert_one({
-        "user_id": user["user_id"],
-        "session_token": session_token,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-        "created_at": datetime.now(timezone.utc).isoformat()
-    })
+    await db.user_sessions.insert_one(
+        {
+            "user_id": user["user_id"],
+            "session_token": session_token,
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
     set_session_cookie(response, session_token)
-    user_doc = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    user_doc = await db.users.find_one(
+        {"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0}
+    )
     return user_doc
 
 
