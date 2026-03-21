@@ -1,12 +1,13 @@
-# backend/routers/kits.py
 from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
+
 from ..database import db, client
-from models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
-from auth import get_current_user
-from routers.notifications import create_notification
+from ..models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
+from ..auth import get_current_user
+from .notifications import create_notification
+
 
 router = APIRouter(prefix="/api", tags=["kits"])
 
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/api", tags=["kits"])
 # ═══════════════════════════════════════════════════════════════════
 # MASTER KITS
 # ═══════════════════════════════════════════════════════════════════
+
 
 @router.get("/master-kits/count")
 async def count_master_kits():
@@ -23,23 +25,23 @@ async def count_master_kits():
 
 @router.get("/master-kits/filters")
 async def get_filters():
-    clubs    = await db.master_kits.distinct("club")
-    brands   = await db.master_kits.distinct("brand")
-    seasons  = await db.master_kits.distinct("season")
+    clubs = await db.master_kits.distinct("club")
+    brands = await db.master_kits.distinct("brand")
+    seasons = await db.master_kits.distinct("season")
     kit_types = await db.master_kits.distinct("kit_type")
-    designs  = await db.master_kits.distinct("design")
-    leagues  = await db.master_kits.distinct("league")
+    designs = await db.master_kits.distinct("design")
+    leagues = await db.master_kits.distinct("league")
     sponsors = await db.master_kits.distinct("sponsor")
-    genders  = await db.master_kits.distinct("gender")
+    genders = await db.master_kits.distinct("gender")
     return {
-        "clubs":      sorted([c for c in clubs if c]),
-        "brands":     sorted([b for b in brands if b]),
-        "seasons":    sorted([s for s in seasons if s], reverse=True),
-        "kit_types":  sorted([t for t in kit_types if t]),
-        "designs":    sorted([d for d in designs if d]),
-        "leagues":    sorted([l for l in leagues if l]),
-        "sponsors":   sorted([s for s in sponsors if s]),
-        "genders":    sorted([g for g in genders if g]),
+        "clubs": sorted([c for c in clubs if c]),
+        "brands": sorted([b for b in brands if b]),
+        "seasons": sorted([s for s in seasons if s], reverse=True),
+        "kit_types": sorted([t for t in kit_types if t]),
+        "designs": sorted([d for d in designs if d]),
+        "leagues": sorted([l for l in leagues if l]),
+        "sponsors": sorted([s for s in sponsors if s]),
+        "genders": sorted([g for g in genders if g]),
     }
 
 
