@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import uuid
 from ..database import db, client
 from models import WishlistAdd
-from auth import get_current_user
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/wishlist", tags=["wishlist"])
 
