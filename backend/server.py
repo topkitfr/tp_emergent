@@ -8,10 +8,6 @@ import time
 from collections import defaultdict
 from fastapi.responses import JSONResponse
 
-print("DEBUG: server.py has been imported")
-
-raise RuntimeError("DEBUG STOP: show full traceback in Render logs")
-
 from .database import db, client
 
 from .routers.auth import router as auth_router
