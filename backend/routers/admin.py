@@ -7,7 +7,7 @@ import logging
 import csv
 import io
 import re
-from .database import db, client
+from ..database import db, client
 from models import ProfileUpdate
 from auth import get_current_user
 from utils import slugify, MODERATOR_EMAILS

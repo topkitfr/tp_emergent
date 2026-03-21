@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
-from .database import db, client
+from ..database import db, client
 from models import CollectionAdd, CollectionUpdate
 from auth import get_current_user
 from routers.notifications import create_notification

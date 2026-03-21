@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
-from .database import db, client
+from ..database import db, client
 from models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
 from auth import get_current_user
 from routers.notifications import create_notification

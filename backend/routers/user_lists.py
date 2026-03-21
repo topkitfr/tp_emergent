@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
-from .database import db, client
+from ..database import db, client
 from auth import get_current_user
 from pydantic import BaseModel
 

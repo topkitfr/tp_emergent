@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import uuid
-from .database import db, client
+from ..database import db, client
 from models import SubmissionCreate, VoteCreate, ReportCreate
 from auth import get_current_user
 from utils import slugify, APPROVAL_THRESHOLD, get_or_create_team_by_name
