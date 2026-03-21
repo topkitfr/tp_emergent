@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 import uuid
-from database import db
+from .database import db, client
 from auth import get_current_user
 from utils import MODERATOR_EMAILS
 

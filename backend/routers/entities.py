@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request, Query
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
-from database import db
+from .database import db, client
 from models import (
     TeamCreate, TeamOut,
     LeagueCreate, LeagueOut,

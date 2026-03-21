@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Request
 from datetime import datetime, timezone
 import uuid
-from database import db
+from .database import db, client
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])

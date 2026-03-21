@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import uuid
 from typing import Optional
 
-from database import db
+from .database import db, client
 
 
 MODERATOR_EMAILS = ["topkitfr@gmail.com", "dev@topkit.fr", "steinmetzolivier@gmail.com"]
