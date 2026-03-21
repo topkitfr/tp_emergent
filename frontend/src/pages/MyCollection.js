@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from 'react-router-dom';
 import {
   getMyCollection,
@@ -91,40 +91,31 @@ export default function MyCollection() {
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
 
-  const fetchCollection = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (selectedCategory) params.category = selectedCategory;
-      const [colRes, statsRes, catStatsRes] = await Promise.all([
-        getMyCollection(params),
-        getCollectionStats(),
-        getCategoryStats(),
-      ]);
-      setItems(colRes.data);
-      setStats(statsRes.data);
-      setCategoryStats(catStatsRes.data);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchCollection = useCallback(async () => {
+  setLoading(true);
+  try {
+    const params = {};
+    if (selectedCategory) params.category = selectedCategory;
+    const [colRes, statsRes, catStatsRes] = await Promise.all([
+      getMyCollection(params),
+      getCollectionStats(),
+      getCategoryStats(),
+    ]);
+    setItems(colRes.data);
+    setStats(statsRes.data);
+    setCategoryStats(catStatsRes.data);
+  } catch {
+    // ignore
+  } finally {
+    setLoading(false);
+  }
+}, [selectedCategory]);  // ← dépendance de fetchCollection
 
-  const fetchLists = async () => {
-    try {
-      const r = await getUserLists();
-      setLists(r.data || []);
-    } catch { /* ignore */ }
-  };
-
-  useEffect(() => {
-    fetchCollection();
-    fetchLists();
-    getCollectionCategories()
-      .then((r) => setCategories(r.data))
-      .catch(() => {});
-  }, [selectedCategory]);
+useEffect(() => {
+  fetchCollection();
+  fetchLists();
+  getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
+}, [fetchCollection]);  // ← maintenant fetchCollection est stable et listée ici
 
   // ── Handlers listes ─────────────────────────────────────────────────────────
 
