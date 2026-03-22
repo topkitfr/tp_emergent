@@ -10,7 +10,7 @@ load_dotenv()
 
 MONGO_URL = os.environ.get("MONGO_URL")
 DB_NAME = os.environ.get("DB_NAME", "topkit")
-CSV_PATH = "FKA-Scrap-Data.csv"
+CSV_PATH = r"C:\Users\Olivi\Desktop\tp_emergent\FKA-Scrap-Data.csv"
 
 def slugify(text: str) -> str:
     text = text.lower().strip()
@@ -47,7 +47,7 @@ async def import_kits():
             "season": season,
             "type": kit_type,
             "design": row["design"],
-            "colors": [c.strip() for c in row["colors"].split("/")] if row["colors"] else [],
+            "colors": [c.strip() for c in str(row["colors"]).split("/")] if pd.notna(row["colors"]) else [],
             "brand": brand,
             "sponsor": row["sponsor"],
             "league": row["league"],
