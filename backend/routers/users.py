@@ -17,7 +17,7 @@ from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 from ..database import db, client
 from ..auth import get_current_user
-from routers.notifications import create_notification
+from .notifications import create_notification
 import uuid
 
 router = APIRouter(prefix="/api", tags=["users"])
