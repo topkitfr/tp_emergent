@@ -4,13 +4,13 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 from ..database import db, client
-from models import (
+from ..models import (
     TeamCreate, TeamOut,
     LeagueCreate, LeagueOut,
     BrandCreate, BrandOut,
     PlayerCreate, PlayerOut,
 )
-from utils import slugify
+from ..utils import slugify
 
 router = APIRouter(prefix="/api", tags=["entities"])
 

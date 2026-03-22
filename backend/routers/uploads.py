@@ -4,7 +4,7 @@ from pathlib import Path
 import uuid
 import aiofiles
 import httpx
-from utils import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
+from ..utils import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)

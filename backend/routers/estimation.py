@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from ..models import EstimationRequest
-from utils import calculate_estimation_for_collection_item
+from ..utils import calculate_estimation_for_collection_item
 
 router = APIRouter(prefix="/api", tags=["estimation"])
 
