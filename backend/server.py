@@ -6,7 +6,17 @@ import os
 import logging
 import time
 from collections import defaultdict
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
+...
+from .routers.user_lists import router as user_lists_router
+
+print("DEBUG: server.py imported, routers loaded OK")
+raise RuntimeError("DEBUG STOP 2: force traceback after routers imports")
+
+# --- Debug PORT from environment ---------------------------------------------
+PORT = os.environ.get("PORT")
+print("DEBUG PORT FROM ENV:", PORT)
+# -----------------------------------------------------------------------------
 
 from .database import db, client
 
