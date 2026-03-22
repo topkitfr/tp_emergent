@@ -1,22 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from pathlib import Path
 import os
 import logging
 import time
 from collections import defaultdict
-from fastapi import FastAPI, Request
-...
-from .routers.user_lists import router as user_lists_router
-
-print("DEBUG: server.py imported, routers loaded OK")
-raise RuntimeError("DEBUG STOP 2: force traceback after routers imports")
-
-# --- Debug PORT from environment ---------------------------------------------
-PORT = os.environ.get("PORT")
-print("DEBUG PORT FROM ENV:", PORT)
-# -----------------------------------------------------------------------------
 
 from .database import db, client
 
@@ -35,21 +25,18 @@ from .routers.notifications import router as notifications_router
 from .routers.users import router as users_router
 from .routers.user_lists import router as user_lists_router
 
-# --- Debug PORT from environment ---------------------------------------------
-PORT = os.environ.get("PORT")
-print("DEBUG PORT FROM ENV:", PORT)
-# -----------------------------------------------------------------------------
-
 
 ROOT_DIR = Path(__file__).parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 app = FastAPI()
 
@@ -78,18 +65,17 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
+
 # ─── Rate Limiting (simple in-memory) ─────────────────────────────────────────
-# Limite : 60 req/min par IP pour les routes /api/auth/*
-# et 200 req/min par IP pour le reste
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 RATE_LIMITS = {
-    "/api/auth/login": (10, 60),      # 10 requêtes par minute
-    "/api/auth/register": (5, 60),    # 5 requêtes par minute
-    "/api/submissions": (30, 60),     # 30 soumissions par minute
-    "/api/upload": (20, 60),          # 20 uploads par minute
+    "/api/auth/login":    (10, 60),
+    "/api/auth/register": (5, 60),
+    "/api/submissions":   (30, 60),
+    "/api/upload":        (20, 60),
 }
-DEFAULT_RATE_LIMIT = (200, 60)  # 200 req/min pour tout le reste
+DEFAULT_RATE_LIMIT = (200, 60)
 
 
 @app.middleware("http")
@@ -97,7 +83,6 @@ async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     path = request.url.path
 
-    # Trouver la limite applicable
     limit, window = DEFAULT_RATE_LIMIT
     for prefix, (lim, win) in RATE_LIMITS.items():
         if path.startswith(prefix):
@@ -106,7 +91,6 @@ async def rate_limit_middleware(request: Request, call_next):
 
     key = f"{client_ip}:{path}"
     now = time.time()
-    # Nettoyer les timestamps anciens
     _rate_limit_store[key] = [
         t for t in _rate_limit_store[key] if now - t < window
     ]
@@ -128,7 +112,6 @@ async def security_headers_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
     except Exception as exc:
-        # Catch toutes les exceptions non gérées pour garantir les headers CORS
         origin = request.headers.get("origin", "")
         cors_headers = {}
         if origin in CORS_ORIGINS:
@@ -202,7 +185,6 @@ async def create_indexes():
     await db.players.create_index("slug", unique=True)
     await db.players.create_index("full_name")
 
-    # Index notifications
     await db.notifications.create_index("user_id")
     await db.notifications.create_index([("user_id", 1), ("read", 1)])
     await db.notifications.create_index("created_at")
