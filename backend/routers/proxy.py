@@ -11,8 +11,8 @@ ALLOWED_DOMAINS = [
     "i.imgur.com",
 ]
 
-# IP publique Freebox + chemin nginx correct
-FREEBOX_BASE = "http://2a01:e0a:994:9a90:8444/images/master_kits/photos"
+# IP publique Freebox
+FREEBOX_BASE = "http://82.67.103.45/images/master_kits/photos"
 
 
 @router.get("/image-proxy")
