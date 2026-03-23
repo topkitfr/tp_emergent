@@ -11,7 +11,8 @@ ALLOWED_DOMAINS = [
     "i.imgur.com",
 ]
 
-FREEBOX_BASE = "http://192.168.0.47/images/master_kits/photos"
+# IP publique Freebox + chemin nginx correct
+FREEBOX_BASE = "http://2a01:e0a:994:9a90:8444/images/master_kits/photos"
 
 
 @router.get("/image-proxy")
@@ -33,7 +34,7 @@ async def image_proxy(url: str):
 
 @router.get("/images/{filename}")
 async def freebox_image_proxy(filename: str):
-    """Proxy images from local Freebox NAS — avoids Mixed Content (HTTP on HTTPS site)."""
+    """Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content."""
     url = f"{FREEBOX_BASE}/{filename}"
     try:
         async with httpx.AsyncClient(timeout=10) as client:
