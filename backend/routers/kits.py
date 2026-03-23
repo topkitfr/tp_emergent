@@ -8,14 +8,23 @@ from ..models import MasterKitCreate, MasterKitOut, VersionCreate, VersionOut
 from ..auth import get_current_user
 from .notifications import create_notification
 
-
 router = APIRouter(prefix="/api", tags=["kits"])
+
+# ─────────────────────────────────────────────────────────────────
+# IMAGE URL → Freebox NAS local
+# ─────────────────────────────────────────────────────────────────
+MEDIA_BASE_URL = "http://192.168.0.47/images/master_kits/photos"
+
+def local_image_url(original_url: str) -> str:
+    if not original_url:
+        return original_url
+    file_name = original_url.rsplit("/", 1)[-1]
+    return f"{MEDIA_BASE_URL}/{file_name}"
 
 
 # ═══════════════════════════════════════════════════════════════════
 # MASTER KITS
 # ═══════════════════════════════════════════════════════════════════
-
 
 @router.get("/master-kits/count")
 async def count_master_kits():
@@ -80,7 +89,7 @@ async def list_master_kits(
     for kit in kits:
         kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
+        kit["front_photo"] = local_image_url(kit.get("front_photo") or kit.get("img_url", ""))  # ✅ modifié
         kit["version_count"] = kit.get("version_count", 0)
         kit["avg_rating"]    = kit.get("avg_rating", 0.0)
         kit["review_count"]  = kit.get("review_count", 0)
@@ -103,7 +112,7 @@ async def get_master_kit(kit_id: str):
         raise HTTPException(status_code=404, detail="Kit not found")
     kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
     kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
-    kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
+    kit["front_photo"] = local_image_url(kit.get("front_photo") or kit.get("img_url", ""))  # ✅ modifié
     ca = kit.get("created_at")
     if hasattr(ca, "isoformat"):
         kit["created_at"] = ca.isoformat()
@@ -115,6 +124,8 @@ async def get_master_kit(kit_id: str):
     for v in versions:
         v["avg_rating"]   = v.get("avg_rating", 0.0)
         v["review_count"] = v.get("review_count", 0)
+        v["front_photo"]  = local_image_url(v.get("front_photo", ""))  # ✅ versions aussi
+        v["back_photo"]   = local_image_url(v.get("back_photo", ""))   # ✅ back photo
     kit["versions"]      = versions
     kit["version_count"] = len(versions)
 
@@ -132,92 +143,72 @@ async def get_master_kit(kit_id: str):
     return kit
 
 
-# ─────────────────────────────────────────────────────────────────
-# NOUVEAU — helper interne
-# Reçoit les champs bruts du kit et crée les submissions d'entités
-# manquantes (celles dont l'id n'existe pas encore en base).
-# Retourne un dict {field: entity_id} pour enrichir le kit créé.
-# ─────────────────────────────────────────────────────────────────
 async def _create_missing_entity_submissions(
     data: dict,
     user_id: str,
     parent_submission_id: str,
 ) -> dict:
-    """
-    Pour chaque champ entité (team_id, league_id, brand_id) :
-      - Si l'id est déjà fourni ET existe en base → on garde
-      - Si le nom est fourni mais l'id est absent (ou l'id est absent en base)
-        → on crée l'entité en for_review + la submission liée
-        → on retourne le nouvel entity_id pour le stocker dans le master_kit
-
-    Retourne un dict de FK à patcher sur le doc kit : {team_id, league_id, brand_id}
-    """
     now = datetime.now(timezone.utc).isoformat()
     fk_patch = {}
 
     ENTITY_MAP = [
-    {
-        "id_field": "team_id",
-        "name_field": "club",
-        "collection": "teams",
-        "sub_type": "team",
-        "name_key": "name",
-    },
-    {
-        "id_field": "league_id",
-        "name_field": "league",
-        "collection": "leagues",
-        "sub_type": "league",
-        "name_key": "name",
-    },
-    {
-        "id_field": "brand_id",
-        "name_field": "brand",
-        "collection": "brands",
-        "sub_type": "brand",
-        "name_key": "name",
-    },
-    {
-        "id_field": "sponsor_id",
-        "name_field": "sponsor",
-        "collection": "sponsors",
-        "sub_type": "sponsor",
-        "name_key": "name",
-    },
-]
-
+        {
+            "id_field": "team_id",
+            "name_field": "club",
+            "collection": "teams",
+            "sub_type": "team",
+            "name_key": "name",
+        },
+        {
+            "id_field": "league_id",
+            "name_field": "league",
+            "collection": "leagues",
+            "sub_type": "league",
+            "name_key": "name",
+        },
+        {
+            "id_field": "brand_id",
+            "name_field": "brand",
+            "collection": "brands",
+            "sub_type": "brand",
+            "name_key": "name",
+        },
+        {
+            "id_field": "sponsor_id",
+            "name_field": "sponsor",
+            "collection": "sponsors",
+            "sub_type": "sponsor",
+            "name_key": "name",
+        },
+    ]
 
     for cfg in ENTITY_MAP:
         entity_id = data.get(cfg["id_field"], "")
         name      = data.get(cfg["name_field"], "")
 
         if not name:
-            continue  # rien à faire si le champ est vide
+            continue
 
-        # Vérifie si l'id fourni existe réellement en base
         if entity_id:
             exists = await db[cfg["collection"]].find_one(
                 {cfg["id_field"]: entity_id}, {"_id": 0, cfg["id_field"]: 1}
             )
             if exists:
-                continue  # entité connue → rien à créer
+                continue
 
-        # Cherche par nom / slug pour éviter les doublons
         from utils import slugify
         slug = slugify(name)
         existing = await db[cfg["collection"]].find_one({"slug": slug}, {"_id": 0})
         if existing:
-            # L'entité existe sous un autre id → on met à jour la FK
             fk_patch[cfg["id_field"]] = existing[cfg["id_field"]]
             continue
 
-        # L'entité n'existe pas du tout → création for_review + submission liée
         new_entity_id = f"{cfg['sub_type']}_{uuid.uuid4().hex[:12]}"
         submission_id = f"sub_{uuid.uuid4().hex[:12]}"
 
         entity_doc = {
             cfg["id_field"]: new_entity_id,
-            "name":          name,  # "full_name" pour player — non concerné ici
+            "name":          name,
             "slug":          slug,
             "status":        "for_review",
             "submission_id": submission_id,
@@ -260,10 +251,6 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
     doc["review_count"]  = 0
     doc["version_count"] = 1
 
-    # ── NOUVEAU : crée les submissions d'entités manquantes avant d'insérer le kit ──
-    # On utilise le kit_id comme parent_submission_id (compat avec le flow submissions)
-    # IMPORTANT : si le kit passe par le flow submission (vote), utiliser submission_id.
-    # Ici c'est la création directe admin → on passe kit_id comme référence parent.
     fk_patch = await _create_missing_entity_submissions(
         data=doc,
         user_id=user["user_id"],
@@ -273,7 +260,6 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
 
     await db.master_kits.insert_one(doc)
 
-    # ── Notifier les followers de la team ──
     team_id = doc.get("team_id", "")
     if team_id:
         followers = await db.follows.find(
@@ -308,30 +294,14 @@ async def create_master_kit(kit: MasterKitCreate, request: Request):
     return result
 
 
-# ─────────────────────────────────────────────────────────────────
-# PATCH /api/submissions/{submission_id}/data
-# Appelé depuis le frontend quand la submission master_kit est créée
-# AVANT le vote, pour attacher les submissions d'entités avec le
-# bon parent_submission_id (submission_id du master_kit).
-#
-# Permet de lier les entités créées en for_review à la submission
-# du kit, pas seulement au kit_id (qui n'existe pas encore).
-# ─────────────────────────────────────────────────────────────────
 @router.post("/master-kits/submit", response_model=dict)
 async def submit_master_kit(kit: MasterKitCreate, request: Request):
-    """
-    Crée une SUBMISSION master_kit (pas le kit directement).
-    Génère un submission_id et crée les submissions d'entités
-    manquantes avec parent_submission_id = submission_id du kit.
-    Le kit ne sera créé en base qu'après approbation communautaire.
-    """
     user = await get_current_user(request)
     now  = datetime.now(timezone.utc).isoformat()
     data = kit.model_dump()
 
     submission_id = f"sub_{uuid.uuid4().hex[:12]}"
 
-    # Crée les submissions d'entités manquantes liées à cette submission
     fk_patch = await _create_missing_entity_submissions(
         data=data,
         user_id=user["user_id"],
@@ -411,11 +381,13 @@ async def list_versions(
         for k in kits_docs:
             k["kit_id"]      = k.get("kit_id") or k.get("id", "")
             k["kit_type"]    = k.get("kit_type") or k.get("type", "")
-            k["front_photo"] = k.get("front_photo") or k.get("img_url", "")
+            k["front_photo"] = local_image_url(k.get("front_photo") or k.get("img_url", ""))  # ✅ modifié
             kits_map[k["kit_id"]] = k
 
     result = []
     for v in versions:
+        v["front_photo"]  = local_image_url(v.get("front_photo", ""))  # ✅ modifié
+        v["back_photo"]   = local_image_url(v.get("back_photo", ""))   # ✅ modifié
         v["master_kit"]   = kits_map.get(v.get("kit_id"))
         v["avg_rating"]   = v.get("avg_rating", 0.0)
         v["review_count"] = v.get("review_count", 0)
@@ -536,11 +508,13 @@ async def get_version(version_id: str):
     version = await db.versions.find_one({"version_id": version_id}, {"_id": 0})
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
+    version["front_photo"] = local_image_url(version.get("front_photo", ""))  # ✅ modifié
+    version["back_photo"]  = local_image_url(version.get("back_photo", ""))   # ✅ modifié
     kit = await db.master_kits.find_one({"kit_id": version.get("kit_id")}, {"_id": 0})
     if kit:
         kit["kit_id"]      = kit.get("kit_id") or kit.get("id", "")
         kit["kit_type"]    = kit.get("kit_type") or kit.get("type", "")
-        kit["front_photo"] = kit.get("front_photo") or kit.get("img_url", "")
+        kit["front_photo"] = local_image_url(kit.get("front_photo") or kit.get("img_url", ""))  # ✅ modifié
         version["master_kit"] = kit
     reviews = await db.reviews.find(
         {"version_id": version_id}, {"_id": 0}
@@ -597,17 +571,17 @@ async def get_kit_players(kit_id: str):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# ENTITÉS → KITS (teams, brands, leagues, sponsors, players)
+# ENTITÉS → KITS
 # ═══════════════════════════════════════════════════════════════════
 
 async def _normalize_kit(doc: dict) -> dict:
     if not doc:
         return {}
-    doc["kit_id"]       = doc.get("kit_id") or doc.get("id", "")
-    doc["kit_type"]     = doc.get("kit_type") or doc.get("type", "")
-    doc["front_photo"]  = doc.get("front_photo") or doc.get("img_url", "")
-    doc["avg_rating"]   = doc.get("avg_rating", 0.0)
-    doc["review_count"] = doc.get("review_count", 0)
+    doc["kit_id"]        = doc.get("kit_id") or doc.get("id", "")
+    doc["kit_type"]      = doc.get("kit_type") or doc.get("type", "")
+    doc["front_photo"]   = local_image_url(doc.get("front_photo") or doc.get("img_url", ""))  # ✅ modifié
+    doc["avg_rating"]    = doc.get("avg_rating", 0.0)
+    doc["review_count"]  = doc.get("review_count", 0)
     doc["version_count"] = doc.get("version_count", 0)
     return doc
 
