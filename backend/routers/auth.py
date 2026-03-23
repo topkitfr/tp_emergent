@@ -14,6 +14,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() == "production"
 
+MAX_BCRYPT_BYTES = 72
+
+
+def normalize_password(pwd: str) -> str:
+    """Tronque le mot de passe à 72 bytes max (limite bcrypt)."""
+    b = pwd.encode("utf-8")
+    if len(b) > MAX_BCRYPT_BYTES:
+        b = b[:MAX_BCRYPT_BYTES]
+    return b.decode("utf-8", errors="ignore")
+
 
 class RegisterBody(BaseModel):
     email: EmailStr
@@ -31,7 +41,7 @@ def set_session_cookie(response: Response, session_token: str):
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=IS_PRODUCTION,  # True en production HTTPS
+        secure=IS_PRODUCTION,
         samesite="lax",
         path="/",
         max_age=7 * 24 * 60 * 60,
@@ -40,7 +50,6 @@ def set_session_cookie(response: Response, session_token: str):
 
 @router.post("/register")
 async def register(body: RegisterBody, response: Response):
-    # Validation renforcée du mot de passe
     if len(body.password) < 8:
         raise HTTPException(
             status_code=400,
@@ -64,6 +73,8 @@ async def register(body: RegisterBody, response: Response):
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     role = "moderator" if body.email in MODERATOR_EMAILS else "user"
 
+    password = normalize_password(body.password)
+
     await db.users.insert_one(
         {
             "user_id": user_id,
@@ -74,7 +85,7 @@ async def register(body: RegisterBody, response: Response):
             "username": body.name.replace(" ", "").lower() if body.name else "",
             "description": "",
             "collection_privacy": "public",
-            "password_hash": pwd_context.hash(body.password),
+            "password_hash": pwd_context.hash(password),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
     )
@@ -99,10 +110,10 @@ async def register(body: RegisterBody, response: Response):
 @router.post("/login")
 async def login(body: LoginBody, response: Response):
     user = await db.users.find_one({"email": body.email})
+    password = normalize_password(body.password)
     if not user or not pwd_context.verify(
-        body.password, user.get("password_hash", "")
+        password, user.get("password_hash", "")
     ):
-        # Message générique pour ne pas confirmer si l'email existe
         raise HTTPException(
             status_code=401, detail="Email ou mot de passe incorrect"
         )
