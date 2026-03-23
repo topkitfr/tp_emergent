@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["kits"])
 # ─────────────────────────────────────────────────────────────────
 # IMAGE URL → Freebox NAS local
 # ─────────────────────────────────────────────────────────────────
-MEDIA_BASE_URL = "http://192.168.0.47/images/master_kits/photos"
+MEDIA_BASE_URL = "https://tp-emergent.onrender.com/api/images"
 
 def local_image_url(original_url: str) -> str:
     if not original_url:
