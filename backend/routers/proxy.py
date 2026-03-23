@@ -1,6 +1,6 @@
 import httpx
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from urllib.parse import urlparse
 
 router = APIRouter()
@@ -10,6 +10,9 @@ ALLOWED_DOMAINS = [
     "upload.wikimedia.org",
     "i.imgur.com",
 ]
+
+FREEBOX_BASE = "http://192.168.0.47/images/master_kits/photos"
+
 
 @router.get("/image-proxy")
 async def image_proxy(url: str):
@@ -26,3 +29,21 @@ async def image_proxy(url: str):
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch image: {e}")
+
+
+@router.get("/images/{filename}")
+async def freebox_image_proxy(filename: str):
+    """Proxy images from local Freebox NAS — avoids Mixed Content (HTTP on HTTPS site)."""
+    url = f"{FREEBOX_BASE}/{filename}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(url)
+            if r.status_code != 200:
+                return Response(status_code=404)
+            return StreamingResponse(
+                iter([r.content]),
+                media_type=r.headers.get("content-type", "image/jpeg"),
+                headers={"Cache-Control": "public, max-age=86400"},
+            )
+    except Exception:
+        return Response(status_code=404)
