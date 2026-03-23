@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-IS_PRODUCTION = False  # Mettre True quand déployé en HTTPS
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() == "production"
 
 
 class RegisterBody(BaseModel):
