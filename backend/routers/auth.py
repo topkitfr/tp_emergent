@@ -8,7 +8,6 @@ from ..database import db, client
 from ..auth import get_current_user
 from ..utils import MODERATOR_EMAILS
 
-
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
