@@ -1,7 +1,7 @@
 // src/pages/VersionDetail.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVersion, getVersionEstimates, addToCollection, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
+import { getVersion, getVersionEstimates, getVersionWornBy, getReviews, addToCollection, createReport, proxyImageUrl, addToWishlist, checkWishlist, removeFromWishlist, createReview } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -107,46 +107,43 @@ export default function VersionDetail() {
 
   const setField = (key) => (val) => setReportCorrections(p => ({ ...p, [key]: val }));
 
-  const fetchReviews = useCallback(async () => {
-    try {
-      const res  = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reviews?version_id=${versionId}`, { credentials: 'include' });
-      const data = res.ok ? await res.json() : [];
-      setReviews(Array.isArray(data) ? data : []);
-    } catch { setReviews([]); }
-  }, [versionId]);
+const fetchReviews = useCallback(async () => {
+  try {
+    const res = await getReviews(versionId);
+    setReviews(Array.isArray(res.data) ? res.data : []);
+  } catch { setReviews([]); }
+}, [versionId]);
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      getVersion(versionId),
-      fetch(`/api/versions/${versionId}/worn-by`).then(r => r.ok ? r.json() : []),
-      getVersionEstimates(versionId).catch(() => null),
-    ]).then(async ([versionRes, wornByData, estimatesRes]) => {
-      const v = versionRes.data;
-      setVersion(v);
-      setWornBy(Array.isArray(wornByData) ? wornByData : []);
-      setEstimates(estimatesRes?.data || null);
-      // Pré-remplir le form de report avec les valeurs actuelles de la version
-      setReportCorrections({
-        competition: v.competition || '',
-        model:       v.model       || '',
-        sku_code:    v.sku_code    || '',
-        ean_code:    v.ean_code    || '',
-        front_photo: v.front_photo || '',
-        back_photo:  v.back_photo  || '',
-      });
-      await fetchReviews();
-      // Charger statut wishlist
-      try {
-        const wRes = await checkWishlist(v.version_id);
-        if (wRes.data?.in_wishlist) {
-          setWishStatus('done');
-          setWishlistId(wRes.data.wishlist_id);
-        }
-      } catch {}
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [versionId, fetchReviews]);
+useEffect(() => {
+  setLoading(true);
+  Promise.all([
+    getVersion(versionId),
+    getVersionWornBy(versionId).then(r => r.data).catch(() => []),
+    getVersionEstimates(versionId).catch(() => null),
+  ]).then(async ([versionRes, wornByData, estimatesRes]) => {
+    const v = versionRes.data;
+    setVersion(v);
+    setWornBy(Array.isArray(wornByData) ? wornByData : []);
+    setEstimates(estimatesRes?.data || null);
+    setReportCorrections({
+      competition: v.competition || '',
+      model:       v.model       || '',
+      sku_code:    v.sku_code    || '',
+      ean_code:    v.ean_code    || '',
+      front_photo: v.front_photo || '',
+      back_photo:  v.back_photo  || '',
+    });
+    await fetchReviews();
+    try {
+      const wRes = await checkWishlist(v.version_id);
+      if (wRes.data?.in_wishlist) {
+        setWishStatus('done');
+        setWishlistId(wRes.data.wishlist_id);
+      }
+    } catch {}
+    setLoading(false);
+  }).catch(() => setLoading(false));
+}, [versionId, fetchReviews]);
 
   const handleAdd = async () => {
     if (addStatus !== 'idle') return;

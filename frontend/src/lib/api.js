@@ -40,6 +40,10 @@ api.interceptors.response.use(
   }
 );
 
+
+export const getVersionWornBy = (versionId) => api.get(`/versions/${versionId}/worn-by`);
+export const getReviews = (versionId) => api.get(`/reviews`, { params: { version_id: versionId } });
+
 // Auth
 export const loginUser = (email, password) => api.post('/auth/login', { email, password });
 export const registerUser = (email, password, name) => api.post('/auth/register', { email, password, name });
