@@ -41,8 +41,8 @@ def set_session_cookie(response: Response, session_token: str):
         key="session_token",
         value=session_token,
         httponly=True,
-        secure=IS_PRODUCTION,
-        samesite="lax",
+        secure=True,         # obligatoire avec SameSite=none
+        samesite="none",     # autorise le cross-site (frontend != backend domaine)
         path="/",
         max_age=7 * 24 * 60 * 60,
     )
@@ -146,5 +146,11 @@ async def logout(request: Request, response: Response):
     session_token = request.cookies.get("session_token")
     if session_token:
         await db.user_sessions.delete_one({"session_token": session_token})
-    response.delete_cookie(key="session_token", path="/", httponly=True)
+    response.delete_cookie(
+        key="session_token",
+        path="/",
+        httponly=True,
+        secure=True,
+        samesite="none",
+    )
     return {"message": "Logged out"}
