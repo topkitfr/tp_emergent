@@ -14,12 +14,6 @@ ALLOWED_DOMAINS = [
 # IP publique Freebox
 FREEBOX_BASE = "http://82.67.103.45/images/master_kits/photos"
 
-CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Cross-Origin-Resource-Policy": "cross-origin",
-    "Cache-Control": "public, max-age=86400",
-}
-
 
 @router.get("/image-proxy")
 async def image_proxy(url: str):
@@ -33,7 +27,6 @@ async def image_proxy(url: str):
         return StreamingResponse(
             content=iter([resp.content]),
             media_type=resp.headers.get("content-type", "image/jpeg"),
-            headers=CORS_HEADERS,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch image: {e}")
@@ -51,7 +44,6 @@ async def freebox_image_proxy(filename: str):
             return StreamingResponse(
                 iter([r.content]),
                 media_type=r.headers.get("content-type", "image/jpeg"),
-                headers=CORS_HEADERS,
             )
     except Exception:
         return Response(status_code=404)
