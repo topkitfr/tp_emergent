@@ -63,10 +63,6 @@ function emptyEntityBuckets() {
   return { team: [], league: [], brand: [], player: [], sponsor: [] };
 }
 
-/**
- * Construit les buckets d'entités (pending ou approved) directement depuis
- * les submissions déjà chargées, sans appel API supplémentaire.
- */
 function buildEntityBucketsFromSubmissions(items = []) {
   const buckets = emptyEntityBuckets();
   items.forEach((sub) => {
@@ -216,6 +212,7 @@ export default function Contributions() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addStep, setAddStep] = useState(1);
+  const [subType, setSubType] = useState('master_kit');
   const [existingKits, setExistingKits] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
@@ -249,48 +246,49 @@ export default function Contributions() {
   const [verFrontPhoto, setVerFrontPhoto] = useState('');
   const [verBackPhoto, setVerBackPhoto] = useState('');
 
-// ===== CHARGEMENT PRINCIPAL =====
-const fetchData = useCallback(async () => {
-  setLoading(true);
-  setLoadingPending(true);
-  try {
-    const status = activeTab === 'approved' ? 'approved' : activeTab === 'rejected' ? 'rejected' : 'pending';
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setLoadingPending(true);
+    try {
+      const status = activeTab === 'approved' ? 'approved' : activeTab === 'rejected' ? 'rejected' : 'pending';
+      const [subsRes, repsRes] = await Promise.all([
+        getSubmissions({ status }),
+        getReports({ status }),
+      ]);
+      const nextSubs = subsRes.data || [];
+      setSubmissions(nextSubs);
+      setReports(repsRes.data || []);
 
-    const [subsRes, repsRes] = await Promise.all([   // ← cette ligne manquait entièrement
-      getSubmissions({ status }),
-      getReports({ status }),
-    ]);
-    const nextSubs = subsRes.data || [];
-    setSubmissions(nextSubs);
-    setReports(repsRes.data || []);
-
-    const entityBuckets = buildEntityBucketsFromSubmissions(nextSubs);
-    if (status === 'approved') {
-      setApprovedEntities(entityBuckets);
-      setPendingEntities(emptyEntityBuckets());
-    } else {
-      setPendingEntities(entityBuckets);
-      setApprovedEntities(emptyEntityBuckets());
+      const entityBuckets = buildEntityBucketsFromSubmissions(nextSubs);
+      if (status === 'approved') {
+        setApprovedEntities(entityBuckets);
+        setPendingEntities(emptyEntityBuckets());
+      } else {
+        setPendingEntities(entityBuckets);
+        setApprovedEntities(emptyEntityBuckets());
+      }
+    } catch (e) {
+      console.error('Failed to fetch submissions:', e);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
+      setLoadingPending(false);
     }
-  } catch (e) {
-    console.error('Failed to fetch submissions:', e);
-    toast.error('Erreur lors du chargement des données');
-  } finally {
-    setLoading(false);
-    setLoadingPending(false);
-  }
-}, [activeTab]);
+  }, [activeTab]);
+
+  useEffect(() => { fetchData(); }, [activeTab, fetchData]);
 
   useEffect(() => {
-    fetchData();
-  }, [activeTab, fetchData]);
-
-useEffect(() => {
-  if (showAddForm) {
-    getMasterKits({ limit: 500 }).then(res => setExistingKits(res.data)).catch(console.error);
-  }
-}, [showAddForm]);
-
+    if (showAddForm) {
+      getMasterKits({ limit: 500 })
+        .then(res => {
+          // L'API retourne { items: [...], total: N } ou directement un tableau
+          const kits = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+          setExistingKits(kits);
+        })
+        .catch(console.error);
+    }
+  }, [showAddForm]);
 
   // ===== SUBMIT MASTER KIT =====
   const handleSubmitKit = async () => {
@@ -302,28 +300,28 @@ useEffect(() => {
     try {
       const data = {
         club, team_id: teamId, season, kit_type: kitType,
-        brand, brand_id: brandId, league, league_id: leagueId, 
+        brand, brand_id: brandId, league, league_id: leagueId,
         sponsor, sponsor_id: sponsorId, design, gender, front_photo: frontPhoto,
       };
 
       const submissionRes = await createSubmission({ submission_type: 'master_kit', data });
       const masterKitSubmissionId = submissionRes?.data?.submission_id;
 
-      // Crée les entités manquantes en pending, liées au master kit
       if (masterKitSubmissionId) {
         const pendingJobs = [];
         if (!teamId   && club.trim())    pendingJobs.push(createTeamPending(  { name: club.trim()   }, masterKitSubmissionId));
         if (!brandId  && brand.trim())   pendingJobs.push(createBrandPending( { name: brand.trim()  }, masterKitSubmissionId));
         if (!leagueId && league.trim())  pendingJobs.push(createLeaguePending({ name: league.trim() }, masterKitSubmissionId));
-if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId));      
-    await Promise.allSettled(pendingJobs);
+        if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: sponsor.trim() }, masterKitSubmissionId));
+        await Promise.allSettled(pendingJobs);
       }
 
       toast.success('Master kit submitted for community review!');
       closeAddForm();
       await fetchData();
       const kitsRes = await getMasterKits();
-      setExistingKits(kitsRes.data || []);
+      const kits = Array.isArray(kitsRes.data) ? kitsRes.data : (kitsRes.data?.items ?? []);
+      setExistingKits(kits);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.detail || 'Failed to submit');
@@ -368,7 +366,6 @@ if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: 
   const hasVoted = (item) => item.voters?.includes(user?.user_id);
   const isModerator = user?.role === 'moderator' || user?.role === 'admin';
 
-  // FIX: vote doit être la string "up" ou "down", pas un objet booléen
   const handleVoteSubmission = async (submissionId, isUpvote) => {
     try {
       await voteOnSubmission(submissionId, isUpvote ? 'up' : 'down');
@@ -390,21 +387,19 @@ if (!sponsorId && sponsor.trim()) pendingJobs.push(createSponsorPending({ name: 
   };
 
   const filteredExistingKits = (existingKits || []).filter(k => {
-  const label = `${k.club ?? ''} ${k.season ?? ''} ${k.kit_type ?? ''}`.toLowerCase()
-  return label.includes(searchExistingKit.toLowerCase())
-});
+    const label = `${k.club ?? ''} ${k.season ?? ''} ${k.kit_type ?? ''}`.toLowerCase();
+    return label.includes(searchExistingKit.toLowerCase());
+  });
 
   const entityEditSubs = submissions.filter(s =>
-  ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
-  ["edit", "removal"].includes(s.data?.mode)
-);
-const entityCreateSubs = submissions.filter(s =>
-  ["team", "league", "brand", "player", "sponsor"].includes(s.submission_type) &&
-  s.data?.mode === "create"
-);
-  // Standalone entity submissions (no parent kit) → votable by community
+    ['team', 'league', 'brand', 'player', 'sponsor'].includes(s.submission_type) &&
+    ['edit', 'removal'].includes(s.data?.mode)
+  );
+  const entityCreateSubs = submissions.filter(s =>
+    ['team', 'league', 'brand', 'player', 'sponsor'].includes(s.submission_type) &&
+    s.data?.mode === 'create'
+  );
   const standaloneEntitySubs = entityCreateSubs.filter(s => !s.data?.parent_submission_id);
-  // Kit-linked entity submissions → approved automatically with parent kit
   const kitLinkedEntitySubs = entityCreateSubs.filter(s => !!s.data?.parent_submission_id);
   const jerseyAndCreateSubs = submissions.filter(s =>
     !entityEditSubs.includes(s) && !entityCreateSubs.includes(s) && s.submission_type === 'master_kit'
@@ -432,7 +427,6 @@ const entityCreateSubs = submissions.filter(s =>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 lg:px-8 py-8">
-        {/* ── Add Jersey Form ── */}
         {showAddForm && (
           <div className="border border-primary/30 p-6 mb-8" data-testid="add-jersey-form">
             <div className="flex items-center gap-4 mb-6">
@@ -463,7 +457,7 @@ const entityCreateSubs = submissions.filter(s =>
                     <SelectTrigger className="bg-card border-border rounded-none"><SelectValue placeholder="Select an existing Master Kit" /></SelectTrigger>
                     <SelectContent className="bg-card border-border max-h-60">
                       {filteredExistingKits.map((k) => (
-                        <SelectItem key={k._id} value={k.kit_id}>{k.club} – {k.season} ({k.type})</SelectItem>
+                        <SelectItem key={k._id} value={k.kit_id}>{k.club} – {k.season} ({k.kit_type})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -611,7 +605,6 @@ const entityCreateSubs = submissions.filter(s =>
           </div>
         )}
 
-             {/* ── Tabs ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-card border border-border rounded-none mb-6">
             <TabsTrigger value="pending" className="rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-pending">
@@ -626,8 +619,6 @@ const entityCreateSubs = submissions.filter(s =>
           </TabsList>
 
           <TabsContent value={activeTab}>
-
-            {/* ── JERSEY SUBMISSIONS ── */}
             <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
               <Shirt className="w-4 h-4 inline mr-1" /> JERSEY SUBMISSIONS
             </h3>
@@ -674,7 +665,7 @@ const entityCreateSubs = submissions.filter(s =>
                         <p className="text-xs text-muted-foreground mt-1" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>
                           by {sub.submitter_name || 'Unknown'} — {sub.created_at ? new Date(sub.created_at).toLocaleDateString() : ''}
                         </p>
-                     </div>
+                      </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-center">
                           <div className="flex items-center gap-1">
@@ -708,11 +699,10 @@ const entityCreateSubs = submissions.filter(s =>
               </div>
             )}
 
-            {/* ── NOUVELLES RÉFÉRENCES VOTABLES (standalone) ── */}
             {standaloneEntitySubs.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  <ThumbsUp className="w-4 h-4 inline mr-1" /> DATABASE REFRENCES
+                  <ThumbsUp className="w-4 h-4 inline mr-1" /> DATABASE REFERENCES
                 </h3>
                 <div className="space-y-3 mb-8">
                   {standaloneEntitySubs.map(sub => (
@@ -772,11 +762,10 @@ const entityCreateSubs = submissions.filter(s =>
               </div>
             )}
 
-            {/* ── RÉFÉRENCES LIÉES À UN KIT (en attente d'approbation du kit parent) ── */}
             {activeTab === 'pending' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
-                  <AlertTriangle className="w-4 h-4 inline mr-1" /> DATABASE REFRENCES
+                  <AlertTriangle className="w-4 h-4 inline mr-1" /> DATABASE REFERENCES
                 </h3>
                 {loadingPending ? (
                   <div className="h-16 bg-card animate-pulse border border-border" />
@@ -786,14 +775,7 @@ const entityCreateSubs = submissions.filter(s =>
                   </div>
                 ) : (
                   <div className="space-y-4 mb-8">
-                    {/* Refs créées via ajout de maillot — affichées en buckets groupés */}
-                    {[
-                      { key: 'team', label: 'Équipes' },
-                      { key: 'league', label: 'Compétitions' },
-                      { key: 'brand', label: 'Marques' },
-                      { key: 'player', label: 'Joueurs' },
-                      { key: 'sponsor', label: 'Sponsors' },
-                    ].map(({ key, label }) => {
+                    {[{ key: 'team', label: 'Équipes' }, { key: 'league', label: 'Compétitions' }, { key: 'brand', label: 'Marques' }, { key: 'player', label: 'Joueurs' }, { key: 'sponsor', label: 'Sponsors' }].map(({ key, label }) => {
                       const list = pendingEntities[key] || [];
                       if (!list.length) return null;
                       return (
@@ -801,8 +783,7 @@ const entityCreateSubs = submissions.filter(s =>
                           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>{label} ({list.length})</p>
                           <div className="space-y-2">
                             {list.map(item => (
-                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
-                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
+                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id} className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
                                 <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getDisplayName(item)}</span>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="rounded-none text-[10px] border-accent/40 text-accent">for review</Badge>
@@ -819,7 +800,6 @@ const entityCreateSubs = submissions.filter(s =>
               </div>
             )}
 
-            {/* ── RÉFÉRENCES VALIDÉES (approved) ── */}
             {activeTab === 'approved' && (
               <div className="mb-10">
                 <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
@@ -833,13 +813,7 @@ const entityCreateSubs = submissions.filter(s =>
                   </div>
                 ) : (
                   <div className="space-y-4 mb-8">
-                    {[
-                      { key: 'team', label: 'Équipes' },
-                      { key: 'league', label: 'Compétitions' },
-                      { key: 'brand', label: 'Marques' },
-                      { key: 'player', label: 'Joueurs' },
-                      { key: 'sponsor', label: 'Sponsors' },
-                    ].map(({ key, label }) => {
+                    {[{ key: 'team', label: 'Équipes' }, { key: 'league', label: 'Compétitions' }, { key: 'brand', label: 'Marques' }, { key: 'player', label: 'Joueurs' }, { key: 'sponsor', label: 'Sponsors' }].map(({ key, label }) => {
                       const list = approvedEntities[key] || [];
                       if (!list.length) return null;
                       return (
@@ -847,8 +821,7 @@ const entityCreateSubs = submissions.filter(s =>
                           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3" style={{ fontFamily: 'Barlow Condensed' }}>{label} ({list.length})</p>
                           <div className="space-y-2">
                             {list.map(item => (
-                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id}
-                                className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
+                              <div key={item.team_id || item.league_id || item.brand_id || item.player_id || item.sponsor_id || item._id} className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border/50">
                                 <span className="text-sm" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>{getDisplayName(item)}</span>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="rounded-none text-[10px] border-primary/40 text-primary">approved</Badge>
@@ -865,7 +838,6 @@ const entityCreateSubs = submissions.filter(s =>
               </div>
             )}
 
-            {/* ── CORRECTION REPORTS ── */}
             <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-4" style={{ fontFamily: 'Barlow Condensed' }}>
               <AlertTriangle className="w-4 h-4 inline mr-1" /> CORRECTION REPORTS
             </h3>
@@ -928,7 +900,6 @@ const entityCreateSubs = submissions.filter(s =>
                     )}
                   </div>
                 ))}
-
                 {entityEditSubs.map(sub => (
                   <div key={sub.submission_id} className="border border-border bg-card" data-testid={`submission-${sub.submission_id}`}>
                     <div
