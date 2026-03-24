@@ -86,7 +86,7 @@ export default function MyCollection() {
   const [editingListId, setEditingListId] = useState(null);
   const [editingListName, setEditingListName] = useState('');
   const [addToListItem, setAddToListItem] = useState(null);
-  // ──────────────────────────────────
+  // ──────────────────────────
   const [detailItem, setDetailItem] = useState(null);
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
@@ -126,7 +126,7 @@ export default function MyCollection() {
     getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
   }, [fetchCollection, fetchLists]);
 
-  // ── Handlers listes ─────────────────────────────────────────────────────────
+  // ── Handlers listes ────────────────────────────────────────────────
 
   const handleCreateList = async () => {
     if (!newListName.trim()) return;
@@ -555,6 +555,7 @@ export default function MyCollection() {
                 <Link to={`/version/${item.version_id}`}>
                   <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
                     <img
+                      crossOrigin="anonymous"
                       src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
                       alt={item.master_kit?.club}
                       className="w-full h-full object-cover group-hover:scale-105"
@@ -680,6 +681,7 @@ export default function MyCollection() {
                   className="flex items-center gap-4 flex-1 min-w-0"
                 >
                   <img
+                    crossOrigin="anonymous"
                     src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
                     alt=""
                     className="w-14 h-18 object-cover"
@@ -776,6 +778,7 @@ export default function MyCollection() {
               <div className="mb-6">
                 <div className="flex gap-4 mb-4">
                   <img
+                    crossOrigin="anonymous"
                     src={proxyImageUrl(
                       detailItem.version?.front_photo || detailItem.master_kit?.front_photo,
                     )}

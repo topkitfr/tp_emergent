@@ -85,7 +85,13 @@ export default function Wishlist() {
               <div key={item.wishlist_id} className="card-shimmer relative border border-border bg-card overflow-hidden group" data-testid={`wishlist-item-${item.wishlist_id}`}>
                 <Link to={`/version/${item.version_id}`}>
                   <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
-                    <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt={item.master_kit?.club} className="w-full h-full object-cover group-hover:scale-105" style={{ transition: 'transform 0.5s ease' }} />
+                    <img
+                      crossOrigin="anonymous"
+                      src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
+                      alt={item.master_kit?.club}
+                      className="w-full h-full object-cover group-hover:scale-105"
+                      style={{ transition: 'transform 0.5s ease' }}
+                    />
                     <div className="absolute top-2 right-2">
                       <Heart className="w-5 h-5 text-red-500 fill-red-500" />
                     </div>
@@ -116,7 +122,12 @@ export default function Wishlist() {
             {items.map(item => (
               <div key={item.wishlist_id} className="flex items-center gap-4 p-3 border border-border bg-card group" data-testid={`wishlist-list-item-${item.wishlist_id}`}>
                 <Link to={`/version/${item.version_id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                  <img src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)} alt="" className="w-14 h-18 object-cover" />
+                  <img
+                    crossOrigin="anonymous"
+                    src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
+                    alt=""
+                    className="w-14 h-18 object-cover"
+                  />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold truncate">{item.master_kit?.club}</h3>
                     <p className="text-xs text-muted-foreground" style={{ fontFamily: 'DM Sans', textTransform: 'none' }}>

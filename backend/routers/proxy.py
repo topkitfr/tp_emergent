@@ -1,7 +1,8 @@
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse, Response
 from urllib.parse import urlparse
+import os
 
 router = APIRouter()
 
@@ -14,9 +15,25 @@ ALLOWED_DOMAINS = [
 # IP publique Freebox
 FREEBOX_BASE = "http://82.67.103.45/images/master_kits/photos"
 
+CORS_ORIGINS = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:3000",
+).split(",")
+
+
+def get_cors_headers(request: Request) -> dict:
+    origin = request.headers.get("origin", "")
+    allowed = origin if origin in CORS_ORIGINS else (CORS_ORIGINS[0] if CORS_ORIGINS else "*")
+    return {
+        "Access-Control-Allow-Origin": allowed,
+        "Access-Control-Allow-Credentials": "true",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cache-Control": "public, max-age=86400",
+    }
+
 
 @router.get("/image-proxy")
-async def image_proxy(url: str):
+async def image_proxy(url: str, request: Request):
     domain = urlparse(url).netloc
     if not any(domain.endswith(d) for d in ALLOWED_DOMAINS):
         raise HTTPException(status_code=403, detail=f"Domain not allowed: {domain}")
@@ -27,13 +44,14 @@ async def image_proxy(url: str):
         return StreamingResponse(
             content=iter([resp.content]),
             media_type=resp.headers.get("content-type", "image/jpeg"),
+            headers=get_cors_headers(request),
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch image: {e}")
 
 
 @router.get("/images/{filename}")
-async def freebox_image_proxy(filename: str):
+async def freebox_image_proxy(filename: str, request: Request):
     """Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content."""
     url = f"{FREEBOX_BASE}/{filename}"
     try:
@@ -44,6 +62,7 @@ async def freebox_image_proxy(filename: str):
             return StreamingResponse(
                 iter([r.content]),
                 media_type=r.headers.get("content-type", "image/jpeg"),
+                headers=get_cors_headers(request),
             )
     except Exception:
         return Response(status_code=404)
