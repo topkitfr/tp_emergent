@@ -652,7 +652,8 @@ async def get_sponsor_kits(slug: str):
     if not sponsor:
         raise HTTPException(status_code=404, detail="Sponsor not found")
     sponsor_id = sponsor.get("sponsor_id") or sponsor.get("id")
-    if not sponsor_id:
-        raise HTTPException(status_code=500, detail="Sponsor has no sponsor_id")
-    kits = await db.master_kits.find({"sponsor_id": sponsor_id}, {"_id": 0}).sort("season", -1).to_list(200)
-    return [await _normalize_kit(k) for k in kits]
+    name       = sponsor.get("name", "")
+    kits_by_id = await db.master_kits.find({"sponsor_id": sponsor_id}, {"_id": 0}).sort("season", -1).to_list(200) if sponsor_id else []
+    if not kits_by_id and name:
+        kits_by_id = await db.master_kits.find({"sponsor": {"$regex": f"^{name}$", "$options": "i"}}, {"_id": 0}).sort("season", -1).to_list(200)
+    return [await _normalize_kit(k) for k in kits_by_id]

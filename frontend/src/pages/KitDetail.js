@@ -51,7 +51,7 @@ export default function KitDetail() {
           front_photo: r.data.front_photo || '',
         });
         try {
-          const res = await getKitPlayers(r.data.id);
+          const res = await getKitPlayers(r.data.kit_id);
           setPlayers(res.data || []);
         } catch { setPlayers([]); }
         setLoading(false);

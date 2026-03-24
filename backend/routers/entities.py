@@ -10,20 +10,19 @@ from ..models import (
     BrandCreate, BrandOut,
     PlayerCreate, PlayerOut,
 )
+from ..auth import get_current_user
 from ..utils import slugify
 
 router = APIRouter(prefix="/api", tags=["entities"])
+
 
 # ─────────────────────────────────────────────
 # Helper — verrou sur entités en attente d'approbation
 # ─────────────────────────────────────────────
 LOCKED_STATUSES = ("for_review", "pending")
 
+
 async def _assert_not_locked(collection: str, id_field: str, entity_id: str):
-    """
-    Lève 423 si l'entité est en cours d'approbation (for_review / pending).
-    Doit être appelé en début de chaque PUT/PATCH d'entité.
-    """
     doc = await db[collection].find_one({id_field: entity_id}, {"_id": 0, "status": 1})
     if doc and doc.get("status") in LOCKED_STATUSES:
         raise HTTPException(
@@ -49,8 +48,8 @@ async def list_teams(
     query = {}
     if search:
         query["$or"] = [
-            {"name":    {"$regex": search, "$options": "i"}},
-            {"aka":     {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": search, "$options": "i"}},
+            {"aka":  {"$regex": search, "$options": "i"}},
         ]
     if country:
         query["country"] = {"$regex": country, "$options": "i"}
@@ -96,11 +95,6 @@ async def create_team_pending(
     team: TeamCreate,
     parent_submission_id: Optional[str] = Query(default=None)
 ):
-    """
-    Crée une équipe en statut for_review + une submission liée.
-    parent_submission_id : submission_id du master_kit parent (pour liaison CASCADE).
-    Si l'équipe existe déjà (même slug) on la retourne sans créer de doublon.
-    """
     slug = slugify(team.name)
     existing = await db.teams.find_one({"slug": slug}, {"_id": 0})
     if existing:
@@ -141,13 +135,10 @@ async def create_team_pending(
 
 @router.put("/teams/{team_id}", response_model=TeamOut)
 async def update_team(team_id: str, team: TeamCreate):
-    # ── VERROU CRITIQUE ──
     await _assert_not_locked("teams", "team_id", team_id)
-
     existing = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Team not found")
-
     update_data = {k: v for k, v in team.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(team.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -257,13 +248,10 @@ async def create_league_pending(
 
 @router.put("/leagues/{league_id}", response_model=LeagueOut)
 async def update_league(league_id: str, league: LeagueCreate):
-    # ── VERROU CRITIQUE ──
     await _assert_not_locked("leagues", "league_id", league_id)
-
     existing = await db.leagues.find_one({"league_id": league_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="League not found")
-
     update_data = {k: v for k, v in league.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(league.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -370,13 +358,10 @@ async def create_brand_pending(
 
 @router.put("/brands/{brand_id}", response_model=BrandOut)
 async def update_brand(brand_id: str, brand: BrandCreate):
-    # ── VERROU CRITIQUE ──
     await _assert_not_locked("brands", "brand_id", brand_id)
-
     existing = await db.brands.find_one({"brand_id": brand_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Brand not found")
-
     update_data = {k: v for k, v in brand.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(brand.name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -385,10 +370,16 @@ async def update_brand(brand_id: str, brand: BrandCreate):
     result["kit_count"] = await db.master_kits.count_documents({"brand_id": brand_id})
     return result
 
+
 # ── SPONSORS ──────────────────────────────────────────────────────────────────
 
 @router.get("/sponsors", response_model=List[dict])
-async def list_sponsors(search: Optional[str] = None, country: Optional[str] = None, skip: int = 0, limit: int = 100):
+async def list_sponsors(
+    search: Optional[str] = None,
+    country: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+):
     query: dict = {"status": {"$ne": "rejected"}}
     if search:
         query["name"] = {"$regex": search, "$options": "i"}
@@ -396,19 +387,38 @@ async def list_sponsors(search: Optional[str] = None, country: Optional[str] = N
         query["country"] = {"$regex": country, "$options": "i"}
     sponsors = await db.sponsors.find(query, {"_id": 0}).sort("name", 1).skip(skip).limit(limit).to_list(limit)
     for s in sponsors:
-        sid = s.get("sponsor_id", "")
-        s["kit_count"] = await db.master_kits.count_documents({"sponsor_id": sid}) if sid else 0
+        sid  = s.get("sponsor_id", "")
+        name = s.get("name", "")
+        count_by_id = await db.master_kits.count_documents({"sponsor_id": sid}) if sid else 0
+        if count_by_id == 0 and name:
+            count_by_name = await db.master_kits.count_documents(
+                {"sponsor": {"$regex": f"^{name}$", "$options": "i"}}
+            )
+        else:
+            count_by_name = 0
+        s["kit_count"] = count_by_id or count_by_name
     return sponsors
 
 
 @router.get("/sponsors/{sponsor_id}")
 async def get_sponsor(sponsor_id: str):
     sponsor = await db.sponsors.find_one(
-        {"$or": [{"sponsor_id": sponsor_id}, {"slug": sponsor_id}]},  # ← sponsor_id avec underscore
+        {"$or": [{"sponsor_id": sponsor_id}, {"slug": sponsor_id}]},
         {"_id": 0}
     )
     if not sponsor:
         raise HTTPException(status_code=404, detail="Sponsor not found")
+    sid  = sponsor.get("sponsor_id", "")
+    name = sponsor.get("name", "")
+    # Cherche les kits par sponsor_id d'abord, fallback sur le champ sponsor (string)
+    kits = await db.master_kits.find({"sponsor_id": sid}, {"_id": 0}).sort("season", -1).to_list(200) if sid else []
+    if not kits and name:
+        kits = await db.master_kits.find(
+            {"sponsor": {"$regex": f"^{name}$", "$options": "i"}},
+            {"_id": 0}
+        ).sort("season", -1).to_list(200)
+    sponsor["kits"]      = kits
+    sponsor["kit_count"] = len(kits)
     return sponsor
 
 
@@ -418,7 +428,7 @@ async def create_sponsor(sponsor: dict):
     if await db.sponsors.find_one({"slug": slug}, {"_id": 0}):
         raise HTTPException(status_code=400, detail="Sponsor already exists")
     doc = {**sponsor}
-    doc["sponsor_id"]  = f"sponsor_{uuid.uuid4().hex[:12]}"  # ← sponsor_id + préfixe cohérent
+    doc["sponsor_id"]  = f"sponsor_{uuid.uuid4().hex[:12]}"
     doc["slug"]        = slug
     doc["status"]      = "approved"
     doc["created_at"]  = datetime.now(timezone.utc).isoformat()
@@ -428,34 +438,40 @@ async def create_sponsor(sponsor: dict):
 
 
 @router.post("/sponsors/pending")
-async def create_sponsor_pending(sponsor: dict, parent_submission_id: Optional[str] = Query(default=None)):
+async def create_sponsor_pending(
+    sponsor: dict,
+    parent_submission_id: Optional[str] = Query(default=None)
+):
     slug = slugify(sponsor.get("name", ""))
     existing = await db.sponsors.find_one({"slug": slug}, {"_id": 0})
     if existing:
         return existing
+
     now           = datetime.now(timezone.utc).isoformat()
-    sponsor_id    = f"sponsor_{uuid.uuid4().hex[:12]}"  # ← préfixe cohérent
-    submission_id = f"sub_{uuid.uuid4().hex[:12]}"      # ← underscore
+    sponsor_id    = f"sponsor_{uuid.uuid4().hex[:12]}"
+    submission_id = f"sub_{uuid.uuid4().hex[:12]}"
 
     doc = {**sponsor}
-    doc["sponsor_id"]    = sponsor_id    # ← underscore
+    doc["sponsor_id"]    = sponsor_id
     doc["slug"]          = slug
-    doc["status"]        = "for_review"  # ← underscore (pas "for-review")
+    doc["status"]        = "for_review"
     doc["submission_id"] = submission_id
     doc["created_at"]    = now
     doc["updated_at"]    = now
     await db.sponsors.insert_one(doc)
 
-    sub_data = {"mode": "create", "name": sponsor.get("name"), "entity_id": sponsor_id}  # ← entity_id underscore
+    sub_data = {"mode": "create", "name": sponsor.get("name"), "entity_id": sponsor_id}
     if parent_submission_id:
         sub_data["parent_submission_id"] = parent_submission_id
 
     await db.submissions.insert_one({
-        "submission_id":   submission_id,   # ← underscore
+        "submission_id":   submission_id,
         "submission_type": "sponsor",
         "data":            sub_data,
         "status":          "pending",
-        "votes_up": 0, "votes_down": 0, "voters": [],
+        "votes_up":        0,
+        "votes_down":      0,
+        "voters":          [],
         "created_at":      now,
     })
     return await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
@@ -463,7 +479,7 @@ async def create_sponsor_pending(sponsor: dict, parent_submission_id: Optional[s
 
 @router.put("/sponsors/{sponsor_id}")
 async def update_sponsor(sponsor_id: str, sponsor: dict):
-    await _assert_not_locked("sponsors", "sponsor_id", sponsor_id)  # ← _assert_not_locked avec underscore
+    await _assert_not_locked("sponsors", "sponsor_id", sponsor_id)
     existing = await db.sponsors.find_one({"sponsor_id": sponsor_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Sponsor not found")
@@ -494,7 +510,6 @@ async def list_players(
     for p in players:
         pid = p.get("player_id", "")
         p["kit_count"] = await db.versions.count_documents({"main_player_id": pid}) if pid else 0
-        # Sanitize list fields that may be stored as "" in old DB docs
         if not isinstance(p.get("positions"), list):
             p["positions"] = []
     return players
@@ -505,11 +520,9 @@ async def get_player(player_id: str):
     player = await db.players.find_one({"$or": [{"player_id": player_id}, {"slug": player_id}]}, {"_id": 0})
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
-    # Sanitize list fields that may be stored as "" in old DB docs
     if not isinstance(player.get("positions"), list):
         player["positions"] = []
     pid = player.get("player_id", "")
-    # Lien via flocage : on cherche les items de collection floqués à ce joueur
     collection_items = await db.collections.find(
         {"flocking_player_id": pid}, {"_id": 0, "version_id": 1}
     ).to_list(2000) if pid else []
@@ -579,7 +592,7 @@ async def create_player_pending(
         sub_data["parent_submission_id"] = parent_submission_id
 
     try:
-        current_user = await get_current_user(request)
+        current_user   = await get_current_user(request)
         submitted_by   = current_user.get("user_id", "")
         submitter_name = current_user.get("name", "")
     except Exception:
@@ -606,13 +619,10 @@ async def create_player_pending(
 
 @router.put("/players/{player_id}", response_model=PlayerOut)
 async def update_player(player_id: str, player: PlayerCreate):
-    # ── VERROU CRITIQUE ──
     await _assert_not_locked("players", "player_id", player_id)
-
     existing = await db.players.find_one({"player_id": player_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Player not found")
-
     update_data = {k: v for k, v in player.model_dump().items() if v is not None}
     update_data["slug"]       = slugify(player.full_name)
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -631,23 +641,16 @@ ENTITY_CONFIG = {
     "league":  {"collection": "leagues",  "id_field": "league_id"},
     "brand":   {"collection": "brands",   "id_field": "brand_id"},
     "player":  {"collection": "players",  "id_field": "player_id"},
-    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id"},  # ← AJOUT
+    "sponsor": {"collection": "sponsors", "id_field": "sponsor_id"},
 }
 
 
 @router.get("/pending")
 async def get_all_pending(master_kit_submission_id: Optional[str] = Query(default=None)):
-    """
-    Retourne les entités en attente (for_review).
-    Si master_kit_submission_id est fourni → filtre sur la liaison parent.
-    Chaque doc inclut submission_id, name (ou full_name pour players).
-    """
     results = {}
     for entity_type, config in ENTITY_CONFIG.items():
         query: dict = {"status": "for_review"}
-
         if master_kit_submission_id:
-            # On cherche les submissions liées pour récupérer les entity_ids correspondants
             linked_subs = await db.submissions.find(
                 {
                     "submission_type": entity_type,
@@ -663,11 +666,8 @@ async def get_all_pending(master_kit_submission_id: Optional[str] = Query(defaul
             query[config["id_field"]] = {"$in": linked_ids}
 
         docs = await db[config["collection"]].find(query, {"_id": 0}).to_list(100)
-
-        # Normalise le champ "display_name" pour le frontend
         for d in docs:
             d["display_name"] = d.get("full_name") or d.get("name") or "—"
-
         results[entity_type] = docs
     return results
 
@@ -684,7 +684,6 @@ async def approve_entity(entity_type: str, entity_id: str):
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Entity not found")
-    # Also close the corresponding submission
     await db.submissions.update_one(
         {
             "submission_type": entity_type,
@@ -708,7 +707,6 @@ async def reject_entity(entity_type: str, entity_id: str):
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Entity not found")
-    # Also close the corresponding submission
     await db.submissions.update_one(
         {
             "submission_type": entity_type,
@@ -735,14 +733,12 @@ async def autocomplete(
 
     if type:
         entity_config = {
-    "team":    {"collection": "teams",    "search_field": "name",      "id_field": "team_id",    "label_field": "name",      "extra_field": "country"},
-    "league":  {"collection": "leagues",  "search_field": "name",      "id_field": "league_id",  "label_field": "name",      "extra_field": "country_or_region"},
-    "brand":   {"collection": "brands",   "search_field": "name",      "id_field": "brand_id",   "label_field": "name",      "extra_field": "country"},
-    "player":  {"collection": "players",  "search_field": "full_name", "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
-    "sponsor": {"collection": "sponsors", "search_field": "name",      "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
-}
-
-# Expose
+            "team":    {"collection": "teams",    "search_field": "name",      "id_field": "team_id",    "label_field": "name",      "extra_field": "country"},
+            "league":  {"collection": "leagues",  "search_field": "name",      "id_field": "league_id",  "label_field": "name",      "extra_field": "country_or_region"},
+            "brand":   {"collection": "brands",   "search_field": "name",      "id_field": "brand_id",   "label_field": "name",      "extra_field": "country"},
+            "player":  {"collection": "players",  "search_field": "full_name", "id_field": "player_id",  "label_field": "full_name", "extra_field": "nationality"},
+            "sponsor": {"collection": "sponsors", "search_field": "name",      "id_field": "sponsor_id", "label_field": "name",      "extra_field": "country"},
+        }
         config = entity_config.get(type)
         if not config:
             return []
@@ -757,7 +753,6 @@ async def autocomplete(
                 "id":     d.get(config["id_field"], ""),
                 "label":  d.get(config["label_field"], ""),
                 "extra":  d.get(config["extra_field"], ""),
-                # Expose le statut pour que le frontend puisse afficher un badge "en attente"
                 "status": d.get("status", "approved"),
             }
             for d in docs
