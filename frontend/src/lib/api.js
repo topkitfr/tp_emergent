@@ -6,40 +6,35 @@ const API = `${BACKEND_URL}/api`;
 
 export const proxyImageUrl = (url) => {
   if (!url) return '';
+  // Images NAS Freebox via proxy backend
   if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
-  if (url.startsWith('https://cdn.footballkitarchive.com/')) {
-    return `${API}/image-proxy?url=${encodeURIComponent(url)}`;
-  }
+  // Images CDN externes : chargées directement (pas de proxy)
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return url;
 };
 
 const api = axios.create({
   baseURL: API,
   withCredentials: true,
-  timeout: 15000, // timeout 15s pour éviter les requêtes bloquées indéfiniment
+  timeout: 15000,
 });
 
 // ─── Intercepteur de réponse — gestion globale des erreurs ─────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 429 — Rate limit
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.['retry-after'];
       error.message = `Trop de requêtes. Réessayez dans ${retryAfter || 60} secondes.`;
     }
-    // 401 — Session expirée (sauf sur /auth/me pour éviter les redirections en boucle)
     if (
       error.response?.status === 401 &&
       !error.config?.url?.includes('/auth/me') &&
       !error.config?.url?.includes('/auth/login')
-    ) {
-      // On peut ajouter ici une redirection vers /login si besoin
-    }
+    ) {}
     return Promise.reject(error);
   }
 );
-
 
 export const getVersionWornBy = (versionId) => api.get(`/versions/${versionId}/worn-by`);
 export const getReviews = (versionId) => api.get(`/reviews`, { params: { version_id: versionId } });
