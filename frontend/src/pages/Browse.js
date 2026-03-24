@@ -12,6 +12,7 @@ import VersionCard from "@/components/VersionCard";
 import AddToCollectionDialog from "@/components/AddToCollectionDialog";
 
 const EMPTY_FILTER = "__all__";
+const LIMIT = 50;
 
 function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
   return (
@@ -77,11 +78,13 @@ export default function Browse() {
   const [browseMode,      setBrowseMode]      = useState("master");
   const [kits,            setKits]            = useState([]);
   const [versions,        setVersions]        = useState([]);
-  const [total,           setTotal]           = useState(0);  // ✅ ajouté
+  const [total,           setTotal]           = useState(0);
+  const [skip,            setSkip]            = useState(0);
   const [filters,         setFilters]         = useState({
     clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [],
   });
   const [loading,         setLoading]         = useState(true);
+  const [loadingMore,     setLoadingMore]     = useState(false);
   const [viewMode,        setViewMode]        = useState("grid");
   const [search,          setSearch]          = useState("");
   const [selectedClub,    setSelectedClub]    = useState("");
@@ -102,17 +105,25 @@ export default function Browse() {
     setSelectedType(""); setSelectedSeason(""); setSelectedDesign(""); setSelectedLeague("");
   };
 
+  // Reset skip à 0 quand les filtres ou le mode changent
+  useEffect(() => {
+    setSkip(0);
+  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
+
   useEffect(() => {
     getFilters()
       .then((r) => setFilters(r.data))
       .catch((e) => console.error("Filters error:", e));
   }, []);
 
-  // ✅ useEffect master kits — corrigé
+  // useEffect master kits
   useEffect(() => {
     if (browseMode !== "master") return;
-    setLoading(true);
-    const params = {};
+    const isLoadMore = skip > 0;
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
+
+    const params = { skip, limit: LIMIT };
     if (search)         params.search   = search;
     if (selectedClub)   params.club     = selectedClub;
     if (selectedBrand)  params.brand    = selectedBrand;
@@ -120,34 +131,43 @@ export default function Browse() {
     if (selectedSeason) params.season   = selectedSeason;
     if (selectedDesign) params.design   = selectedDesign;
     if (selectedLeague) params.league   = selectedLeague;
+
     getMasterKits(params)
       .then((r) => {
-        setKits(r.data?.results ?? []);
+        const newKits = r.data?.results ?? [];
+        setKits((prev) => skip === 0 ? newKits : [...prev, ...newKits]);
         setTotal(r.data?.total ?? 0);
         setLoading(false);
+        setLoadingMore(false);
       })
-      .catch((e) => { console.error("Kits error:", e); setLoading(false); });
-  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
+      .catch((e) => { console.error("Kits error:", e); setLoading(false); setLoadingMore(false); });
+  }, [browseMode, skip, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
 
-  // ✅ useEffect versions — corrigé
+  // useEffect versions
   useEffect(() => {
     if (browseMode !== "version") return;
-    setLoading(true);
-    const params = {};
+    const isLoadMore = skip > 0;
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
+
+    const params = { skip, limit: LIMIT };
     if (search)         params.search   = search;
     if (selectedClub)   params.club     = selectedClub;
     if (selectedBrand)  params.brand    = selectedBrand;
     if (selectedType)   params.kit_type = selectedType;
     if (selectedSeason) params.season   = selectedSeason;
     if (selectedLeague) params.league   = selectedLeague;
+
     getVersions(params)
       .then((r) => {
-        setVersions(r.data?.results ?? []);
+        const newVersions = r.data?.results ?? [];
+        setVersions((prev) => skip === 0 ? newVersions : [...prev, ...newVersions]);
         setTotal(r.data?.total ?? 0);
         setLoading(false);
+        setLoadingMore(false);
       })
-      .catch((e) => { console.error("Versions error:", e); setLoading(false); });
-  }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
+      .catch((e) => { console.error("Versions error:", e); setLoading(false); setLoadingMore(false); });
+  }, [browseMode, skip, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
 
   const filterItems = [
     { label: "Club",     value: selectedClub,   set: setSelectedClub,   options: filters.clubs     ?? [] },
@@ -162,7 +182,8 @@ export default function Browse() {
 
   const filtersPanelProps = { browseMode, setBrowseMode, search, setSearch, filterItems, activeFilterCount, clearFilters };
   const gridClass = viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "flex flex-col gap-3";
-  const isEmpty = browseMode === "master" ? kits.length === 0 : versions.length === 0;
+  const displayedCount = browseMode === "master" ? kits.length : versions.length;
+  const isEmpty = displayedCount === 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -176,11 +197,7 @@ export default function Browse() {
 
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm text-muted-foreground">
-              {loading ? "Loading..." : (
-                browseMode === "master"
-                  ? `${total} kits found`
-                  : `${total} versions found`
-              )}
+              {loading ? "Loading..." : `${total} ${browseMode === "master" ? "kits" : "versions"} found`}
             </span>
 
             <div className="flex items-center gap-2">
@@ -248,6 +265,20 @@ export default function Browse() {
               ))}
             </div>
           )}
+
+          {/* Load more */}
+          {!loading && displayedCount < total && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setSkip((s) => s + LIMIT)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : `Load more (${total - displayedCount} remaining)`}
+              </Button>
+            </div>
+          )}
+
         </div>
       </div>
 
