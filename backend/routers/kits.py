@@ -93,6 +93,8 @@ async def list_master_kits(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
+    sort_by: Optional[str] = None,
+    order: Optional[str] = None,
 ):
     query = {}
     if club:
@@ -121,9 +123,14 @@ async def list_master_kits(
     total = await db.master_kits.count_documents(query)
     capped_limit = min(limit, 100)
 
+    # ── Tri ──────────────────────────────────────────────────────────
+    ALLOWED_SORT_FIELDS = {"created_at", "season", "avg_rating", "review_count"}
+    sort_field = sort_by if sort_by in ALLOWED_SORT_FIELDS else "season"
+    sort_dir = -1 if order == "desc" else 1
+
     kits = (
         await db.master_kits.find(query, {"_id": 0})
-        .sort("season", -1)
+        .sort(sort_field, sort_dir)
         .skip(skip)
         .limit(capped_limit)
         .to_list(capped_limit)

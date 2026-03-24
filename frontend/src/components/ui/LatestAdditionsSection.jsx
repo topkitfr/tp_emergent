@@ -17,7 +17,16 @@ function LatestAdditionsSection() {
           sort_by: "created_at",
           order: "desc",
         });
-        setKits(response.data?.items ?? response.data ?? []);
+        // L'API retourne { results: [...], total, skip, limit }
+        const data = response.data;
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data?.items)
+          ? data.items
+          : [];
+        setKits(items);
       } catch (e) {
         console.error("Erreur chargement latest kits", e);
         setError("Impossible de charger les derniers kits.");
@@ -65,7 +74,7 @@ function LatestAdditionsSection() {
       <p className="text-sm text-muted-foreground mb-8">Les derniers kits ajoutés au catalogue.</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kits.map((kit) => (
-          <JerseyCard key={kit._id} kit={kit} showNew={true} />
+          <JerseyCard key={kit._id || kit.kit_id} kit={kit} showNew={true} />
         ))}
       </div>
     </div>
