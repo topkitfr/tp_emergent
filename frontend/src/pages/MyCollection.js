@@ -78,44 +78,53 @@ export default function MyCollection() {
   const [categoryStats, setCategoryStats] = useState([]);
   // ── Listes personnalisées ──
   const [lists, setLists] = useState([]);
-  const [activeListId, setActiveListId] = useState(null);   // null = vue "Toute la collection"
+  const [activeListId, setActiveListId] = useState(null);
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('#6366f1');
   const [creatingList, setCreatingList] = useState(false);
   const [editingListId, setEditingListId] = useState(null);
   const [editingListName, setEditingListName] = useState('');
-  const [addToListItem, setAddToListItem] = useState(null); // collection_id à ajouter à une liste
+  const [addToListItem, setAddToListItem] = useState(null);
   // ──────────────────────────────────
   const [detailItem, setDetailItem] = useState(null);
   const [signedPlayerAuraLevel, setSignedPlayerAuraLevel] = useState(0);
   const [editForm, setEditForm] = useState({});
 
-const fetchCollection = useCallback(async () => {
-  setLoading(true);
-  try {
-    const params = {};
-    if (selectedCategory) params.category = selectedCategory;
-    const [colRes, statsRes, catStatsRes] = await Promise.all([
-      getMyCollection(params),
-      getCollectionStats(),
-      getCategoryStats(),
-    ]);
-    setItems(colRes.data);
-    setStats(statsRes.data);
-    setCategoryStats(catStatsRes.data);
-  } catch {
-    // ignore
-  } finally {
-    setLoading(false);
-  }
-}, [selectedCategory]);  // ← dépendance de fetchCollection
+  const fetchCollection = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (selectedCategory) params.category = selectedCategory;
+      const [colRes, statsRes, catStatsRes] = await Promise.all([
+        getMyCollection(params),
+        getCollectionStats(),
+        getCategoryStats(),
+      ]);
+      setItems(colRes.data);
+      setStats(statsRes.data);
+      setCategoryStats(catStatsRes.data);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory]);
 
-useEffect(() => {
-  fetchCollection();
-  fetchLists();
-  getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
-}, [fetchCollection]);  // ← maintenant fetchCollection est stable et listée ici
+  const fetchLists = useCallback(async () => {
+    try {
+      const r = await getUserLists();
+      setLists(r.data ?? []);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCollection();
+    fetchLists();
+    getCollectionCategories().then(r => setCategories(r.data)).catch(() => {});
+  }, [fetchCollection, fetchLists]);
 
   // ── Handlers listes ─────────────────────────────────────────────────────────
 
@@ -195,8 +204,7 @@ useEffect(() => {
 
   const openDetail = (item) => {
     setDetailItem(item);
-    setSignedPlayerAuraLevel(0); // reset
-    // Charge l'aura du joueur signataire si présent
+    setSignedPlayerAuraLevel(0);
     if (item.signed_by_player_id) {
       getPlayerAura(item.signed_by_player_id)
         .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
@@ -357,7 +365,6 @@ useEffect(() => {
               </button>
             </div>
 
-            {/* Formulaire de création */}
             {showCreateList && (
               <div className="flex items-center gap-2 mb-3 p-3 border border-primary/30 bg-primary/5">
                 <input
@@ -388,9 +395,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Chips de listes */}
             <div className="flex flex-wrap gap-2">
-              {/* Chip "Tout" */}
               <button
                 onClick={() => setActiveListId(null)}
                 className={`flex items-center gap-1.5 border px-3 py-1.5 text-xs transition-colors ${
@@ -445,7 +450,6 @@ useEffect(() => {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: lst.color || '#6366f1' }} />
                       {lst.name}
                       <span className="font-mono opacity-60">{lst.item_count}</span>
-                      {/* Actions au hover */}
                       <span className="hidden group-hover/chip:flex items-center gap-0.5 ml-1">
                         <span onClick={e => { e.stopPropagation(); setEditingListId(lst.list_id); setEditingListName(lst.name); }}
                           className="p-0.5 hover:text-foreground" title="Renommer">
@@ -775,8 +779,8 @@ useEffect(() => {
                     src={proxyImageUrl(
                       detailItem.version?.front_photo || detailItem.master_kit?.front_photo,
                     )}
-                  alt={detailItem.master_kit?.club}
-                  className="w-20 h-28 object-cover border border-border"
+                    alt={detailItem.master_kit?.club}
+                    className="w-20 h-28 object-cover border border-border"
                   />
                   <div className="flex-1">
                     <h3
@@ -813,92 +817,39 @@ useEffect(() => {
                   data-testid="item-current-values"
                 >
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Flocking
-                    </span>
-                    <p className="text-xs">
-                      {detailItem.flocking_detail || detailItem.flocking_type || 'None'}
-                    </p>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Flocking</span>
+                    <p className="text-xs">{detailItem.flocking_detail || detailItem.flocking_type || 'None'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Origin
-                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Origin</span>
                     <p className="text-xs">{detailItem.condition_origin || 'None'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      State
-                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>State</span>
                     <p className="text-xs">{detailItem.physical_state || 'None'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Size
-                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Size</span>
                     <p className="text-xs">{detailItem.size || 'None'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Purchase Cost
-                    </span>
-                    <p className="text-xs font-mono">
-                      {detailItem.purchase_cost ? `${detailItem.purchase_cost}€` : 'None'}
-                    </p>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Purchase Cost</span>
+                    <p className="text-xs font-mono">{detailItem.purchase_cost ? `${detailItem.purchase_cost}€` : 'None'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Signed
-                    </span>
-                    <p className="text-xs">
-                      {detailItem.signed ? detailItem.signed_by || 'Yes' : 'No'}
-                    </p>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Signed</span>
+                    <p className="text-xs">{detailItem.signed ? detailItem.signed_by || 'Yes' : 'No'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Proof/Certificate
-                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Proof/Certificate</span>
                     <p className="text-xs">{detailItem.signed_proof ? 'Yes' : 'No'}</p>
                   </div>
                   <div>
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Estimated Price
-                    </span>
-                    <p className="text-xs font-mono text-accent">
-                      {detailItem.estimated_price ? `${detailItem.estimated_price}€` : 'None'}
-                    </p>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Estimated Price</span>
+                    <p className="text-xs font-mono text-accent">{detailItem.estimated_price ? `${detailItem.estimated_price}€` : 'None'}</p>
                   </div>
                   <div className="col-span-2">
-                    <span
-                      className="text-[10px] text-muted-foreground uppercase"
-                      style={fieldStyle}
-                    >
-                      Notes
-                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase" style={fieldStyle}>Notes</span>
                     <p className="text-xs">{detailItem.notes || 'None'}</p>
                   </div>
                 </div>
@@ -907,94 +858,51 @@ useEffect(() => {
               </div>
 
               <div className="space-y-4">
-                <p
-                  className="text-xs uppercase tracking-wider text-muted-foreground"
-                  style={fieldStyle}
-                >
+                <p className="text-xs uppercase tracking-wider text-muted-foreground" style={fieldStyle}>
                   ITEM DETAILS
                 </p>
 
-                {/* FLOCKING */}
-                <p
-                  className="text-[10px] uppercase tracking-wider text-primary/60"
-                  style={fieldStyle}
-                >
+                <p className="text-[10px] uppercase tracking-wider text-primary/60" style={fieldStyle}>
                   FLOCKING
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Type
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Type</Label>
                     <Select
                       value={editForm.flocking_type || 'none'}
-                      onValueChange={(v) =>
-                        setEditForm((p) => ({ ...p, flocking_type: v === 'none' ? '' : v }))
-                      }
+                      onValueChange={(v) => setEditForm((p) => ({ ...p, flocking_type: v === 'none' ? '' : v }))}
                     >
-                      <SelectTrigger
-                        className={inputClass}
-                        data-testid="detail-flocking-type"
-                      >
+                      <SelectTrigger className={inputClass} data-testid="detail-flocking-type">
                         <SelectValue placeholder="None" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {FLOCKING_TYPES.map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
-                          </SelectItem>
-                        ))}
+                        {FLOCKING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Origin
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Origin</Label>
                     <Select
                       value={editForm.flocking_origin || 'none'}
-                      onValueChange={(v) =>
-                        setEditForm((p) => ({ ...p, flocking_origin: v === 'none' ? '' : v }))
-                      }
+                      onValueChange={(v) => setEditForm((p) => ({ ...p, flocking_origin: v === 'none' ? '' : v }))}
                     >
-                      <SelectTrigger
-                        className={inputClass}
-                        data-testid="detail-flocking-origin"
-                      >
+                      <SelectTrigger className={inputClass} data-testid="detail-flocking-origin">
                         <SelectValue placeholder="None" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {FLOCKING_ORIGINS.map((o) => (
-                          <SelectItem key={o} value={o}>
-                            {o}
-                          </SelectItem>
-                        ))}
+                        {FLOCKING_ORIGINS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Player
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Player</Label>
                     <EntityAutocomplete
                       entityType="player"
                       value={editForm.flocking_detail || ''}
-                      onChange={(val) =>
-                        setEditForm((p) => ({
-                          ...p,
-                          flocking_detail: val,
-                          flocking_player_id: '',
-                        }))
-                      }
-                      onSelect={(item) =>
-                        setEditForm((p) => ({
-                          ...p,
-                          flocking_detail: item.label,
-                          flocking_player_id: item.id,
-                        }))
-                      }
+                      onChange={(val) => setEditForm((p) => ({ ...p, flocking_detail: val, flocking_player_id: '' }))}
+                      onSelect={(item) => setEditForm((p) => ({ ...p, flocking_detail: item.label, flocking_player_id: item.id }))}
                       placeholder="e.g., Messi"
                       className={inputClass}
                       testId="detail-flocking-detail"
@@ -1002,97 +910,61 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Condition & State */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Condition (Origin)
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Condition (Origin)</Label>
                     <Select
                       value={editForm.condition_origin || 'none'}
-                      onValueChange={(v) =>
-                        setEditForm((p) => ({ ...p, condition_origin: v === 'none' ? '' : v }))
-                      }
+                      onValueChange={(v) => setEditForm((p) => ({ ...p, condition_origin: v === 'none' ? '' : v }))}
                     >
-                      <SelectTrigger
-                        className={inputClass}
-                        data-testid="detail-condition-origin"
-                      >
+                      <SelectTrigger className={inputClass} data-testid="detail-condition-origin">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {CONDITION_ORIGINS.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
+                        {CONDITION_ORIGINS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Physical State
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Physical State</Label>
                     <Select
                       value={editForm.physical_state || 'none'}
-                      onValueChange={(v) =>
-                        setEditForm((p) => ({ ...p, physical_state: v === 'none' ? '' : v }))
-                      }
+                      onValueChange={(v) => setEditForm((p) => ({ ...p, physical_state: v === 'none' ? '' : v }))}
                     >
-                      <SelectTrigger
-                        className={inputClass}
-                        data-testid="detail-physical-state"
-                      >
+                      <SelectTrigger className={inputClass} data-testid="detail-physical-state">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {PHYSICAL_STATES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
+                        {PHYSICAL_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                {/* Size & Purchase Cost */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Size
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Size</Label>
                     <Select
                       value={editForm.size || 'none'}
-                      onValueChange={(v) =>
-                        setEditForm((p) => ({ ...p, size: v === 'none' ? '' : v }))
-                      }
+                      onValueChange={(v) => setEditForm((p) => ({ ...p, size: v === 'none' ? '' : v }))}
                     >
                       <SelectTrigger className={inputClass} data-testid="detail-size">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
                         <SelectItem value="none">None</SelectItem>
-                        {SIZES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
+                        {SIZES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className={fieldLabel} style={fieldStyle}>
-                      Purchase Cost (&euro;)
-                    </Label>
+                    <Label className={fieldLabel} style={fieldStyle}>Purchase Cost (&euro;)</Label>
                     <Input
                       type="number"
                       value={editForm.purchase_cost || ''}
-                      onChange={(e) =>
-                        setEditForm((p) => ({ ...p, purchase_cost: e.target.value }))
-                      }
+                      onChange={(e) => setEditForm((p) => ({ ...p, purchase_cost: e.target.value }))}
                       placeholder="0"
                       className={`${inputClass} font-mono`}
                       data-testid="detail-purchase-cost"
@@ -1100,7 +972,6 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Signed */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -1109,29 +980,16 @@ useEffect(() => {
                         onCheckedChange={(v) => setEditForm((p) => ({ ...p, signed: v }))}
                         data-testid="detail-signed-switch"
                       />
-                      <Label className="text-xs" style={fieldStyle}>
-                        SIGNED
-                      </Label>
+                      <Label className="text-xs" style={fieldStyle}>SIGNED</Label>
                     </div>
                     {editForm.signed && (
                       <div className="flex-1">
                         <EntityAutocomplete
                           entityType="player"
                           value={editForm.signed_by || ''}
-                          onChange={(val) =>
-                            setEditForm((p) => ({
-                              ...p,
-                              signed_by: val,
-                              signed_by_player_id: '',
-                            }))
-                          }
+                          onChange={(val) => setEditForm((p) => ({ ...p, signed_by: val, signed_by_player_id: '' }))}
                           onSelect={(item) => {
-                            setEditForm((p) => ({
-                              ...p,
-                              signed_by: item.label,
-                              signed_by_player_id: item.id,
-                            }));
-                            // Recharge l'aura du nouveau joueur sélectionné
+                            setEditForm((p) => ({ ...p, signed_by: item.label, signed_by_player_id: item.id }));
                             if (item.id) {
                               getPlayerAura(item.id)
                                 .then(r => setSignedPlayerAuraLevel(r.data?.aura_level || 0))
@@ -1149,39 +1007,28 @@ useEffect(() => {
                     <div className="flex items-center gap-2 ml-12">
                       <Switch
                         checked={editForm.signed_proof || false}
-                        onCheckedChange={(v) =>
-                          setEditForm((p) => ({ ...p, signed_proof: v }))
-                        }
+                        onCheckedChange={(v) => setEditForm((p) => ({ ...p, signed_proof: v }))}
                         data-testid="detail-signed-proof"
                       />
-                      <Label
-                        className="text-[10px] text-muted-foreground"
-                        style={fieldStyle}
-                      >
+                      <Label className="text-[10px] text-muted-foreground" style={fieldStyle}>
                         PROOF / CERTIFICATE
                       </Label>
                     </div>
                   )}
-
                 </div>
 
-                {/* Notes */}
                 <div className="space-y-2">
-                  <Label className={fieldLabel} style={fieldStyle}>
-                    Notes
-                  </Label>
+                  <Label className={fieldLabel} style={fieldStyle}>Notes</Label>
                   <Textarea
                     value={editForm.notes || ''}
-                    onChange={(e) =>
-                      setEditForm((p) => ({ ...p, notes: e.target.value }))
-                    }
+                    onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
                     placeholder="Any notes..."
                     className="bg-card border-border rounded-none min-h-[80px]"
                     data-testid="detail-notes"
                   />
                 </div>
 
-<EstimationBreakdown
+                <EstimationBreakdown
                   modelType={detailItem.version?.model || 'Replica'}
                   competition={detailItem.version?.competition || ''}
                   conditionOrigin={editForm.condition_origin || ''}
@@ -1260,9 +1107,7 @@ useEffect(() => {
                         : handleAddToList(lst.list_id)
                       }
                       className={`w-full flex items-center justify-between px-3 py-2.5 border text-left text-xs transition-colors ${
-                        alreadyIn
-                          ? 'border-primary/40 bg-primary/5'
-                          : 'border-border hover:border-primary/30'
+                        alreadyIn ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-primary/30'
                       }`}
                       data-testid={`add-to-list-option-${lst.list_id}`}
                     >
