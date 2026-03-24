@@ -120,7 +120,7 @@ export default function Browse() {
     if (selectedDesign) params.design   = selectedDesign;
     if (selectedLeague) params.league   = selectedLeague;
     getMasterKits(params)
-      .then((r) => { setKits(Array.isArray(r.data) ? r.data : []); setLoading(false); })
+      .then((r) => { console.log("KITS DATA:", r.data); setKits(Array.isArray(r.data) ? r.data : []); setLoading(false); })
       .catch((e) => { console.error("Kits error:", e); setLoading(false); });
   }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
 
