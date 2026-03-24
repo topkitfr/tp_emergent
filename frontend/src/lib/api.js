@@ -73,7 +73,6 @@ export const getCategoryStats = () => api.get('/collections/category-stats');
 
 // Reviews
 export const createReview = (data) => api.post('/reviews', data);
-export const getReviews = (versionId) => api.get('/reviews', { params: { version_id: versionId } });
 
 // Version Estimates
 export const getVersionEstimates = (versionId) => api.get(`/versions/${versionId}/estimates`);
