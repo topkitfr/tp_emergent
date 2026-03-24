@@ -16,7 +16,6 @@ const EMPTY_FILTER = "__all__";
 function FiltersPanel({ browseMode, setBrowseMode, search, setSearch, filterItems, activeFilterCount, clearFilters }) {
   return (
     <div className="space-y-4">
-
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">View</label>
         <div className="flex items-center gap-2">
@@ -78,6 +77,7 @@ export default function Browse() {
   const [browseMode,      setBrowseMode]      = useState("master");
   const [kits,            setKits]            = useState([]);
   const [versions,        setVersions]        = useState([]);
+  const [total,           setTotal]           = useState(0);  // ✅ ajouté
   const [filters,         setFilters]         = useState({
     clubs: [], brands: [], seasons: [], kit_types: [], designs: [], leagues: [],
   });
@@ -108,6 +108,7 @@ export default function Browse() {
       .catch((e) => console.error("Filters error:", e));
   }, []);
 
+  // ✅ useEffect master kits — corrigé
   useEffect(() => {
     if (browseMode !== "master") return;
     setLoading(true);
@@ -120,10 +121,15 @@ export default function Browse() {
     if (selectedDesign) params.design   = selectedDesign;
     if (selectedLeague) params.league   = selectedLeague;
     getMasterKits(params)
-      .then((r) => { console.log("KITS DATA:", r.data); setKits(Array.isArray(r.data) ? r.data : []); setLoading(false); })
+      .then((r) => {
+        setKits(r.data?.results ?? []);
+        setTotal(r.data?.total ?? 0);
+        setLoading(false);
+      })
       .catch((e) => { console.error("Kits error:", e); setLoading(false); });
   }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedDesign, selectedLeague]);
 
+  // ✅ useEffect versions — corrigé
   useEffect(() => {
     if (browseMode !== "version") return;
     setLoading(true);
@@ -135,7 +141,11 @@ export default function Browse() {
     if (selectedSeason) params.season   = selectedSeason;
     if (selectedLeague) params.league   = selectedLeague;
     getVersions(params)
-      .then((r) => { setVersions(Array.isArray(r.data) ? r.data : []); setLoading(false); })
+      .then((r) => {
+        setVersions(r.data?.results ?? []);
+        setTotal(r.data?.total ?? 0);
+        setLoading(false);
+      })
       .catch((e) => { console.error("Versions error:", e); setLoading(false); });
   }, [browseMode, search, selectedClub, selectedBrand, selectedType, selectedSeason, selectedLeague]);
 
@@ -168,8 +178,8 @@ export default function Browse() {
             <span className="text-sm text-muted-foreground">
               {loading ? "Loading..." : (
                 browseMode === "master"
-                  ? `${kits.length} kits found`
-                  : `${versions.length} versions found`
+                  ? `${total} kits found`
+                  : `${total} versions found`
               )}
             </span>
 
