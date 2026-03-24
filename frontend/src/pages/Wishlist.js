@@ -86,7 +86,6 @@ export default function Wishlist() {
                 <Link to={`/version/${item.version_id}`}>
                   <div className="aspect-[3/4] relative overflow-hidden bg-secondary">
                     <img
-                      crossOrigin="anonymous"
                       src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
                       alt={item.master_kit?.club}
                       className="w-full h-full object-cover group-hover:scale-105"
@@ -123,7 +122,6 @@ export default function Wishlist() {
               <div key={item.wishlist_id} className="flex items-center gap-4 p-3 border border-border bg-card group" data-testid={`wishlist-list-item-${item.wishlist_id}`}>
                 <Link to={`/version/${item.version_id}`} className="flex items-center gap-4 flex-1 min-w-0">
                   <img
-                    crossOrigin="anonymous"
                     src={proxyImageUrl(item.version?.front_photo || item.master_kit?.front_photo)}
                     alt=""
                     className="w-14 h-18 object-cover"
