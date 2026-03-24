@@ -256,7 +256,7 @@ async def _create_missing_entity_submissions(
             if exists:
                 continue
 
-        from utils import slugify
+        from ..utils import slugify
 
         slug = slugify(name)
         existing = await db[cfg["collection"]].find_one(
