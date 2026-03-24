@@ -6,10 +6,14 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+const API = `${BACKEND_URL}/api`;
+
 export function proxyImageUrl(url) {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  if (!url) return '';
+  if (url.startsWith('/api/uploads/')) return `${BACKEND_URL}${url}`;
+  if (url.startsWith('https://cdn.footballkitarchive.com/')) {
+    return `${API}/image-proxy?url=${encodeURIComponent(url)}`;
   }
   return url;
 }
