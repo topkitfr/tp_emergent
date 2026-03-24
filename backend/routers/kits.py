@@ -34,23 +34,42 @@ async def count_master_kits():
 
 @router.get("/master-kits/filters")
 async def get_filters():
-    clubs = await db.master_kits.distinct("club")
-    brands = await db.master_kits.distinct("brand")
-    seasons = await db.master_kits.distinct("season")
+    # ── Entités depuis les vraies collections DB (approved) ──
+    teams_docs   = await db.teams.find({"status": "approved"}, {"_id": 0, "name": 1}).to_list(500)
+    brands_docs  = await db.brands.find({"status": "approved"}, {"_id": 0, "name": 1}).to_list(500)
+    leagues_docs = await db.leagues.find({"status": "approved"}, {"_id": 0, "name": 1}).to_list(500)
+
+    clubs   = sorted([t["name"] for t in teams_docs   if t.get("name")])
+    brands  = sorted([b["name"] for b in brands_docs  if b.get("name")])
+    leagues = sorted([l["name"] for l in leagues_docs if l.get("name")])
+
+    # Fallback : si les collections sont vides, on repasse sur distinct()
+    if not clubs:
+        raw = await db.master_kits.distinct("club")
+        clubs = sorted([c for c in raw if c])
+    if not brands:
+        raw = await db.master_kits.distinct("brand")
+        brands = sorted([b for b in raw if b])
+    if not leagues:
+        raw = await db.master_kits.distinct("league")
+        leagues = sorted([l for l in raw if l])
+
+    # ── Champs sans collection dédiée → distinct() ──
+    seasons   = await db.master_kits.distinct("season")
     kit_types = await db.master_kits.distinct("kit_type")
-    designs = await db.master_kits.distinct("design")
-    leagues = await db.master_kits.distinct("league")
-    sponsors = await db.master_kits.distinct("sponsor")
-    genders = await db.master_kits.distinct("gender")
+    designs   = await db.master_kits.distinct("design")
+    sponsors  = await db.master_kits.distinct("sponsor")
+    genders   = await db.master_kits.distinct("gender")
+
     return {
-        "clubs": sorted([c for c in clubs if c]),
-        "brands": sorted([b for b in brands if b]),
-        "seasons": sorted([s for s in seasons if s], reverse=True),
+        "clubs":     clubs,
+        "brands":    brands,
+        "seasons":   sorted([s for s in seasons   if s], reverse=True),
         "kit_types": sorted([t for t in kit_types if t]),
-        "designs": sorted([d for d in designs if d]),
-        "leagues": sorted([l for l in leagues if l]),
-        "sponsors": sorted([s for s in sponsors if s]),
-        "genders": sorted([g for g in genders if g]),
+        "designs":   sorted([d for d in designs   if d]),
+        "leagues":   leagues,
+        "sponsors":  sorted([s for s in sponsors  if s]),
+        "genders":   sorted([g for g in genders   if g]),
     }
 
 
