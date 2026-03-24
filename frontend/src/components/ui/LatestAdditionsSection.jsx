@@ -12,8 +12,12 @@ function LatestAdditionsSection() {
       try {
         setLoading(true);
         setError(null);
-        const response = await getMasterKits({ limit: 4 });
-        setKits(response.data);
+        const response = await getMasterKits({
+          limit: 4,
+          sort_by: "created_at",
+          order: "desc",
+        });
+        setKits(response.data?.items ?? response.data ?? []);
       } catch (e) {
         console.error("Erreur chargement latest kits", e);
         setError("Impossible de charger les derniers kits.");
@@ -28,7 +32,11 @@ function LatestAdditionsSection() {
     return (
       <div>
         <h2 className="text-lg md:text-xl mb-2 text-muted-foreground">LATEST ADDITIONS</h2>
-        <p className="text-sm text-muted-foreground mb-8">Chargement des derniers maillots…</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-[3/4] bg-card animate-pulse border border-border" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -42,18 +50,23 @@ function LatestAdditionsSection() {
     );
   }
 
-  if (!kits.length) return null;
+  if (!kits.length) {
+    return (
+      <div>
+        <h2 className="text-lg md:text-xl mb-2 text-muted-foreground">LATEST ADDITIONS</h2>
+        <p className="text-sm text-muted-foreground">Aucun kit disponible pour le moment.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h2 className="text-lg md:text-xl mb-2 text-muted-foreground">LATEST ADDITIONS</h2>
-      <p className="text-sm text-muted-foreground mb-8">Les derniers kits version ajoutés au catalogue.</p>
-
+      <p className="text-sm text-muted-foreground mb-8">Les derniers kits ajoutés au catalogue.</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kits.map((kit) => (
-  <JerseyCard key={kit._id} kit={kit} showNew={true} />
-))}
-
+          <JerseyCard key={kit._id} kit={kit} showNew={true} />
+        ))}
       </div>
     </div>
   );
