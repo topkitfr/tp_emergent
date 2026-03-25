@@ -14,7 +14,7 @@ import EntityAutocomplete from '@/components/EntityAutocomplete';
 
 const KIT_TYPES    = ['Home', 'Away', 'Third', 'Fourth', 'GK', 'Special', 'Other'];
 const MODELS       = ['Authentic', 'Replica', 'Other'];
-const GENDERS      = ['Man', 'Woman', 'Kid'];
+const GENDERS      = ['MEN', 'WOMEN', 'YOUTH'];
 const COMPETITIONS = ['National Championship', 'National Cup', 'Continental Cup', 'Intercontinental Cup', 'World Cup'];
 
 const fieldLabel = 'text-xs uppercase tracking-wider';
@@ -67,7 +67,6 @@ export default function AddJersey() {
       let resolvedBrandId = brandId;
       let resolvedLeagueId = leagueId;
 
-      // Auto-create pending team if typed but not selected from autocomplete
       if (club && !resolvedTeamId) {
         try {
           const res = await createTeamPending({ name: club });
@@ -76,7 +75,6 @@ export default function AddJersey() {
         } catch (e) { console.warn('createTeamPending failed:', e); }
       }
 
-      // Auto-create pending brand if typed but not selected
       if (brand && !resolvedBrandId) {
         try {
           const res = await createBrandPending({ name: brand });
@@ -85,7 +83,6 @@ export default function AddJersey() {
         } catch (e) { console.warn('createBrandPending failed:', e); }
       }
 
-      // Auto-create pending league if typed but not selected
       if (league && !resolvedLeagueId) {
         try {
           const res = await createLeaguePending({ name: league });
