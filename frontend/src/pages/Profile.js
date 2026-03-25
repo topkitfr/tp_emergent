@@ -91,7 +91,6 @@ export default function Profile() {
       await updateProfile(formData);
       toast.success('Profile updated');
       setEditing(false);
-      // Met à jour profileUser localement sans dépendre de checkAuth (DEV_LOGIN renvoie un objet hardcodé)
       setProfileUser(prev => ({ ...prev, ...formData }));
       checkAuth();
     } catch (err) {
@@ -207,6 +206,7 @@ export default function Profile() {
                     <ImageUpload
                       value={formData.profile_picture}
                       onChange={(url) => setFormData(p => ({...p, profile_picture: url}))}
+                      folder="profile"
                       label="Profile Picture"
                       testId="profile-picture-upload"
                     />

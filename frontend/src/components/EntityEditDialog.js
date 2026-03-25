@@ -21,6 +21,7 @@ const ENTITY_CONFIGS = {
   team: {
     label: 'Team', nameField: 'name',
     imageField: 'crest_url', imageLabel: 'Crest / Badge',
+    folder: 'team',
     fields: [
       { key: 'name',            label: 'Team Name',       required: true },
       { key: 'country',         label: 'Country' },
@@ -32,6 +33,7 @@ const ENTITY_CONFIGS = {
   },
   league: {
     label: 'League', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
+    folder: 'league',
     fields: [
       { key: 'name',              label: 'League Name',     required: true },
       { key: 'country_or_region', label: 'Country / Region' },
@@ -41,6 +43,7 @@ const ENTITY_CONFIGS = {
   },
   sponsor: {
     label: 'Sponsor', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
+    folder: 'sponsor',
     fields: [
       { key: 'name',    label: 'Sponsor Name', required: true },
       { key: 'country', label: 'Country' },
@@ -49,6 +52,7 @@ const ENTITY_CONFIGS = {
   },
   brand: {
     label: 'Brand', nameField: 'name', imageField: 'logo_url', imageLabel: 'Logo',
+    folder: 'brand',
     fields: [
       { key: 'name',    label: 'Brand Name',    required: true },
       { key: 'country', label: 'Country' },
@@ -57,6 +61,7 @@ const ENTITY_CONFIGS = {
   },
   player: {
     label: 'Player', nameField: 'full_name', imageField: 'photo_url', imageLabel: 'Photo',
+    folder: 'player',
     fields: [
       { key: 'full_name',        label: 'Full Name',              required: true, span: 2 },
       { key: 'nationality',      label: 'Nationality' },
@@ -94,11 +99,9 @@ export default function EntityEditDialog({
     setSubmitting(true);
     try {
       const payload = { ...form, mode };
-      // positions : si string (ancien format) → array
       if (payload.positions && typeof payload.positions === 'string') {
         payload.positions = payload.positions.split(',').map(p => p.trim()).filter(Boolean);
       }
-      // cast number fields
       for (const f of config.fields) {
         if (f.type === 'number' && payload[f.key]) {
           payload[f.key] = parseInt(payload[f.key], 10) || null;
@@ -234,7 +237,6 @@ export default function EntityEditDialog({
       );
     }
 
-    // default : text / number
     return (
       <Input
         type={f.type === 'number' ? 'number' : 'text'}
@@ -284,6 +286,7 @@ export default function EntityEditDialog({
             <ImageUpload
               value={form[config.imageField] || ''}
               onChange={v => handleChange(config.imageField, v)}
+              folder={config.folder}
               testId={`entity-edit-${config.imageField}`}
             />
           </div>

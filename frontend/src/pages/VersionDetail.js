@@ -448,6 +448,7 @@ useEffect(() => {
                       <ImageUpload
                         value={reportCorrections.front_photo}
                         onChange={setField('front_photo')}
+                        folder="version"
                         testId="report-ver-front-photo"
                       />
                     </div>
@@ -458,6 +459,7 @@ useEffect(() => {
                       <ImageUpload
                         value={reportCorrections.back_photo}
                         onChange={setField('back_photo')}
+                        folder="version"
                         testId="report-ver-back-photo"
                       />
                     </div>
