@@ -17,83 +17,57 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["admin"])
 
 
-# ─── Helpers CSV ──────────────────────────────────────────────────────────────
+# ─── Helpers CSV ───────────────────────────────────────────────────────────────────────────────
 
 def _csv_slug(text: str) -> str:
-    """Slug stable : minuscules, alphanum + tirets, sans accents simples."""
     return re.sub(r'[^a-z0-9]+', '-', text.lower().strip()).strip('-')
 
 
 def _normalize_season(season: str) -> str:
-    """
-    Normalise n'importe quel format de saison vers 'YYYY/YYYY+1'.
-    Gère : '00-01', '00-01 (Carry-over)', '2022-23', '1987-88',
-            '01/01/2000' (date parasite → skip via return ''),
-            '01-03' (span multi-années → skip via return '')
-    """
     if not season:
         return ""
     s = re.sub(r'\s*\(carry-over\)', '', season, flags=re.IGNORECASE).strip()
-
-    # Format dd/mm/yyyy ou similaire → inutilisable comme saison
     if re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', s):
         return ""
-
-    # Format standard : YY-YY ou YYYY-YY ou YYYY-YYYY
     m = re.match(r'^(\d{2,4})[-/](\d{2,4})$', s)
     if m:
         y1_str, y2_str = m.group(1), m.group(2)
-
-        # Résoudre y1
         if len(y1_str) == 2:
             n = int(y1_str)
             y1 = 1900 + n if n >= 85 else 2000 + n
         else:
             y1 = int(y1_str)
-
-        # Résoudre y2
         if len(y2_str) == 2:
             n2 = int(y2_str)
-            # y2 doit être y1+1 (ex: 00-01 → 2001, pas 2000+0=2000)
-            # On vérifie la cohérence
             y2_candidate = 1900 + n2 if n2 >= 85 else 2000 + n2
-            # Si l'écart est > 2 ans c'est un span multi-saisons → skip
             if abs(y2_candidate - y1) > 2:
                 return ""
-            y2 = y1 + 1  # toujours normaliser à y1/y1+1
+            y2 = y1 + 1
         else:
             y2 = int(y2_str)
             if abs(y2 - y1) > 2:
                 return ""
             y2 = y1 + 1
-
         return f"{y1}/{y2}"
-
-    return ""  # Format non reconnu → skip
+    return ""
 
 
 def _normalize_league(league: str) -> str:
-    """
-    Normalise les noms de ligues : corrige les slugs et les variantes.
-    """
     mapping = {
-        'la-liga':              'La Liga',
-        'bundesliga':           'Bundesliga',
-        'ligue-1':              'Ligue 1',
-        'premier-league':       'Premier League',
-        'serie-a':              'Serie A',
-        # Variantes historiques → noms modernes
+        'la-liga':               'La Liga',
+        'bundesliga':            'Bundesliga',
+        'ligue-1':               'Ligue 1',
+        'premier-league':        'Premier League',
+        'serie-a':               'Serie A',
         'championnat de france': 'Ligue 1',
         'division 1':            'Ligue 1',
     }
     if not league:
         return ''
-    normalized = mapping.get(league.lower().strip(), league.strip())
-    return normalized
+    return mapping.get(league.lower().strip(), league.strip())
 
 
 def _normalize_sponsor(sponsor: str) -> str:
-    """Nettoie les sponsors parasites."""
     s = sponsor.strip() if sponsor else ''
     return '' if s in ('-', 'N/A', 'n/a', 'None') else s
 
@@ -109,7 +83,7 @@ def _normalize_gender(gender: str) -> str:
     return g if g in ('MEN', 'WOMEN', 'YOUTH', 'UNISEX') else mapping.get(g, 'MEN')
 
 
-# ─── Stats ────────────────────────────────────────────────────────────────────
+# ─── Stats ───────────────────────────────────────────────────────────────────────────────────
 
 @router.get("/stats")
 async def get_stats():
@@ -120,7 +94,7 @@ async def get_stats():
     return {"master_kits": kits, "versions": versions, "users": users, "reviews": reviews}
 
 
-# ─── User Profile ─────────────────────────────────────────────────────────────
+# ─── User Profile ─────────────────────────────────────────────────────────────────────────
 
 @router.get("/users/by-username/{username}")
 async def get_user_by_username(username: str):
@@ -161,7 +135,7 @@ async def update_profile(update: ProfileUpdate, request: Request):
     return await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
 
 
-# ─── Seed / Import Data ───────────────────────────────────────────────────────
+# ─── Seed / Import Data ───────────────────────────────────────────────────────────────────────────
 
 @router.post("/seed")
 async def seed_data():
@@ -229,7 +203,7 @@ async def import_excel():
     return {"message": f"Successfully imported {imported} master kits", "count": imported}
 
 
-# ─── Migration Endpoints ──────────────────────────────────────────────────────
+# ─── Migration Endpoints ──────────────────────────────────────────────────────────────────────────
 
 @router.post("/migrate-schema")
 async def migrate_schema():
@@ -364,22 +338,10 @@ async def migrate_entities_from_kits():
     }
 
 
-# ─── Reset + Import CSV (admin/moderator only) ────────────────────────────────
+# ─── Reset + Import CSV (admin/moderator only) ────────────────────────────────────────────
 
 @router.post("/admin/reset-and-import-csv")
 async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
-    """
-    1. Vérifie le rôle admin/moderator.
-    2. Vide les collections : master_kits, versions, teams, leagues, brands.
-       (users, collections, reviews, wishlist, submissions sont préservés)
-    3. Importe le CSV avec normalisation complète :
-       - Saisons → YYYY/YYYY+1 (multi-années et dates invalides skippées)
-       - Ligues  → noms canoniques (la-liga → La Liga, etc.)
-       - Sponsors '-' / '' → ''
-       - Doublons (team+season+type) ignorés
-       - Entités teams/brands/leagues créées ou réutilisées via slug
-    4. Crée une version par défaut (Replica / National Championship) pour chaque kit.
-    """
     user = await get_current_user(request)
     if user.get("role") not in ("admin", "moderator"):
         raise HTTPException(status_code=403, detail="Rôle admin ou modérateur requis")
@@ -387,7 +349,6 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Le fichier doit être un .csv")
 
-    # ── 1. Lecture du CSV ──────────────────────────────────────────────────────
     content = await file.read()
     try:
         text = content.decode("utf-8-sig")
@@ -399,19 +360,16 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     if not rows:
         raise HTTPException(status_code=400, detail="CSV vide ou mal formaté")
 
-    # ── 2. Reset des collections kits/entités ──────────────────────────────────
-    for col in ("master_kits", "versions", "teams", "leagues", "brands"):
+    for col in ("master_kits", "versions", "teams", "leagues", "brands", "sponsors"):
         await db[col].delete_many({})
     logger.info(f"reset-and-import-csv: reset par {user.get('email')} — {len(rows)} lignes CSV")
 
     now = datetime.now(timezone.utc).isoformat()
 
-    # ── 3. Pré-construire les maps entités (batch pour éviter N×get_or_create) ─
-    # Dédoublonner d'abord les données utiles
-    seen_kits: set[str] = set()
+    seen_kits: set = set()
     valid_rows = []
     for r in rows:
-        team_name = (r.get("team") or "").strip()
+        team_name  = (r.get("team") or "").strip()
         season_raw = (r.get("season") or "").strip()
         kit_type   = (r.get("type") or "Home").strip() or "Home"
         if not team_name or not season_raw:
@@ -439,22 +397,23 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
 
     logger.info(f"reset-and-import-csv: {len(valid_rows)} lignes valides après dédup/normalisation (sur {len(rows)})")
 
-    # ── 4. Créer les entités en batch (1 INSERT par entité unique) ─────────────
-    all_team_names   = sorted(set(r["team"]   for r in valid_rows if r["team"]))
-    all_league_names = sorted(set(r["league"] for r in valid_rows if r["league"]))
-    all_brand_names  = sorted(set(r["brand"]  for r in valid_rows if r["brand"]))
+    all_team_names    = sorted(set(r["team"]    for r in valid_rows if r["team"]))
+    all_league_names  = sorted(set(r["league"]  for r in valid_rows if r["league"]))
+    all_brand_names   = sorted(set(r["brand"]   for r in valid_rows if r["brand"]))
+    all_sponsor_names = sorted(set(r["sponsor"] for r in valid_rows if r["sponsor"]))
 
-    team_map: Dict[str, str] = {}
-    league_map: Dict[str, str] = {}
-    brand_map: Dict[str, str] = {}
+    team_map:    Dict[str, str] = {}
+    league_map:  Dict[str, str] = {}
+    brand_map:   Dict[str, str] = {}
+    sponsor_map: Dict[str, str] = {}
 
     for name in all_team_names:
-        new_team_id = f"team_{uuid.uuid4().hex[:12]}"
+        new_id = f"team_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
         await db.teams.update_one(
             {"slug": sl},
             {"$setOnInsert": {
-                "team_id": new_team_id, "name": name, "slug": sl,
+                "team_id": new_id, "name": name, "slug": sl,
                 "country": "", "city": "", "founded": None,
                 "primary_color": "", "secondary_color": "",
                 "crest_url": "", "aka": [], "kit_count": 0,
@@ -463,15 +422,15 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             upsert=True,
         )
         doc = await db.teams.find_one({"slug": sl}, {"_id": 0, "team_id": 1})
-        team_map[name] = doc["team_id"] if doc else new_team_id
+        team_map[name] = doc["team_id"] if doc else new_id
 
     for name in all_league_names:
-        new_league_id = f"league_{uuid.uuid4().hex[:12]}"
+        new_id = f"league_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
         await db.leagues.update_one(
             {"slug": sl},
             {"$setOnInsert": {
-                "league_id": new_league_id, "name": name, "slug": sl,
+                "league_id": new_id, "name": name, "slug": sl,
                 "country_or_region": "", "level": "domestic",
                 "organizer": "", "logo_url": "", "kit_count": 0,
                 "status": "approved", "created_at": now, "updated_at": now,
@@ -479,15 +438,15 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             upsert=True,
         )
         doc = await db.leagues.find_one({"slug": sl}, {"_id": 0, "league_id": 1})
-        league_map[name] = doc["league_id"] if doc else new_league_id
+        league_map[name] = doc["league_id"] if doc else new_id
 
     for name in all_brand_names:
-        new_brand_id = f"brand_{uuid.uuid4().hex[:12]}"
+        new_id = f"brand_{uuid.uuid4().hex[:12]}"
         sl = slugify(name)
         await db.brands.update_one(
             {"slug": sl},
             {"$setOnInsert": {
-                "brand_id": new_brand_id, "name": name, "slug": sl,
+                "brand_id": new_id, "name": name, "slug": sl,
                 "country": "", "founded": None, "logo_url": "",
                 "kit_count": 0, "status": "approved",
                 "created_at": now, "updated_at": now,
@@ -495,18 +454,34 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             upsert=True,
         )
         doc = await db.brands.find_one({"slug": sl}, {"_id": 0, "brand_id": 1})
-        brand_map[name] = doc["brand_id"] if doc else new_brand_id
+        brand_map[name] = doc["brand_id"] if doc else new_id
 
-    # ── 5. Insérer les master_kits + une version par défaut ────────────────────
+    # ─── NOUVEAU : création des sponsors ─────────────────────────────────────────────
+    for name in all_sponsor_names:
+        new_id = f"sponsor_{uuid.uuid4().hex[:12]}"
+        sl = slugify(name)
+        await db.sponsors.update_one(
+            {"slug": sl},
+            {"$setOnInsert": {
+                "sponsor_id": new_id, "name": name, "slug": sl,
+                "country": "", "logo_url": "", "kit_count": 0,
+                "status": "approved", "created_at": now, "updated_at": now,
+            }},
+            upsert=True,
+        )
+        doc = await db.sponsors.find_one({"slug": sl}, {"_id": 0, "sponsor_id": 1})
+        sponsor_map[name] = doc["sponsor_id"] if doc else new_id
+
     kits_to_insert     = []
     versions_to_insert = []
 
     for r in valid_rows:
-        kit_id   = f"kit_{uuid.uuid4().hex[:12]}"
-        kit_slug = _csv_slug(f"{r['team']}-{r['season']}-{r['kit_type']}")
-        team_id  = team_map.get(r["team"], "")
+        kit_id    = f"kit_{uuid.uuid4().hex[:12]}"
+        kit_slug  = _csv_slug(f"{r['team']}-{r['season']}-{r['kit_type']}")
+        team_id   = team_map.get(r["team"], "")
         league_id = league_map.get(r["league"], "")
         brand_id  = brand_map.get(r["brand"], "")
+        sponsor_id = sponsor_map.get(r["sponsor"], "")  # ← NOUVEAU
 
         kits_to_insert.append({
             "kit_id":      kit_id,
@@ -514,6 +489,7 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             "team_id":     team_id,
             "brand_id":    brand_id,
             "league_id":   league_id,
+            "sponsor_id":  sponsor_id,              # ← NOUVEAU
             "club":        r["team"],
             "brand":       r["brand"],
             "league":      r["league"],
@@ -550,7 +526,6 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
             "created_at":  now,
         })
 
-    # Insert en batch
     if kits_to_insert:
         await db.master_kits.insert_many(kits_to_insert, ordered=False)
     if versions_to_insert:
@@ -559,19 +534,20 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     skipped = len(rows) - len(valid_rows)
     logger.info(
         f"reset-and-import-csv done: {len(kits_to_insert)} kits, "
-        f"{len(versions_to_insert)} versions, {skipped} lignes skippées, "
-        f"{len(team_map)} teams, {len(league_map)} leagues, {len(brand_map)} brands"
+        f"{len(versions_to_insert)} versions, {skipped} lignes skipées, "
+        f"{len(team_map)} teams, {len(league_map)} leagues, {len(brand_map)} brands, {len(sponsor_map)} sponsors"
     )
 
     return {
         "message": "Reset et import terminés",
-        "kits_created":     len(kits_to_insert),
-        "versions_created": len(versions_to_insert),
-        "teams_created":    len(team_map),
-        "leagues_created":  len(league_map),
-        "brands_created":   len(brand_map),
-        "rows_total":       len(rows),
-        "rows_skipped":     skipped,
+        "kits_created":      len(kits_to_insert),
+        "versions_created":  len(versions_to_insert),
+        "teams_created":     len(team_map),
+        "leagues_created":   len(league_map),
+        "brands_created":    len(brand_map),
+        "sponsors_created":  len(sponsor_map),          # ← NOUVEAU
+        "rows_total":        len(rows),
+        "rows_skipped":      skipped,
         "skip_reasons": {
             "no_team_or_season": "Lignes sans team ou sans saison",
             "invalid_season":    "Saisons multi-années ou dates invalides ignorées",
@@ -580,14 +556,10 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     }
 
 
-# ─── Import CSV simple (sans reset, admin/moderator only) ────────────────────
+# ─── Import CSV simple (sans reset, admin/moderator only) ──────────────────────────────────
 
 @router.post("/admin/import-csv")
 async def import_csv_upload(request: Request, file: UploadFile = File(...)):
-    """
-    Upload un CSV et importe les kits sans reset.
-    Les doublons existants (même slug) sont ignorés.
-    """
     user = await get_current_user(request)
     if user.get("role") not in ("admin", "moderator"):
         raise HTTPException(status_code=403, detail="Rôle admin ou modérateur requis")
@@ -609,7 +581,7 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
     now = datetime.now(timezone.utc).isoformat()
     created_kits = 0
     skipped_kits = 0
-    import_errors = []  # type: List[str]
+    import_errors: List[str] = []
 
     async def _get_or_create(collection, id_field, slug_val, doc):
         existing = await db[collection].find_one({"slug": slug_val}, {"_id": 0, id_field: 1})
@@ -632,11 +604,11 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
                 skipped_kits += 1
                 continue
 
-            brand_name  = (r.get("brand") or "").strip()
-            league_name = _normalize_league(r.get("league") or "")
-            img_url     = (r.get("img_url") or r.get("Image URL") or "").strip()
+            brand_name   = (r.get("brand") or "").strip()
+            league_name  = _normalize_league(r.get("league") or "")
+            sponsor_name = _normalize_sponsor(r.get("sponsor") or "")
+            img_url      = (r.get("img_url") or r.get("Image URL") or "").strip()
 
-            # Skip doublon
             kit_slug = _csv_slug(f"{team_name}-{season}-{kit_type}")
             if await db["master_kits"].find_one({"slug": kit_slug}):
                 skipped_kits += 1
@@ -662,16 +634,25 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
                     "country_or_region": "", "level": "domestic", "organizer": "", "logo_url": "",
                     "kit_count": 0, "status": "approved", "created_at": now, "updated_at": now,
                 })
+            # ─── NOUVEAU : création du sponsor ─────────────────────────────────────────────
+            sponsor_id = ""
+            if sponsor_name:
+                sponsor_id = await _get_or_create("sponsors", "sponsor_id", slugify(sponsor_name), {
+                    "sponsor_id": f"sponsor_{uuid.uuid4().hex[:12]}", "name": sponsor_name, "slug": slugify(sponsor_name),
+                    "country": "", "logo_url": "", "kit_count": 0,
+                    "status": "approved", "created_at": now, "updated_at": now,
+                })
 
             kit_id = f"kit_{uuid.uuid4().hex[:12]}"
             await db["master_kits"].insert_one({
                 "kit_id": kit_id, "slug": kit_slug,
                 "team_id": team_id, "brand_id": brand_id, "league_id": league_id,
+                "sponsor_id": sponsor_id,              # ← NOUVEAU
                 "club": team_name, "brand": brand_name, "league": league_name,
                 "season": season, "kit_type": kit_type, "type": kit_type,
                 "design":      (r.get("design") or "").strip(),
                 "colors":      (r.get("colors") or "").strip(),
-                "sponsor":     _normalize_sponsor(r.get("sponsor") or ""),
+                "sponsor":     sponsor_name,
                 "gender":      _normalize_gender(r.get("gender") or ""),
                 "front_photo": img_url, "img_url": img_url,
                 "source_url":  (r.get("source_url") or "").strip(),
