@@ -21,7 +21,7 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ─── Intercepteur de réponse — gestion globale des erreurs ──────────────────────────
+// ─── Intercepteur de réponse — gestion globale des erreurs ──────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -81,11 +81,15 @@ export const getStats = () => api.get('/stats');
 export const seedData = () => api.post('/seed');
 
 // Upload
-export const uploadImage = (file, folder = 'master_kit') => {
+export const uploadImage = (file, folder = 'master_kit', entityId = null) => {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('folder', folder);
-  return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  const params = { folder };
+  if (entityId) params.entity_id = entityId;
+  return api.post('/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    params,
+  });
 };
 
 // User Profile
@@ -101,7 +105,7 @@ export const isFollowing        = (type, id) => api.get(`/users/follows/${type}/
 export const votePlayerAura     = (playerId, score) => api.post(`/players/${playerId}/aura`, { score });
 export const getPlayerAura      = (playerId) => api.get(`/players/${playerId}/aura`);
 
-// ── Listes personnalisées ──────────────────────────────────────────
+// ── Listes personnalisées ──────────────────────────────────────────────────
 export const getUserLists       = ()                      => api.get('/lists');
 export const getListDetail      = (listId)                => api.get(`/lists/${listId}`);
 export const createList         = (data)                  => api.post('/lists', data);
