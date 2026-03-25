@@ -80,21 +80,21 @@ def _normalize_sponsor(sponsor: str) -> str:
 def _normalize_gender(gender: str) -> str:
     g = (gender or '').strip().upper()
     mapping = {
-        'MAN':    'MEN',
-        'MALE':   'MEN',
-        'HOMME':  'MEN',
-        'HOMMES': 'MEN',
-        'WOMAN':  'WOMEN',
-        'FEMALE': 'WOMEN',
-        'FEMME':  'WOMEN',
-        'FEMMES': 'WOMEN',
-        'KID':    'YOUTH',
-        'KIDS':   'YOUTH',
-        'CHILD':  'YOUTH',
-        'JUNIOR': 'YOUTH',
-        '':       'MEN',
+        'Man':    'Men',
+        'Male':   'Men',
+        'Homme':  'Men',
+        'Hommes': 'Men',
+        'Woman':  'Women',
+        'Female': 'Women',
+        'Femme':  'Women',
+        'Femmes': 'Women',
+        'Kid':    'Youth',
+        'Kids':   'Youth',
+        'Child':  'Youth',
+        'Junior': 'Youth',
+        '':       'Men',
     }
-    return g if g in ('MEN', 'WOMEN', 'YOUTH', 'UNISEX') else mapping.get(g, 'MEN')
+    return g if g in ('Men', 'Women', 'Youth', 'Unisex') else mapping.get(g, 'Men')
 
 
 # ─── Stats ───────────────────────────────────────────────────────────────────────────────────
