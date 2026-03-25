@@ -12,8 +12,8 @@ ALLOWED_DOMAINS = [
     "i.imgur.com",
 ]
 
-# IP publique Freebox
-FREEBOX_BASE = "http://82.67.103.45/images/master_kits/photos"
+# IP publique Freebox — racine des médias
+FREEBOX_BASE = "http://82.67.103.45"
 
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
@@ -50,10 +50,26 @@ async def image_proxy(url: str, request: Request):
         raise HTTPException(status_code=502, detail=f"Failed to fetch image: {e}")
 
 
-@router.get("/images/{filename}")
-async def freebox_image_proxy(filename: str, request: Request):
-    """Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content."""
-    url = f"{FREEBOX_BASE}/{filename}"
+@router.get("/images/{filepath:path}")
+async def freebox_image_proxy(filepath: str, request: Request):
+    """Proxy HTTPS (Render) → HTTP (Freebox NAS) pour éviter le Mixed Content.
+    Supporte tous les types de médias :
+      /api/images/master_kits/photos/abc.jpg
+      /api/images/brands/logos/abc.jpg
+      /api/images/teams/logos/abc.jpg
+      /api/images/versions/photos/abc.jpg
+      /api/images/players/photos/abc.jpg
+      /api/images/users/photos/abc.jpg
+      /api/images/leagues/logos/abc.jpg
+      /api/images/sponsors/logos/abc.jpg
+      # Legacy : juste le filename (anciens kits importés)
+      /api/images/abc.jpg  → fallback master_kits/photos/
+    """
+    # Legacy : filename seul sans sous-dossier → fallback master_kits/photos
+    if "/" not in filepath:
+        filepath = f"master_kits/photos/{filepath}"
+
+    url = f"{FREEBOX_BASE}/{filepath}"
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             r = await client.get(url)
