@@ -7,7 +7,7 @@ import { Upload, X, Image, Link2, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function ImageUpload({ value, onChange, label, testId }) {
+export default function ImageUpload({ value, onChange, label, testId, folder = 'master_kit' }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [mode, setMode] = useState('upload'); // 'upload' or 'url'
@@ -33,7 +33,7 @@ export default function ImageUpload({ value, onChange, label, testId }) {
     }
     setUploading(true);
     try {
-      const res = await uploadImage(file);
+      const res = await uploadImage(file, folder);
       onChange(res.data.url);
       toast.success('Image uploaded');
     } catch (err) {
@@ -42,7 +42,7 @@ export default function ImageUpload({ value, onChange, label, testId }) {
     } finally {
       setUploading(false);
     }
-  }, [onChange]);
+  }, [onChange, folder]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();

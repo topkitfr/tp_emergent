@@ -79,9 +79,10 @@ export const getStats = () => api.get('/stats');
 export const seedData = () => api.post('/seed');
 
 // Upload
-export const uploadImage = (file) => {
+export const uploadImage = (file, folder = 'master_kit') => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('folder', folder);
   return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
