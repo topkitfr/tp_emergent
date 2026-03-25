@@ -11,18 +11,19 @@ import { proxyImageUrl } from '@/lib/api';
  * EntityListPage — layout unifié pour toutes les pages liste d'entités.
  *
  * Props:
- * - title: string — titre de la page (ex: "TEAMS")
- * - icon: ReactNode — icône de l'entité
- * - entities: array — liste des entités
+ * - title: string
+ * - icon: ReactNode
+ * - entities: array
  * - loading: bool
  * - search: string
  * - onSearchChange: fn
- * - filters: array de { key, label, value, onChange, options: [{value, label}] }
- *   options peut aussi être un array de strings
- * - renderCard: fn(entity) → ReactNode — carte custom par entité
+ * - filters: array de { key, label, value, onChange, options }
+ * - renderCard: fn(entity) → ReactNode
  * - emptyMessage: string
- * - totalLabel: string — ex: "teams"
+ * - totalLabel: string
  * - testId: string
+ * - onAddNew: fn
+ * - footer: ReactNode — contenu affiché sous la grille (ex: <Pagination />)
  */
 export default function EntityListPage({
   title,
@@ -37,6 +38,7 @@ export default function EntityListPage({
   totalLabel = 'items',
   testId,
   onAddNew,
+  footer,
 }) {
   return (
     <div className="animate-fade-in-up" data-testid={testId}>
@@ -123,6 +125,9 @@ export default function EntityListPage({
             {entities.map(renderCard)}
           </div>
         )}
+
+        {/* ── Footer (ex: Pagination) ── */}
+        {footer && <div className="mt-6">{footer}</div>}
       </div>
     </div>
   );
@@ -130,7 +135,6 @@ export default function EntityListPage({
 
 /**
  * EntityCard — carte standardisée pour toutes les entités.
- * Utilisée dans les pages liste.
  */
 export function EntityCard({ to, image, icon: CardIcon, name, meta = [], badges = [], testId }) {
   return (
