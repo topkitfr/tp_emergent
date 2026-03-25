@@ -29,6 +29,11 @@ def _normalize_season(season: str) -> str:
     s = re.sub(r'\s*\(carry-over\)', '', season, flags=re.IGNORECASE).strip()
     if re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', s):
         return ""
+    # Format YYYY seul -> YYYY/YYYY+1
+    m_single = re.match(r'^(\d{4})$', s)
+    if m_single:
+        y = int(m_single.group(1))
+        return f"{y}/{y + 1}"
     m = re.match(r'^(\d{2,4})[-/](\d{2,4})$', s)
     if m:
         y1_str, y2_str = m.group(1), m.group(2)
@@ -75,10 +80,19 @@ def _normalize_sponsor(sponsor: str) -> str:
 def _normalize_gender(gender: str) -> str:
     g = (gender or '').strip().upper()
     mapping = {
-        'MAN': 'MEN', 'MALE': 'MEN',
-        'WOMAN': 'WOMEN', 'FEMALE': 'WOMEN',
-        'KID': 'YOUTH', 'KIDS': 'YOUTH', 'CHILD': 'YOUTH',
-        '': 'MEN',
+        'MAN':    'MEN',
+        'MALE':   'MEN',
+        'HOMME':  'MEN',
+        'HOMMES': 'MEN',
+        'WOMAN':  'WOMEN',
+        'FEMALE': 'WOMEN',
+        'FEMME':  'WOMEN',
+        'FEMMES': 'WOMEN',
+        'KID':    'YOUTH',
+        'KIDS':   'YOUTH',
+        'CHILD':  'YOUTH',
+        'JUNIOR': 'YOUTH',
+        '':       'MEN',
     }
     return g if g in ('MEN', 'WOMEN', 'YOUTH', 'UNISEX') else mapping.get(g, 'MEN')
 
@@ -342,12 +356,6 @@ async def migrate_entities_from_kits():
 
 @router.post("/migrate-sponsors-from-kits")
 async def migrate_sponsors_from_kits():
-    """
-    Backfill : lit le champ 'sponsor' (string) de chaque master_kit existant,
-    crée le document sponsor manquant dans la collection 'sponsors' (upsert par slug),
-    puis écrit sponsor_id sur le kit.
-    Idempotent : peut être relancé sans doublon.
-    """
     all_kits = await db.master_kits.find(
         {"sponsor": {"$nin": ["", None]}},
         {"_id": 0, "kit_id": 1, "sponsor": 1, "sponsor_id": 1}
@@ -369,26 +377,18 @@ async def migrate_sponsors_from_kits():
             await db.sponsors.update_one(
                 {"slug": sl},
                 {"$setOnInsert": {
-                    "sponsor_id": new_id,
-                    "name":       raw,
-                    "slug":       sl,
-                    "country":    "",
-                    "logo_url":   "",
-                    "kit_count":  0,
-                    "status":     "approved",
-                    "created_at": now,
-                    "updated_at": now,
+                    "sponsor_id": new_id, "name": raw, "slug": sl,
+                    "country": "", "logo_url": "", "kit_count": 0,
+                    "status": "approved", "created_at": now, "updated_at": now,
                 }},
                 upsert=True,
             )
             doc = await db.sponsors.find_one({"slug": sl}, {"_id": 0, "sponsor_id": 1})
             resolved_id = doc["sponsor_id"] if doc else new_id
             sponsor_map[raw] = resolved_id
-            # compte les créations réelles (pas les upserts sur existant)
             if resolved_id == new_id:
                 sponsors_created += 1
 
-        # patch le kit seulement si sponsor_id est absent ou vide
         if not kit.get("sponsor_id"):
             await db.master_kits.update_one(
                 {"kit_id": kit["kit_id"]},
@@ -396,17 +396,97 @@ async def migrate_sponsors_from_kits():
             )
             kits_patched += 1
 
-    logger.info(
-        f"migrate-sponsors-from-kits: {sponsors_created} sponsors créés, "
-        f"{kits_patched} kits patchés, {len(sponsor_map)} sponsors uniques"
-    )
-
     return {
         "message": "Backfill sponsors terminé",
-        "sponsors_created":  sponsors_created,
-        "sponsors_total":    len(sponsor_map),
-        "kits_patched":      kits_patched,
-        "kits_scanned":      len(all_kits),
+        "sponsors_created": sponsors_created, "sponsors_total": len(sponsor_map),
+        "kits_patched": kits_patched, "kits_scanned": len(all_kits),
+    }
+
+
+# ─── Normalisation des saisons ────────────────────────────────────────────────────────────────
+
+@router.post("/migrate-normalize-seasons")
+async def migrate_normalize_seasons():
+    """
+    Parcourt tous les master_kits et normalise le champ 'season'
+    vers le format YYYY/YYYY (ex: '2024' -> '2024/2025', '24-25' -> '2024/2025').
+    Idempotent.
+    """
+    all_kits = await db.master_kits.find(
+        {}, {"_id": 0, "kit_id": 1, "season": 1}
+    ).to_list(20000)
+
+    patched = 0
+    skipped = 0
+    examples_before: List[str] = []
+    examples_after:  List[str] = []
+
+    for kit in all_kits:
+        raw = kit.get("season") or ""
+        normalized = _normalize_season(raw)
+        if not normalized or normalized == raw:
+            skipped += 1
+            continue
+        if len(examples_before) < 10:
+            examples_before.append(raw)
+            examples_after.append(normalized)
+        await db.master_kits.update_one(
+            {"kit_id": kit["kit_id"]},
+            {"$set": {"season": normalized}}
+        )
+        patched += 1
+
+    logger.info(f"migrate-normalize-seasons: {patched} kits patchés, {skipped} inchangés")
+    return {
+        "message": "Normalisation des saisons terminée",
+        "kits_patched":   patched,
+        "kits_unchanged": skipped,
+        "total_scanned":  len(all_kits),
+        "examples": [{"before": b, "after": a} for b, a in zip(examples_before, examples_after)],
+    }
+
+
+# ─── Normalisation du genre ──────────────────────────────────────────────────────────────────
+
+@router.post("/migrate-normalize-gender")
+async def migrate_normalize_gender():
+    """
+    Normalise le champ 'gender' de tous les master_kits :
+    Male/Man/Homme -> MEN, Female/Woman/Femme -> WOMEN, Kid/Junior -> YOUTH.
+    Idempotent.
+    """
+    all_kits = await db.master_kits.find(
+        {}, {"_id": 0, "kit_id": 1, "gender": 1}
+    ).to_list(20000)
+
+    patched = 0
+    skipped = 0
+    # Compter les valeurs distinctes avant/après pour audit
+    before_counts: Dict[str, int] = {}
+    after_counts:  Dict[str, int] = {}
+
+    for kit in all_kits:
+        raw        = kit.get("gender") or ""
+        normalized = _normalize_gender(raw)
+        before_counts[raw or "(vide)"] = before_counts.get(raw or "(vide)", 0) + 1
+        after_counts[normalized]       = after_counts.get(normalized, 0) + 1
+        if normalized == raw:
+            skipped += 1
+            continue
+        await db.master_kits.update_one(
+            {"kit_id": kit["kit_id"]},
+            {"$set": {"gender": normalized}}
+        )
+        patched += 1
+
+    logger.info(f"migrate-normalize-gender: {patched} kits patchés, {skipped} inchangés")
+    return {
+        "message": "Normalisation du genre terminée",
+        "kits_patched":   patched,
+        "kits_unchanged": skipped,
+        "total_scanned":  len(all_kits),
+        "before_distribution": before_counts,
+        "after_distribution":  after_counts,
     }
 
 
@@ -547,54 +627,29 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
     versions_to_insert = []
 
     for r in valid_rows:
-        kit_id    = f"kit_{uuid.uuid4().hex[:12]}"
-        kit_slug  = _csv_slug(f"{r['team']}-{r['season']}-{r['kit_type']}")
-        team_id   = team_map.get(r["team"], "")
-        league_id = league_map.get(r["league"], "")
-        brand_id  = brand_map.get(r["brand"], "")
+        kit_id     = f"kit_{uuid.uuid4().hex[:12]}"
+        kit_slug   = _csv_slug(f"{r['team']}-{r['season']}-{r['kit_type']}")
+        team_id    = team_map.get(r["team"], "")
+        league_id  = league_map.get(r["league"], "")
+        brand_id   = brand_map.get(r["brand"], "")
         sponsor_id = sponsor_map.get(r["sponsor"], "")
 
         kits_to_insert.append({
-            "kit_id":      kit_id,
-            "slug":        kit_slug,
-            "team_id":     team_id,
-            "brand_id":    brand_id,
-            "league_id":   league_id,
-            "sponsor_id":  sponsor_id,
-            "club":        r["team"],
-            "brand":       r["brand"],
-            "league":      r["league"],
-            "season":      r["season"],
-            "kit_type":    r["kit_type"],
-            "type":        r["kit_type"],
-            "design":      r["design"],
-            "colors":      r["colors"],
-            "sponsor":     r["sponsor"],
-            "gender":      r["gender"],
-            "front_photo": r["img_url"],
-            "img_url":     r["img_url"],
-            "source_url":  r["source_url"],
-            "status":      "approved",
-            "avg_rating":  0.0,
-            "version_count": 1,
-            "created_by":  user.get("user_id", "admin"),
-            "created_at":  now,
+            "kit_id": kit_id, "slug": kit_slug,
+            "team_id": team_id, "brand_id": brand_id, "league_id": league_id, "sponsor_id": sponsor_id,
+            "club": r["team"], "brand": r["brand"], "league": r["league"],
+            "season": r["season"], "kit_type": r["kit_type"], "type": r["kit_type"],
+            "design": r["design"], "colors": r["colors"], "sponsor": r["sponsor"],
+            "gender": r["gender"], "front_photo": r["img_url"], "img_url": r["img_url"],
+            "source_url": r["source_url"], "status": "approved", "avg_rating": 0.0,
+            "version_count": 1, "created_by": user.get("user_id", "admin"), "created_at": now,
         })
-
         versions_to_insert.append({
-            "version_id":  f"ver_{uuid.uuid4().hex[:12]}",
-            "kit_id":      kit_id,
-            "competition": "National Championship",
-            "model":       "Replica",
-            "sku_code":    "",
-            "ean_code":    "",
-            "front_photo": r["img_url"],
-            "back_photo":  "",
-            "main_player_id": "",
-            "avg_rating":  0.0,
-            "review_count": 0,
-            "created_by":  user.get("user_id", "admin"),
-            "created_at":  now,
+            "version_id": f"ver_{uuid.uuid4().hex[:12]}", "kit_id": kit_id,
+            "competition": "National Championship", "model": "Replica",
+            "sku_code": "", "ean_code": "", "front_photo": r["img_url"], "back_photo": "",
+            "main_player_id": "", "avg_rating": 0.0, "review_count": 0,
+            "created_by": user.get("user_id", "admin"), "created_at": now,
         })
 
     if kits_to_insert:
@@ -603,22 +658,12 @@ async def reset_and_import_csv(request: Request, file: UploadFile = File(...)):
         await db.versions.insert_many(versions_to_insert, ordered=False)
 
     skipped = len(rows) - len(valid_rows)
-    logger.info(
-        f"reset-and-import-csv done: {len(kits_to_insert)} kits, "
-        f"{len(versions_to_insert)} versions, {skipped} lignes skipées, "
-        f"{len(team_map)} teams, {len(league_map)} leagues, {len(brand_map)} brands, {len(sponsor_map)} sponsors"
-    )
-
     return {
         "message": "Reset et import terminés",
-        "kits_created":      len(kits_to_insert),
-        "versions_created":  len(versions_to_insert),
-        "teams_created":     len(team_map),
-        "leagues_created":   len(league_map),
-        "brands_created":    len(brand_map),
-        "sponsors_created":  len(sponsor_map),
-        "rows_total":        len(rows),
-        "rows_skipped":      skipped,
+        "kits_created": len(kits_to_insert), "versions_created": len(versions_to_insert),
+        "teams_created": len(team_map), "leagues_created": len(league_map),
+        "brands_created": len(brand_map), "sponsors_created": len(sponsor_map),
+        "rows_total": len(rows), "rows_skipped": skipped,
         "skip_reasons": {
             "no_team_or_season": "Lignes sans team ou sans saison",
             "invalid_season":    "Saisons multi-années ou dates invalides ignorées",
@@ -666,7 +711,6 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
             team_name  = (r.get("team") or "").strip()
             season_raw = (r.get("season") or "").strip()
             kit_type   = (r.get("type") or "Home").strip() or "Home"
-
             if not team_name or not season_raw:
                 skipped_kits += 1
                 continue
@@ -674,17 +718,14 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
             if not season:
                 skipped_kits += 1
                 continue
-
             brand_name   = (r.get("brand") or "").strip()
             league_name  = _normalize_league(r.get("league") or "")
             sponsor_name = _normalize_sponsor(r.get("sponsor") or "")
             img_url      = (r.get("img_url") or r.get("Image URL") or "").strip()
-
             kit_slug = _csv_slug(f"{team_name}-{season}-{kit_type}")
             if await db["master_kits"].find_one({"slug": kit_slug}):
                 skipped_kits += 1
                 continue
-
             team_id = await _get_or_create("teams", "team_id", slugify(team_name), {
                 "team_id": f"team_{uuid.uuid4().hex[:12]}", "name": team_name, "slug": slugify(team_name),
                 "country": "", "city": "", "founded": None, "primary_color": "", "secondary_color": "",
@@ -712,34 +753,26 @@ async def import_csv_upload(request: Request, file: UploadFile = File(...)):
                     "country": "", "logo_url": "", "kit_count": 0,
                     "status": "approved", "created_at": now, "updated_at": now,
                 })
-
             kit_id = f"kit_{uuid.uuid4().hex[:12]}"
             await db["master_kits"].insert_one({
                 "kit_id": kit_id, "slug": kit_slug,
-                "team_id": team_id, "brand_id": brand_id, "league_id": league_id,
-                "sponsor_id": sponsor_id,
+                "team_id": team_id, "brand_id": brand_id, "league_id": league_id, "sponsor_id": sponsor_id,
                 "club": team_name, "brand": brand_name, "league": league_name,
                 "season": season, "kit_type": kit_type, "type": kit_type,
-                "design":      (r.get("design") or "").strip(),
-                "colors":      (r.get("colors") or "").strip(),
-                "sponsor":     sponsor_name,
-                "gender":      _normalize_gender(r.get("gender") or ""),
+                "design": (r.get("design") or "").strip(), "colors": (r.get("colors") or "").strip(),
+                "sponsor": sponsor_name, "gender": _normalize_gender(r.get("gender") or ""),
                 "front_photo": img_url, "img_url": img_url,
-                "source_url":  (r.get("source_url") or "").strip(),
+                "source_url": (r.get("source_url") or "").strip(),
                 "status": "approved", "avg_rating": 0.0,
-                "created_by": user.get("user_id", "admin"),
-                "created_at": now,
+                "created_by": user.get("user_id", "admin"), "created_at": now,
             })
             created_kits += 1
-
         except Exception as e:
             if len(import_errors) < 20:
                 import_errors.append(f"Ligne {i} ({r.get('team','?')}): {type(e).__name__}: {e}")
 
     return {
         "message": "Import terminé",
-        "created":    created_kits,
-        "skipped":    skipped_kits,
-        "total_rows": len(rows),
-        "errors":     import_errors,
+        "created": created_kits, "skipped": skipped_kits,
+        "total_rows": len(rows), "errors": import_errors,
     }
