@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import { Zap, Globe, Calendar } from 'lucide-react';
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { getBrand } from '@/lib/api';
-import api from '@/lib/api';
 
 export default function BrandDetail() {
   const { id } = useParams();
@@ -16,14 +15,11 @@ export default function BrandDetail() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [brandRes, kitsRes] = await Promise.all([
-        getBrand(id),
-        api.get(`/brands/${id}/kits`),
-      ]);
+      const brandRes = await getBrand(id);
       if (!brandRes.data) { setBrand(null); return; }
       setBrand({
         ...brandRes.data,
-        kits: (kitsRes.data || []).filter(k => k.status !== 'rejected'),
+        kits: (brandRes.data?.kits || []).filter(k => k.status !== 'rejected'),
       });
     } catch {
       setBrand(null);

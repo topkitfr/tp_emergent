@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import { Trophy, Globe, Layers } from 'lucide-react';
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { getLeague } from '@/lib/api';
-import api from '@/lib/api';
 
 export default function LeagueDetail() {
   const { id } = useParams();
@@ -16,13 +15,10 @@ export default function LeagueDetail() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [leagueRes, kitsRes] = await Promise.all([
-        getLeague(id),
-        api.get(`/leagues/${id}/kits`),
-      ]);
+      const leagueRes = await getLeague(id);
       setLeague({
         ...leagueRes.data,
-        kits: (kitsRes.data || []).filter(k => k.status !== 'rejected'),
+        kits: (leagueRes.data?.kits || []).filter(k => k.status !== 'rejected'),
       });
     } catch {
       setLeague(null);

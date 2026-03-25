@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import { Shield, Globe, MapPin, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
 import { getTeam, followEntity, unfollowEntity, isFollowing } from '@/lib/api';
-import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function TeamDetail() {
@@ -20,13 +19,10 @@ export default function TeamDetail() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [teamRes, kitsRes] = await Promise.all([
-        getTeam(id),
-        api.get(`/teams/${id}/kits`),
-      ]);
+      const teamRes = await getTeam(id);
       setTeam({
         ...teamRes.data,
-        kits: (kitsRes.data || []).filter(k => k.status !== 'rejected'),
+        kits: (teamRes.data?.kits || []).filter(k => k.status !== 'rejected'),
       });
     } catch {
       setTeam(null);
