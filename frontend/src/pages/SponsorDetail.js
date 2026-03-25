@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tag, Globe } from 'lucide-react';
 import EntityDetailPage, { EntityDetailSkeleton } from '@/components/EntityDetailPage';
-import { getSponsor, getSponsorKits } from '@/lib/api';
+import { getSponsor } from '@/lib/api';
 
 export default function SponsorDetail() {
   const { id } = useParams();
@@ -16,14 +16,11 @@ export default function SponsorDetail() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sponsorRes, kitsRes] = await Promise.all([
-        getSponsor(id),
-        getSponsorKits(id),
-      ]);
-      if (!sponsorRes.data) { setSponsor(null); return; }
+      const res = await getSponsor(id);
+      if (!res.data) { setSponsor(null); return; }
       setSponsor({
-        ...sponsorRes.data,
-        kits: (kitsRes.data || []).filter(k => k.status !== 'rejected'),
+        ...res.data,
+        kits: (res.data.kits || []).filter(k => k.status !== 'rejected'),
       });
     } catch {
       setSponsor(null);
