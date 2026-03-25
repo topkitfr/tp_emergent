@@ -1,10 +1,17 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse, Response
 import httpx
+import os
 
 router = APIRouter(prefix="/api", tags=["images"])
 
-FREEBOX_BASE = "http://192.168.0.47/images/master_kits/photos"
+# URL de base pour les médias — Cloudflare tunnel en prod, IP locale en dev
+MEDIA_BASE_URL = os.getenv(
+    "MEDIA_BASE_URL",
+    "https://917824d5-a03a-481d-8a97-36ccc4c108c6.cfargotunnel.com"
+)
+FREEBOX_BASE = f"{MEDIA_BASE_URL}/images/master_kits/photos"
+
 
 @router.get("/images/{filename}")
 async def proxy_image(filename: str):
