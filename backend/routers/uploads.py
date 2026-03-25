@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Response, UploadFile, File
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 import os
 import re
@@ -43,23 +43,36 @@ def _to_relative_path(public_url: str) -> str:
     return f"/api/images{relative}"
 
 
-async def _forward_to_receiver(contents: bytes, filename: str, folder: str) -> str:
-    """Envoie le fichier au récepteur Freebox et retourne le chemin relatif /api/images/..."""
+async def _forward_to_receiver(
+    contents: bytes, filename: str, folder: str, entity_id: Optional[str] = None
+) -> dict:
+    """Envoie le fichier au récepteur Freebox et retourne url + relative_path."""
+    params = {"folder": folder}
+    if entity_id:
+        params["entity_id"] = entity_id
+
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             RECEIVER_URL,
             headers={"x-secret": RECEIVER_SECRET},
             files={"file": (filename, contents)},
-            data={"folder": folder},
+            params=params,
         )
         if resp.status_code != 200:
             raise HTTPException(status_code=500, detail=f"Receiver error: {resp.text}")
-        raw_url = resp.json()["url"]
-        return _to_relative_path(raw_url)
+        data = resp.json()
+        return {
+            "url": _to_relative_path(data["url"]),
+            "relative_path": data.get("relative_path"),
+        }
 
 
 @router.post("/upload")
-async def upload_image(file: UploadFile = File(...), folder: str = "master_kit"):
+async def upload_image(
+    file: UploadFile = File(...),
+    folder: str = "master_kit",
+    entity_id: Optional[str] = None,
+):
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -71,12 +84,16 @@ async def upload_image(file: UploadFile = File(...), folder: str = "master_kit")
         raise HTTPException(status_code=400, detail="File too large. Max 10MB")
 
     folder = FOLDER_MAP.get(folder, "master_kit")
-    relative_url = await _forward_to_receiver(contents, file.filename, folder)
-    return {"filename": file.filename, "url": relative_url}
+    result = await _forward_to_receiver(contents, file.filename, folder, entity_id)
+    return {"filename": file.filename, **result}
 
 
 @router.post("/upload/multiple")
-async def upload_multiple_images(files: List[UploadFile] = File(...), folder: str = "master_kit"):
+async def upload_multiple_images(
+    files: List[UploadFile] = File(...),
+    folder: str = "master_kit",
+    entity_id: Optional[str] = None,
+):
     results = []
     folder = FOLDER_MAP.get(folder, "master_kit")
     for file in files:
@@ -87,8 +104,8 @@ async def upload_multiple_images(files: List[UploadFile] = File(...), folder: st
         if len(contents) > MAX_FILE_SIZE:
             continue
         try:
-            relative_url = await _forward_to_receiver(contents, file.filename, folder)
-            results.append({"filename": file.filename, "url": relative_url})
+            result = await _forward_to_receiver(contents, file.filename, folder, entity_id)
+            results.append({"filename": file.filename, **result})
         except Exception:
             continue
     return results
