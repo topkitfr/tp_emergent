@@ -9,7 +9,6 @@ from ..utils import ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 # URL du serveur récepteur sur la Freebox VM
 RECEIVER_URL = os.getenv("RECEIVER_URL", "http://82.67.103.45:8001/receive-upload")
 RECEIVER_SECRET = os.getenv("RECEIVER_SECRET", "changeme")
-MEDIA_BASE_URL = os.getenv("MEDIA_BASE_URL", "http://82.67.103.45")
 
 router = APIRouter(prefix="/api", tags=["uploads"])
 
@@ -30,23 +29,22 @@ def _to_relative_path(public_url: str) -> str:
     """
     Convertit l'URL absolue retournée par le receiver Freebox
     (ex: http://82.67.103.45/brands/logos/abc.jpg)
-    en chemin relatif utilisable par le proxy backend
-    (ex: /api/uploads/brands/logos/abc.jpg).
+    en chemin relatif via le proxy backend existant
+    (ex: /api/images/brands/logos/abc.jpg).
 
-    Si la conversion échoue (URL externe inconnue), on retourne l'URL telle quelle.
+    La route /api/images/{filepath} existe dans proxy.py et sert
+    les fichiers depuis la Freebox en HTTPS via Render.
     """
-    # Supprimer la base IP (avec ou sans port)
-    # ex: http://82.67.103.45   ou  http://82.67.103.45:8080
     pattern = re.compile(r'^https?://[^/]+')
     match = pattern.match(public_url)
     if not match:
         return public_url
     relative = public_url[match.end():]  # ex: /brands/logos/abc.jpg
-    return f"/api/uploads{relative}"
+    return f"/api/images{relative}"
 
 
 async def _forward_to_receiver(contents: bytes, filename: str, folder: str) -> str:
-    """Envoie le fichier au récepteur Freebox et retourne le chemin relatif /api/uploads/..."""
+    """Envoie le fichier au récepteur Freebox et retourne le chemin relatif /api/images/..."""
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             RECEIVER_URL,
