@@ -27,7 +27,15 @@ from .routers.user_lists import router as user_lists_router
 
 
 ROOT_DIR = Path(__file__).parent
-UPLOAD_DIR = Path("/mnt/Freebox-1/topkit-media")
+# MEDIA_ROOT peut être surchargé via variable d'environnement
+# Sur la VM Freebox : MEDIA_ROOT=/mnt/Freebox-1/topkit-media
+# Sur Render : non défini → fallback local backend/uploads/
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT")
+if MEDIA_ROOT:
+    UPLOAD_DIR = Path(MEDIA_ROOT)
+else:
+    UPLOAD_DIR = ROOT_DIR / "uploads"
+    UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 logging.basicConfig(
