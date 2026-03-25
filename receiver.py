@@ -7,7 +7,7 @@ import os
 app = FastAPI()
 
 MEDIA_ROOT = Path("/mnt/Freebox-1/topkit-media")
-BASE_URL = "http://82.67.103.45"
+BASE_URL = os.getenv("MEDIA_BASE_URL", "http://82.67.103.45")
 SECRET = os.getenv("RECEIVER_SECRET", "changeme")
 
 FOLDERS = {
@@ -41,6 +41,7 @@ async def receive_upload(
     async with aiofiles.open(filepath, "wb") as f:
         await f.write(contents)
 
+    # URL nginx : http://82.67.103.45/master_kits/photos/abc.jpg
     relative = str(filepath.relative_to(MEDIA_ROOT))
-    public_url = f"/api/uploads/{relative}"
+    public_url = f"{BASE_URL}/{relative}"
     return {"filename": filename, "url": public_url}
